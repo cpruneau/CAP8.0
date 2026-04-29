@@ -6,6 +6,7 @@ lib
 bin*
 lib*
 DOC
+DOC/*
 build
 build*
 publishedData
