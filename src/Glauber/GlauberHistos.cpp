@@ -9,11 +9,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#include"GlauberHistos.hpp"
-#include"MathConstants.hpp"
-#include"NameHelpers.hpp"
-#include"PrintHelpers.hpp"
-#include"VectorLorentz.hpp"
+#include "GlauberHistos.hpp"
+#include "MathConstants.hpp"
+#include "NameHelpers.hpp"
+#include "PrintHelpers.hpp"
+#include "VectorLorentz.hpp"
+#include "TEllipse.h"
+#include "TCanvas.h"
 
 ClassImp(CAP::GlauberHistos);
 
@@ -28,6 +30,10 @@ namespace CAP
   _fillBasics(true),
   _fillMoments(false),
   _fillSmeared(false),
+  _fillArea(false),
+  _drawEvents(false),
+  _drawEventsN(100),
+  _drawEventsIndex(0),
   _nOrders(4),
   _nParts_nBins(100),
   _nBinaries_nBins(100),
@@ -657,21 +663,61 @@ namespace CAP
     h_areaTotalVsImpact   = createProfile(createName(_histogramBaseName,"areaTotalVsImpact"),   _impact_nBins,_impact_min,_impact_max,"b (fm)","Area_{T} (fm^{2})");
     }
 
-  _fillEvents  = true;
-  _fillEventsN = 100;
-  _fillEventsIndex = 100;
-  if (_fillEvents)
-    {
-    for (int k=0; k<_fillEventsN; k++)
-      {
-      String eventName = createName(_histogramBaseName,"Event_");
-      eventName += k;
-//      TH2 * h = createHistogram(eventName)
-      }
-    }
 
 
   }
+
+  void GlauberHistos::drawEvent(GlauberEvent & event, const String & eventName)
+  {
+  TH2 * h = createHistogram(eventName,1, -20.0, 20.0, 1, -20.0, 20.0,"x(fm)", "y(fm)","");
+  TCanvas * canvas = new TCanvas(eventName,eventName,5,5,800, 800);
+  h->Draw();
+  TEllipse e;
+  e.SetFillColor(0);
+  e.SetFillStyle(0);
+  e.SetLineColor(1);
+  e.SetLineStyle(2);
+  e.SetLineWidth(1);
+
+  double halfImpact = 0.5*event.impactParameter();
+  GlauberNucleus & nucleusA = event.nucleusA();
+  GlauberNucleus & nucleusB = event.nucleusB();
+  std::vector<GlauberNucleon> & nucleonsA = nucleusA.allNucleons();
+  std::vector<GlauberNucleon> & nucleonsB = nucleusB.allNucleons();
+  double radiusA =  nucleusA.type().radiusProton();
+  double radiusB =  nucleusB.type().radiusProton();
+  e.DrawEllipse(halfImpact, 0.0,radiusA,radiusA,0,360,0);
+  e.DrawEllipse(-halfImpact,0.0,radiusB,radiusB,0,360,0);
+
+  e.SetLineColor(2);
+  e.SetFillColor(2);
+  double r = 0.5;
+  for (auto nucleon : nucleonsA)
+    {
+    double x = nucleon.position().x();
+    double y = nucleon.position().y();
+    if (nucleon.isWounded())
+      e.SetFillStyle(1001);
+    else
+      e.SetFillStyle(0);
+     e.DrawEllipse(x,y,r,r,0.0,360.0,0);
+    }
+  e.SetLineColor(4);
+  e.SetFillColor(4);
+  for (auto nucleon : nucleonsB)
+    {
+    double x = nucleon.position().x();
+    double y = nucleon.position().y();
+    if (nucleon.isWounded())
+      e.SetFillStyle(1001);
+    else
+      e.SetFillStyle(0);
+    e.DrawEllipse(x,y,r,r,0.0,360.0,0);
+    }
+  canvas->Print(eventName+".pdf");
+  delete h;
+  }
+
 
   void GlauberHistos::loadFrom(TFile & inputFile)
   {
@@ -878,6 +924,18 @@ namespace CAP
 //      }
     }
   if (_fillArea) calculateArea(event);
+
+  _drawEvents  = true;
+  if (_drawEvents && _drawEventsIndex<20)
+    {
+    printValue("_drawEventsIndex",_drawEventsIndex);
+    String eventName = createName(_histogramBaseName,"Event_");
+    eventName += _drawEventsIndex;
+    drawEvent(event,eventName);
+    _drawEventsIndex++;
+    }
+
+
   }
 
   double GlauberHistos::calculateDensityAt(const GlauberNucleus & nucleus,

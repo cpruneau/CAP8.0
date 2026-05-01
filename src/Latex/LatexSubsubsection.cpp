@@ -1,5 +1,6 @@
 #include "LatexSubsubsection.hpp"
 ClassImp(CAP::LatexSubsubsection);
+ClassImp(CAP::LatexParagraph);
 
 namespace CAP
 {
@@ -25,7 +26,13 @@ namespace CAP
   void LatexSubsubsection::writeHeader(std::ofstream & out)
   {
   skipLines(out,2);
-  out << "\\subsubsection{" << name() << "}" << endl;
+  if (isExcluded())
+    out << "\\subsubsection*{" << name() << "}" << endl;
+  else
+    out << "\\subsubsection{" << name() << "}" << endl;
+
+  if (label().Length()>0)
+    out << "\\label{sec:" << label() << "}" << endl;
   skipLines(out,1);
   }
 

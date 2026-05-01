@@ -1,8 +1,10 @@
 #include "LatexDocument.hpp"
 #include "StreamHelpers.hpp"
+#include <iostream>
 
 ClassImp(CAP::LatexDocument);
-
+using std::cout;
+using std::endl;
 
 namespace CAP
 {
@@ -63,6 +65,100 @@ namespace CAP
   {
   skipLines(out,2);
   out << "\\end{document}" << endl;
+  }
+
+  void LatexDocument::writePackages(std::ofstream & out)
+  {
+  for (auto package : _packages) package.write(out);
+  }
+
+  void LatexDocument::writeCommands(std::ofstream & out)
+  {
+  for(auto command : _commands) command.write(out);
+  }
+
+  void LatexDocument::writeAuthors(std::ofstream & out)
+  {
+  for(auto author : _authors) author.write(out);
+  }
+
+  void LatexDocument::writeAbstract(std::ofstream & out)
+  {
+  out << "\\begin{abstract}" << endl;
+  out << _abstract << endl;
+  out << "\\end{abstract}" << endl;
+  }
+
+  void LatexDocument::addPackage(const String & name, const String & option)
+  {
+  LatexPackage package;
+  package.setName(name);
+  package.setOption(option);
+  _packages.push_back(package);
+  }
+
+
+  void LatexDocument::addCommand(const String & keyword, const String & command)
+  {
+  LatexCommand comm;
+  comm.setKeyword(keyword);
+  comm.setCommand(command);
+  _commands.push_back(comm);
+  }
+
+
+  void LatexDocument::addAuthor(const String & name, const String & email, const String & affiliation)
+  {
+  LatexAuthor author;
+  author.setName(name);
+  author.setEmail(email);
+  author.setAffiliation(affiliation);
+  _authors.push_back(author);
+  }
+
+  void LatexDocument::addPackage(const LatexPackage & package)
+  {
+  _packages.push_back(package);
+  }
+
+  void LatexDocument::addCommand(const LatexCommand & command)
+  {
+  _commands.push_back(command);
+  }
+
+  void LatexDocument::addAuthor(const LatexAuthor & author)
+  {
+  _authors.push_back(author);
+  }
+
+  void LatexDocument::addPackages(const std::vector<LatexPackage> & packages)
+  {
+  for(auto package : packages) _packages.push_back(package);
+  }
+
+  void LatexDocument::addCommands(const std::vector<LatexCommand> & commands)
+  {
+  for(auto command : commands) _commands.push_back(command);
+  }
+
+  void LatexDocument::addAbstract(const String & text)
+  {
+  _abstract = text;
+  }
+
+  void LatexDocument::help()
+  {
+  cout << "======================================" << endl;
+  cout << "LatexDocument::help()" << endl;
+  cout << "======================================" << endl;
+  cout << "Known DocumentClasses/Styles" << endl;
+  cout << "-- beamer    : creation of presentations (frame)"<< endl;
+  cout << "  -- Warsaw  : theme Warsaw"<< endl;
+  cout << endl;
+  cout << "-- aps    : aps style papers"<< endl;
+  cout << "-- prc    : prc style papers"<< endl;
+  cout << "-- prl    : prlc style papers"<< endl;
+
   }
 
 } // namespace CAP

@@ -7,6 +7,8 @@
 #add_definitions(${ROOT_CXX_FLAGS})
 
 ROOT_GENERATE_DICTIONARY(G__Latex
+LatexAuthor.hpp
+LatexCommand.hpp
 LatexDocument.hpp
 LatexElement.hpp
 LatexEquation.hpp
@@ -14,6 +16,8 @@ LatexFigure.hpp
 LatexFigureGroup.hpp
 LatexFrame.hpp
 LatexList.hpp
+LatexPackage.hpp
+LatexParagraph.hpp
 LatexSection.hpp
 LatexSubsection.hpp
 LatexSubsubsection.hpp
@@ -25,6 +29,8 @@ LINKDEF LatexLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Latex SHARED
+LatexAuthor.cpp
+LatexCommand.cpp
 LatexDocument.cpp
 LatexElement.cpp
 LatexEquation.cpp
@@ -32,6 +38,8 @@ LatexFigure.cpp
 LatexFigureGroup.cpp
 LatexFrame.cpp
 LatexList.cpp
+LatexPackage.cpp
+LatexParagraph.cpp
 LatexSection.cpp
 LatexSubsection.cpp
 LatexSubsubsection.cpp

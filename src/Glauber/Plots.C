@@ -1791,8 +1791,8 @@ void loadLatex(const TString & includeBasePath)
 void createPresentation(vector<TCanvas*> canvasList, const TString & outDirectory, const TString & fileName)
 {
   CAP::LatexDocument doc;
-  //doc.setDocumentClassName(const String & v)  { _documentClassName = v;}
-  //doc.setThemeName(const String & v)          { _themeName = v;}
+  doc.setDocumentClassName("beamer");
+  doc.setThemeName("Warsaw");
   doc.setAuthor("C. Pruneau");
   doc.setInstitution("Wayne State University");
   doc.setTitle("Selected Glauber Calculations");

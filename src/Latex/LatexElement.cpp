@@ -12,29 +12,36 @@ namespace CAP
   LatexElement::LatexElement()
   :
   _name("NoName"),
+  _label(),
+  _excluded(false),
   _children()
   { }
 
   LatexElement::LatexElement(const LatexElement & src)
   :
   _name(src._name),
+  _label(src._label),
+  _excluded(src._excluded),
   _children(src._children)
   { }
 
-  //Accountant & Accountant::operator=(const Accountant & rhs)
   LatexElement  & LatexElement::operator=(const LatexElement & rhs)
   {
   //if (rhs != *this)
-    //{
-    _name      = rhs._name;
-    _children  = rhs._children;
-   // }
+  //{
+  _name      = rhs._name;
+  _label     = rhs._label;
+  _excluded  = rhs._excluded;
+  _children  = rhs._children;
+  // }
   return *this;
   }
 
   void LatexElement::reset()
   {
-  _name = "NoName";
+  _name      = "NoName";
+  _label     = "";
+  _excluded  = false;
   _children.clear();
   }
 

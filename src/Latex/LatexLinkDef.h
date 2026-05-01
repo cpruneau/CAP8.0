@@ -2,6 +2,8 @@
 #pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
+#pragma link C++ class CAP::LatexAuthor+;
+#pragma link C++ class CAP::LatexCommand+;
 #pragma link C++ class CAP::LatexDocument+;
 #pragma link C++ class CAP::LatexElement+;
 #pragma link C++ class CAP::LatexEquation+;
@@ -9,6 +11,8 @@
 #pragma link C++ class CAP::LatexFigureGroup+;
 #pragma link C++ class CAP::LatexFrame+;
 #pragma link C++ class CAP::LatexList+;
+#pragma link C++ class CAP::LatexPackage+;
+#pragma link C++ class CAP::LatexParagraph+;
 #pragma link C++ class CAP::LatexSection+;
 #pragma link C++ class CAP::LatexSubsection+;
 #pragma link C++ class CAP::LatexSubsubsection+;

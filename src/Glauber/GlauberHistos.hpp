@@ -43,15 +43,17 @@ public:
   double calculateDensity(NuclearDistribution & dist, double x, double y);
   void   calculateArea(GlauberEvent & event);
   void   calculateAreaAt(const GlauberNucleus & nucleus, TH2* area, double mx, double my, double rMaxSq);
+
+  void   drawEvent(GlauberEvent & event, const String & evName);
 protected:
 
   bool _fillBasics;
   bool _fillMoments;
   bool _fillSmeared;
   bool _fillArea;
-  bool _fillEvents;
-  int  _fillEventsN;
-  int  _fillEventsIndex;
+  bool _drawEvents;
+  int  _drawEventsN;
+  int  _drawEventsIndex;
   int  _nOrders;
   
   int _nParts_nBins;
