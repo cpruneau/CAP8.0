@@ -26,6 +26,13 @@ namespace CAP
   return *this;
   }
 
+  void LatexFrame::write(std::ofstream & out)
+  {
+  writeHeader(out);
+  writeContent(out);
+  writeTrailer(out);
+  }
+
   void LatexFrame::writeHeader(std::ofstream & out)
   {
   skipLines(out,2);

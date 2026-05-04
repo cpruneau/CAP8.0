@@ -23,12 +23,16 @@ namespace CAP
   void setName(const String & name) { _name = name; }
   void setLabel(const String & label) { _label = label; }
   void setExcluded(bool v) { _excluded = v; }
+  void setParent(LatexElement * parent) { _parent = parent; }
 
+  String & name() { return _name; }
+  String & label() { return _label; }
   const String & name() const { return _name; }
   const String & label() const { return _label; }
   bool  isExcluded() const { return _excluded; }
   std::vector<LatexElement*> & children() { return _children; }
   const std::vector<LatexElement*> & children() const  { return _children; }
+  LatexElement * parent() {return _parent; }
 
   virtual void reset();
   virtual void write(std::ofstream & out);
@@ -43,6 +47,7 @@ namespace CAP
   String _label;
   bool   _excluded;
   std::vector<LatexElement*> _children;
+  LatexElement * _parent;
 
   ClassDef(LatexElement,0)
   };

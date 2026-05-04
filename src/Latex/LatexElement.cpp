@@ -1,4 +1,6 @@
 #include "LatexElement.hpp"
+#include "PrintHelpers.hpp"
+
 ClassImp(CAP::LatexElement);
 
 namespace CAP
@@ -14,7 +16,8 @@ namespace CAP
   _name("NoName"),
   _label(),
   _excluded(false),
-  _children()
+  _children(),
+  _parent(nullptr)
   { }
 
   LatexElement::LatexElement(const LatexElement & src)
@@ -22,7 +25,8 @@ namespace CAP
   _name(src._name),
   _label(src._label),
   _excluded(src._excluded),
-  _children(src._children)
+  _children(src._children),
+  _parent(src._parent)
   { }
 
   LatexElement  & LatexElement::operator=(const LatexElement & rhs)
@@ -33,6 +37,7 @@ namespace CAP
   _label     = rhs._label;
   _excluded  = rhs._excluded;
   _children  = rhs._children;
+  _parent    = rhs._parent;
   // }
   return *this;
   }
@@ -42,11 +47,13 @@ namespace CAP
   _name      = "NoName";
   _label     = "";
   _excluded  = false;
+  _parent    = nullptr;
   _children.clear();
   }
 
   void LatexElement::addChild(LatexElement * node)
   {
+  node->setParent(this);
   _children.push_back(node);
   }
 

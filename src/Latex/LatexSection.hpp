@@ -13,6 +13,8 @@ namespace CAP
   LatexSection  & operator=(const LatexSection & rhs);
   virtual ~LatexSection() { }
   virtual void writeHeader(std::ofstream & out);
+  void setTitle(const String &title) { setName(title); }
+  const String & title() const { return name(); }
 
   ClassDef(LatexSection,0)
   };

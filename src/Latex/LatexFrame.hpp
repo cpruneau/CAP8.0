@@ -13,8 +13,12 @@ class LatexFrame : public LatexElement
   LatexFrame(const LatexFrame & src);
   LatexFrame   & operator=(const LatexFrame & rhs);
   ~LatexFrame() { reset(); }
+  virtual void write(std::ofstream & out);
   virtual void writeHeader(std::ofstream & out);
   virtual void writeTrailer(std::ofstream & out);
+
+  void setTitle(const String & title) { setName(title); }
+  String & title() { return name(); }
 
   virtual void addText(const String & text);
   virtual void addFigure(const String & figureName,

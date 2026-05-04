@@ -56,7 +56,7 @@ namespace CAP
   {
   String s(""); s += _scale;
   String h(""); h += _height;
-  out << "\\includegraphics[scale=\"" << s << ",height=\"" << h << "in\"]{" << fileName() << "}" << endl;
+  out << "\\includegraphics[scale=" << s << ",height=" << h << "in]{" << fileName() << "}" << endl;
   out << "\\caption{" << caption() << "}" << endl;
   out << "\\label{fig:" << label() << "}" << endl;
   }

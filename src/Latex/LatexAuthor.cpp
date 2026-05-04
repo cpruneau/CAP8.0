@@ -32,10 +32,10 @@ namespace CAP
   {
   skipLines(out,1);
   out << "\\author{" << name() << "}" << endl;
-  if (email().Length()>0)
-    out << "\\email{" << email() << "}" << endl;
+//  if (email().Length()>0)
+//    out << "\\email{" << email() << "}" << endl;
   if (affiliation().Length()>0)
-  out << "\\affiliation{" << affiliation() << "}" << endl;
+  out << "\\\institute{" << affiliation() << "}" << endl;
   }
   
 }

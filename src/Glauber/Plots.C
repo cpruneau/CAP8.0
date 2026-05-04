@@ -1379,7 +1379,7 @@ void createFigureSlide(std::ofstream & out, const TString & title, const TString
 }
 
 
-int Plots(bool print=1, bool latex=1)
+int Plots(bool print=0, bool latex=1)
 {
   TString includeBasePath = getenv("CAP_SRC_PATH");
   loadLatex(includeBasePath);
@@ -1791,10 +1791,10 @@ void loadLatex(const TString & includeBasePath)
 void createPresentation(vector<TCanvas*> canvasList, const TString & outDirectory, const TString & fileName)
 {
   CAP::LatexDocument doc;
+  doc.setName("MyPresentation");
   doc.setDocumentClassName("beamer");
   doc.setThemeName("Warsaw");
-  doc.setAuthor("C. Pruneau");
-  doc.setInstitution("Wayne State University");
+  doc.addAuthor("C. Pruneau","aa7526@wayne.edu","Wayne State University");
   doc.setTitle("Selected Glauber Calculations");
   doc.setSubtitle("A New CAP Module");
   doc.setDate("");
@@ -1802,39 +1802,44 @@ void createPresentation(vector<TCanvas*> canvasList, const TString & outDirector
   doc.setOutputPath(outDirectory);
   doc.setOutFileName(fileName);
 
-  CAP::LatexSection * goals   = new CAP::LatexSection(); goals->setName("Goals");  doc.addChild(goals);
-  CAP::LatexFrame   * goalsF  = new CAP::LatexFrame();   goalsF->setName("Goals");  doc.addChild(goalsF);
-  goalsF->addText("Testing our new GlauberMC Code");
-  goalsF->addEquation("E=mc^2","eq:emc2");
+  doc.addSection("Goals","goals");
+  doc.addFrame("Goals of this study");
+  doc.addText("Testing our new GlauberMC Code");
+  doc.addEquation("E=mc^2","eq:emc2");
+  doc.endSection();
+  //doc.endSection();
 
-  CAP::LatexSection * methods = new CAP::LatexSection(); methods->setName("Methods");  doc.addChild(methods);
-  CAP::LatexFrame   * methodsF = new CAP::LatexFrame();  methodsF->setName("Methods");  doc.addChild(methodsF);
+  doc.addSection("Methods","Methods");
+  CAP::LatexFrame & methods = doc.addFrame("Methods");
+  doc.addText("Methods to Testing our new GlauberMC Code");
   std::vector<TString> list;
   list.push_back(TString("Method 1"));
   list.push_back(TString("Method 2"));
   list.push_back(TString("Method 3"));
   list.push_back(TString("Method 4"));
-  methodsF->addList(list);
-  CAP::LatexSection * results = new CAP::LatexSection(); results->setName("Results");  doc.addChild(results);
+  methods.addList(list);
+  doc.endSection();
+  doc.addSection("Results","Results");
 
+  int k = 0;
   for (auto & canvas : canvasList)
     {
+    //f (k>3) break;
     TString name = canvas->GetName();
     TString canvasFileName;
     canvasFileName = outDirectory;
     canvasFileName += name;
     canvasFileName += ".pdf";
-
-    CAP::LatexFrame * frame = new CAP::LatexFrame(); frame->setName(name);  doc.addChild(frame);
-    CAP::LatexFigure * fig = new CAP::LatexFigure();
-    fig->setFileName(canvasFileName);
-    fig->setCaption("caption to be added here");
-    fig->setLabel(name);
-    frame->addChild(fig);
-
+    CAP::LatexFrame & frame = doc.addFrame(name);
+    doc.addFigure(canvasFileName,canvasFileName,"caption to be added here");
+    doc.endSection();
+    k++;
     }
-
-  CAP::LatexSection * conclusions = new CAP::LatexSection(); conclusions->setName("Conclusions");  doc.addChild(conclusions);
+  doc.endSection();
+  doc.addSection("Conclusions","Conclusions");
+  CAP::LatexFrame & conclusion = doc.addFrame("Conclusions");
+  doc.addText("Very cool package!");
+  doc.endSection();
   doc.create();
 
 }

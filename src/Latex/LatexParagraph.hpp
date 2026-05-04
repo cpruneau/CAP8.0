@@ -13,6 +13,8 @@ namespace CAP
   LatexParagraph  & operator=(const LatexParagraph & rhs);
   ~LatexParagraph(){ }
   virtual void writeHeader(std::ofstream & out);
+  void setTitle(const String &title) { setName(title); }
+  const String & title() const { return name(); }
 
   ClassDef(LatexParagraph,0)
   };
