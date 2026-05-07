@@ -315,6 +315,11 @@ namespace CAP
   cout << "-- prl    : prlc style papers"<< endl;
   }
 
+  //!
+  //!Add figures to an existing document.
+  //!path where the figure files are located
+  //!fileList list of the files to insert in the presentation
+  //!
   void LatexDocument::addFigures(const String & path, const std::vector<String> & fileList)
   {
   for (auto file : fileList)
@@ -325,7 +330,11 @@ namespace CAP
     }
   }
 
-
+  //!
+  //!Add figures to an existing document based on a search in a given directory structure with top level path..
+  //!Files are searched for at the given path and require the given extension.  Use depth=0 for only the top level directory. Use larger values
+  //!to get files from subdirectories.
+  //!
   void LatexDocument::addFiguresFrom(const String & path, const String & ext, int depth)
   {
   bool verbose = true;
