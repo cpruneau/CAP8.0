@@ -119,7 +119,7 @@ if (Include_IDENTITY)
 endif()
 
 add_executable(CAP CAP.cxx)
-target_link_libraries(CAP PUBLIC  Base Math Glauber Particles  SubSample  Global Spherocity ParticleSingle ParticlePair ParticlePair3D NuDyn PtPt Performance Therminator3  BasicEventGen Xml Latex)
+target_link_libraries(CAP PUBLIC  Base Math Helpers Glauber Particles  SubSample  Global Spherocity ParticleSingle ParticlePair ParticlePair3D NuDyn PtPt Performance Therminator3  BasicEventGen Xml )
 
 install(TARGETS CAP  LIBRARY DESTINATION "/Users/aa7526/Documents/GitHub/CAP8.0/lib")
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Helpers" "Xml" "Latex" "Glauber" "Particles"  "ParticleSingle" "ParticlePair"  "BasicEventGen" "$ENV{ROOTSYS}/include"

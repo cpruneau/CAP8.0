@@ -1821,10 +1821,8 @@ void createPresentation(vector<TCanvas*> canvasList, const TString & outDirector
   doc.endSection();
   doc.addSection("Results","Results");
 
-  int k = 0;
   for (auto & canvas : canvasList)
     {
-    //f (k>3) break;
     TString name = canvas->GetName();
     TString canvasFileName;
     canvasFileName = outDirectory;
@@ -1833,7 +1831,6 @@ void createPresentation(vector<TCanvas*> canvasList, const TString & outDirector
     CAP::LatexFrame & frame = doc.addFrame(name);
     doc.addFigure(canvasFileName,canvasFileName,"caption to be added here");
     doc.endSection();
-    k++;
     }
   doc.endSection();
   doc.addSection("Conclusions","Conclusions");

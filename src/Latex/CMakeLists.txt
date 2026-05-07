@@ -46,7 +46,7 @@ LatexSubsubsection.cpp
 LatexText.cpp
 G__Latex.cxx)
 
-target_link_libraries(Latex Base Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(Latex Base Math Helpers ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Latex PUBLIC Base Math ${EXTRA_INCLUDES} )
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libLatex.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libLatex_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")

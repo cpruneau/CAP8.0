@@ -1,5 +1,7 @@
+#include "Exceptions.hpp"
 #include "LatexDocument.hpp"
 #include "PrintHelpers.hpp"
+#include "RootFileHelpers.hpp"
 #include "StreamHelpers.hpp"
 #include <iostream>
 
@@ -160,18 +162,7 @@ namespace CAP
   return *author;
   }
 
-  LatexSection & LatexDocument::addSection(const String & title, const String & label)
-  {
-  LatexSection * s =  new LatexSection();
-  s->setTitle(title);
-  s->setLabel(label);
-  printValue("addSection() title",title);
-  printValue("addSection   currentScope() name",currentScope()->name());
-  currentScope()->addChild(s);
-  setCurrentScope(s);
-  printValue("addSection   currentScope() name",currentScope()->name());
- return *s;
-  }
+
 
   void LatexDocument::setScopeToParent()
   {
@@ -196,14 +187,29 @@ namespace CAP
   return *f;
   }
 
+  LatexSection & LatexDocument::addSection(const String & title, const String & label)
+  {
+  LatexSection * s =  new LatexSection();
+  s->setTitle(title);
+  s->setLabel(label);
+  printValue("addSection() title",title);
+  printValue("addSection   currentScope() name",currentScope()->name());
+  currentScope()->addChild(s);
+  setCurrentScope(s);
+  printValue("addSection   currentScope() name",currentScope()->name());
+  return *s;
+  }
 
   LatexSubsection & LatexDocument::addSubection(const String & title, const String & label)
   {
   LatexSubsection * s = new LatexSubsection();
   s->setTitle(title);
   s->setLabel(label);
+  printValue("addSubection() title",title);
+  printValue("addSubection   currentScope() name",currentScope()->name());
   currentScope()->addChild(s);
   setCurrentScope(s);
+  printValue("addSubection   currentScope() name",currentScope()->name());
   return *s;
   }
 
@@ -212,8 +218,12 @@ namespace CAP
   LatexSubsubsection * s = new LatexSubsubsection();
   s->setTitle(title);
   s->setLabel(label);
+  printValue("addSubsubsection() title",title);
+  printValue("addSubsubsection   currentScope() name",currentScope()->name());
   currentScope()->addChild(s);
   setCurrentScope(s);
+  printValue("addSubsubsection   currentScope() name",currentScope()->name());
+
   return *s;
   }
 
@@ -303,7 +313,44 @@ namespace CAP
   cout << "-- aps    : aps style papers"<< endl;
   cout << "-- prc    : prc style papers"<< endl;
   cout << "-- prl    : prlc style papers"<< endl;
+  }
 
+  void LatexDocument::addFiguresFrom(const String & path, const String & ext, int depth)
+  {
+  bool verbose = true;
+  // top directory first
+  std::vector<String> fileList = listFilesInDir(path,ext,false,verbose,depth,0);
+  if (verbose)
+    {
+    printCR();
+    printValue("fileList.size()",fileList.size());
+    }
+  for (auto file : fileList)
+    {
+    addFrame(file);
+    addFigure(path+file,file,file);
+    endSection();
+    }
+
+  // add subdirectories (if any) as subsections.
+  std::vector<String> directories = listDirsIn(path,verbose);
+  int nDirectories = directories.size();
+  if (verbose)
+    {
+    printCR();
+    printValue("directories.size()",nDirectories);
+    }
+  for (auto dir : directories)
+    {
+    printValue("dir", dir);
+    String subPath = path;
+    subPath += "/";
+    subPath += dir;
+    subPath += "/";
+    addSubection(dir,dir);
+    addFiguresFrom(subPath,"pdf",0);
+    endSection();
+    }
   }
 
 } // namespace CAP
