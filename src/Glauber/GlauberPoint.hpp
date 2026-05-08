@@ -1,6 +1,7 @@
 #ifndef CAP__GlauberPoint
 #define CAP__GlauberPoint
 #include "TObject.h"
+#include <cmath>
 
 namespace CAP
 {
@@ -17,7 +18,7 @@ public:
   virtual ~GlauberPoint(){}
   float x() const  { return _x; }
   float y() const  { return _y; }
-  float r() const  { return sqrt(_x*_x+_y*_y); }
+  float r() const  { return std::sqrt(_x*_x+_y*_y); }
   float r2() const { return _x*_x+_y*_y; }
   void set(float x, float y)
   {
@@ -32,7 +33,7 @@ public:
     //!
     //! determine the azimuthal angle of the point relative to the x axis.
     //!
-  float  phi() const { return atan2(_y,_x);}
+  float  phi() const { return std::atan2(_y,_x);}
   
 protected:
 
