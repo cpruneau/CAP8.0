@@ -28,6 +28,6 @@ cd <your_cap_directory>
 source SetupCAP.sh
 mkdir build
 cd build
-cmake ../src
+cmake --install-prefix <your_cap_install_directory> ../src
 make install
 ```
