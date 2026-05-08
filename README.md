@@ -3,10 +3,15 @@
 
 # Prerequisites
 - Valid `PYTHIA8` installation
+- Valid `FastJet` installation
 - Valid `root` installation built with `PYTHIA8` support
 - Environment variable for `PYTHIA8` location
  ```
  export PYTHIA8=<your_pythia8_directory>
+ ```
+- Environment variable for `FastJet` location
+ ```
+ export FASTJET=<your_fastjet_directory>
  ```
 - `root` environment activated with
  ```
@@ -23,6 +28,6 @@ cd <your_cap_directory>
 source SetupCAP.sh
 mkdir build
 cd build
-cmake ../src
+cmake --install-prefix <your_cap_install_directory> ../src
 make install
 ```
