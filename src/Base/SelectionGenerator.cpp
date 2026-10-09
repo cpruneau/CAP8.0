@@ -10,6 +10,7 @@
  *
  * *********************************************************************/
 #include "SelectionGenerator.hpp"
+#include "Exceptions.hpp"
 
 ClassImp(CAP::SelectionGenerator);
 
@@ -18,7 +19,7 @@ CAP::SelectionGenerator::SelectionGenerator()
 cumulativeProbability()
 {    }
 
-CAP::SelectionGenerator::SelectionGenerator(std::vector<double> & probabilities)
+CAP::SelectionGenerator::SelectionGenerator(const std::vector<double> & probabilities)
 :
 cumulativeProbability()
 {
@@ -34,15 +35,18 @@ CAP::SelectionGenerator & CAP::SelectionGenerator::operator=(const CAP::Selectio
   return *this;
 }
 
-void CAP::SelectionGenerator::initializeWith(std::vector<double> & probabilities)
+void CAP::SelectionGenerator::initializeWith(const std::vector<double> & probabilities)
 {
   cumulativeProbability.clear();
   int n = probabilities.size();
+  if (n==0) throw CAP::Exception("Empty probability vector","SelectionGenerator::initializeWith()");
   double sum = 0.0;
   for (int k=0; k<n; k++)
     {
+    if (probabilities[k]<0.0) throw CAP::Exception("Negative probability","SelectionGenerator::initializeWith()");
     sum += probabilities[k];
     }
+  if (!(sum>0.0)) throw CAP::Exception("Probabilities sum to zero","SelectionGenerator::initializeWith()");
   double prob = 0.0;
   for (int kk=0; kk<n; kk++)
     {
@@ -56,6 +60,7 @@ int CAP::SelectionGenerator::generate()
 {
   double v = gRandom->Rndm();
   int n = cumulativeProbability.size();
+  if (n==0) throw CAP::Exception("Generator not initialized","SelectionGenerator::generate()");
   for (int k=0; k<n; k++)
   {
   if (v <= cumulativeProbability[k]) return k;

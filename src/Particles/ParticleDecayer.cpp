@@ -131,7 +131,7 @@ void  ParticleDecayer::decay3(ParticleType & parentType,
   if (mp < minMass)
     {
     //cout << "<E> ParticleDecayer::decay3(..) Parent too light: M = " << mp << ", m1 = " << m1 << ", m2 = " << m2 << ", m3 = " << m3 << endl;
-    mp =  mp = 1.02*minMass;
+    mp = 1.02*minMass;
     }
   e        = parentMomentum.t();
   vx       = parentMomentum.x()/e;

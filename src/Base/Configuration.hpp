@@ -58,9 +58,7 @@ class Configuration : public Properties
 
   virtual int nSelectedValues(const char *  path, const char *  keyBaseName, const char *  defaultValue) const
   {
-  String sPath = path;
-  String sKeyBaseName = keyBaseName;
-  return nSelectedValues(sPath+String(":")+sKeyBaseName, defaultValue);
+  return nSelectedValues(standardize(path,keyBaseName), defaultValue);
   }
 
   virtual int nPossibleValues(const char *  keyBaseName) const;
@@ -78,9 +76,7 @@ class Configuration : public Properties
 
   virtual void addSelectedValues(const char * path, const char * keyBaseName, const char * defaultValue, const std::vector<String> & selectedValues)
   {
-  String sPath = path;
-  String sKeyBaseName = keyBaseName;
-  addSelectedValues(sPath+String(":")+sKeyBaseName, defaultValue, selectedValues);
+  addSelectedValues(standardize(path,keyBaseName), defaultValue, selectedValues);
   }
 
 protected:

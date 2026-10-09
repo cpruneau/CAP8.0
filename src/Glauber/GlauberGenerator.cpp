@@ -1,6 +1,7 @@
 #include "GlauberGenerator.hpp"
 #include "GlauberEvent.hpp"
 #include "GlauberEventMoments.hpp"
+#include "Exceptions.hpp"
 #include "RootHistogramHelpers.hpp"
 #include "TCanvas.h"
 #include "TH1D.h"
@@ -358,7 +359,14 @@ namespace CAP
 
       case 2: // Use PTProfile and xSection fluctuations
       {
-      // fix me...
+      // Option 2 (e-by-e nucleon size fluctuations, same for all nucleons) is not written yet.
+      throw NoImplementationException("GlauberGenerator: INTERACTION:NNCOLLISION_OPTION=2",__FUNCTION__);
+      }
+
+      case 3: // independent nucleon size fluctuations
+      {
+      // Option 3 is not written yet: _ptotProfile is never created, so execute() would dereference a null pointer.
+      throw NoImplementationException("GlauberGenerator: INTERACTION:NNCOLLISION_OPTION=3",__FUNCTION__);
       }
     }
   }
@@ -399,6 +407,8 @@ namespace CAP
     // xsecA[i] = fPTot->GetRandom();
     // xsecB[i] = fPTot->GetRandom();
     // here use member of GlauberNucleon
+    // Not written yet: _ptotProfile is never created (see initialization).
+    if (!_ptotProfile) throw NoImplementationException("GlauberGenerator: INTERACTION:NNCOLLISION_OPTION=3",__FUNCTION__);
     for (auto & nucleonA : nucleusA.allNucleons()) nucleonA.setXSect(_ptotProfile->random());
     for (auto & nucleonB : nucleusB.allNucleons()) nucleonB.setXSect(_ptotProfile->random());
     }
@@ -433,11 +443,10 @@ namespace CAP
 
           case 2: // nucleon sizes fluctuate (the same for all nucleons)
           {
-          ev.setEventXSection(_xSection);
-
-          // printValue("Check",10);
+          // Not written yet -- see initialization. Previously fell through into case 3.
           //          double xSect = std::sqrt( 0.1*_ptotProfile->GetRandom()/pi());
           //          double bh = TMath::Sqrt(d2*fHardFrac);
+          throw NoImplementationException("GlauberGenerator: INTERACTION:NNCOLLISION_OPTION=2",__FUNCTION__);
           }
 
           case 3:

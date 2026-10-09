@@ -11,6 +11,7 @@
  * *********************************************************************/
 #ifndef CAP__ParticleType
 #define CAP__ParticleType
+#include <cmath>
 #include "Aliases.hpp"
 #include "SelectionGenerator.hpp"
 #include "ParticleDecayMode.hpp"
@@ -529,7 +530,7 @@ public:
   //!
   bool isFermion() const
   {
-  return fabs(_spin - static_cast<int>(_spin)) > 0.01;
+  return std::fabs(_spin - static_cast<int>(_spin)) > 0.01;
   }
 
   //!
@@ -537,7 +538,7 @@ public:
   //!
   bool isBoson() const
   {
-  return fabs(_spin - static_cast<int>(_spin)) < 0.01;
+  return std::fabs(_spin - static_cast<int>(_spin)) < 0.01;
   }
 
   //!
@@ -608,25 +609,25 @@ public:
 
   bool isNeutrino() const
   {
-  int code = fabs(_pdgCode);
+  int code = std::abs(_pdgCode);
   return code==12 || code==14 || code==16;
   }
 
   bool isElectronNeutrino() const
   {
-  int code = fabs(_pdgCode);
+  int code = std::abs(_pdgCode);
   return code==12;
   }
 
   bool isMuonNeutrino() const
   {
-  int code = fabs(_pdgCode);
+  int code = std::abs(_pdgCode);
   return code==14 ;
   }
 
   bool isTauNeutrino() const
   {
-  int code = fabs(_pdgCode);
+  int code = std::abs(_pdgCode);
   return code==16;
   }
 
@@ -1145,7 +1146,7 @@ public:
   double atomicNumber() const
   {
   if (isBaryon())
-    return fabs(_charge);
+    return std::fabs(_charge);
   else
     return 0;
   }
@@ -1156,7 +1157,7 @@ public:
   //!
   double massNumber() const
   {
-  return fabs(baryonNumber());
+  return std::fabs(baryonNumber());
   }
 
   //!

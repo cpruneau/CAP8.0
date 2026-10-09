@@ -26,11 +26,11 @@ class SelectionGenerator
 {
 public:
   SelectionGenerator();
-  SelectionGenerator(std::vector<double> & probabilities);
+  SelectionGenerator(const std::vector<double> & probabilities);
   SelectionGenerator & operator=(const SelectionGenerator & source);
 
   virtual ~SelectionGenerator(){}
-  virtual void initializeWith(std::vector<double> & probabilities);
+  virtual void initializeWith(const std::vector<double> & probabilities);
   virtual int generate();
   int nPartitions() const
   {

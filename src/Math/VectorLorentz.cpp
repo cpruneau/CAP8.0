@@ -1,8 +1,9 @@
 #include "VectorLorentz.hpp"
 #include "MathExceptions.hpp"
 #include "PrintHelpers.hpp"
+#include <iostream>
 
-ClassImp(VectorLorentz);
+ClassImp(CAP::MATH::VectorLorentz);
 
 
 namespace CAP
@@ -41,21 +42,25 @@ _x2(values[2]),
 _x3(values[3])
 {  }
 
-VectorLorentz::VectorLorentz(std::vector<float> values)
+VectorLorentz::VectorLorentz(const std::vector<float> & values)
 :
-_x0(values[0]),
-_x1(values[1]),
-_x2(values[2]),
-_x3(values[3])
-{  }
+_x0(0),
+_x1(0),
+_x2(0),
+_x3(0)
+{
+  setTXYZ(values);
+}
 
-VectorLorentz::VectorLorentz(std::vector<double> values)
+VectorLorentz::VectorLorentz(const std::vector<double> & values)
 :
-_x0(values[0]),
-_x1(values[1]),
-_x2(values[2]),
-_x3(values[3])
-{  }
+_x0(0),
+_x1(0),
+_x2(0),
+_x3(0)
+{
+  setTXYZ(values);
+}
 
 VectorLorentz::VectorLorentz(const VectorLorentz & source)
 :
@@ -67,7 +72,7 @@ _x3(source._x3)
 
 
 //!
-//! Returns the value stored at the give index.
+//! Returns the component stored at the given index: 0 for t, 1 for x, 2 for y, 3 for z.
 //!
 double VectorLorentz::operator[] (unsigned int index) const
 {
@@ -77,7 +82,7 @@ double VectorLorentz::operator[] (unsigned int index) const
       case 1: return _x1;
       case 2: return _x2;
       case 3: return _x3;
-      default: throw MathException("index>3","VectorLorentz::operator()");
+      default: throw MathException("index must be 0, 1, 2 or 3",__FUNCTION__);
     }
 }
 
@@ -105,16 +110,18 @@ void VectorLorentz::setTXYZ(const double values[4])
   _x3 = values[3];
 }
 
-void VectorLorentz::setTXYZ(const std::vector<float> values)
+void VectorLorentz::setTXYZ(const std::vector<float> & values)
 {
+  if (values.size()<4) throw MathException("values must contain at least 4 elements",__FUNCTION__);
   _x0 = values[0];
   _x1 = values[1];
   _x2 = values[2];
   _x3 = values[3];
 }
 
-void VectorLorentz::setTXYZ(const std::vector<double> values)
+void VectorLorentz::setTXYZ(const std::vector<double> & values)
 {
+  if (values.size()<4) throw MathException("values must contain at least 4 elements",__FUNCTION__);
   _x0 = values[0];
   _x1 = values[1];
   _x2 = values[2];
@@ -143,7 +150,7 @@ void VectorLorentz::setTPhiRhoZ(const double & t, const double & phi, const doub
 {
   _x0 = t;
   _x1 = rho*std::cos(phi);
-  _x2 = rho*std::sin(phi);;
+  _x2 = rho*std::sin(phi);
   _x3 = z;
 }
 
@@ -173,12 +180,12 @@ void VectorLorentz::setMPhiPtY(const double & m, const double & phi, const doubl
 }
 
 //!
-//! Return the azimuthal angle between this and the other vector
-//!  TXYZ=0, TPhiThetaR,  TPhiRhoZ, MXYZ, MPhiRhoY, MPhiRhoEta};
+//! Return the azimuthal angle between this and the other vector, phi - other.phi,
+//! mapped onto the range [0, 2pi).
 double  VectorLorentz::deltaPhi(const VectorLorentz & other) const
 {
   double dPhi = std::atan2(_x2,_x1) - std::atan2(other._x2,other._x1);
-  while (dPhi>twoPi()) dPhi -= twoPi();
+  while (dPhi>=twoPi()) dPhi -= twoPi();
   while (dPhi<0) dPhi += twoPi();
   return dPhi;
 }
@@ -186,7 +193,7 @@ double  VectorLorentz::deltaPhi(const VectorLorentz & other) const
 double VectorLorentz::modulus() const
 {
   double s = _x0*_x0 - (_x1*_x1+_x2*_x2+_x3*_x3);
-  if (s<0) throw MathException("x0*x0 - (_x1*_x1+_x2*_x2+_x3*_x3) case 0","modulus()");
+  if (s<0) throw MathException("t*t - (x*x+y*y+z*z) < 0: space-like vector",__FUNCTION__);
   return std::sqrt(s);
 }
 
@@ -195,10 +202,18 @@ Vector3D VectorLorentz::xyz() const
   return  Vector3D( _x1, _x2, _x3);
 }
 
+//!
+//! Invariant mass. Small negative values of the mass squared caused by rounding
+//! (e.g., for massless particles) are treated as zero.
+//!
 double VectorLorentz::mass() const
 {
   double mSq = modulusSquare();
-  if (mSq<0) throw MathException("modulusSquare()<0",__FUNCTION__);
+  if (mSq<0)
+    {
+    if (-mSq <= 1.0E-12*_x0*_x0) return 0.0; // rounding: massless particle
+    throw MathException("modulusSquare()<0",__FUNCTION__);
+    }
   return std::sqrt(mSq);
 }
 
@@ -274,7 +289,13 @@ double VectorLorentz::transverseMassSq() const
 //!
 double VectorLorentz::transverseMass() const
 {
-  return std::sqrt(_x0*_x0 - _x3*_x3);
+  double mtSq = _x0*_x0 - _x3*_x3;
+  if (mtSq<0)
+    {
+    if (-mtSq <= 1.0E-12*_x0*_x0) return 0.0; // rounding
+    throw MathException("t*t - z*z < 0",__FUNCTION__);
+    }
+  return std::sqrt(mtSq);
 }
 
 VectorLorentz & VectorLorentz::operator= (const VectorLorentz & rhs)
@@ -323,17 +344,17 @@ VectorLorentz & VectorLorentz::operator-= (const VectorLorentz & rhs)
   return *this;
 }
 
-//! Unary minus.
+//! Unary minus: all four components are negated, so that v + (-v) is the null vector.
 VectorLorentz VectorLorentz::operator- () const
 {
-  return VectorLorentz(_x0,-_x1,-_x2,-_x3);
+  return VectorLorentz(-_x0,-_x1,-_x2,-_x3);
 }
 
 //! produce a 3D unit vector in the direction of this vector
-const Vector3D VectorLorentz::unit() const
+Vector3D VectorLorentz::unit() const
 {
   double r = std::sqrt(_x1*_x1+_x2*_x2+_x3*_x3);
-  if (r==0) throw MathException("Cannot produced unit vector from null vector",__FUNCTION__);
+  if (r==0) throw MathException("Cannot produce unit vector from null vector",__FUNCTION__);
   return Vector3D(_x1/r,_x2/r,_x3/r);
 }
 
@@ -367,38 +388,47 @@ void VectorLorentz::rotateZ(const double & angle)
   double x = _x1;
   double y = _x2;
   _x1 = c*x - s*y;
-  _x2 = c*y + s*y;
+  _x2 = s*x + c*y;
 }
 
+//! Boost this vector by velocity beta along the x axis: t' = gamma(t + beta x), x' = gamma(x + beta t)
 void VectorLorentz::boostX(const double & beta)
 {
   if (std::fabs(beta)>=1.0)
     throw  MathException("std::fabs(beta)>=1.0",__FUNCTION__);
   double gamma = 1.0/std::sqrt(1.0 - beta*beta);
-  _x0 = gamma*(_x0+beta*_x0);
-  _x1 = gamma*(_x1+beta*_x0);
+  double t = _x0;
+  double s = _x1;
+  _x0 = gamma*(t + beta*s);
+  _x1  = gamma*(s + beta*t);
 }
 
+//! Boost this vector by velocity beta along the y axis: t' = gamma(t + beta y), y' = gamma(y + beta t)
 void VectorLorentz::boostY(const double & beta)
 {
   if (std::fabs(beta)>=1.0)
     throw  MathException("std::fabs(beta)>=1.0",__FUNCTION__);
   double gamma = 1.0/std::sqrt(1.0 - beta*beta);
-  _x0 = gamma*(_x0+beta*_x0);
-  _x2 = gamma*(_x2+beta*_x0);
+  double t = _x0;
+  double s = _x2;
+  _x0 = gamma*(t + beta*s);
+  _x2  = gamma*(s + beta*t);
 }
 
+//! Boost this vector by velocity beta along the z axis: t' = gamma(t + beta z), z' = gamma(z + beta t)
 void VectorLorentz::boostZ(const double & beta)
 {
   if (std::fabs(beta)>=1.0)
     throw  MathException("std::fabs(beta)>=1.0",__FUNCTION__);
   double gamma = 1.0/std::sqrt(1.0 - beta*beta);
-  _x0 = gamma*(_x0+beta*_x0);
-  _x3 = gamma*(_x3+beta*_x0);
+  double t = _x0;
+  double s = _x3;
+  _x0 = gamma*(t + beta*s);
+  _x3  = gamma*(s + beta*t);
 }
 
 //!
-//!Boost this Lorentz vector alnog the given velocity vector
+//!Boost this Lorentz vector by the given velocity vector (betaX,betaY,betaZ), |beta|<1
 //!
 void VectorLorentz::boost(const double & betaX,const double & betaY,const double & betaZ)
 {
@@ -417,13 +447,12 @@ void VectorLorentz::boost(const double & betaX,const double & betaY,const double
   _x3 += betaZ*(gamma2*bp+gamma*x0p);      //gamma2*bp*betaZ+gamma*betaZ*x0p;
 }
 
-void VectorLorentz::boost(const Vector3D & vector)
+//!
+//!Boost this Lorentz vector by the given velocity vector beta, |beta|<1
+//!
+void VectorLorentz::boost(const Vector3D & beta)
 {
-  double  betaX = vector._x1;
-  double  betaY = vector._x2;
-  double  betaZ = vector._x3;
-  double  v = std::sqrt(betaX*betaX + betaY*betaY + betaZ*betaZ);
-  boost(betaX/v,betaY/v,betaZ/v);
+  boost(beta.x(),beta.y(),beta.z());
 }
 
 //!
@@ -431,21 +460,21 @@ void VectorLorentz::boost(const Vector3D & vector)
 //!
 double VectorLorentz::rapidity() const
 {
-  double arg = (_x0+_x3) / (_x0-_x3);
-  if (arg<=0) throw MathException("arg<=0",__FUNCTION__);
-  return 0.5*std::log(arg);
+  double num = _x0+_x3;
+  double den = _x0-_x3;
+  if (num<=0 || den<=0) throw MathException("rapidity requires t>|z|",__FUNCTION__);
+  return 0.5*std::log(num/den);
 }
 
 //!
 //! Return the rapidity difference between this and the other vector
-//!  TXYZ=0, TPhiThetaR,  TPhiRhoZ, MXYZ, MPhiRhoY, MPhiRhoEta};
 double  VectorLorentz::deltaRapidity(const VectorLorentz & other) const
 {
   return rapidity() - other.rapidity();
 }
 
 //!
-//! Return the rapidity difference between this and the other vector
+//! Return the pseudorapidity difference between this and the other vector
 //!
 double  VectorLorentz::deltaPseudoRapidity(const VectorLorentz & other) const
 {
@@ -582,6 +611,29 @@ double VectorLorentz::distance(const VectorLorentz & other) const
     return std::sqrt(dsq);
   throw MathDomainException(0.0,1.E100,dsq,"std::sqrt(arg) w/ arg<0",__FUNCTION__);
 }
+
+  void VectorLorentz::encodeBinary(BinaryWriter & w) const
+  {
+  w.writeFloat64(_x0);
+  w.writeFloat64(_x1);
+  w.writeFloat64(_x2);
+  w.writeFloat64(_x3);
+  }
+
+  void VectorLorentz::decodeBinary(BinaryReader & r, const String & /*name*/, unsigned int /*version*/)
+  {
+  _x0 = r.readFloat64();
+  _x1 = r.readFloat64();
+  _x2 = r.readFloat64();
+  _x3 = r.readFloat64();
+  }
+
+  void VectorLorentz::writeBinary(std::ostream & out) const                     { writeBinaryObject(out,*this); }
+  bool VectorLorentz::readBinary(std::istream & in)                             { return readBinaryObject(in,*this); }
+  void VectorLorentz::saveBinary(const String & fileName, bool append) const    { saveBinaryObject(fileName,*this,append); }
+  void VectorLorentz::loadBinary(const String & fileName, unsigned int index)    { loadBinaryObjectAt(fileName,*this,index); }
+  void VectorLorentz::saveBinary(const String & fileName, const std::vector<VectorLorentz> & objects) { saveBinaryObjects(fileName,objects); }
+  std::vector<VectorLorentz> VectorLorentz::loadAllBinary(const String & fileName)       { return loadAllBinaryObjects<VectorLorentz>(fileName); }
 
 } // namespace MATH
 } // namespace CAP

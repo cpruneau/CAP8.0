@@ -42,7 +42,7 @@ namespace CAP
   //!
   //! accept/reject the given GlauberEvent based on filter parameter
   //!
-  bool GlauberEventFilter::accept(const GlauberEvent & event)
+  bool GlauberEventFilter::accept(const GlauberEvent & event) const
   {
   if (nConditions()<1) return true;
   bool accepting = false;

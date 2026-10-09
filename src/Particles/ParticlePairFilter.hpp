@@ -32,7 +32,7 @@ public:
   //!
   //!Accept/reject the given pair of particles
   //!
-  virtual bool accept(const Particle & particle1, const Particle & particle2);
+  virtual bool accept(const Particle & particle1, const Particle & particle2) const;
 
 protected:
   

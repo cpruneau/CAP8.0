@@ -51,6 +51,12 @@ protected:
   _objects(nullptr)
   {   }
 
+  //!
+  //! The factory owns raw T* allocations: copying it would share (and later double-delete) them.
+  //!
+  Factory(const Factory &) = delete;
+  Factory & operator=(const Factory &) = delete;
+
   virtual ~Factory()
   {
   clear();
@@ -81,7 +87,7 @@ protected:
   _owner = owner;
   }
 
-  long size()
+  long size() const
   {
     return _currentSize;
   }
@@ -90,7 +96,7 @@ protected:
   {
   if (_objects) clear();
   _objects = new T*[_defaultSize];
-  for (unsigned int k=0; k<_defaultSize; k++ ) _objects[k] = new T();
+  for (long k=0; k<_defaultSize; k++ ) _objects[k] = new T();
   _currentSize = _defaultSize;
   _nextServed = 0;
   }
@@ -103,6 +109,7 @@ protected:
   for (long k=0; k<_currentSize; k++) _objects[k] = hold[k];
   for (long k=_currentSize; k<newSize; k++) _objects[k] = new T();
   delete[] hold;
+  _currentSize = newSize;
   }
 
   void reset()
@@ -110,25 +117,35 @@ protected:
   _nextServed = 0;
   }
 
+  //!
+  //! Release the objects (if owned) and the pointer array, and return the factory to its
+  //! empty state so that a later clear() -- e.g., from the destructor -- is a no-op.
+  //! Never throws: it is called from the destructor.
+  //!
   void clear()
   {
-  if (_owner)
+  if (_objects)
     {
-    for (long k=0; k<_currentSize; k++) delete _objects[k];
+    if (_owner)
+      {
+      for (long k=0; k<_currentSize; k++) delete _objects[k];
+      }
     delete[] _objects;
     }
-  else
-    throw MemoryException("Non owner cannot delete array",__FUNCTION__);
+  _objects     = nullptr;
+  _currentSize = 0;
+  _nextServed  = 0;
   }
 
   T & objectAt(unsigned int index)
   {
+  if ((long)index>=_currentSize) throw IndexOutOfBoundException(index,_currentSize,"index>=size()",__FUNCTION__);
   return *(_objects[index]);
   }
 
   T & nextObject()
   {
-  if ((_nextServed+1)>=size()) increaseSize(_defaultSizeIncrement);
+  if (_nextServed>=_currentSize) increaseSize(_defaultSizeIncrement>0 ? _defaultSizeIncrement : 1);
   return *(_objects[_nextServed++]);
   }
 

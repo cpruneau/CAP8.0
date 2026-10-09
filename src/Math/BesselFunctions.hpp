@@ -2,19 +2,20 @@
 #define CAP_BesselFunctions
 #include "MathBasicFunctions.hpp"
 
-using namespace std;
-
-
 //!
-//! Compendium of basic and essential mathematical  functions
-//!  By convention, all function names  begin with a lower case letter.
+//! Bessel and Struve functions of integer order.
+//!
+//! Accuracy: these use the polynomial and rational approximations of Abramowitz & Stegun and Numerical Recipes,
+//! and Chebyshev series (CERNLIB) for the Struve functions. Relative accuracy is about 1e-7 (I0, I1, K0, K1, Y0, and
+//! I_n, K_n which are computed from them), 1e-8 (J0, J1, Y1) and 1e-9 (H0, H1), 1e-12 (L0, L1); not full double precision.
+//! Functions defined only for x > 0 (K, Y) throw MathException otherwise.
 
 namespace CAP
 {
 namespace MATH
 {
 
-//! bessel functions
+//! Bessel and Struve functions
 double besselI(int n,double x) ;
 double besselK(int n,double x) ;
 double besselI0(double x);

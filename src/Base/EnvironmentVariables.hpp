@@ -27,6 +27,8 @@ class EnvironmentVariables : public Properties
 public:
 
   virtual ~EnvironmentVariables() {}
+  EnvironmentVariables(const EnvironmentVariables &) = delete;             // singleton: no copies
+  EnvironmentVariables & operator=(const EnvironmentVariables &) = delete;
   String variable(const char* aKeyword) const;
   void  addVariable(const char* aKeyword, const char* aValue);
   void print() const;

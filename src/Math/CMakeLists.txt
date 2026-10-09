@@ -2,12 +2,37 @@
 # Project CAP/Math
 ################################################################################################
 ROOT_GENERATE_DICTIONARY(G__Math
+ParameterizedFunction.hpp
+Bessel.hpp
+ChiSquare.hpp
 Complex.hpp
-#Histogram.hpp
-#Partition.hpp
+CompositeFunction.hpp
+Constant.hpp
+Cubic.hpp
+DataPoint2D.hpp
+DataPoints.hpp
+DataPointsVector.hpp
+Exponential.hpp
+Folder.hpp
+Function.hpp
+Histogram.hpp
+Partition.hpp
+Vector2D.hpp
 Vector3D.hpp
 VectorLorentz.hpp
+VectorND.hpp
+Laguerre.hpp
+Legendre.hpp
+Linear.hpp
+Matrix.hpp
+LogNormal.hpp
+Normal.hpp
+Parabolic.hpp
+Parameter.hpp
+Polynomial.hpp
+Quartic.hpp
 ScalarField.hpp
+SphericalHarmonics.hpp
 LINKDEF MathLinkDef.h)
 
 ################################################################################################
@@ -15,9 +40,21 @@ LINKDEF MathLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Math SHARED
+ParameterizedFunction.cpp
+Bessel.cpp
 BesselFunctions.cpp
+ChiSquare.cpp
 Complex.cpp
-#Histogram.cpp
+CompositeFunction.cpp
+Constant.cpp
+Cubic.cpp
+DataPoint2D.cpp
+DataPoints.cpp
+DataPointsVector.cpp
+Exponential.cpp
+Folder.cpp
+Function.cpp
+Histogram.cpp
 MathBasicFunctions.cpp
 MathBasicGeometry.cpp
 MathBasicInterpolation.cpp
@@ -27,10 +64,23 @@ MathBasicSortingFunctions.cpp
 MathBasicStatistics.cpp
 MathConstants.cpp
 MathExceptions.cpp
-#Partition.cpp
+Partition.cpp
+Vector2D.cpp
 Vector3D.cpp
 VectorLorentz.cpp
+VectorND.cpp
+Laguerre.cpp
+Legendre.cpp
+Linear.cpp
+Matrix.cpp
+LogNormal.cpp
+Normal.cpp
+Parabolic.cpp
+Parameter.cpp
+Polynomial.cpp
+Quartic.cpp
 ScalarField.cpp
+SphericalHarmonics.cpp
 G__Math.cxx)
 
 target_link_libraries(Math Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )

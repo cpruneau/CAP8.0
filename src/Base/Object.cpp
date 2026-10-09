@@ -51,7 +51,10 @@ namespace CAP
   :
   _name(name),
   _title(title),
-  _className(className)
+  _className(className),
+  _minimumReportLevel(kInfo),
+  _holdMinimumReportLevel(kInfo),
+  _loggerStyle(0)
   {}
 
   Object::Object(const Object & source)
@@ -64,7 +67,7 @@ namespace CAP
   _loggerStyle(source._loggerStyle)
   { /* no ops */}
 
-  Object Object::operator=(const Object & rhs)
+  Object & Object::operator=(const Object & rhs)
   {
   if (this!=&rhs)
     {
@@ -118,7 +121,7 @@ namespace CAP
   {
   switch (level)
     {
-      case kUnknown:
+      case kUnknown: kUnknownName = name; break;
       case kTrace:   kTraceName   = name; break;
       case kEnd:     kEndName     = name; break;
       case kStart:   kStartName   = name; break;
@@ -140,8 +143,6 @@ namespace CAP
     setMinimumReportLevel(kEnd);
   else if (severityName.EqualTo(kStartName))
     setMinimumReportLevel(kStart);
-  else if (severityName.EqualTo(kEndName))
-    setMinimumReportLevel(kEnd);
   else if (severityName.EqualTo(kDebug0Name))
     setMinimumReportLevel(kDebug0);
   else if (severityName.EqualTo(kDebug1Name))
@@ -156,6 +157,13 @@ namespace CAP
     setMinimumReportLevel(kError);
   else if (severityName.EqualTo(kFatalName))
     setMinimumReportLevel(kFatal);
+  else if (severityName.Length()>0 && !severityName.EqualTo("NONE"))
+    {
+    // Unrecognized name: keep the current level but say so ("NONE" is the value returned
+    // by Properties::valueString() for a missing key, so it stays silent).
+    if (report(kWarning,__FUNCTION__))
+      std::cout << "Unknown severity name: " << severityName << " -- report level left at " << minimumReportName() << endl;
+    }
   }
 
 

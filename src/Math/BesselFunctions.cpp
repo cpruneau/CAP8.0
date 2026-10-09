@@ -167,12 +167,17 @@ double  besselI(int  n,double  x)
   if (n==0) return besselI0(x);
   if (n==1) return besselI1(x);
   if (x == 0) return 0;
-  if (absolute(x) > kBigPositive) return 0;
-  double  tox = 2/absolute(x);
+  double  i0 = besselI0(x);
+  if (std::isinf(i0))   // I_n(x) overflows as well
+    return ((x < 0) && (n%2 == 1)) ? -i0 : i0;
+  double  ax  = absolute(x);
+  double  tox = 2/ax;
   double  bip = 0, bim = 0;
   double  bi  = 1;
   double  result = 0;
-  int  m = 2*((n+int (std::sqrt(float(iacc*n)))));
+  // Start the downward recurrence well above both n and |x|: starting above n only loses accuracy for |x| >> n
+  double  nStart = (double(n) > ax) ? double(n) : ax;
+  int  m = 2*(int(nStart) + int(std::sqrt(iacc*nStart)));
   for (int  j=m; j>=1; j--) {
     bim = bip+double (j)*tox*bi;
     bip = bi;
@@ -186,7 +191,7 @@ double  besselI(int  n,double  x)
     if (j==n) result=bip;
   }
 
-  result *= besselI0(x)/bi; // Normalise with besselI0(x)
+  result *= i0/bi; // Normalise with besselI0(x)
   if ((x < 0)  &&  (n%2 == 1)) result = -result;
 
   return result;
@@ -281,6 +286,7 @@ double  besselY0(double  x)
   const double  q8  = -0.6911147651e-5, q9  = 0.7621095161e-6;
   const double  q10 = -0.934945152e-7,  q11 = 0.636619772;
 
+  if (x <= 0) throw MathException("Invalid argument x <= 0","besselY0()");
   if (x < 8) {
     y = x*x;
     result1 = p1 + y*(p2 + y*(p3 + y*(p4  + y*(p5  + y*p6))));
@@ -317,6 +323,7 @@ double  besselY1(double  x)
   const double  q8  =  0.8449199096e-5, q9  = -0.88228987e-6;
   const double  q10 =  0.105787412e-6,  q11 =  0.636619772;
 
+  if (x <= 0) throw MathException("Invalid argument x <= 0","besselY1()");
   if (x < 8) {
     y=x*x;
     result1 = x*(p1 + y*(p2 + y*(p3 + y*(p4 + y*(p5  + y*p6)))));
@@ -486,6 +493,7 @@ double  struveH1(double  x)
 
 double  struveL0(double  x)
 {
+  if (x<0) return -struveL0(-x);   // odd function
   double  s=1.0;
   double  r=1.0;
   double  a0,sl0,a1,bi0;
@@ -501,7 +509,7 @@ double  struveL0(double  x)
     }
     sl0=a0*s;
   } else {
-    km=int(5*(x+1.0));
+    km=int(0.5*(x+1.0));   // asymptotic series: terms grow again beyond about x/2
     if(x>=50.0)km=25;
     for (i=1; i<=km; i++) {
       r*=(2*i-1)*(2*i-1)/x/x;
@@ -530,6 +538,7 @@ double  struveL0(double  x)
 
 double  struveL1(double  x)
 {
+  if (x<0) return struveL1(-x);   // even function
   double  a1,sl1,bi1,s;
   double  r=1.0;
   int  km,i;

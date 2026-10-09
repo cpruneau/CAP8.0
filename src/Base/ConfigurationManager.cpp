@@ -23,7 +23,9 @@ ConfigurationManager::ConfigurationManager()
 _configuration(),
 _configurationPath("")
 {
-  setDefaultConfiguration();
+  // Note: setDefaultConfiguration() is virtual; calling it from this constructor could only
+  // ever reach the no-op base version, never a derived override. Derived classes (e.g., Task)
+  // are configured explicitly via setDefaultConfiguration()/configure() after construction.
 }
 
 ConfigurationManager::ConfigurationManager(const ConfigurationManager & source)
@@ -35,7 +37,7 @@ _configurationPath(source._configurationPath)
 ConfigurationManager::~ConfigurationManager()
 {  }
 
-ConfigurationManager ConfigurationManager::operator=(const ConfigurationManager & rhs)
+ConfigurationManager & ConfigurationManager::operator=(const ConfigurationManager & rhs)
 {
   if (this!=&rhs)
     {
@@ -50,7 +52,7 @@ void ConfigurationManager::exportDictionary(const String & path, const String & 
 {
   setDefaultConfiguration();
   std::ofstream & outputFile = openOutputAsciiFile(path,name,".Dict",verbose);
-  _configuration.print();
+  _configuration.saveTo(outputFile); // was _configuration.print(), which went to stdout and left the file empty
   outputFile.close();
 }
 

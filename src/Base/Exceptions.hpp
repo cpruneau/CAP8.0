@@ -1,12 +1,13 @@
 #ifndef CAP_Exceptions
 #define CAP_Exceptions
 #include <iostream>
+#include <exception>
 #include "Aliases.hpp"
 
 namespace CAP
 {
 
-class Exception
+class Exception : public std::exception
 {
 public:
   Exception(const String & message,
@@ -14,6 +15,8 @@ public:
             const String & exceptionClass="Exception");
   virtual ~Exception() {}
   virtual void print() const;
+  //! Allows catching CAP exceptions through std::exception as well.
+  virtual const char * what() const noexcept override { return _message.Data(); }
 
 protected:
   const String  _exception;

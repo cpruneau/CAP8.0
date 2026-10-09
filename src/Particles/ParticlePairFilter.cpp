@@ -26,7 +26,7 @@ Filter<Particle>()
 }
 
 
-bool ParticlePairFilter::accept(const Particle & particle1, const Particle & particle2)
+bool ParticlePairFilter::accept(const Particle & particle1, const Particle & particle2) const
 {
 //  ParticleType & type1 = particle1.type();
 //  ParticleType & type2 = particle2.type();

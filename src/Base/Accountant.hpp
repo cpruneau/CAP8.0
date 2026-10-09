@@ -48,7 +48,7 @@ public:
   return _counts;
   }
 
-  unsigned int size()
+  unsigned int size() const
   {
   return _counts.size();
   }

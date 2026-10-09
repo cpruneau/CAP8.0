@@ -1,5 +1,6 @@
 #ifndef CAP__GlauberPoint
 #define CAP__GlauberPoint
+#include <cmath>
 #include "TObject.h"
 
 namespace CAP

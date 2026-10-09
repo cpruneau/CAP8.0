@@ -20,6 +20,8 @@ startTime(),
 stopTime(),
 oldStop(),
 totalDuration(),
+intervalDuration(),
+days(0),
 hours(0),
 minutes(0),
 seconds(0),
@@ -37,30 +39,34 @@ startTime(timer.startTime),
 stopTime(timer.stopTime),
 oldStop(timer.oldStop),
 totalDuration(timer.totalDuration),
+intervalDuration(timer.intervalDuration),
+days(timer.days),
 hours(timer.hours),
 minutes(timer.minutes),
 seconds(timer.seconds),
-deltaDays(timer.seconds),
-deltaHours(timer.seconds),
-deltaMinutes(timer.seconds),
-deltaSeconds(timer.seconds)
+deltaDays(timer.deltaDays),
+deltaHours(timer.deltaHours),
+deltaMinutes(timer.deltaMinutes),
+deltaSeconds(timer.deltaSeconds)
 {   }
 
 CAP::Timer & CAP::Timer::operator=(const CAP::Timer & timer)
 {
   if (this!=&timer)
     {
-    startTime     = timer.startTime;
-    stopTime      = timer.stopTime;
-    oldStop       = timer.oldStop;
-    totalDuration = timer.totalDuration;
+    startTime        = timer.startTime;
+    stopTime         = timer.stopTime;
+    oldStop          = timer.oldStop;
+    totalDuration    = timer.totalDuration;
+    intervalDuration = timer.intervalDuration;
+    days          = timer.days;
     hours         = timer.hours;
     minutes       = timer.minutes;
     seconds       = timer.seconds;
-    deltaDays     = timer.seconds;
-    deltaHours    = timer.seconds;
-    deltaMinutes  = timer.seconds;
-    deltaSeconds  = timer.seconds;
+    deltaDays     = timer.deltaDays;
+    deltaHours    = timer.deltaHours;
+    deltaMinutes  = timer.deltaMinutes;
+    deltaSeconds  = timer.deltaSeconds;
     }
   return *this;
 }
@@ -74,21 +80,30 @@ void CAP::Timer::start()
 void CAP::Timer::stop()
 {
   stopTime = high_resolution_clock::now();
-  intervalDuration = chrono::duration_cast<chrono::seconds>(stopTime - oldStop);
-  totalDuration    = chrono::duration_cast<chrono::seconds>(stopTime - startTime);
-  days     = (int)(totalDuration.count()/(24*3600));
-  hours    = (int)(totalDuration.count()/3600);
-  minutes  = (int)((totalDuration.count() - 3600 * hours)/60);
-  seconds  = totalDuration.count() - 60 * minutes - 3600 * hours;
-  deltaDays    = (int)(intervalDuration.count()/(24*3600));
-  deltaHours   = (int)(intervalDuration.count()/(3600));;
-  deltaMinutes = (int)((intervalDuration.count() - 3600 * deltaHours)/60);
-  deltaSeconds = intervalDuration.count() - 60*deltaMinutes - 3600*deltaHours - 24*3600*deltaDays;
+  intervalDuration = chrono::duration_cast<duration<double>>(stopTime - oldStop);
+  totalDuration    = chrono::duration_cast<duration<double>>(stopTime - startTime);
+  // Break durations into days / hours (0-23) / minutes (0-59) / seconds (0-60), each unit
+  // computed from what remains after removing the larger ones. Previously hours were not
+  // reduced modulo 24, and deltaSeconds subtracted the days twice (negative after 24 h).
+  double t   = totalDuration.count();
+  days       = (int)(t/86400.0);          t -= 86400.0 * days;
+  hours      = (int)(t/3600.0);           t -= 3600.0  * hours;
+  minutes    = (int)(t/60.0);             t -= 60.0    * minutes;
+  seconds    = t;
+  double dt  = intervalDuration.count();
+  deltaDays    = (int)(dt/86400.0);       dt -= 86400.0 * deltaDays;
+  deltaHours   = (int)(dt/3600.0);        dt -= 3600.0  * deltaHours;
+  deltaMinutes = (int)(dt/60.0);          dt -= 60.0    * deltaMinutes;
+  deltaSeconds = dt;
   oldStop  = stopTime;
 }
 
 void CAP::Timer::print()  const
 {
+  printValue("days",days);
+  printValue("hours",hours);
+  printValue("minutes",minutes);
+  printValue("seconds",seconds);
   printValue("DeltaDays",deltaDays);
   printValue("DeltaHours",deltaHours);
   printValue("DeltaMinutes",deltaMinutes);

@@ -93,19 +93,19 @@ void Accountant::print() const
   String className  = "Accountant";
   String objectName = name();
   String outputName;
-  outputName = className;
-  outputName = ":";
-  outputName = name();
-  outputName = ":N";
+  outputName  = className;
+  outputName += ":";
+  outputName += name();
+  outputName += ":N";
   printValue(outputName,size);
   for (unsigned int k=0; k<_counts.size(); k++)
     {
-    outputName = className;
-    outputName = ":";
-    outputName = name();
-    outputName = "[";
+    outputName  = className;
+    outputName += ":";
+    outputName += name();
+    outputName += "[";
     outputName += k;
-    outputName = "]";
+    outputName += "]";
     printValue(outputName,_counts[k]);
     }
 }

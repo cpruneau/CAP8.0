@@ -24,7 +24,7 @@ public:
   ConfigurationManager();
   ConfigurationManager(const ConfigurationManager & source);
   virtual ~ConfigurationManager();
-  ConfigurationManager operator=(const ConfigurationManager & rhs);
+  ConfigurationManager & operator=(const ConfigurationManager & rhs);
 
   //!
   //! Returns a reference to a constant Configuration object controlling the behavior of this task instance.

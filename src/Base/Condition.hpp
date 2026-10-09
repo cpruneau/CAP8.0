@@ -36,7 +36,12 @@ public:
   const Condition & operator=(const Condition & source);
   virtual int type() const { return _type; }
   virtual int subtype() const  { return _subtype; }
-  virtual String typeName() const  {  return String("ConditionDoubleDualRange");  }
+  virtual String typeName() const  {  return String("Condition");  }
+  //!
+  //! Polymorphic copy: returns a heap-allocated copy of the dynamic type (caller owns it).
+  //! Every class derived from Condition must override clone().
+  //!
+  virtual Condition * clone() const { return new Condition(*this); }
   //virtual String subtypeName() const;
   virtual bool accept(bool value);
   virtual bool accept(int  value);
@@ -58,6 +63,8 @@ public:
   virtual ~ConditionBool() {};
   const ConditionBool & operator=(const ConditionBool & source);
   virtual String typeName() const { return String("ConditionBool");}
+  virtual ConditionBool * clone() const { return new ConditionBool(*this); }
+  using Condition::accept; // keep the int/double overloads visible (they throw) instead of silently converting to bool
   virtual bool accept(bool value) { return (value == _requested);  }
   virtual void print() const;
 };
@@ -76,6 +83,8 @@ public:
   virtual ~ConditionInteger() {}
   const ConditionInteger & operator=(const ConditionInteger & source);
   virtual String typeName() const { return String("ConditionInteger");  }
+  virtual ConditionInteger * clone() const { return new ConditionInteger(*this); }
+  using Condition::accept;
   virtual bool accept(int value) {  return (_requested == value); }
   virtual void print() const;
 };
@@ -93,7 +102,9 @@ public:
   ConditionIntegerRange(const ConditionIntegerRange & source);
   virtual ~ConditionIntegerRange() {}
   const ConditionIntegerRange & operator=(const ConditionIntegerRange & source);
-  virtual String conditionTypeName() const {  return String("ConditionIntegerRange");  }
+  virtual String typeName() const {  return String("ConditionIntegerRange");  }
+  virtual ConditionIntegerRange * clone() const { return new ConditionIntegerRange(*this); }
+  using Condition::accept;
   virtual bool accept(int value) {  return (value>=_minimum  &&  value<=_maximum);  }
   virtual void print() const;
 };
@@ -113,7 +124,9 @@ public:
   ConditionDoubleRange(const ConditionDoubleRange & source);
   virtual ~ConditionDoubleRange() {}
   const ConditionDoubleRange & operator=(const ConditionDoubleRange & source);
-  virtual String conditionTypeName() const  { return String("ConditionDoubleRange");  }
+  virtual String typeName() const  { return String("ConditionDoubleRange");  }
+  virtual ConditionDoubleRange * clone() const { return new ConditionDoubleRange(*this); }
+  using Condition::accept;
   virtual bool accept(double value)  {  return (value>=_minimum  &&  value<_maximum);  }
   virtual void print() const;
 };
@@ -133,14 +146,15 @@ public:
   ConditionDoubleDualRange(const ConditionDoubleDualRange & source);
   virtual ~ConditionDoubleDualRange() {}
   const ConditionDoubleDualRange & operator=(const ConditionDoubleDualRange & source);
-  virtual String conditionTypeName() const { return String("ConditionDoubleDualRange"); }
+  virtual String typeName() const { return String("ConditionDoubleDualRange"); }
+  virtual ConditionDoubleDualRange * clone() const { return new ConditionDoubleDualRange(*this); }
+  using ConditionDoubleRange::accept;
   virtual bool accept(double value) { return (value>=_minimum  &&  value<_maximum) || (value>=_minimum2  &&  value<_maximum2); }
   virtual void print() const;
 };
 
-#endif /* CAP__Filter  */
-
-
 } // namespace CAP
+
+#endif /* CAP__Condition */
 
 

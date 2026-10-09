@@ -89,9 +89,7 @@ Property::Property(const char * name, const char * title, const char * value)
 :
 Object(name,title,"Property"),
 _value(value)
-{
-  setValue(value);
-}
+{ }
 
 Property::Property(const char * name, const char * title, const String & value)
 :
@@ -137,7 +135,7 @@ Object(property),
 _value(property._value)
 { }
 
-Property Property::operator=(const Property & property)
+Property & Property::operator=(const Property & property)
 {
   if (this!=&property)
     {
@@ -172,7 +170,8 @@ bool Property::valueContains(const char * keyword) const
 //!
 //!option determine how stuct the equality is.
 //!option=0 : same name
-//!option=1 : same name and same title
+//!option=1 : same name and same value
+//!option=2 : same name, same title, and same value
 //!
 bool Property::isEqualTo(const Property & rhs, int option) const
 {
@@ -363,9 +362,9 @@ void Property::setValue(double value)
 bool  Property::isBool() const
 {
   String v = _value;
-  if (v.EqualTo("0") || v.EqualTo("FALSE") || v.EqualTo("YES") ) return true;
-  else if (v.EqualTo("1") || v.EqualTo("TRUE")  || v.EqualTo("NO")  ) return true;
-  return false;
+  v.ToUpper(); // same (case-insensitive) rules as getBool()
+  return v.EqualTo("0") || v.EqualTo("FALSE") || v.EqualTo("NO")
+      || v.EqualTo("1") || v.EqualTo("TRUE")  || v.EqualTo("YES");
 }
 
 // not quite right... should return false if integer is too large
@@ -398,8 +397,8 @@ bool  Property::getBool() const
 {
   String v = _value;
   v.ToUpper();
-  if (v.EqualTo("0") || v.EqualTo("FALSE") || v.EqualTo("YES") ) return false;
-  else if (v.EqualTo("1") || v.EqualTo("TRUE")  || v.EqualTo("NO")  ) return true;
+  if (v.EqualTo("0") || v.EqualTo("FALSE") || v.EqualTo("NO") ) return false;
+  else if (v.EqualTo("1") || v.EqualTo("TRUE")  || v.EqualTo("YES")  ) return true;
   else if (v.IsDec())
     {
     int vv = v.Atoi();

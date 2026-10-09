@@ -54,7 +54,7 @@ public:
   Property(const char * name, const char * title, double value);
   
   Property(const Property & property);
-  Property operator=(const Property & property);
+  Property & operator=(const Property & property);
   virtual ~Property(){}
   
   virtual void setValue(const String & title);

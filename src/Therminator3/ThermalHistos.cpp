@@ -379,12 +379,12 @@ namespace CAP
   unsigned int k = 0;
   for (auto & hadron : hadrons)
     {
-    _position = double(6*(k-200)) + 2.5;
+    _position = 6.0*(double(k)-200.0) + 2.5;
     parentMass = hadron.type().mass();
     createLine(0.0, parentMass, 333.0, parentMass, 1, 1, 1, true);
     if (hadron.type().isStable() || parentMass>2.0) continue;
     k++;
-    if (k<200 | k>250) continue;
+    if (k<200 || k>250) continue;
     const std::vector<ParticleDecayMode> & decayModes = hadron.type().decayModes();
     
     for (auto & decayMode : decayModes)

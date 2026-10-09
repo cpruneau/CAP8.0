@@ -27,7 +27,7 @@ namespace CAP
   GlauberEventFilter(const GlauberEventFilter & source);
   GlauberEventFilter & operator=(const GlauberEventFilter & source);
   virtual ~GlauberEventFilter() {}
-  virtual bool accept(const GlauberEvent & event);
+  virtual bool accept(const GlauberEvent & event) const;
   virtual void configure(const String & ownerName,
                          const String & typeName,
                          const Configuration & configuration,

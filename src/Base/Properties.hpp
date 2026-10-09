@@ -74,13 +74,14 @@ namespace CAP
   virtual void addProperty(const char * path, const char * name, const String & value);
   
   bool hasEndColon(const char * path) const;
+  int  findIndex(const char * aKeyword) const;
   
   void loadFrom(const char * _path,
                 const char * _fileName,
                 const char * _extension=".ini");
   void saveTo(const char * _path,
               const char * _fileName,
-              const char * _extension="ini");
+              const char * _extension=".ini");
   void saveTo(std::ostream & os) const;
   void print() const;
   void clear();

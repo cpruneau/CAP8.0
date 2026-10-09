@@ -44,12 +44,12 @@ public:
   Object();
   Object(const String & name, const String & title, const String & className);
   Object(const Object & object);
-  Object operator=(const Object & object);
+  Object & operator=(const Object & object);
   virtual ~Object();
   virtual void setName(const String & name) { _name = name; }
   virtual void setName(const char * name) { _name = name; }
   virtual const String & name() const {  return _name; }
-  virtual bool isNamed() const {  return _name.Length()>1; }
+  virtual bool isNamed() const {  return _name.Length()>0; }
   virtual bool isNamed(const char * name) const { return _name.EqualTo(name);}
   virtual bool isNamed(const String & name) const { return _name.EqualTo(name); }
   virtual bool sameNameAs(const Object & object) const { return _name.EqualTo(object._name); }
@@ -134,7 +134,7 @@ public:
   _loggerStyle = s;
   }
 
-  inline unsigned int  loggingStyle()
+  inline unsigned int  loggingStyle() const
   {
   return _loggerStyle;
   }

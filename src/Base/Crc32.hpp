@@ -5,6 +5,7 @@
  * *********************************************************************/
 #ifndef CAP__CRC32
 #define CAP__CRC32
+#include <string>
 
 namespace CAP
 {
@@ -23,6 +24,7 @@ class Crc32
 
   private:
     mutable unsigned int      mCrc32;
+    mutable std::string       mHex;   //!< storage backing the pointer returned by valueHex()
     static const unsigned int mCrc32Tab[];
 };
 

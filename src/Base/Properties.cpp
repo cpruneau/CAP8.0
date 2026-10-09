@@ -44,6 +44,7 @@ namespace CAP
   String  Properties::standardize(const char * path, const char* keyword) const
   {
   String aKeyword = path;
+  if (aKeyword.Length()==0) return String(keyword); // no path: avoid producing ":keyword"
   if (aKeyword.EndsWith(":")) aKeyword += keyword;
   else
     {
@@ -54,24 +55,41 @@ namespace CAP
   }
 
 
+  //!
+  //! Locate a property by name. An exact match always wins. Failing that, a property whose name
+  //! ends with ":<keyword>" (i.e., the keyword is a complete trailing path component) is accepted.
+  //! Returns -1 if there is no match.
+  //!
+  int Properties::findIndex(const char* keyword) const
+  {
+  String key = keyword;
+  while (key.BeginsWith(":")) key = String(key.Data()+1);
+  if (key.Length()==0) return -1;
+  for (unsigned int k=0; k<_properties.size(); k++)
+    {
+    if (_properties[k].isNamed(key)) return k;
+    }
+  String suffix = ":";
+  suffix += key;
+  for (unsigned int k=0; k<_properties.size(); k++)
+    {
+    if (_properties[k].name().EndsWith(suffix)) return k;
+    }
+  return -1;
+  }
+
   const Property & Properties::property(const char* keyword)  const
   {
-  for (auto & property : properties())
-    {
-    if (property.isNamed(keyword) ||
-        property.nameEndsWith(keyword)) return property;
-    }
-  throw PropertyException(keyword,"Property not found!!!!!","Properties::property(const char* keyword) ");
+  int index = findIndex(keyword);
+  if (index<0) throw PropertyException(keyword,"Property not found","Properties::property(const char* keyword) ");
+  return _properties[index];
   }
 
   Property & Properties::property(const char* keyword)
   {
-  for (auto & property : properties())
-    {
-    if (property.isNamed(keyword) ||
-        property.nameEndsWith(keyword)) return property;
-    }
-  throw PropertyException(keyword,"Property not found!!!!!",__FUNCTION__);
+  int index = findIndex(keyword);
+  if (index<0) throw PropertyException(keyword,"Property not found",__FUNCTION__);
+  return _properties[index];
   }
 
   bool  Properties::valueBool(const char* keyword, bool useDefault, bool defaultValue) const
@@ -86,7 +104,7 @@ namespace CAP
     if (useDefault)
       return defaultValue;
     else
-      throw e;
+      throw;   // rethrow the original exception (throw e; threw a copy)
     }
   }
 
@@ -103,7 +121,7 @@ namespace CAP
     if (useDefault)
       return defaultValue;
     else
-      throw e;
+      throw;   // rethrow the original exception (throw e; threw a copy)
     }
   }
 
@@ -119,7 +137,7 @@ namespace CAP
     if (useDefault)
       return defaultValue;
     else
-      throw e;
+      throw;   // rethrow the original exception (throw e; threw a copy)
     }
   }
 
@@ -135,7 +153,7 @@ namespace CAP
     if (useDefault)
       return defaultValue;
     else
-      throw e;
+      throw;   // rethrow the original exception (throw e; threw a copy)
     }
   }
 
@@ -151,7 +169,7 @@ namespace CAP
     if (useDefault)
       return defaultValue;
     else
-      throw e;
+      throw;   // rethrow the original exception (throw e; threw a copy)
     }
   }
 
@@ -242,15 +260,21 @@ namespace CAP
   void Properties::addSelectedProperties(const Properties & source,
                                          const String keyword)
   {
+  // Select properties that belong to the given (task) name: the name must be a complete path
+  // component, not merely a substring (so that "Ana" does not pick up "Analysis:..." keys).
+  String prefix = keyword;   prefix += ":";
+  String inner  = ":";       inner  += keyword;  inner += ":";
   for (auto & p : source.properties())
     {
-    if (p.name().Contains(keyword))  addProperty(p);
+    if (p.name().BeginsWith(prefix) || p.name().Contains(inner))  addProperty(p);
     }
   }
 
   void Properties::addProperties(const Properties & source)
   {
-  for (auto & p : source._properties) _properties.push_back(p);
+  // Go through addProperty() so that a property already present is overridden by the new value
+  // (a plain push_back left the old value first in line, so property() kept returning it).
+  for (auto & p : source._properties) addProperty(p);
   }
 
   void Properties::addProperty(const Property& newProperty)
@@ -269,7 +293,7 @@ namespace CAP
   void Properties::addProperty(const char * name, bool value)
   {
   Property p(name,value);
-  _properties.push_back(p);
+  addProperty(p);
   }
 
   //!
@@ -367,12 +391,7 @@ namespace CAP
 
   bool Properties::isFound(const char * keyword) const
   {
-  for (auto & p : properties())
-    {
-    if (p.isNamed(keyword) ||
-        p.nameEndsWith(keyword)) return true;
-    }
-  return false;
+  return findIndex(keyword)>=0;
   }
 
   void Properties::loadFrom(const char * _path,
