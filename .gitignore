@@ -63,3 +63,9 @@ Thumbs.db
 _orig_*/
 * 2.*
 * 2/
+
+# workflow GUI: per-user settings, generated task templates, default job output
+.RunCAP.json
+DB/Templates/
+/output/
+.RunCAP.crash.log
