@@ -3,10 +3,15 @@
 
 # Prerequisites
 - Valid `PYTHIA8` installation
+- Valid `FastJet` installation
 - Valid `root` installation built with `PYTHIA8` support
 - Environment variable for `PYTHIA8` location
  ```
  export PYTHIA8=<your_pythia8_directory>
+ ```
+- Environment variable for `FastJet` location
+ ```
+ export FASTJET=<your_fastjet_directory>
  ```
 - `root` environment activated with
  ```
@@ -31,9 +36,10 @@ From a shell:
 ```
 cd <your_cap_directory>
 source SetupCAP.sh
-cmake -S src -B build -DCAP_WITH_PYTHIA8=ON      # options: CAP_WITH_THERMINATOR3, CAP_WITH_LATEX, CAP_WITH_JETS,
-                                                 # CAP_WITH_EPOS, CAP_WITH_PHSD, CAP_WITH_PYTHIA8, CAP_WITH_HERWIG
-make -C build -j8 install
+mkdir build
+cd build
+cmake --install-prefix <your_cap_install_directory> ../src
+make install
 ```
 The core modules (Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
 Spherocity, SubSample, Performance, BasicEventGen, Glauber) are always built. Pythia8, Herwig and FastJet are found
