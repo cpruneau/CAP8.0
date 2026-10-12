@@ -44,7 +44,7 @@ namespace CAP
   int _trimRight;
   int _trimTop;
 
-  ClassDef(LatexFigure,0)
+  //ClassDef(LatexFigure,0)
   };
 
 } // namespace CAP

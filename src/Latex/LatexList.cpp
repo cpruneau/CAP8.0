@@ -1,6 +1,6 @@
 #include "LatexList.hpp"
 #include "LatexText.hpp"
-//ClassImp(CAP::LatexList);
+//////ClassImp(CAP::LatexList);
 
 namespace CAP
 {

@@ -1,5 +1,5 @@
 #include "LatexCommand.hpp"
-ClassImp(CAP::LatexCommand);
+////ClassImp(CAP::LatexCommand);
 
 namespace CAP
 {

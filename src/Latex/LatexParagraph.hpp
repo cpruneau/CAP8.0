@@ -16,7 +16,7 @@ namespace CAP
   void setTitle(const String &title) { setName(title); }
   const String & title() const { return name(); }
 
-  ClassDef(LatexParagraph,0)
+  //ClassDef(LatexParagraph,0)
   };
 
 } // namespace CAP

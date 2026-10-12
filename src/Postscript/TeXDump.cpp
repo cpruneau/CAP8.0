@@ -510,7 +510,7 @@ void TTeXDump::drawPS(int nn, double *xw, double *yw)
       TString spec = gStyle->GetLineStyleString(fLineStyle);
       TString tikzSpec;
       TString stripped = TString{spec.Strip(TString::kBoth)};
-      if (stripped.Length()) {
+      if (stripped.length()) {
          tikzSpec.Append(",dash pattern=");
          Ssiz_t i{0}, j{0};
          bool on{true}, iterate{true};
@@ -519,7 +519,7 @@ void TTeXDump::drawPS(int nn, double *xw, double *yw)
             j = stripped.Index(" ", 1, i, TString::kExact);
             if (j == kNPOS){
                iterate = false;
-               j = stripped.Length();
+               j = stripped.length();
             }
 
             if (on) {

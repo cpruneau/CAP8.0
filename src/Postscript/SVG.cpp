@@ -1024,7 +1024,7 @@ void TSVG::cellArrayPng(char *buffer, int size)
 {
    if (!fCompact) {
       TString base64 = TBase64::Encode(reinterpret_cast<char *>(buffer), size);
-      printFast(base64.Length(), base64.Data());
+      printFast(base64.length(), base64.Data());
    }
 }
 

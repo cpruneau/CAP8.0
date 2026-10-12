@@ -1,5 +1,5 @@
 #include "LatexPackage.hpp"
-ClassImp(CAP::LatexPackage);
+////ClassImp(CAP::LatexPackage);
 
 namespace CAP
 {
@@ -24,7 +24,7 @@ namespace CAP
 
   void LatexPackage::write(std::ofstream & out)
   {
-  if (option().Length()>0)
+  if (option().length()>0)
     out << "\\usepackage[" << option() << "]{" << name() << "}" <<  endl;
   else
     out << "\\usepackage{" << name() << "}"<< endl;

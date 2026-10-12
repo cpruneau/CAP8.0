@@ -18,7 +18,7 @@ namespace CAP
   _doN(false),
   _doDensity(false),
   _doArea(false),
-  _doLength(false),
+  _dolength(false),
   _pass(0),
   _nOrders(4),
   _sum(0.0),
@@ -55,7 +55,7 @@ namespace CAP
   _doN(source._doN),
   _doDensity(source._doDensity),
   _doArea(source._doArea),
-  _doLength(source._doLength),
+  _dolength(source._dolength),
   _pass(source._pass),
   _nOrders(source._nOrders),
   _sum(source._sum),
@@ -92,7 +92,7 @@ namespace CAP
     _doN       = rhs._doN;
     _doDensity = rhs._doDensity;
     _doArea    = rhs._doArea;
-    _doLength  = rhs._doLength;
+    _dolength  = rhs._dolength;
     _pass      = rhs._pass;
     _nOrders = rhs._nOrders;
     _sum     = rhs._sum;

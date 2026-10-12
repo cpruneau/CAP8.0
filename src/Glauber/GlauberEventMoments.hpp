@@ -43,7 +43,7 @@ public:
   bool _doN;
   bool _doDensity;
   bool _doArea;
-  bool _doLength;
+  bool _dolength;
 
   //! Current pass (0: means, 1: moments about the center).
   int    _pass;

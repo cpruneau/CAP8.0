@@ -1,5 +1,5 @@
 #include "LatexText.hpp"
-ClassImp(CAP::LatexText);
+////ClassImp(CAP::LatexText);
 
 namespace CAP
 {

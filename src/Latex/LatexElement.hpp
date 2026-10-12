@@ -1,11 +1,8 @@
 #ifndef CAP__LatexElement
 #define CAP__LatexElement
-#include "TObject.h"
-#include "TString.h"
+#include "String.hpp"
 #include <ostream>
 #include <fstream>
-
-using  String = TString;
 using  std::endl;
 
 namespace CAP
@@ -48,8 +45,6 @@ namespace CAP
   bool   _excluded;
   std::vector<LatexElement*> _children;
   LatexElement * _parent;
-
-  ClassDef(LatexElement,0)
   };
 
 } // namespace CAP

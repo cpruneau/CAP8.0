@@ -1,6 +1,6 @@
 #include "LatexFigure.hpp"
 
-ClassImp(CAP::LatexFigure);
+////ClassImp(CAP::LatexFigure);
 
 namespace CAP
 {

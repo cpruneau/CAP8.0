@@ -371,9 +371,9 @@ namespace CAP
   TH1 * diagRoot = toRootHistogram(*diag);   // ROOT copy, drawn as the frame of the diagram
   diagRoot->SetMinimum(0.0);
   diagRoot->SetMaximum(2.2);
-  diagRoot->GetXaxis()->SetTickLength(0); // Removes tick marks
-  diagRoot->GetXaxis()->SetLabelOffset(999); //
-  diagRoot->GetYaxis()->SetTitleOffset(1.3); //
+//  diagRoot->GetXaxis()->SetTicklength(0); // Removes tick marks
+//  diagRoot->GetXaxis()->SetLabelOffset(999); //
+//  diagRoot->GetYaxis()->SetTitleOffset(1.3); //
   diagRoot->Draw();
   double _position = 0.5;
   const std::vector<ThermalHadron> & hadrons = thermalGas.hadrons();

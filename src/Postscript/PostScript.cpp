@@ -2692,8 +2692,8 @@ void TPostScript::text(double xx, double yy, const char *chars)
    // Restore text attributes.
    saveAtText.TAtText::Modify();
 
-   double charsLength = gPad->AbsPixeltoX(w)-gPad->AbsPixeltoX(0);
-   int psCharsLength = (int)((XtoPS(charsLength)-XtoPS(0)) / scale);
+   double charslength = gPad->AbsPixeltoX(w)-gPad->AbsPixeltoX(0);
+   int psCharslength = (int)((XtoPS(charslength)-XtoPS(0)) / scale);
 
    // text angle.
    int psangle = int(0.5 + fTextAngle);
@@ -2722,8 +2722,8 @@ void TPostScript::text(double xx, double yy, const char *chars)
    double cmy = _yPageSize*(gPad->GetAbsYlowNDC()+vy*gPad->GetAbsHNDC());
    writeReal((288.*cmy)/2.54);
    printStr(TString::Format(" t %d r ", psangle));
-   if(txalh == 2) printStr(TString::Format(" %d 0 t ", -psCharsLength/2));
-   if(txalh == 3) printStr(TString::Format(" %d 0 t ", -psCharsLength));
+   if(txalh == 2) printStr(TString::Format(" %d 0 t ", -psCharslength/2));
+   if(txalh == 3) printStr(TString::Format(" %d 0 t ", -psCharslength));
    printStr(gEnv->GetValue(psfont[font-1][0], psfont[font-1][1]));
    if (font != 15) {
       printStr(TString::Format(" findfont %g sf 0 0 m ",fontsize));
@@ -2872,8 +2872,8 @@ void TPostScript::text(double xx, double yy, const wchar_t *chars)
    t.SeTextSize(fTextSize);
    t.SeTextFont(fTextFont);
    t.GeTextExtent(w, h, chars);
-   double charsLength = gPad->AbsPixeltoX(w)-gPad->AbsPixeltoX(0);
-   int psCharsLength = XtoPS(charsLength)-XtoPS(0);
+   double charslength = gPad->AbsPixeltoX(w)-gPad->AbsPixeltoX(0);
+   int psCharslength = XtoPS(charslength)-XtoPS(0);
 
    // text angle.
    int psangle = int(0.5 + fTextAngle);
@@ -2897,8 +2897,8 @@ void TPostScript::text(double xx, double yy, const wchar_t *chars)
    writeInteger(XtoPS(x));
    writeInteger(YtoPS(y));
    printStr(TString::Format(" t %d r ", psangle));
-   if(txalh == 2) printStr(TString::Format(" %d 0 t ", -psCharsLength/2));
-   if(txalh == 3) printStr(TString::Format(" %d 0 t ", -psCharsLength));
+   if(txalh == 2) printStr(TString::Format(" %d 0 t ", -psCharslength/2));
+   if(txalh == 3) printStr(TString::Format(" %d 0 t ", -psCharslength));
    fMustEmbed[font-1] = kTRUE; // This font will be embedded in the file at EOF time.
    printStr(gEnv->GetValue(psfont[font-1][0], psfont[font-1][1]));
    printStr(TString::Format(" findfont %g sf 0 0 m ",fontsize));

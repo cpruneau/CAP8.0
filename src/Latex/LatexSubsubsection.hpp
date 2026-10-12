@@ -1,11 +1,11 @@
 #ifndef CAP__LatexSubsubsection
 #define CAP__LatexSubsubsection
-#include "LatexElement.hpp"
+#include "LatexSection.hpp"
 
 namespace CAP
 {
 
-  class LatexSubsubsection : public LatexElement
+  class LatexSubsubsection : public LatexSection
   {
   public:
 
@@ -17,7 +17,7 @@ namespace CAP
   void setTitle(const String &title) { setName(title); }
   const String & title() const { return name(); }
 
-  ClassDef(LatexSubsubsection,0)
+  //ClassDef(LatexSubsubsection,0)
   };
 
 

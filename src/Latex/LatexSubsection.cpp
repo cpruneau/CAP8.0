@@ -1,24 +1,24 @@
 #include "LatexSubsection.hpp"
-ClassImp(CAP::LatexSubsection);
+//ClassImp(CAP::LatexSubsection);
 
 namespace CAP
 {
   LatexSubsection::LatexSubsection()
   :
-  LatexElement()
+  LatexSection()
   { }
 
   LatexSubsection::LatexSubsection(const LatexSubsection & src)
   :
-  LatexElement(src)
+  LatexSection(src)
   { }
 
   LatexSubsection  & LatexSubsection::operator=(const LatexSubsection & rhs)
   {
-//  if (rhs!=*this)
-//    {
-    LatexElement::operator=(rhs);
-//    }
+  if (this!=&rhs)
+    {
+    LatexSection::operator=(rhs);
+    }
   return *this;
   }
 
@@ -29,7 +29,7 @@ namespace CAP
     out << "\\subsection*{" << name() << "}" << endl;
   else
     out << "\\subsection{" << name() << "}" << endl;
-  if (label().Length()>0)
+  if (label().length()>0)
     out << "\\label{sec:" << label() << "}" << endl;
   skipLines(out,1);
   }

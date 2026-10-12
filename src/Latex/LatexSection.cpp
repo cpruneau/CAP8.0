@@ -1,5 +1,5 @@
 #include "LatexSection.hpp"
-ClassImp(CAP::LatexSection);
+////ClassImp(CAP::LatexSection);
 
 namespace CAP
 {
@@ -29,7 +29,7 @@ namespace CAP
     out << "\\section*{" << name() << "}" << endl;
   else
     out << "\\section{" << name() << "}" << endl;
-  if (label().Length()>0)
+  if (label().length()>0)
     out << "\\label{sec:" << label() << "}" << endl;
   skipLines(out,1);
   }

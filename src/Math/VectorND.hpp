@@ -145,7 +145,7 @@ public:
   //!
   void resize(unsigned int n, double value=0.0);
 
-  //! @brief Length (Euclidean norm) of the vector. @return sqrt(sum of x[i]^2)
+  //! @brief length (Euclidean norm) of the vector. @return sqrt(sum of x[i]^2)
   double modulus() const;
 
   //! @brief Squared length of the vector. @return sum of x[i]^2

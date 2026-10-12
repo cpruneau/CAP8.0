@@ -26,7 +26,7 @@ namespace CAP
   String _email;
   String _affiliation;
 
-  ClassDef(LatexAuthor,0)
+  //ClassDef(LatexAuthor,0)
   };
 
 } // namespace CAP

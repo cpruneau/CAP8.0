@@ -1,5 +1,5 @@
 #include "LatexParagraph.hpp"
-ClassImp(CAP::LatexParagraph);
+////ClassImp(CAP::LatexParagraph);
 
 namespace CAP
 {
@@ -30,7 +30,7 @@ namespace CAP
   else
     out << "\\paragraph{" << name() << "}" << endl;
 
-  if (label().Length()>0)
+  if (label().length()>0)
     out << "\\label{sec:" << label() << "}" << endl;
   skipLines(out,1);
   }

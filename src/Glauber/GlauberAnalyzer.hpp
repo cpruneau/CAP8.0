@@ -103,7 +103,7 @@ namespace CAP
 //                       const GlauberEventMoments & momentsSystem,
 //                       double & areaOverlap,
 //                       double & areaAll);
-//  double calculateLength();
+//  double calculatelength();
 
   ClassDef(GlauberAnalyzer,0)
   };

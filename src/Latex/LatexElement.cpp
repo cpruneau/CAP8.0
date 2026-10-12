@@ -1,7 +1,7 @@
 #include "LatexElement.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::LatexElement);
+//////ClassImp(CAP::LatexElement);
 
 namespace CAP
 {

@@ -1077,7 +1077,7 @@ namespace CAP
 
   }
 
-  double  GlauberHistos::calculateLength()
+  double  GlauberHistos::calculatelength()
   {
   //  const double krhs = std::sqrt(_xSectionEvent/40./pi());
   //  const double ksg  = krhs/std::sqrt(5.0);

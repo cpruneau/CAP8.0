@@ -95,7 +95,7 @@ namespace CAP
     void                setCalcAAGG(bool b)        {_gGribovAA = b;}
     void                setCalcArea(bool b)        {_calcArea = b;}
     void                setCalcCore(bool b)        {_coreOnly = b;}
-    void                setCalcLength(bool b)      {_calcength = b;}
+    void                setCalclength(bool b)      {_calcength = b;}
     void                setDetail(Int_t d)           {fDetail = d;}
     void                setHardFrac(double f)      {_hardFracXSect=f;}
     void                setLattice(Int_t i)          {_nucleusA.setLattice(i); _nucleusB.setLattice(i);}
@@ -530,7 +530,7 @@ bool GlauberMC::CalcResults(double impactPar)
       l+=kDL;
       val    = CalcDens(rad,x,y);
     }
-    eventStat.Length = 2*i1a/i0a;
+    eventStat.length = 2*i1a/i0a;
   }
 
   if (eventStat.nParticipants > _nPartMax)
@@ -785,7 +785,7 @@ void GlauberMC::run(Int_t nevents, double b)
     if (fDetail>1)
       vars+=":Psi1:Ecc1:Psi2:Ecc2:Psi3:Ecc3:Psi4:Ecc4:Psi5:Ecc5";
     if (fDetail>2)
-      vars+=":AreaO:AreaA:X0:Y0:Phi0:Length";
+      vars+=":AreaO:AreaA:X0:Y0:Phi0:length";
     if (fDetail>3)
       vars+=":meanX:meanY:meanX2:meanY2:meanXY:meanXSystem:meanYSystem:meanXA:meanYA:meanXB:meanYB";
     if (fDetail>4)

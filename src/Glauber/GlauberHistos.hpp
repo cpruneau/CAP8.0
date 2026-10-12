@@ -56,7 +56,7 @@ public:
                          unsigned int index);
 
   //! @brief Characteristic length of the overlap region. @return length
-  double calculateLength();
+  double calculatelength();
   //! @brief Density of the nucleons of a nucleus at a transverse point. @param nucleus nucleus @param x x @param y y
   //! @param rMaxSq squared radius of the neighborhood @return density
   double calculateDensityAt(const GlauberNucleus & nucleus, double x, double y, double rMaxSq);

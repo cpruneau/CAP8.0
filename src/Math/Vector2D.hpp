@@ -114,7 +114,7 @@ public:
   //! @param other other vector @return angle difference in [0, 2pi)
   double  deltaPhi(const Vector2D & other) const;
 
-  //! @brief Length of the vector. @return sqrt(x^2 + y^2)
+  //! @brief length of the vector. @return sqrt(x^2 + y^2)
   inline double modulus() const
   {
   return std::sqrt(_x1*_x1+_x2*_x2);

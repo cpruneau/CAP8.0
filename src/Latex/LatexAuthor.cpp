@@ -1,5 +1,5 @@
 #include "LatexAuthor.hpp"
-ClassImp(CAP::LatexAuthor);
+////ClassImp(CAP::LatexAuthor);
 
 namespace CAP
 {
@@ -32,9 +32,9 @@ namespace CAP
   {
   skipLines(out,1);
   out << "\\author{" << name() << "}" << endl;
-//  if (email().Length()>0)
+//  if (email().length()>0)
 //    out << "\\email{" << email() << "}" << endl;
-  if (affiliation().Length()>0)
+  if (affiliation().length()>0)
   out << "\\institute{" << affiliation() << "}" << endl;
   }
   
