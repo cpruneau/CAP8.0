@@ -198,7 +198,7 @@ namespace CAP
   //!
   void ParticleType::print()
     {
-    unsigned int size = gOutputLength;
+    unsigned int size = gOutputlength;
     std::ostream & os = *gOutputStream;
     unsigned int style = 0;
     switch (style)
@@ -276,7 +276,7 @@ namespace CAP
   void ParticleType::printDecays()
     {
     std::ostream & os = *gOutputStream;
-    unsigned int size = gOutputLength;
+    unsigned int size = gOutputlength;
     unsigned int style = 0;
     switch (style)
       {

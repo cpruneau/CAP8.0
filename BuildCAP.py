@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # **********************************************************************
-# Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+# Copyright (C) 2019-2024, Claude Pruneau
 # All rights reserved.
 #
 # For the licensing terms see LICENSE.
