@@ -6,13 +6,20 @@
 
 using namespace std;
 
+//!
+//! @brief Electric charge of a particle from its PDG code (from its quark content for hadrons).
+//!
 class ChargeAssignment
 {
 
 public:
+//! @brief Charge of a particle. @param pdgid PDG code @return charge (units of e)
 double charge(int pdgid);
+//! @brief Default constructor.
 ChargeAssignment(); //Constructor
+//! @brief Destructor.
 ~ChargeAssignment(); // Destructor
+//! @brief Round a charge to the nearest multiple of 1/3. @param input charge @return rounded charge
 double roundOff(double input);
 
 private:

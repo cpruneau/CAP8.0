@@ -1,9 +1,11 @@
 #include "GlauberGenerator.hpp"
+#include "RootConversion.hpp"
 #include "GlauberEvent.hpp"
 #include "GlauberEventMoments.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Exceptions.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "TCanvas.h"
-#include "TH1D.h"
 #include "TRandom.h"
 
 
@@ -124,16 +126,16 @@ namespace CAP
 
   _configuration.addProperty(createKey(taskName,"SEVERITY"),         "TRACE");
   _configuration.addProperty(createKey(taskName,"SUBTASK:N"),        0);
-  _configuration.addProperty(createKey(taskName,"EVENT:USE"),        1);
+  _configuration.addProperty(createKey(taskName,"EVENT:USE"),        true);
   _configuration.addProperty(createKey(taskName,"EVENT:REQUESTED:N"),1000);
   _configuration.addProperty(createKey(taskName,"EVENT:REPORT:N"),   100);
   _configuration.addProperty(createKey(taskName,"EVENT:N"),          1);
   _configuration.addProperty(createKey(taskName,"EVENT_0:NAME"),     "Glauber");
-  _configuration.addProperty(createKey(taskName,"EVENT_0:OWNER"),    1);
+  _configuration.addProperty(createKey(taskName,"EVENT_0:OWNER"),    true);
 
-  _configuration.addProperty(createKey(taskName,"DB","USE"),1);
-  _configuration.addProperty(createKey(taskName,"DB","IMPORT"),0);
-  _configuration.addProperty(createKey(taskName,"DB","EXPORT"),0);
+  _configuration.addProperty(createKey(taskName,"DB","USE"),true);
+  _configuration.addProperty(createKey(taskName,"DB","IMPORT"),false);
+  _configuration.addProperty(createKey(taskName,"DB","EXPORT"),false);
   _configuration.addProperty(createKey(taskName,"DB","IMPORT:PATH"),"NONE");
   _configuration.addProperty(createKey(taskName,"DB","IMPORT:FILE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,"DB","EXPORT:PATH"),"NONE");
@@ -141,7 +143,7 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,"DB","N"),1);
   _configuration.addProperty(createKey(taskName,"DB_0:NAME"),"DefaultDb");
   _configuration.addProperty(createKey(taskName,"DB_0:TITLE"),"DefaultDb");
-  _configuration.addProperty(createKey(taskName,"DB_0:OWNER"),1);
+  _configuration.addProperty(createKey(taskName,"DB_0:OWNER"),true);
 
   objectType = "GENERATION";
   _configuration.addProperty(createKey(taskName,objectType,"NUCLEUS_A:NAME"),          "Pb");
@@ -292,7 +294,7 @@ namespace CAP
       {
       // use fixed cross section with user selected profile
       // cross section to be used determined
-      _xSectOption = _configuration.valueInt(createKey(taskName,objectType,"INTERACTION:XSECT_OPTION"));
+      _xSectOption = _configuration.valueInt(createKey(taskName,objectType,"INTERACTION:xSECT_OPTION"));  // was XSECT_OPTION (key defined and used in glauber.ini as xSECT_OPTION)
       switch (_xSectOption)
         {
           case 1:// _xSection = function of std::sqrt(s)
@@ -326,8 +328,8 @@ namespace CAP
 
       int n = 400;
       double max = 6.0;
-      TH1 * h = new TH1D("nnXSectProfile","nnXSectProfile",n, -max, max);
-      TH1 * hs = new TH1D("nnXSectProfileS","nnXSectProfileS",n, -max, max);
+      Histogram * h = new Histogram("nnXSectProfile","nnXSectProfile",n, -max, max);
+      Histogram * hs = new Histogram("nnXSectProfileS","nnXSectProfileS",n, -max, max);
       double dx = 2.0*max/double(n);
       double x = -max;
       double sum = 0.0;
@@ -336,21 +338,21 @@ namespace CAP
         double v = _nnXSectProfile->evaluate(fabs(x));
         x += dx;
         sum += dx*v;
-        h->SetBinContent(k,v);
-        h->SetBinError(k,0.0);
-        hs->SetBinContent(k,sum);
-        hs->SetBinError(k,0.0);
+        h->setBinAt(unsigned(k),1,v,0.0);
+        hs->setBinAt(unsigned(k),1,sum,0.0);
         }
       cout << " integral: " << sum << endl;
 
       TCanvas * canvas = new TCanvas("NNProfile","NNProfile",5,5,800, 800);
       canvas->SetLogy(1);
-      h->Draw();
+      TH1 * hRoot = toRootHistogram(*h);
+      hRoot->Draw();
       canvas->Print("NNProfile.pdf");
 
       TCanvas * canvas2 = new TCanvas("NNProfileS","NNProfileS",25,5,800, 800);
       //canvas2->SetLogy(1);
-      hs->Draw();
+      TH1 * hsRoot = toRootHistogram(*hs);
+      hsRoot->Draw();
       canvas2->Print("NNProfileS.pdf");
 
       break;
@@ -358,7 +360,14 @@ namespace CAP
 
       case 2: // Use PTProfile and xSection fluctuations
       {
-      // fix me...
+      // Option 2 (e-by-e nucleon size fluctuations, same for all nucleons) is not written yet.
+      throw NoImplementationException("GlauberGenerator: INTERACTION:NNCOLLISION_OPTION=2",__FUNCTION__);
+      }
+
+      case 3: // independent nucleon size fluctuations
+      {
+      // Option 3 is not written yet: _ptotProfile is never created, so execute() would dereference a null pointer.
+      throw NoImplementationException("GlauberGenerator: INTERACTION:NNCOLLISION_OPTION=3",__FUNCTION__);
       }
     }
   }
@@ -399,6 +408,8 @@ namespace CAP
     // xsecA[i] = fPTot->GetRandom();
     // xsecB[i] = fPTot->GetRandom();
     // here use member of GlauberNucleon
+    // Not written yet: _ptotProfile is never created (see initialization).
+    if (!_ptotProfile) throw NoImplementationException("GlauberGenerator: INTERACTION:NNCOLLISION_OPTION=3",__FUNCTION__);
     for (auto & nucleonA : nucleusA.allNucleons()) nucleonA.setXSect(_ptotProfile->random());
     for (auto & nucleonB : nucleusB.allNucleons()) nucleonB.setXSect(_ptotProfile->random());
     }
@@ -433,11 +444,10 @@ namespace CAP
 
           case 2: // nucleon sizes fluctuate (the same for all nucleons)
           {
-          ev.setEventXSection(_xSection);
-
-          // printValue("Check",10);
+          // Not written yet -- see initialization. Previously fell through into case 3.
           //          double xSect = std::sqrt( 0.1*_ptotProfile->GetRandom()/pi());
           //          double bh = TMath::Sqrt(d2*fHardFrac);
+          throw NoImplementationException("GlauberGenerator: INTERACTION:NNCOLLISION_OPTION=2",__FUNCTION__);
           }
 
           case 3:

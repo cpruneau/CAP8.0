@@ -1,4 +1,5 @@
 #include "ThermalModel.hpp"
+#include <memory>
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
@@ -132,11 +133,11 @@ namespace CAP
   EnvironmentVariables * envVariables = EnvironmentVariables::environmentVariables();
   String basePath;
 
-  if (importPathA.EqualTo("DEFAULT"))
+  if (importPathA.equalTo("DEFAULT"))
     {
     importPath = envVariables->variable("CAP_HISTOS_IMPORT_PATH");
     }
-  else if (importPathA.BeginsWith("/") || exportPathA.BeginsWith("./"))
+  else if (importPathA.beginsWith("/") || exportPathA.beginsWith("./"))
     {
     importPath = importPathA;
     }
@@ -146,11 +147,11 @@ namespace CAP
     importPath += "/";
     importPath += importPathA;
     }
-  if (exportPathA.EqualTo("DEFAULT"))
+  if (exportPathA.equalTo("DEFAULT"))
     {
     exportPath = envVariables->variable("CAP_HISTOS_EXPORT_PATH");
     }
-  else if (exportPathA.BeginsWith("/") || exportPathA.BeginsWith("./"))
+  else if (exportPathA.beginsWith("/") || exportPathA.beginsWith("./"))
     {
     exportPath = exportPathA;
     }
@@ -186,13 +187,10 @@ namespace CAP
     {
     int temperature = 1000* _thermalHadronGas.temperature();
     exportFileName = exportBaseName + temperature;
-    TFile * outputFile;
-    if (forceRewrite)
-      outputFile = openRecreateRootFile(exportPath,exportFileName,1);
-    else
-      outputFile = openNewRootFile(exportPath,exportFileName,1);
+    std::unique_ptr<CapFile> outputFile(forceRewrite ? CapFile::openRecreateCapFile(exportPath,exportFileName,true)
+                                                     : CapFile::openNewCapFile(exportPath,exportFileName,true));
     _histograms.saveTo(*outputFile);
-    outputFile->Close();
+    outputFile->write();
     }
   //if (_thermalHadronGas) delete _thermalHadronGas;
   }

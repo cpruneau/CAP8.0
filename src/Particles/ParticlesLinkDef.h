@@ -15,7 +15,8 @@
 #pragma link C++ class CAP::Filter<CAP::Event>+;
 #pragma link C++ class CAP::Filter<CAP::Particle>+;
 #pragma link C++ class CAP::Factory<CAP::Particle>+;
-#pragma link C++ class CAP::HistogramGroup+;
+#pragma link C++ class CAP::HistogramFolder+;
+#pragma link C++ class CAP::RootHistogramGroup+;
 #pragma link C++ class CAP::ManagedObject+;
 // #pragma link C++ class CAP::ManagedObjects<CAP::BaseHistos>+;
   //#pragma link C++ class CAP::ManagedObjects<CAP::BaseDerivedHistos>+;
@@ -30,8 +31,6 @@
 #pragma link C++ class CAP::Particle+;
 #pragma link C++ class CAP::ParticleDb+;
 #pragma link C++ class CAP::ParticleDbParser+;
-///#pragma link C++ class CAP::ParticleDbParser_CS+;
-///#pragma link C++ class CAP::ParticleDbXmlWriter+;
 #pragma link C++ class CAP::ParticleDecayer+;
 #pragma link C++ class CAP::ParticleDecayerTask+;
 #pragma link C++ class CAP::ParticleDecayMode+;

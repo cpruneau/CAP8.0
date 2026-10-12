@@ -198,14 +198,14 @@ void Plotter::setProperties(TH1 * h,
   xAxis->SetTitleOffset(graphConfiguration.valueDouble("xTitleOffset"));
   xAxis->SetLabelSize(graphConfiguration.valueDouble("xLabelSize"));
   xAxis->SetLabelOffset(graphConfiguration.valueDouble("xLabelOffset"));
-  if (!xTitle.EqualTo("none")) xAxis->SetTitle(xTitle);
+  if (!xTitle.equalTo("none")) xAxis->SetTitle(xTitle);
   TAxis * yAxis = (TAxis *) h->GetYaxis();
   yAxis->SetNdivisions(graphConfiguration.valueInt("nYDivisions"));
   yAxis->SetTitleSize(graphConfiguration.valueDouble("yTitleSize"));
   yAxis->SetTitleOffset(graphConfiguration.valueDouble("yTitleOffset"));
   yAxis->SetLabelSize(graphConfiguration.valueDouble("yLabelSize"));
   yAxis->SetLabelOffset(graphConfiguration.valueDouble("yLabelOffset"));
-  if (yTitle.EqualTo("none"))   yAxis->SetTitle(yTitle);
+  if (yTitle.equalTo("none"))   yAxis->SetTitle(yTitle);
 
   if (h->IsA() == TH2::Class()  || h->IsA() == TH2F::Class() || h->IsA() == TH2F::Class() )
     {
@@ -216,7 +216,7 @@ void Plotter::setProperties(TH1 * h,
     zAxis->SetTitleOffset(graphConfiguration.valueDouble("zTitleOffset"));
     zAxis->SetLabelSize(graphConfiguration.valueDouble("zLabelSize"));
     zAxis->SetLabelOffset(graphConfiguration.valueDouble("zLabelOffset"));
-    if (zTitle.EqualTo("none"))  zAxis->SetTitle(zTitle);
+    if (zTitle.equalTo("none"))  zAxis->SetTitle(zTitle);
     }
 }
 
@@ -264,14 +264,14 @@ void Plotter::setProperties(TGraph * g,
   xAxis->SetTitleOffset(graphConfiguration.valueDouble("xTitleOffset"));
   xAxis->SetLabelSize(graphConfiguration.valueDouble("xLabelSize"));
   xAxis->SetLabelOffset(graphConfiguration.valueDouble("xLabelOffset"));
-  if (!xTitle.EqualTo("none")) xAxis->SetTitle(xTitle);
+  if (!xTitle.equalTo("none")) xAxis->SetTitle(xTitle);
   TAxis * yAxis = (TAxis *) g->GetYaxis();
   yAxis->SetNdivisions(graphConfiguration.valueInt("nYDivisions"));
   yAxis->SetTitleSize(graphConfiguration.valueDouble("yTitleSize"));
   yAxis->SetTitleOffset(graphConfiguration.valueDouble("yTitleOffset"));
   yAxis->SetLabelSize(graphConfiguration.valueDouble("yLabelSize"));
   yAxis->SetLabelOffset(graphConfiguration.valueDouble("yLabelOffset"));
-  if (yTitle.EqualTo("none"))   yAxis->SetTitle(yTitle);
+  if (yTitle.equalTo("none"))   yAxis->SetTitle(yTitle);
 }
 
 void Plotter::setProperties(const vector<TGraph*> & graphs,

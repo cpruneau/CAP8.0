@@ -200,7 +200,7 @@ void loadBase(const TString & includeBasePath)
 //  gSystem->Load(includePath+"Task.hpp");
 //  gSystem->Load(includePath+"Collection.hpp");
 //  gSystem->Load(includePath+"HistogramCollection.hpp");
-//  gSystem->Load(includePath+"HistogramGroup.hpp");
+//  gSystem->Load(includePath+"RootHistogramGroup.hpp");
  // gSystem->Load("libBase.so");
 ///
 

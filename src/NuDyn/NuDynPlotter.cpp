@@ -11,7 +11,9 @@
  * *********************************************************************/
 #include "NuDynPlotter.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "RootConversion.hpp"
+#include "Profile.hpp"
 #include "NameHelpers.hpp"
 
 using CAP::NuDynPlotter;
@@ -33,7 +35,7 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
                              CanvasConfiguration & canvasConfiguration,
                              GraphConfiguration  ** graphConfigurations)
 {
-  TH1 ** histograms = new TH1* [100];
+  TH1 ** histograms = new TH1* [100];   // ROOT copies of the histograms, made for drawing
   String ** histTitles = new String * [100];
 
   String histName;
@@ -45,7 +47,7 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
   int nPart = 4;
   int nGraphs = 0;
 
-  histograms[0] = nuDynHistos->h_eventStreams_evt;     histTitles[0] = new String("N_{eventStreams}");
+  histograms[0] = rootCopy(nuDynHistos->h_eventStreams_evt);     histTitles[0] = new String("N_{eventStreams}");
   plot(1, canvasNameBase+"eventStreams_evt",canvasConfiguration,graphConfigurations,
        "n", 0.0, 0.0,
        "Counts", 0.0, -1.2,
@@ -59,7 +61,7 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
   histTitle += i1;
   histTitle += "}";
   cout << "Inserting: " << histTitle << endl;
-  histograms[i1] = nuDynHistos->h_f1_evt[i1]; histTitles[i1] = new String(histTitle);
+  histograms[i1] = rootCopy(nuDynHistos->h_f1_evt[i1]); histTitles[i1] = new String(histTitle);
   nGraphs++;
   }
   plot(nGraphs, canvasNameBase+"f1_evt",canvasConfiguration,graphConfigurations,
@@ -79,11 +81,11 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
       histTitle += i2;
       histTitle += "}";
       cout << "Inserting: " << histTitle << endl;
-      histograms[index12] = nuDynHistos->h_f2_evt[index12]; histTitles[index12] = new String(histTitle);
+      histograms[index12] = rootCopy(nuDynHistos->h_f2_evt[index12]); histTitles[index12] = new String(histTitle);
       nGraphs++;
       }
     }
-//  histograms[0] = nuDynHistos->h_f2_evt[2]; histTitles[0] = new String("f_{2}^{00}");
+//  histograms[0] = rootCopy(nuDynHistos->h_f2_evt[2]); histTitles[0] = new String("f_{2}^{00}");
 //    plot(1, canvasNameBase+"f2_evt",canvasConfiguration,graphConfigurations,
        plot(nGraphs, canvasNameBase+"f2_evt",canvasConfiguration,graphConfigurations,
        "Mult", 20.0, 400.0,
@@ -102,10 +104,10 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
       histTitle += i2;
       histTitle += "}";
       cout << "Inserting: " << histTitle << endl;
-      histograms[index12] = nuDynDerivedHistos->h_F2_evt[index12]; histTitles[index12] = new String(histTitle);
+      histograms[index12] = rootCopy(nuDynDerivedHistos->h_F2_evt[index12]); histTitles[index12] = new String(histTitle);
       if (!histograms[index12])
         {
-        cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+        cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
         return;
         }
       nGraphs++;
@@ -129,10 +131,10 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
        histTitle += i2;
        histTitle += "}";
        cout << "Inserting: " << histTitle << endl;
-       histograms[index12] = nuDynDerivedHistos->h_R2_evt[index12]; histTitles[index12] = new String(histTitle);
+       histograms[index12] = rootCopy(nuDynDerivedHistos->h_R2_evt[index12]); histTitles[index12] = new String(histTitle);
        if (!histograms[index12])
          {
-         cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+         cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
          return;
          }
        nGraphs++;
@@ -161,17 +163,17 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
 //        histTitle += i3;
 //        histTitle += "}";
 //        cout << "Inserting: " << histTitle << endl;
-//        histograms[index123] = nuDynHistos->h_f3_evt[index123]; histTitles[index123] = new String(histTitle);
+//        histograms[index123] = rootCopy(nuDynHistos->h_f3_evt[index123]); histTitles[index123] = new String(histTitle);
 //        if (!histograms[index123])
 //          {
-//          cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+//          cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
 //          return;
 //          }
 //        nGraphs++;
 //        }
 //      }
 //    }
-  histograms[0] = nuDynHistos->h_f3_evt[1]; histTitles[0] = new String("f_{3}^{000}");
+  histograms[0] = rootCopy(nuDynHistos->h_f3_evt[1]); histTitles[0] = new String("f_{3}^{000}");
 
   plot(1, canvasNameBase+"f3_evt",canvasConfiguration,graphConfigurations,
        "Mult", 20.0, 400.0,
@@ -193,10 +195,10 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
          histTitle += i3;
          histTitle += "}";
          //cout << "Inserting: " << histTitle << endl;
-         histograms[index123] = nuDynDerivedHistos->h_F3_evt[index123]; histTitles[index123] = new String(histTitle);
+         histograms[index123] = rootCopy(nuDynDerivedHistos->h_F3_evt[index123]); histTitles[index123] = new String(histTitle);
          if (!histograms[index123])
            {
-           cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+           cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
            return;
            }
          nGraphs++;
@@ -224,10 +226,10 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
           histTitle += i3;
           histTitle += "}";
           cout << "Inserting: " << histTitle << endl;
-          histograms[index123] = nuDynDerivedHistos->h_R3_evt[index123]; histTitles[index123] = new String(histTitle);
+          histograms[index123] = rootCopy(nuDynDerivedHistos->h_R3_evt[index123]); histTitles[index123] = new String(histTitle);
           if (!histograms[index123])
             {
-            cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+            cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
             return;
             }
           nGraphs++;
@@ -259,10 +261,10 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
           histTitle += i4;
           histTitle += "}";
           cout << "Inserting: " << histTitle << endl;
-          histograms[index1234] = nuDynHistos->h_f4_evt[index1234]; histTitles[index1234] = new String(histTitle);
+          histograms[index1234] = rootCopy(nuDynHistos->h_f4_evt[index1234]); histTitles[index1234] = new String(histTitle);
           if (!histograms[index1234])
           {
-          cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+          cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
           return;
           }
           nGraphs++;
@@ -295,10 +297,10 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
           histTitle += i4;
           histTitle += "}";
           cout << "Inserting: " << histTitle << endl;
-          histograms[index1234] = nuDynDerivedHistos->h_F4_evt[index1234]; histTitles[index1234] = new String(histTitle);
+          histograms[index1234] = rootCopy(nuDynDerivedHistos->h_F4_evt[index1234]); histTitles[index1234] = new String(histTitle);
           if (!histograms[index1234])
           {
-          cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+          cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
           return;
           }
           nGraphs++;
@@ -331,10 +333,10 @@ void NuDynPlotter::makePlots(const String & canvasNameBase,
           histTitle += i4;
           histTitle += "}";
           cout << "Inserting: " << histTitle << endl;
-          histograms[index1234] = nuDynDerivedHistos->h_R4_evt[index1234]; histTitles[index1234] = new String(histTitle);
+          histograms[index1234] = rootCopy(nuDynDerivedHistos->h_R4_evt[index1234]); histTitles[index1234] = new String(histTitle);
           if (!histograms[index1234])
           {
-          cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+          cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
           return;
           }
           nGraphs++;
@@ -360,7 +362,7 @@ void NuDynPlotter::makeComparisonPlots(const String & canvasNameBase,
                                        String ** histLabels,
                                        GraphConfiguration  ** graphConfigurations)
 {
-  TH1 ** histograms = new TH1* [100];
+  TH1 ** histograms = new TH1* [100];   // ROOT copies of the histograms, made for drawing
   String ** histTitles = new String * [100];
 
   String histName;
@@ -376,10 +378,10 @@ int index1234 = nuDynHistos[0]->index4(0,1,2,3);
     histTitle = histTitleBase;
     histTitle += *histLabels[i1];
     //cout << "Inserting: " << histTitle  << endl;
-    histograms[i1] = nuDynHistos[i1]->h_f4_evt[index1234];
+    histograms[i1] = rootCopy(nuDynHistos[i1]->h_f4_evt[index1234]);
     if (!histograms[i1])
         {
-        cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+        cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
         return;
         }
     histTitles[i1] = new String(histTitle);
@@ -397,10 +399,10 @@ int index1234 = nuDynHistos[0]->index4(0,1,2,3);
      histTitle = histTitleBase;
      histTitle += *histLabels[i1];
      cout << "Inserting: " << histTitle  << endl;
-     histograms[i1] = nuDynDerivedHistos[i1]->h_F4_evt[index1234]; histTitles[i1] = new String(histTitle);
+     histograms[i1] = rootCopy(nuDynDerivedHistos[i1]->h_F4_evt[index1234]); histTitles[i1] = new String(histTitle);
      if (!histograms[i1])
        {
-       cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+       cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
        return;
        }
      }
@@ -415,10 +417,10 @@ int index1234 = nuDynHistos[0]->index4(0,1,2,3);
     histTitle = histTitleBase;
     histTitle += *histLabels[i1];
     cout << "Inserting: " << histTitle  << endl;
-    histograms[i1] = nuDynDerivedHistos[i1]->h_R4_evt[index1234]; histTitles[i1] = new String(histTitle);
+    histograms[i1] = rootCopy(nuDynDerivedHistos[i1]->h_R4_evt[index1234]); histTitles[i1] = new String(histTitle);
     if (!histograms[i1])
       {
-      cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+      cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
       return;
       }
     }
@@ -440,7 +442,7 @@ void NuDynPlotter::makeNudynComparisonPlots(const String & canvasNameBase,
                                             String ** histLabels,
                                             GraphConfiguration  ** graphConfigurations)
 {
-  TH1 ** histograms = new TH1* [100];
+  TH1 ** histograms = new TH1* [100];   // ROOT copies of the histograms, made for drawing
   String ** histTitles = new String * [100];
 
   String histName;
@@ -456,10 +458,10 @@ int index12= nuDynHistos[0]->index2(0,1);
     histTitle = histTitleBase;
     histTitle += *histLabels[i1];
     //cout << "Inserting: " << histTitle  << endl; // HMHMHMHM_nudyn_23_evt
-    histograms[i1] = nuDynDerivedHistos[i1]->h_nudyn_evt[index12];
+    histograms[i1] = rootCopy(nuDynDerivedHistos[i1]->h_nudyn_evt[index12]);
     if (!histograms[i1])
         {
-        cout << "<F> HistogramGroup not loaded!!!! ABORT!!!" << endl;
+        cout << "<F> HistogramFolder not loaded!!!! ABORT!!!" << endl;
         return;
         }
     histTitles[i1] = new String(histTitle);

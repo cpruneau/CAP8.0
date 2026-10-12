@@ -16,21 +16,33 @@
 namespace CAP
 {
 
+//!
+//! @brief Task shifting all the particles of each event by a random vertex position drawn from Gaussian distributions
+//! (mean and rms per axis, in configuration units converted with rConversion and tConversion).
+//!
 class EventVertexRandomizerTask
 :
 public EventProcessor
 {
 public:
   
+  //! @brief Default constructor.
+  //! @brief Default constructor.
   EventVertexRandomizerTask();
+  //! @brief Destructor.
   virtual ~EventVertexRandomizerTask() {}
+  //! @brief Add the default configuration of the task.
   virtual void setDefaultConfiguration();
+  //! @brief Initialize the task.
   virtual void initialize();
+  //! @brief Execute the task (process the current event).
   virtual void execute();
   
 protected:
   
+  //! Conversion factor of the configured positions (default 1e9).
   double rConversion;
+  //! Conversion factor of the configured time (default 1e9).
   double tConversion;
   double xAvg; //!< mean vertex position along the x-axis
   double yAvg; //!< mean vertex position along the y-axis

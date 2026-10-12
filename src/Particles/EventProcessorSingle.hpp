@@ -15,17 +15,30 @@
 
 namespace CAP
 {
+  //!
+  //! @brief Base class of the single-particle analyzers: an EventProcessor that manages one group of base histograms
+  //! (HISTOGRAM_1, filled event by event) and one group of derived histograms (HISTOGRAM_2, computed at the end) per
+  //! (event filter, particle filter) combination.
+  //!
+  //! The groups are managed objects of types HISTOGRAM_1 and HISTOGRAM_2 (configuration keys \<name\>:HISTOGRAM_1_\<k\>:...,
+  //! \<name\>:HISTOGRAM_2_\<k\>:...). The group of event filter e and particle filter p has index e*nParticleFilters()+p.
+  //!
+  //! @tparam HISTOGRAM_1 base histograms (a BaseHistos) @tparam HISTOGRAM_2 derived histograms (a BaseDerivedHistos)
+  //!
   template <class HISTOGRAM_1,class HISTOGRAM_2>
   class EventProcessorSingle
   :
   public EventProcessor
   {
   protected:
+  //! Base histogram groups.
   ManagedObjects<HISTOGRAM_1>        _managedHistograms_1s;
+  //! Derived histogram groups.
   ManagedObjects<HISTOGRAM_2>        _managedHistograms_2s;
 
   public:
 
+  //! @brief Default constructor.
   EventProcessorSingle()
   :
   EventProcessor(),
@@ -38,6 +51,7 @@ namespace CAP
   setTitle("EventProcessorSingle");
   }
 
+  //! @brief Copy constructor. @param source task to copy
   EventProcessorSingle(const EventProcessorSingle & source)
   :
   EventProcessor(source),
@@ -45,6 +59,7 @@ namespace CAP
   _managedHistograms_2s(source._managedHistograms_2s)
   {   }
 
+  //! @brief Copy assignment. @param rhs task to copy @return this task
   EventProcessorSingle & operator=(const EventProcessorSingle & rhs)
   {
   if (this!=&rhs)
@@ -56,8 +71,10 @@ namespace CAP
   return *this;
   }
 
+  //! @brief Destructor.
   virtual ~EventProcessorSingle() {}
 
+  //! @brief Add the default configuration of the task and of the histogram groups (HISTOGRAM_1, HISTOGRAM_2).
   virtual void setDefaultConfiguration()
   {
   EventProcessor::setDefaultConfiguration();
@@ -66,6 +83,7 @@ namespace CAP
   _managedHistograms_2s.setDefaultObjectConfiguration(taskName,"HISTOGRAM_2",configuration());
   }
 
+  //! @brief Configure the task and the histogram groups. @param configuration configuration
   virtual void configure(const Configuration & configuration)
   {
   if (reportDebug(__FUNCTION__)) { printCR();  }
@@ -75,6 +93,7 @@ namespace CAP
   }
 
 
+  //! @brief Initialize the task and the histogram groups.
   virtual void initialize()
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
@@ -83,6 +102,7 @@ namespace CAP
   _managedHistograms_2s.initialize();
   }
 
+  //! @brief Finalize the task and the histogram groups.
   virtual void finalize()
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
@@ -91,6 +111,7 @@ namespace CAP
   _managedHistograms_2s.finalize();
   }
 
+  //! @brief Reset the task and the histogram groups.
   virtual void reset()
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
@@ -99,6 +120,7 @@ namespace CAP
   _managedHistograms_2s.reset();
   }
 
+  //! @brief Clear the task and the histogram groups.
   virtual void clear()
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
@@ -107,6 +129,7 @@ namespace CAP
   _managedHistograms_2s.clear();
   }
 
+  //! @brief Print the task and the histogram groups.
   virtual void print() const
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
@@ -115,14 +138,22 @@ namespace CAP
   _managedHistograms_2s.print();
   }
 
+  //! @brief Number of base histogram groups. @return number
   unsigned int nHistograms_1() const  { return _managedHistograms_1s.size();  }
+  //! @brief Number of derived histogram groups. @return number
   unsigned int nHistograms_2() const  { return _managedHistograms_2s.size();  }
 
+  //! @brief Base histogram groups. @return groups
   const std::vector<HISTOGRAM_1*> & histograms_1() const         { return _managedHistograms_1s.getObjects(); }
+  //! @brief Derived histogram groups. @return groups
   const std::vector<HISTOGRAM_2*> & histograms_2() const         { return _managedHistograms_2s.getObjects(); }
+  //! @brief Base histogram groups. @return groups
   std::vector<HISTOGRAM_1*> & histograms_1()                     { return _managedHistograms_1s.getObjects(); }
+  //! @brief Derived histogram groups. @return groups
   std::vector<HISTOGRAM_2*> & histograms_2()                     { return _managedHistograms_2s.getObjects(); }
 
+  //! @brief Scale the base histograms of each event filter by its factor. @param factors factor of each event filter
+  //! @throws Exception if there are fewer factors than event filters or fewer groups than combinations
   void scaleHistograms(const std::vector<double> & factors)
   {
   if (reportDebug(__FUNCTION__))
@@ -132,17 +163,16 @@ namespace CAP
     printValue("nEventFilters()",    _managedEventFilters.size());
     printValue("nParticleFilters()", _managedParticleFilters.size());
     }
-  std::vector<HISTOGRAM_1*> histos_1 = histograms_1();
-  //std::vector<HISTOGRAM_2*> histos_2 = histograms_2();
-  unsigned int baseSingleIndex = 0;
-  for (unsigned int iEventFilter=0; iEventFilter<_managedEventFilters.size(); iEventFilter++)
+  std::vector<HISTOGRAM_1*> & histos_1 = histograms_1();
+  unsigned int nEF = nEventFilters();
+  unsigned int nPF = nParticleFilters();
+  if (factors.size()<nEF)        throw Exception("factors.size()<nEventFilters()",__FUNCTION__);
+  if (histos_1.size()<nEF*nPF)   throw Exception("histograms_1().size()<nEventFilters()*nParticleFilters()",__FUNCTION__);
+  for (unsigned int iEventFilter=0; iEventFilter<nEF; iEventFilter++)
     {
-    baseSingleIndex = iEventFilter*nParticleFilters();
-    for (unsigned int iParticleFilter=0; iParticleFilter<_managedParticleFilters.size(); iParticleFilter++)
-      {
-      histos_1[baseSingleIndex + iParticleFilter]->scaleHistograms(factors[iEventFilter]);
-      histos_1[baseSingleIndex + iParticleFilter]->scaleHistograms(factors[iEventFilter]);
-      }
+    unsigned int baseSingleIndex = iEventFilter*nPF;
+    for (unsigned int iParticleFilter=0; iParticleFilter<nPF; iParticleFilter++)
+      histos_1[baseSingleIndex + iParticleFilter]->scaleHistograms(factors[iEventFilter]);   // once (was done twice)
     }
   if (reportDebug(__FUNCTION__))
     {
@@ -151,6 +181,7 @@ namespace CAP
     }
   }
 
+  //! @brief Compute the derived histograms of each (event filter, particle filter) combination from its base histograms.
   virtual void calculateDerived()
   {
   if (EventProcessor::reportDebug(__FUNCTION__))  { printCR(); };

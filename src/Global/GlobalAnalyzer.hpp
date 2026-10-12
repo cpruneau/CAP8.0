@@ -19,6 +19,12 @@ namespace CAP
 {
 
 //!
+//! @brief Analyzer of global event quantities: multiplicity, energy, net charge, net strangeness, net baryon number
+//! and pT sum of the accepted particles, per (event filter, particle filter) combination.
+//!
+//! The values are also stored in the event record (Event::setMult(), ...) for use by other tasks and their event
+//! filters; the record is indexed by the event filter index, and the last accepted particle filter determines it.
+//!
 //! This class implements a basic analyzer of the multiplicity, energy, net charge, net strangeness, and net baryon number of the particles composing an event.
 //! A global analyzer task can be used to determine the multiplcity (or other characteristics) of an event and set the event record with these values. The values
 //! then become available to other tasks, and the event filters they operate,  to decide whether the analysis of an event should be carried out. The task can be
@@ -35,11 +41,17 @@ public EventProcessorSingle<GlobalHistos,GlobalDerivedHistos>
 {
 public:
 
+  //! @brief Default constructor.
   GlobalAnalyzer();
+  //! @brief Copy constructor. @param analyzer analyzer to copy
   GlobalAnalyzer(const GlobalAnalyzer & analyzer);
+  //! @brief Copy assignment. @param analyzer analyzer to copy @return this analyzer
   GlobalAnalyzer & operator=(const GlobalAnalyzer & analyzer);
+  //! @brief Destructor.
   virtual ~GlobalAnalyzer() {}
+  //! @brief Add the default configuration: that of EventProcessorSingle and the histogram binning.
   virtual void setDefaultConfiguration();
+  //! @brief Compute the global quantities of the current event, store them in the event record and fill the histograms.
   virtual void execute();
 
   ClassDef(GlobalAnalyzer,0)

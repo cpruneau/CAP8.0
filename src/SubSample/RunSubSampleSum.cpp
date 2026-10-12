@@ -11,6 +11,7 @@
  * *********************************************************************/
 #include "RunSubSampleSum.hpp"
 #include "PrintHelpers.hpp"
+#include "CapFile.hpp"
 #include "RootFileHelpers.hpp"
 #include "SubSampleStatCalculator.hpp"
 #include "Exceptions.hpp"
@@ -46,13 +47,17 @@ void RunSubSampleSum::run(String & histogramImportPathName,
   Configuration configuration;
   try
   {
-    if (verbose) configuration.addProperty("SubSample:Severity","DEBUG");
-    else configuration.addProperty("SubSample:Severity","INFO");
-    configuration.addProperty("SubSample:HistogramsImportPath",       histogramImportPathName);
-    configuration.addProperty("SubSample:HistogramsImportFile",       histogramImportFileName);
-    configuration.addProperty("SubSample:HistogramsExportPath",       histogramExportPathName);
-    configuration.addProperty("SubSample:HistogramsExportFile",       histogramExportFileName);
+    // The task is named SubSample and reads SubSample:HISTOGRAM:IMPORT:PATH, ... (the keys set here were
+    // SubSample:HistogramsImportPath, ..., which the task does not read, and its default name SubSampleStatCalculator
+    // did not select the SubSample: keys).
     Task * task = new CAP::SubSampleStatCalculator();
+    task->setName("SubSample");
+    task->setDefaultConfiguration();
+    configuration.addProperty("SubSample:TASK:SEVERITY",              String(verbose ? "DEBUG" : "INFO"));
+    configuration.addProperty("SubSample:HISTOGRAM:IMPORT:PATH",      histogramImportPathName);
+    configuration.addProperty("SubSample:HISTOGRAM:IMPORT:FILE_NAME", histogramImportFileName);
+    configuration.addProperty("SubSample:HISTOGRAM:EXPORT:PATH",      histogramExportPathName);
+    configuration.addProperty("SubSample:HISTOGRAM:EXPORT:FILE_NAME", histogramExportFileName);
     task->configure(configuration);
     task->execute();
     delete task;

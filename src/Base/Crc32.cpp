@@ -119,7 +119,7 @@ Crc32::~Crc32()
 void Crc32::update(const char* aData, unsigned int aSize)
 {
   for(unsigned int i = 0; i < aSize; i++)
-    mCrc32 = (mCrc32 >> 8) ^ mCrc32Tab[(aData[i]) ^ (mCrc32 & 0x000000FF)];
+    mCrc32 = (mCrc32 >> 8) ^ mCrc32Tab[(static_cast<unsigned char>(aData[i]) ^ mCrc32) & 0x000000FF];
 }
 
 unsigned int Crc32::finish() const
@@ -140,5 +140,8 @@ const char* Crc32::valueHex() const
   oss.fill('0');
   oss.width(8);
   oss << mCrc32;
-  return (oss.str().data());
+  // Keep the string alive in a member: returning oss.str().data() handed back
+  // a pointer into a temporary that was destroyed at the end of the statement.
+  mHex = oss.str();
+  return mHex.c_str();
 }

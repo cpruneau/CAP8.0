@@ -12,18 +12,12 @@
 #ifndef CAP__Aliases
 #define CAP__Aliases
 #include <vector>
-#include "TString.h"
-#include "TH1.h"
-#include "TH2.h"
-#include "TH3.h"
+#include "String.hpp"
+#include "Rtypes.h"   // ClassDef/ClassImp macros of the ROOT dictionaries (CAP::String itself does not use ROOT)
 
 namespace CAP
 {
 using Size_t        = unsigned int;
-using String        = TString;
-using Histogram1D   = TH1;
-using Histogram2D   = TH2;
-using Histogram3D   = TH3;
 }
 
 #endif /* CAP__Aliases */

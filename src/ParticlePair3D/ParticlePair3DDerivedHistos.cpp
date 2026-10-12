@@ -10,7 +10,8 @@
  *
  * *********************************************************************/
 #include "ParticlePair3DDerivedHistos.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 #include "TRandom.h"
@@ -214,110 +215,110 @@ void ParticlePair3DDerivedHistos::create()
   
 }
 
-void ParticlePair3DDerivedHistos::loadFrom(TFile & inputFile)
+void ParticlePair3DDerivedHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_n2_DeltaPs = loadH1(inputFile,createName(_histogramBaseName,"n2_DeltaPs"));
-  h_n2_DeltaPo = loadH1(inputFile,createName(_histogramBaseName,"n2_DeltaPo"));
-  h_n2_DeltaPl = loadH1(inputFile,createName(_histogramBaseName,"n2_DeltaPl"));
+  h_n2_DeltaPs = importHistogram(inputFile,createName(_histogramBaseName,"n2_DeltaPs"));
+  h_n2_DeltaPo = importHistogram(inputFile,createName(_histogramBaseName,"n2_DeltaPo"));
+  h_n2_DeltaPl = importHistogram(inputFile,createName(_histogramBaseName,"n2_DeltaPl"));
   
-  h_n1n1_Qinv   = loadH1(inputFile,createName(_histogramBaseName,"n1n1_Qinv"));
-  h_n1n1_DeltaP = loadH3(inputFile,createName(_histogramBaseName,"n1n1_DeltaP"));
-  h_n1n1_DeltaPs= loadH1(inputFile,createName(_histogramBaseName,"n1n1_DeltaPs"));
-  h_n1n1_DeltaPo= loadH1(inputFile,createName(_histogramBaseName,"n1n1_DeltaPo"));
-  h_n1n1_DeltaPl= loadH1(inputFile,createName(_histogramBaseName,"n1n1_DeltaPl"));
+  h_n1n1_Qinv   = importHistogram(inputFile,createName(_histogramBaseName,"n1n1_Qinv"));
+  h_n1n1_DeltaP = importHistogram(inputFile,createName(_histogramBaseName,"n1n1_DeltaP"));
+  h_n1n1_DeltaPs= importHistogram(inputFile,createName(_histogramBaseName,"n1n1_DeltaPs"));
+  h_n1n1_DeltaPo= importHistogram(inputFile,createName(_histogramBaseName,"n1n1_DeltaPo"));
+  h_n1n1_DeltaPl= importHistogram(inputFile,createName(_histogramBaseName,"n1n1_DeltaPl"));
   
-  h_c2_Qinv   = loadH1(inputFile,createName(_histogramBaseName,"c2_Qinv"));
-  h_c2_DeltaP = loadH3(inputFile,createName(_histogramBaseName,"c2_DeltaP"));
-  h_c2_DeltaPs= loadH1(inputFile,createName(_histogramBaseName,"c2_DeltaPs"));
-  h_c2_DeltaPo= loadH1(inputFile,createName(_histogramBaseName,"c2_DeltaPo"));
-  h_c2_DeltaPl= loadH1(inputFile,createName(_histogramBaseName,"c2_DeltaPl"));
+  h_c2_Qinv   = importHistogram(inputFile,createName(_histogramBaseName,"c2_Qinv"));
+  h_c2_DeltaP = importHistogram(inputFile,createName(_histogramBaseName,"c2_DeltaP"));
+  h_c2_DeltaPs= importHistogram(inputFile,createName(_histogramBaseName,"c2_DeltaPs"));
+  h_c2_DeltaPo= importHistogram(inputFile,createName(_histogramBaseName,"c2_DeltaPo"));
+  h_c2_DeltaPl= importHistogram(inputFile,createName(_histogramBaseName,"c2_DeltaPl"));
   
-  h_r2_Qinv   = loadH1(inputFile,createName(_histogramBaseName,"r2_Qinv"));
-  h_r2_DeltaP = loadH3(inputFile,createName(_histogramBaseName,"r2_DeltaP"));
-  h_r2_DeltaPs= loadH1(inputFile,createName(_histogramBaseName,"r2_DeltaPs"));
-  h_r2_DeltaPo= loadH1(inputFile,createName(_histogramBaseName,"r2_DeltaPo"));
-  h_r2_DeltaPl= loadH1(inputFile,createName(_histogramBaseName,"r2_DeltaPl"));
+  h_r2_Qinv   = importHistogram(inputFile,createName(_histogramBaseName,"r2_Qinv"));
+  h_r2_DeltaP = importHistogram(inputFile,createName(_histogramBaseName,"r2_DeltaP"));
+  h_r2_DeltaPs= importHistogram(inputFile,createName(_histogramBaseName,"r2_DeltaPs"));
+  h_r2_DeltaPo= importHistogram(inputFile,createName(_histogramBaseName,"r2_DeltaPo"));
+  h_r2_DeltaPl= importHistogram(inputFile,createName(_histogramBaseName,"r2_DeltaPl"));
   
-  h_a12_Qinv      = loadH1(inputFile,createName(_histogramBaseName,"A12_Qinv"));
-  h_a12_DeltaPs   = loadH1(inputFile,createName(_histogramBaseName,"A12_DeltaPs"));
-  h_a12_DeltaPo   = loadH1(inputFile,createName(_histogramBaseName,"A12_DeltaPo"));
-  h_a12_DeltaPl   = loadH1(inputFile,createName(_histogramBaseName,"A12_DeltaPl"));
-  h_a21_Qinv      = loadH1(inputFile,createName(_histogramBaseName,"A21_Qinv"));
-  h_a21_DeltaPs   = loadH1(inputFile,createName(_histogramBaseName,"A21_DeltaPs"));
-  h_a21_DeltaPo   = loadH1(inputFile,createName(_histogramBaseName,"A21_DeltaPo"));
-  h_a21_DeltaPl   = loadH1(inputFile,createName(_histogramBaseName,"A21_DeltaPl"));
+  h_a12_Qinv      = importHistogram(inputFile,createName(_histogramBaseName,"A12_Qinv"));
+  h_a12_DeltaPs   = importHistogram(inputFile,createName(_histogramBaseName,"A12_DeltaPs"));
+  h_a12_DeltaPo   = importHistogram(inputFile,createName(_histogramBaseName,"A12_DeltaPo"));
+  h_a12_DeltaPl   = importHistogram(inputFile,createName(_histogramBaseName,"A12_DeltaPl"));
+  h_a21_Qinv      = importHistogram(inputFile,createName(_histogramBaseName,"A21_Qinv"));
+  h_a21_DeltaPs   = importHistogram(inputFile,createName(_histogramBaseName,"A21_DeltaPs"));
+  h_a21_DeltaPo   = importHistogram(inputFile,createName(_histogramBaseName,"A21_DeltaPo"));
+  h_a21_DeltaPl   = importHistogram(inputFile,createName(_histogramBaseName,"A21_DeltaPl"));
 
-  h_n1_1_pt_mc  = loadH1(inputFile,createName(_histogramBaseName,"n1_1_pt_mc"));
-  h_n1_2_pt_mc  = loadH1(inputFile,createName(_histogramBaseName,"n1_2_pt_mc"));
-  h_n1_1_y_mc   = loadH1(inputFile,createName(_histogramBaseName,"n1_1_y_mc"));
-  h_n1_2_y_mc   = loadH1(inputFile,createName(_histogramBaseName,"n1_2_y_mc"));
+  h_n1_1_pt_mc  = importHistogram(inputFile,createName(_histogramBaseName,"n1_1_pt_mc"));
+  h_n1_2_pt_mc  = importHistogram(inputFile,createName(_histogramBaseName,"n1_2_pt_mc"));
+  h_n1_1_y_mc   = importHistogram(inputFile,createName(_histogramBaseName,"n1_1_y_mc"));
+  h_n1_2_y_mc   = importHistogram(inputFile,createName(_histogramBaseName,"n1_2_y_mc"));
 
 
-  h_n1_1_ptY_mc  = loadH2(inputFile,createName(_histogramBaseName,"n1_1_ptY_mc"));
-  h_n1_2_ptY_mc  = loadH2(inputFile,createName(_histogramBaseName,"n1_2_ptY_mc"));
-  h_n1r_1_ptY_mc = loadH2(inputFile,createName(_histogramBaseName,"n1r_1_ptY_mc"));
-  h_n1r_2_ptY_mc = loadH2(inputFile,createName(_histogramBaseName,"n1r_2_ptY_mc"));
+  h_n1_1_ptY_mc  = importHistogram(inputFile,createName(_histogramBaseName,"n1_1_ptY_mc"));
+  h_n1_2_ptY_mc  = importHistogram(inputFile,createName(_histogramBaseName,"n1_2_ptY_mc"));
+  h_n1r_1_ptY_mc = importHistogram(inputFile,createName(_histogramBaseName,"n1r_1_ptY_mc"));
+  h_n1r_2_ptY_mc = importHistogram(inputFile,createName(_histogramBaseName,"n1r_2_ptY_mc"));
   
 }
 
 void ParticlePair3DDerivedHistos::cloneD(const ParticlePair3DDerivedHistos & source)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_n1n1_Qinv    = safeCloneH1(source.h_n1n1_Qinv);
-  h_n1n1_DeltaP  = safeCloneH3(source.h_n1n1_DeltaP);
-  h_n1n1_DeltaPs = safeCloneH1(source.h_n1n1_DeltaPs);
-  h_n1n1_DeltaPo = safeCloneH1(source.h_n1n1_DeltaPo);
-  h_n1n1_DeltaPl = safeCloneH1(source.h_n1n1_DeltaPl);
+  h_n1n1_Qinv    = histogramLike(source.h_n1n1_Qinv);
+  h_n1n1_DeltaP  = histogramLike(source.h_n1n1_DeltaP);
+  h_n1n1_DeltaPs = histogramLike(source.h_n1n1_DeltaPs);
+  h_n1n1_DeltaPo = histogramLike(source.h_n1n1_DeltaPo);
+  h_n1n1_DeltaPl = histogramLike(source.h_n1n1_DeltaPl);
 
-  h_n2_DeltaPs   = safeCloneH1(source.h_n2_DeltaPs);
-  h_n2_DeltaPo   = safeCloneH1(source.h_n2_DeltaPo);
-  h_n2_DeltaPl   = safeCloneH1(source.h_n2_DeltaPl);
+  h_n2_DeltaPs   = histogramLike(source.h_n2_DeltaPs);
+  h_n2_DeltaPo   = histogramLike(source.h_n2_DeltaPo);
+  h_n2_DeltaPl   = histogramLike(source.h_n2_DeltaPl);
 
-  h_c2_Qinv      = safeCloneH1(source.h_c2_Qinv);
-  h_c2_DeltaP    = safeCloneH3(source.h_c2_DeltaP);
-  h_c2_DeltaPs   = safeCloneH1(source.h_c2_DeltaPs);
-  h_c2_DeltaPo   = safeCloneH1(source.h_c2_DeltaPo);
-  h_c2_DeltaPl   = safeCloneH1(source.h_c2_DeltaPl);
+  h_c2_Qinv      = histogramLike(source.h_c2_Qinv);
+  h_c2_DeltaP    = histogramLike(source.h_c2_DeltaP);
+  h_c2_DeltaPs   = histogramLike(source.h_c2_DeltaPs);
+  h_c2_DeltaPo   = histogramLike(source.h_c2_DeltaPo);
+  h_c2_DeltaPl   = histogramLike(source.h_c2_DeltaPl);
 
-  h_r2_Qinv      = safeCloneH1(source.h_r2_Qinv);
-  h_r2_DeltaP    = safeCloneH3(source.h_r2_DeltaP);
-  h_r2_DeltaPs   = safeCloneH1(source.h_r2_DeltaPs);
-  h_r2_DeltaPo   = safeCloneH1(source.h_r2_DeltaPo);
-  h_r2_DeltaPl   = safeCloneH1(source.h_r2_DeltaPl);
+  h_r2_Qinv      = histogramLike(source.h_r2_Qinv);
+  h_r2_DeltaP    = histogramLike(source.h_r2_DeltaP);
+  h_r2_DeltaPs   = histogramLike(source.h_r2_DeltaPs);
+  h_r2_DeltaPo   = histogramLike(source.h_r2_DeltaPo);
+  h_r2_DeltaPl   = histogramLike(source.h_r2_DeltaPl);
 
-  h_a12_Qinv     = safeCloneH1(source.h_a12_Qinv);
-  h_a12_DeltaPs  = safeCloneH1(source.h_a12_DeltaPs);
-  h_a12_DeltaPo  = safeCloneH1(source.h_a12_DeltaPo);
-  h_a12_DeltaPl  = safeCloneH1(source.h_a12_DeltaPl);
+  h_a12_Qinv     = histogramLike(source.h_a12_Qinv);
+  h_a12_DeltaPs  = histogramLike(source.h_a12_DeltaPs);
+  h_a12_DeltaPo  = histogramLike(source.h_a12_DeltaPo);
+  h_a12_DeltaPl  = histogramLike(source.h_a12_DeltaPl);
 
-  h_a21_Qinv     = safeCloneH1(source.h_a21_Qinv);
-  h_a21_DeltaPs  = safeCloneH1(source.h_a21_DeltaPs);
-  h_a21_DeltaPo  = safeCloneH1(source.h_a21_DeltaPo);
-  h_a21_DeltaPl  = safeCloneH1(source.h_a21_DeltaPl);
+  h_a21_Qinv     = histogramLike(source.h_a21_Qinv);
+  h_a21_DeltaPs  = histogramLike(source.h_a21_DeltaPs);
+  h_a21_DeltaPo  = histogramLike(source.h_a21_DeltaPo);
+  h_a21_DeltaPl  = histogramLike(source.h_a21_DeltaPl);
 
-  h_n1_1_pt      = safeCloneH1(source.h_n1_1_pt);
-  h_n1_2_pt      = safeCloneH1(source.h_n1_2_pt);
-  h_n1_1_y       = safeCloneH1(source.h_n1_1_y);
-  h_n1_2_y       = safeCloneH1(source.h_n1_2_y);
+  h_n1_1_pt      = histogramLike(source.h_n1_1_pt);
+  h_n1_2_pt      = histogramLike(source.h_n1_2_pt);
+  h_n1_1_y       = histogramLike(source.h_n1_1_y);
+  h_n1_2_y       = histogramLike(source.h_n1_2_y);
 
-  h_n1_1_pt_mc   = safeCloneH1(source.h_n1_1_pt_mc);
-  h_n1_2_pt_mc   = safeCloneH1(source.h_n1_2_pt_mc);
-  h_n1_1_y_mc    = safeCloneH1(source.h_n1_1_y_mc);
-  h_n1_2_y_mc    = safeCloneH1(source.h_n1_2_y_mc);
+  h_n1_1_pt_mc   = histogramLike(source.h_n1_1_pt_mc);
+  h_n1_2_pt_mc   = histogramLike(source.h_n1_2_pt_mc);
+  h_n1_1_y_mc    = histogramLike(source.h_n1_1_y_mc);
+  h_n1_2_y_mc    = histogramLike(source.h_n1_2_y_mc);
 
-  h_n1r_1_pt_mc  = safeCloneH1(source.h_n1r_1_pt_mc);
-  h_n1r_2_pt_mc  = safeCloneH1(source.h_n1r_2_pt_mc);
-  h_n1r_1_y_mc   = safeCloneH1(source.h_n1r_1_y_mc);
-  h_n1r_2_y_mc   = safeCloneH1(source.h_n1r_2_y_mc);
+  h_n1r_1_pt_mc  = histogramLike(source.h_n1r_1_pt_mc);
+  h_n1r_2_pt_mc  = histogramLike(source.h_n1r_2_pt_mc);
+  h_n1r_1_y_mc   = histogramLike(source.h_n1r_1_y_mc);
+  h_n1r_2_y_mc   = histogramLike(source.h_n1r_2_y_mc);
 
-  h_n1_1_ptY_mc  = safeCloneH2(source.h_n1_1_ptY_mc);
-  h_n1_2_ptY_mc  = safeCloneH2(source.h_n1_2_ptY_mc);
-  h_n1r_1_ptY_mc = safeCloneH2(source.h_n1r_1_ptY_mc);
-  h_n1r_2_ptY_mc = safeCloneH2(source.h_n1r_2_ptY_mc);
+  h_n1_1_ptY_mc  = histogramLike(source.h_n1_1_ptY_mc);
+  h_n1_2_ptY_mc  = histogramLike(source.h_n1_2_ptY_mc);
+  h_n1r_1_ptY_mc = histogramLike(source.h_n1r_1_ptY_mc);
+  h_n1r_2_ptY_mc = histogramLike(source.h_n1r_2_ptY_mc);
 }
 
-// HistogramGroup from ParticlePair3DDerivedHistos must be normalized "per event" before calling this function
+// HistogramFolder from ParticlePair3DDerivedHistos must be normalized "per event" before calling this function
 void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
                                                              ParticleSingleDerivedHistos & part2Histos,
                                                              ParticlePair3DHistos        & pairHistos,
@@ -337,20 +338,20 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
   const double g[4]={1.0,-1.0,-1.0,-1.0};
   double qinv, qside, qlong, qout;
 
-  TH1 * part1_n1 = part1Histos.h_n1;
-  TH1 * part2_n1 = part2Histos.h_n1;
+  Histogram * part1_n1 = part1Histos.h_n1;
+  Histogram * part2_n1 = part2Histos.h_n1;
 
-  TH2 * part1_ptY = part1Histos.h_n1_ptY;
-  TH2 * part2_ptY = part2Histos.h_n1_ptY;
+  Histogram * part1_ptY = part1Histos.h_n1_ptY;
+  Histogram * part2_ptY = part2Histos.h_n1_ptY;
 
-  double v1 = part1_n1->GetBinContent(2);
-  part1_n1->SetBinContent(1,v1);
-  double v2 = part2_n1->GetBinContent(2);
-  part2_n1->SetBinContent(1,v2);
-  double nParticle1_mean = part1_n1->GetMean();
-  double nParticle2_mean = part2_n1->GetMean();
-  double nParticle1 = part1_ptY->Integral();
-  double nParticle2 = part2_ptY->Integral();
+  double v1 = part1_n1->binValueAt(1);
+  part1_n1->setBinValueAt(unsigned(0),v1);
+  double v2 = part2_n1->binValueAt(1);
+  part2_n1->setBinValueAt(unsigned(0),v2);
+  double nParticle1_mean = part1_n1->mean();
+  double nParticle2_mean = part2_n1->mean();
+  double nParticle1 = part1_ptY->integral();
+  double nParticle2 = part2_ptY->integral();
   printValue("nParticle1 (integral)",nParticle1);
   printValue("nParticle1_mean",nParticle1_mean);
 
@@ -368,21 +369,21 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
   printValue("scale",scale);
 
 // projections
-  TH1* hTemp;
-  hTemp = part1_ptY->ProjectionX();
-  h_n1_1_y->Add(hTemp);
+  Histogram* hTemp;
+  hTemp = new Histogram(part1_ptY->project2DOnto1D(0));
+  h_n1_1_y->add(*hTemp);
   delete hTemp;
 
-  hTemp = part2_ptY->ProjectionX();
-  h_n1_2_y->Add(hTemp);
+  hTemp = new Histogram(part2_ptY->project2DOnto1D(0));
+  h_n1_2_y->add(*hTemp);
   delete hTemp;
 
-  hTemp = part1_ptY->ProjectionY();
-  h_n1_1_pt->Add(hTemp);
+  hTemp = new Histogram(part1_ptY->project2DOnto1D(1));
+  h_n1_1_pt->add(*hTemp);
   delete hTemp;
 
-  hTemp = part2_ptY->ProjectionY();
-  h_n1_2_pt->Add(hTemp);
+  hTemp = new Histogram(part2_ptY->project2DOnto1D(1));
+  h_n1_2_pt->add(*hTemp);
   delete hTemp;
 
 
@@ -407,10 +408,10 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
     for (int iParticle1=0; iParticle1<nPart1; iParticle1++)
       {
       phi1 = CAP::MATH::twoPi() * gRandom->Rndm();
-      part1_ptY->GetRandom2(y1,pt1);
-      h_n1_1_pt_mc->Fill(pt1);
-      h_n1_1_y_mc->Fill(y1);
-      h_n1_1_ptY_mc->Fill(y1,pt1);
+      part1_ptY->random(y1,pt1);
+      h_n1_1_pt_mc->fill(pt1);
+      h_n1_1_y_mc->fill(y1);
+      h_n1_1_ptY_mc->fill(y1,pt1,1.0);
       evPhi1.push_back(phi1);
       evPt1.push_back(pt1);
       evY1.push_back(y1);
@@ -420,10 +421,10 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
       for (int iParticle2=0; iParticle2<nPart2; iParticle2++)
         {
         phi2 = CAP::MATH::twoPi() * gRandom->Rndm();
-        part2_ptY->GetRandom2(y2,pt2);
-        h_n1_2_pt_mc->Fill(pt2);
-        h_n1_2_y_mc->Fill(y2);
-        h_n1_2_ptY_mc->Fill(y2,pt2);
+        part2_ptY->random(y2,pt2);
+        h_n1_2_pt_mc->fill(pt2);
+        h_n1_2_y_mc->fill(y2);
+        h_n1_2_ptY_mc->fill(y2,pt2,1.0);
         evPhi2.push_back(phi2);
         evPt2.push_back(pt2);
         evY2.push_back(y2);
@@ -475,21 +476,21 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
         qlong=(ptot[0]*q[3]-ptot[3]*q[0])/Mlong;
         qout=(roots/Mlong)*(ptot[1]*q[1]+ptot[2]*q[2])/pt;
         qinv=std::sqrt(qinv);
-        h_n1n1_Qinv->Fill(qinv,weight);
-        h_n1n1_DeltaP->Fill(qside,qout,qlong,weight);
+        h_n1n1_Qinv->fill(qinv,weight);
+        h_n1n1_DeltaP->fill(qside,qout,qlong,weight);
         }
       }
     }
 
-  h_n1_1_pt_mc->Scale(scale);
-  h_n1_1_y_mc->Scale(scale);
-  h_n1_2_pt_mc->Scale(scale);
-  h_n1_2_y_mc->Scale(scale);
-  h_n1_1_ptY_mc->Scale(scale);
-  h_n1_2_ptY_mc->Scale(scale);
+  h_n1_1_pt_mc->scale(scale);
+  h_n1_1_y_mc->scale(scale);
+  h_n1_2_pt_mc->scale(scale);
+  h_n1_2_y_mc->scale(scale);
+  h_n1_1_ptY_mc->scale(scale);
+  h_n1_2_ptY_mc->scale(scale);
 
-  double nParticle1_mc = h_n1_1_pt_mc->Integral();
-  double nParticle2_mc = h_n1_2_pt_mc->Integral();
+  double nParticle1_mc = h_n1_1_pt_mc->integral();
+  double nParticle2_mc = h_n1_2_pt_mc->integral();
   double tweak1;
   double tweak2;
 
@@ -498,9 +499,9 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
     {
     nParticle2_mc = nParticle1_mc;
     tweak2 = tweak1;
-    h_n1_2_y_mc->Add(h_n1_1_y_mc);
-    h_n1_2_pt_mc->Add(h_n1_1_pt_mc);
-    h_n1_2_ptY_mc->Add(h_n1_1_ptY_mc);
+    h_n1_2_y_mc->add(*h_n1_1_y_mc);
+    h_n1_2_pt_mc->add(*h_n1_1_pt_mc);
+    h_n1_2_ptY_mc->add(*h_n1_1_ptY_mc);
     }
   else
     tweak2= nParticle2/nParticle2_mc;
@@ -514,30 +515,30 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
   printValue("tweak1",tweak1);
   printValue("tweak2",tweak2);
 
-  h_n1_1_pt_mc->Scale(tweak1);
-  h_n1_1_y_mc->Scale(tweak1);
-  h_n1_1_ptY_mc->Scale(tweak1);
+  h_n1_1_pt_mc->scale(tweak1);
+  h_n1_1_y_mc->scale(tweak1);
+  h_n1_1_ptY_mc->scale(tweak1);
 
-  h_n1_2_pt_mc->Scale(tweak2);
-  h_n1_2_y_mc->Scale(tweak2);
-  h_n1_2_ptY_mc->Scale(tweak2);
+  h_n1_2_pt_mc->scale(tweak2);
+  h_n1_2_y_mc->scale(tweak2);
+  h_n1_2_ptY_mc->scale(tweak2);
 
-  h_n1r_1_pt_mc->Divide(h_n1_1_pt_mc, h_n1_1_pt);
-  h_n1r_1_y_mc->Divide(h_n1_1_y_mc,   h_n1_1_y);
-  h_n1r_1_ptY_mc->Divide(h_n1_1_ptY_mc, part1_ptY);
+  h_n1r_1_pt_mc->setAsRatioOf(*h_n1_1_pt_mc,*h_n1_1_pt);
+  h_n1r_1_y_mc->setAsRatioOf(*h_n1_1_y_mc,*h_n1_1_y);
+  h_n1r_1_ptY_mc->setAsRatioOf(*h_n1_1_ptY_mc,*part1_ptY);
 
-  h_n1r_2_pt_mc->Divide(h_n1_2_pt_mc, h_n1_2_pt);
-  h_n1r_2_y_mc->Divide(h_n1_2_y_mc,   h_n1_2_y);
-  h_n1r_2_ptY_mc->Divide(h_n1_2_ptY_mc, part2_ptY);
+  h_n1r_2_pt_mc->setAsRatioOf(*h_n1_2_pt_mc,*h_n1_2_pt);
+  h_n1r_2_y_mc->setAsRatioOf(*h_n1_2_y_mc,*h_n1_2_y);
+  h_n1r_2_ptY_mc->setAsRatioOf(*h_n1_2_ptY_mc,*part2_ptY);
 
-  h_n1n1_Qinv->Scale(scale);
-  h_n1n1_DeltaP->Scale(scale);
+  h_n1n1_Qinv->scale(scale);
+  h_n1n1_DeltaP->scale(scale);
 
-  double n2_yield   = pairHistos.h_n2_Qinv->GetBinContent(5);
-  double n1n1_yield = h_n1n1_Qinv->GetBinContent(5);
+  double n2_yield   = pairHistos.h_n2_Qinv->binValueAt(4);
+  double n1n1_yield = h_n1n1_Qinv->binValueAt(4);
 
-  double n2_yield_err   = pairHistos.h_n2_Qinv->GetBinError(5);
-  double n1n1_yield_err = h_n1n1_Qinv->GetBinError(5);
+  double n2_yield_err   = pairHistos.h_n2_Qinv->binUncertaintyAt(4);
+  double n1n1_yield_err = h_n1n1_Qinv->binUncertaintyAt(4);
   double tweak = n2_yield/n1n1_yield;
   printValue("n2_yield",n2_yield);
   printValue("n1n1_yield",n1n1_yield);
@@ -545,42 +546,42 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
   printValue("n2_yield_err",n2_yield_err);
   printValue("n1n1_yield_err",n1n1_yield_err);
 
-  h_n1n1_DeltaP->ProjectionX(createName(_histogramBaseName,"n2_DeltaPs"),1,DeltaPo_nbins,1,DeltaPl_nbins,"e");
-  h_n1n1_DeltaP->ProjectionY(createName(_histogramBaseName,"n2_DeltaPo"),1,DeltaPs_nbins,1,DeltaPl_nbins,"e");
-  h_n1n1_DeltaP->ProjectionZ(createName(_histogramBaseName,"n2_DeltaPl"),1,DeltaPs_nbins,1,DeltaPo_nbins,"e");
+  projectInto(h_n1n1_DeltaP,0,createName(_histogramBaseName,"n2_DeltaPs"));
+  projectInto(h_n1n1_DeltaP,1,createName(_histogramBaseName,"n2_DeltaPo"));
+  projectInto(h_n1n1_DeltaP,2,createName(_histogramBaseName,"n2_DeltaPl"));
 
-  pairHistos.h_n2_DeltaP->ProjectionX(createName(_histogramBaseName,"n2_DeltaPs"),1,DeltaPo_nbins,1,DeltaPl_nbins,"e");
-  pairHistos.h_n2_DeltaP->ProjectionY(createName(_histogramBaseName,"n2_DeltaPo"),1,DeltaPs_nbins,1,DeltaPl_nbins,"e");
-  pairHistos.h_n2_DeltaP->ProjectionZ(createName(_histogramBaseName,"n2_DeltaPl"),1,DeltaPs_nbins,1,DeltaPo_nbins,"e");
+  projectInto(pairHistos.h_n2_DeltaP,0,createName(_histogramBaseName,"n2_DeltaPs"));
+  projectInto(pairHistos.h_n2_DeltaP,1,createName(_histogramBaseName,"n2_DeltaPo"));
+  projectInto(pairHistos.h_n2_DeltaP,2,createName(_histogramBaseName,"n2_DeltaPl"));
 
   calculateC2_H1H1H1(pairHistos.h_n2_Qinv,h_n1n1_Qinv,h_c2_Qinv);
   calculateC2_H3H3H3(pairHistos.h_n2_DeltaP,h_n1n1_DeltaP,h_c2_DeltaP);
-  h_c2_DeltaP->ProjectionX(createName(_histogramBaseName,"c2_DeltaPs"),1,DeltaPo_nbins,1,DeltaPl_nbins,"e");
-  h_c2_DeltaP->ProjectionY(createName(_histogramBaseName,"c2_DeltaPo"),1,DeltaPs_nbins,1,DeltaPl_nbins,"e");
-  h_c2_DeltaP->ProjectionZ(createName(_histogramBaseName,"c2_DeltaPl"),1,DeltaPs_nbins,1,DeltaPo_nbins,"e");
+  projectInto(h_c2_DeltaP,0,createName(_histogramBaseName,"c2_DeltaPs"));
+  projectInto(h_c2_DeltaP,1,createName(_histogramBaseName,"c2_DeltaPo"));
+  projectInto(h_c2_DeltaP,2,createName(_histogramBaseName,"c2_DeltaPl"));
 
   calculateR2_H1H1H1(pairHistos.h_n2_Qinv,h_n1n1_Qinv,h_r2_Qinv);
 
-  double r2_yield = h_r2_Qinv->GetBinContent(5);
-  double r2_yield_err = h_r2_Qinv->GetBinError(5);
+  double r2_yield = h_r2_Qinv->binValueAt(4);
+  double r2_yield_err = h_r2_Qinv->binUncertaintyAt(4);
   printValue("r2_yield",r2_yield);
   printValue("r2_yield_err",r2_yield_err);
 
   calculateR2_H3H3H3(pairHistos.h_n2_DeltaP,h_n1n1_DeltaP,h_r2_DeltaP);
-  h_r2_DeltaP->ProjectionX(createName(_histogramBaseName,"r2_DeltaPs"),1,DeltaPo_nbins,1,DeltaPl_nbins,"e");
-  h_r2_DeltaP->ProjectionY(createName(_histogramBaseName,"r2_DeltaPo"),1,DeltaPs_nbins,1,DeltaPl_nbins,"e");
-  h_r2_DeltaP->ProjectionZ(createName(_histogramBaseName,"r2_DeltaPl"),1,DeltaPs_nbins,1,DeltaPo_nbins,"e");
+  projectInto(h_r2_DeltaP,0,createName(_histogramBaseName,"r2_DeltaPs"));
+  projectInto(h_r2_DeltaP,1,createName(_histogramBaseName,"r2_DeltaPo"));
+  projectInto(h_r2_DeltaP,2,createName(_histogramBaseName,"r2_DeltaPl"));
 
   double invN1 = 1.0/nParticle1;
   double invN2 = 1.0/nParticle2;
-  h_a12_Qinv    ->Add(h_c2_Qinv,invN2);
-  h_a12_DeltaPs ->Add(h_c2_DeltaPs,invN2);
-  h_a12_DeltaPo ->Add(h_c2_DeltaPo,invN2);
-  h_a12_DeltaPl ->Add(h_c2_DeltaPl,invN2);
-  h_a21_Qinv    ->Add(h_c2_Qinv,invN1);
-  h_a21_DeltaPs ->Add(h_c2_DeltaPs,invN1);
-  h_a21_DeltaPo ->Add(h_c2_DeltaPo,invN1);
-  h_a21_DeltaPl ->Add(h_c2_DeltaPl,invN1);
+  h_a12_Qinv    ->add(*h_c2_Qinv,invN2);
+  h_a12_DeltaPs ->add(*h_c2_DeltaPs,invN2);
+  h_a12_DeltaPo ->add(*h_c2_DeltaPo,invN2);
+  h_a12_DeltaPl ->add(*h_c2_DeltaPl,invN2);
+  h_a21_Qinv    ->add(*h_c2_Qinv,invN1);
+  h_a21_DeltaPs ->add(*h_c2_DeltaPs,invN1);
+  h_a21_DeltaPo ->add(*h_c2_DeltaPo,invN1);
+  h_a21_DeltaPl ->add(*h_c2_DeltaPl,invN1);
 }
 
 //! set the masses to be used in the calculation of q_inv
@@ -592,5 +593,26 @@ void ParticlePair3DDerivedHistos::setMasses(double m1, double m2)
   mass2 = m2;
 }
 
+
+//!
+//! Project a rank 3 histogram onto one of its axes (all bins of the other axes) and store the result in the histogram of
+//! this group with the given name (replacing its content), or in a new histogram of the group if there is none.
+//!
+void ParticlePair3DDerivedHistos::projectInto(const Histogram * source, unsigned int axis, const String & targetName)
+{
+  if (!source) throw NullPointerException("source",__FUNCTION__);
+  Histogram projection = source->project3DOnto1D(axis);
+  Histogram * target = histogram(targetName);
+  if (target)
+    {
+    target->reset();
+    target->add(projection);
+    }
+  else
+    {
+    projection.setName(targetName);
+    append(new Histogram(projection));
+    }
+}
 
 } //  namespace CAP

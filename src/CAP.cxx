@@ -17,6 +17,7 @@
 #include "Configuration.hpp"
 #include "PrintHelpers.hpp"
 #include "Task.hpp"
+#include "XmlDocument.hpp"
 #include "Exceptions.hpp"
 #include "MathExceptions.hpp"
 //#include "Histogram.hpp"
@@ -30,22 +31,27 @@ void usage()
   std::cout << "Usage:" << std::endl;
   std::cout << "CAP  configurationFile" << std::endl;
   std::cout << "CAP  configurationPath configurationFile" << std::endl;
-  std::cout << "CAP  configurationPath configurationFile histogramPath" << std::endl<< std::endl << std::endl;
+  std::cout << "CAP  configurationPath configurationFile histogramPath" << std::endl<< std::endl;
+  std::cout << "A configuration file ending with .xml is read as XML: the task named taskName (or the first TASK" << std::endl;
+  std::cout << "element if taskName is -) is created from its TASK element." << std::endl << std::endl;
+  std::cout << "CAP  --xml-templates outputPath [className ...]" << std::endl;
+  std::cout << "Write the XML template (all parameters, defaults and types) of the given task classes, or of all" << std::endl;
+  std::cout << "task classes, to outputPath/<ClassName>.xml." << std::endl << std::endl << std::endl;
 }
 
 void parse(int argc,
            char* argv[],
-           TString &  taskName,
-           TString &  configurationPath,
-           TString &  configurationFile,
-           TString &  histogramPath)
+           CAP::String &  taskName,
+           CAP::String &  configurationPath,
+           CAP::String &  configurationFile,
+           CAP::String &  histogramPath)
 {
-  TString configurationPathDefault  = "Test/";
-  TString configurationFileDefault  = "test.ini";
-  TString histogramPathDefault      = "test/";
+  CAP::String configurationPathDefault  = "Test/";
+  CAP::String configurationFileDefault  = "test.ini";
+  CAP::String histogramPathDefault      = "test/";
 
-  TString hPath;
-  TString cPath;
+  CAP::String hPath;
+  CAP::String cPath;
   switch (argc)
     {
       default:
@@ -80,20 +86,20 @@ void parse(int argc,
       break;
     }
 
-  if (cPath.BeginsWith("/"))
+  if (cPath.beginsWith("/"))
     {
     configurationPath = cPath;
     }
   else
     {
-    TString base = getenv("CAP_PROJECTS_PATH");
+    CAP::String base = getenv("CAP_PROJECTS_PATH");
     configurationPath = base;
     configurationPath += "/";
     configurationPath += cPath;
     configurationPath += "/";
     }
 
-  if (hPath.BeginsWith("/"))
+  if (hPath.beginsWith("/"))
     {
     histogramPath = hPath;
     }
@@ -115,21 +121,47 @@ void parse(int argc,
 
 int main(int argc, char* argv[])
 {
-  TString mainTaskName;
-  TString configurationPath;
-  TString configurationFile;
-  TString histogramPath;
+  if (argc>=3 && CAP::String(argv[1])=="--xml-templates")
+    {
+    try
+      {
+      std::vector<CAP::String> classNames;
+      for (int k=3; k<argc; k++) classNames.push_back(argv[k]);
+      std::vector<CAP::String> files = CAP::Task::exportXmlTemplates(argv[2],classNames);
+      for (auto & f : files) CAP::printValue("Template written",f);
+      return 0;
+      }
+    catch (CAP::Exception & exception)
+      {
+      exception.print();
+      return 1;
+      }
+    }
+  CAP::String mainTaskName;
+  CAP::String configurationPath;
+  CAP::String configurationFile;
+  CAP::String histogramPath;
   parse(argc,argv,mainTaskName,configurationPath,configurationFile,histogramPath);
   long seed=112133;
   if (seed!=0)  gRandom->SetSeed(seed);
  try
   {
-  CAP::Configuration configuration;
-  configuration.loadFrom(configurationPath,configurationFile);
   CAP::Task * creatorTask = new CAP::Task();
-  cout << "check 1" << endl;
-  CAP::Task * mainTask = creatorTask->createTask(nullptr,mainTaskName,configuration);
-  cout << "check 2" << endl;
+  CAP::Task * mainTask = nullptr;
+  if (configurationFile.endsWith(".xml"))
+    {
+    CAP::XmlDocument document = CAP::XmlDocument::read(configurationPath,configurationFile);
+    const CAP::XmlElement * taskElement = (mainTaskName=="-") ? document.findFirst("TASK")
+                                                                : document.findFirst("TASK","name",mainTaskName);
+    if (!taskElement) throw CAP::ConfigurationException(mainTaskName,"No such TASK element in "+configurationFile,"main()");
+    mainTask = creatorTask->createTask(nullptr,*taskElement);
+    }
+  else
+    {
+    CAP::Configuration configuration;
+    configuration.loadFrom(configurationPath,configurationFile);
+    mainTask = creatorTask->createTask(nullptr,mainTaskName,configuration);
+    }
   mainTask->initialize();
   mainTask->execute();
   mainTask->finalize();
@@ -141,7 +173,7 @@ int main(int argc, char* argv[])
 //  CAP::Timer timer;
 //
 //  timer.start();
-//  CAP::Histogram * h = new CAP::Histogram(TString("test"),TString("test"),100,0.0, 100.0);
+//  CAP::Histogram * h = new CAP::Histogram(CAP::String("test"),CAP::String("test"),100,0.0, 100.0);
 //  long n = 400000000;
 //  CAP::printLine();
 //  CAP::printLine();
@@ -157,7 +189,7 @@ int main(int argc, char* argv[])
 //  timer.print();
 //  CAP::printString("Part I  completed successfully");
 //  timer.start();
-//  TH1 * hh = new TH1D(TString("test"),TString("test"),100,0.0, 100.0);
+//  TH1 * hh = new TH1D(CAP::String("test"),CAP::String("test"),100,0.0, 100.0);
 //  for (long k=0; k<n; k++)
 //    {
 //    //if (k%1000) cout << k << endl;

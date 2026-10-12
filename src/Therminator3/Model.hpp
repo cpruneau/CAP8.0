@@ -40,11 +40,11 @@ namespace CAP
                          const String & objectType,
                          const Configuration & configuration);
 
-  virtual void loadFrom(TFile & file __attribute__((unused))) {}
+  virtual void loadFrom(CapFile & file __attribute__((unused))) {}
   virtual void loadFromAscii(std::ifstream & file __attribute__((unused))) {}
   virtual void loadFromAscii2(std::ifstream & file1 __attribute__((unused)),
                               std::ifstream & file2 __attribute__((unused))) {}
-  virtual void saveTo(TFile & file __attribute__((unused))) {}
+  virtual void saveTo(CapFile & file __attribute__((unused))) {}
   virtual void saveToAscii(std::ofstream & file __attribute__((unused))){}
   virtual void saveToAscii2(std::ofstream & file1 __attribute__((unused)),
                             std::ofstream & file2 __attribute__((unused))) {}

@@ -12,7 +12,8 @@
 #include "PtPtDerivedHistos.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
@@ -72,21 +73,21 @@ PtPtDerivedHistos & PtPtDerivedHistos::operator=(const PtPtDerivedHistos & rhs)
 
 void PtPtDerivedHistos::cloneD(const PtPtDerivedHistos & source )
 {
-  h_F1_evt = safeCloneH1(source.h_F1_evt);
-  h_F2_evt = safeCloneH1(source.h_F2_evt);
-  h_F3_evt = safeCloneH1(source.h_F3_evt);
-  h_F4_evt = safeCloneH1(source.h_F4_evt);
-  h_R2_evt = safeCloneH1(source.h_R2_evt);
-  h_R3_evt = safeCloneH1(source.h_R3_evt);
-  h_R4_evt = safeCloneH1(source.h_R4_evt);
+  h_F1_evt = histogramLike(source.h_F1_evt);
+  h_F2_evt = histogramLike(source.h_F2_evt);
+  h_F3_evt = histogramLike(source.h_F3_evt);
+  h_F4_evt = histogramLike(source.h_F4_evt);
+  h_R2_evt = histogramLike(source.h_R2_evt);
+  h_R3_evt = histogramLike(source.h_R3_evt);
+  h_R4_evt = histogramLike(source.h_R4_evt);
 
-  h_q1_evt = safeCloneH1(source.h_q1_evt);
-  h_q1q1_evt = safeCloneH1(source.h_q1q1_evt);
-  h_q1q1q1_evt = safeCloneH1(source.h_q1q1q1_evt);
-  h_q1q1q1q1_evt = safeCloneH1(source.h_q1q1q1q1_evt);
-  h_dq1dq1_evt = safeCloneH1(source.h_dq1dq1_evt);
-  h_dq1dq1dq1_evt = safeCloneH1(source.h_dq1dq1dq1_evt);
-  h_dq1dq1dq1dq1_evt = safeCloneH1(source.h_dq1dq1dq1dq1_evt);
+  h_q1_evt = histogramLike(source.h_q1_evt);
+  h_q1q1_evt = histogramLike(source.h_q1q1_evt);
+  h_q1q1q1_evt = histogramLike(source.h_q1q1q1_evt);
+  h_q1q1q1q1_evt = histogramLike(source.h_q1q1q1q1_evt);
+  h_dq1dq1_evt = histogramLike(source.h_dq1dq1_evt);
+  h_dq1dq1dq1_evt = histogramLike(source.h_dq1dq1dq1_evt);
+  h_dq1dq1dq1dq1_evt = histogramLike(source.h_dq1dq1dq1dq1_evt);
 }
 
 void PtPtDerivedHistos::configure(const String & taskName,
@@ -121,7 +122,7 @@ void PtPtDerivedHistos::create()
   h_dq1dq1dq1dq1_evt = createHistogram(createName(_histogramBaseName,"dq1dq1dq1dq1"),evt_nbins,evt_min,evt_max,xTitle,"#Delta q_{1}#Delta q_{1}#Delta q_{1}#Delta q_{1}");
 }
 
-void PtPtDerivedHistos::loadFrom(TFile & inputFile)
+void PtPtDerivedHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   PtPtHistos::loadFrom(inputFile);

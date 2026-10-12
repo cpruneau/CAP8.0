@@ -15,7 +15,8 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::EventSmearer);
 
@@ -24,7 +25,7 @@ namespace CAP
 
 EventSmearer::EventSmearer()
 :
-HistogramGroup()
+HistogramFolder()
 {
   appendClassName("EventSmearer");
   setMinimumReportLevel(Object::kInfo);
@@ -34,7 +35,7 @@ HistogramGroup()
 
 EventSmearer::EventSmearer(const EventSmearer & source)
 :
-HistogramGroup(source)
+HistogramFolder(source)
 {
   cloneB(source);
 }
@@ -43,7 +44,7 @@ EventSmearer & EventSmearer::operator=(const EventSmearer & rhs)
 {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     cloneB(rhs);
     }
   return *this;
@@ -60,7 +61,7 @@ void EventSmearer::configure(const String & ownerName,
                                    unsigned int index)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  HistogramGroup::configure(ownerName,typeName,configuration,index);
+  HistogramFolder::configure(ownerName,typeName,configuration,index);
 }
 
 

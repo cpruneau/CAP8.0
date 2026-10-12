@@ -13,7 +13,8 @@
 #include "JetHelpers.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "fastjet/ClusterSequence.hh"
 #include "Configuration.hpp"
 #include "Task.hpp"
@@ -123,19 +124,19 @@ JetSingleHistosDerived & JetSingleHistosDerived::operator=(const JetSingleHistos
 
 void JetSingleHistosDerived::cloneD(const JetSingleHistosDerived & source)
 {
-  h_jet_n1d_pt  = safeCloneH1(source.h_jet_n1d_pt);
-  h_jet_n1d_phi = safeCloneH1(source.h_jet_n1d_phi);
-  h_jet_n1d_eta = safeCloneH1(source.h_jet_n1d_eta);
-  h_jet_n1d_th  = safeCloneH1(source.h_jet_n1d_th);
-  h_jet_n1d_jt  = safeCloneH1(source.h_jet_n1d_jt);
-  h_jet_n1d_z   = safeCloneH1(source.h_jet_n1d_z);
+  h_jet_n1d_pt  = histogramLike(source.h_jet_n1d_pt);
+  h_jet_n1d_phi = histogramLike(source.h_jet_n1d_phi);
+  h_jet_n1d_eta = histogramLike(source.h_jet_n1d_eta);
+  h_jet_n1d_th  = histogramLike(source.h_jet_n1d_th);
+  h_jet_n1d_jt  = histogramLike(source.h_jet_n1d_jt);
+  h_jet_n1d_z   = histogramLike(source.h_jet_n1d_z);
 
-  h_jet_n1r_pt  = safeCloneH1(source.h_jet_n1r_pt);
-  h_jet_n1r_phi = safeCloneH1(source.h_jet_n1r_phi);
-  h_jet_n1r_eta = safeCloneH1(source.h_jet_n1r_eta);
-  h_jet_n1r_th  = safeCloneH1(source.h_jet_n1r_th);
-  h_jet_n1r_jt  = safeCloneH1(source.h_jet_n1r_jt);
-  h_jet_n1r_z   = safeCloneH1(source.h_jet_n1r_z);
+  h_jet_n1r_pt  = histogramLike(source.h_jet_n1r_pt);
+  h_jet_n1r_phi = histogramLike(source.h_jet_n1r_phi);
+  h_jet_n1r_eta = histogramLike(source.h_jet_n1r_eta);
+  h_jet_n1r_th  = histogramLike(source.h_jet_n1r_th);
+  h_jet_n1r_jt  = histogramLike(source.h_jet_n1r_jt);
+  h_jet_n1r_z   = histogramLike(source.h_jet_n1r_z);
 }
 
 void JetSingleHistosDerived::configure(const String & taskName,
@@ -211,41 +212,41 @@ void JetSingleHistosDerived::create()
 
 }
 
-void JetSingleHistosDerived::loadFrom(TFile & inputFile)
+void JetSingleHistosDerived::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   JetSingleHistos::loadFrom(inputFile,taskName,objectType,configuration,index);
-  h_jet_n1d_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1d_pt"));
-  h_jet_n1d_phi   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1d_phi"));
-  h_jet_n1d_eta   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1d_eta"));
-  h_jet_n1d_th    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1d_th"));
-  h_jet_n1d_jt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1d_jt"));
-  h_jet_n1d_z     = loadH1(inputFile,createName(_histogramBaseName,"jet_n1d_z"));
+  h_jet_n1d_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1d_pt"));
+  h_jet_n1d_phi   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1d_phi"));
+  h_jet_n1d_eta   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1d_eta"));
+  h_jet_n1d_th    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1d_th"));
+  h_jet_n1d_jt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1d_jt"));
+  h_jet_n1d_z     = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1d_z"));
 
-  h_jet_n1r_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1r_pt"));
-  h_jet_n1r_phi   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1r_phi"));
-  h_jet_n1r_eta   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1r_eta"));
-  h_jet_n1r_th    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1r_th"));
-  h_jet_n1r_jt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1r_jt"));
-  h_jet_n1r_z     = loadH1(inputFile,createName(_histogramBaseName,"jet_n1r_z"));
+  h_jet_n1r_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1r_pt"));
+  h_jet_n1r_phi   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1r_phi"));
+  h_jet_n1r_eta   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1r_eta"));
+  h_jet_n1r_th    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1r_th"));
+  h_jet_n1r_jt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1r_jt"));
+  h_jet_n1r_z     = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1r_z"));
 }
 
 void JetSingleHistosDerived::calculateDerivedHistograms(const JetSingleHistos & s)
 {
-  h_jet_n1d_pt   ->Add(s.h_jet_n1p_pt,   s.h_jet_n1m_pt, 1.0, -10.0);
-  h_jet_n1d_phi  ->Add(s.h_jet_n1p_phi,  s.h_jet_n1m_phi,1.0, -10.0);
-  h_jet_n1d_eta  ->Add(s.h_jet_n1p_eta,  s.h_jet_n1m_eta,1.0, -10.0);
-  h_jet_n1d_th   ->Add(s.h_jet_n1p_th,   s.h_jet_n1m_th, 1.0, -10.0);
-  h_jet_n1d_jt   ->Add(s.h_jet_n1p_jt,   s.h_jet_n1m_jt, 1.0, -10.0);
-  h_jet_n1d_z    ->Add(s.h_jet_n1p_z,    s.h_jet_n1m_z,  1.0, -10.0);
+  h_jet_n1d_pt   ->setAsSumOf(*s.h_jet_n1p_pt,*s.h_jet_n1m_pt,1.0,-10.0);
+  h_jet_n1d_phi  ->setAsSumOf(*s.h_jet_n1p_phi,*s.h_jet_n1m_phi,1.0,-10.0);
+  h_jet_n1d_eta  ->setAsSumOf(*s.h_jet_n1p_eta,*s.h_jet_n1m_eta,1.0,-10.0);
+  h_jet_n1d_th   ->setAsSumOf(*s.h_jet_n1p_th,*s.h_jet_n1m_th,1.0,-10.0);
+  h_jet_n1d_jt   ->setAsSumOf(*s.h_jet_n1p_jt,*s.h_jet_n1m_jt,1.0,-10.0);
+  h_jet_n1d_z    ->setAsSumOf(*s.h_jet_n1p_z,*s.h_jet_n1m_z,1.0,-10.0);
 
   // ratios (+)/(-)
-  h_jet_n1r_pt  ->Add(s.h_jet_n1p_pt);  h_jet_n1r_pt  ->Divide(s.h_jet_n1m_pt);
-  h_jet_n1r_phi ->Add(s.h_jet_n1p_phi); h_jet_n1r_phi ->Divide(s.h_jet_n1m_phi);
-  h_jet_n1r_eta ->Add(s.h_jet_n1p_eta); h_jet_n1r_eta ->Divide(s.h_jet_n1m_eta);
-  h_jet_n1r_th  ->Add(s.h_jet_n1p_th);  h_jet_n1r_th  ->Divide(s.h_jet_n1m_th);
-  h_jet_n1r_jt  ->Add(s.h_jet_n1p_jt);  h_jet_n1r_jt  ->Divide(s.h_jet_n1m_jt);
-  h_jet_n1r_z   ->Add(s.h_jet_n1p_z);   h_jet_n1r_z   ->Divide(s.h_jet_n1m_z);
+  h_jet_n1r_pt  ->add(*s.h_jet_n1p_pt);  h_jet_n1r_pt  ->divideBy(*s.h_jet_n1m_pt);
+  h_jet_n1r_phi ->add(*s.h_jet_n1p_phi); h_jet_n1r_phi ->divideBy(*s.h_jet_n1m_phi);
+  h_jet_n1r_eta ->add(*s.h_jet_n1p_eta); h_jet_n1r_eta ->divideBy(*s.h_jet_n1m_eta);
+  h_jet_n1r_th  ->add(*s.h_jet_n1p_th);  h_jet_n1r_th  ->divideBy(*s.h_jet_n1m_th);
+  h_jet_n1r_jt  ->add(*s.h_jet_n1p_jt);  h_jet_n1r_jt  ->divideBy(*s.h_jet_n1m_jt);
+  h_jet_n1r_z   ->add(*s.h_jet_n1p_z);   h_jet_n1r_z   ->divideBy(*s.h_jet_n1m_z);
 }
 
 

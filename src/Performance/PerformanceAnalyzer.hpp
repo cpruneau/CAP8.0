@@ -18,17 +18,27 @@
 namespace CAP
 {
 
+//!
+//! @brief Analyzer filling detector performance histograms (ParticlePerformanceHistos) for each (event filter, particle
+//! filter) combination.
+//!
 class PerformanceAnalyzer
 :
 public EventProcessorSingle<ParticlePerformanceHistos,ParticlePerformanceDerivedHistos>
 {
 public:
   
+  //! @brief Default constructor.
   PerformanceAnalyzer();
+  //! @brief Copy constructor. @param analyzer object to copy
   PerformanceAnalyzer(const PerformanceAnalyzer & analyzer);
+  //! @brief Copy assignment. @param analyzer object to copy @return this object
   PerformanceAnalyzer & operator=(const PerformanceAnalyzer & analyzer);
+  //! @brief Destructor.
   virtual ~PerformanceAnalyzer() {}
+  //! @brief Add the default configuration of the task.
   virtual void setDefaultConfiguration();
+  //! @brief Execute the task (process the current event).
   virtual void execute();
 
 protected:

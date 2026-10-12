@@ -12,7 +12,8 @@
 #include "ParticleSingleAnalyzer.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::ParticleSingleAnalyzer);
 
@@ -112,6 +113,9 @@ void ParticleSingleAnalyzer::execute()
   std::vector<ParticleEfficiency*> & particleEff = particleEfficiencies();
   unsigned int nef = acceptedEF.size();
   unsigned int npf = acceptedPF.size();
+  // Particle efficiencies: either one for all particle filters, or one per particle filter.
+  if (usePartEff && particleEff.size()!=1 && particleEff.size()!=npf)
+    throw Exception("Number of particle efficiencies must be 1 or equal to the number of particle filters",__FUNCTION__);
   for (unsigned int iEventFilter = 0;iEventFilter<nef;iEventFilter++)
     {
     if (!acceptedEF[iEventFilter]) continue;
@@ -122,6 +126,7 @@ void ParticleSingleAnalyzer::execute()
       index = baseSingle + iParticleFilter;
       ParticleSingleHistos * histos = histograms[index];
       std::vector<Particle*> & accParticles = acceptedParticles(iParticleFilter);
+      ParticleEfficiency * efficiency = usePartEff ? particleEff[particleEff.size()==1 ? 0 : iParticleFilter] : nullptr;
       double multiplicityAccepted = 0.0;
       double energyAccepted = 0.0;
       for (unsigned int k=0; k<accParticles.size(); k++)
@@ -130,15 +135,11 @@ void ParticleSingleAnalyzer::execute()
         multiplicityAccepted++;
         VectorLorentz mm = particle->momentum();
         energyAccepted += mm.t();
-        if (usePartEff)
-          weight = particleEff[k]->weightAt(mm);
-        else
-          weight = 1.0;
+        weight = efficiency ? efficiency->weightAt(mm) : 1.0;
         histos->fill(*particle,weight);
         }
       histos->fillMultiplicity(multiplicityAccepted,energyAccepted,1.0);
       }
-    iEventFilter++;
     }
 }
 

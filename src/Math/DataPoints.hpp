@@ -1,518 +1,233 @@
-#ifndef CAP_Histogram
-#define CAP_Histogram
+#ifndef CAP_MATH_DataPoints
+#define CAP_MATH_DataPoints
+#include <vector>
+#include "Aliases.hpp"
 #include "Object.hpp"
-#include "Partition.hpp"
-#include "DataPoints.hpp"
-#include "DataVectors.hpp"
+#include "DataPoint2D.hpp"
 
 namespace CAP
 {
   namespace MATH
   {
 
-  class Histogram
-  :
-  public Object,
-  public Partition
+  //!
+  //! @brief Abstract container of two-dimensional data points (DataPoint2D).
+  //!
+  //! Defines the interface shared by all collections of (x, y) points with uncertainties,
+  //! independently of how the points are stored. Concrete classes must implement
+  //! size(), point() and addPoint(const DataPoint2D&); everything else has a default
+  //! implementation written in terms of these three functions, which concrete classes
+  //! may override for efficiency.
+  //!
+  //! Points can be added one at a time (addPoint) or in bulk (addPoints), either as
+  //! DataPoint2D objects or from parallel vectors x, y (and optionally uncertainties).
+  //!
+  //! Concrete implementations: CAP::GRAPHICS::Data2DPoints (stores DataPoint2D objects) and
+  //! CAP::GRAPHICS::Data2DColumns (stores one vector per quantity), both through CAP::GRAPHICS::Data2D.
+  //!
+  //! Example:
+  //! @code
+  //!   std::vector<double> x = {1.0, 2.0, 3.0};
+  //!   std::vector<double> y = {4.0, 5.0, 6.0};
+  //!   CAP::GRAPHICS::Data2DPoints data;   // any concrete DataPoints
+  //!   data.addPoints(x, y);
+  //!   data.addPoint(CAP::MATH::DataPoint2D(4.0f, 7.0f));
+  //!   float yMax = data.yMaximum();       // 7
+  //! @endcode
+  //!
+  class DataPoints : public Object
   {
-  protected:
-  unsigned int nBins;
-  std::vector<long>  _entries;
-  std::vector<float> _values;
-  std::vector<float> _uncertainties;
-
-  inline double statErrorSum(double & e1, double & e2)
-  {
-  return std::sqrt(e1*e1+e2*e2);
-  }
-
-  inline double statErrorProduct(double & v1, double & e1, double & v2, double & e2)
-  {
-  // do not use relative errors and avoid divisions
-  double ep1 = v1*e2;
-  double ep2 = v2*e1;
-  return std::sqrt(ep1*ep1+ep2*ep2);
-  }
-
-  inline double statErrorRatio(double & v1, double & e1, double & v2, double & e2)
-  {
-  // do not use relative errors and minimize number of divisions
-  if (v2==0) return 1.0E100;
-  double er2 = e2*v1/v2;
-  return std::sqrt(e1*e1+er2*er2)/v2;
-  }
-
-
-
   public:
 
-  Histogram();
-  Histogram(const Partition & partition);
-  Histogram(const String & name, const String & title,
-            unsigned int n, double minimum, double maximum);
-  Histogram(const String & name, const String & title, unsigned int n0, double minimum_0, double maximum_0, unsigned int n1, double minimum_1, double maximum_1);
-  Histogram(const Histogram & source);
-  virtual ~Histogram() {};
-  Histogram & operator= (const Histogram & rhs);
+  //! @brief Default constructor: name and title "DataPoints".
+  DataPoints();
+  //! @brief Constructor with a name. @param name object name @param title object title @param className class name
+  DataPoints(const String & name, const String & title, const String & className);
 
-  bool compatibleWith(const Histogram & source, bool sizeAndLimits=1);
+  //! @brief Destructor.
+  virtual ~DataPoints() {}
 
-  bool  operator== (const Histogram & rhs) const;
-  bool  operator!= (const Histogram & rhs) const;
-  Histogram & operator+= (const Histogram & rhs);
-  Histogram & operator-= (const Histogram & rhs);
-  Histogram & operator*= (const Histogram & rhs);
-  Histogram & operator/= (const Histogram & rhs);
-  Histogram & operator+= (double value);
-  Histogram & operator-= (double value);
-  Histogram & operator*= (double value);
-  Histogram & operator/= (double value);
+  //! @name Interface to implement
+  //! @{
 
-  void scale(double coefficient);
-  void add(const Histogram & h, double coefficient);
-  void multiplyBy(const Histogram & rhs, double coefficient);
-  void divideBy(const Histogram & rhs, double coefficient);
-  void inverse();
+  //! @brief Number of points in this container. @return number of points
+  virtual unsigned int size() const = 0;
 
-  void setAsSumOf(const Histogram & h1, const Histogram & h2,
-                  double coefficient1, double coefficient2);
-  void setAsSumOf(const std::vector<const Histogram *> & histograms,
-                  const std::vector<double> & coefficientw);
+  //!
+  //! @brief Number of independent variables of the data points: 1 for (x, y) points.
+  //! @return rank of the data (1 by default; derived classes holding points of higher rank override it)
+  //!
+  virtual unsigned int rank() const { return 1; }
 
-  void setAsProductOf(const Histogram & h1, const Histogram & h2,
-                      double coefficient1, double coefficient2);
-  void setAsProductOf(const std::vector<const Histogram *> & histograms,
-                      const std::vector<double> & coefficientw);
-  void setAsRatioOf(const Histogram & h1, const Histogram & h2,
-                    double coefficient1, double coefficient2);
+  //! @name Points of any rank
+  //! Access to point index as coordinates (rank() values) and a value with uncertainties, valid for any rank.
+  //! The default implementations, for rank 1, read point(index); classes holding points of higher rank override them.
+  //! @{
 
-  void setBinEntriesAt(unsigned int binIndex, long entries);
-  void setBinValueAt(unsigned int binIndex, double value);
-  void setBinUncertaintyAt(unsigned int binIndex, double uncertainty);
-  void setBinAt(unsigned int binIndex, long entries, double value, double uncertainty);
+  //! @brief Coordinates of a point. @param index index of the point @return rank() coordinates (x for rank 1)
+  virtual std::vector<double> coordinatesAt(unsigned int index) const;
+  //! @brief Uncertainties of the coordinates of a point. @param index index of the point @return rank() uncertainties (xError for rank 1)
+  virtual std::vector<double> coordinateErrorsAt(unsigned int index) const;
+  //! @brief Value of a point. @param index index of the point @return value (y for rank 1)
+  virtual double valueAt(unsigned int index) const;
+  //! @brief Statistical uncertainty of the value of a point. @param index index of the point @return statistical uncertainty (yStatError for rank 1)
+  virtual double statErrorAt(unsigned int index) const;
+  //! @brief Systematic uncertainty of the value of a point. @param index index of the point @return systematic uncertainty (ySysError for rank 1)
+  virtual double sysErrorAt(unsigned int index) const;
 
-  void setBinEntriesAt(unsigned int binIndex0, unsigned int binIndex1, long entries);
-  void setBinValueAt(unsigned int binIndex0, unsigned int binIndex1, double value);
-  void setBinUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1, double uncertainty);
-  void setBinAt(unsigned int binIndex0, unsigned int binIndex1, long entries, double value, double uncertainty);
+  //! @}
 
-  void setBinEntriesAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2, long entries);
-  void setBinValueAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2, double value);
-  void setBinUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2, double uncertainty);
-  void setBinAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2, long entries, double value, double uncertainty);
+  //!
+  //! @brief Return a copy of point number index.
+  //! @param index point index, 0 <= index < size()
+  //! @return the point
+  //!
+  virtual DataPoint2D point(unsigned int index) const = 0;
 
-  void setBinEntriesAt(const std::vector<unsigned int> & binIndices, long entries);
-  void setBinValueAt(const std::vector<unsigned int> & binIndices, double value);
-  void setBinUncertaintyAt(const std::vector<unsigned int> & binIndices, double uncertainty);
-  void setBinAt(const std::vector<unsigned int> & binIndices, long entries, double value, double uncertainty);
+  //!
+  //! @brief Append one point.
+  //! @param dataPoint point to append
+  //!
+  virtual void addPoint(const DataPoint2D & dataPoint) = 0;
 
-  void setBinEntriesAt(double x, long entries);
-  void setBinValueAt(double x, double value);
-  void setBinUncertaintyAt(double x, double uncertainty);
-  void setBinAt(double x, long entries, double value, double uncertainty);
+  //! @}
 
-  void setBinEntriesAt(double x0, double x1, long entries);
-  void setBinValueAt(double x0, double x1, , double value);
-  void setBinUncertaintyAt(double x0, double x1, , double uncertainty);
-  void setBinAt(double x0, double x1, , long entries, double value, double uncertainty);
+  //! @brief Check whether the container holds no points. @return true if size()==0
+  bool empty() const { return size()==0; }
 
-  void setBinEntriesAt(double x0, double x1, double x2, long entries);
-  void setBinValueAt(double x0, double x1, double x2, double value);
-  void setBinUncertaintyAt(double x0, double x1, double x2, double uncertainty);
-  void setBinAt(double x0, double x1, double x2, long entries, double value, double uncertainty);
+  //! @name Adding points
+  //! Vectors of uncertainties may be empty, in which case the uncertainties are set to zero;
+  //! otherwise all vectors must have the same size (MathException otherwise).
+  //! @{
 
-  void setBinEntriesAt(const std::vector<double> & binIndices, long entries);
-  void setBinValueAt(const std::vector<double> & binIndices, double value);
-  void setBinUncertaintyAt(const std::vector<double> & binIndices, double uncertainty);
-  void setBinAt(const std::vector<double> & binIndices, long entries, double value, double uncertainty);
+  //!
+  //! @brief Append one point given its values and uncertainties.
+  //!
+  //! The default implementation builds a DataPoint2D and calls addPoint(const DataPoint2D&).
+  //! @param x x value @param xError uncertainty on x @param y y value
+  //! @param yStatError statistical uncertainty on y @param ySysError systematic uncertainty on y
+  //!
+  virtual void addPoint(float x, float xError, float y, float yStatError, float ySysError);
 
-  void setWith(const DataVectors & dataVector);
-  void setWith(const DataPoints & dataVector);
+  //!
+  //! @brief Append all the given points.
+  //! @param dataPoints points to append
+  //!
+  virtual void addPoints(const std::vector<DataPoint2D> & dataPoints);
 
-  void setWith(const std::vector<float> & values);
-  void setWith(const std::vector<double> & values);
-  void setWith(const std::vector<float> & values, const std::vector<float> & uncertainties);
-  void setWith(const std::vector<double> & values, const std::vector<double> & uncertainties);
-  void setWith(const std::vector<long> & entries,  const std::vector<float> & values);
-  void setWith(const std::vector<long> & entries,  const std::vector<double> & values);
-  void setWith(const std::vector<long> & entries,  const std::vector<float> & values,  const std::vector<float> & uncertainties);
-  void setWith(const std::vector<long> & entries,  const std::vector<double> & values, const std::vector<double> & uncertainties);
+  //!
+  //! @brief Append points from two vectors x and y (no uncertainties).
+  //! @param x x values @param y y values (same size as x)
+  //! @throws MathException if x and y have different sizes
+  //!
+  virtual void addPoints(const std::vector<double> & x,
+                         const std::vector<double> & y);
 
-  Histogram extract1(unsigned int first, unsigned int last);
-  Histogram extract2(unsigned int first1, unsigned int last1,
-                     unsigned int first2, unsigned int last2);
-  Histogram extract3(unsigned int first1, unsigned int last1,
-                     unsigned int first2, unsigned int last2,
-                     unsigned int first3, unsigned int last3);
+  //!
+  //! @brief Append points from vectors x, y and the statistical uncertainties on y.
+  //! @param x x values @param y y values @param yStatError statistical uncertainties on y (or empty)
+  //! @throws MathException if the vector sizes differ
+  //!
+  virtual void addPoints(const std::vector<double> & x,
+                         const std::vector<double> & y,
+                         const std::vector<double> & yStatError);
 
-  Histogram project2DOnto1D(unsigned int targetAxisIndex, unsigned int first, unsigned int last);
-  Histogram project3DOnto1D(unsigned int targetAxisIndex,
-                            unsigned int first1, unsigned int last1,
-                            unsigned int first2, unsigned int last2);
-  Histogram project3DOnto2D(unsigned int targetAxisIndex1, unsigned int targetAxisIndex2,
-                            unsigned int first, unsigned int last);
+  //!
+  //! @brief Append points from vectors of values and uncertainties.
+  //! @param x x values @param xError uncertainties on x (or empty) @param y y values
+  //! @param yStatError statistical uncertainties on y (or empty) @param ySysError systematic uncertainties on y (or empty)
+  //! @throws MathException if the vector sizes differ
+  //!
+  virtual void addPoints(const std::vector<double> & x,
+                         const std::vector<double> & xError,
+                         const std::vector<double> & y,
+                         const std::vector<double> & yStatError,
+                         const std::vector<double> & ySysError);
 
-  double totalEntries() const;
-  double totalEntries(unsigned int first, unsigned int last) const;
-  double totalEntries(unsigned int first0, unsigned int last0,
-                      unsigned int first1, unsigned int last1) const;
-  double totalEntries(unsigned int first0, unsigned int last0,
-                      unsigned int first1, unsigned int last1,
-                      unsigned int first2, unsigned int last2) const;
+  //! @}
 
-  double integral(bool binSumOnly=1) const;
-  double integral(unsigned int first, unsigned int last,
-                  bool binSumOnly=1)  const;
-  double integral(unsigned int first0, unsigned int last0,
-                  unsigned int first1, unsigned int last1,
-                  bool binSumOnly=1) const;
-  double integral(unsigned int first0, unsigned int last0,
-                  unsigned int first1, unsigned int last1,
-                  unsigned int first2, unsigned int last2,
-                  bool binSumOnly=1) const;
+  //! @name Extrema
+  //! Default implementations scan all points; they throw MathException if the container is empty.
+  //! When several points share an extremum, the first one is used.
+  //! @{
 
-  void maximumEntries(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void minimumEntries(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void maximumValue(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void minimumValue(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void maximumAvgValue(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void minimumAvgValue(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  double maximumEntries(unsigned int first=0, unsigned int last= 0);
-  double minimumEntries(unsigned int first=0, unsigned int last= 0);
-  double maximumValue(unsigned int first=0, unsigned int last= 0);
-  double minimumValue(unsigned int first=0, unsigned int last= 0);
-  double maximumAvgValue(unsigned int first=0, unsigned int last= 0);
-  double minimumAvgValue(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMaxEntries(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMinEntries(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMaxValue(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMinValue(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMaxAvgValue(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMinAvgValue(unsigned int first=0, unsigned int last= 0);
+  //! @brief Smallest x value. @return minimum of x
+  virtual float xMinimum()    const;
+  //! @brief Largest x value. @return maximum of x
+  virtual float xMaximum()    const;
+  //! @brief x value of the point with the largest y. @return x at maximum y
+  virtual float xAtYMaximum() const;
+  //! @brief x value of the point with the smallest y. @return x at minimum y
+  virtual float xAtYMinimum() const;
+  //! @brief Smallest y value. @return minimum of y
+  virtual float yMinimum()    const;
+  //! @brief Largest y value. @return maximum of y
+  virtual float yMaximum()    const;
+  //! @brief y value of the point with the largest x. @return y at maximum x
+  virtual float yAtXMaximum() const;
+  //! @brief y value of the point with the smallest x. @return y at minimum x
+  virtual float yAtXMinimum() const;
+  //! @brief Extent of the x values. @return xMaximum()-xMinimum()
+  float xRange() const { return xMaximum() - xMinimum(); }
+  //! @brief Extent of the y values. @return yMaximum()-yMinimum()
+  float yRange() const { return yMaximum() - yMinimum(); }
 
+  //! @}
 
+  //! @name Extrema of points of any rank
+  //! Read through coordinatesAt() and valueAt(), so they apply to every rank and every derived class.
+  //! They throw MathException if the container is empty. Derived classes may declare functions with the same
+  //! names; those are then used on objects of that class (Histogram uses minimumInRange() and maximumInRange()
+  //! for searches over a range of bins, so the functions below apply to histograms as well).
+  //! @{
 
-  void clear();
-  void reset();
+  //!
+  //! @brief Smallest value of one independent variable over all points.
+  //! @param index independent variable, 0 to rank()-1 (0 is x)
+  //! @return minimum of the variable
+  //! @throws MathException if the container is empty or index>=rank()
+  //!
+  double minimum(unsigned int index) const;
+  //!
+  //! @brief Largest value of one independent variable over all points.
+  //! @param index independent variable, 0 to rank()-1 (0 is x)
+  //! @return maximum of the variable
+  //! @throws MathException if the container is empty or index>=rank()
+  //!
+  double maximum(unsigned int index) const;
+  //! @brief Smallest dependent value over all points. @return minimum value @throws MathException if the container is empty
+  double minimumValue() const;
+  //! @brief Largest dependent value over all points. @return maximum value @throws MathException if the container is empty
+  double maximumValue() const;
 
-  void fill(double x0, double weight=1.0);
-  void fill(double x0, double x1, double weight);
-  void fill(double x0, double x1, double x2, double weight);
-  void fill(std::vector<double> & x, double weight);
+  //! @}
 
-  double binEntriesAt(unsigned int binIndex) const;
-  double binEntriesAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binEntriesAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binEntriesAt(const std::vector<unsigned int> & indices) const;
-  double binValueAt(unsigned int binIndex) const;
-  double binValueAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binValueAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binValueAt(const std::vector<unsigned int> & indices) const;
-  double binUncertaintyAt(unsigned int binIndex) const;
-  double binUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binUncertaintyAt(const std::vector<unsigned int> & indices) const;
-  double binAvgValueAt(unsigned int binIndex) const;
-  double binAvgValueAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binAvgValueAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binAvgValueAt(const std::vector<unsigned int> & indices) const;
-  double binAvgValueUncertaintyAt(unsigned int binIndex) const;
-  double binAvgValueUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binAvgValueUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binAvgValueUncertaintyAt(const std::vector<unsigned int> & indices) const;
+  //! @brief Print all points to std::cout, one per line.
+  virtual void print() const override;
 
-
-
-
-  const std::vector<long> & binEntries() const { return _entries; }
-  const std::vector<float> & binAvgValues() const { return _values; }
-  const std::vector<float> & AvgValueUncertainties() const { return _uncertainties; }
-  std::vector<long>  & binEntries() { return _entries; }
-  std::vector<float> & binAvgValues() { return _values; }
-  std::vector<float> & binAvgValueUncertainties() { return _uncertainties; }
-  std::vector<double> & binValues();
-  std::vector<double> & binValueUncertainties();
-
-  DataPoints   dataPoints(bool average=0, bool excludeEmptyBins=1) const;
-  DataVectors  dataVectors(bool average=0, bool excludeEmptyBins=1) const;
-
-
-  virtual void print() const;
-
-  friend Histogram operator+(const Histogram & left, const Histogram & right);
-  friend Histogram operator-(const Histogram & left, const Histogram & right);
-  friend Histogram operator*(const Histogram & left, const Histogram & right);
-  friend Histogram operator/(const Histogram & left, const Histogram & right);
-
-  friend Histogram operator+(const Histogram & left, double right);
-  friend Histogram operator+(double left, const Histogram & right);
-  friend Histogram operator-(const Histogram & left, double right);
-  friend Histogram operator-(double left, const Histogram & right);
-  friend Histogram operator*(const Histogram & left, double right);
-  friend Histogram operator*(double left, const Histogram & right);
-  friend Histogram operator/(const Histogram & left, double right);
-  friend Histogram operator/(double left, const Histogram & right);
-
-  friend std::ostream& operator<<(std::ostream& out, const Histogram & v);
-
-
-
-
-  ClassDef(Histogram,1)
-
-  };
-
-
-  Histogram operator+(const Histogram & left, const Histogram & right);
-  Histogram operator-(const Histogram & left, const Histogram & right);
-  Histogram operator*(const Histogram & left, const Histogram & right);
-  Histogram operator/(const Histogram & left, const Histogram & right);
-
-  Histogram operator+(const Histogram & left, double right);
-  Histogram operator+(double left, const Histogram & right);
-  Histogram operator-(const Histogram & left, double right);
-  Histogram operator-(double left, const Histogram & right);
-  Histogram operator*(const Histogram & left, double right);
-  Histogram operator*(double left, const Histogram & right);
-  Histogram operator/(const Histogram & left, double right);
-  Histogram operator/(double left, const Histogram & right);
-
-  Histogram operator+(const Histogram & right);
-  Histogram operator-(const Histogram & right);
-
-  std::ostream& operator<<(std::ostream& out, const Histogram & v);
-
-  ////
-
-  class DataPoint
-  {
   protected:
-  float _x;
-  float _y;
-  float _stat;
-  float _syst;
 
-  public:
+  //!
+  //! @brief Index of the point with the extreme value of x (useY=false) or y (useY=true).
+  //! @param useY true to scan y, false to scan x @param findMaximum true for the maximum, false for the minimum
+  //! @return index of the extremum point
+  //! @throws MathException if the container is empty
+  //!
+  unsigned int extremumIndex(bool useY, bool findMaximum) const;
 
-  Histogram();
-  Histogram(const Partition & partition);
-  Histogram(const String & name, const String & title,
-            unsigned int n, double minimum, double maximum);
-  Histogram(const String & name, const String & title, unsigned int n0, double minimum_0, double maximum_0, unsigned int n1, double minimum_1, double maximum_1);
-  Histogram(const Histogram & source);
-  virtual ~Histogram() {};
-  Histogram & operator= (const Histogram & rhs);
+  //!
+  //! @brief Extremum of one independent variable (index<rank()) or of the dependent value (index==rank()).
+  //! @param index variable index, or rank() for the dependent value @param findMaximum true for the maximum, false for the minimum
+  //! @param source name of the calling function, reported in exceptions
+  //! @return the extremum
+  //! @throws MathException if the container is empty or index>rank()
+  //!
+  double extremum(unsigned int index, bool findMaximum, const char * source) const;
 
-  bool compatibleWith(const Histogram & source, bool sizeAndLimits=1);
-
-  bool  operator== (const Histogram & rhs) const;
-  bool  operator!= (const Histogram & rhs) const;
-  Histogram & operator+= (const Histogram & rhs);
-  Histogram & operator-= (const Histogram & rhs);
-  Histogram & operator*= (const Histogram & rhs);
-  Histogram & operator/= (const Histogram & rhs);
-  Histogram & operator+= (double value);
-  Histogram & operator-= (double value);
-  Histogram & operator*= (double value);
-  Histogram & operator/= (double value);
-
-  void scale(double coefficient);
-  void add(const Histogram & h, double coefficient);
-  void multiplyBy(const Histogram & rhs, double coefficient);
-  void divideBy(const Histogram & rhs, double coefficient);
-  void inverse();
-
-  void setAsSumOf(const Histogram & h1, const Histogram & h2,
-                  double coefficient1, double coefficient2);
-  void setAsSumOf(const std::vector<const Histogram *> & histograms,
-                  const std::vector<double> & coefficientw);
-
-  void setAsProductOf(const Histogram & h1, const Histogram & h2,
-                      double coefficient1, double coefficient2);
-  void setAsProductOf(const std::vector<const Histogram *> & histograms,
-                      const std::vector<double> & coefficientw);
-  void setAsRatioOf(const Histogram & h1, const Histogram & h2,
-                    double coefficient1, double coefficient2);
-
-  void setBinEntriesAt(unsigned int binIndex, long entries);
-  void setBinValueAt(unsigned int binIndex, double value);
-  void setBinUncertaintyAt(unsigned int binIndex, double uncertainty);
-  void setBinAt(unsigned int binIndex, long entries, double value, double uncertainty);
-
-  void setBinEntriesAt(unsigned int binIndex0, unsigned int binIndex1, long entries);
-  void setBinValueAt(unsigned int binIndex0, unsigned int binIndex1, double value);
-  void setBinUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1, double uncertainty);
-  void setBinAt(unsigned int binIndex0, unsigned int binIndex1, long entries, double value, double uncertainty);
-
-  void setBinEntriesAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2, long entries);
-  void setBinValueAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2, double value);
-  void setBinUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2, double uncertainty);
-  void setBinAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2, long entries, double value, double uncertainty);
-
-  void setBinEntriesAt(const std::vector<unsigned int> & binIndices, long entries);
-  void setBinValueAt(const std::vector<unsigned int> & binIndices, double value);
-  void setBinUncertaintyAt(const std::vector<unsigned int> & binIndices, double uncertainty);
-  void setBinAt(const std::vector<unsigned int> & binIndices, long entries, double value, double uncertainty);
-
-  void setBinEntriesAt(double x, long entries);
-  void setBinValueAt(double x, double value);
-  void setBinUncertaintyAt(double x, double uncertainty);
-  void setBinAt(double x, long entries, double value, double uncertainty);
-
-  void setBinEntriesAt(double x0, double x1, long entries);
-  void setBinValueAt(double x0, double x1, , double value);
-  void setBinUncertaintyAt(double x0, double x1, , double uncertainty);
-  void setBinAt(double x0, double x1, , long entries, double value, double uncertainty);
-
-  void setBinEntriesAt(double x0, double x1, double x2, long entries);
-  void setBinValueAt(double x0, double x1, double x2, double value);
-  void setBinUncertaintyAt(double x0, double x1, double x2, double uncertainty);
-  void setBinAt(double x0, double x1, double x2, long entries, double value, double uncertainty);
-
-  void setBinEntriesAt(const std::vector<double> & binIndices, long entries);
-  void setBinValueAt(const std::vector<double> & binIndices, double value);
-  void setBinUncertaintyAt(const std::vector<double> & binIndices, double uncertainty);
-  void setBinAt(const std::vector<double> & binIndices, long entries, double value, double uncertainty);
-
-  void setWith(const DataVectors & dataVector);
-  void setWith(const DataPoints & dataVector);
-
-  void setWith(const std::vector<float> & values);
-  void setWith(const std::vector<double> & values);
-  void setWith(const std::vector<float> & values, const std::vector<float> & uncertainties);
-  void setWith(const std::vector<double> & values, const std::vector<double> & uncertainties);
-  void setWith(const std::vector<long> & entries,  const std::vector<float> & values);
-  void setWith(const std::vector<long> & entries,  const std::vector<double> & values);
-  void setWith(const std::vector<long> & entries,  const std::vector<float> & values,  const std::vector<float> & uncertainties);
-  void setWith(const std::vector<long> & entries,  const std::vector<double> & values, const std::vector<double> & uncertainties);
-
-  Histogram extract1(unsigned int first, unsigned int last);
-  Histogram extract2(unsigned int first1, unsigned int last1,
-                     unsigned int first2, unsigned int last2);
-  Histogram extract3(unsigned int first1, unsigned int last1,
-                     unsigned int first2, unsigned int last2,
-                     unsigned int first3, unsigned int last3);
-
-  Histogram project2DOnto1D(unsigned int targetAxisIndex, unsigned int first, unsigned int last);
-  Histogram project3DOnto1D(unsigned int targetAxisIndex,
-                            unsigned int first1, unsigned int last1,
-                            unsigned int first2, unsigned int last2);
-  Histogram project3DOnto2D(unsigned int targetAxisIndex1, unsigned int targetAxisIndex2,
-                            unsigned int first, unsigned int last);
-
-  double totalEntries() const;
-  double totalEntries(unsigned int first, unsigned int last) const;
-  double totalEntries(unsigned int first0, unsigned int last0,
-                      unsigned int first1, unsigned int last1) const;
-  double totalEntries(unsigned int first0, unsigned int last0,
-                      unsigned int first1, unsigned int last1,
-                      unsigned int first2, unsigned int last2) const;
-
-  double integral(bool binSumOnly=1) const;
-  double integral(unsigned int first, unsigned int last,
-                  bool binSumOnly=1)  const;
-  double integral(unsigned int first0, unsigned int last0,
-                  unsigned int first1, unsigned int last1,
-                  bool binSumOnly=1) const;
-  double integral(unsigned int first0, unsigned int last0,
-                  unsigned int first1, unsigned int last1,
-                  unsigned int first2, unsigned int last2,
-                  bool binSumOnly=1) const;
-
-  void maximumEntries(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void minimumEntries(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void maximumValue(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void minimumValue(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void maximumAvgValue(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  void minimumAvgValue(unsigned int & index, long & value, unsigned int first=0, unsigned int last= 0);
-  double maximumEntries(unsigned int first=0, unsigned int last= 0);
-  double minimumEntries(unsigned int first=0, unsigned int last= 0);
-  double maximumValue(unsigned int first=0, unsigned int last= 0);
-  double minimumValue(unsigned int first=0, unsigned int last= 0);
-  double maximumAvgValue(unsigned int first=0, unsigned int last= 0);
-  double minimumAvgValue(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMaxEntries(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMinEntries(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMaxValue(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMinValue(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMaxAvgValue(unsigned int first=0, unsigned int last= 0);
-  unsigned int  binWithMinAvgValue(unsigned int first=0, unsigned int last= 0);
-
-
-
-  void clear();
-  void reset();
-
-  void fill(double x0, double weight=1.0);
-  void fill(double x0, double x1, double weight);
-  void fill(double x0, double x1, double x2, double weight);
-  void fill(std::vector<double> & x, double weight);
-
-  double binEntriesAt(unsigned int binIndex) const;
-  double binEntriesAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binEntriesAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binEntriesAt(const std::vector<unsigned int> & indices) const;
-  double binValueAt(unsigned int binIndex) const;
-  double binValueAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binValueAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binValueAt(const std::vector<unsigned int> & indices) const;
-  double binUncertaintyAt(unsigned int binIndex) const;
-  double binUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binUncertaintyAt(const std::vector<unsigned int> & indices) const;
-  double binAvgValueAt(unsigned int binIndex) const;
-  double binAvgValueAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binAvgValueAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binAvgValueAt(const std::vector<unsigned int> & indices) const;
-  double binAvgValueUncertaintyAt(unsigned int binIndex) const;
-  double binAvgValueUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1) const;
-  double binAvgValueUncertaintyAt(unsigned int binIndex0, unsigned int binIndex1, unsigned int binIndex2) const;
-  double binAvgValueUncertaintyAt(const std::vector<unsigned int> & indices) const;
-
-
-
-
-  const std::vector<long> & binEntries() const { return _entries; }
-  const std::vector<float> & binAvgValues() const { return _values; }
-  const std::vector<float> & AvgValueUncertainties() const { return _uncertainties; }
-  std::vector<long>  & binEntries() { return _entries; }
-  std::vector<float> & binAvgValues() { return _values; }
-  std::vector<float> & binAvgValueUncertainties() { return _uncertainties; }
-  std::vector<double> & binValues();
-  std::vector<double> & binValueUncertainties();
-
-  DataPoints   dataPoints(bool average=0, bool excludeEmptyBins=1) const;
-  DataVectors  dataVectors(bool average=0, bool excludeEmptyBins=1) const;
-
-
-  virtual void print() const;
-
-  friend Histogram operator+(const Histogram & left, const Histogram & right);
-  friend Histogram operator-(const Histogram & left, const Histogram & right);
-  friend Histogram operator*(const Histogram & left, const Histogram & right);
-  friend Histogram operator/(const Histogram & left, const Histogram & right);
-
-  friend Histogram operator+(const Histogram & left, double right);
-  friend Histogram operator+(double left, const Histogram & right);
-  friend Histogram operator-(const Histogram & left, double right);
-  friend Histogram operator-(double left, const Histogram & right);
-  friend Histogram operator*(const Histogram & left, double right);
-  friend Histogram operator*(double left, const Histogram & right);
-  friend Histogram operator/(const Histogram & left, double right);
-  friend Histogram operator/(double left, const Histogram & right);
-
-  friend std::ostream& operator<<(std::ostream& out, const Histogram & v);
-
-
-
-
-  ClassDef(Histogram,1)
-
+  //ClassDef(DataPoints,1)
   };
 
-
-
-  } // Math
+  } // namespace MATH
 } // namespace CAP
 
 #endif

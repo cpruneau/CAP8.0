@@ -12,7 +12,8 @@
 #include "ParticlePerformanceDerivedHistos.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 
@@ -45,7 +46,7 @@ void ParticlePerformanceDerivedHistos::create()
   if (reportDebug(__FUNCTION__)) { printCR(); }
 }
 
-void ParticlePerformanceDerivedHistos::loadFrom(TFile & inputFile)
+void ParticlePerformanceDerivedHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   ParticlePerformanceHistos::loadFrom(inputFile);

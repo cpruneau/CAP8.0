@@ -12,7 +12,8 @@
 #include "PtPtAnalyzer.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::PtPtAnalyzer);
 

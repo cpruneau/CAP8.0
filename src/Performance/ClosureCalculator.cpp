@@ -10,11 +10,14 @@
  *
  * *********************************************************************/
 #include "ClosureCalculator.hpp"
+#include "ManagedObjects.hpp"
+#include <memory>
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "RootFileHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
-#include "HistogramGroup.hpp"
+#include "CapFile.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
+#include "HistogramFolder.hpp"
 
 ClassImp(CAP::ClosureCalculator);
 
@@ -40,6 +43,7 @@ void ClosureCalculator::setDefaultConfiguration()
   _configuration.addProperty(createKey(taskName,objectType,"IMPORT:REC_FILE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:CLOSURE_FILE_NAME"),"NONE");
+  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FORCE_REWRITE"),true);
 }
 
 void ClosureCalculator::execute()
@@ -64,42 +68,30 @@ void ClosureCalculator::execute()
     printValue(createKey(taskName,objectType,"EXPORT:PATH"),exportPath);
     printValue(createKey(taskName,objectType,"EXPORT:CLOSURE_FILE_NAME"),exportFileName);
     }
-  TFile & generatorFile = *openOldRootFile(importPath,importGenFileName);
-  TFile & detectorFile  = *openOldRootFile(importPath,importRecoFileName);
-  TFile * closureFile = nullptr; // fix me
-//  if (histogramsForceRewrite())
-//    closureFile = openRecreateRootFile(importPath,exportFileName);
-//  else
-//    closureFile = openNewRootFile(importPath,exportFileName);
-
-  HistogramGroup * generator = new HistogramGroup();
-  HistogramGroup * detector  = new HistogramGroup();
-  HistogramGroup * closure   = new HistogramGroup();
-  generator->setParentTask(this);
-  generator->setName("GeneratorLevel");
-  generator->loadList(generatorFile);
-  detector->setParentTask(this);
-  detector->setName("DetectorLevel");
-  detector->loadList(detectorFile);
-  //detector->setOwnership(false);
-  closure->setName("Closure");
-  closure->setParentTask(this);
-  //closure->setOwnership(false);
-   switch (method)
+  std::unique_ptr<CapFile> generatorFile(CapFile::openOldCapFile(importPath,ManagedObjects<HistogramFolder>::capFileName(importGenFileName)));
+  std::unique_ptr<CapFile> detectorFile (CapFile::openOldCapFile(importPath,ManagedObjects<HistogramFolder>::capFileName(importRecoFileName)));
+  HistogramFolder generator("GeneratorLevel");
+  HistogramFolder detector("DetectorLevel");
+  generator.setParentTask(this);
+  detector.setParentTask(this);
+  generator.importAllHistograms(*generatorFile);
+  detector.importAllHistograms(*detectorFile);
+  // closure = detector - generator (method 0) or detector/generator (method 1), histogram by histogram
+  HistogramFolder closure(detector);
+  closure.setName("Closure");
+  closure.setParentTask(this);
+  switch (method)
     {
-      case 0: printValue("method",0); break;
-      case 1: printValue("method",1); break;
-//      case 0: closure->differenceGroup(*detector,*generator,true); break;
-//      case 1: closure->ratioHistogramGroups(*detector,*generator,true); break;
+      case 0: closure -= generator; break;
+      case 1: HistogramFolder::divideHistogramsLists(1.0,detector,1.0,generator,closure); break;
+      default: throw Exception("Unknown closure method (0: difference, 1: ratio)",__FUNCTION__);
     }
-  closure->saveTo(*closureFile);
-  //TaskAccountant::exportNEexecutedTask(*closureFile);
-  generatorFile.Close();
-  detectorFile.Close();
-  closureFile->Close();
-  delete generator;
-  delete detector;
-  delete closure;
+  bool forceRewrite = _configuration.valueBool(createKey(taskName,objectType,"EXPORT:FORCE_REWRITE"),1,true);
+  std::unique_ptr<CapFile> closureFile(forceRewrite
+                                       ? CapFile::openRecreateCapFile(exportPath,ManagedObjects<HistogramFolder>::capFileName(exportFileName))
+                                       : CapFile::openNewCapFile(exportPath,ManagedObjects<HistogramFolder>::capFileName(exportFileName)));
+  closure.saveTo(*closureFile);
+  closureFile->write();
   if (reportInfo(__FUNCTION__))
     {
     printCR();

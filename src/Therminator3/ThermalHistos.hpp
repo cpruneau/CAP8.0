@@ -9,7 +9,7 @@
  **********************************************************************/
 #ifndef CAP_ThermalHistos
 #define CAP_ThermalHistos
-#include "HistogramGroup.hpp"
+#include "HistogramFolder.hpp"
 #include "ThermalHadronGasFD.hpp"
 
 namespace CAP
@@ -29,7 +29,7 @@ namespace CAP
   //!
   class ThermalHistos
   :
-  public HistogramGroup
+  public HistogramFolder
   {
   public:
   
@@ -42,7 +42,7 @@ namespace CAP
                          const Configuration & configuration,
                          unsigned int index);
   virtual void create();
-  virtual void loadFrom(TFile & inputFile);
+  virtual void loadFrom(CapFile & inputFile);
   virtual void fill(const ThermalHadronGasFD & hadronGas);
   //virtual void fillRho1VsP(ThermalHadronGas & hadronGas, double _volume);
   
@@ -55,61 +55,61 @@ namespace CAP
   
   virtual void cloneB(const ThermalHistos & source);
   
-  TH1 * h_massVsIndex;
-  TH1 * h_numberDensityVsIndex;
-  TH1 * h_energyDensityVsIndex;
-  TH1 * h_entropyDensityVsIndex;
-  TH1 * h_pressureVsIndex;
-  TH1 * h_netBaryonDensityVsIndex;
-  TH1 * h_netChargeDensityVsIndex;
-  TH1 * h_netStrangeDensityVsIndex;
-  TH1 * h_charmDensityVsIndex;
-  TH1 * h_bottomDensityVsIndex;
-  TH1 * h_topDensityVsIndex;
-  TH1 * h_densityWFDVsIndex;
+  Histogram * h_massVsIndex;
+  Histogram * h_numberDensityVsIndex;
+  Histogram * h_energyDensityVsIndex;
+  Histogram * h_entropyDensityVsIndex;
+  Histogram * h_pressureVsIndex;
+  Histogram * h_netBaryonDensityVsIndex;
+  Histogram * h_netChargeDensityVsIndex;
+  Histogram * h_netStrangeDensityVsIndex;
+  Histogram * h_charmDensityVsIndex;
+  Histogram * h_bottomDensityVsIndex;
+  Histogram * h_topDensityVsIndex;
+  Histogram * h_densityWFDVsIndex;
   
   // stable particles only
-  TH1 * diag;
-  TH1 * h_singleDensityVsIndex;
-  TH1 * h_singleDensityWFDVsIndex;
-  TH1 * h_singleDensityRatioVsIndex;
-  vector<TH1*> h_pairDensityVsIndex;
-  vector<TH1*> h_normPairDensityVsIndex;
+  Histogram * diag;
+  Histogram * h_singleDensityVsIndex;
+  Histogram * h_singleDensityWFDVsIndex;
+  Histogram * h_singleDensityRatioVsIndex;
+  vector<Histogram*> h_pairDensityVsIndex;
+  vector<Histogram*> h_normPairDensityVsIndex;
   
   
-  TH1 * h_relNumberDensityVsIndex;
-  //  TH1 * h_relEnergyDensityVsIndex;
-  //  TH1 * h_relEntropyDensityVsIndex;
-  //  TH1 * h_relPressureVsIndex;
+  Histogram * h_relNumberDensityVsIndex;
+  //  Histogram * h_relEnergyDensityVsIndex;
+  //  Histogram * h_relEntropyDensityVsIndex;
+  //  Histogram * h_relPressureVsIndex;
   
   // stable only
-  TH1 * h_relDensityWFDVsIndex;
-  //  TH1 * h_ratioDensityWtoWOFDVsIndex;
-  //  TH1 * h_ratioDensityWtoWOFDVsMass;
+  Histogram * h_relDensityWFDVsIndex;
+  //  Histogram * h_ratioDensityWtoWOFDVsIndex;
+  //  Histogram * h_ratioDensityWtoWOFDVsMass;
   
-  TProfile * h_numberDensityVsMass;
-  TProfile * h_energyDensityVsMass;
-  TProfile * h_entropyDensityVsMass;
-  TProfile * h_pressureVsMass;
-  TProfile * h_netBaryonDensityVsMass;
-  TProfile * h_netChargeDensityVsMass;
-  TProfile * h_netStrangeDensityVsMass;
-  TProfile * h_charmDensityVsMass;
-  TProfile * h_bottomDensityVsMass;
-  TProfile * h_topDensityVsMass;
-  TProfile * h_densityWFDVsMass;
+  Profile * h_numberDensityVsMass;
+  Profile * h_energyDensityVsMass;
+  Profile * h_entropyDensityVsMass;
+  Profile * h_pressureVsMass;
+  Profile * h_netBaryonDensityVsMass;
+  Profile * h_netChargeDensityVsMass;
+  Profile * h_netStrangeDensityVsMass;
+  Profile * h_charmDensityVsMass;
+  Profile * h_bottomDensityVsMass;
+  Profile * h_topDensityVsMass;
+  Profile * h_densityWFDVsMass;
   
-  TProfile * h_relNumberDensityVsMass;
-  TProfile * h_relEnergyDensityVsMass;
-  TProfile * h_relEntropyDensityVsMass;
-  TProfile * h_relPressureVsMass;
-  TProfile * h_relDensityWFDVsMass;
-  TProfile * h_relNetBaryonDensityVsMass;
-  TProfile * h_relNetChargeDensityVsMass;
-  TProfile * h_relNetStrangeDensityVsMass;
-  TProfile * h_relcharmDensityVsMass;
-  TProfile * h_relbottomDensityVsMass;
-  TProfile * h_reltopDensityVsMass;
+  Profile * h_relNumberDensityVsMass;
+  Profile * h_relEnergyDensityVsMass;
+  Profile * h_relEntropyDensityVsMass;
+  Profile * h_relPressureVsMass;
+  Profile * h_relDensityWFDVsMass;
+  Profile * h_relNetBaryonDensityVsMass;
+  Profile * h_relNetChargeDensityVsMass;
+  Profile * h_relNetStrangeDensityVsMass;
+  Profile * h_relcharmDensityVsMass;
+  Profile * h_relbottomDensityVsMass;
+  Profile * h_reltopDensityVsMass;
   
   
   bool    index_fill;

@@ -13,7 +13,8 @@
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 
 ClassImp(CAP::ParticlePairDerivedHistos);
@@ -175,73 +176,73 @@ void ParticlePairDerivedHistos::cloneD(const ParticlePairDerivedHistos & source)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   ParticlePairHistos::cloneB(source);
-  h_n1n1_ptpt  = safeCloneH2(source.h_n1n1_ptpt);
-  h_C2_ptpt    = safeCloneH2(source.h_C2_ptpt);
-  h_C2N_ptpt   = safeCloneH2(source.h_C2N_ptpt);
-  h_R2_ptpt    = safeCloneH2(source.h_R2_ptpt);
+  h_n1n1_ptpt  = histogramLike(source.h_n1n1_ptpt);
+  h_C2_ptpt    = histogramLike(source.h_C2_ptpt);
+  h_C2N_ptpt   = histogramLike(source.h_C2N_ptpt);
+  h_R2_ptpt    = histogramLike(source.h_R2_ptpt);
   
-  h_n1n1_phiphi  = safeCloneH2(source.h_n1n1_phiphi);
-  h_C2_phiphi    = safeCloneH2(source.h_C2_phiphi);
-  h_C2N_phiphi   = safeCloneH2(source.h_C2N_phiphi);
-  h_R2_phiphi    = safeCloneH2(source.h_R2_phiphi);
-  h_P2_phiphi    = safeCloneH2(source.h_P2_phiphi);
-  h_G2_phiphi    = safeCloneH2(source.h_G2_phiphi);
-  h_DptDpt_phiphi  = safeCloneH2(source.h_DptDpt_phiphi);
-  h_pt1pt1_phiphi  = safeCloneH2(source.h_pt1pt1_phiphi);
+  h_n1n1_phiphi  = histogramLike(source.h_n1n1_phiphi);
+  h_C2_phiphi    = histogramLike(source.h_C2_phiphi);
+  h_C2N_phiphi   = histogramLike(source.h_C2N_phiphi);
+  h_R2_phiphi    = histogramLike(source.h_R2_phiphi);
+  h_P2_phiphi    = histogramLike(source.h_P2_phiphi);
+  h_G2_phiphi    = histogramLike(source.h_G2_phiphi);
+  h_DptDpt_phiphi  = histogramLike(source.h_DptDpt_phiphi);
+  h_pt1pt1_phiphi  = histogramLike(source.h_pt1pt1_phiphi);
   
-  h_n1n1_etaeta    = safeCloneH2(source.h_n1n1_etaeta);
-  h_C2_etaeta      = safeCloneH2(source.h_C2_etaeta);
-  h_C2N_etaeta     = safeCloneH2(source.h_C2N_etaeta);
-  h_R2_etaeta      = safeCloneH2(source.h_R2_etaeta);
-  h_G2_etaeta      = safeCloneH2(source.h_G2_etaeta);
-  h_P2_etaeta      = safeCloneH2(source.h_P2_etaeta);
-  h_DptDpt_etaeta  = safeCloneH2(source.h_DptDpt_etaeta);
-  h_pt1pt1_etaeta  = safeCloneH2( source.h_pt1pt1_etaeta);
+  h_n1n1_etaeta    = histogramLike(source.h_n1n1_etaeta);
+  h_C2_etaeta      = histogramLike(source.h_C2_etaeta);
+  h_C2N_etaeta     = histogramLike(source.h_C2N_etaeta);
+  h_R2_etaeta      = histogramLike(source.h_R2_etaeta);
+  h_G2_etaeta      = histogramLike(source.h_G2_etaeta);
+  h_P2_etaeta      = histogramLike(source.h_P2_etaeta);
+  h_DptDpt_etaeta  = histogramLike(source.h_DptDpt_etaeta);
+  h_pt1pt1_etaeta  = histogramLike(source.h_pt1pt1_etaeta);
   
-  h_n1n1_yY    = safeCloneH2(source.h_n1n1_yY);
-  h_C2_yY      = safeCloneH2(source.h_C2_yY);
-  h_C2N_yY     = safeCloneH2(source.h_C2N_yY);
-  h_R2_yY      = safeCloneH2(source.h_R2_yY);
-  h_G2_yY      = safeCloneH2(source.h_G2_yY);
-  h_P2_yY      = safeCloneH2(source.h_P2_yY);
-  h_DptDpt_yY  = safeCloneH2(source.h_DptDpt_yY);
-  h_pt1pt1_yY  = safeCloneH2(source.h_pt1pt1_yY);
+  h_n1n1_yY    = histogramLike(source.h_n1n1_yY);
+  h_C2_yY      = histogramLike(source.h_C2_yY);
+  h_C2N_yY     = histogramLike(source.h_C2N_yY);
+  h_R2_yY      = histogramLike(source.h_R2_yY);
+  h_G2_yY      = histogramLike(source.h_G2_yY);
+  h_P2_yY      = histogramLike(source.h_P2_yY);
+  h_DptDpt_yY  = histogramLike(source.h_DptDpt_yY);
+  h_pt1pt1_yY  = histogramLike(source.h_pt1pt1_yY);
   
-  h_n1n1_DetaDphi    = safeCloneH2(source.h_n1n1_DetaDphi);
-  h_C2_DetaDphi      = safeCloneH2(source.h_C2_DetaDphi);
-  h_C2N_DetaDphi     = safeCloneH2(source.h_C2N_DetaDphi);
-  h_C2O_DetaDphi     = safeCloneH2(source.h_C2O_DetaDphi);
-  h_R2_DetaDphi      = safeCloneH2(source.h_R2_DetaDphi);
-  h_P2_DetaDphi      = safeCloneH2(source.h_P2_DetaDphi);
-  h_G2_DetaDphi      = safeCloneH2(source.h_G2_DetaDphi);
-  h_DptDpt_DetaDphi  = safeCloneH2(source.h_DptDpt_DetaDphi);
-  h_pt1pt1_DetaDphi  = safeCloneH2(source.h_pt1pt1_DetaDphi);
+  h_n1n1_DetaDphi    = histogramLike(source.h_n1n1_DetaDphi);
+  h_C2_DetaDphi      = histogramLike(source.h_C2_DetaDphi);
+  h_C2N_DetaDphi     = histogramLike(source.h_C2N_DetaDphi);
+  h_C2O_DetaDphi     = histogramLike(source.h_C2O_DetaDphi);
+  h_R2_DetaDphi      = histogramLike(source.h_R2_DetaDphi);
+  h_P2_DetaDphi      = histogramLike(source.h_P2_DetaDphi);
+  h_G2_DetaDphi      = histogramLike(source.h_G2_DetaDphi);
+  h_DptDpt_DetaDphi  = histogramLike(source.h_DptDpt_DetaDphi);
+  h_pt1pt1_DetaDphi  = histogramLike(source.h_pt1pt1_DetaDphi);
   
-  h_C2_DetaDphi_shft  = safeCloneH2(source.h_C2_DetaDphi_shft);
-  h_C2N_DetaDphi_shft = safeCloneH2(source.h_C2N_DetaDphi_shft);
-  h_C2O_DetaDphi_shft = safeCloneH2(source.h_C2O_DetaDphi_shft);
-  h_R2_DetaDphi_shft  = safeCloneH2(source.h_R2_DetaDphi_shft);
-  h_P2_DetaDphi_shft  = safeCloneH2(source.h_P2_DetaDphi_shft);
-  h_G2_DetaDphi_shft  = safeCloneH2(source.h_G2_DetaDphi_shft);
-  h_DptDpt_DetaDphi_shft  = safeCloneH2(source.h_DptDpt_DetaDphi_shft);
+  h_C2_DetaDphi_shft  = histogramLike(source.h_C2_DetaDphi_shft);
+  h_C2N_DetaDphi_shft = histogramLike(source.h_C2N_DetaDphi_shft);
+  h_C2O_DetaDphi_shft = histogramLike(source.h_C2O_DetaDphi_shft);
+  h_R2_DetaDphi_shft  = histogramLike(source.h_R2_DetaDphi_shft);
+  h_P2_DetaDphi_shft  = histogramLike(source.h_P2_DetaDphi_shft);
+  h_G2_DetaDphi_shft  = histogramLike(source.h_G2_DetaDphi_shft);
+  h_DptDpt_DetaDphi_shft  = histogramLike(source.h_DptDpt_DetaDphi_shft);
   
-  h_n1n1_DyDphi  = safeCloneH2(source.h_n1n1_DyDphi);
-  h_C2_DyDphi    = safeCloneH2(source.h_C2_DyDphi);
-  h_C2N_DyDphi   = safeCloneH2(source.h_C2N_DyDphi);
-  h_C2O_DyDphi   = safeCloneH2(source.h_C2O_DyDphi);
-  h_R2_DyDphi    = safeCloneH2(source.h_R2_DyDphi);
-  h_P2_DyDphi    = safeCloneH2(source.h_P2_DyDphi);
-  h_G2_DyDphi    = safeCloneH2(source.h_G2_DyDphi);
-  h_DptDpt_DyDphi  = safeCloneH2(source.h_DptDpt_DyDphi);
+  h_n1n1_DyDphi  = histogramLike(source.h_n1n1_DyDphi);
+  h_C2_DyDphi    = histogramLike(source.h_C2_DyDphi);
+  h_C2N_DyDphi   = histogramLike(source.h_C2N_DyDphi);
+  h_C2O_DyDphi   = histogramLike(source.h_C2O_DyDphi);
+  h_R2_DyDphi    = histogramLike(source.h_R2_DyDphi);
+  h_P2_DyDphi    = histogramLike(source.h_P2_DyDphi);
+  h_G2_DyDphi    = histogramLike(source.h_G2_DyDphi);
+  h_DptDpt_DyDphi  = histogramLike(source.h_DptDpt_DyDphi);
   
-  h_n1n1_DyDphi_shft   = safeCloneH2(source.h_n1n1_DyDphi_shft);
-  h_C2_DyDphi_shft     = safeCloneH2(source.h_C2_DyDphi_shft);
-  h_C2N_DyDphi_shft    = safeCloneH2(source.h_C2N_DyDphi_shft);
-  h_C2O_DyDphi_shft    = safeCloneH2(source.h_C2O_DyDphi_shft);
-  h_R2_DyDphi_shft     = safeCloneH2(source.h_R2_DyDphi_shft);
-  h_P2_DyDphi_shft     = safeCloneH2(source.h_P2_DyDphi_shft);
-  h_G2_DyDphi_shft     = safeCloneH2(source.h_G2_DyDphi_shft);
-  h_DptDpt_DyDphi_shft = safeCloneH2(source.h_DptDpt_DyDphi_shft);
+  h_n1n1_DyDphi_shft   = histogramLike(source.h_n1n1_DyDphi_shft);
+  h_C2_DyDphi_shft     = histogramLike(source.h_C2_DyDphi_shft);
+  h_C2N_DyDphi_shft    = histogramLike(source.h_C2N_DyDphi_shft);
+  h_C2O_DyDphi_shft    = histogramLike(source.h_C2O_DyDphi_shft);
+  h_R2_DyDphi_shft     = histogramLike(source.h_R2_DyDphi_shft);
+  h_P2_DyDphi_shft     = histogramLike(source.h_P2_DyDphi_shft);
+  h_G2_DyDphi_shft     = histogramLike(source.h_G2_DyDphi_shft);
+  h_DptDpt_DyDphi_shft = histogramLike(source.h_DptDpt_DyDphi_shft);
 }
 
 void ParticlePairDerivedHistos::configure(const String & taskName,
@@ -346,126 +347,118 @@ void ParticlePairDerivedHistos::create()
   }
 }
 
-void ParticlePairDerivedHistos::loadFrom(TFile & inputFile)
+void ParticlePairDerivedHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_n1n1_phiphi          = importH2(inputFile, CAP::createName(_histogramBaseName,"n1n1_phiphi"));
-  h_C2_phiphi            = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_phiphi"));
-  h_C2N_phiphi           = importH2(inputFile, CAP::createName(_histogramBaseName,"C2N_phiphi"));
-  h_R2_phiphi            = importH2(inputFile, CAP::createName(_histogramBaseName,"R2_phiphi"));
+  h_n1n1_phiphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_phiphi"));
+  h_C2_phiphi            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_phiphi"));
+  h_C2N_phiphi           = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_phiphi"));
+  h_R2_phiphi            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_phiphi"));
   
-  h_n1n1_ptpt            = importH2(inputFile, CAP::createName(_histogramBaseName,"n1n1_ptpt"));
-  h_C2_ptpt              = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_ptpt"));
-  h_C2N_ptpt             = importH2(inputFile, CAP::createName(_histogramBaseName,"C2N_ptpt"));
-  h_R2_ptpt              = importH2(inputFile, CAP::createName(_histogramBaseName,"R2_ptpt"));
+  h_n1n1_ptpt            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_ptpt"));
+  h_C2_ptpt              = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_ptpt"));
+  h_C2N_ptpt             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_ptpt"));
+  h_R2_ptpt              = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_ptpt"));
   
   if (p2_fill)
   {
-    h_pt1pt1_phiphi      = importH2(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_phiphi"));
-    h_DptDpt_phiphi      = importH2(inputFile, CAP::createName(_histogramBaseName,"DptDpt_phiphi"));
-    h_P2_phiphi          = importH2(inputFile, CAP::createName(_histogramBaseName,"P2_phiphi"));
-    h_G2_phiphi          = importH2(inputFile, CAP::createName(_histogramBaseName,"G2_phiphi"));
+    h_pt1pt1_phiphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_phiphi"));
+    h_DptDpt_phiphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_phiphi"));
+    h_P2_phiphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_phiphi"));
+    h_G2_phiphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_phiphi"));
   }
   
   if (eta_fill)
   {
-    h_n1n1_etaeta        = importH2(inputFile, CAP::createName(_histogramBaseName,"n1n1_etaeta"));
-    h_C2_etaeta          = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_etaeta"));
-    h_C2N_etaeta         = importH2(inputFile, CAP::createName(_histogramBaseName,"C2N_etaeta"));
-    h_R2_etaeta          = importH2(inputFile, CAP::createName(_histogramBaseName,"R2_etaeta"));
+    h_n1n1_etaeta        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_etaeta"));
+    h_C2_etaeta          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_etaeta"));
+    h_C2N_etaeta         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_etaeta"));
+    h_R2_etaeta          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_etaeta"));
     
-    h_n1n1_DetaDphi      = importH2(inputFile, CAP::createName(_histogramBaseName,"n1n1_DetaDphi_shft"));
-    h_C2_DetaDphi        = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_DetaDphi_shft"));
-    h_C2N_DetaDphi       = importH2(inputFile, CAP::createName(_histogramBaseName,"C2N_DetaDphi_shft"));
-    h_R2_DetaDphi        = importH2(inputFile, CAP::createName(_histogramBaseName,"R2_DetaDphi_shft"));
+    h_n1n1_DetaDphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_DetaDphi_shft"));
+    h_C2_DetaDphi        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DetaDphi_shft"));
+    h_C2N_DetaDphi       = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_DetaDphi_shft"));
+    h_R2_DetaDphi        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_DetaDphi_shft"));
     
-    h_C2_DetaDphi_shft   = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_DetaDphi_shft"));
-    h_C2N_DetaDphi_shft  = importH2(inputFile, CAP::createName(_histogramBaseName,"C2N_DetaDphi_shft"));
-    h_R2_DetaDphi_shft   = importH2(inputFile, CAP::createName(_histogramBaseName,"R2_DetaDphi_shft"));
+    h_C2_DetaDphi_shft   = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DetaDphi_shft"));
+    h_C2N_DetaDphi_shft  = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_DetaDphi_shft"));
+    h_R2_DetaDphi_shft   = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_DetaDphi_shft"));
     
     if (p2_fill)
     {
-      h_pt1pt1_etaeta        = importH2(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_etaeta"));
-      h_DptDpt_etaeta        = importH2(inputFile, CAP::createName(_histogramBaseName,"DptDpt_etaeta"));
-      h_P2_etaeta            = importH2(inputFile, CAP::createName(_histogramBaseName,"P2_etaeta"));
-      h_G2_etaeta            = importH2(inputFile, CAP::createName(_histogramBaseName,"G2_etaeta"));
+      h_pt1pt1_etaeta        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_etaeta"));
+      h_DptDpt_etaeta        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_etaeta"));
+      h_P2_etaeta            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_etaeta"));
+      h_G2_etaeta            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_etaeta"));
       
-      h_pt1pt1_DetaDphi      = importH2(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_DetaDphi_shft"));
-      h_DptDpt_DetaDphi      = importH2(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DetaDphi_shft"));
-      h_P2_DetaDphi          = importH2(inputFile, CAP::createName(_histogramBaseName,"P2_DetaDphi_shft"));
-      h_G2_DetaDphi          = importH2(inputFile, CAP::createName(_histogramBaseName,"G2_DetaDphi_shft"));
-      h_DptDpt_DetaDphi_shft = importH2(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DetaDphi_shft"));
-      h_P2_DetaDphi_shft     = importH2(inputFile, CAP::createName(_histogramBaseName,"P2_DetaDphi_shft"));
-      h_G2_DetaDphi_shft     = importH2(inputFile, CAP::createName(_histogramBaseName,"G2_DetaDphi_shft"));
+      h_pt1pt1_DetaDphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_DetaDphi_shft"));
+      h_DptDpt_DetaDphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DetaDphi_shft"));
+      h_P2_DetaDphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_DetaDphi_shft"));
+      h_G2_DetaDphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_DetaDphi_shft"));
+      h_DptDpt_DetaDphi_shft = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DetaDphi_shft"));
+      h_P2_DetaDphi_shft     = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_DetaDphi_shft"));
+      h_G2_DetaDphi_shft     = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_DetaDphi_shft"));
     }
   }
   
   if (rapidity_fill)
   {
-    h_n1n1_yY           = importH2(inputFile, CAP::createName(_histogramBaseName,"n1n1_yY"));
-    h_C2_yY             = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_yY"));
-    h_C2N_yY            = importH2(inputFile,CAP::createName(_histogramBaseName,"C2N_yY"));
-    h_R2_yY             = importH2(inputFile, CAP::createName(_histogramBaseName,"R2_yY"));
+    h_n1n1_yY           = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_yY"));
+    h_C2_yY             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_yY"));
+    h_C2N_yY            = importHistogram(inputFile,CAP::createName(_histogramBaseName,"C2N_yY"));
+    h_R2_yY             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_yY"));
     
-    h_n1n1_DyDphi       = importH2(inputFile, CAP::createName(_histogramBaseName,"n1n1_DyDphi"));
-    h_C2_DyDphi         = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi"));
-    h_C2N_DyDphi        = importH2(inputFile, CAP::createName(_histogramBaseName,"C2N_DyDphi"));
-    h_C2O_DyDphi        = importH2(inputFile, CAP::createName(_histogramBaseName,"C2O_DyDphi"));
-    h_R2_DyDphi         = importH2(inputFile, CAP::createName(_histogramBaseName,"R2_DyDphi"));
+    h_n1n1_DyDphi       = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_DyDphi"));
+    h_C2_DyDphi         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi"));
+    h_C2N_DyDphi        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_DyDphi"));
+    h_C2O_DyDphi        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2O_DyDphi"));
+    h_R2_DyDphi         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_DyDphi"));
     
-    h_C2_DyDphi_shft    = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi_shft"));
-    h_C2N_DyDphi_shft   = importH2(inputFile, CAP::createName(_histogramBaseName,"C2N_DyDphi_shft"));
-    h_C2O_DyDphi_shft   = importH2(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi_shft"));
-    h_R2_DyDphi_shft    = importH2(inputFile, CAP::createName(_histogramBaseName,"R2_DyDphi_shft"));
+    h_C2_DyDphi_shft    = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi_shft"));
+    h_C2N_DyDphi_shft   = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_DyDphi_shft"));
+    h_C2O_DyDphi_shft   = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi_shft"));
+    h_R2_DyDphi_shft    = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_DyDphi_shft"));
     
     if (p2_fill)
     {
-      h_pt1pt1_yY         = importH2(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_yY"));
-      h_DptDpt_yY         = importH2(inputFile, CAP::createName(_histogramBaseName,"DptDpt_yY"));
-      h_P2_yY             = importH2(inputFile, CAP::createName(_histogramBaseName,"P2_yY"));
-      h_G2_yY             = importH2(inputFile, CAP::createName(_histogramBaseName,"G2_yY"));
+      h_pt1pt1_yY         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_yY"));
+      h_DptDpt_yY         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_yY"));
+      h_P2_yY             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_yY"));
+      h_G2_yY             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_yY"));
       
-      h_pt1pt1_DyDphi     = importH2(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_DyDphi_shft"));
-      h_DptDpt_DyDphi     = importH2(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DyDphi_shft"));
-      h_P2_DyDphi         = importH2(inputFile, CAP::createName(_histogramBaseName,"P2_DyDphi_shft"));
-      h_G2_DyDphi         = importH2(inputFile, CAP::createName(_histogramBaseName,"G2_DyDphi_shft"));
+      h_pt1pt1_DyDphi     = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_DyDphi_shft"));
+      h_DptDpt_DyDphi     = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DyDphi_shft"));
+      h_P2_DyDphi         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_DyDphi_shft"));
+      h_G2_DyDphi         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_DyDphi_shft"));
       
-      h_DptDpt_DyDphi_shft= importH2(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DyDphi_shft"));
-      h_P2_DyDphi_shft    = importH2(inputFile, CAP::createName(_histogramBaseName,"P2_DyDphi_shft"));
-      h_G2_DyDphi_shft    = importH2(inputFile, CAP::createName(_histogramBaseName,"G2_DyDphi_shft"));
+      h_DptDpt_DyDphi_shft= importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DyDphi_shft"));
+      h_P2_DyDphi_shft    = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_DyDphi_shft"));
+      h_G2_DyDphi_shft    = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_DyDphi_shft"));
     }
   }
 }
 
-void quickCopy(TH2 * source, TH2 * target)
+void quickCopy(Histogram * source, Histogram * target)
 {
-  int sNx = source->GetNbinsX();
-  int sNy = source->GetNbinsY();
-  int tNx = target->GetNbinsX();
-  int tNy = target->GetNbinsY();
+  int sNx = source->nBins(0);
+  int sNy = source->nBins(1);
+  int tNx = target->nBins(0);
+  int tNy = target->nBins(1);
   
   
   if (sNx!=tNx || sNy!=tNy)
   {
-    String s = source->GetName();
+    String s = source->name();
     s += "-->";
-    s += target->GetName();
-    throw CAP::HistogramException(s,"sNx!=tNx || sNy!=tNy","ParticlePairDerivedHistos::quickCopy(TH2 * source, TH2 * target)");
+    s += target->name();
+    throw CAP::HistogramException(s,"sNx!=tNx || sNy!=tNy","ParticlePairDerivedHistos::quickCopy(Histogram * source, Histogram * target)");
   }
-  for (int iX=1; iX<sNx; iX++)
-  {
-    for (int iY=1; iY<sNy; iY++)
-    {
-      double v  = source->GetBinContent(iX,iY);
-      double ev = source->GetBinError(iX,iY);
-      target->SetBinContent(iX,iY,v);
-      target->SetBinError(iX,iY,ev);
-    }
-  }
+  for (unsigned int k=0; k<source->nBinsTotal(); k++)
+    target->setBinAtGlobal(k,source->binEntriesAtGlobal(k),source->binValueAtGlobal(k),source->binUncertaintyAtGlobal(k));
 }
 
 
-// HistogramGroup from ParticlePairDerivedHistos must be normalized "per event" before calling this function
+// HistogramFolder from ParticlePairDerivedHistos must be normalized "per event" before calling this function
 void ParticlePairDerivedHistos::
 calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
                            ParticleSingleDerivedHistos & part2Histos,
@@ -492,21 +485,21 @@ calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
   if (!h_C2N_ptpt )              throw HistogramException("LOGIC","!h_C2N_ptpt",__FUNCTION__);
   if (!h_R2_ptpt )               throw HistogramException("LOGIC","!h_R2_ptpt",__FUNCTION__);
   
-  yield2 = part2Histos.h_n1_pt->Integral();
+  yield2 = part2Histos.h_n1_pt->integral();
   calculateN1N1_H1H1H2( part1Histos.h_n1_pt,   part2Histos.h_n1_pt,  h_n1n1_ptpt,1.0, 1.0);
-  h_C2_ptpt->Add(pairHistos.h_n2_ptpt,h_n1n1_ptpt,1.0,-1.0);
-  h_C2N_ptpt->Add(h_C2_ptpt);
-  h_C2N_ptpt->Scale(1.0/yield2);
+  h_C2_ptpt->setAsSumOf(*pairHistos.h_n2_ptpt,*h_n1n1_ptpt,1.0,-1.0);
+  h_C2N_ptpt->add(*h_C2_ptpt);
+  h_C2N_ptpt->scale(1.0/yield2);
   calculateR2_H2H2H2(pairHistos.h_n2_ptpt,h_n1n1_ptpt,h_R2_ptpt,0, 1.0, 1.0);
   
   //
   // phi vs phi
   //
-  yield2 = part2Histos.h_n1_phi->Integral();
+  yield2 = part2Histos.h_n1_phi->integral();
   calculateN1N1_H1H1H2( part1Histos.h_n1_phi,  part2Histos.h_n1_phi, h_n1n1_phiphi,1.0, 1.0);
-  h_C2_phiphi->Add(pairHistos.h_n2_phiphi,h_n1n1_phiphi,1.0,-1.0);
-  h_C2N_phiphi->Add(h_C2_phiphi);
-  h_C2N_phiphi->Scale(1.0/yield2);
+  h_C2_phiphi->setAsSumOf(*pairHistos.h_n2_phiphi,*h_n1n1_phiphi,1.0,-1.0);
+  h_C2N_phiphi->add(*h_C2_phiphi);
+  h_C2N_phiphi->scale(1.0/yield2);
   calculateR2_H2H2H2(pairHistos.h_n2_phiphi,h_n1n1_phiphi,h_R2_phiphi,0, 1.0, 1.0);
   
   if (p2_fill)
@@ -514,8 +507,8 @@ calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
     avgPt1Phi = avgValue(part1Histos.h_avg_pt_phi);
     avgPt2Phi = avgValue(part2Histos.h_avg_pt_phi);
     scalingFactorPhi = 1.0/avgPt1Phi/avgPt2Phi;
-    h_P2_phiphi->Add(h_DptDpt_phiphi,h_DptDpt_phiphi,1.0,0.0);
-    h_P2_phiphi->Scale(scalingFactorPhi);
+    h_P2_phiphi->setAsSumOf(*h_DptDpt_phiphi,*h_DptDpt_phiphi,1.0,0.0);
+    h_P2_phiphi->scale(scalingFactorPhi);
   }
   
   
@@ -525,20 +518,20 @@ calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
     //
     // eta vs eta
     //
-    yield2 = part2Histos.h_n1_eta->Integral();
+    yield2 = part2Histos.h_n1_eta->integral();
     calculateN1N1_H1H1H2(part1Histos.h_n1_eta,part2Histos.h_n1_eta,h_n1n1_etaeta,1.0, 1.0);
-    h_C2_etaeta->Add(pairHistos.h_n2_etaeta,h_n1n1_etaeta,1.0,-1.0);
-    h_C2N_etaeta->Add(h_C2_etaeta);
-    h_C2N_etaeta->Scale(1.0/yield2);
+    h_C2_etaeta->setAsSumOf(*pairHistos.h_n2_etaeta,*h_n1n1_etaeta,1.0,-1.0);
+    h_C2N_etaeta->add(*h_C2_etaeta);
+    h_C2N_etaeta->scale(1.0/yield2);
     calculateR2_H2H2H2(pairHistos.h_n2_etaeta,h_n1n1_etaeta,h_R2_etaeta,0, 1.0, 1.0);
     
     //
     // Deta vs Dphi
     //
     reduce_n1EtaPhiN1EtaPhiOntoN1N1DetaDphi(part1Histos.h_n1_phiEta,part2Histos.h_n1_phiEta,h_n1n1_DetaDphi,Deta_nbins,Dphi_nbins);
-    h_C2_DetaDphi->Add(pairHistos.h_n2_DetaDphi,h_n1n1_DetaDphi, 1.0, -1.0);
-    h_C2N_DetaDphi->Add(h_C2_DetaDphi);
-    h_C2N_DetaDphi->Scale(1.0/yield2);
+    h_C2_DetaDphi->setAsSumOf(*pairHistos.h_n2_DetaDphi,*h_n1n1_DetaDphi,1.0,-1.0);
+    h_C2N_DetaDphi->add(*h_C2_DetaDphi);
+    h_C2N_DetaDphi->scale(1.0/yield2);
     calculateR2_H2H2H2(pairHistos.h_n2_DetaDphi,h_n1n1_DetaDphi,h_R2_DetaDphi,0,1.0,1.0);
     
     shiftY(*h_C2N_DetaDphi,*h_C2N_DetaDphi_shft,Dphi_nbins_shft);
@@ -550,13 +543,13 @@ calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
       avgPt1Eta = avgValue(part1Histos.h_avg_pt_eta);
       avgPt2Eta = avgValue(part2Histos.h_avg_pt_eta);
       scalingFactorEta = 1.0/avgPt1Eta/avgPt2Eta;
-      h_P2_etaeta->Add(h_DptDpt_etaeta,h_DptDpt_etaeta,1.0,0.0);
-      h_P2_etaeta->Scale(scalingFactorEta);
+      h_P2_etaeta->setAsSumOf(*h_DptDpt_etaeta,*h_DptDpt_etaeta,1.0,0.0);
+      h_P2_etaeta->scale(scalingFactorEta);
       shiftY(*h_DptDpt_DetaDphi, *h_DptDpt_DetaDphi_shft,Dphi_nbins_shft);
       
       /// calculate average pt base on h_avg_pt_eta histograms
-      h_P2_DetaDphi->Add(h_DptDpt_DetaDphi,h_DptDpt_DetaDphi,1.0,0.0);
-      h_P2_DetaDphi->Scale(scalingFactorEta);
+      h_P2_DetaDphi->setAsSumOf(*h_DptDpt_DetaDphi,*h_DptDpt_DetaDphi,1.0,0.0);
+      h_P2_DetaDphi->scale(scalingFactorEta);
       //symmetrizeDeltaEtaDeltaPhi(h_P2_DetaDphi,ijNormalization);
       shiftY(*h_P2_DetaDphi,*h_P2_DetaDphi_shft, Dphi_nbins_shft);
 
@@ -572,11 +565,11 @@ calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
     //
     // y vs y
     //
-    yield2 = part2Histos.h_n1_y->Integral();
+    yield2 = part2Histos.h_n1_y->integral();
     calculateN1N1_H1H1H2(part1Histos.h_n1_y,part2Histos.h_n1_y,h_n1n1_yY,1.0, 1.0);
-    h_C2_yY->Add(pairHistos.h_n2_yY,h_n1n1_yY,1.0,-1.0);
-    h_C2N_yY->Add(h_C2_yY);
-    h_C2N_yY->Scale(1.0/yield2);
+    h_C2_yY->setAsSumOf(*pairHistos.h_n2_yY,*h_n1n1_yY,1.0,-1.0);
+    h_C2N_yY->add(*h_C2_yY);
+    h_C2N_yY->scale(1.0/yield2);
     calculateR2_H2H2H2(pairHistos.h_n2_yY,h_n1n1_yY,h_R2_yY,0, 1.0, 1.0);
     
     //
@@ -584,9 +577,9 @@ calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
     //
     //if (reportDebug(__FUNCTION__))  cout << "Calculate XXX_DyDphi" << endl;
     reduce_n1EtaPhiN1EtaPhiOntoN1N1DetaDphi(part1Histos.h_n1_phiY,part2Histos.h_n1_phiY,h_n1n1_DyDphi,Drapidity_nbins,Dphi_nbins);
-    h_C2_DyDphi->Add(pairHistos.h_n2_DyDphi,h_n1n1_DyDphi, 1.0, -1.0);
-    h_C2N_DyDphi->Add(h_C2_DyDphi);
-    h_C2N_DyDphi->Scale(1.0/yield2);
+    h_C2_DyDphi->setAsSumOf(*pairHistos.h_n2_DyDphi,*h_n1n1_DyDphi,1.0,-1.0);
+    h_C2N_DyDphi->add(*h_C2_DyDphi);
+    h_C2N_DyDphi->scale(1.0/yield2);
     calculateR2_H2H2H2(pairHistos.h_n2_DyDphi,h_n1n1_DyDphi,h_R2_DyDphi,0,1.0,1.0);
     
     vector<double> omegaFactor;
@@ -605,14 +598,14 @@ calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
       avgPt1Y = avgValue(part1Histos.h_avg_pt_y);
       avgPt2Y = avgValue(part2Histos.h_avg_pt_y);
       scalingFactorY = 1.0/avgPt1Y/avgPt2Y;
-      h_P2_yY->Add(h_DptDpt_yY,h_DptDpt_yY,1.0,0.0);
-      h_P2_yY->Scale(scalingFactorY);
+      h_P2_yY->setAsSumOf(*h_DptDpt_yY,*h_DptDpt_yY,1.0,0.0);
+      h_P2_yY->scale(scalingFactorY);
       //if (reportDebug(__FUNCTION__))  cout <<  " shiftY(*h_R2_DyDphi,*h_R2_DyDphi_shft,Dphi_nbins_shft)" << endl;
       shiftY(*h_DptDpt_DyDphi, *h_DptDpt_DyDphi_shft,Dphi_nbins_shft);
       
       /// calculate average pt base on h_avg_pt_eta histograms
-      h_P2_DyDphi->Add(h_DptDpt_DyDphi,h_DptDpt_DyDphi,1.0,0.0);
-      h_P2_DyDphi->Scale(scalingFactorY);
+      h_P2_DyDphi->setAsSumOf(*h_DptDpt_DyDphi,*h_DptDpt_DyDphi,1.0,0.0);
+      h_P2_DyDphi->scale(scalingFactorY);
       //symmetrizeDeltaEtaDeltaPhi(h_P2_DetaDphi,ijNormalization);
       shiftY(*h_P2_DyDphi,*h_P2_DyDphi_shft, Dphi_nbins_shft);
       calculateG2_H2H2H2H2( h_DptDpt_yY,       h_n1n1_yY,       h_pt1pt1_yY,       h_G2_yY,       ijNormalization, bincorrection, 1.0);
@@ -623,39 +616,39 @@ calculateDerivedHistograms(ParticleSingleDerivedHistos & part1Histos,
   }
 }
 
-void ParticlePairDerivedHistos::calculateOmegaFactor(TH2 * source, vector<double> & omegaFactor)
+void ParticlePairDerivedHistos::calculateOmegaFactor(Histogram * source, vector<double> & omegaFactor)
 {
-  int nY  = source->GetNbinsX(); // bins in delta rapidity
+  int nY  = source->nBins(0); // bins in delta rapidity
   double y0;
   y0 = 2.0*rapidity_maximumAcc;
   for (int iY=1; iY<=nY; iY++) // delta rapidity loop
   {
-    double dy = source->GetXaxis()->GetBinCenter(iY);
+    double dy = source->binCenter((iY)-1,0);
     omegaFactor.push_back(1.0- absolute(dy/y0));
     //cout << " index : " << iY << "  dy: " << dy << " Omega: " << omegaFactor[iY] << endl;
   }
 }
 
 
-void ParticlePairDerivedHistos::calculateAverageYbar(TH2 * source,
-                                                     TH2 * target,
+void ParticlePairDerivedHistos::calculateAverageYbar(Histogram * source,
+                                                     Histogram * target,
                                                      vector<double> & omegaFactor)
 {
-  //  cout << "calculateAverageYbar(TH2 *source,TH2*target,vector<double>&omegaFactor)" << endl;
+  //  cout << "calculateAverageYbar(Histogram *source,Histogram*target,vector<double>&omegaFactor)" << endl;
   double scale = 1.0;
-  int nX = source->GetNbinsX();
-  int nY = source->GetNbinsY();
+  int nX = source->nBins(0);
+  int nY = source->nBins(1);
   for (int iX=1; iX<=nX; iX++)
   {
     scale = 1.0/omegaFactor[iX-1];
     //if (iX>180  &&  iX<220) cout << " iX: " << iX << " omegaFactor: " << omegaFactor[iX-1] << " scale:" << scale << endl;
     for (int iY=1; iY<=nY; iY++)
     {
-      double v  =  source->GetBinContent(iX,iY);
-      double ev =  source->GetBinError(iX,iY);
+      double v  =  source->binValueAt((iX)-1,(iY)-1);
+      double ev =  source->binUncertaintyAt((iX)-1,(iY)-1);
       //if (iX>190  &&  iX<210) cout << " v: " << v << "+-" << ev << " v*scale:" << v*scale << "+-" << ev*scale << endl;
-      target->SetBinContent(iX,iY,v*scale);
-      target->SetBinError(iX,iY,ev*scale);
+      target->setBinValueAt(unsigned((iX)-1),unsigned((iY)-1),v*scale);
+      target->setBinUncertaintyAt(unsigned((iX)-1),unsigned((iY)-1),ev*scale);
     }
   }
 }

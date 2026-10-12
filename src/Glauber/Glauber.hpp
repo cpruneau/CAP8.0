@@ -1,7 +1,7 @@
 #ifndef CAP__GlauberTask
 #define CAP__GlauberTask
 #include "Task.hpp"
-#include "HistogramGroup.hpp"
+#include "HistogramFolder.hpp"
 #include "Histogramset.hpp"
 
 namespace CAP
@@ -42,6 +42,10 @@ using namespace std;
 //!
 //!Class implements Glauber MC generator
 //!
+//! @brief Legacy Monte Carlo Glauber code (TGlauberMC of Loizides, Nagle and Steinberg, PHOBOS Glauber Monte Carlo).
+//! @note Not part of the build (Glauber.hpp is not listed in Glauber/CMakeLists.txt); superseded by GlauberGenerator,
+//! GlauberNucleus, GlauberEvent and GlauberAnalyzer.
+//!
 class GlauberMC
 {
   public:
@@ -81,12 +85,16 @@ class GlauberMC
     bool        calculateEvent(double impactPar);
 
   public:
+  //! @brief Default constructor.
   GlauberMC();
   GlauberMC(const char* NA = "Pb", const char* NB = "Pb", double xsect = 42, double xsectsigma=0);
+  //! @brief Copy constructor. @param glauberMC object to copy
   GlauberMC(const GlauberMC & glauberMC );
+  //! @brief Copy assignment. @param glauberMC object to copy @return this object
   GlauberMC operator=(const GlauberMC & glauberMC);
 
 
+  //! @brief Destructor.
   virtual              ~GlauberMC() {delete fNt; fNt=0;}
 
     double            CalcDens(TF1 & prof, double xval, double yval) const;
@@ -610,7 +618,7 @@ double GlauberMC::CalcDens(TF1 & prof, double xval, double yval) const
 
 void GlauberMC::Draw(Option_t* option)
 {
-  static TH2F *h2f = new TH2F("hGlauberMC",";x (fm);y(fm)",1,-18,18,1,-12,12);
+  static Histogram *h2f = new Histogram("hGlauberMC",";x (fm);y(fm)",1,-18,18,1,-12,12);
 
   h2f->GlauberNucleon();
   h2f->setStats(0);
@@ -665,10 +673,10 @@ TObjArray *GlauberMC::allNucleons()
   TObjArray *allNucleons=new TObjArray(_nucleonsA.size()+_nucleonsB.size());
   allNucleons->setOwner();
   for (Int_t i = 0; i<_nucleonsA.size(); ++i) {
-    allNucleons->Add(_nucleonsA->At(i));
+    allNucleons->add(*(_nucleonsA->At(i)));
   }
   for (Int_t i = 0; i<_nucleonsB.size(); ++i) {
-    allNucleons->Add(_nucleonsB->At(i));
+    allNucleons->add(*(_nucleonsB->At(i)));
   }
   _nucleonsAB = allNucleons;
   return allNucleons;
@@ -686,7 +694,7 @@ bool GlauberMC::nextEvent(double impactPar)
 
 //bool GlauberMC::readNextEvent(bool calc, const char *fname)
 //{
-//  static TFile *inf = 0;
+//  static CapFile *inf = 0;
 //  static Int_t iev  = 0;
 //  if (fname) {
 //    cout << "readNextEvent: setting up file " << fname << endl;
@@ -840,7 +848,7 @@ void GlauberMC::run(Int_t nevents, double b)
 
   for (Int_t i = 0; i<nevents; ++i) {
     while (!NextEvent(b)) {}
-    fNt->Fill((Float_t*)(&eventStats.nParticipants));
+    fNt->fill((Float_t*)(&eventStats.nParticipants));
     if ((i>0)&&(i%100)==0) 
       cout << "GlauberEventStat # " << i << " x-sect = " << totXSect() << " +- " << totXSectErr() << " b        \r" << flush;
   }

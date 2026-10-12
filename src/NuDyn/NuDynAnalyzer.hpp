@@ -19,6 +19,8 @@ namespace CAP
 {
 
 //!
+//! @brief Task computing multiplicity moments and the nu_dyn fluctuation variable for pairs of particle filters.
+//!
 //!Task used for the determination of multiplicity moments of second, third, and fourth order. These moments
 //!can then be used, in a "derived" stage, to compute cumulants of 2nd, 3rd, and 4th order, as well as other
 //!variables such as the nu-dynamic variable.
@@ -29,17 +31,27 @@ namespace CAP
 //!property used as independent variable to compute (and eventually plot) the moments, cumulants, etc, is selected based on the  inputType
 //!parameter selected at construction of an instance of this class.
 //!
+//! For each accepted event filter and each pair of particle filters (i, j) with j < i, execute() fills a NuDynHistos
+//! (group index e*nPF*nPF + i*nPF + j) with the multiplicities n_i, n_j and the factorial moments n_i(n_i-1), n_i n_j,
+//! n_j(n_j-1), as a function of the event class variable (see EventProcessor::getEvtClassValue()).
+//!
 class NuDynAnalyzer
 :
 public EventProcessorSingle<NuDynHistos,NuDynDerivedHistos>
 {
 public:
   
+  //! @brief Default constructor.
   NuDynAnalyzer();
+  //! @brief Copy constructor. @param task task to copy
   NuDynAnalyzer(const NuDynAnalyzer & task);
+  //! @brief Destructor.
   virtual ~NuDynAnalyzer() {}
+  //! @brief Copy assignment. @param task task to copy @return this task
   NuDynAnalyzer & operator=(const NuDynAnalyzer & task);
+  //! @brief Add the default configuration: that of EventProcessorSingle and the histogram binning.
   virtual void setDefaultConfiguration();
+  //! @brief Analyze the current event (see the class description).
   virtual void execute();
  
   ClassDef(NuDynAnalyzer,0)

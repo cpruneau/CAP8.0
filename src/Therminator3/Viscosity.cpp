@@ -34,7 +34,8 @@ namespace CAP
 
   Viscosity::Viscosity()
   :
-  MATH::ScalarField()
+  MATH::ScalarField(),
+  _type(0)
   {  }
 
   double Viscosity::shearPPdotPiAt(double aX, double aY, double aZ, double aPe, double aPx, double aPy, double aPz) const

@@ -46,7 +46,7 @@ Thermodynamics.cpp
 Viscosity.cpp
 G__Therminator3.cxx)
 
-target_link_libraries(Therminator3 Base Math Helpers Xml  Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
-target_include_directories(Therminator3  PUBLIC  Base Math Helpers Xml Particles  ${EXTRA_INCLUDES} )
+target_link_libraries(Therminator3 Base Math Helpers Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_include_directories(Therminator3  PUBLIC  Base Math Helpers Particles  ${EXTRA_INCLUDES} )
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libTherminator3.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libTherminator3_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Therminator3  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

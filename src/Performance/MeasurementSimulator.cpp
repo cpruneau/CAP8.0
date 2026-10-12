@@ -12,7 +12,8 @@
 #include "MeasurementSimulator.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "TRandom.h"
 
 ClassImp(CAP::MeasurementSimulator);

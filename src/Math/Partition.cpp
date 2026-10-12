@@ -18,7 +18,7 @@ namespace CAP
   _minima(),
   _maxima(),
   _widths(),
-  _titles(),
+  _titles()
   { }
 
   Partition::Partition(const Partition & src)
@@ -31,6 +31,7 @@ namespace CAP
   _maxima(src._maxima),
   _widths(src._widths),
   _titles(src._titles),
+  _binLabels(src._binLabels)
   { }
 
   Partition::~Partition()
@@ -45,23 +46,29 @@ namespace CAP
     _rank       = rhs._rank;
     _type       = rhs._type;
     _nBinsTotal = rhs._nBinsTotal;
-    _nBins  = rhs._nBins;
-    _minima = rhs._minima;
-    _maxima = rhs._maxima;
-    _widths = rhs._widths;
-    _titles = rhs._titles;
-    _rank   = rhs._rank;
-    _type   = rhs._type;
+    _nBins      = rhs._nBins;
+    _minima     = rhs._minima;
+    _maxima     = rhs._maxima;
+    _widths     = rhs._widths;
+    _titles     = rhs._titles;
+    _binLabels  = rhs._binLabels;
     }
   return *this;
   }
 
+  void Partition::checkDimIndex(unsigned int dimIndex, const char * source) const
+  {
+  if (dimIndex>=_rank)
+    throw IndexOutOfBoundException(dimIndex,_rank,"Dimension index out of bound",source);
+  }
+
   void Partition::addDimension(const Partition & partition)
   {
+  if (&partition==this) throw Exception("Cannot add a partition to itself",__FUNCTION__);
   unsigned int addedRank = partition.rank();
   for (unsigned int k=0; k<addedRank; k++)
     {
-    addDimension(partition._nBin[k],partition._minimum[k],partition._maximum[k],partition._title[k]);
+    addDimension(partition._nBins[k],partition._minima[k],partition._maxima[k],partition._titles[k]);
     }
   }
 
@@ -69,18 +76,19 @@ namespace CAP
   {
   if (nBin<1) throw Exception("Invalid dimension size nBins<1",__FUNCTION__);
   if (minimum>=maximum) throw Exception("Invalid dimension range minimum>=maximum",__FUNCTION__);
-  _nBinsTotal *= nBin;
+  _nBinsTotal = (_rank==0) ? nBin : _nBinsTotal*nBin;
   _nBins.push_back(nBin);
   _minima.push_back(minimum);
   _maxima.push_back(maximum);
   _widths.push_back((maximum-minimum)/double(nBin));
   _titles.push_back(title);
+  _binLabels.push_back(std::map<unsigned int,String>());
   _rank++;
   }
 
   bool Partition::compatibleWith(const Partition & rhs, bool sizeAndLimits) const
   {
-  if (_rank!=rhs.rank()) return false;
+  if (_rank!=rhs._rank) return false;
   for (unsigned int k=0; k<_rank; k++)
     {
     if (_nBins[k]!=rhs._nBins[k])  return false;
@@ -103,26 +111,28 @@ namespace CAP
   _maxima.clear();
   _widths.clear();
   _titles.clear();
+  _binLabels.clear();
   }
 
   void Partition::createPartition(const Partition & partition1,const Partition & partition2)
   {
+  // copy first in case partition1 or partition2 is *this
+  Partition p1(partition1);
+  Partition p2(partition2);
   clear();
-  addDimension(partition1);
-  addDimension(partition2);
+  addDimension(p1);
+  addDimension(p2);
   }
 
-  unsigned int Partition::nBins(unsigned int dimIndex=0) const
+  unsigned int Partition::nBins(unsigned int dimIndex) const
   {
-  if (dimIndex>=_rank) throw IndexOutOfBoundException(dimIndex,"Dimension index out of bound",__FUNCTION__);
-  return nBins[dimIndex];
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _nBins[dimIndex];
   }
 
   unsigned int Partition::nBinsTotal() const
   {
-  unsigned int n = 1;
-  for (auto & nBin : _nBins) n *= nBin;
-  return n;
+  return _nBinsTotal;
   }
 
   int Partition::binIndex(unsigned int index, bool isStrict) const
@@ -138,7 +148,7 @@ namespace CAP
   return index;
   }
 
-   int Partition::binIndex(unsigned int index0,unsigned int index1, bool isStrict) const
+  int Partition::binIndex(unsigned int index0,unsigned int index1, bool isStrict) const
   {
   if (_rank!=2) throw Exception("Partition has rank!=2",__FUNCTION__);
   if (index0 >= _nBins[0])
@@ -158,9 +168,9 @@ namespace CAP
   return index1*_nBins[0] + index0;
   }
 
-   int Partition::binIndex(unsigned int index0,unsigned int index1,unsigned int index2, bool isStrict) const
+  int Partition::binIndex(unsigned int index0,unsigned int index1,unsigned int index2, bool isStrict) const
   {
-  if (_rank!=3) throw Exception("Partition has rank!=2",__FUNCTION__);
+  if (_rank!=3) throw Exception("Partition has rank!=3",__FUNCTION__);
   if (index0 >= _nBins[0])
     {
     if (isStrict)
@@ -182,13 +192,12 @@ namespace CAP
     else
       return -1;
     }
-  return index2*_nBins[1]*_nBins[0] + index1*_nBins[0] + index0;
+  return (index2*_nBins[1] + index1)*_nBins[0] + index0;
   }
 
-   int Partition::binIndex(const std::vector<unsigned int> indices, bool isStrict) const
+  int Partition::binIndex(const std::vector<unsigned int> & indices, bool isStrict) const
   {
-  unsigned int n = indices.size();
-  if (_rank!=n) throw Exception(n,"indices does not match rank",__FUNCTION__);
+  if (indices.size()!=_rank) throw Exception("Number of indices does not match rank",__FUNCTION__);
   unsigned int index = 0;
   unsigned int mult  = 1;
   for (unsigned int k=0; k<_rank; k++)
@@ -196,126 +205,167 @@ namespace CAP
     if (indices[k] >= _nBins[k])
       {
       if (isStrict)
-        throw IndexOutOfBoundException(index2,_nBins[2],"Out of bound index",__FUNCTION__);
+        throw IndexOutOfBoundException(indices[k],_nBins[k],"Out of bound index",__FUNCTION__);
       else
         return -1;
       }
     index += mult*indices[k];
-    mult *= indices[k];
+    mult  *= _nBins[k];
     }
   return index;
   }
 
-   int Partition::binIndex(double x, unsigned int dimIndex, bool isStrict) const
+  int Partition::axisBinIndex(double x, unsigned int dimIndex) const
   {
-  if (dimIndex>=_rank) throw IndexOutOfBoundException(dimIndex,"dimIndex >= rank",__FUNCTION__);
-  int index = (x- minima[dimIndex])/widths[dimIndex];
-  return binIndex(index);
+  checkDimIndex(dimIndex,__FUNCTION__);
+  if (x<_minima[dimIndex] || x>=_maxima[dimIndex]) return -1;
+  unsigned int index = (unsigned int) ((x-_minima[dimIndex])/_widths[dimIndex]);
+  if (index>=_nBins[dimIndex]) index = _nBins[dimIndex]-1; // guard float rounding at the upper edge
+  return index;
+  }
+
+  int Partition::binIndex(double x) const
+  {
+  if (_rank!=1) throw Exception("Partition has rank!=1",__FUNCTION__);
+  return axisBinIndex(x,0);
   }
 
   int Partition::binIndex(double x0, double x1) const
   {
-  if (_rank!=2 || x0<minima[0] || x0>=maxima[0] || x1<minima[1] || x1>=maxima[1]) return -1;
-  int index0 = (x0- minima[0])/widths[0];
-  int index1 = (x1- minima[1])/widths[1];
-  return binIndex(index0,index1);
+  if (_rank!=2) throw Exception("Partition has rank!=2",__FUNCTION__);
+  int index0 = axisBinIndex(x0,0);
+  int index1 = axisBinIndex(x1,1);
+  if (index0<0 || index1<0) return -1;
+  return binIndex((unsigned int)index0,(unsigned int)index1);
   }
-
 
   int Partition::binIndex(double x0, double x1, double x2) const
   {
-  if (_rank!=3 || x0<minima[0] || x0>=maxima[0] || x1<minima[1] || x1>=maxima[1] || x2<minima[2] || x2>=maxima[2]) return -1;
-  int index0 = (x0- minima[0])/widths[0];
-  int index1 = (x1- minima[1])/widths[1];
-  int index2 = (x2- minima[2])/widths[2];
-  return binIndex(index0,index1,index2);
+  if (_rank!=3) throw Exception("Partition has rank!=3",__FUNCTION__);
+  int index0 = axisBinIndex(x0,0);
+  int index1 = axisBinIndex(x1,1);
+  int index2 = axisBinIndex(x2,2);
+  if (index0<0 || index1<0 || index2<0) return -1;
+  return binIndex((unsigned int)index0,(unsigned int)index1,(unsigned int)index2);
   }
 
   int Partition::binIndex(const std::vector<double> & x) const
   {
-  if (x.size()!=_rank) throw IndexOutOfBoundException(x.size(),"Rank mismatch for given x",__FUNCTION__);
-  for (unsigned int k=0; k<=_rank; k++) indices.push_back((x[k]- minima[k])/widths[k]);
+  if (x.size()!=_rank) throw Exception("Rank mismatch for given x",__FUNCTION__);
+  std::vector<unsigned int> indices;
+  for (unsigned int k=0; k<_rank; k++)
+    {
+    int index = axisBinIndex(x[k],k);
+    if (index<0) return -1;
+    indices.push_back(index);
+    }
   return binIndex(indices);
   }
 
-  double Partition::minimum(unsigned int dimIndex=0) const
+  double Partition::minimum(unsigned int dimIndex) const
   {
-  if (dimIndex>=_rank) throw IndexOutOfBoundException(dimIndex,"Dimension index out of bound",__FUNCTION__);
-  return minima[dimIndex];
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _minima[dimIndex];
   }
 
-  double Partition::maximum(unsigned int dimIndex=0) const
+  double Partition::maximum(unsigned int dimIndex) const
   {
-  if (dimIndex>=_rank) throw IndexOutOfBoundException(dimIndex,"Dimension index out of bound",__FUNCTION__);
-  return minima[dimIndex];
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _maxima[dimIndex];
   }
 
-  //! return the bin width -- for now use fixed widths...
-  double Partition::binWidth(unsigned int binIndex, unsigned int dimIndex=0) const
+  // return the bin width -- for now use fixed widths...
+  double Partition::binWidth(unsigned int binIndex __attribute__((unused)), unsigned int dimIndex) const
   {
-  if (dimIndex>=_rank) throw IndexOutOfBoundException(dimIndex,"Dimension index out of bound",__FUNCTION__);
-  return width[dimIndex];
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _widths[dimIndex];
   }
 
-  double Partition::binLowEdge(unsigned int binIndex, unsigned int dimIndex=0) const
+  double Partition::binLowEdge(unsigned int binIndex, unsigned int dimIndex) const
   {
-  if (dimIndex>=_rank) throw IndexOutOfBoundException(dimIndex,"Dimension index out of bound",__FUNCTION__);
-  return double(binIndex)*width[dimIndex];
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _minima[dimIndex] + double(binIndex)*_widths[dimIndex];
   }
 
-  double Partition::binHighEdge(unsigned int binIndex, unsigned int dimIndex=0) const
+  double Partition::binHighEdge(unsigned int binIndex, unsigned int dimIndex) const
   {
-  if (dimIndex>=_rank) throw IndexOutOfBoundException(dimIndex,"Dimension index out of bound",__FUNCTION__);
-  return double(binIndex+1)*width[dimIndex];
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _minima[dimIndex] + double(binIndex+1)*_widths[dimIndex];
   }
 
-  double Partition::binCenter(unsigned int binIndex, unsigned int dimIndex=0) const
+  double Partition::binCenter(unsigned int binIndex, unsigned int dimIndex) const
   {
-  if (dimIndex>=_rank) throw IndexOutOfBoundException(dimIndex,"Dimension index out of bound",__FUNCTION__);
-  return (0.5+double(binIndex))*width[dimIndex];
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _minima[dimIndex] + (0.5+double(binIndex))*_widths[dimIndex];
   }
 
-  Partition Partition::extractPartition(unsigned int k=0)  const
+  Partition Partition::extractPartition(unsigned int k)  const
   {
-  if (k>=_rank) throw IndexOutOfBoundException(k,"Dimension k out of bound",__FUNCTION__);
+  checkDimIndex(k,__FUNCTION__);
   Partition newPartition;
-  newPartition.addDimension(_nBins[k], _minimum[k], _maximum[k], _title[k])
+  newPartition.addDimension(_nBins[k], _minima[k], _maxima[k], _titles[k]);
   return newPartition;
   }
 
-  Partition Partition::extractPartition(unsigned int k0=0,unsigned int k1=1) const
+  Partition Partition::extractPartition(unsigned int k0, unsigned int k1) const
   {
+  checkDimIndex(k0,__FUNCTION__);
+  checkDimIndex(k1,__FUNCTION__);
   if (k0==k1)  throw Exception("Dimension k0 and k1 are the same",__FUNCTION__);
-  if (k0>=_rank) throw IndexOutOfBoundException(k0,"Dimension k0 out of bound",__FUNCTION__);
-  if (k1>=_rank) throw IndexOutOfBoundException(k1,"Dimension k1 out of bound",__FUNCTION__);
   Partition newPartition;
-  newPartition.addDimension(_nBins[k0], _minimum[k0], _maximum[k0], _title[k0])
-  newPartition.addDimension(_nBins[k1], _minimum[k1], _maximum[k1], _title[k1])
+  newPartition.addDimension(_nBins[k0], _minima[k0], _maxima[k0], _titles[k0]);
+  newPartition.addDimension(_nBins[k1], _minima[k1], _maxima[k1], _titles[k1]);
   return newPartition;
   }
 
-  Partition Partition::extractPartition(unsigned int k0=0,unsigned int k1=1,unsigned int k1=2) const
+  Partition Partition::extractPartition(unsigned int k0, unsigned int k1, unsigned int k2) const
   {
-  if (k0>=_rank) throw IndexOutOfBoundException(k0,"Dimension k0 out of bound",__FUNCTION__);
-  if (k1>=_rank) throw IndexOutOfBoundException(k1,"Dimension k1 out of bound",__FUNCTION__);
-  if (k2>=_rank) throw IndexOutOfBoundException(k2,"Dimension k2 out of bound",__FUNCTION__);
+  checkDimIndex(k0,__FUNCTION__);
+  checkDimIndex(k1,__FUNCTION__);
+  checkDimIndex(k2,__FUNCTION__);
   if (k0==k1)  throw Exception("Dimension k0, k1 are the same",__FUNCTION__);
   if (k0==k2)  throw Exception("Dimension k0, k2 are the same",__FUNCTION__);
   if (k1==k2)  throw Exception("Dimension k1, k2 are the same",__FUNCTION__);
   Partition newPartition;
-  newPartition.addDimension(_nBins[k0], _minimum[k0], _maximum[k0], _title[k0])
-  newPartition.addDimension(_nBins[k1], _minimum[k1], _maximum[k1], _title[k1])
-  newPartition.addDimension(_nBins[k2], _minimum[k2], _maximum[k2], _title[k2])
+  newPartition.addDimension(_nBins[k0], _minima[k0], _maxima[k0], _titles[k0]);
+  newPartition.addDimension(_nBins[k1], _minima[k1], _maxima[k1], _titles[k1]);
+  newPartition.addDimension(_nBins[k2], _minima[k2], _maxima[k2], _titles[k2]);
   return newPartition;
   }
-
-  const String & Partition::dimensionTitle(unsigned int k=0) const
+  void Partition::setDimensionTitle(unsigned int k, const String & title)
   {
-  if (k>=_rank) throw IndexOutOfBoundException(k,"Dimension k0 out of bound",__FUNCTION__);
+  checkDimIndex(k,__FUNCTION__);
+  _titles[k] = title;
+  }
+
+
+  const String & Partition::dimensionTitle(unsigned int k) const
+  {
+  checkDimIndex(k,__FUNCTION__);
   return _titles[k];
   }
 
+  
+  void Partition::setBinLabel(unsigned int binIndex, const String & label, unsigned int dimIndex)
+  {
+  checkDimIndex(dimIndex,__FUNCTION__);
+  if (binIndex>=_nBins[dimIndex]) throw IndexOutOfBoundException(binIndex,_nBins[dimIndex],"Invalid bin index",__FUNCTION__);
+  if (label.length()==0) _binLabels[dimIndex].erase(binIndex);
+  else                   _binLabels[dimIndex][binIndex] = label;
+  }
 
+  String Partition::binLabel(unsigned int binIndex, unsigned int dimIndex) const
+  {
+  checkDimIndex(dimIndex,__FUNCTION__);
+  auto it = _binLabels[dimIndex].find(binIndex);
+  return it==_binLabels[dimIndex].end() ? String("") : it->second;
+  }
+
+  const std::map<unsigned int,String> & Partition::binLabels(unsigned int dimIndex) const
+  {
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _binLabels[dimIndex];
+  }
+
+} // namespace MATH
 } // namespace CAP
-
-

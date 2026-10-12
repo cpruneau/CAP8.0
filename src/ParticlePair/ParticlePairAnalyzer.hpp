@@ -19,6 +19,15 @@
 
 namespace CAP
 {
+  //! @brief Pair analyzer: fills pair histograms for each (event filter, particle filter 1, particle filter 2)
+  //! combination and computes correlation functions and balance functions at the end of the run.
+  //!
+  //! Histogram groups (see EventProcessorPair): HISTOGRAM_1 ParticlePairHistos, HISTOGRAM_2 ParticlePairDerivedHistos,
+  //! HISTOGRAM_3 ParticlePairBfHistos, HISTOGRAM_4 ParticleSingleDerivedHistos (imported from a single-particle
+  //! analysis). For identical filters, a particle is not paired with itself.
+  //!
+  //! Pairs are not weighted by the particle efficiencies.
+  //!
   //! Task used for the analysis of particle  pair distributions and correlations. As for other tasks classes of this package, use event filters and particle filters to determine the
   //! event selection and particle types and kinematic ranges across which  particle pair  distributions are studied. Particle particle distributions are computed
   //! (histogrammed) with instances of the ParticlePairHistos class. The behavior of the class, i.e., what type and the range of filled histograms are determined by
@@ -59,11 +68,17 @@ public EventProcessorPair<ParticlePairHistos,ParticlePairDerivedHistos,ParticleP
 {
 public:
 
+  //! @brief Default constructor.
   ParticlePairAnalyzer();
+  //! @brief Copy constructor. @param task task to copy
   ParticlePairAnalyzer(const ParticlePairAnalyzer & task);
+  //! @brief Copy assignment. @param task task to copy @return this task
   ParticlePairAnalyzer & operator=(const ParticlePairAnalyzer & task);
+  //! @brief Destructor.
   virtual ~ParticlePairAnalyzer() {}
+  //! @brief Add the default configuration: that of EventProcessorPair and the histogram binning and fill options.
   virtual void setDefaultConfiguration();
+  //! @brief Analyze the current event: apply the filters and fill the pair histograms of each accepted combination.
   virtual void execute();
 
   ClassDef(ParticlePairAnalyzer,0)

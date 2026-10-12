@@ -17,6 +17,12 @@
 
 namespace CAP
 {
+//!
+//! The TFile helpers below (openRootFile ..., importParameter, exportParameter, importAccountant, exportAccountant) are
+//! kept for code that still writes ROOT objects. Their CAP equivalents are members of CAP::CapFile (Base/CapFile.hpp):
+//! CapFile::openCapFile(), openOldCapFile(), openNewCapFile(), openRecreateCapFile(), openCapFiles(),
+//! exportParameter(), importParameter(), exportAccountant() and importAccountant().
+//!
 TFile * openRootFile(const String & path, const String & name,const String & ioOption,bool verbose=0);
 TFile * openRootFile(const String & name, const String & ioOption,bool verbose=0);
 TFile * openOldRootFile(const String & path, const String & name,bool verbose=0);

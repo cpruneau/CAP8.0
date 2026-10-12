@@ -17,16 +17,25 @@
 
 namespace CAP
 {
+//!
+//! @brief Calculator of the particle flow derived histograms from previously filled histograms.
+//! @warning Not built: its base class Calculator (Calculator.hpp) does not exist.
+//!
 class ParticleFlowCalculator
 :
 public Calculator<ParticleFlowHistos,ParticleFlowDerivedHistos,1>
 {
 public:
   
+  //! @brief Default constructor.
   ParticleFlowCalculator();
+  //! @brief Copy constructor. @param calculator calculator to copy
   ParticleFlowCalculator(const ParticleFlowCalculator & calculator);
+  //! @brief Copy assignment. @param calculator calculator to copy @return this calculator
   ParticleFlowCalculator & operator=(const ParticleFlowCalculator & calculator);
+  //! @brief Destructor.
   virtual ~ParticleFlowCalculator() {}
+  //! @brief Add the default configuration.
   virtual void setDefaultConfiguration();
 
   ClassDef(ParticleFlowCalculator,0)

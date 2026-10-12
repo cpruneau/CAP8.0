@@ -9,7 +9,7 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#include "CommandLineParser.hpp"
+#include "CmdlineParser.hpp"
 
 using CAP::CommandLineParser;
 using std::ostream;
@@ -25,11 +25,15 @@ Parser()
 
 CommandLineParser::CommandLineParser(const String & _name,
                              const String & _title,
-                             const String & _version,
-                             const String & _preHash)
+                             const String & _version __attribute__((unused)),
+                             const String & _preHash __attribute__((unused)))
 :
-Parser(_name,title,version,_prehash)
-{   }
+Parser()
+{
+  // Parser has no (name,title,version,preHash) constructor; version/preHash are not stored yet.
+  setName(_name);
+  setTitle(_title);
+}
 
 
 CommandLineParser::CommandLineParser(const CommandLineParser & parser)
@@ -39,7 +43,7 @@ Parser(parser)
 
 CommandLineParser & CommandLineParser::operator=(const CommandLineParser & parser)
 {
-  if (this!=&source)
+  if (this!=&parser)
     {
     Parser::operator=(parser);
     }

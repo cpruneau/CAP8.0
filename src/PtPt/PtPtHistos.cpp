@@ -12,7 +12,8 @@
 #include "PtPtHistos.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 
@@ -23,7 +24,7 @@ namespace CAP
 
   PtPtHistos::PtPtHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   h_evt(),
   h_f1_evt(),
   h_f2_evt(),
@@ -52,7 +53,7 @@ namespace CAP
 
   PtPtHistos::PtPtHistos(const PtPtHistos & source)
   :
-  HistogramGroup(source),
+  HistogramFolder(source),
   h_evt(),
   h_f1_evt(),
   h_f2_evt(),
@@ -81,7 +82,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs),
+    HistogramFolder::operator=(rhs),
     cloneB(rhs);
     }
   return *this;
@@ -90,22 +91,22 @@ namespace CAP
   void PtPtHistos::cloneB(const PtPtHistos & source)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_evt          = safeCloneH1(source.h_evt);
-  h_f1_evt       = safeCloneProfile(source.h_f1_evt);
-  h_f2_evt       = safeCloneProfile(source.h_f2_evt);
-  h_f3_evt       = safeCloneProfile(source.h_f3_evt);
-  h_f4_evt       = safeCloneProfile(source.h_f4_evt);
-  h_Q1_evt       = safeCloneProfile(source.h_Q1_evt);
-  h_Q1Q1_evt     = safeCloneProfile(source.h_Q1Q1_evt);
-  h_Q1Q1Q1_evt   = safeCloneProfile(source.h_Q1Q1Q1_evt);
-  h_Q1Q1Q1Q1_evt = safeCloneProfile(source.h_Q1Q1Q1Q1_evt);
-  h_Q2_evt       = safeCloneProfile(source.h_Q2_evt);
-  h_Q2Q1_evt     = safeCloneProfile(source.h_Q2Q1_evt);
-  h_Q2Q1Q1_evt   = safeCloneProfile(source.h_Q2Q1Q1_evt);
-  h_Q2Q2_evt     = safeCloneProfile(source.h_Q2Q2_evt);
-  h_Q3_evt       = safeCloneProfile(source.h_Q3_evt);
-  h_Q3Q1_evt     = safeCloneProfile(source.h_Q3Q1_evt);
-  h_Q4_evt       = safeCloneProfile(source.h_Q4_evt);
+  h_evt          = histogramLike(source.h_evt);
+  h_f1_evt       = histogramLike(source.h_f1_evt);
+  h_f2_evt       = histogramLike(source.h_f2_evt);
+  h_f3_evt       = histogramLike(source.h_f3_evt);
+  h_f4_evt       = histogramLike(source.h_f4_evt);
+  h_Q1_evt       = histogramLike(source.h_Q1_evt);
+  h_Q1Q1_evt     = histogramLike(source.h_Q1Q1_evt);
+  h_Q1Q1Q1_evt   = histogramLike(source.h_Q1Q1Q1_evt);
+  h_Q1Q1Q1Q1_evt = histogramLike(source.h_Q1Q1Q1Q1_evt);
+  h_Q2_evt       = histogramLike(source.h_Q2_evt);
+  h_Q2Q1_evt     = histogramLike(source.h_Q2Q1_evt);
+  h_Q2Q1Q1_evt   = histogramLike(source.h_Q2Q1Q1_evt);
+  h_Q2Q2_evt     = histogramLike(source.h_Q2Q2_evt);
+  h_Q3_evt       = histogramLike(source.h_Q3_evt);
+  h_Q3Q1_evt     = histogramLike(source.h_Q3Q1_evt);
+  h_Q4_evt       = histogramLike(source.h_Q4_evt);
   }
 
   void PtPtHistos::configure(const String & taskName,
@@ -151,24 +152,24 @@ namespace CAP
   h_Q4_evt =       createProfile(createName(_histogramBaseName,"Q4"),      evt_nbins,evt_min,evt_max,xTitle,"Q_{4}");
   }
 
-  void PtPtHistos::loadFrom(TFile & inputFile)
+  void PtPtHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_f1_evt = loadProfile(inputFile,createName(_histogramBaseName,"n1"));
-  h_f2_evt = loadProfile(inputFile,createName(_histogramBaseName,"n2"));
-  h_f3_evt = loadProfile(inputFile,createName(_histogramBaseName,"n3"));
-  h_f4_evt = loadProfile(inputFile,createName(_histogramBaseName,"n4"));
-  h_Q1_evt =       loadProfile(inputFile,createName(_histogramBaseName,"Q1"));
-  h_Q1Q1_evt =     loadProfile(inputFile,createName(_histogramBaseName,"Q1Q1"));
-  h_Q1Q1Q1_evt =   loadProfile(inputFile,createName(_histogramBaseName,"Q1Q1Q1"));
-  h_Q1Q1Q1Q1_evt = loadProfile(inputFile,createName(_histogramBaseName,"Q1Q1Q1Q1"));
-  h_Q2_evt =       loadProfile(inputFile,createName(_histogramBaseName,"Q2"));
-  h_Q2Q1_evt =     loadProfile(inputFile,createName(_histogramBaseName,"Q2Q1"));
-  h_Q2Q1Q1_evt =   loadProfile(inputFile,createName(_histogramBaseName,"Q2Q1Q1"));
-  h_Q2Q2_evt =     loadProfile(inputFile,createName(_histogramBaseName,"Q2Q2"));
-  h_Q3_evt =       loadProfile(inputFile,createName(_histogramBaseName,"Q3"));
-  h_Q3Q1_evt =     loadProfile(inputFile,createName(_histogramBaseName,"Q3Q1"));
-  h_Q4_evt =       loadProfile(inputFile,createName(_histogramBaseName,"Q4"));
+  h_f1_evt = importProfile(inputFile,createName(_histogramBaseName,"n1"));
+  h_f2_evt = importProfile(inputFile,createName(_histogramBaseName,"n2"));
+  h_f3_evt = importProfile(inputFile,createName(_histogramBaseName,"n3"));
+  h_f4_evt = importProfile(inputFile,createName(_histogramBaseName,"n4"));
+  h_Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q1"));
+  h_Q1Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q1Q1"));
+  h_Q1Q1Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q1Q1Q1"));
+  h_Q1Q1Q1Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q1Q1Q1Q1"));
+  h_Q2_evt = importProfile(inputFile,createName(_histogramBaseName,"Q2"));
+  h_Q2Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q2Q1"));
+  h_Q2Q1Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q2Q1Q1"));
+  h_Q2Q2_evt = importProfile(inputFile,createName(_histogramBaseName,"Q2Q2"));
+  h_Q3_evt = importProfile(inputFile,createName(_histogramBaseName,"Q3"));
+  h_Q3Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q3Q1"));
+  h_Q4_evt = importProfile(inputFile,createName(_histogramBaseName,"Q4"));
   }
 
   /// Implement Eqs. D4 - D7
@@ -186,10 +187,10 @@ namespace CAP
   //    double n2 = n1*(n1-1);
   //    double n3 = n2*(n1-2);
   //    double n4 = n3*(n1-3);
-  //    h_f1_evt[i1]->Fill(mult,n1);
-  //    h_f2_evt[i1]->Fill(mult,n2);
-  //    h_f3_evt[i1]->Fill(mult,n3);
-  //    h_f4_evt[i1]->Fill(mult,n4);
+  //    h_f1_evt[i1]->fill(mult,n1);
+  //    h_f2_evt[i1]->fill(mult,n2);
+  //    h_f3_evt[i1]->fill(mult,n3);
+  //    h_f4_evt[i1]->fill(mult,n4);
   //
   //    double Q1 = q1Sum[i1];
   //    double Q2 = q2Sum[i1];
@@ -203,17 +204,17 @@ namespace CAP
   //    double Q2Q1Q1 = Q2Q1*Q1;
   //    double Q3Q1   = Q3*Q1;
   //
-  //    h_Q1_evt[i1]->Fill(mult,Q1);
-  //    h_Q1Q1_evt[i1]->Fill(mult,Q1Q1);
-  //    h_Q1Q1Q1_evt[i1]->Fill(mult,Q1Q1Q1);
-  //    h_Q1Q1Q1Q1_evt[i1]->Fill(mult,Q1Q1Q1Q1);
-  //    h_Q2_evt[i1]->Fill(mult,Q2);
-  //    h_Q2Q1_evt[i1]->Fill(mult,Q2Q1);
-  //    h_Q2Q1Q1_evt[i1]->Fill(mult,Q2Q1Q1);
-  //    h_Q2Q2_evt[i1]->Fill(mult,Q2Q2);
-  //    h_Q3_evt[i1]->Fill(mult,Q3);
-  //    h_Q3Q1_evt[i1]->Fill(mult,Q3Q1);
-  //    h_Q4_evt[i1]->Fill(mult,Q4);
+  //    h_Q1_evt[i1]->fill(mult,Q1);
+  //    h_Q1Q1_evt[i1]->fill(mult,Q1Q1);
+  //    h_Q1Q1Q1_evt[i1]->fill(mult,Q1Q1Q1);
+  //    h_Q1Q1Q1Q1_evt[i1]->fill(mult,Q1Q1Q1Q1);
+  //    h_Q2_evt[i1]->fill(mult,Q2);
+  //    h_Q2Q1_evt[i1]->fill(mult,Q2Q1);
+  //    h_Q2Q1Q1_evt[i1]->fill(mult,Q2Q1Q1);
+  //    h_Q2Q2_evt[i1]->fill(mult,Q2Q2);
+  //    h_Q3_evt[i1]->fill(mult,Q3);
+  //    h_Q3Q1_evt[i1]->fill(mult,Q3Q1);
+  //    h_Q4_evt[i1]->fill(mult,Q4);
   //    }
 
 } // namespace CAP

@@ -93,18 +93,18 @@ TFile * StreamManager::openRootFile(const String & path,
                                   const String & ioOption)
 {
   String fileName;
-  if (name.BeginsWith("/"))
+  if (name.beginsWith("/"))
     fileName = name;
   else
     {
     String filePath = path;
-    int slash = filePath.First('/');
-    int len   = filePath.Length();
+    int slash = filePath.first('/');
+    int len   = filePath.length();
     if (len>0 && (len-1)!=slash) filePath += "/";
     fileName = filePath;
     fileName += name;
     }
-  if (!fileName.EndsWith(".root")) fileName += ".root";
+  if (!fileName.endsWith(".root")) fileName += ".root";
   if (verbose)  std::cout << "StreamManager::openRootFile(...) Opening file: " << fileName << " with option: " << ioOption << std::endl;
   TFile * file = new TFile(fileName,ioOption);
   if (!file) throw  FileException(fileName,"File not found","StreamManager::openRootFile()");
@@ -147,18 +147,18 @@ std::ifstream & StreamManager::openInputAsciiFile(const String & path,
 {
   String fileName = path;
   // make sure that if an path is given, it ends with '/'
-  int slash = fileName.First('/');
-  int len = fileName.Length();
+  int slash = fileName.first('/');
+  int len = fileName.length();
   //  std::cout << slash << std::endl;
   //  std::cout << len << std::endl;
   if (len>0 && (len-1)!=slash) fileName += "/";
   fileName += name;
-  if (!fileName.EndsWith(extension)) fileName += extension;
+  if (!fileName.endsWith(extension)) fileName += extension;
   if (verbose)
     std::cout << "StreamManager::openInputAsciiFile(...) Attempting to open output file named: " << fileName << std::endl;
   std::ios_base::openmode mode = std::ios_base::in;
   if (verbose)  std::cout << "Opening file: " << fileName << " with option: " << mode << std::endl;
-  std::ifstream * file = new std::ifstream(fileName.Data(),mode);
+  std::ifstream * file = new std::ifstream(fileName.data(),mode);
   if (!file || !file->is_open()) throw  FileException(fileName,"File not found","StreamManager::openInputAsciiFile()");
   if (verbose)
     std::cout << "StreamManager::openInputAsciiFile(...) File: " << fileName << " successfully opened." << std::endl;
@@ -172,18 +172,18 @@ std::ofstream & StreamManager::openOutputAsciiFile(const String & path,
 {
   String fileName = path;
   // make sure that if an path is given, it ends with '/'
-  int slash = fileName.First('/');
-  int len = fileName.Length();
+  int slash = fileName.first('/');
+  int len = fileName.length();
   //  std::cout << slash << std::endl;
   //  std::cout << len << std::endl;
   if (len>0 && (len-1)!=slash) fileName += "/";
   fileName += name;
-  if (!fileName.EndsWith(extension)) fileName += extension;
+  if (!fileName.endsWith(extension)) fileName += extension;
   if (verbose)
     std::cout << "StreamManager::openOutputAsciiFile(...) Attempting to open output file named: " << fileName << " in mode: " << ioOption << std::endl;
   std::ios_base::openmode mode = std::ios_base::out|std::ios_base::app;
   if (verbose)  std::cout << "Opening file: " << fileName << " with option: " << ioOption << std::endl;
-  std::ofstream * file = new std::ofstream(fileName.Data(),mode);
+  std::ofstream * file = new std::ofstream(fileName.data(),mode);
   if (!file || !file->is_open()) throw  FileException(fileName,"File not found","StreamManager::openInputAsciiFile()");
   if (verbose)
     std::cout << "StreamManager::openOutputAsciiFile(...) File: " << fileName << " successfully opened." << std::endl;
@@ -197,18 +197,18 @@ std::ifstream & StreamManager::openInputBinaryFile(const String & path,
 {
   String fileName = path;
   // make sure that if an path is given, it ends with '/'
-  int slash = fileName.First('/');
-  int len = fileName.Length();
+  int slash = fileName.first('/');
+  int len = fileName.length();
   //  std::cout << slash << std::endl;
   //  std::cout << len << std::endl;
   if (len>0 && (len-1)!=slash) fileName += "/";
   fileName += name;
-  if (!fileName.EndsWith(extension)) fileName += extension;
+  if (!fileName.endsWith(extension)) fileName += extension;
   if (verbose)
     std::cout << "StreamManager::openOutputAsciiFile(...) Attempting to open output file named: " << fileName << std::endl;
   std::ios_base::openmode mode = std::ios_base::in|std::ios::binary;
   if (verbose)  std::cout << "Opening file: " << fileName <<  std::endl;
-  std::ifstream * file = new std::ifstream(fileName.Data(),mode);
+  std::ifstream * file = new std::ifstream(fileName.data(),mode);
   if (!file || !file->is_open()) throw  FileException(fileName,"File not found","StreamManager::openInputAsciiFile()");
   if (verbose)
     std::cout << "StreamManager::openOutputAsciiFile(...) File: " << fileName << " successfully opened." << std::endl;
@@ -224,18 +224,18 @@ std::ofstream & StreamManager::openOutputBinaryFile(const String & path,
 {
   String fileName = path;
   // make sure that if an path is given, it ends with '/'
-  int slash = fileName.First('/');
-  int len = fileName.Length();
+  int slash = fileName.first('/');
+  int len = fileName.length();
   //  std::cout << slash << std::endl;
   //  std::cout << len << std::endl;
   if (len>0 && (len-1)!=slash) fileName += "/";
   fileName += name;
-  if (!fileName.EndsWith(extension)) fileName += extension;
+  if (!fileName.endsWith(extension)) fileName += extension;
   if (verbose)
     std::cout << "StreamManager::openOutputAsciiFile(...) Attempting to open output file named: " << fileName  << std::endl;
   std::ios_base::openmode mode = std::ios_base::out|std::ios::binary;
   if (verbose)  std::cout << "Opening file: " << fileName <<  std::endl;
-  std::ofstream * file = new std::ofstream(fileName.Data(),mode);
+  std::ofstream * file = new std::ofstream(fileName.data(),mode);
   if (!file || !file->is_open()) throw  FileException(fileName,"File not found","StreamManager::openInputAsciiFile()");
   if (verbose)
     std::cout << "StreamManager::openOutputAsciiFile(...) File: " << fileName << " successfully opened." << std::endl;
@@ -294,11 +294,11 @@ void StreamManager::closeStreamOutputFiles()
 String StreamManager::removeRootExtension(const String fileName)
 {
   String name = fileName;
-  int dot = name.Last('.');
-  int len = name.Length();
+  int dot = name.last('.');
+  int len = name.length();
   //  std::cout << dot << std::endl;
   //  std::cout << len << std::endl;
-  if (dot==len-5 ) name.Remove(dot,len-dot);
+  if (dot==len-5 ) name.remove(dot,len-dot);
   return name;
 }
 

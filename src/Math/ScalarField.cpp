@@ -1,4 +1,6 @@
 #include "ScalarField.hpp"
+#include <cmath>
+#include <string>
 #include "MathExceptions.hpp"
 
 ClassImp(CAP::MATH::ScalarField);
@@ -8,399 +10,516 @@ namespace CAP
   namespace MATH
   {
 
-  double ScalarField::_xIn;
-  double ScalarField::_xI0;
-  double ScalarField::_xIp;
-  double ScalarField::_x0;
-  double ScalarField::_xD;
-
   ScalarField::ScalarField()
   :
-  Object("Null","Null","ScalarField"),
-  _type(0),
-  _xNPts(0), _yNPts(0), _zNPts(0),
+  Function("Null","Null","ScalarField",1),
   _constValue(0.0),
-  _xMin(0.0), _xMax(1.0), _xWidth(1.0),_xRange(1.0),
-  _yMin(0.0), _yMax(1.0), _yWidth(1.0),_yRange(1.0),
-  _zMin(0.0), _zMax(1.0), _zWidth(1.0),_zRange(1.0),
-  _field(nullptr)
+  _minima(), _maxima(), _nPoints(), _values()
+  { }
+
+  ScalarField::ScalarField(const String & name, double value, unsigned int rank)
+  :
+  Function(name,name,"ScalarField",rank),
+  _constValue(value),
+  _minima(), _maxima(), _nPoints(), _values()
+  { }
+
+  ScalarField::ScalarField(const String & name,
+                           const std::vector<double> & minima,
+                           const std::vector<double> & maxima,
+                           const std::vector<unsigned int> & nPoints,
+                           double initialValue)
+  :
+  Function(name,name,"ScalarField",1),
+  _constValue(0.0),
+  _minima(), _maxima(), _nPoints(), _values()
   {
-  // no _field array initialization -- this _field is constant _type == 0, value == 0
+  setMesh(minima,maxima,nPoints,initialValue);
   }
 
-  ScalarField::ScalarField(const String & aName, double _constValue)
+  ScalarField::ScalarField(const String & name,
+                           double xMin, double xMax, unsigned int xNPts,
+                           double yMin, double yMax, unsigned int yNPts,
+                           double zMin, double zMax, unsigned int zNPts,
+                           double initialValue)
   :
-  Object(aName,aName,"ScalarField"),
-  _type(0),
-  _xNPts(0), _yNPts(0), _zNPts(0),
-  _constValue(_constValue),
-  _xMin(0.0), _xMax(1.0), _xWidth(1.0),_xRange(1.0),
-  _yMin(0.0), _yMax(1.0), _yWidth(1.0),_yRange(1.0),
-  _zMin(0.0), _zMax(1.0), _zWidth(1.0),_zRange(1.0),
-  _field(nullptr)
+  Function(name,name,"ScalarField",3),
+  _constValue(0.0),
+  _minima(), _maxima(), _nPoints(), _values()
   {
-  // no _field array initialization -- this _field is constant _type == 0, value == _constValue
+  setValue(name,xMin,xMax,xNPts,yMin,yMax,yNPts,zMin,zMax,zNPts,initialValue);
   }
 
-  ScalarField::ScalarField(const String & aName,
-                           double x_min, double x_max, unsigned int x_npts,
-                           double y_min, double y_max, unsigned int y_npts,
-                           double z_min, double z_max, unsigned int z_npts,
-                           double initValue)
+  ScalarField::ScalarField(const ScalarField & source)
   :
-  Object(aName,aName,"ScalarField"),
-  _type(1),
-  _xNPts(x_npts), _yNPts(y_npts), _zNPts(z_npts),
-  _constValue(initValue),
-  _xMin(x_min), _xMax(x_max), _xWidth(0.0), _xRange(x_max-x_min),
-  _yMin(y_min), _yMax(y_max), _yWidth(0.0), _yRange(y_max-y_min),
-  _zMin(z_min), _zMax(z_max), _zWidth(0.0), _zRange(z_max-z_min),
-  _field(nullptr)
-  {
-  if (_xMax<=_xMin) throw InvalidBoundsException(_xMin,_xMax,"_xMax<=_xMin",__FUNCTION__);
-  if (_yMax<=_yMin) throw InvalidBoundsException(_yMin,_yMax,"_yMax<=_yMin",__FUNCTION__);
-  if (_zMax<=_zMin) throw InvalidBoundsException(_zMin,_zMax,"_zMax<=_zMin",__FUNCTION__);
-  if (_xNPts < 1) _xNPts = 1;
-  if (_yNPts < 1) _yNPts = 1;
-  if (_zNPts < 1) _zNPts = 1;
-  _xWidth = (double(_xNPts) - 1.0) / _xRange;
-  _yWidth = (double(_yNPts) - 1.0) / _yRange;
-  _zWidth = (double(_zNPts) - 1.0) / _zRange;
-  initialize(_xNPts, _yNPts, _yNPts, initValue);
-  }
-
-  ScalarField::ScalarField(const ScalarField& source)
-  :
-  Object(source),
-  _type(source._type),
-  _xNPts(source._xNPts), _yNPts(source._yNPts), _zNPts(source._zNPts),
+  Function(source),
   _constValue(source._constValue),
-  _xMin(source._xMin), _xMax(source._xMax), _xWidth(source._xWidth), _xRange(source._xRange),
-  _yMin(source._yMin), _yMax(source._yMax), _yWidth(source._yWidth), _yRange(source._yRange),
-  _zMin(source._zMin), _zMax(source._zMax), _zWidth(source._zWidth), _zRange(source._zRange),
-  _field(nullptr)
-  {
-  if (_type>0)
-    {
-    copyField(source._field,_xNPts, _yNPts, _yNPts);
-    }
-  }
+  _minima(source._minima),
+  _maxima(source._maxima),
+  _nPoints(source._nPoints),
+  _values(source._values)
+  { }
 
-  ScalarField::~ScalarField()
-  {
-  clear();
-  }
-
-  ScalarField ScalarField::operator=(const ScalarField & rhs)
+  ScalarField & ScalarField::operator=(const ScalarField & rhs)
   {
   if (this!=&rhs)
     {
-    Object::operator=(rhs);
+    Function::operator=(rhs);
     _constValue = rhs._constValue;
-    _xNPts  = rhs._xNPts;
-    _yNPts  = rhs._yNPts;
-    _zNPts  = rhs._zNPts;
-    _xMin   = rhs._xMin;
-    _xMax   = rhs._xMax;
-    _xWidth = rhs._xWidth;
-    _xRange = rhs._xRange;
-    _yMin   = rhs._yMin;
-    _yMax   = rhs._yMax;
-    _yWidth = rhs._yWidth;
-    _yRange = rhs._yRange;
-    _zMin   = rhs._zMin;
-    _zMax   = rhs._zMax;
-    _zWidth = rhs._zWidth;
-    _zRange = rhs._zRange;
-    copyField(rhs._field,_xNPts,_yNPts,_zNPts);
+    _minima     = rhs._minima;
+    _maxima     = rhs._maxima;
+    _nPoints    = rhs._nPoints;
+    _values     = rhs._values;
     }
   return *this;
   }
 
-  double& ScalarField::operator()(unsigned int iX, unsigned int iY, unsigned int iZ)
-  {
-  if (_type==0)
-    return _constValue;
-  else if (iX>=_xNPts || iY>=_yNPts || iZ>=_zNPts)
-    throw MathException("Invalid input",__FUNCTION__);
-  else
-    return _field[iX][iY][iZ];
-  }
-
-  void ScalarField::initialize(unsigned int nX, unsigned int nY, unsigned int nZ, double initialValue)
-  {
-  if (_field) clear();
-  _type = 3;
-  _constValue = initialValue;
-  if (nX<1 || nY<1 || nZ<1) throw MathException("nX<1 || nY<1 || nZ<1",__FUNCTION__);
-  _field = new double** [nX];
-  for (unsigned int i=0; i<nX; i++)
-    {
-    _field[i] = new double* [nY];
-    for (unsigned int j=0; j<nY; j++)
-      {
-      _field[i][j] = new double [nZ];
-      for (unsigned int k=0; k<nZ; k++)
-        _field[i][j][k] = initialValue;
-      }
-    }
-  }
-
-  void ScalarField::reset()
-  {
-  if (_type==0)
-    _constValue = 0.0;
-  else
-    {
-    for (unsigned int i=0; i<_xNPts; i++)
-      {
-      for (unsigned int j=0; j<_yNPts; j++)
-        {
-        for (unsigned int k=0; k<_zNPts; k++)
-          _field[i][j][k] = 0.0;
-        }
-      }
-    }
-  }
-
-  void ScalarField::clear()
-  {
-  if (_field)
-    {
-    for (unsigned int i=0; i<_xNPts; i++)
-      {
-      for (unsigned int j=0; j<_yNPts; j++)
-        delete[] _field[i][j];
-      delete[] _field[i];
-      }
-    delete[] _field;
-    }
-  }
-
+  // ---------------------------------------------------------------- setting the field
 
   void ScalarField::setValue(double value)
   {
-  clear();
-  _type = 0;
+  _minima.clear();
+  _maxima.clear();
+  _nPoints.clear();
+  _values.clear();
   _constValue = value;
   }
 
   void ScalarField::setValue(const ScalarField & source)
   {
-  clear();
-  _type = source._type;
+  if (this==&source) return;
+  Function::operator=(source);
   _constValue = source._constValue;
-  _xMin = source._xMin; _xMax = source._xMax; _xNPts = source._xNPts; _xWidth = source._xWidth; _xRange = source._xRange;
-  _yMin = source._yMin; _yMax = source._yMax; _yNPts = source._yNPts; _yWidth = source._yWidth; _yRange = source._yRange;
-  _zMin = source._zMin; _zMax = source._zMax; _zNPts = source._zNPts; _zWidth = source._zWidth; _zRange = source._zRange;
-  initialize(_xNPts,_yNPts,_zNPts);
+  _minima     = source._minima;
+  _maxima     = source._maxima;
+  _nPoints    = source._nPoints;
+  _values     = source._values;
   }
 
-  void ScalarField::setValue(const String & aName,
-                             double xMin, double xMax, unsigned int xNpts,
-                             double yMin, double yMax, unsigned int yNpts,
-                             double zMin, double zMax, unsigned int zNpts,
-                             double initValue)
+  void ScalarField::setValue(const String & name,
+                             double xMin, double xMax, unsigned int xNPts,
+                             double initialValue)
+  {
+  if (xMax<=xMin) throw InvalidBoundsException(xMin,xMax,"Invalid input: xMin>=xMax",__FUNCTION__);
+  setMesh({xMin},{xMax},{xNPts<1 ? 1u : xNPts},initialValue);
+  setName(name);
+  setTitle(name);
+  }
+
+  void ScalarField::setValue(const String & name,
+                             double xMin, double xMax, unsigned int xNPts,
+                             double yMin, double yMax, unsigned int yNPts,
+                             double initialValue)
+  {
+  if (xMax<=xMin) throw InvalidBoundsException(xMin,xMax,"Invalid input: xMin>=xMax",__FUNCTION__);
+  if (yMax<=yMin) throw InvalidBoundsException(yMin,yMax,"Invalid input: yMin>=yMax",__FUNCTION__);
+  setMesh({xMin,yMin},{xMax,yMax},{xNPts<1 ? 1u : xNPts, yNPts<1 ? 1u : yNPts},initialValue);
+  setName(name);
+  setTitle(name);
+  }
+
+  void ScalarField::setValue(const String & name,
+                             double xMin, double xMax, unsigned int xNPts,
+                             double yMin, double yMax, unsigned int yNPts,
+                             double zMin, double zMax, unsigned int zNPts,
+                             double initialValue)
   {
   if (xMax<=xMin) throw InvalidBoundsException(xMin,xMax,"Invalid input: xMin>=xMax",__FUNCTION__);
   if (yMax<=yMin) throw InvalidBoundsException(yMin,yMax,"Invalid input: yMin>=yMax",__FUNCTION__);
   if (zMax<=zMin) throw InvalidBoundsException(zMin,zMax,"Invalid input: zMin>=zMax",__FUNCTION__);
-  clear();
-  _type = 1;
-  setName(aName);
-  setTitle(aName);
+  setMesh({xMin,yMin,zMin},{xMax,yMax,zMax},
+          {xNPts<1 ? 1u : xNPts, yNPts<1 ? 1u : yNPts, zNPts<1 ? 1u : zNPts},
+          initialValue);
+  setName(name);
+  setTitle(name);
+  }
+
+  void ScalarField::setMesh(const std::vector<double> & minima,
+                            const std::vector<double> & maxima,
+                            const std::vector<unsigned int> & nPoints,
+                            double initialValue)
+  {
+  if (minima.empty()) throw MathException("The mesh must have at least one axis",__FUNCTION__);
+  if (maxima.size()!=minima.size() || nPoints.size()!=minima.size())
+    throw MathException("minima, maxima and nPoints must have the same size",__FUNCTION__);
+  unsigned long long total = 1;
+  for (unsigned int n : nPoints)
+    {
+    if (n==0) throw MathException("Number of points along an axis must be at least 1",__FUNCTION__);
+    total *= n;
+    if (total > 0xFFFFFFFFull) throw MathException("Too many mesh nodes",__FUNCTION__);
+    }
+  // check with the new numbers of points
+  for (unsigned int k=0; k<minima.size(); k++)
+    {
+    if (!std::isfinite(minima[k]) || !std::isfinite(maxima[k]))
+      throw InvalidBoundsException(minima[k],maxima[k],"Mesh boundaries must be finite",__FUNCTION__);
+    if (nPoints[k]>1 && maxima[k]<=minima[k])
+      throw InvalidBoundsException(minima[k],maxima[k],"Maximum must be larger than minimum",__FUNCTION__);
+    }
+  Function::setRank(minima.size());
+  _minima  = minima;
+  _maxima  = maxima;
+  _nPoints = nPoints;
+  _values.assign(total,initialValue);
   _constValue = 0.0;
-  _xMin = xMin; _xMax = xMax; _xNPts = xNpts; _xWidth = 0.0;
-  _yMin = yMin; _yMax = yMax; _yNPts = yNpts; _yWidth = 0.0;
-  _zMin = zMin; _zMax = zMax; _zNPts = zNpts; _zWidth = 0.0;
-  _xRange = _xMax - _xMin;
-  _yRange = _yMax - _yMin;
-  _zRange = _zMax - _zMin;
-  if(_xNPts < 1) _xNPts = 1;
-  if(_yNPts < 1) _yNPts = 1;
-  if(_zNPts < 1) _zNPts = 1;
-  _xWidth = (_xNPts - 1) / _xRange;
-  _yWidth = (_yNPts - 1) / _yRange;
-  _zWidth = (_zNPts - 1) / _zRange;
-  initialize(_xNPts, _yNPts, _yNPts,initValue);
+  }
+
+  void ScalarField::setRank(unsigned int rank)
+  {
+  if (!isConstant() && rank!=_minima.size())
+    throw MathException("Cannot change the rank of a mesh field: use setMesh()",__FUNCTION__);
+  Function::setRank(rank);
+  }
+
+  void ScalarField::reset()
+  {
+  _constValue = 0.0;
+  for (auto & v : _values) v = 0.0;
+  }
+
+  // ---------------------------------------------------------------- mesh boundaries and nodes
+
+  void ScalarField::checkAxis(unsigned int axis, const char * source) const
+  {
+  if (axis>=_minima.size())
+    {
+    String message = isConstant() ? "A constant field has no mesh axis " : "No mesh axis ";
+    message += std::to_string(axis).c_str();
+    throw MathException(message,source);
+    }
+  }
+
+  void ScalarField::checkBounds(const std::vector<double> & minima, const std::vector<double> & maxima, const char * source) const
+  {
+  for (unsigned int k=0; k<minima.size(); k++)
+    {
+    if (!std::isfinite(minima[k]) || !std::isfinite(maxima[k]))
+      throw InvalidBoundsException(minima[k],maxima[k],"Mesh boundaries must be finite",source);
+    if (_nPoints[k]>1 && maxima[k]<=minima[k])
+      throw InvalidBoundsException(minima[k],maxima[k],"Maximum must be larger than minimum",source);
+    }
+  }
+
+  double ScalarField::minimum(unsigned int axis) const       { checkAxis(axis,__FUNCTION__); return _minima[axis]; }
+  double ScalarField::maximum(unsigned int axis) const       { checkAxis(axis,__FUNCTION__); return _maxima[axis]; }
+  unsigned int ScalarField::nPoints(unsigned int axis) const { checkAxis(axis,__FUNCTION__); return _nPoints[axis]; }
+
+  double ScalarField::spacing(unsigned int axis) const
+  {
+  checkAxis(axis,__FUNCTION__);
+  return _nPoints[axis]>1 ? (_maxima[axis]-_minima[axis])/double(_nPoints[axis]-1) : 0.0;
+  }
+
+  double ScalarField::coordinate(unsigned int axis, unsigned int index) const
+  {
+  checkAxis(axis,__FUNCTION__);
+  if (index>=_nPoints[axis]) throw IndexOutOfBoundException(index,_nPoints[axis],"Node index out of range",__FUNCTION__);
+  return _minima[axis] + index*spacing(axis);
+  }
+
+  void ScalarField::setMinima(const std::vector<double> & minima)
+  {
+  if (isConstant()) throw MathException("A constant field has no mesh",__FUNCTION__);
+  if (minima.size()!=_minima.size()) throw MathException("Size of minima differs from the mesh rank",__FUNCTION__);
+  checkBounds(minima,_maxima,__FUNCTION__);
+  _minima = minima;
+  }
+
+  void ScalarField::setMaxima(const std::vector<double> & maxima)
+  {
+  if (isConstant()) throw MathException("A constant field has no mesh",__FUNCTION__);
+  if (maxima.size()!=_maxima.size()) throw MathException("Size of maxima differs from the mesh rank",__FUNCTION__);
+  checkBounds(_minima,maxima,__FUNCTION__);
+  _maxima = maxima;
+  }
+
+  void ScalarField::setMinimum(unsigned int axis, double minimum)
+  {
+  checkAxis(axis,__FUNCTION__);
+  std::vector<double> minima(_minima);
+  minima[axis] = minimum;
+  checkBounds(minima,_maxima,__FUNCTION__);
+  _minima = minima;
+  }
+
+  void ScalarField::setMaximum(unsigned int axis, double maximum)
+  {
+  checkAxis(axis,__FUNCTION__);
+  std::vector<double> maxima(_maxima);
+  maxima[axis] = maximum;
+  checkBounds(_minima,maxima,__FUNCTION__);
+  _maxima = maxima;
+  }
+
+  double ScalarField::volume() const
+  {
+  double v = 1.0;
+  for (unsigned int k=0; k<_minima.size(); k++) v *= _maxima[k]-_minima[k];
+  return v;
+  }
+
+  double ScalarField::random(unsigned int axis, double r) const
+  {
+  checkAxis(axis,__FUNCTION__);
+  return _minima[axis] + (_maxima[axis]-_minima[axis])*r;
+  }
+
+  // ---------------------------------------------------------------- node values
+
+  unsigned int ScalarField::nodeIndex(const std::vector<unsigned int> & indices, const char * source) const
+  {
+  if (indices.size()!=_nPoints.size())
+    {
+    String message = "Mesh of rank ";
+    message += std::to_string(_nPoints.size()).c_str();
+    message += " addressed with ";
+    message += std::to_string(indices.size()).c_str();
+    message += " index(es)";
+    throw MathException(message,source);
+    }
+  unsigned int index  = 0;
+  unsigned int stride = 1;
+  for (unsigned int k=0; k<indices.size(); k++)
+    {
+    if (indices[k]>=_nPoints[k]) throw IndexOutOfBoundException(indices[k],_nPoints[k],"Node index out of range",source);
+    index  += indices[k]*stride;
+    stride *= _nPoints[k];
+    }
+  return index;
+  }
+
+  double & ScalarField::operator()(unsigned int i)
+  {
+  if (isConstant()) return _constValue;
+  return _values[nodeIndex({i},__FUNCTION__)];
+  }
+
+  double & ScalarField::operator()(unsigned int i, unsigned int j)
+  {
+  if (isConstant()) return _constValue;
+  return _values[nodeIndex({i,j},__FUNCTION__)];
+  }
+
+  double & ScalarField::operator()(unsigned int i, unsigned int j, unsigned int k)
+  {
+  if (isConstant()) return _constValue;
+  return _values[nodeIndex({i,j,k},__FUNCTION__)];
+  }
+
+  double & ScalarField::operator()(const std::vector<unsigned int> & indices)
+  {
+  if (isConstant()) return _constValue;
+  return _values[nodeIndex(indices,__FUNCTION__)];
+  }
+
+  double ScalarField::valueAt(const std::vector<unsigned int> & indices) const
+  {
+  if (isConstant()) return _constValue;
+  return _values[nodeIndex(indices,__FUNCTION__)];
+  }
+
+  double ScalarField::valueAt(unsigned int i, unsigned int j, unsigned int k) const
+  {
+  return valueAt(std::vector<unsigned int>{i,j,k});
+  }
+
+  double ScalarField::valueAt(double x, double y, double z) const
+  {
+  return interpolate(x,y,z);
   }
 
   double ScalarField::value() const
   {
-  if (_type==0)
-    return _constValue;
-  else
-    throw MathException("Invalid input: Must specify iX, iY, iZ",__FUNCTION__);
+  if (!isConstant()) throw MathException("Not a constant field: specify a position or node indices",__FUNCTION__);
+  return _constValue;
   }
 
-  double ScalarField::valueAt(unsigned int iX, unsigned int iY, unsigned int iZ) const
-  {
-  if (_type==0)
-    return _constValue;
-  if (iX>=_xNPts) throw IndexOutOfBoundException(iX,_xNPts,"iX>=xNPts",__FUNCTION__);
-  if (iY>=_yNPts) throw IndexOutOfBoundException(iX,_yNPts,"iY>=yNPts",__FUNCTION__);
-  if (iZ>=_zNPts) throw IndexOutOfBoundException(iX,_zNPts,"iZ>=zNPts",__FUNCTION__);
-  return _field[iX][iY][iZ];
-  }
+  // ---------------------------------------------------------------- evaluation and interpolation
 
-  double ScalarField::valueAt(double aX, double aY, double aZ) const
+  double ScalarField::interpolateMesh(const double * x, const char * source) const
   {
-  if (_type==0)
-    return _constValue;
-  else
-    return interpolate(aX,aY,aZ);
-  }
-
-
-  double ScalarField::interpolate(double aX, double aY, double aZ) const
-  {
-  if(_zNPts>1)
-    return interpolate3D(aX, aY, aZ);
-  else if (_yNPts>1)
-    return interpolate2D(aX, aY);
-  else if (_xNPts>1)
-    return interpolate1D(aX);
-  else
-    return _field[0][0][0];
-  }
-
-  ScalarField ScalarField::derivativeX(const String & aName)
-  {
-  unsigned int ti;
-  if (_xNPts<=1) throw DivByZeroException("_xNPts<=1","Too few bins in X",__FUNCTION__);
-  ScalarField result(*this);
-  _xD = (_xMax - _xMin) / (_xNPts - 1);
-  result.setName(aName);
-  for (unsigned int i=0; i<_xNPts; i++)
+  const unsigned int n = _nPoints.size();
+  std::vector<unsigned int> base(n);
+  std::vector<double> frac(n);
+  std::vector<unsigned int> stride(n);
+  unsigned int s = 1;
+  for (unsigned int k=0; k<n; k++)
     {
-    ti = initDerivative(i, _xMin, _xMax, _xNPts);
-    for (unsigned int j=0; j<_yNPts; j++)
-      for (unsigned int k=0; k<_zNPts; k++)
-        result(i,j,k) = derivative(_field[ti-1][j][k], _field[ti][j][k], _field[ti+1][j][k]);
+    if (!std::isfinite(x[k])) throw MathException("Coordinate is not finite",source);
+    stride[k] = s;
+    s *= _nPoints[k];
+    if (_nPoints[k]==1) { base[k] = 0; frac[k] = 0.0; continue; }
+    double t = (x[k]-_minima[k])/spacing(k);
+    double cell = std::floor(t);
+    if (cell<0.0) cell = 0.0;
+    if (cell>double(_nPoints[k]-2)) cell = double(_nPoints[k]-2);  // last cell; linear extrapolation beyond the edges
+    base[k] = (unsigned int) cell;
+    frac[k] = t - cell;
     }
-  return result;
-  }
-
-  ScalarField ScalarField::derivativeY(const String & aName)
-  {
-  unsigned int tj;
-  if (_yNPts<=1) throw DivByZeroException("_yNPts<=1","Too few bins in Y",__FUNCTION__);
-  ScalarField result(*this);
-  _xD = (_yMax - _yMin) / (_yNPts - 1);
-  result.setName(aName);
-  for (unsigned int i=0; i<_xNPts; i++)
-    for (unsigned int j=0; j<_yNPts; j++) {
-      tj = initDerivative(j, _yMin, _yMax, _yNPts);
-      for (unsigned int k=0; k<_zNPts; k++)
-        result(i,j,k) = derivative(_field[i][tj-1][k], _field[i][tj][k], _field[i][tj+1][k]);
-    }
-  return result;
-  }
-
-  ScalarField ScalarField::derivativeZ(const String & aName)
-  {
-  unsigned int tk;
-  if (_zNPts<=1) throw DivByZeroException("_zNPts<=1","Too few bins in Z",__FUNCTION__);
-  ScalarField result(*this);
-  _xD = (_zMax - _zMin) / (_zNPts - 1);
-  result.setName(aName);
-  for (unsigned int i=0; i<_xNPts; i++)
-    for (unsigned int j=0; j<_yNPts; j++)
-      for (unsigned int k=0; k<_zNPts; k++) {
-        tk = initDerivative(k, _zMin, _zMax, _zNPts);
-        result(i,j,k) = derivative(_field[i][j][tk-1], _field[i][j][tk], _field[i][j][tk+1]);
-      }
-  return result;
-  }
-
-  double ScalarField::interpolate1D(double aX)  const
-  {
-  unsigned int i, j, k;
-  double ti;
-
-  ti = (aX - _xMin) * _xWidth;	i = (unsigned int) ti;	if(i+1 > _xNPts-1) i--;	ti -= i;
-  j  = 0;
-  k  = 0;
-  return
-  _field[i  ][j  ][k  ] * (1-ti) + _field[i+1][j  ][k  ] * ti;
-  }
-
-  double ScalarField::interpolate2D(double aX, double aY) const
-  {
-  unsigned int    i, j, k;
-  double ti,tj;
-
-  ti = (aX - _xMin) * _xWidth;	i = (unsigned int) ti;	if(i+1 > _xNPts-1) i--;	ti -= i;
-  tj = (aY - _yMin) * _yWidth;	j = (unsigned int) tj;	if(j+1 > _yNPts-1) j--;	tj -= j;
-  k  = 0;
-  return
-  (_field[i  ][j  ][k  ] * (1-ti) + _field[i+1][j  ][k  ] * ti) * (1-tj) +
-  (_field[i  ][j+1][k  ] * (1-ti) + _field[i+1][j+1][k  ] * ti) *    tj;
-  }
-
-  double ScalarField::interpolate3D(double aX, double aY, double aZ)  const
-  {
-  unsigned int    i, j, k;
-  double ti,tj,tk;
-
-  ti = (aX - _xMin) * _xWidth;	i = (unsigned int) ti;	if(i+1 > _xNPts-1) i--;	ti -= i;
-  tj = (aY - _yMin) * _yWidth;	j = (unsigned int) tj;	if(j+1 > _yNPts-1) j--;	tj -= j;
-  tk = (aZ - _zMin) * _zWidth;	k = (unsigned int) tk;	if(k+1 > _zNPts-1) k--;	tk -= k;
-  return
-  (
-   (_field[i  ][j  ][k  ] * (1-ti) + _field[i+1][j  ][k  ] * ti) * (1-tj) +
-   (_field[i  ][j+1][k  ] * (1-ti) + _field[i+1][j+1][k  ] * ti) *    tj
-   ) * (1-tk) + (
-                 (_field[i  ][j  ][k+1] * (1-ti) + _field[i+1][j  ][k+1] * ti) * (1-tj) +
-                 (_field[i  ][j+1][k+1] * (1-ti) + _field[i+1][j+1][k+1] * ti) *    tj
-                 ) *    tk;
-  }
-
-  inline int ScalarField::initDerivative(int aIdx, double aAMin, double aAampx, int aAPts)
-  {
-  if(aIdx == 0) {
-    _xIn = aAMin;
-    _xI0 = aAMin + _xD;
-    _xIp = aAMin + _xD * 2.0;
-    _x0  = aAMin;
-    return aIdx + 1;
-  } else if (aIdx == aAPts - 1) {
-    _xIn = aAampx - _xD * 2.0;
-    _xI0 = aAampx - _xD;
-    _xIp = aAampx;
-    _x0  = aAampx;
-    return aIdx - 1;
-  } else {
-    _xIn = aAMin + _xD * (aIdx - 1);
-    _xI0 = aAMin + _xD *  aIdx;
-    _xIp = aAMin + _xD * (aIdx + 1);
-    _x0  = _xI0;
-    return aIdx;
-  }
-  }
-
-  inline double ScalarField::derivative(double aFin, double aFi0, double aFip)
-  {
-  return (
-          _xIn * (_xIn - 2.0 * _x0) * (aFip - aFi0) +
-          _xI0 * (_xI0 - 2.0 * _x0) * (aFin - aFip) +
-          _xIp * (_xIp - 2.0 * _x0) * (aFi0 - aFin)
-          ) / (2.0 * _xD * _xD * _xD);
-  }
-
-
-  void ScalarField::copyField(double*** source,unsigned int nX, unsigned int nY, unsigned int nZ)
-  {
-  initialize(nX,nY,nZ,0.0);
-  for (unsigned int iX=0; iX<nX; iX++)
+  // sum over the 2^n corners of the cell; axes with a single node contribute one corner only
+  double sum = 0.0;
+  const unsigned long long nCorners = 1ull << n;
+  for (unsigned long long corner=0; corner<nCorners; corner++)
     {
-    for (unsigned int iY=0; iY<nY; iY++)
+    double weight = 1.0;
+    unsigned int index = 0;
+    bool valid = true;
+    for (unsigned int k=0; k<n; k++)
       {
-      for (unsigned int iZ=0; iZ<nZ; iZ++)
-        _field[iX][iY][iZ] = source[iX][iY][iZ];
+      bool upper = (corner>>k) & 1ull;
+      if (upper && _nPoints[k]==1) { valid = false; break; }
+      weight *= upper ? frac[k] : 1.0-frac[k];
+      index  += (base[k] + (upper ? 1 : 0))*stride[k];
       }
+    if (valid) sum += weight*_values[index];
     }
+  return sum;
   }
+
+  double ScalarField::interpolate(double x) const
+  {
+  checkRank(1,__FUNCTION__);
+  return isConstant() ? _constValue : interpolateMesh(&x,__FUNCTION__);
+  }
+
+  double ScalarField::interpolate(double x1, double x2) const
+  {
+  checkRank(2,__FUNCTION__);
+  double x[2] = {x1,x2};
+  return isConstant() ? _constValue : interpolateMesh(x,__FUNCTION__);
+  }
+
+  double ScalarField::interpolate(double x1, double x2, double x3) const
+  {
+  checkRank(3,__FUNCTION__);
+  double x[3] = {x1,x2,x3};
+  return isConstant() ? _constValue : interpolateMesh(x,__FUNCTION__);
+  }
+
+  double ScalarField::interpolate(const std::vector<double> & x) const
+  {
+  checkRank(x.size(),__FUNCTION__);
+  return isConstant() ? _constValue : interpolateMesh(x.data(),__FUNCTION__);
+  }
+
+  double ScalarField::evaluateAt(double x) const                          { return interpolate(x); }
+  double ScalarField::evaluateAt(double x1, double x2) const              { return interpolate(x1,x2); }
+  double ScalarField::evaluateAt(double x1, double x2, double x3) const   { return interpolate(x1,x2,x3); }
+  double ScalarField::evaluateAt(const std::vector<double> & x) const     { return interpolate(x); }
+
+  // ---------------------------------------------------------------- derivatives
+
+  ScalarField ScalarField::derivative(unsigned int axis, const String & name) const
+  {
+  checkAxis(axis,__FUNCTION__);
+  const unsigned int n = _nPoints[axis];
+  if (n<=1) throw DivByZeroException("nPoints<=1","Too few points along the axis",__FUNCTION__);
+  ScalarField result(*this);
+  result.setName(name);
+  result.setTitle(name);
+  const double h = spacing(axis);
+  unsigned int stride = 1;
+  for (unsigned int k=0; k<axis; k++) stride *= _nPoints[k];
+  for (unsigned int g=0; g<_values.size(); g++)
+    {
+    unsigned int i = (g/stride)%n;   // node index along the axis
+    const double * f = &_values[g - i*stride];   // f[m*stride] is node m along the axis
+    double d;
+    if (n==2)
+      d = (f[stride] - f[0])/h;
+    else if (i==0)
+      d = (-3.0*f[0] + 4.0*f[stride] - f[2*stride])/(2.0*h);
+    else if (i==n-1)
+      d = (3.0*f[i*stride] - 4.0*f[(i-1)*stride] + f[(i-2)*stride])/(2.0*h);
+    else
+      d = (f[(i+1)*stride] - f[(i-1)*stride])/(2.0*h);
+    result._values[g] = d;
+    }
+  return result;
+  }
+  void ScalarField::encodeBinary(BinaryWriter & w) const
+  {
+  w.writeString(title());
+  w.writeVarUInt(rank());
+  w.writeFloat64(_constValue);
+  w.writeVarUInt(_minima.size());          // 0 for a constant field
+  for (unsigned int k=0; k<_minima.size(); k++)
+    {
+    w.writeFloat64(_minima[k]);
+    w.writeFloat64(_maxima[k]);
+    w.writeVarUInt(_nPoints[k]);
+    }
+  if (!isConstant()) writeDoubles(w,_values);
+  }
+
+  void ScalarField::decodeBinary(BinaryReader & r, const String & fieldName, unsigned int /*version*/)
+  {
+  setName(fieldName);
+  setTitle(r.readString());
+  uint64_t rank = r.readVarUInt();
+  double constValue = r.readFloat64();
+  uint64_t meshRank = r.readVarUInt();
+  if (rank==0 || rank > 64 || meshRank > 64) throw Exception("Invalid rank","ScalarField::decodeBinary()");
+  if (meshRank==0)
+    {
+    setValue(constValue);
+    setRank((unsigned int)rank);
+    return;
+    }
+  if (meshRank!=rank) throw Exception("Mesh rank differs from the rank","ScalarField::decodeBinary()");
+  std::vector<double> minima(meshRank), maxima(meshRank);
+  std::vector<unsigned int> nPoints(meshRank);
+  for (uint64_t k=0; k<meshRank; k++)
+    {
+    minima[k] = r.readFloat64();
+    maxima[k] = r.readFloat64();
+    uint64_t n = r.readVarUInt();
+    if (n==0 || n > 0xFFFFFFFFull) throw Exception("Invalid number of points","ScalarField::decodeBinary()");
+    nPoints[k] = (unsigned int) n;
+    }
+  std::vector<double> values = readDoubles(r);
+  setMesh(minima,maxima,nPoints);                    // validates the mesh
+  if (values.size()!=_values.size()) throw Exception("Number of values differs from the number of nodes","ScalarField::decodeBinary()");
+  _values = values;
+  _constValue = constValue;
+  }
+
+  void ScalarField::writeBinary(std::ostream & out) const                     { writeBinaryObject(out,*this); }
+  bool ScalarField::readBinary(std::istream & in)                             { return readBinaryObject(in,*this); }
+  void ScalarField::saveBinary(const String & fileName, bool append) const    { saveBinaryObject(fileName,*this,append); }
+  void ScalarField::loadBinary(const String & fileName, const String & name)   { loadBinaryObject(fileName,*this,name); }
+  void ScalarField::saveBinary(const String & fileName, const std::vector<ScalarField> & objects) { saveBinaryObjects(fileName,objects); }
+  std::vector<ScalarField> ScalarField::loadAllBinary(const String & fileName)       { return loadAllBinaryObjects<ScalarField>(fileName); }
+
+
+  void ScalarField::combineWith(const ScalarField & rhs, double sign, const char * source)
+  {
+  if (rank()!=rhs.rank()) throw MathException("Fields have different ranks",source);
+  if (rhs.isConstant())
+    {
+    if (isConstant()) _constValue += sign*rhs._constValue;
+    else for (auto & v : _values) v += sign*rhs._constValue;
+    return;
+    }
+  if (isConstant())
+    {
+    // constant +- mesh: the result is defined on the mesh of rhs
+    std::vector<double> values(rhs._values.size());
+    for (std::size_t k=0; k<values.size(); k++) values[k] = _constValue + sign*rhs._values[k];
+    _minima = rhs._minima; _maxima = rhs._maxima; _nPoints = rhs._nPoints; _values.swap(values); _constValue = 0.0;
+    return;
+    }
+  if (_minima!=rhs._minima || _maxima!=rhs._maxima || _nPoints!=rhs._nPoints)
+    throw MathException("Fields are defined on different meshes",source);
+  for (std::size_t k=0; k<_values.size(); k++) _values[k] += sign*rhs._values[k];
+  }
+
+  ScalarField & ScalarField::operator+=(const ScalarField & rhs) { combineWith(rhs,+1.0,__FUNCTION__); return *this; }
+  ScalarField & ScalarField::operator-=(const ScalarField & rhs) { combineWith(rhs,-1.0,__FUNCTION__); return *this; }
+
+  ScalarField operator+(const ScalarField & left, const ScalarField & right) { ScalarField r(left); r += right; return r; }
+  ScalarField operator-(const ScalarField & left, const ScalarField & right) { ScalarField r(left); r -= right; return r; }
+
   } // namespace MATH
 } // namespace CAP
-

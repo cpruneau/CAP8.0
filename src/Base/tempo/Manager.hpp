@@ -245,7 +245,7 @@ T Manager<T>::createStoreObjectNamed(const String & newName)
 {
   for (auto & name : objectStoreNames)
     {
-    if (name.EqualTo(newName))
+    if (name.equalTo(newName))
       throw ManagerException(name,"T already exist",__FUNCTION__);
     }
   T object = new T();
@@ -262,7 +262,7 @@ T* Manager<T>::getStoreObjectNamed(const String & requestedName)
   for (auto & name : objectStoreNames)
     {
     //printValue("Store Name",name);
-    if (name.EqualTo(requestedName)) return objectStore[index];
+    if (name.equalTo(requestedName)) return objectStore[index];
     index++;
     }
   throw ManagerException(requestedName,"T does not exist",__FUNCTION__);

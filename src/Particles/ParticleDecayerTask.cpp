@@ -98,41 +98,32 @@ void ParticleDecayerTask::decayParticle(Particle & parent, Event & event)
       parent.setDecayed(true);
       break;
       }
-      case 4: // skip those for now...
+      case 4:
       {
-      //        Particle * child1 = Particle::factory().nextObject();
-      //        Particle * child2 = Particle::factory().nextObject();
-      //        Particle * child3 = Particle::factory().nextObject();
-      //        Particle * child4 = Particle::factory().nextObject();
-      //        ParticleType  & childType1 = decayMode.childType(0); child1.setType(&childType1); child1.setLive(true);
-      //        ParticleType  & childType2 = decayMode.childType(1); child2.setType(&childType2); child2.setLive(true);
-      //        ParticleType  & childType3 = decayMode.childType(2); child3.setType(&childType3); child3.setLive(true);
-      //        ParticleType  & childType4 = decayMode.childType(3); child4->setType(&childType4); child4->setLive(true);
-      //        VectorLorentz & p1 = child1.momentum();
-      //        VectorLorentz & r1 = child1.position();
-      //        VectorLorentz & p2 = child2.momentum();
-      //        VectorLorentz & r2 = child2.position();
-      //        VectorLorentz & p3 = child3.momentum();
-      //        VectorLorentz & r3 = child3.position();
-      //        VectorLorentz & p4 = child4->momentum();
-      //        VectorLorentz & r4 = child4->position();
-      //        decay4(parentType,
-      //                       parentMomentum,
-      //                       parentPosition,
-      //                       childType1,p1,r1,
-      //                       childType2,p2,r2,
-      //                       childType3,p3,r3,
-      //                       childType4,p4,r4);
-      //        events[0]->add(child1); child1.setLive(true);
-      //        events[0]->add(child2); child2.setLive(true);
-      //        events[0]->add(child3); child3.setLive(true);
-      //        events[0]->add(child4); child4->setLive(true);
-      //      if (!child1.isStable() ) decayParticle(child1,event);
-      //      if (!child2.isStable() ) decayParticle(child2,event);
-      //      if (!child3.isStable() ) decayParticle(child3,event);
-      //      if (!child4->isStable() ) decayParticle(child4,event);
-      //      parent.setDecayed(true);
-      //
+      Particle & child1 = Particle::factory().nextObject();
+      Particle & child2 = Particle::factory().nextObject();
+      Particle & child3 = Particle::factory().nextObject();
+      Particle & child4 = Particle::factory().nextObject();
+      ParticleType & childType1 = decayMode.childType(0); child1.setType(&childType1); child1.setLive(true);
+      ParticleType & childType2 = decayMode.childType(1); child2.setType(&childType2); child2.setLive(true);
+      ParticleType & childType3 = decayMode.childType(2); child3.setType(&childType3); child3.setLive(true);
+      ParticleType & childType4 = decayMode.childType(3); child4.setType(&childType4); child4.setLive(true);
+      decay4(parentType,
+             parentMomentum,
+             parentPosition,
+             childType1,child1.momentum(),child1.position(),
+             childType2,child2.momentum(),child2.position(),
+             childType3,child3.momentum(),child3.position(),
+             childType4,child4.momentum(),child4.position());
+      event.addParticle(&child1);
+      event.addParticle(&child2);
+      event.addParticle(&child3);
+      event.addParticle(&child4);
+      if (!child1.isStable() ) decayParticle(child1,event);
+      if (!child2.isStable() ) decayParticle(child2,event);
+      if (!child3.isStable() ) decayParticle(child3,event);
+      if (!child4.isStable() ) decayParticle(child4,event);
+      parent.setDecayed(true);
       break;
       }
     }
@@ -149,10 +140,16 @@ void ParticleDecayerTask::decayParticle(Particle & parent, Event & event)
 void ParticleDecayerTask::execute()
 {
   Event & ev = event();
-  for (auto & particle : ev.particles())
+  // Index loop over the particles present before the decays: decayParticle() appends the products to the event (and
+  // decays them recursively), which invalidated the iterators of the former range-based loop.
+  std::vector<Particle*> & particles = ev.particles();
+  const std::size_t nInitial = particles.size();
+  for (std::size_t k=0; k<nInitial; k++)
     {
-    if (particle->isLive() &&
-        particle->isDecayEnabled()) decayParticle(*particle,ev);
+    Particle * particle = particles[k];
+    // !isStable(): decay enabled AND decay modes present (isDecayEnabled() alone accepted types without decay modes,
+    // e.g. after ParticleDb::enableAllDecays(), for which no decay mode can be drawn)
+    if (particle->isLive() && !particle->isStable()) decayParticle(*particle,ev);
     }
 }
 

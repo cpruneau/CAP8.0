@@ -13,7 +13,8 @@
 #include "StreamHelpers.hpp"
 #include "Exceptions.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::PHSDEventReader);
 

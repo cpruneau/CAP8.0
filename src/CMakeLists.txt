@@ -6,16 +6,24 @@
 #
 ################################################################################################
 
-set(Include_JETS "NO")
-set(Include_PYTHIA "NO")
-set(Include_HERWIG "NO")
-set(Include_HIJING "NO")
-set(Include_AMPT "NO")
-set(Include_EPOS "NO")
-set(Include_PHSD "NO")
-set(Include_THERMINATOR "YES")
-set(Include_GLAUBER "YES")
-set(Include_IDENTITY "NO")
+################################################################################################
+# Build options (set with -D<option>=ON|OFF, or with the BuildCAP.py GUI).
+# The core modules (Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
+# Spherocity, SubSample, Performance, BasicEventGen, Glauber) are always built.
+################################################################################################
+option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
+option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
+option(CAP_WITH_JETS         "Build the Jets module (requires FastJet)"                       OFF)
+option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader)"                      OFF)
+option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      OFF)
+option(CAP_WITH_PYTHIA8      "Build the interface to the Pythia8 event generator (CAPPythia)" OFF)
+option(CAP_WITH_HERWIG       "Build the interface to the Herwig event generator"              OFF)
+# Installation prefixes of the external packages. When empty, a copy distributed with CAP is used if present
+# (a directory <CAP>/pythia8*, <CAP>/external/pythia8*, ...), then the environment (CAP_PYTHIA8_PATH, PYTHIA8, ...),
+# then the package's configuration tool (pythia8-config --prefix, ...).
+set(CAP_PYTHIA8_DIR "" CACHE PATH "Pythia8 installation prefix")
+set(CAP_HERWIG_DIR  "" CACHE PATH "Herwig installation prefix")
+set(CAP_FASTJET_DIR "" CACHE PATH "FastJet installation prefix")
 
 if(APPLE)
     cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
@@ -53,12 +61,77 @@ find_package(ROOT REQUIRED COMPONENTS EG MathCore MathMore RIO Hist Tree Net )
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 ################################################################################################
 include(${ROOT_USE_FILE})
-include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Helpers" "Xml" "Latex" "Particles" "ParticleSingle" "ParticlePair" "ParticlePair3D" "SubSample"  "CAPPythia"  "Global" "Jets" "Spherocity"   "NuDyn" "PtPt" "Therminator3" "PHSD" "Performance"  "BasicEventGen" "Glauber" "$ENV{ROOTSYS}/include"
- "$ENV{CAP_FASTJET_INCLUDE_PATH}" "$ENV{CAP_PYTHIA8_INCLUDE_PATH}" "$ENV{CAP_PYTHIA8_INCLUDE_PATH}/Pythia8/" )
+include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Helpers" "Latex" "Particles" "ParticleSingle" "ParticlePair" "ParticlePair3D" "SubSample"  "CAPPythia"  "Global" "Jets" "Spherocity"   "NuDyn" "PtPt" "Therminator3" "PHSD" "Performance"  "BasicEventGen" "Glauber" "$ENV{ROOTSYS}/include"
+ )
 add_definitions(${ROOT_CXX_FLAGS})
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(EG SHARED IMPORTED)
 
+get_filename_component(CAP_TOP_DIR "${CMAKE_SOURCE_DIR}" DIRECTORY)   # the CAP8.0 directory
+
+################################################################################################
+# Install directories: $CAP_LIB_PATH and $CAP_BIN_PATH (see SetupCAP.sh), by default <CAP>/lib and <CAP>/bin
+################################################################################################
+if("$ENV{CAP_LIB_PATH}" STREQUAL "")
+  set(ENV{CAP_LIB_PATH} "${CAP_TOP_DIR}/lib/")   # read by the install() commands of the modules
+  message(WARNING "CAP_LIB_PATH is not set (source SetupCAP.sh): the libraries will be installed in $ENV{CAP_LIB_PATH}")
+endif()
+if("$ENV{CAP_BIN_PATH}" STREQUAL "")
+  set(CAP_INSTALL_BIN_DIR "${CAP_TOP_DIR}/bin")
+else()
+  set(CAP_INSTALL_BIN_DIR "$ENV{CAP_BIN_PATH}")
+endif()
+
+################################################################################################
+# cap_resolve_prefix(<var> <label> <file> <bundled glob...> ENV <env vars...> TOOL <config tool>)
+# Set <var> (cache) to the installation prefix of an external package, if it is empty: a prefix holding <file> among
+# the copies distributed with CAP (globs relative to the CAP directory), the environment variables, and the prefix
+# reported by the configuration tool.
+################################################################################################
+function(cap_resolve_prefix VAR LABEL FILE)
+  cmake_parse_arguments(ARG "" "TOOL" "BUNDLED;ENV" ${ARGN})
+  if(NOT "${${VAR}}" STREQUAL "")
+    if(NOT EXISTS "${${VAR}}/${FILE}")
+      message(FATAL_ERROR "${LABEL}: ${VAR}=${${VAR}} does not contain ${FILE}")
+    endif()
+    message(STATUS "${LABEL}: using ${VAR}=${${VAR}}")
+    return()
+  endif()
+  set(candidates "")
+  foreach(pattern ${ARG_BUNDLED})
+    file(GLOB found LIST_DIRECTORIES true "${CAP_TOP_DIR}/${pattern}")
+    list(APPEND candidates ${found})
+  endforeach()
+  foreach(env ${ARG_ENV})
+    if(NOT "$ENV{${env}}" STREQUAL "")
+      list(APPEND candidates "$ENV{${env}}")
+    endif()
+  endforeach()
+  if(ARG_TOOL)
+    find_program(tool_path ${ARG_TOOL})
+    if(tool_path)
+      execute_process(COMMAND ${tool_path} --prefix OUTPUT_VARIABLE prefix OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+      if(prefix)
+        list(APPEND candidates "${prefix}")
+      endif()
+    endif()
+    unset(tool_path CACHE)
+  endif()
+  foreach(candidate ${candidates})
+    string(REGEX REPLACE "/+$" "" candidate "${candidate}")
+    if(EXISTS "${candidate}/${FILE}")
+      set(${VAR} "${candidate}" CACHE PATH "${LABEL} installation prefix" FORCE)
+      message(STATUS "${LABEL}: found ${candidate}")
+      return()
+    endif()
+  endforeach()
+  message(FATAL_ERROR "${LABEL} was requested but not found (looked for ${FILE} in: ${candidates}). "
+                      "Set ${VAR} to its installation prefix, or turn the option off.")
+endfunction()
+
+################################################################################################
+# Core modules (always built)
+################################################################################################
 add_subdirectory(Base)
 add_subdirectory(BasicEventGen)
 add_subdirectory(Math)
@@ -74,53 +147,103 @@ add_subdirectory(PtPt)
 add_subdirectory(NuDyn)
 add_subdirectory(Spherocity)
 add_subdirectory(SubSample)
-add_subdirectory(Therminator3)
-add_subdirectory(Xml)
-add_subdirectory(Latex)
+set(CAP_LINKED_MODULES Base Math Helpers Glauber Particles SubSample Global Spherocity ParticleSingle ParticlePair
+                       ParticlePair3D NuDyn PtPt Performance BasicEventGen)
+set(CAP_OPTIONAL_BUILT "")
 
-if (Include_PYTHIA OR Include_JETS)
-  find_library(PYTHIA8_LIB pythia8 PATHS $ENV{CAP_PYTHIA8_LIB_PATH})
-  add_library(PYTHIA8_LIB SHARED IMPORTED)
-  set_target_properties(PYTHIA8_LIB PROPERTIES IMPORTED_LOCATION ${PYTHIA8_LIB})
-  add_subdirectory(CAPPythia)
+################################################################################################
+# Optional modules
+################################################################################################
+if(CAP_WITH_THERMINATOR3)
+  add_subdirectory(Therminator3)
+  list(APPEND CAP_LINKED_MODULES Therminator3)
+  list(APPEND CAP_OPTIONAL_BUILT Therminator3)
 endif()
 
-if (Include_HERWIG)
-  add_subdirectory(Herwig)
+if(CAP_WITH_LATEX)
+  add_subdirectory(Latex)
+  list(APPEND CAP_LINKED_MODULES Latex)
+  list(APPEND CAP_OPTIONAL_BUILT Latex)
 endif()
 
-
-if (Include_JETS)
-  find_library(FASTJET_LIB fastjet PATHS $ENV{CAP_FASTJET_LIB_PATH} )
-  add_library(FASTJET_LIB SHARED IMPORTED)
-  set_target_properties(FASTJET_LIB PROPERTIES IMPORTED_LOCATION ${FASTJET_LIB})
-  add_subdirectory(Jets)
-endif()
-
-if (Include_AMPT)
-  add_subdirectory(Ampt)
-endif()
-
-if (Include_EPOS)
+if(CAP_WITH_EPOS)
   add_subdirectory(Epos)
+  list(APPEND CAP_LINKED_MODULES Epos)
+  list(APPEND CAP_OPTIONAL_BUILT Epos)
 endif()
 
-if (Include_PHSD)
+if(CAP_WITH_PHSD)
   add_subdirectory(PHSD)
+  list(APPEND CAP_LINKED_MODULES PHSD)
+  list(APPEND CAP_OPTIONAL_BUILT PHSD)
 endif()
 
-
-if (Include_HIJING)
-  add_subdirectory(Hijing)
+if(CAP_WITH_JETS)
+  cap_resolve_prefix(CAP_FASTJET_DIR "FastJet" "include/fastjet/ClusterSequence.hh"
+                     BUNDLED "fastjet*" "external/fastjet*" ENV CAP_FASTJET_PATH FASTJET TOOL fastjet-config)
+  find_library(CAP_FASTJET_LIBRARY NAMES fastjet PATHS "${CAP_FASTJET_DIR}/lib" NO_DEFAULT_PATH)
+  if(NOT CAP_FASTJET_LIBRARY)
+    message(FATAL_ERROR "FastJet: no libfastjet in ${CAP_FASTJET_DIR}/lib (is FastJet built and installed?)")
+  endif()
+  set(CAP_FASTJET_INCLUDE_PATH "${CAP_FASTJET_DIR}/include")
+  include_directories("${CAP_FASTJET_INCLUDE_PATH}")   # also needed by rootcling for the dictionary
+  add_library(FASTJET_LIB SHARED IMPORTED)
+  set_target_properties(FASTJET_LIB PROPERTIES IMPORTED_LOCATION "${CAP_FASTJET_LIBRARY}"
+                        INTERFACE_INCLUDE_DIRECTORIES "${CAP_FASTJET_INCLUDE_PATH}")
+  add_subdirectory(Jets)
+  list(APPEND CAP_LINKED_MODULES Jets)
+  list(APPEND CAP_OPTIONAL_BUILT "Jets (FastJet: ${CAP_FASTJET_DIR})")
 endif()
 
-if (Include_IDENTITY)
-  add_subdirectory(Identity)
+################################################################################################
+# Event generators
+################################################################################################
+if(CAP_WITH_PYTHIA8)
+  cap_resolve_prefix(CAP_PYTHIA8_DIR "Pythia8" "include/Pythia8/Pythia.h"
+                     BUNDLED "pythia8*" "external/pythia8*" ENV CAP_PYTHIA8_PATH PYTHIA8 TOOL pythia8-config)
+  find_library(CAP_PYTHIA8_LIBRARY NAMES pythia8 PATHS "${CAP_PYTHIA8_DIR}/lib" NO_DEFAULT_PATH)
+  if(NOT CAP_PYTHIA8_LIBRARY)
+    message(FATAL_ERROR "Pythia8: no libpythia8 in ${CAP_PYTHIA8_DIR}/lib (is Pythia8 built?)")
+  endif()
+  set(CAP_PYTHIA8_INCLUDE_PATH "${CAP_PYTHIA8_DIR}/include")
+  include_directories("${CAP_PYTHIA8_INCLUDE_PATH}" "${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8")   # also for rootcling
+  add_library(PYTHIA8_LIB SHARED IMPORTED)
+  set_target_properties(PYTHIA8_LIB PROPERTIES IMPORTED_LOCATION "${CAP_PYTHIA8_LIBRARY}"
+                        INTERFACE_INCLUDE_DIRECTORIES "${CAP_PYTHIA8_INCLUDE_PATH};${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8")
+  add_subdirectory(CAPPythia)
+  list(APPEND CAP_LINKED_MODULES CAPPythia)
+  list(APPEND CAP_OPTIONAL_BUILT "CAPPythia (Pythia8: ${CAP_PYTHIA8_DIR})")
 endif()
 
+if(CAP_WITH_HERWIG)
+  cap_resolve_prefix(CAP_HERWIG_DIR "Herwig" "include/Herwig/API/HerwigAPI.h"
+                     BUNDLED "Herwig*" "herwig*" "external/Herwig*" "external/herwig*" ENV CAP_HERWIG_PATH HERWIG_DIR
+                     TOOL Herwig-config)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/Herwig/CMakeLists.txt")
+    include_directories("${CAP_HERWIG_DIR}/include")
+    add_subdirectory(Herwig)
+    list(APPEND CAP_LINKED_MODULES Herwig)
+    list(APPEND CAP_OPTIONAL_BUILT "Herwig (Herwig: ${CAP_HERWIG_DIR})")
+  else()
+    message(WARNING "Herwig was found in ${CAP_HERWIG_DIR}, but CAP's interface to Herwig (src/Herwig) does not exist "
+                    "yet: nothing is built for Herwig.")
+  endif()
+endif()
+
+################################################################################################
+# CAP executable
+################################################################################################
 add_executable(CAP CAP.cxx)
-target_link_libraries(CAP PUBLIC  Base Math Helpers Glauber Particles  SubSample  Global Spherocity ParticleSingle ParticlePair ParticlePair3D NuDyn PtPt Performance Therminator3  BasicEventGen Xml )
+target_link_libraries(CAP PUBLIC ${CAP_LINKED_MODULES})
+install(TARGETS CAP RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
 
-install(TARGETS CAP  LIBRARY DESTINATION "/Users/aa7526/Documents/GitHub/CAP8.0/lib")
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Helpers" "Xml" "Latex" "Glauber" "Particles"  "ParticleSingle" "ParticlePair"  "BasicEventGen" "$ENV{ROOTSYS}/include"
+string(REPLACE ";" ", " optional_text "${CAP_OPTIONAL_BUILT}")
+if(optional_text STREQUAL "")
+  set(optional_text "none")
+endif()
+message(STATUS "CAP core modules: Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, "
+               "PtPt, NuDyn, Spherocity, SubSample, Performance, BasicEventGen, Glauber")
+message(STATUS "CAP optional modules: ${optional_text}")
+message(STATUS "CAP libraries install directory: $ENV{CAP_LIB_PATH}")
+#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Helpers" "Latex" "Glauber" "Particles"  "ParticleSingle" "ParticlePair"  "BasicEventGen" "$ENV{ROOTSYS}/include"
 #"$ENV{CAP_FASTJET_INCLUDE_PATH}" "$ENV{CAP_PYTHIA8_INCLUDE_PATH}" "$ENV{CAP_PYTHIA8_INCLUDE_PATH}/Pythia8/" )

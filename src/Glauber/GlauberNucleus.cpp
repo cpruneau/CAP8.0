@@ -624,7 +624,7 @@ namespace CAP
 //      nucleon->SetType(0);
 //      if (i<fZ)
 //        nucleon->SetType(1);
-//      fNucleons->Add(nucleon);
+//      fNucleons->add(*nucleon);
 //      }
 //    }
 //  if (1)
@@ -672,7 +672,7 @@ namespace CAP
 //      double ctheta = 2*gRandom->Rndm() - 1;
 //      double stheta = TMath::Sqrt(1-ctheta*ctheta);
 //      TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(0));
-//      nucleon->Reset();
+//      nucleon->reset();
 //      nucleon->SetXYZ(r * stheta * TMath::Cos(phi),
 //                      r * stheta * TMath::Sin(phi),
 //                      r * ctheta);
@@ -687,11 +687,11 @@ namespace CAP
 //
 //      TGlauNucleon *nucleon1=(TGlauNucleon*)(fNucleons->At(0));
 //      TGlauNucleon *nucleon2=(TGlauNucleon*)(fNucleons->At(1));
-//      nucleon1->Reset();
+//      nucleon1->reset();
 //      nucleon1->SetXYZ(r * stheta * TMath::Cos(phi),
 //                       r * stheta * TMath::Sin(phi),
 //                       r * ctheta);
-//      nucleon2->Reset();
+//      nucleon2->reset();
 //      if (fF==4) { // place opposite of 1
 //        nucleon2->SetXYZ(-nucleon1->GetX(),
 //                         -nucleon1->GetY(),
@@ -796,7 +796,7 @@ namespace CAP
 //      // change to loop over fN _nucleons!
 //      for (Int_t i = 0; i<fN; ++i) {
 //        TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(i));
-//        nucleon->Reset();
+//        nucleon->reset();
 //        nucleon->SetXYZ(fNucArr[fNucCounter][i][0],
 //                        fNucArr[fNucCounter][i][1],
 //                        fNucArr[fNucCounter][i][2]);
@@ -832,7 +832,7 @@ namespace CAP
 //        for (Int_t i = 0; i<fN; ++i)
 //          {
 //          TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(i));
-//          nucleon->Reset();
+//          nucleon->reset();
 //          while (1)
 //            {
 //            ++fTrials;
@@ -866,7 +866,7 @@ namespace CAP
 //              } else if ((fF==8) || (fF==14)) { // use TF2
 //                double r;
 //                double theta;
-//                fFunc3->GetRandom2(r,theta);
+//                fFunc3->random(r,theta);
 //                double phi = 2*TMath::Pi()*gRandom->Rndm();
 //                x = r * TMath::Sin(phi) * TMath::Sin(theta);
 //                y = r * TMath::Cos(phi) * TMath::Sin(theta);

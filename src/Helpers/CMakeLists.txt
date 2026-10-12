@@ -24,6 +24,7 @@ GraphConfiguration.cpp
 RootChainManager.cpp
 RootFileHelpers.cpp
 RootHistogramHelpers.cpp
+RootConversion.cpp
 G__Helpers.cxx)
 
 target_link_libraries(Helpers Base Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )

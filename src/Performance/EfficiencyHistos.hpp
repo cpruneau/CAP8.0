@@ -11,7 +11,7 @@
  * *********************************************************************/
 #ifndef CAP__ParticlePerformanceHistos
 #define CAP__ParticlePerformanceHistos
-#include "HistogramGroup.hpp"
+#include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "Configuration.hpp"
 
@@ -19,35 +19,45 @@ namespace CAP
 {
 
 
-class ParticlePerformanceHistos : public HistogramGroup
+//!
+//! @brief Older copy of ParticlePerformanceHistos (same class name).
+//! @note Not part of the build (not listed in Performance/CMakeLists.txt).
+//!
+class ParticlePerformanceHistos : public HistogramFolder
 {
 public:
   
+  //! @brief Default constructor.
   ParticlePerformanceHistos();
+  //! @brief Destructor.
   virtual ~ParticlePerformanceHistos() {}
+  //! @brief Configure the object from keys \<taskName\>:\<objectType\>:... (binning, options).
+  //! @param taskName name of the task @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
                                const String & objectType,
                                const Configuration & configuration,
                                unsigned int index);
+  //! @brief Create the histograms.
   virtual void create();
-  virtual void loadFrom(TFile & inputFile);
+  //! @brief Load the histograms from a file. @param inputFile file
+  virtual void loadFrom(CapFile & inputFile);
   virtual void fill(Particle & particle, double weight);
   
 protected:
 
-  TH1 * h_n1_dpt;
-  TH1 * h_n1_deta;
-  TH1 * h_n1_dphi;
-  TH1 * h_n1_dy;
+  Histogram * h_n1_dpt;
+  Histogram * h_n1_deta;
+  Histogram * h_n1_dphi;
+  Histogram * h_n1_dy;
 
-  TProfile * p_n1_dptVsPt;
-  TProfile * p_n1_dptVsEta;
-  TProfile * p_n1_detaVsPt;
-  TProfile * p_n1_detaVsEta;
-  TProfile * p_n1_dyVsPt;
-  TProfile * p_n1_dyVsEta;
-  TProfile * p_n1_dphiVsPt;
-  TProfile * p_n1_dphiVsEta;
+  Profile * p_n1_dptVsPt;
+  Profile * p_n1_dptVsEta;
+  Profile * p_n1_detaVsPt;
+  Profile * p_n1_detaVsEta;
+  Profile * p_n1_dyVsPt;
+  Profile * p_n1_dyVsEta;
+  Profile * p_n1_dphiVsPt;
+  Profile * p_n1_dphiVsEta;
 
   ClassDef(ParticlePerformanceHistos,0)
 

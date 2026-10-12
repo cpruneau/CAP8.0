@@ -100,7 +100,7 @@ void PythiaEventGenerator::initialize()
   if (reportStart(__FUNCTION__)) { printCR(); }
   EventProcessor::initialize();
   const String & taskName = name();
-  pythia = new Pythia8::Pythia(valueString("xmlInputPath").Data(), valueBool("Print:Banner"));
+  pythia = new Pythia8::Pythia(valueString("xmlInputPath").data(), valueBool("Print:Banner"));
   pythia->settings.mode("Beams:idA",       _configuration.valueInt(createKey(taskName,"Beams:idA")));
   pythia->settings.mode("Beams:idB",       _configuration.valueInt(createKey(taskName,"Beams:idB")));
   pythia->settings.mode("Beams:frameType", _configuration.valueInt(createKey(taskName,"Beams:frameType"));
@@ -126,7 +126,7 @@ void PythiaEventGenerator::initialize()
     String  seedValueString = "Random:seed = ";
     seedValueString += _configuration.valueLong(createKey(taskName,"SeedValue"));
     pythia->readString("Random:setSeed = on");
-    pythia->readString(seedValueString.Data());
+    pythia->readString(seedValueString.data());
     printValue("Pythia:Random:setSeed","ON");
     printValue("Pythia:Random:SeedValue",seedValueString);
     }
@@ -134,11 +134,11 @@ void PythiaEventGenerator::initialize()
     {
   String & key = taskName; key += ":Option"; key += k;
     String  value = _configuration.valueString(key);
-    if (!value.Contains("none") )
+    if (!value.contains("none") )
       {
       String s = "Pythia:"; s+=key;
       printValue(s,value);
-      pythia->readString(value.Data());
+      pythia->readString(value.data());
       }
     }
   if(valueBool(  "UseQCDCR"))

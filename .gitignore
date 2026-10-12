@@ -52,3 +52,20 @@ Makefile
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# build GUI: keep the script (matched by build*), ignore its per-user settings
+!BuildCAP.py
+.BuildCAP.json
+
+# local scratch/backup area
+.captmp/
+# snapshot backups and Finder/iCloud duplicates
+_orig_*/
+* 2.*
+* 2/
+
+# workflow GUI: per-user settings, generated task templates, default job output
+.RunCAP.json
+DB/Templates/
+/output/
+.RunCAP.crash.log

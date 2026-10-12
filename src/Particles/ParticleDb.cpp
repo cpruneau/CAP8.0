@@ -14,6 +14,7 @@
 #include "ParticleDbExceptions.hpp"
 #include "ParticleDb.hpp"
 #include "ParticleDbParser.hpp"
+#include "ParticleDbXml.hpp"
 #include "PrintHelpers.hpp"
 #include "StreamHelpers.hpp"
 //#include "Task.hpp"
@@ -240,7 +241,7 @@ namespace CAP
   int index = 0;
   for (auto & pt : _particleTypes)
     {
-    if (pt->name().EqualTo(aName)) return index;
+    if (pt->name().equalTo(aName)) return index;
     index++;
     }
   return -1;
@@ -274,7 +275,7 @@ namespace CAP
   {
   for (auto & pt : _particleTypes)
     {
-    if (pt->name().EqualTo(aName)) return true;
+    if (pt->name().equalTo(aName)) return true;
     }
   return false;
   }
@@ -283,7 +284,7 @@ namespace CAP
   {
   for (auto & pt : _particleTypes)
     {
-    if (pt->name().EqualTo(aName)) return pt;
+    if (pt->name().equalTo(aName)) return pt;
     }
   throw UndefinedParticleTypeException(aName,__FUNCTION__);
 
@@ -311,7 +312,7 @@ namespace CAP
   //  {
   //  for (auto & pt : _particleTypes)
   //    {
-  //    if (pt->name().EqualTo(aName)) return pt;
+  //    if (pt->name().equalTo(aName)) return pt;
   //    }
   //  throw UndefinedParticleTypeException(aName,__FUNCTION__);
   //
@@ -345,7 +346,7 @@ namespace CAP
   {
   for (auto & type : _particleTypes)
     {
-    if (type->name().EqualTo(aName)) return type;
+    if (type->name().equalTo(aName)) return type;
     }
   throw UndefinedParticleTypeException(aName,__FUNCTION__);
   }
@@ -443,26 +444,24 @@ namespace CAP
 
   std::vector<ParticleType*> & ParticleDb::findWeakDecays()
   {
-  _weakDecays.push_back( findTypeNamed("Ka0492zer")); // 311);   // neutral kaons
-  _weakDecays.push_back( findTypeNamed("Ka0492zrb")); // -311);
-                                                      // lambda
-  _weakDecays.push_back( findTypeNamed("Lm1115zer")); //  3122); // lambda
-  _weakDecays.push_back( findTypeNamed("Lm1115zrb")); // -3122);
-                                                      // sigma
-  _weakDecays.push_back( findTypeNamed("Sg1189min")); //  3112); // sigmas
-  _weakDecays.push_back( findTypeNamed("Sg1189mnb")); // -3112);
-  _weakDecays.push_back( findTypeNamed("Sg1192zer")); //  3212);
-  _weakDecays.push_back( findTypeNamed("Sg1192zrb")); // -3212);
-  _weakDecays.push_back( findTypeNamed("Sg1189plu")); //  3222);
-  _weakDecays.push_back( findTypeNamed("Sg1189plb")); // -3222);
-                                                      // xi (cascade)
-  _weakDecays.push_back( findTypeNamed("Xi1321min")); //  3312);  // cascades
-  _weakDecays.push_back( findTypeNamed("Xi1321mnb")); // -3312);
-  _weakDecays.push_back( findTypeNamed("Xi1321zer")); //  3322);
-  _weakDecays.push_back( findTypeNamed("Xi1321zrb")); // -3322);
-                                                      // Omega
-  _weakDecays.push_back( findTypeNamed("UM1672min")); //  3334);  // Omegas
-  _weakDecays.push_back( findTypeNamed("UM1672mnb")); // -3334);
+  // Weakly decaying hadrons, identified by PDG code so that this works with any database (the former Therminator
+  // names, e.g. Ka0492zer, are not in DB/ParticleData and made findTypeNamed() throw). The list is rebuilt at each
+  // call (it was appended to, so repeated calls duplicated it). Codes absent from the database are skipped.
+  // The Sigma0 (3212), which decays electromagnetically, is kept in the list as in the original version.
+  static const int weakPdgCodes[] = {  311,  -311,    // K0, K0bar
+                                      3122, -3122,    // Lambda
+                                      3112, -3112,    // Sigma-
+                                      3212, -3212,    // Sigma0
+                                      3222, -3222,    // Sigma+
+                                      3312, -3312,    // Xi-
+                                      3322, -3322,    // Xi0
+                                      3334, -3334 };  // Omega-
+  _weakDecays.clear();
+  for (int code : weakPdgCodes)
+    {
+    int index = findIndexForPdgCode(code);
+    if (index>=0) _weakDecays.push_back(_particleTypes[index]);
+    }
   return _weakDecays;
   }
 
@@ -477,38 +476,40 @@ namespace CAP
     printValue("taskName",  taskName);
     printValue("objectType",objectType);
     }
-  //  _dbImport            = configuration.valueBool(  createKey(taskName,objectType,index,"IMPORT"));
+  //  _dbImport            = configuration.valueBool(  createKey(taskName,objectType,index,"IMPORT"),true,_dbImport);
   //  _dbImportPath        = configuration.valueString(createKey(taskName,objectType,index,"IMPORT:PATH"));
   //  _dbImportFile        = configuration.valueString(createKey(taskName,objectType,index,"IMPORT:FILE_NAME"));
   //  _dbImportDecaysFile  = configuration.valueString(createKey(taskName,objectType,index,"IMPORT:DECAYS_FILE"));
-  //  _dbExport            = configuration.valueBool(  createKey(taskName,objectType,index,"EXPORT"));
+  //  _dbExport            = configuration.valueBool(  createKey(taskName,objectType,index,"EXPORT"),true,_dbExport);
   //  _dbExportPath        = configuration.valueString(createKey(taskName,objectType,index,"EXPORT:PATH"));
   //  _dbExportFile        = configuration.valueString(createKey(taskName,objectType,index,"EXPORT:FILE"));
   //  _dbExportDecaysFile  = configuration.valueString(createKey(taskName,objectType,index,"EXPORT:DECAYS_FILE"));
 
-  _dbDisableNeutralParticles = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableNeutralParticles"));
-  _dbDisableChargedParticles = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableChargedParticles"));
-  _dbDisableSelected         = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableSelected"));
+  // Keys absent from the configuration keep the values set by the constructor (they were read with the default
+  // false/0, so that, e.g., a configuration without _dbEnableAllParticles disabled all the particles).
+  _dbDisableNeutralParticles = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableNeutralParticles"),true,_dbDisableNeutralParticles);
+  _dbDisableChargedParticles = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableChargedParticles"),true,_dbDisableChargedParticles);
+  _dbDisableSelected         = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableSelected"),true,_dbDisableSelected);
 
-  _dbEnableAllParticles      = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableAllParticles"));
-  _dbEnableNeutralParticles  = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableNeutralParticles"));
-  _dbEnableChargedParticles  = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableChargedParticles"));
-  _dbEnableSelected          = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableSelected"));
+  _dbEnableAllParticles      = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableAllParticles"),true,_dbEnableAllParticles);
+  _dbEnableNeutralParticles  = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableNeutralParticles"),true,_dbEnableNeutralParticles);
+  _dbEnableChargedParticles  = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableChargedParticles"),true,_dbEnableChargedParticles);
+  _dbEnableSelected          = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableSelected"),true,_dbEnableSelected);
 
-  _dbDisableNeutralDecays    = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableNeutralDecays"));
-  _dbDisableChargedDecays    = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableChargedDecays"));
-  _dbDisableSelectedDecays   = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableSelectedDecays"));
-  _dbDisableWeakDecays       = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableWeakDecays"));
-  _dbDisableLongLivedDecays  = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableLongLivedDecays"));
-  _dbDisableShortLivedDecays = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableShortLivedDecays"));
-  _dbEnableAllDecays         = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableAllDecays"));
-  _dbEnableNeutralDecays     = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableNeutralDecays"));
-  _dbEnableChargedDecays     = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableChargedDecays"));
-  _dbEnableSelectedDecays    = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableSelectedDecays"));
-  _dbEnableWeakDecays        = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableWeakDecays"));
-  _dbEnableLongLivedDecays   = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableLongLivedDecays"));
-  _dbEnableShortLivedDecays  = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableLongLivedDecays"));
-  _dbMaxLifeTime             = configuration.valueDouble(createKey(taskName,objectType,index,"MaxLifeTime"));
+  _dbDisableNeutralDecays    = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableNeutralDecays"),true,_dbDisableNeutralDecays);
+  _dbDisableChargedDecays    = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableChargedDecays"),true,_dbDisableChargedDecays);
+  _dbDisableSelectedDecays   = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableSelectedDecays"),true,_dbDisableSelectedDecays);
+  _dbDisableWeakDecays       = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableWeakDecays"),true,_dbDisableWeakDecays);
+  _dbDisableLongLivedDecays  = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableLongLivedDecays"),true,_dbDisableLongLivedDecays);
+  _dbDisableShortLivedDecays = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableShortLivedDecays"),true,_dbDisableShortLivedDecays);
+  _dbEnableAllDecays         = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableAllDecays"),true,_dbEnableAllDecays);
+  _dbEnableNeutralDecays     = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableNeutralDecays"),true,_dbEnableNeutralDecays);
+  _dbEnableChargedDecays     = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableChargedDecays"),true,_dbEnableChargedDecays);
+  _dbEnableSelectedDecays    = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableSelectedDecays"),true,_dbEnableSelectedDecays);
+  _dbEnableWeakDecays        = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableWeakDecays"),true,_dbEnableWeakDecays);
+  _dbEnableLongLivedDecays   = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableLongLivedDecays"),true,_dbEnableLongLivedDecays);
+  _dbEnableShortLivedDecays  = configuration.valueBool(  createKey(taskName,objectType,index,"_dbEnableShortLivedDecays"),true,_dbEnableShortLivedDecays);  // was read from _dbEnableLongLivedDecays
+  _dbMaxLifeTime             = configuration.valueDouble(createKey(taskName,objectType,index,"MaxLifeTime"),true,_dbMaxLifeTime);
 
   if (reportDebug(__FUNCTION__))
     {
@@ -573,19 +574,37 @@ namespace CAP
                                   std::ifstream & inputFile2)
   {
   ParticleDbParser parser;
-  parser.readDb(*this,inputFile1,inputFile2);
+  parser.readDb(*this,inputFile1,inputFile2);   // also maps the antiparticles and sets up the decay generators
   //  inputFile.close();
   //  inputFileDecays.close();
-  mapAntiParticleIndices();
-  setupDecayGenerator();
   if (reportDebug(__FUNCTION__))
     {
     printCR();
     printString("Successfully initiated ParticleDb");
     printValue("ParticleDb.size()",_particleTypes.size());
     }
+  finishLoad();
+  }
 
-  // finish setup
+  void ParticleDb::loadFromXml(const String & fileName)
+  {
+  ParticleDbXml::read(*this,fileName);   // also maps the antiparticles and sets up the decay generators
+  if (reportDebug(__FUNCTION__))
+    {
+    printCR();
+    printValue("Loaded ParticleDb from",fileName);
+    printValue("ParticleDb.size()",_particleTypes.size());
+    }
+  finishLoad();
+  }
+
+  void ParticleDb::exportXml(const String & path, const String & name) const
+  {
+  ParticleDbXml::write(*this,path,name);
+  }
+
+  void ParticleDb::finishLoad()
+  {
 
   if (_dbEnableAllParticles)
     {
@@ -628,6 +647,7 @@ namespace CAP
     printString("Successfully loaded/initiated ParticleDb");
     }
   sortByMass();
+  mapAntiParticleIndices();   // after sorting: the antiparticle indices are indices in _particleTypes
   }
 
   //  void ParticleDb::dbAnalyzer()

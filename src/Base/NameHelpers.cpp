@@ -424,8 +424,8 @@ const  String createTitle(const String & observable,
   String bb = "";
   String p1 = particle1;
   String p2 = particle2;
-  //  if (p1.Contains("#bar"))  p1 = "#bar{p}";
-  //  if (p2.Contains("#bar"))  p2 = "#bar{p}";
+  //  if (p1.contains("#bar"))  p1 = "#bar{p}";
+  //  if (p2.contains("#bar"))  p2 = "#bar{p}";
 
   String title;
   title = observable;

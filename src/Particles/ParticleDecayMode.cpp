@@ -26,6 +26,8 @@ namespace CAP
 ParticleDecayMode::ParticleDecayMode()
 :
 _branchingRatio(1.0),
+_declaredBranchingRatio(-1.0),
+_clebschGordan(false),
 _childrenPdgCodes(),
 _childrenTypes()
 {
@@ -36,6 +38,8 @@ _childrenTypes()
 ParticleDecayMode::ParticleDecayMode(const ParticleDecayMode & source)
 :
 _branchingRatio(source._branchingRatio),
+_declaredBranchingRatio(source._declaredBranchingRatio),
+_clebschGordan(source._clebschGordan),
 _childrenPdgCodes(source._childrenPdgCodes),
 _childrenTypes(source._childrenTypes)
 {  }
@@ -51,6 +55,8 @@ ParticleDecayMode & ParticleDecayMode::operator=(const ParticleDecayMode & sourc
   if (this!=&source)
     {
     _branchingRatio    = source._branchingRatio;
+    _declaredBranchingRatio = source._declaredBranchingRatio;
+    _clebschGordan     = source._clebschGordan;
     _childrenPdgCodes  = source._childrenPdgCodes;
     _childrenTypes     = source._childrenTypes;
     }

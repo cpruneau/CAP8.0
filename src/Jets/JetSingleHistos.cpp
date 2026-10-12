@@ -13,7 +13,8 @@
 #include "JetHelpers.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Configuration.hpp"
 #include "Task.hpp"
 
@@ -24,7 +25,7 @@ namespace CAP
 
   JetSingleHistos::JetSingleHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   h_jet_n1_pt(nullptr),
   h_jet_n1_phi(nullptr),
   h_jet_n1_eta(nullptr),
@@ -67,7 +68,7 @@ namespace CAP
 
   JetSingleHistos::JetSingleHistos(const JetSingleHistos & source)
   :
-  HistogramGroup(source),
+  HistogramFolder(source),
   particleTypeList(ParticleTypeList::list()),
   h_jet_n1_pt(nullptr),
   h_jet_n1_phi(nullptr),
@@ -113,7 +114,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     particleTypeList = rhs.particleTypeList;
     pt_nbins  = rhs.pt_nbins;
     phi_nbins = rhs.phi_nbins;
@@ -139,26 +140,26 @@ namespace CAP
 
   void JetSingleHistos::cloneB(const JetSingleHistos & source)
   {
-  h_jet_n1_pt   = safeCloneH1(source.h_jet_n1_pt);
-  h_jet_n1_phi  = safeCloneH1(source.h_jet_n1_phi);
-  h_jet_n1_eta  = safeCloneH1(source.h_jet_n1_eta);
-  h_jet_n1_th   = safeCloneH1(source.h_jet_n1_th);
-  h_jet_n1_jt   = safeCloneH1(source.h_jet_n1_jt);
-  h_jet_n1_z    = safeCloneH1(source.h_jet_n1_z);
+  h_jet_n1_pt   = histogramLike(source.h_jet_n1_pt);
+  h_jet_n1_phi  = histogramLike(source.h_jet_n1_phi);
+  h_jet_n1_eta  = histogramLike(source.h_jet_n1_eta);
+  h_jet_n1_th   = histogramLike(source.h_jet_n1_th);
+  h_jet_n1_jt   = histogramLike(source.h_jet_n1_jt);
+  h_jet_n1_z    = histogramLike(source.h_jet_n1_z);
 
-  h_jet_n1p_pt  = safeCloneH1(source.h_jet_n1p_pt);
-  h_jet_n1p_phi = safeCloneH1(source.h_jet_n1p_phi);
-  h_jet_n1p_eta = safeCloneH1(source.h_jet_n1p_eta);
-  h_jet_n1p_th  = safeCloneH1(source.h_jet_n1p_th);
-  h_jet_n1p_jt  = safeCloneH1(source.h_jet_n1p_jt);
-  h_jet_n1p_z   = safeCloneH1(source.h_jet_n1p_z);
+  h_jet_n1p_pt  = histogramLike(source.h_jet_n1p_pt);
+  h_jet_n1p_phi = histogramLike(source.h_jet_n1p_phi);
+  h_jet_n1p_eta = histogramLike(source.h_jet_n1p_eta);
+  h_jet_n1p_th  = histogramLike(source.h_jet_n1p_th);
+  h_jet_n1p_jt  = histogramLike(source.h_jet_n1p_jt);
+  h_jet_n1p_z   = histogramLike(source.h_jet_n1p_z);
 
-  h_jet_n1m_pt  = safeCloneH1(source.h_jet_n1m_pt);
-  h_jet_n1m_phi = safeCloneH1(source.h_jet_n1m_phi);
-  h_jet_n1m_eta = safeCloneH1(source.h_jet_n1m_eta);
-  h_jet_n1m_th  = safeCloneH1(source.h_jet_n1m_th);
-  h_jet_n1m_jt  = safeCloneH1(source.h_jet_n1m_jt);
-  h_jet_n1m_z   = safeCloneH1(source.h_jet_n1m_z);
+  h_jet_n1m_pt  = histogramLike(source.h_jet_n1m_pt);
+  h_jet_n1m_phi = histogramLike(source.h_jet_n1m_phi);
+  h_jet_n1m_eta = histogramLike(source.h_jet_n1m_eta);
+  h_jet_n1m_th  = histogramLike(source.h_jet_n1m_th);
+  h_jet_n1m_jt  = histogramLike(source.h_jet_n1m_jt);
+  h_jet_n1m_z   = histogramLike(source.h_jet_n1m_z);
   }
 
   void JetSingleHistos::configure(const String & taskName,
@@ -166,7 +167,7 @@ namespace CAP
                                   const Configuration & configuration,
                                   unsigned int index)
   {
-  HistogramGroup::configure(taskName,objectType,configuration,index);
+  HistogramFolder::configure(taskName,objectType,configuration,index);
   pt_nbins   = configuration.valueInt(createKey(taskName,objectType,index,    "pt_nbins"));
   pt_min     = configuration.valueDouble(createKey(taskName,objectType,index, "pt_min"));
   pt_max     = configuration.valueDouble(createKey(taskName,objectType,index, "pt_max"));
@@ -236,29 +237,29 @@ namespace CAP
   h_jet_n1m_z     = createHistogram(createName(_histogramBaseName,"jet_n1m_z"),     z_nbins,     z_min,     z_max,      "p_{t}","N_1^{-}");
   }
 
-  void JetSingleHistos::loadFrom(TFile & inputFile)
+  void JetSingleHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_jet_n1_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1_pt"));
-  h_jet_n1_phi   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1_phi"));
-  h_jet_n1_eta   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1_eta"));
-  h_jet_n1_th    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1_th"));
-  h_jet_n1_jt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1_jt"));
-  h_jet_n1_z     = loadH1(inputFile,createName(_histogramBaseName,"jet_n1_z"));
+  h_jet_n1_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1_pt"));
+  h_jet_n1_phi   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1_phi"));
+  h_jet_n1_eta   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1_eta"));
+  h_jet_n1_th    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1_th"));
+  h_jet_n1_jt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1_jt"));
+  h_jet_n1_z     = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1_z"));
 
-  h_jet_n1p_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1p_pt"));
-  h_jet_n1p_phi   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1p_phi"));
-  h_jet_n1p_eta   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1p_eta"));
-  h_jet_n1p_th    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1p_th"));
-  h_jet_n1p_jt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1p_jt"));
-  h_jet_n1p_z     = loadH1(inputFile,createName(_histogramBaseName,"jet_n1p_z"));
+  h_jet_n1p_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1p_pt"));
+  h_jet_n1p_phi   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1p_phi"));
+  h_jet_n1p_eta   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1p_eta"));
+  h_jet_n1p_th    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1p_th"));
+  h_jet_n1p_jt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1p_jt"));
+  h_jet_n1p_z     = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1p_z"));
 
-  h_jet_n1m_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1m_pt"));
-  h_jet_n1m_phi   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1m_phi"));
-  h_jet_n1m_eta   = loadH1(inputFile,createName(_histogramBaseName,"jet_n1m_eta"));
-  h_jet_n1m_th    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1m_th"));
-  h_jet_n1m_jt    = loadH1(inputFile,createName(_histogramBaseName,"jet_n1m_jt"));
-  h_jet_n1m_z     = loadH1(inputFile,createName(_histogramBaseName,"jet_n1m_z"));
+  h_jet_n1m_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1m_pt"));
+  h_jet_n1m_phi   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1m_phi"));
+  h_jet_n1m_eta   = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1m_eta"));
+  h_jet_n1m_th    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1m_th"));
+  h_jet_n1m_jt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1m_jt"));
+  h_jet_n1m_z     = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1m_z"));
   }
 
   void JetSingleHistos::fill(PseudoJet& jet)
@@ -283,30 +284,30 @@ namespace CAP
     double part_jt  = 0;
     double part_th  = 0;
     //calculateJtTheta(jet_px,jet_py,jet_pz,jet_p,part_px,part_py,part_pz,part_p,part_jt,part_th);
-    h_jet_n1_pt->Fill(part_pt);
-    h_jet_n1_phi->Fill(part_phi);
-    h_jet_n1_eta->Fill(part_eta);
-    h_jet_n1_th->Fill(part_th);
-    h_jet_n1_jt->Fill(part_jt);
-    h_jet_n1_z->Fill(part_z);
+    h_jet_n1_pt->fill(part_pt);
+    h_jet_n1_phi->fill(part_phi);
+    h_jet_n1_eta->fill(part_eta);
+    h_jet_n1_th->fill(part_th);
+    h_jet_n1_jt->fill(part_jt);
+    h_jet_n1_z->fill(part_z);
 
     if (q>0)
       {
-      h_jet_n1p_pt->Fill(part_pt);
-      h_jet_n1p_phi->Fill(part_phi);
-      h_jet_n1p_eta->Fill(part_eta);
-      h_jet_n1p_th->Fill(part_th);
-      h_jet_n1p_jt->Fill(part_jt);
-      h_jet_n1p_z->Fill(part_z);
+      h_jet_n1p_pt->fill(part_pt);
+      h_jet_n1p_phi->fill(part_phi);
+      h_jet_n1p_eta->fill(part_eta);
+      h_jet_n1p_th->fill(part_th);
+      h_jet_n1p_jt->fill(part_jt);
+      h_jet_n1p_z->fill(part_z);
       }
     else
       {
-      h_jet_n1m_pt->Fill(part_pt);
-      h_jet_n1m_phi->Fill(part_phi);
-      h_jet_n1m_eta->Fill(part_eta);
-      h_jet_n1m_th->Fill(part_th);
-      h_jet_n1m_jt->Fill(part_jt);
-      h_jet_n1m_z->Fill(part_z);
+      h_jet_n1m_pt->fill(part_pt);
+      h_jet_n1m_phi->fill(part_phi);
+      h_jet_n1m_eta->fill(part_eta);
+      h_jet_n1m_th->fill(part_th);
+      h_jet_n1m_jt->fill(part_jt);
+      h_jet_n1m_z->fill(part_z);
       }
     }
   }

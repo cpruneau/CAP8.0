@@ -23,6 +23,13 @@ namespace CAP
 
 class ParticleType;
 
+//!
+//! @brief Partitions of a hadron multiplicity among particle species subject to conservation of net charge,
+//! strangeness and baryon number (canonical ensemble), with the multinomial probability of each partition.
+//!
+//! @warning Work in progress: this header does not compile (typos such as "vecotr", "templage", "Partition::") and
+//! the class is not part of the build.
+//!
 class ParticlePartition
 {
 protected:

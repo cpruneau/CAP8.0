@@ -2,12 +2,42 @@
 # Project CAP/Math
 ################################################################################################
 ROOT_GENERATE_DICTIONARY(G__Math
+ParameterizedFunction.hpp
+Bessel.hpp
+ChiSquare.hpp
 Complex.hpp
-#Histogram.hpp
-#Partition.hpp
+CompositeFunction.hpp
+Constant.hpp
+Cubic.hpp
+DataPoint.hpp
+DataPointColumns.hpp
+DataPoint2D.hpp
+DataPoint3D.hpp
+DataPointND.hpp
+DataPoints.hpp
+DataPointsVector.hpp
+Exponential.hpp
+Function.hpp
+Histogram.hpp
+Profile.hpp
+Partition.hpp
+Vector2D.hpp
 Vector3D.hpp
 VectorLorentz.hpp
+VectorND.hpp
+Laguerre.hpp
+Legendre.hpp
+Linear.hpp
+Matrix.hpp
+LogNormal.hpp
+Normal.hpp
+Parabolic.hpp
+Parameter.hpp
+Polynomial.hpp
+Table2D.hpp
+Quartic.hpp
 ScalarField.hpp
+SphericalHarmonics.hpp
 LINKDEF MathLinkDef.h)
 
 ################################################################################################
@@ -15,9 +45,26 @@ LINKDEF MathLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Math SHARED
+ParameterizedFunction.cpp
+Bessel.cpp
 BesselFunctions.cpp
+ChiSquare.cpp
 Complex.cpp
-#Histogram.cpp
+CompositeFunction.cpp
+Constant.cpp
+Cubic.cpp
+DataPoint.cpp
+DataPointColumns.cpp
+DataPoint2D.cpp
+DataPoint3D.cpp
+DataPointND.cpp
+DataPoints.cpp
+DataPointsVector.cpp
+Exponential.cpp
+FolderTypes.cpp
+Function.cpp
+Histogram.cpp
+Profile.cpp
 MathBasicFunctions.cpp
 MathBasicGeometry.cpp
 MathBasicInterpolation.cpp
@@ -27,10 +74,25 @@ MathBasicSortingFunctions.cpp
 MathBasicStatistics.cpp
 MathConstants.cpp
 MathExceptions.cpp
-#Partition.cpp
+Partition.cpp
+Vector2D.cpp
 Vector3D.cpp
 VectorLorentz.cpp
+VectorND.cpp
+Laguerre.cpp
+Legendre.cpp
+Linear.cpp
+Matrix.cpp
+LogNormal.cpp
+Normal.cpp
+Parabolic.cpp
+Parameter.cpp
+Polynomial.cpp
+Table2D.cpp
+Quartic.cpp
 ScalarField.cpp
+SphericalHarmonics.cpp
+XmlScalarField.cpp
 G__Math.cxx)
 
 target_link_libraries(Math Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )

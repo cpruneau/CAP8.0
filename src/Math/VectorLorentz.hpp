@@ -3,7 +3,10 @@
 #include <algorithm>
 #include <limits>
 #include <cmath>
+#include <vector>
+#include <ostream>
 #include "Aliases.hpp"
+#include "BinaryIO.hpp"
 #include "Exceptions.hpp"
 #include "MathConstants.hpp"
 #include "Vector3D.hpp"
@@ -36,11 +39,11 @@ protected:
 public:
 
   VectorLorentz();
-  VectorLorentz(const double & _x0, const double & _x1, const double & _x2, const double & _x3);
+  VectorLorentz(const double & x0, const double & x1, const double & x2, const double & x3);
   VectorLorentz(const float values[4]);
   VectorLorentz(const double values[4]);
-  VectorLorentz(std::vector<float> values);
-  VectorLorentz(std::vector<double> values);
+  VectorLorentz(const std::vector<float> & values);
+  VectorLorentz(const std::vector<double> & values);
   VectorLorentz(const VectorLorentz & source);
   virtual ~VectorLorentz() {};
   double operator[] (unsigned int index) const;
@@ -64,11 +67,11 @@ public:
   return _x3;
   }
 
-  void setTXYZ(const double & _x0, const double & _x1, const double & _x2, const double & _x3);
+  void setTXYZ(const double & x0, const double & x1, const double & x2, const double & x3);
   void setTXYZ(const float values[4]);
   void setTXYZ(const double values[4]);
-  void setTXYZ(const std::vector<float> values);
-  void setTXYZ(const std::vector<double> values);
+  void setTXYZ(const std::vector<float> & values);
+  void setTXYZ(const std::vector<double> & values);
   void setTXYZ(const VectorLorentz & source);
   void setTPhiThetaR(const double & t, const double & phi, const double & theta, const double & r);
   void setTPhiRhoZ(const double & t, const double & phi, const double & rho, const double & z);
@@ -80,14 +83,18 @@ public:
   return std::atan2(_x2,_x1);
   }
 
+  //! cos(phi); returns 1 for a vector along the z axis (phi taken as 0)
   inline double  cosPhi() const
   {
-  return _x1/std::sqrt(_x1*_x1+_x2*_x2);
+  double rho = std::sqrt(_x1*_x1+_x2*_x2);
+  return (rho>0.0) ? _x1/rho : 1.0;
   }
 
+  //! sin(phi); returns 0 for a vector along the z axis (phi taken as 0)
   inline double  sinPhi() const
   {
-  return _x2/std::sqrt(_x1*_x1+_x2*_x2);
+  double rho = std::sqrt(_x1*_x1+_x2*_x2);
+  return (rho>0.0) ? _x2/rho : 0.0;
   }
 
   double  deltaPhi(const VectorLorentz & other) const;
@@ -97,15 +104,19 @@ public:
   return std::atan2(std::sqrt(_x1*_x1+_x2*_x2),_x3);
   }
 
+  //! cos(theta); returns 1 for a null 3-vector (theta taken as 0, consistent with theta())
   inline double  cosTheta() const
   {
-  return _x3/std::sqrt(_x1*_x1+_x2*_x2+_x3*_x3);
+  double r = std::sqrt(_x1*_x1+_x2*_x2+_x3*_x3);
+  return (r>0.0) ? _x3/r : 1.0;
   }
 
+  //! sin(theta); returns 0 for a null 3-vector (theta taken as 0, consistent with theta())
   inline double sinTheta() const
   {
   double ptSq = _x1*_x1+_x2*_x2;
-  return std::sqrt(ptSq)/std::sqrt(ptSq+_x3*_x3);
+  double r    = std::sqrt(ptSq+_x3*_x3);
+  return (r>0.0) ? std::sqrt(ptSq)/r : 0.0;
   }
 
   inline double modulus3() const
@@ -182,7 +193,7 @@ public:
   double distance(const VectorLorentz & other) const;
 
 
-  const Vector3D unit()  const;
+  Vector3D unit()  const;
   void rotateX(const double & angle);
   void rotateY(const double & angle);
   void rotateZ(const double & angle);
@@ -199,10 +210,47 @@ public:
   friend VectorLorentz operator+(const VectorLorentz & left, const VectorLorentz & right);
   friend VectorLorentz operator-(const VectorLorentz & left, const VectorLorentz & right);
   friend double operator* (const VectorLorentz & left, const VectorLorentz & right);
-  friend double operator*(const VectorLorentz & left,const VectorLorentz & right);
   friend VectorLorentz operator*(const VectorLorentz & v, double a);
   friend VectorLorentz operator*(double a, const VectorLorentz & v);
   friend std::ostream& operator<<(std::ostream& out, const VectorLorentz & v);
+
+
+  //! @name Binary files (independent of ROOT)
+  //! Saved as "CAPL" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! exactly. Records of other classes in the same file are skipped.
+  //! @{
+
+  //! @brief Tag of VectorLorentz records in binary files. @return "CAPL"
+  static const char * binaryTag() { return "CAPL"; }
+  //! @brief Format version written (and highest version read). @return version
+  static unsigned int binaryVersion() { return 1; }
+  //! @brief Name stored in binary records. @return ""
+  String binaryName() const { return ""; }
+  //! @brief Write the binary payload after the name (used by writeBinary()). @param w writer
+  void encodeBinary(BinaryWriter & w) const;
+  //! @brief Rebuild this object from a binary payload (used by readBinary()). @param r reader @param name stored name @param version format version
+  //! @throws Exception if the data is invalid
+  void decodeBinary(BinaryReader & r, const String & name, unsigned int version);
+  //! @brief Write this vector as one binary record to a stream (open in binary mode). @param out stream @throws FileException if writing fails
+  void writeBinary(std::ostream & out) const;
+  //! @brief Read the next VectorLorentz record of a stream into this object, skipping records of other classes.
+  //! @param in stream @return false at the end of the stream (unchanged) @throws FileException if the data is invalid (unchanged)
+  bool readBinary(std::istream & in);
+  //! @brief Save this vector to a binary file. @param fileName file name @param append add at the end of the file instead of replacing it
+  //! @throws FileException if the file cannot be written
+  void saveBinary(const String & fileName, bool append=false) const;
+  //! @brief Load from a binary file the vector at position index among the objects of this class (0 = the first one).
+  //! @param fileName file name @param index position
+  //! @throws FileException if the file cannot be read, is corrupted, or holds fewer objects (this one is then unchanged)
+  void loadBinary(const String & fileName, unsigned int index=0);
+  //! @brief Save several objects to one binary file (replacing it). @param fileName file name @param objects objects to save, in order
+  //! @throws FileException if the file cannot be written
+  static void saveBinary(const String & fileName, const std::vector<VectorLorentz> & objects);
+  //! @brief Load all the VectorLorentz objects of a binary file, in order. @param fileName file name @return objects
+  //! @throws FileException if the file cannot be read or is corrupted
+  static std::vector<VectorLorentz> loadAllBinary(const String & fileName);
+
+  //! @}
 
   ClassDef(VectorLorentz,1)
 
@@ -215,7 +263,6 @@ public:
 VectorLorentz operator+ (const VectorLorentz & left, const VectorLorentz & right);
 VectorLorentz operator- (const VectorLorentz & left, const VectorLorentz & right);
 double operator* (const VectorLorentz & left, const VectorLorentz & right);
-double  operator*(const VectorLorentz & left,const VectorLorentz & right);
 VectorLorentz operator* (const VectorLorentz & v, double a);
 VectorLorentz operator* (double a, const VectorLorentz & v);
 std::ostream& operator<<(std::ostream& out, const VectorLorentz & v);

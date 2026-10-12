@@ -85,29 +85,29 @@ void JetFilterCreator::createFilter(const String & name,
 
     // kNone, kP, kPt, kEta, kMult
 
-    if (conditionType.EqualTo("DoubleRange"))
+    if (conditionType.equalTo("DoubleRange"))
       {
-      if (conditionSubtype.EqualTo("P"))
+      if (conditionSubtype.equalTo("P"))
         subtype = JetFilter::kP;
-      else if (conditionSubtype.EqualTo("PT"))
+      else if (conditionSubtype.equalTo("PT"))
         subtype = JetFilter::kPt;
-      else if (conditionSubtype.EqualTo("ETA"))
+      else if (conditionSubtype.equalTo("ETA"))
         subtype = JetFilter::kEta;
-      else if (conditionSubtype.EqualTo("MULT"))
+      else if (conditionSubtype.equalTo("MULT"))
         subtype = JetFilter::kMult;
       else
         throw FilterException(conditionSubtype,__FUNCTION__);
       filter->addCondition(subtype,conditionMinima[k],conditionMaxima[k]);
       }
-    else if (conditionType.EqualTo("DoubleDualRange"))
+    else if (conditionType.equalTo("DoubleDualRange"))
       {
-      if (conditionSubtype.EqualTo("P"))
+      if (conditionSubtype.equalTo("P"))
         subtype = JetFilter::kP;
-      else if (conditionSubtype.EqualTo("PT"))
+      else if (conditionSubtype.equalTo("PT"))
         subtype = JetFilter::kPt;
-      else if (conditionSubtype.EqualTo("ETA"))
+      else if (conditionSubtype.equalTo("ETA"))
         subtype = JetFilter::kEta;
-      else if (conditionSubtype.EqualTo("MMULT"))
+      else if (conditionSubtype.equalTo("MMULT"))
         subtype = JetFilter::kMult;
       else
         throw FilterException(conditionSubtype,__FUNCTION__);

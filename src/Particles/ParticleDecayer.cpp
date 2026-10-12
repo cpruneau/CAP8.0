@@ -14,6 +14,7 @@
 #include <string>
 #include <cstdlib>
 #include <cmath>
+#include <utility>
 #include "ParticleDecayer.hpp"
 #include "PrintHelpers.hpp"
 
@@ -131,7 +132,7 @@ void  ParticleDecayer::decay3(ParticleType & parentType,
   if (mp < minMass)
     {
     //cout << "<E> ParticleDecayer::decay3(..) Parent too light: M = " << mp << ", m1 = " << m1 << ", m2 = " << m2 << ", m3 = " << m3 << endl;
-    mp =  mp = 1.02*minMass;
+    mp = 1.02*minMass;
     }
   e        = parentMomentum.t();
   vx       = parentMomentum.x()/e;
@@ -229,52 +230,84 @@ void ParticleDecayer::decay4(ParticleType & parentType,
                              VectorLorentz & r4
                              )
 {
-  double e, vx, vy, vz, mp;
-  //double mWidth;
-  double m1, m2, m3, m4, minMass,tau, taup, gamma, lifeTime;
-  //double e1_lrf, e2_lrf, e3_lrf, e4_lrf, p1_lrf, p2_lrf, cos12_lrf;
-  //double v2;
-
-  mp       = parentMomentum.modulus();
-  m1       = childType1.mass();
-  m2       = childType2.mass();
-  m3       = childType3.mass();
-  m4       = childType4.mass();
-  minMass  = m1 + m2 + m3 + m4;
-  if (mp < minMass)
-    {
-    mp = 1.02*minMass;
-    }
-  e        = parentMomentum.t();
-  vx       = parentMomentum.x()/e;
-  vy       = parentMomentum.y()/e;
-  vz       = parentMomentum.z()/e;
-  //v2       = vx*vx + vy*vy + vz*vz;
-  gamma    = parentMomentum.gamma();
-  //mWidth   = parentType.getWidth();
-  tau      = parentType.lifeTime();
-  taup     = gamma*tau;
-  lifeTime = -3.0E23 * taup * std::log(random->Rndm()); // fm
-  r1 = parentPosition;
-  r2 = parentPosition;
-  r3 = parentPosition;
+  double mp       = parentMomentum.modulus();
+  double m1       = childType1.mass();
+  double m2       = childType2.mass();
+  double m3       = childType3.mass();
+  double m4       = childType4.mass();
+  double minMass  = m1 + m2 + m3 + m4;
+  if (mp < minMass) mp = 1.02*minMass;
+  double e        = parentMomentum.t();
+  double vx       = parentMomentum.x()/e;
+  double vy       = parentMomentum.y()/e;
+  double vz       = parentMomentum.z()/e;
+  double gamma    = parentMomentum.gamma();
+  double tau      = parentType.lifeTime();
+  double taup     = gamma*tau;
+  double timeToDecay = -3.0E23 * taup * std::log(random->Rndm()); // fm
   VectorLorentz shift;
-  shift.setTXYZ(lifeTime,vx*lifeTime,vy*lifeTime,vz*lifeTime);
-  r1 += shift;
-  r2 += shift;
-  r3 += shift;
-  r4 += shift;
-  //
-  //double deltaM = mp - m1 - m2 - m3;
+  shift.setTXYZ(timeToDecay,vx*timeToDecay,vy*timeToDecay,vz*timeToDecay);
+  r1 = parentPosition; r1 += shift;
+  r2 = parentPosition; r2 += shift;
+  r3 = parentPosition; r3 += shift;
+  r4 = parentPosition; r4 += shift;   // r4 was shifted without being set to the parent position
 
-  p1.setTXYZ(m1,0.0,0.0,0.0);
-  p2.setTXYZ(m2,0.0,0.0,0.0);
-  p3.setTXYZ(m3,0.0,0.0,0.0);
-  p4.setTXYZ(m4,0.0,0.0,0.0);
+  // Four-body phase space (GENBOD method): parent -> (123) 4, (123) -> (12) 3, (12) -> 1 2, the invariant masses
+  // m12 < m123 drawn uniformly in the allowed range and accepted with the weight p*(M;123,4) p*(m123;12,3) p*(m12;1,2)
+  // (product of the two-body momenta, bounded by wMax). Each two-body decay is isotropic in the rest frame of its
+  // mother; the products are then boosted to the frame of the mother's mother, up to the frame of the parent.
+  // (This replaces a placeholder that gave the products their mass at rest in the parent frame.)
+  double kinetic = mp - minMass;
+  double wMax = twoBodyMomentum(mp,m1+m2+m3,m4)*twoBodyMomentum(mp-m4,m1+m2,m3)*twoBodyMomentum(mp-m4-m3,m1,m2);
+  double m12  = m1+m2;
+  double m123 = m1+m2+m3;
+  for (int iTry=0; iTry<10000; iTry++)
+    {
+    double ra = random->Rndm();
+    double rb = random->Rndm();
+    if (ra>rb) std::swap(ra,rb);
+    m12  = m1+m2    + ra*kinetic;
+    m123 = m1+m2+m3 + rb*kinetic;
+    double w = twoBodyMomentum(mp,m123,m4)*twoBodyMomentum(m123,m12,m3)*twoBodyMomentum(m12,m1,m2);
+    if (random->Rndm()*wMax <= w) break;
+    }
+  VectorLorentz p123, p12;
+  twoBodyDecay(mp,  m123,m4,p123,p4);   // parent rest frame
+  twoBodyDecay(m123,m12, m3,p12, p3);   // (123) rest frame
+  twoBodyDecay(m12, m1,  m2,p1,  p2);   // (12) rest frame
+  // (12) frame -> (123) frame
+  double bx = p12.x()/p12.t(), by = p12.y()/p12.t(), bz = p12.z()/p12.t();
+  p1.boost(bx,by,bz);
+  p2.boost(bx,by,bz);
+  // (123) frame -> parent rest frame
+  bx = p123.x()/p123.t(); by = p123.y()/p123.t(); bz = p123.z()/p123.t();
+  p1.boost(bx,by,bz);
+  p2.boost(bx,by,bz);
+  p3.boost(bx,by,bz);
+  // parent rest frame -> lab frame
   p1.boost(vx,vy,vz);
   p2.boost(vx,vy,vz);
   p3.boost(vx,vy,vz);
   p4.boost(vx,vy,vz);
+}
+
+double ParticleDecayer::twoBodyMomentum(double m, double ma, double mb)
+{
+  double a = (m*m-(ma+mb)*(ma+mb))*(m*m-(ma-mb)*(ma-mb));
+  return a>0.0 ? std::sqrt(a)/(2.0*m) : 0.0;
+}
+
+void ParticleDecayer::twoBodyDecay(double m, double ma, double mb, VectorLorentz & pa, VectorLorentz & pb)
+{
+  double p        = twoBodyMomentum(m,ma,mb);
+  double phi      = twoPi*random->Rndm();
+  double cosTheta = 2.0*random->Rndm() - 1.0;
+  double sinTheta = std::sqrt(1.0 - cosTheta*cosTheta);
+  double px = p*sinTheta*std::cos(phi);
+  double py = p*sinTheta*std::sin(phi);
+  double pz = p*cosTheta;
+  pa.setTXYZ(std::sqrt(p*p+ma*ma), px, py, pz);
+  pb.setTXYZ(std::sqrt(p*p+mb*mb),-px,-py,-pz);
 }
 
 void  ParticleDecayer::decay2(Particle & parent,

@@ -11,10 +11,10 @@
  * *********************************************************************/
 #include "ParticleSingleDerivedHistos.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
 #include "Configuration.hpp"
 
 ClassImp(CAP::ParticleSingleDerivedHistos);
@@ -72,19 +72,20 @@ ParticleSingleDerivedHistos & ParticleSingleDerivedHistos::operator=(const Parti
 
 void ParticleSingleDerivedHistos::cloneD(const ParticleSingleDerivedHistos & source)
 {
+  // The base-class histograms were cloned by the ParticleSingleHistos copy constructor or assignment;
+  // clone (and register in the group) the derived ones only.
   if (reportStart(__FUNCTION__)) { printCR(); }
-  ParticleSingleHistos::cloneB(source);
-  h_n1_phi        = safeCloneH1(source.h_n1_phi);
-  h_n1_eta        = safeCloneH1(source.h_n1_eta);
-  h_n1_y          = safeCloneH1(source.h_n1_y);
-  h_spt_phi       = safeCloneH1(source.h_spt_phi);
-  h_spt_eta       = safeCloneH1(source.h_spt_eta);
-  h_spt_y         = safeCloneH1(source.h_spt_y);
-  h_avg_pt_phi    = safeCloneH1(source.h_avg_pt_phi);
-  h_avg_pt_eta    = safeCloneH1(source.h_avg_pt_eta);
-  h_avg_pt_phiEta = safeCloneH2(source.h_avg_pt_phiEta);
-  h_avg_pt_y      = safeCloneH1(source.h_avg_pt_y);
-  h_avg_pt_phiY   = safeCloneH2(source.h_avg_pt_phiY);
+  h_n1_phi        = histogramLike(source.h_n1_phi);
+  h_n1_eta        = histogramLike(source.h_n1_eta);
+  h_n1_y          = histogramLike(source.h_n1_y);
+  h_spt_phi       = histogramLike(source.h_spt_phi);
+  h_spt_eta       = histogramLike(source.h_spt_eta);
+  h_spt_y         = histogramLike(source.h_spt_y);
+  h_avg_pt_phi    = histogramLike(source.h_avg_pt_phi);
+  h_avg_pt_eta    = histogramLike(source.h_avg_pt_eta);
+  h_avg_pt_phiEta = histogramLike(source.h_avg_pt_phiEta);
+  h_avg_pt_y      = histogramLike(source.h_avg_pt_y);
+  h_avg_pt_phiY   = histogramLike(source.h_avg_pt_phiY);
 }
 
 void ParticleSingleDerivedHistos::configure(const String & taskName,
@@ -127,31 +128,34 @@ void ParticleSingleDerivedHistos::create()
     }
 }
 
-void ParticleSingleDerivedHistos::loadFrom(TFile & inputFile)
+void ParticleSingleDerivedHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_n1_phi      = importH1(inputFile,  createName(_histogramBaseName,"n1_phi"));
-  h_spt_phi     = importH1(inputFile,  createName(_histogramBaseName,"sum_pt_phi"));
-  h_avg_pt_phi  = importH1(inputFile,  createName(_histogramBaseName,"avg_pt_phi"));
+  h_n1_phi      = importHistogram(inputFile,  createName(_histogramBaseName,"n1_phi"));
+  if (p2_fill)
+    {
+    h_spt_phi     = importHistogram(inputFile,  createName(_histogramBaseName,"sum_pt_phi"));
+    h_avg_pt_phi  = importHistogram(inputFile,  createName(_histogramBaseName,"avg_pt_phi"));
+    }
 
   if (eta_fill)
     {
-    h_n1_eta     = importH1(inputFile,  createName(_histogramBaseName,"n1_eta"));
+    h_n1_eta     = importHistogram(inputFile,  createName(_histogramBaseName,"n1_eta"));
     if (p2_fill)
       {
-      h_spt_eta         = importH1(inputFile,  createName(_histogramBaseName,"sum_eta"));
-      h_avg_pt_eta      = importH1(inputFile,  createName(_histogramBaseName,"avg_pt_eta"));
-      h_avg_pt_phiEta   = importH2(inputFile,  createName(_histogramBaseName,"avg_pt_phiEta"));
+      h_spt_eta         = importHistogram(inputFile,  createName(_histogramBaseName,"sum_pt_eta"));
+      h_avg_pt_eta      = importHistogram(inputFile,  createName(_histogramBaseName,"avg_pt_eta"));
+      h_avg_pt_phiEta   = importHistogram(inputFile,  createName(_histogramBaseName,"avg_pt_phiEta"));
       }
     }
   if (rapidity_fill)
     {
-    h_n1_y     = importH1(inputFile,  createName(_histogramBaseName,"n1_y"));
+    h_n1_y     = importHistogram(inputFile,  createName(_histogramBaseName,"n1_y"));
     if (p2_fill)
       {
-      h_spt_y         = importH1(inputFile,  createName(_histogramBaseName,"spt_y"));
-      h_avg_pt_y      = importH1(inputFile,  createName(_histogramBaseName,"avg_pt_y"));
-      h_avg_pt_phiY   = importH2(inputFile,  createName(_histogramBaseName,"avg_pt_phiY"));
+      h_spt_y         = importHistogram(inputFile,  createName(_histogramBaseName,"sum_pt_y"));
+      h_avg_pt_y      = importHistogram(inputFile,  createName(_histogramBaseName,"avg_pt_y"));
+      h_avg_pt_phiY   = importHistogram(inputFile,  createName(_histogramBaseName,"avg_pt_phiY"));
       }
     }
 }
@@ -162,24 +166,24 @@ void ParticleSingleDerivedHistos::loadFrom(TFile & inputFile)
 void ParticleSingleDerivedHistos::calculateDerivedHistograms(ParticleSingleHistos & baseHistos)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  TH1* hTemp;
+  Histogram* hTemp;
   if (baseHistos.h_n1_phiEta)
     {
-    hTemp = baseHistos.h_n1_phiEta->ProjectionY();
-    h_n1_phi->Add(hTemp);
+    hTemp = new Histogram(baseHistos.h_n1_phiEta->project2DOnto1D(1));
+    h_n1_phi->add(*hTemp);
     delete hTemp;
 
-    hTemp = baseHistos.h_n1_phiEta->ProjectionX();
-    h_n1_eta->Add(hTemp);
+    hTemp = new Histogram(baseHistos.h_n1_phiEta->project2DOnto1D(0));
+    h_n1_eta->add(*hTemp);
     delete hTemp;
 
     if (p2_fill  &&  baseHistos.h_spt_phiEta)
       {
-      hTemp = baseHistos.h_spt_phiEta->ProjectionY();
-      h_spt_phi->Add(hTemp);
+      hTemp = new Histogram(baseHistos.h_spt_phiEta->project2DOnto1D(1));
+      h_spt_phi->add(*hTemp);
       delete hTemp;
-      hTemp = baseHistos.h_spt_phiEta->ProjectionX();
-      h_spt_eta->Add(hTemp);
+      hTemp = new Histogram(baseHistos.h_spt_phiEta->project2DOnto1D(0));
+      h_spt_eta->add(*hTemp);
       delete hTemp;
 
       calculateInclusiveAvg(h_spt_phi,h_n1_phi,h_avg_pt_phi);
@@ -190,22 +194,23 @@ void ParticleSingleDerivedHistos::calculateDerivedHistograms(ParticleSingleHisto
 
   if (baseHistos.h_n1_phiY)
     {
-    hTemp = baseHistos.h_n1_phiY->ProjectionY();
-    h_n1_phi->Reset();
-    h_n1_phi->Add(hTemp);
+    hTemp = new Histogram(baseHistos.h_n1_phiY->project2DOnto1D(1));
+    h_n1_phi->reset();
+    h_n1_phi->add(*hTemp);
     delete hTemp;
 
-    hTemp = baseHistos.h_n1_phiY->ProjectionX();
-    h_n1_y->Add(hTemp);
+    hTemp = new Histogram(baseHistos.h_n1_phiY->project2DOnto1D(0));
+    h_n1_y->add(*hTemp);
     delete hTemp;
 
     if (p2_fill  &&  baseHistos.h_spt_phiY)
       {
-      hTemp = baseHistos.h_spt_phiY->ProjectionY();
-      h_spt_phi->Add(hTemp);
+      hTemp = new Histogram(baseHistos.h_spt_phiY->project2DOnto1D(1));
+      h_spt_phi->reset();   // like h_n1_phi above: phi projections are recomputed from the y histograms
+      h_spt_phi->add(*hTemp);
       delete hTemp;
-      hTemp = baseHistos.h_spt_phiY->ProjectionX();
-      h_spt_y->Add(hTemp);
+      hTemp = new Histogram(baseHistos.h_spt_phiY->project2DOnto1D(0));
+      h_spt_y->add(*hTemp);
       delete hTemp;
 
       calculateInclusiveAvg(h_spt_phi,h_n1_phi,h_avg_pt_phi);

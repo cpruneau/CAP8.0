@@ -12,7 +12,8 @@
 #include "JetHistos.hpp"
 #include "JetHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "ParticleType.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
@@ -24,7 +25,7 @@ namespace CAP
 {
   JetHistos::JetHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   particleTypeList(ParticleTypeList::list()),
   h_jet_count(nullptr),
   h_jet_pt(nullptr),
@@ -70,7 +71,7 @@ namespace CAP
 
   JetHistos::JetHistos(const JetHistos & source)
   :
-  HistogramGroup(source),
+  HistogramFolder(source),
   particleTypeList(ParticleTypeList::list()),
   h_jet_count(nullptr),
   h_jet_pt(nullptr),
@@ -119,7 +120,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     jet_n1_nbins= rhs.jet_n1_nbins;
     jet_p_nbins= rhs.jet_p_nbins;
     jet_pt_nbins= rhs.jet_pt_nbins;
@@ -144,28 +145,28 @@ namespace CAP
 
   void JetHistos::cloneB(const JetHistos & source)
   {
-  h_jet_n1 = safeCloneH1(source.h_jet_n1);
-  h_jet_pt = safeCloneH1(source.h_jet_pt);
-  h_jet_phi = safeCloneH1(source.h_jet_phi);
-  h_jet_eta = safeCloneH1(source.h_jet_eta);
-  h_jet_etaPt = safeCloneH2(source.h_jet_etaPt);
-  h_jet_n = safeCloneH1(source.h_jet_n);
-  h_jet_np = safeCloneH1(source.h_jet_np);
-  h_jet_nm = safeCloneH1(source.h_jet_nm);
-  h_jet_n0 = safeCloneH1(source.h_jet_n0);
-  h_jet_netQ = safeCloneH1(source.h_jet_netQ);
-  p_jet_n = safeCloneProfile(source.p_jet_n);
-  p_jet_np = safeCloneProfile(source.p_jet_np);
-  p_jet_nm = safeCloneProfile(source.p_jet_nm);
-  p_jet_n0 = safeCloneProfile(source.p_jet_n0);
-  p_jet_npSq = safeCloneProfile(source.p_jet_npSq);
-  p_jet_nmSq = safeCloneProfile(source.p_jet_nmSq);
-  p_jet_n0Sq = safeCloneProfile(source.p_jet_n0Sq);
-  p_jet_npnm = safeCloneProfile(source.p_jet_npnm);
-  p_jet_npn0 = safeCloneProfile(source.p_jet_npn0);
-  p_jet_nmn0 = safeCloneProfile(source.p_jet_nmn0);
-  p_jet_netQ = safeCloneProfile(source.p_jet_netQ);
-  p_jet_netQSq = safeCloneProfile(source.p_jet_netQSq);
+  h_jet_n1 = histogramLike(source.h_jet_n1);
+  h_jet_pt = histogramLike(source.h_jet_pt);
+  h_jet_phi = histogramLike(source.h_jet_phi);
+  h_jet_eta = histogramLike(source.h_jet_eta);
+  h_jet_etaPt = histogramLike(source.h_jet_etaPt);
+  h_jet_n = histogramLike(source.h_jet_n);
+  h_jet_np = histogramLike(source.h_jet_np);
+  h_jet_nm = histogramLike(source.h_jet_nm);
+  h_jet_n0 = histogramLike(source.h_jet_n0);
+  h_jet_netQ = histogramLike(source.h_jet_netQ);
+  p_jet_n = histogramLike(source.p_jet_n);
+  p_jet_np = histogramLike(source.p_jet_np);
+  p_jet_nm = histogramLike(source.p_jet_nm);
+  p_jet_n0 = histogramLike(source.p_jet_n0);
+  p_jet_npSq = histogramLike(source.p_jet_npSq);
+  p_jet_nmSq = histogramLike(source.p_jet_nmSq);
+  p_jet_n0Sq = histogramLike(source.p_jet_n0Sq);
+  p_jet_npnm = histogramLike(source.p_jet_npnm);
+  p_jet_npn0 = histogramLike(source.p_jet_npn0);
+  p_jet_nmn0 = histogramLike(source.p_jet_nmn0);
+  p_jet_netQ = histogramLike(source.p_jet_netQ);
+  p_jet_netQSq = histogramLike(source.p_jet_netQSq);
   }
 
   void JetHistos::configure(const String & taskName,
@@ -174,7 +175,7 @@ namespace CAP
                             unsigned int index)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  HistogramGroup::configure(taskName,objectType,configuration,index);
+  HistogramFolder::configure(taskName,objectType,configuration,index);
   jet_n1_nbins    = configuration.valueInt(   createKey(taskName,objectType,index,"jet_n1_nbins"));
   jet_p_nbins     = configuration.valueInt(   createKey(taskName,objectType,index,"jet_p_nbins"));
   jet_pt_nbins    = configuration.valueInt(   createKey(taskName,objectType,index,"jet_pt_nbins"));
@@ -222,31 +223,31 @@ namespace CAP
   p_jet_netQSq = createProfile(createName(_histogramBaseName,"jet_netQSq_p"), jet_p_nbins,   jet_p_min,    jet_p_max,    "p_{T} (GeV/c)","<Q^2>");
   }
 
-  void JetHistos::loadFrom(TFile & inputFile)
+  void JetHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_jet_count  = loadH1(inputFile,createName(_histogramBaseName,"jet_count"));
-  h_jet_pt     = loadH1(inputFile,createName(_histogramBaseName,"jet_pt"));
-  h_jet_phi    = loadH1(inputFile,createName(_histogramBaseName,"jet_phi"));
-  h_jet_eta    = loadH1(inputFile,createName(_histogramBaseName,"jet_eta"));
-  h_jet_etaPt  = loadH2(inputFile,createName(_histogramBaseName,"jet_etaPt"));
-  h_jet_n      = loadH1(inputFile,createName(_histogramBaseName,"jet_n"));
-  h_jet_np     = loadH1(inputFile,createName(_histogramBaseName,"jet_np"));
-  h_jet_nm     = loadH1(inputFile,createName(_histogramBaseName,"jet_nm"));
-  h_jet_n0     = loadH1(inputFile,createName(_histogramBaseName,"jet_n0"));
-  h_jet_netQ   = loadH1(inputFile,createName(_histogramBaseName,"jet_netQ"));
-  p_jet_n      = loadProfile(inputFile,createName(_histogramBaseName,"jet_n_p"));
-  p_jet_np     = loadProfile(inputFile,createName(_histogramBaseName,"jet_np_p"));
-  p_jet_nm     = loadProfile(inputFile,createName(_histogramBaseName,"jet_nm_p"));
-  p_jet_n0     = loadProfile(inputFile,createName(_histogramBaseName,"jet_n0_p"));
-  p_jet_npSq   = loadProfile(inputFile,createName(_histogramBaseName,"jet_npSq_p"));
-  p_jet_nmSq   = loadProfile(inputFile,createName(_histogramBaseName,"jet_nmSq_p"));
-  p_jet_n0Sq   = loadProfile(inputFile,createName(_histogramBaseName,"jet_n0Sq_p"));
-  p_jet_npnm   = loadProfile(inputFile,createName(_histogramBaseName,"jet_npnm_p"));
-  p_jet_npn0   = loadProfile(inputFile,createName(_histogramBaseName,"jet_npn0_p"));
-  p_jet_nmn0   = loadProfile(inputFile,createName(_histogramBaseName,"jet_nmn0_p"));
-  p_jet_netQ   = loadProfile(inputFile,createName(_histogramBaseName,"jet_netQ_p"));
-  p_jet_netQSq = loadProfile(inputFile,createName(_histogramBaseName,"jet_netQSq_p"));
+  h_jet_count  = importHistogram(inputFile,createName(_histogramBaseName,"jet_count"));
+  h_jet_pt     = importHistogram(inputFile,createName(_histogramBaseName,"jet_pt"));
+  h_jet_phi    = importHistogram(inputFile,createName(_histogramBaseName,"jet_phi"));
+  h_jet_eta    = importHistogram(inputFile,createName(_histogramBaseName,"jet_eta"));
+  h_jet_etaPt  = importHistogram(inputFile,createName(_histogramBaseName,"jet_etaPt"));
+  h_jet_n      = importHistogram(inputFile,createName(_histogramBaseName,"jet_n"));
+  h_jet_np     = importHistogram(inputFile,createName(_histogramBaseName,"jet_np"));
+  h_jet_nm     = importHistogram(inputFile,createName(_histogramBaseName,"jet_nm"));
+  h_jet_n0     = importHistogram(inputFile,createName(_histogramBaseName,"jet_n0"));
+  h_jet_netQ   = importHistogram(inputFile,createName(_histogramBaseName,"jet_netQ"));
+  p_jet_n      = importProfile(inputFile,createName(_histogramBaseName,"jet_n_p"));
+  p_jet_np     = importProfile(inputFile,createName(_histogramBaseName,"jet_np_p"));
+  p_jet_nm     = importProfile(inputFile,createName(_histogramBaseName,"jet_nm_p"));
+  p_jet_n0     = importProfile(inputFile,createName(_histogramBaseName,"jet_n0_p"));
+  p_jet_npSq   = importProfile(inputFile,createName(_histogramBaseName,"jet_npSq_p"));
+  p_jet_nmSq   = importProfile(inputFile,createName(_histogramBaseName,"jet_nmSq_p"));
+  p_jet_n0Sq   = importProfile(inputFile,createName(_histogramBaseName,"jet_n0Sq_p"));
+  p_jet_npnm   = importProfile(inputFile,createName(_histogramBaseName,"jet_npnm_p"));
+  p_jet_npn0   = importProfile(inputFile,createName(_histogramBaseName,"jet_npn0_p"));
+  p_jet_nmn0   = importProfile(inputFile,createName(_histogramBaseName,"jet_nmn0_p"));
+  p_jet_netQ   = importProfile(inputFile,createName(_histogramBaseName,"jet_netQ_p"));
+  p_jet_netQSq = importProfile(inputFile,createName(_histogramBaseName,"jet_netQSq_p"));
   }
 
   void JetHistos::fill(PseudoJet& jet)
@@ -254,11 +255,11 @@ namespace CAP
   double jet_phi = jet.phi();
   double jet_pt  = jet.perp();
   double jet_eta = jet.pseudorapidity();
-  h_jet_count->Fill(1.0);
-  h_jet_pt->Fill(jet_pt);
-  h_jet_phi->Fill(jet_phi);
-  h_jet_eta->Fill(jet_eta);
-  h_jet_etaPt->Fill(jet_eta, jet_pt);
+  h_jet_count->fill(1.0);
+  h_jet_pt->fill(jet_pt);
+  h_jet_phi->fill(jet_phi);
+  h_jet_eta->fill(jet_eta);
+  h_jet_etaPt->fill(jet_eta,jet_pt,1.0);
 
   double n  = 0;
   double np = 0;
@@ -282,23 +283,23 @@ namespace CAP
     else n0 += 1.0;
     }
 
-  h_jet_n->Fill(n);
-  h_jet_np->Fill(np);
-  h_jet_nm->Fill(nm);
-  h_jet_n0->Fill(n0);
-  h_jet_netQ->Fill(netQ);
-  p_jet_n->Fill(jet_pt,n);
-  p_jet_np->Fill(jet_pt,np);
-  p_jet_nm->Fill(jet_pt,nm);
-  p_jet_n0->Fill(jet_pt,n0);
-  p_jet_npSq->Fill(jet_pt,np*(np-1.0));
-  p_jet_nmSq->Fill(jet_pt,nm*(nm-1.0));
-  p_jet_n0Sq->Fill(jet_pt,n0*(n0-1.0));
-  p_jet_npnm->Fill(jet_pt,np*nm);
-  p_jet_npn0->Fill(jet_pt,nm*n0);
-  p_jet_nmn0->Fill(jet_pt,nm*n0);
-  p_jet_netQ->Fill(jet_pt,netQ);
-  p_jet_netQSq->Fill(jet_pt,netQ*netQ);
+  h_jet_n->fill(n);
+  h_jet_np->fill(np);
+  h_jet_nm->fill(nm);
+  h_jet_n0->fill(n0);
+  h_jet_netQ->fill(netQ);
+  p_jet_n->fill(jet_pt,n);
+  p_jet_np->fill(jet_pt,np);
+  p_jet_nm->fill(jet_pt,nm);
+  p_jet_n0->fill(jet_pt,n0);
+  p_jet_npSq->fill(jet_pt,np*(np-1.0));
+  p_jet_nmSq->fill(jet_pt,nm*(nm-1.0));
+  p_jet_n0Sq->fill(jet_pt,n0*(n0-1.0));
+  p_jet_npnm->fill(jet_pt,np*nm);
+  p_jet_npn0->fill(jet_pt,nm*n0);
+  p_jet_nmn0->fill(jet_pt,nm*n0);
+  p_jet_netQ->fill(jet_pt,netQ);
+  p_jet_netQSq->fill(jet_pt,netQ*netQ);
 
   //  printValue("jet_n",n);
   //  printValue("jet_np",np);
@@ -315,20 +316,20 @@ namespace CAP
 
   double JetHistos::acceptedJets() const
   {
-  return h_jet_count->GetBinContent(1);
+  return h_jet_count->binValueAt(0);
   }
 
   void JetHistos::scaleHistograms(double scale)
   {
-  h_jet_pt->Scale(scale);
-  h_jet_phi->Scale(scale);
-  h_jet_eta->Scale(scale);
-  h_jet_etaPt->Scale(scale);
-  h_jet_n->Scale(scale);
-  h_jet_np->Scale(scale);
-  h_jet_nm->Scale(scale);
-  h_jet_n0->Scale(scale);
-  h_jet_netQ->Scale(scale);
+  h_jet_pt->scale(scale);
+  h_jet_phi->scale(scale);
+  h_jet_eta->scale(scale);
+  h_jet_etaPt->scale(scale);
+  h_jet_n->scale(scale);
+  h_jet_np->scale(scale);
+  h_jet_nm->scale(scale);
+  h_jet_n0->scale(scale);
+  h_jet_netQ->scale(scale);
   }
 
 } // namespace CAP

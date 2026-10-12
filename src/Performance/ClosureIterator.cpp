@@ -14,7 +14,9 @@
 #include "ClosureCalculator.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
+#include "CapFile.hpp"
 #include "RootFileHelpers.hpp"
 #include "Exceptions.hpp"
 

@@ -12,7 +12,8 @@
 #include "EventEfficiency.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 
 ClassImp(CAP::EventEfficiency);
@@ -22,7 +23,7 @@ namespace CAP
 
 EventEfficiency::EventEfficiency()
 :
-HistogramGroup(),
+HistogramFolder(),
 h_efficiency_mult(nullptr),
 h_weight_mult(nullptr),
 nBins_mult(0),
@@ -32,13 +33,15 @@ max_mult(0)
 
 EventEfficiency::EventEfficiency(const EventEfficiency & source)
 :
-HistogramGroup(source),
+HistogramFolder(source),
 h_efficiency_mult(nullptr),
 h_weight_mult(nullptr),
 nBins_mult(source.nBins_mult),
 min_mult(source.min_mult),
 max_mult(source.max_mult)
-{ /* no ops */}
+{
+  cloneB(source);
+}
 
 EventEfficiency & EventEfficiency::operator=(const EventEfficiency & rhs)
 {
@@ -55,8 +58,8 @@ EventEfficiency & EventEfficiency::operator=(const EventEfficiency & rhs)
 
 double EventEfficiency::efficiencyAt(const Event & event __attribute__((unused)))
 {
-  //int    ix  = h_efficiency_mult->GetXaxis()->FindBin(momentum.perp());
-  return 1.0; //h_efficiency_mult->GetBinContent(ix);
+  //int k = h_efficiency_mult->binIndex(multiplicity);
+  return 1.0; //k<0 ? 0.0 : h_efficiency_mult->binValueAtGlobal(k);
 }
 
 double EventEfficiency::weightAt(const Event & event  __attribute__((unused)) )
@@ -75,23 +78,21 @@ void EventEfficiency::calculateWeights()
   if (h_weight_mult) delete h_weight_mult;
   if (h_efficiency_mult)
     {
-    h_weight_mult = (TH1*) h_efficiency_mult->Clone();
-    unsigned int n = h_weight_mult->GetNbinsX();
-    for (unsigned int k=1; k<n; k++)
+    h_weight_mult = h_efficiency_mult->clone();
+    // weight = 1/efficiency in bins with an efficiency in (0,1]; 0 elsewhere
+    for (unsigned int k=0; k<h_weight_mult->nBinsTotal(); k++)
       {
-      double v = h_weight_mult->GetBinContent(k);
-      double ev = h_weight_mult->GetBinError(k);
-      if (v>0  &&  v<1.0)
+      double v  = h_weight_mult->binValueAtGlobal(k);
+      double ev = h_weight_mult->binUncertaintyAtGlobal(k);
+      if (v>0.0  &&  v<=1.0)
         {
-        double w = 1.0/v;
+        double w  = 1.0/v;
         double ew = w*ev/v;
-        h_weight_mult->SetBinContent(k,w);
-        h_weight_mult->SetBinError(k,ew);
+        h_weight_mult->setBinAtGlobal(k,1,w,ew);
         }
       else
         {
-        h_weight_mult->SetBinContent(k,0.0);
-        h_weight_mult->SetBinError(k,0.0);
+        h_weight_mult->setBinAtGlobal(k,0,0.0,0.0);
         }
       }
     }
@@ -101,8 +102,10 @@ void EventEfficiency::calculateWeights()
 void EventEfficiency::cloneB(const EventEfficiency & source)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_efficiency_mult = safeCloneH1(source.h_efficiency_mult);
-  h_weight_mult     = safeCloneH1(source.h_efficiency_mult);
+  // the efficiency histogram belongs to the group (copied with it); the weight histogram is owned by this object
+  h_efficiency_mult = histogramLike(source.h_efficiency_mult);
+  delete h_weight_mult;
+  h_weight_mult     = safeClone(source.h_weight_mult);
 }
 
 void EventEfficiency::configure(const String & ownerName,
@@ -110,7 +113,7 @@ void EventEfficiency::configure(const String & ownerName,
                                       const Configuration & configuration,
                                       unsigned int index)
 {
-  HistogramGroup::configure(ownerName,typeName,configuration,index);
+  HistogramFolder::configure(ownerName,typeName,configuration,index);
   nBins_mult = configuration.valueInt(   createKey(ownerName,typeName,index,"nBins_mult"));
   min_mult   = configuration.valueDouble(createKey(ownerName,typeName,index,"Min_mult"));
   max_mult   = configuration.valueDouble(createKey(ownerName,typeName,index,"Max_mult"));
@@ -132,10 +135,10 @@ void EventEfficiency::create()
   h_efficiency_mult  = createHistogram(createName(baseName(),"MULT"),nBins_mult,min_mult,max_mult,"mult","#epsilon",2);
 }
 
-void EventEfficiency::loadFrom(TFile & inputFile)
+void EventEfficiency::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_efficiency_mult  = importH2(inputFile,createName(baseName(),"MULT"));
+  h_efficiency_mult  = importHistogram(inputFile,createName(baseName(),"MULT"));
 }
 
 } // namespace CAP

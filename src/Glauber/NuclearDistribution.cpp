@@ -1,5 +1,7 @@
 #include "GlauberExceptions.hpp"
 #include "NuclearDistribution.hpp"
+#include "TRandom.h"
+#include <algorithm>
 #include "PrintHelpers.hpp"
 using namespace std;
 using CAP::MATH::pi;
@@ -25,7 +27,8 @@ namespace CAP
   _r1(0),
   _r2(0),
   _maxRadius(0),
-  _radiusGen(nullptr)
+  _radiusGen(nullptr),
+  _cumulative()
   { }
 
   NuclearDistribution::NuclearDistribution(const NuclearDistribution & src)
@@ -42,7 +45,8 @@ namespace CAP
   _r1(src._r1),
   _r2(src._r2),
   _maxRadius(src._maxRadius),
-  _radiusGen(src._radiusGen)
+  _radiusGen(src._radiusGen ? new Histogram(*src._radiusGen) : nullptr),
+  _cumulative(src._cumulative)
   { }
 
 
@@ -62,7 +66,9 @@ namespace CAP
     _r1     = rhs._r1;
     _r2     = rhs._r2;
     _maxRadius = rhs._maxRadius;
-    _radiusGen = rhs._radiusGen;
+    delete _radiusGen;
+    _radiusGen  = rhs._radiusGen ? new Histogram(*rhs._radiusGen) : nullptr;
+    _cumulative = rhs._cumulative;
     }
   return *this;
   }
@@ -222,7 +228,11 @@ namespace CAP
   double NuclearDistribution::random()
   {
   if (!_radiusGen) createHistogram();
-  return _radiusGen->GetRandom();
+  // radius distributed as the histogram (uniform within the chosen bin), using the cumulative sums computed once
+  double u = gRandom->Rndm()*_cumulative.back();
+  unsigned int k = std::upper_bound(_cumulative.begin(),_cumulative.end(),u) - _cumulative.begin();
+  if (k>=_cumulative.size()) k = _cumulative.size()-1;
+  return _radiusGen->binLowEdge(k,0) + gRandom->Rndm()*_radiusGen->binWidth(k,0);
   }
 
   void NuclearDistribution::reset()
@@ -240,6 +250,7 @@ namespace CAP
   _r2 = 0;
   delete _radiusGen;
   _radiusGen = nullptr;
+  _cumulative.clear();
   }
 
   void NuclearDistribution::createHistogram()
@@ -249,7 +260,7 @@ namespace CAP
   nucProf += _instances;
   _instances++;
   if (_radiusGen) delete _radiusGen;
-  _radiusGen = new TH1F(nucProf,nucProf,nBins,0.0,_maxRadius);
+  _radiusGen = new Histogram(nucProf,nucProf,nBins,0.0,_maxRadius);
   double dr = _maxRadius/double(nBins);
   double r  = 0;
 //  printValue("createHistogram() nBins",nBins);
@@ -261,11 +272,19 @@ namespace CAP
     {
     double v = evaluate(r);
     double ev = 0;
-    _radiusGen->SetBinContent(k+1, v);
-    _radiusGen->SetBinError(k+1, ev);
+    _radiusGen->setBinAt(unsigned(k),1,v,ev);
     r += dr;
     }
-  //printValue("first ran",_radiusGen->GetRandom());
+  _cumulative.assign(nBins,0.0);
+  double sum = 0.0;
+  for (int k=0; k<nBins; k++)
+    {
+    double v = _radiusGen->binValueAt(unsigned(k));
+    if (v>0.0) sum += v;
+    _cumulative[k] = sum;
+    }
+  if (!(sum>0.0)) throw Exception("Empty nuclear density distribution",__FUNCTION__);
+  //printValue("first ran",_radiusGen->random());
   }
 
 

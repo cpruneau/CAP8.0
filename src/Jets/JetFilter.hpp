@@ -18,16 +18,25 @@
 namespace CAP
 {
 
+//!
+//! @brief Filter selecting jets (FastJet PseudoJet) on their momentum, pT, pseudorapidity or constituent multiplicity.
+//!
 class JetFilter : public Filter<fastjet::PseudoJet>
 {
 public:
 
+  //! @brief Default constructor.
   JetFilter();
+  //! @brief Copy constructor. @param otherFilter object to copy
   JetFilter(const JetFilter & otherFilter);
+  //! @brief Copy assignment. @param otherFilter object to copy @return this object
   JetFilter & operator=(const JetFilter & otherFilter);
+  //! @brief Destructor.
   virtual ~JetFilter() {}
+  //! @brief Whether a jet satisfies all the conditions. @param pseudoJet jet @return true if accepted
   virtual bool accept(const fastjet::PseudoJet & pseudoJet);
 
+  //! @brief Quantities a condition can test.
   enum JetFilterType   { kNone, kP, kPt, kEta, kMult };
 
   ClassDef(JetFilter,0)

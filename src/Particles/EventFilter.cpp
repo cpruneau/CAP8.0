@@ -103,85 +103,85 @@ namespace CAP
     minimum  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MINIMUM"));
     maximum  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MAXIMUM"));
     
-    if (type.EqualTo("DOUBLE_RANGE"))
+    if (type.equalTo("DOUBLE_RANGE"))
       {
-      if (subtype.EqualTo("MULT_0"))
+      if (subtype.equalTo("MULT_0"))
         subtypeIndex = EventFilter::kMult0;
-      else if (subtype.EqualTo("MULT_1"))
+      else if (subtype.equalTo("MULT_1"))
         subtypeIndex = EventFilter::kMult1;
-      else if (subtype.EqualTo("MULT_2"))
+      else if (subtype.equalTo("MULT_2"))
         subtypeIndex = EventFilter::kMult2;
-      else if (subtype.EqualTo("MULT_3"))
+      else if (subtype.equalTo("MULT_3"))
         subtypeIndex = EventFilter::kMult3;
-      else if (subtype.EqualTo("MULT_4"))
+      else if (subtype.equalTo("MULT_4"))
         subtypeIndex = EventFilter::kMult4;
-      else if (subtype.EqualTo("MULT_5"))
+      else if (subtype.equalTo("MULT_5"))
         subtypeIndex = EventFilter::kMult5;
-      else if (subtype.EqualTo("ENERGY_0"))
+      else if (subtype.equalTo("ENERGY_0"))
         subtypeIndex = EventFilter::kEnergy0;
-      else if (subtype.EqualTo("ENERGY_1"))
+      else if (subtype.equalTo("ENERGY_1"))
         subtypeIndex = EventFilter::kEnergy1;
-      else if (subtype.EqualTo("ENERGY_2"))
+      else if (subtype.equalTo("ENERGY_2"))
         subtypeIndex = EventFilter::kEnergy2;
-      else if (subtype.EqualTo("ENERGY_3"))
+      else if (subtype.equalTo("ENERGY_3"))
         subtypeIndex = EventFilter::kEnergy3;
-      else if (subtype.EqualTo("ENERGY_4"))
+      else if (subtype.equalTo("ENERGY_4"))
         subtypeIndex = EventFilter::kEnergy4;
-      else if (subtype.EqualTo("ENERGY_5"))
+      else if (subtype.equalTo("ENERGY_5"))
         subtypeIndex = EventFilter::kEnergy5;
-      else if (subtype.EqualTo("SPHERO_0"))
+      else if (subtype.equalTo("SPHERO_0"))
         subtypeIndex = EventFilter::kSphero0;
-      else if (subtype.EqualTo("SPHERO_1"))
+      else if (subtype.equalTo("SPHERO_1"))
         subtypeIndex = EventFilter::kSphero1;
-      else if (subtype.EqualTo("SPHERO_2"))
+      else if (subtype.equalTo("SPHERO_2"))
         subtypeIndex = EventFilter::kSphero2;
-      else if (subtype.EqualTo("SPHERO_3"))
+      else if (subtype.equalTo("SPHERO_3"))
         subtypeIndex = EventFilter::kSphero3;
-      else if (subtype.EqualTo("SPHERO_4"))
+      else if (subtype.equalTo("SPHERO_4"))
         subtypeIndex = EventFilter::kSphero4;
-      else if (subtype.EqualTo("SPHERO_5"))
+      else if (subtype.equalTo("SPHERO_5"))
         subtypeIndex = EventFilter::kSphero5;
       else
         throw FilterException(subtype,__FUNCTION__);
       addCondition(subtypeIndex,minimum,maximum);
       }
-    else if (type.EqualTo("DOUBLE_DUAL_RANGE"))
+    else if (type.equalTo("DOUBLE_DUAL_RANGE"))
       {
-      if (subtype.EqualTo("MULT_0"))
+      if (subtype.equalTo("MULT_0"))
         subtypeIndex = EventFilter::kMult0;
-      else if (subtype.EqualTo("MULT_1"))
+      else if (subtype.equalTo("MULT_1"))
         subtypeIndex = EventFilter::kMult1;
-      else if (subtype.EqualTo("MULT_2"))
+      else if (subtype.equalTo("MULT_2"))
         subtypeIndex = EventFilter::kMult2;
-      else if (subtype.EqualTo("MULT_3"))
+      else if (subtype.equalTo("MULT_3"))
         subtypeIndex = EventFilter::kMult3;
-      else if (subtype.EqualTo("MULT_4"))
+      else if (subtype.equalTo("MULT_4"))
         subtypeIndex = EventFilter::kMult4;
-      else if (subtype.EqualTo("MULT_5"))
+      else if (subtype.equalTo("MULT_5"))
         subtypeIndex = EventFilter::kMult5;
-      else if (subtype.EqualTo("ENERGY_0"))
+      else if (subtype.equalTo("ENERGY_0"))
         subtypeIndex = EventFilter::kEnergy0;
-      else if (subtype.EqualTo("ENERGY_1"))
+      else if (subtype.equalTo("ENERGY_1"))
         subtypeIndex = EventFilter::kEnergy1;
-      else if (subtype.EqualTo("ENERGY_2"))
+      else if (subtype.equalTo("ENERGY_2"))
         subtypeIndex = EventFilter::kEnergy2;
-      else if (subtype.EqualTo("ENERGY_3"))
+      else if (subtype.equalTo("ENERGY_3"))
         subtypeIndex = EventFilter::kEnergy3;
-      else if (subtype.EqualTo("ENERGY_4"))
+      else if (subtype.equalTo("ENERGY_4"))
         subtypeIndex = EventFilter::kEnergy4;
-      else if (subtype.EqualTo("ENERGY_5"))
+      else if (subtype.equalTo("ENERGY_5"))
         subtypeIndex = EventFilter::kEnergy5;
-      else if (subtype.EqualTo("SPHERO_0"))
+      else if (subtype.equalTo("SPHERO_0"))
         subtypeIndex = EventFilter::kSphero0;
-      else if (subtype.EqualTo("SPHERO_1"))
+      else if (subtype.equalTo("SPHERO_1"))
         subtypeIndex = EventFilter::kSphero1;
-      else if (subtype.EqualTo("SPHERO_2"))
+      else if (subtype.equalTo("SPHERO_2"))
         subtypeIndex = EventFilter::kSphero2;
-      else if (subtype.EqualTo("SPHERO_3"))
+      else if (subtype.equalTo("SPHERO_3"))
         subtypeIndex = EventFilter::kSphero3;
-      else if (subtype.EqualTo("SPHERO_4"))
+      else if (subtype.equalTo("SPHERO_4"))
         subtypeIndex = EventFilter::kSphero4;
-      else if (subtype.EqualTo("SPHERO_5"))
+      else if (subtype.equalTo("SPHERO_5"))
         subtypeIndex = EventFilter::kSphero5;
       else
         throw FilterException(subtype,__FUNCTION__);

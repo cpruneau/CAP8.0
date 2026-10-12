@@ -30,7 +30,7 @@ void printDualRange(const char * keyword,
 
 extern std::ostream * gOutputStream;
 extern unsigned int   gOutputStyle;
-extern unsigned int   gOutputLength;
+extern unsigned int   gOutputlength;
 
 } // namespace CAP
 

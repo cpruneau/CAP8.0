@@ -12,6 +12,10 @@
 #include "ParticleDbParser.hpp"
 #include "PrintHelpers.hpp"
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <cmath>
+#include "ParticleDecayMode.hpp"
 #include "MathBasicFunctions.hpp"
 
 using CAP::MATH::absolute;
@@ -33,44 +37,62 @@ ParticleDbParser::ParticleDbParser()
 PropertiesParser()
 { }
 
+namespace
+{
+  //! Whether a line holds data (not empty, not a comment); leading white space is ignored.
+  bool isDataLine(const std::string & line)
+  {
+  std::size_t first = line.find_first_not_of(" \t\r");
+  return first!=std::string::npos && line[first]!='#';
+  }
+
+  String lineError(const char * fileName, int lineNumber, const std::string & line)
+  {
+  String message = fileName;
+  message += " line ";
+  message += lineNumber;
+  message += ": cannot parse '";
+  message += line.c_str();
+  message += "'";
+  return message;
+  }
+}
+
 //!
-//!Therminator Particle Db Parser
-//!
-//! @param ParticleDb Database to be loaded by this parse
-//! @param inputFile Input stream for particles
-//! @param inputFileDecays Input stream for decays
-//!
+//! Read particles.data and decays.data (see the class description).
 //!
 void  ParticleDbParser::readDb(ParticleDb  & particleDb,
-                               ifstream & inputFile,
-                               ifstream & inputFileDecays,
+                               std::ifstream & inputFile,
+                               std::ifstream & inputFileDecays,
                                bool verbose)
 {
-  char   buff[300];
-  char   name[30];
-  char   title[30];
-  int    pdgCode, quarks, antiquarks, leptons, index;
-  double charge, mass, massUncertainty, width, widthUncertainty, spin, isospin, isospin3;
-
-  index = 0;
-  ParticleType * particleType;
+  std::string line;
+  int lineNumber = 0;
+  int index = 0;
 
   //
   // read particles
   //
-  while (!inputFile.eof())
+  while (std::getline(inputFile,line))
     {
-    inputFile.getline(buff,400);
-    if (!(*buff) || (*buff == '#')) continue;
-    istringstream * iss = new istringstream(buff);
-    (*iss) >> name >> title >> pdgCode >> charge >> mass >> massUncertainty >> width >> widthUncertainty >> spin >> isospin >> isospin3 >> quarks >> antiquarks >> leptons;
-    particleType = new ParticleType();
+    lineNumber++;
+    if (!isDataLine(line)) continue;
+    std::istringstream iss(line);
+    std::string name, title;
+    int    pdgCode, quarks, antiquarks, leptons;
+    double charge, mass, massUncertainty, width, widthUncertainty, spin, isospin, isospin3;
+    if (!(iss >> name >> title >> pdgCode >> charge >> mass >> massUncertainty >> width >> widthUncertainty
+              >> spin >> isospin >> isospin3 >> quarks >> antiquarks >> leptons))
+      throw Exception(lineError("particles.data",lineNumber,line),__FUNCTION__);
+    ParticleType * particleType = new ParticleType();
     particleType->setIndex(index);
-    particleType->setName(name);
-    particleType->setTitle(title);
+    particleType->setName(name.c_str());
+    particleType->setTitle(title.c_str());
     particleType->setCharge(charge);
     particleType->setMass(mass);
+    particleType->setMassUncertainty(massUncertainty);
     particleType->setWidth(width);
+    particleType->setWidthUncertainty(widthUncertainty);
     particleType->setSpin(spin);
     particleType->setIsospin(isospin);
     particleType->setIsospin3(isospin3);
@@ -81,134 +103,30 @@ void  ParticleDbParser::readDb(ParticleDb  & particleDb,
     particleType->disableDecay();
     particleType->enable();
     particleDb.append(particleType);
-
-//    printValue("name",name);
-//    printValue("title",title);
-//    printValue("pdgCode",pdgCode);
-//    printValue("charge",charge);
-//    printValue("mass",mass);
-//    printValue("massUncertainty",massUncertainty);
-//    printValue("width",width);
-//    printValue("widthUncertainty",widthUncertainty);
-//    printValue("spin",spin);
-//    printValue("isospin",isospin);
-//    printValue("isospin3",isospin3);
-//    printValue("quarks",quarks);
-//    printValue("antiquarks",antiquarks);
-//    printValue("leptons",leptons);
-    delete iss;
     index++;
     }
 
   //
   // read decays
   //
-  double tBRatio, tRatio;
-  int    CGcoeff; // complete branching ratio by Clebsch-Gordan coefficient: 0-no 1-yes
-  ParticleType * parentType = nullptr;
-  ParticleType * childType1 = nullptr;
-  ParticleType * childType2 = nullptr;
-  ParticleType * childType3 = nullptr;
-  ParticleType * childType4 = nullptr;
-  double mass0 = 0;
-  double mass1 = 0;
-  double mass2 = 0;
-  double mass3 = 0;
-  double mass4 = 0;
-
-  while (!inputFileDecays.eof())
+  lineNumber = 0;
+  while (std::getline(inputFileDecays,line))
     {
-    inputFileDecays.getline(buff,300);
-    if (!(*buff) || (*buff == '#')) continue;
-    char parentName[30];
-    char childName1[30];
-    char childName2[30];
-    char childName3[30];
-    char childName4[30];
-    istringstream * isss = new istringstream(buff);
-    *isss >> parentName >> childName1 >> childName2 >> childName3 >> childName4 >> tBRatio >> CGcoeff;;
-    //cout << parentName << "  " << childName1 << "  " << childName2 << "  " << childName3 << "  " <<  childName4 <<"  " << tBRatio << "  " <<CGcoeff <<  endl;;
-    delete isss;
-
-//    printValue("parentName",parentName);
-//    printValue("childName1",childName1);
-//    printValue("childName2",childName2);
-
-    parentType = nullptr;
-    childType1 = nullptr;
-    childType2 = nullptr;
-    childType3 = nullptr;
-    childType4 = nullptr;
-    mass0 = 0;
-    mass1 = 0;
-    mass2 = 0;
-    mass3 = 0;
-    mass4 = 0;
-
-    parentType = particleDb.particleType(parentName);
-    mass0 = parentType->mass();
-    childType1 = particleDb.particleType(childName1);
-    mass1 = childType1->mass();
-    childType2 = particleDb.particleType(childName2);
-    mass2 = childType2->mass();
-    String name3(childName3);
-    if (!name3.EqualTo("none"))
+    lineNumber++;
+    if (!isDataLine(line)) continue;
+    std::istringstream iss(line);
+    std::string parentName, childName[4];
+    double branchingRatio;
+    int    clebschGordanFlag; // complete branching ratio by Clebsch-Gordan coefficient: 0-no 1-yes
+    if (!(iss >> parentName >> childName[0] >> childName[1] >> childName[2] >> childName[3] >> branchingRatio >> clebschGordanFlag))
+      throw Exception(lineError("decays.data",lineNumber,line),__FUNCTION__);
+    ParticleType * parentType = particleDb.particleType(parentName.c_str());  // throws if unknown
+    std::vector<ParticleType*> children;
+    for (const std::string & childN : childName)
       {
-      childType3 = particleDb.particleType(childName3);
-      mass3 = childType3->mass();
+      if (childN!="none") children.push_back(particleDb.particleType(childN.c_str()));
       }
-    String name4(childName4);
-    if (!name4.EqualTo("none"))
-      {
-      childType4 = particleDb.particleType(childName4);
-      mass4 = childType4->mass();
-      }
-    double massDiff = mass1+mass2+mass3+mass4-mass0;
-    if (massDiff>0  &&  verbose)
-      {
-      printCR();
-      printValue("Mass exception: parentName",parentName);
-      printValue("Mass exception: childName1",childName1);
-      printValue("Mass exception: childName2",childName2);
-      printValue("Mass exception: massDiff",massDiff);
-      }
-
-    if (CGcoeff)
-      {
-      // complete branching ratio by Clebsch-Gordan coefficient
-        double j1, m1, j2, m2, J, M, CB;
-        J  = parentType->isospin();
-        M  = parentType->isospin3();
-        j1 = childType1->isospin();
-        m1 = childType1->isospin3();
-        j2 = childType2->isospin();
-        m2 = childType2->isospin3();
-        CB = clebschGordan(J, M, j1, m1, j2, m2);
-        tRatio = CB*CB * tBRatio;
-        // Multiply the Clebsh by two?
-        // The same spin, mass, strangeness (charm?)
-        // and different I3?
-        if (  (absolute(childType1->spin()  - childType2->spin()) < 0.01)
-            &&  (absolute(childType1->mass() - childType2->mass()) < 0.01)
-            &&  (absolute(childType1->isospin3()-childType2->isospin3())   > 0.01)
-            &&  (childType1->strangeness()-childType2->strangeness() == 0)
-            &&  (childType1->charm()- childType2->charm() == 0)        )
-          {
-          tRatio *= 2.0;
-          }
-      }
-    else
-      {
-      tRatio = tBRatio;
-      }
-    ParticleDecayMode decayMode;
-    decayMode.setBranchingRatio(tRatio);
-    decayMode.addChild(childType1);
-    decayMode.addChild(childType2);
-    if (childType3) decayMode.addChild(childType3);
-    if (childType4) decayMode.addChild(childType3);
-    parentType->addDecayMode(decayMode);
-   // parentType->enableDecay();
+    addDecayMode(parentType,children,branchingRatio,clebschGordanFlag!=0,verbose);
     }
 
   if (verbose)
@@ -217,6 +135,70 @@ void  ParticleDbParser::readDb(ParticleDb  & particleDb,
     printValue("Total index of particles read",particleDb.size());
     }
   inputFileDecays.close();
+  finishDb(particleDb);
+}
+
+void ParticleDbParser::addDecayMode(ParticleType * parentType,
+                                    const std::vector<ParticleType*> & children,
+                                    double declaredBranchingRatio,
+                                    bool clebschGordanFlag,
+                                    bool verbose)
+{
+  if (children.size()<2 || children.size()>4)
+    {
+    String message = "Decay mode of "; message += parentType->name(); message += " with "; message += int(children.size());
+    message += " products (2 to 4 expected)";
+    throw Exception(message,__FUNCTION__);
+    }
+  if (verbose)
+    {
+    double massDiff = -parentType->mass();
+    for (const ParticleType * child : children) massDiff += child->mass();
+    if (massDiff>0)
+      {
+      printCR();
+      printValue("Mass exception: parentName",parentType->name());
+      for (const ParticleType * child : children) printValue("Mass exception: childName",child->name());
+      printValue("Mass exception: massDiff",massDiff);
+      }
+    }
+
+  ParticleType * childType1 = children[0];
+  ParticleType * childType2 = children[1];
+  double ratio = declaredBranchingRatio;
+  if (clebschGordanFlag)
+    {
+    // complete branching ratio by Clebsch-Gordan coefficient
+    double J  = parentType->isospin();
+    double M  = parentType->isospin3();
+    double j1 = childType1->isospin();
+    double m1 = childType1->isospin3();
+    double j2 = childType2->isospin();
+    double m2 = childType2->isospin3();
+    double CB = clebschGordan(J, M, j1, m1, j2, m2);
+    ratio = CB*CB * declaredBranchingRatio;
+    // Multiply the Clebsh by two?
+    // The same spin, mass, strangeness (charm?)
+    // and different I3?
+    if (  (absolute(childType1->spin()  - childType2->spin()) < 0.01)
+        &&  (absolute(childType1->mass() - childType2->mass()) < 0.01)
+        &&  (absolute(childType1->isospin3()-childType2->isospin3())   > 0.01)
+        &&  (childType1->strangeness()-childType2->strangeness() == 0)
+        &&  (childType1->charm()- childType2->charm() == 0)        )
+      {
+      ratio *= 2.0;
+      }
+    }
+  ParticleDecayMode decayMode;
+  decayMode.setBranchingRatio(ratio);
+  decayMode.setDeclaredBranchingRatio(declaredBranchingRatio);
+  decayMode.setClebschGordan(clebschGordanFlag);
+  for (ParticleType * child : children) decayMode.addChild(child);  // was: the 4th product added the 3rd one again
+  parentType->addDecayMode(decayMode);
+}
+
+void ParticleDbParser::finishDb(ParticleDb & particleDb)
+{
   particleDb.mapAntiParticleIndices();
   particleDb.setupDecayGenerator();
 }

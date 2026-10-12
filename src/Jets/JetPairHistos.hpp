@@ -11,7 +11,7 @@
  * *********************************************************************/
 #ifndef CAP__JetPairHistos
 #define CAP__JetPairHistos
-#include "HistogramGroup.hpp"
+#include "HistogramFolder.hpp"
 #include "fastjet/ClusterSequence.hh"
 #include "MathConstants.hpp"
 #include "ParticleTypeList.hpp"
@@ -22,77 +22,93 @@ namespace CAP
 {
 
 
-class JetPairHistos : public HistogramGroup
+//!
+//! @brief Pair histograms of the jet constituents (all, ++, +-, --) vs (pT1, pT2), (phi1, phi2), (eta1, eta2),
+//! (theta1, theta2), (jt1, jt2), (z1, z2).
+//!
+class JetPairHistos : public HistogramFolder
 {
 public:
 
   friend class JetPairHistosDerived;
 
+  //! @brief Default constructor.
   JetPairHistos();
+  //! @brief Copy constructor. @param source object to copy
   JetPairHistos(const JetPairHistos & source);
+  //! @brief Copy assignment. @param rhs object to copy @return this object
   JetPairHistos & operator=(const JetPairHistos & rhs);
+  //! @brief Destructor.
   ~JetPairHistos(){}
+  //! @brief Configure the object from keys \<taskName\>:\<objectType\>:... (binning, options).
+  //! @param taskName name of the task @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
                                const String & objectType,
                                const Configuration & configuration,
                                unsigned int index);
+  //! @brief Create the histograms.
   virtual void create();
-  virtual void loadFrom(TFile & inputFile);
+  //! @brief Load the histograms from a file. @param inputFile file
+  virtual void loadFrom(CapFile & inputFile);
+  //! @brief Fill the histograms with the constituent pairs of a jet. @param J jet
   virtual void fill(PseudoJet& J);
+  //! @brief Scale the histograms. @param scale factor
   virtual void scaleHistograms(double scale);
 
 protected:
 
+  //! @brief Copy the content of another group. @param source group to copy
   virtual void cloneB(const JetPairHistos & source);
 
+  //! Particle types used to find the charges of the constituents (not owned).
   ParticleTypeList * particleTypeList;
   
-  TH2 *h_jet_n2_ptpt;    // pt
-  TH2 *h_jet_n2_phiphi;  // phi - azimuth relative to z axis
-  TH2 *h_jet_n2_etaeta;  // rapidity or eta
-  TH2 *h_jet_n2_thth;    // angle relative to jet axis
-  TH2 *h_jet_n2_jtjt;    // particle momentum perp to jet axis.
-  TH2 *h_jet_n2_zz;      // part_p/jet_p
+  Histogram *h_jet_n2_ptpt;  ///< pair density of the constituents, all charges, vs (pT1, pT2)
+  Histogram *h_jet_n2_phiphi;  ///< pair density of the constituents, all charges, vs (phi1, phi2)
+  Histogram *h_jet_n2_etaeta;  ///< pair density of the constituents, all charges, vs (eta1, eta2)
+  Histogram *h_jet_n2_thth;  ///< pair density of the constituents, all charges, vs (theta1, theta2)
+  Histogram *h_jet_n2_jtjt;  ///< pair density of the constituents, all charges, vs (jt1, jt2)
+  Histogram *h_jet_n2_zz;  ///< pair density of the constituents, all charges, vs (z1, z2)
 
-  TH2 *h_jet_n2pp_ptpt;    // pt
-  TH2 *h_jet_n2pp_phiphi;  // phi - azimuth relative to z axis
-  TH2 *h_jet_n2pp_etaeta;  // rapidity or eta
-  TH2 *h_jet_n2pp_thth;    // angle relative to jet axis
-  TH2 *h_jet_n2pp_jtjt;    // particle momentum perp to jet axis.
-  TH2 *h_jet_n2pp_zz;      // part_p/jet_p
+  Histogram *h_jet_n2pp_ptpt;  ///< pair density of the constituents, (+,+) charges, vs (pT1, pT2)
+  Histogram *h_jet_n2pp_phiphi;  ///< pair density of the constituents, (+,+) charges, vs (phi1, phi2)
+  Histogram *h_jet_n2pp_etaeta;  ///< pair density of the constituents, (+,+) charges, vs (eta1, eta2)
+  Histogram *h_jet_n2pp_thth;  ///< pair density of the constituents, (+,+) charges, vs (theta1, theta2)
+  Histogram *h_jet_n2pp_jtjt;  ///< pair density of the constituents, (+,+) charges, vs (jt1, jt2)
+  Histogram *h_jet_n2pp_zz;  ///< pair density of the constituents, (+,+) charges, vs (z1, z2)
 
-  TH2 *h_jet_n2pm_ptpt;    // pt
-  TH2 *h_jet_n2pm_phiphi;  // phi - azimuth relative to z axis
-  TH2 *h_jet_n2pm_etaeta;  // rapidity or eta
-  TH2 *h_jet_n2pm_thth;    // angle relative to jet axis
-  TH2 *h_jet_n2pm_jtjt;    // particle momentum perp to jet axis.
-  TH2 *h_jet_n2pm_zz;      // part_p/jet_p
+  Histogram *h_jet_n2pm_ptpt;  ///< pair density of the constituents, (+,-) charges, vs (pT1, pT2)
+  Histogram *h_jet_n2pm_phiphi;  ///< pair density of the constituents, (+,-) charges, vs (phi1, phi2)
+  Histogram *h_jet_n2pm_etaeta;  ///< pair density of the constituents, (+,-) charges, vs (eta1, eta2)
+  Histogram *h_jet_n2pm_thth;  ///< pair density of the constituents, (+,-) charges, vs (theta1, theta2)
+  Histogram *h_jet_n2pm_jtjt;  ///< pair density of the constituents, (+,-) charges, vs (jt1, jt2)
+  Histogram *h_jet_n2pm_zz;  ///< pair density of the constituents, (+,-) charges, vs (z1, z2)
 
-  TH2 *h_jet_n2mm_ptpt;    // pt
-  TH2 *h_jet_n2mm_phiphi;  // phi - azimuth relative to z axis
-  TH2 *h_jet_n2mm_etaeta;  // rapidity or eta
-  TH2 *h_jet_n2mm_thth;    // angle relative to jet axis
-  TH2 *h_jet_n2mm_jtjt;    // particle momentum perp to jet axis.
-  TH2 *h_jet_n2mm_zz;      // part_p/jet_p
+  Histogram *h_jet_n2mm_ptpt;  ///< pair density of the constituents, (-,-) charges, vs (pT1, pT2)
+  Histogram *h_jet_n2mm_phiphi;  ///< pair density of the constituents, (-,-) charges, vs (phi1, phi2)
+  Histogram *h_jet_n2mm_etaeta;  ///< pair density of the constituents, (-,-) charges, vs (eta1, eta2)
+  Histogram *h_jet_n2mm_thth;  ///< pair density of the constituents, (-,-) charges, vs (theta1, theta2)
+  Histogram *h_jet_n2mm_jtjt;  ///< pair density of the constituents, (-,-) charges, vs (jt1, jt2)
+  Histogram *h_jet_n2mm_zz;  ///< pair density of the constituents, (-,-) charges, vs (z1, z2)
 
-  int pt_nbins;
-  int phi_nbins;
-  int eta_nbins;
-  int jt_nbins;
-  int th_nbins;
-  int z_nbins;
-  double pt_min;
-  double pt_max;
-  double phi_min;
-  double phi_max;
-  double eta_min;
-  double eta_max;
-  double jt_min;
-  double jt_max;
-  double th_min;
-  double th_max;
-  double z_min;
-  double z_max;
+  int pt_nbins;  ///< number of bins of the pT axis
+  int phi_nbins;  ///< number of bins of the azimuth axis
+  int eta_nbins;  ///< number of bins of the pseudorapidity axis
+  int jt_nbins;  ///< number of bins of the jt axis
+  int th_nbins;  ///< number of bins of the angle to the jet axis axis
+  int z_nbins;  ///< number of bins of the z axis
+  double pt_min;  ///< lower edge of the pT axis
+  double pt_max;  ///< upper edge of the pT axis
+  double phi_min;  ///< lower edge of the azimuth axis
+  double phi_max;  ///< upper edge of the azimuth axis
+  double eta_min;  ///< lower edge of the pseudorapidity axis
+  double eta_max;  ///< upper edge of the pseudorapidity axis
+  double jt_min;  ///< lower edge of the jt axis
+  double jt_max;  ///< upper edge of the jt axis
+  double th_min;  ///< lower edge of the angle to the jet axis axis
+  double th_max;  ///< upper edge of the angle to the jet axis axis
+  double z_min;  ///< lower edge of the z axis
+  double z_max;  ///< upper edge of the z axis
 
   ClassDef(JetPairHistos,0)
 };

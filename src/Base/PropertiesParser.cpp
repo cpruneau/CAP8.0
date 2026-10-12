@@ -32,53 +32,47 @@ void  PropertiesParser::loadFrom(Properties & _properties,
                                      const String & _inputFileName,
                                      const String & _extension)
 {
-  std::ifstream & inputFile = openInputAsciiFile(_inputPath,_inputFileName,_extension);;
+  std::ifstream & inputFile = openInputAsciiFile(_inputPath,_inputFileName,_extension);
   if (reportDebug(__FUNCTION__))
     {
     printCR();
     printValue("Parsing file",_inputPath + _inputFileName);
     }
-  //Property    parameter;
-  String      aString;
-  int          lineCount;
-  int          i;
-  char         textBuffer[200];
-
-  inputFile.seekg(0, std::ios::beg);
-  lineCount = 0;
-  while ((!inputFile.eof()))
+  // Read whole lines with std::getline: the previous fixed 200-char buffer set the failbit on
+  // any longer line, after which eof() never became true and the loop never terminated.
+  auto trim = [](const std::string & str)
+    {
+    const char * ws = " \t\r\n";
+    size_t first = str.find_first_not_of(ws);
+    if (first==std::string::npos) return std::string();
+    size_t last = str.find_last_not_of(ws);
+    return str.substr(first,last-first+1);
+    };
+  std::string line;
+  int lineCount = 0;
+  while (std::getline(inputFile,line))
     {
     lineCount++;
-    inputFile.getline(textBuffer,200);
-    aString = textBuffer;
-    if((aString.IsNull()) || (aString.IsWhitespace()) || (aString[0] == '#') || (aString[0] == ';')) {
-//      if (reportDebug(__FUNCTION__))
-//        cout << "\tlineCount "<<lineCount<<" Ignoring  : "<<aString.Data() << endl;
-      continue;
-    } else if(aString.Contains('[')) {
-//      if (reportDebug(__FUNCTION__))
-//        cout << "\tlineCount "<<lineCount<<" Section   : "<<aString.Data() << endl;
-      continue;
-    } else if(!aString.Contains('=')) {
-      if (reportDebug(__FUNCTION__))
+    std::string text = trim(line);
+    // blank lines, comments (# or ;) and [section] headers are ignored.
+    if (text.empty() || text[0]=='#' || text[0]==';' || text[0]=='[') continue;
+    size_t equal = text.find('=');
+    if (equal==std::string::npos)
+      {
+      if (reportWarning(__FUNCTION__))
         {
         printCR();
         printValue("lineCount",lineCount);
-        printValue("WARNING String",aString.Data());
+        printValue("Ignoring line without '='",text.c_str());
         }
       continue;
-    }
-    aString.ReplaceAll(" ","");
-    aString.ReplaceAll("\t","");
-    //    parameter.keyword = "";
-    //    parameter.value   = "";
-    //    for(i=0; aString[i] != '='; i++)   parameter.keyword += aString[i];
-    //    for(i++; i<aString.Length(); i++)  parameter.value += aString[i];
-    //    _configuration.addProperty(parameter);
-    String keyword = "";
-    String value   = "";
-    for(i=0; aString[i] != '='; i++)   keyword += aString[i];
-    for(i++; i<aString.Length(); i++)  value   += aString[i];
+      }
+    // Keys never contain white space; values keep their internal spaces and are only trimmed.
+    std::string key;
+    for (char c : text.substr(0,equal)) if (c!=' ' && c!='\t') key += c;
+    std::string val = trim(text.substr(equal+1));
+    String keyword = key.c_str();
+    String value   = val.c_str();
     _properties.addProperty(keyword,value);
     if (reportDebug(__FUNCTION__))
       {
@@ -88,15 +82,20 @@ void  PropertiesParser::loadFrom(Properties & _properties,
       printValue("Property value",value);
       }
     }
+  inputFile.close();
 }
 
+//!
+//! Write the properties as "name = value" lines, i.e., in the format read back by loadFrom().
+//!
 void  PropertiesParser::saveTo(Properties & _properties,
                                  const String & _path,
                                  const String & _fileName,
                                  const String & _extension)
 {
   std::ofstream & outputFile = openOutputAsciiFile(_path,_fileName,_extension);
-  for (auto & property : _properties.properties()) property.saveTo(outputFile);
+  for (auto & property : _properties.properties())
+    outputFile << property.name() << " = " << property.value() << std::endl;
   outputFile.close();
 }
 

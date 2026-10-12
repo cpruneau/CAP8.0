@@ -11,7 +11,8 @@
  * *********************************************************************/
 #include "JetHistosDerived.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
 #include "Task.hpp"
@@ -55,12 +56,12 @@ JetHistosDerived & JetHistosDerived::operator=(const JetHistosDerived & rhs)
 
 void JetHistosDerived::cloneD(const JetHistosDerived & source)
 {
-  h_jet_R200_pt    = safeCloneH1(source.h_jet_R200_pt);
-  h_jet_R2pp_pt    = safeCloneH1(source.h_jet_R2pp_pt);
-  h_jet_R2pm_pt    = safeCloneH1(source.h_jet_R2pm_pt);
-  h_jet_R2mm_pt    = safeCloneH1(source.h_jet_R2mm_pt);
-  h_jet_nudyn_pt   = safeCloneH1(source.h_jet_nudyn_pt);
-  h_jet_netQrms_pt = safeCloneH1(source.h_jet_netQrms_pt);
+  h_jet_R200_pt    = histogramLike(source.h_jet_R200_pt);
+  h_jet_R2pp_pt    = histogramLike(source.h_jet_R2pp_pt);
+  h_jet_R2pm_pt    = histogramLike(source.h_jet_R2pm_pt);
+  h_jet_R2mm_pt    = histogramLike(source.h_jet_R2mm_pt);
+  h_jet_nudyn_pt   = histogramLike(source.h_jet_nudyn_pt);
+  h_jet_netQrms_pt = histogramLike(source.h_jet_netQrms_pt);
 }
 
 
@@ -84,29 +85,29 @@ void JetHistosDerived::create()
   h_jet_netQrms_pt = createHistogram(createName(_histogramBaseName,"jet_netQrms_pt"), nBins_jet_pt,  min_jet_pt,  max_jet_pt,   "p_{T} (GeV/c)","<#Delta Q^2>");
 }
 
-void JetHistosDerived::loadFrom(TFile & inputFile)
+void JetHistosDerived::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   JetHistos::loadFrom(inputFile);
-  h_jet_R200_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_R200_pt"));
-  h_jet_R2pp_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_R2pp_pt"));
-  h_jet_R2pm_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_R2pm_pt"));
-  h_jet_R2mm_pt    = loadH1(inputFile,createName(_histogramBaseName,"jet_R2mm_pt"));
-  h_jet_nudyn_pt   = loadH1(inputFile,createName(_histogramBaseName,"jet_nudyn_pt"));
-  h_jet_netQrms_pt = loadH1(inputFile,createName(_histogramBaseName,"jet_netQrms_pt"));
+  h_jet_R200_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_R200_pt"));
+  h_jet_R2pp_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_R2pp_pt"));
+  h_jet_R2pm_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_R2pm_pt"));
+  h_jet_R2mm_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_R2mm_pt"));
+  h_jet_nudyn_pt   = importHistogram(inputFile,createName(_histogramBaseName,"jet_nudyn_pt"));
+  h_jet_netQrms_pt = importHistogram(inputFile,createName(_histogramBaseName,"jet_netQrms_pt"));
 }
 
-void calculateR2_P1P1P1H1(const TProfile * n2_12, const TProfile * n1_1, const TProfile * n1_2, TH1 * R2_12)
+void calculateR2_P1P1P1H1(const Profile * n2_12, const Profile * n1_1, const Profile * n1_2, Histogram * R2_12)
 {
   if (!ptrExist(__FUNCTION__,n2_12,n1_1,n1_2,R2_12))  throw NullPointerException(__FUNCTION__);
   if (!sameDimensions(__FUNCTION__,n2_12,n1_1,n1_2,R2_12))  throw IncompatibleHistogramException(__FUNCTION__);
-  int n_x = n2_12->GetNbinsX();
+  int n_x = n2_12->nBins(0);
   double v_12,v_1,v_2,r2,er2;
   for (int i1=1; i1<=n_x;++i1)
   {
-    v_12  = n2_12->GetBinContent(i1); //ev_12 = n2_12->GetBinError(i1);
-    v_1   = n1_1->GetBinContent(i1);  //ev_1  = n1_1->GetBinError(i1);
-    v_2   = n1_2->GetBinContent(i1);  //ev_2  = n1_2->GetBinError(i1);
+    v_12  = n2_12->binValueAt(i1-1); //ev_12 = n2_12->GetBinError(i1);
+    v_1   = n1_1->binValueAt(i1-1);  //ev_1  = n1_1->GetBinError(i1);
+    v_2   = n1_2->binValueAt(i1-1);  //ev_2  = n1_2->GetBinError(i1);
     if (v_1>0  &&  v_2>0)
     {
       r2   = v_12/(v_1 * v_2) - 1.0;
@@ -116,24 +117,24 @@ void calculateR2_P1P1P1H1(const TProfile * n2_12, const TProfile * n1_1, const T
     {
     r2 = 0; er2 = 0;
     }
-    R2_12->SetBinContent(i1,r2); R2_12->SetBinError(i1,er2);
+    R2_12->setBinValueAt(unsigned((i1)-1),r2); R2_12->setBinUncertaintyAt(unsigned((i1)-1),er2);
   }
 }
 
-void calculateRms(const TH1 * valueSqVsX, const TH1 * valueVsX, TH1 * rmsVsX)
+void calculateRms(const Histogram * valueSqVsX, const Histogram * valueVsX, Histogram * rmsVsX)
 {
-  int n_x = valueSqVsX->GetNbinsX();
+  int n_x = valueSqVsX->nBins(0);
   double vSq, v, rmsSq, rms;
   for (int i1=1; i1<=n_x;++i1)
   {
-    vSq  = valueSqVsX->GetBinContent(i1);
-    v    = valueVsX->GetBinContent(i1);
+    vSq  = valueSqVsX->binValueAt((i1)-1);
+    v    = valueVsX->binValueAt((i1)-1);
     rmsSq  = vSq - v*v;
     if (rms>0.0)
       rms = std::sqrt(rmsSq);
     else
       rms = 0.0;
-    rmsVsX->SetBinContent(i1,rms); rmsVsX->SetBinError(i1,0.0);
+    rmsVsX->setBinValueAt(unsigned((i1)-1),rms); rmsVsX->setBinUncertaintyAt(unsigned((i1)-1),0.0);
   }
 }
 

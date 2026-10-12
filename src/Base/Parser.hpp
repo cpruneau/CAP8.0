@@ -23,15 +23,25 @@
 namespace CAP
 {
 
+  //!
+  //! @brief Base class of the parsers (PropertiesParser, CommandLineParser).
+  //!
+  //! Parser adds nothing to Object yet: it gives the parsers a common base, with a name ("Parser" by default) and
+  //! the reporting facilities of Object.
+  //!
   class Parser
   :
   public Object
   {
   public:
 
+  //! @brief Default constructor: name and class name "Parser".
   Parser();
+  //! @brief Copy constructor. @param parser parser to copy
   Parser(const Parser & parser);
+  //! @brief Copy assignment. @param parser parser to copy @return this parser
   Parser & operator=(const Parser & parser);
+  //! @brief Destructor.
   virtual ~Parser(){}
 
   protected:

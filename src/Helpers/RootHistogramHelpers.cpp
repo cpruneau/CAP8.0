@@ -9,13 +9,11 @@
 #include "TSystemDirectory.h"
 #include "TRandom.h"
 #include "Vector3D.hpp"
-#include "VectorLorentz.hpp"
 #include "MathBasicFunctions.hpp"
 
 namespace CAP
 {
   using MATH::absolute;
-  using MATH::VectorLorentz;
   using MATH::sqrtTwoPi;
 
   bool isValid(const String & name,int n_x, double min_x, double max_x, const String & caller, bool verbose=false)
@@ -3571,8 +3569,8 @@ namespace CAP
                  const String & title_x,
                  const String & title_y)
   {
-  if (title_x.Sizeof()>0)  histogram->GetXaxis()->SetTitle(title_x);
-  if (title_y.Sizeof()>0)  histogram->GetYaxis()->SetTitle(title_y);
+  if (title_x.length()>0)  histogram->GetXaxis()->SetTitle(title_x);
+  if (title_y.length()>0)  histogram->GetYaxis()->SetTitle(title_y);
   }
 
   void setTitles(TH2 * histogram,
@@ -3580,9 +3578,9 @@ namespace CAP
                  const String & title_y,
                  const String & title_z)
   {
-  if (title_x.Sizeof()>0)  histogram->GetXaxis()->SetTitle(title_x);
-  if (title_y.Sizeof()>0)  histogram->GetYaxis()->SetTitle(title_y);
-  if (title_z.Sizeof()>0)  histogram->GetZaxis()->SetTitle(title_z);
+  if (title_x.length()>0)  histogram->GetXaxis()->SetTitle(title_x);
+  if (title_y.length()>0)  histogram->GetYaxis()->SetTitle(title_y);
+  if (title_z.length()>0)  histogram->GetZaxis()->SetTitle(title_z);
   }
 
   void setTitles(TH3 * histogram,
@@ -3591,9 +3589,9 @@ namespace CAP
                  const String & title_z,
                  const String & title_w __attribute__((unused)) )
   {
-  if (title_x.Sizeof()>0)  histogram->GetXaxis()->SetTitle(title_x);
-  if (title_y.Sizeof()>0)  histogram->GetYaxis()->SetTitle(title_y);
-  if (title_z.Sizeof()>0)  histogram->GetZaxis()->SetTitle(title_z);
+  if (title_x.length()>0)  histogram->GetXaxis()->SetTitle(title_x);
+  if (title_y.length()>0)  histogram->GetYaxis()->SetTitle(title_y);
+  if (title_z.length()>0)  histogram->GetZaxis()->SetTitle(title_z);
   }
 
   void differenceHistos(TH1 *h, TH1 *hRef, TH1 *hDiff, bool correlatedUncertainties)
@@ -3992,7 +3990,7 @@ namespace CAP
   for (auto & histogram : histograms)
     {
     printValue("histo name",histogram->GetName());
-    printValue("histo legend",legendTexts[k]);
+    printValue("histo legend",legendTexts[k].Data());
     legend->AddEntry(histogram,legendTexts[k]);
     if (doDraw) legend->Draw();
     k++;

@@ -114,7 +114,7 @@ constexpr double planck_CGS()
 //! \f$ GeV s \f$
 constexpr double planck()
 {
-  return 1.0E-9 * planck_SI() / 1.6021773e-19;
+  return 1.0E-9 * planck_SI() / 1.602176634e-19; // exact SI value of e (was the 1992 value 1.6021773e-19)
 }
 
 
@@ -145,7 +145,7 @@ constexpr double hBar_CGS()
 //! \f$ GeV s \f$
 constexpr double hBar()
 {
-  return 1.0E-9 * hBar_SI()/ 1.6021773e-19;
+  return 1.0E-9 * hBar_SI()/ 1.602176634e-19;
 }
 
 //!
@@ -229,7 +229,7 @@ constexpr double boltzmannConstantUncertainty()
 //! Stefan-boltzmannConstant constant in \f$ W m^{-2} K^{-4}\f$: \f$ \sigma \f$
 constexpr double stefanBoltzmannConstant_SI()
 {
-  return 5.670373e-8;
+  return 5.670374419e-8; // exact in the 2019 SI
 }
 
 //!
@@ -315,42 +315,42 @@ constexpr double qElectronUncertainty()
 //! vacuum electric permittivity in F . m
 constexpr double electricPermittivity_SI()
 {
-  return 8.854187812813E-12;
+  return 8.8541878128E-12;   // CODATA 2018: 8.8541878128(13)e-12 (uncertainty digits had been appended)
 }
 
 //!
 //! vacuum electric permittivity in F . m
 constexpr double electricPermittivityUncertainty_SI()
 {
-  return 1.5E-10;
+  return 1.3E-21;
 }
 
 //!
 //! vacuum magnetic permeability
 constexpr double magneticPermeability_SI()
 {
-  return 1.2566370621219E-6;
+  return 1.25663706212E-6;   // CODATA 2018: 1.25663706212(19)e-6
 }
 
 //!
 //! vacuum electric permittivity in F . m
 constexpr double magneticPermeabilityUncertainty_SI()
 {
-  return 1.5E-10;
+  return 1.9E-16;
 }
 
 //!
 //! fine structure constant
 constexpr double fineStructureConstant()
 {
-  return 7.297352569311E-3;
+  return 7.2973525693E-3;    // CODATA 2018: 7.2973525693(11)e-3
 }
 
 //!
 //! fine structure constant
 constexpr double fineStructureConstantUncertainty()
 {
-  return 1.5E-10;
+  return 1.1E-12;
 }
 
 
@@ -461,17 +461,17 @@ constexpr double poundToKilogram()
 
 constexpr double angstromToMeter()
 {
-  return 0.45359237;
+  return 1.0E-10;
 }
 
 constexpr double electronChargeToCoulomb()
 {
-  return 1.6022e-19;
+  return 1.602176634e-19;
 }
 
 constexpr double electronVoltToJoule()
 {
-  return 1.6021773e-19;
+  return 1.602176634e-19;
 }
 
 //!
@@ -507,16 +507,16 @@ constexpr double amu_kg()
 //!
 constexpr double amu_GeV()
 {
-  return 0.9314941024228;
+  return 0.93149410242;      // CODATA 2018: 931.49410242(28) MeV
 }
 
 
 //!
-//! 1 Kilogram = 5.6095861672249E+29 MeV/c2
+//! 1 Kilogram = 5.609588603804E+29 MeV/c2  (c^2/e, exact in the 2019 SI)
 //!
 constexpr double kilogramToMeV()
 {
-  return 5.6095861672249E+29;
+  return 5.609588603804E+29;
 }
 
 //!
@@ -526,7 +526,7 @@ constexpr double kilogramToMeV()
 //!
 constexpr double protonMass()
 {
-  return 0.9382720881629;
+  return 0.93827208816;      // CODATA 2018: 938.27208816(29) MeV
 }
 
 //!
@@ -536,17 +536,17 @@ constexpr double protonMass()
 //!
 constexpr double neutronMass()
 {
-  return  0.9395654205254;
+  return  0.93956542052;     // CODATA 2018: 939.56542052(54) MeV
 }
 
 //!
 //!Deuteron Mass:
 //! 2.013553212745(40) u
-//! 1875.61292812  MeV/c2
+//! 1875.61294257(57)  MeV/c2  (CODATA 2018)
 //!
 constexpr double deuteronMass()
 {
-  return   1.87561292812 ;
+  return   1.87561294257 ;
 }
 //!
 //!Triton Mass:
@@ -584,7 +584,7 @@ constexpr double au197Mass()
 
 //!
 //!Lead 208
-//!196.966552 u
+//!207.97665 u
 //!
 constexpr double pb208Mass()
 {

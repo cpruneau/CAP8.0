@@ -13,7 +13,8 @@
 #include "ParticlePerformanceHistos.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::PerformanceAnalyzer);
 
@@ -82,19 +83,21 @@ void PerformanceAnalyzer::execute()
   if (!filterEvent(theEvent)) return;
   if (!filterParticles(theEvent.particles()))  return;
   unsigned int npf = nParticleFilters();
-  unsigned int iEventFilter = 0;
   std::vector<ParticlePerformanceHistos*> & histograms = histograms_1();
-  for (auto accepted : _acceptedParticleFilters)
+  if (histograms.size()<_acceptedEventFilters.size()*npf)
+    throw Exception("histograms_1().size()<nEventFilters()*nParticleFilters()",__FUNCTION__);
+  // loop over the event filters (was over the particle filter flags), groups at e*nPF + p
+  for (unsigned int iEventFilter=0; iEventFilter<_acceptedEventFilters.size(); iEventFilter++)
     {
-    if (!accepted) continue;
+    if (!_acceptedEventFilters[iEventFilter]) continue;
     unsigned int  baseSingle   = iEventFilter*npf;
     for (unsigned int iParticleFilter=0; iParticleFilter<npf;iParticleFilter++)
       {
+      if (!_acceptedParticleFilters[iParticleFilter]) continue;
       ParticlePerformanceHistos * histos = histograms[baseSingle+iParticleFilter];
-      std::vector<Particle*> & accepted = acceptedParticles(iParticleFilter);
-      for (auto & particle : accepted) histos->fill(*particle,1.0);
+      std::vector<Particle*> & particles = acceptedParticles(iParticleFilter);
+      for (auto & particle : particles) histos->fill(*particle,1.0);
       }
-    iEventFilter++;
     }
 }
 

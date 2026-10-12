@@ -6,7 +6,6 @@
 #include <string>
 #include <TFile.h>
 #include <TH1D.h>
-#include "TProfile.h"
 
 
 using namespace fastjet;
@@ -166,7 +165,7 @@ int main()
 
     int no_of_jets_btw_0to10, no_of_jets_btw_10to20, no_of_jets_btw_20to30, no_of_jets_btw_30to40, no_of_jets_btw_40to50, no_of_jets_btw_50to200, total_jets;
 
-    for (int j = 1; j <= Particles.Get_hist_jetp()->GetNbinsX(); ++j) {
+    for (int j = 1; j <= Particles.Get_hist_jetp()->nBins(0); ++j) {
     int binContent = Particles.Get_hist_jetp()->GetBinContent(j);
     cout << "Bin " << j << ": " << binContent << endl;
 
