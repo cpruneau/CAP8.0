@@ -2,6 +2,7 @@
 #define CAP_MATH_Function
 #include <vector>
 #include "Aliases.hpp"
+#include "Object.hpp"
 
 namespace CAP
 {
@@ -38,7 +39,7 @@ namespace CAP
   //!   f.evaluateAt(1.0);                   // throws MathException: rank is 2
   //! @endcode
   //!
-  class Function
+  class Function : public Object
   {
   public:
 
@@ -48,6 +49,9 @@ namespace CAP
   //! @throws MathException if rank is 0
   //!
   Function(unsigned int rank=1);
+  //! @brief Constructor with a name. @param name object name @param title object title @param className class name
+  //! @param rank number of independent variables (>= 1) @throws MathException if rank==0
+  Function(const String & name, const String & title, const String & className, unsigned int rank=1);
   //! @brief Copy constructor. @param source function to copy
   Function(const Function & source);
   //! @brief Assignment operator. @param rhs function to copy @return reference to this function

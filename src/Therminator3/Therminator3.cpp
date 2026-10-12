@@ -1,4 +1,5 @@
 #include "Therminator3.hpp"
+#include <memory>
 #include "PrintHelpers.hpp"
 #include "ModelHadronGas.hpp"
 #include "ModelBlastWave.hpp"
@@ -174,17 +175,17 @@ namespace CAP
   String typeName = "HYDRO_MODEL";
 
   _modelSelected = configuration.valueString(createKey(taskName,typeName,"TYPE"));
-  if (_modelSelected.EqualTo("HG")) // Hadron Gas W/O flow
+  if (_modelSelected.equalTo("HG")) // Hadron Gas W/O flow
     _model = new ModelHadronGas();
-  else if (_modelSelected.EqualTo("BW")) // Basic Blastwave
+  else if (_modelSelected.equalTo("BW")) // Basic Blastwave
     _model = new ModelBlastWave();
-  else if (_modelSelected.EqualTo("BWA")) // Basic Blastwave Alternate
+  else if (_modelSelected.equalTo("BWA")) // Basic Blastwave Alternate
     _model = new ModelBWA();
-  else if (_modelSelected.EqualTo("HYDRO2D")) // Hydro2D
+  else if (_modelSelected.equalTo("HYDRO2D")) // Hydro2D
     _model = new ModelHydro2D();
-  else if (_modelSelected.EqualTo("HYDRO3D")) // Hydro3D
+  else if (_modelSelected.equalTo("HYDRO3D")) // Hydro3D
     _model = new ModelHydro3D();
-  else if (_modelSelected.EqualTo("SFO")) // Hydro SFO
+  else if (_modelSelected.equalTo("SFO")) // Hydro SFO
     _model = new ModelKrakowSFO();
   else
     throw Exception("Unknown model selected",__FUNCTION__);
@@ -204,11 +205,11 @@ namespace CAP
   EnvironmentVariables * envVariables = EnvironmentVariables::environmentVariables();
   String basePath;
 
-  if (importPathA.EqualTo("DEFAULT"))
+  if (importPathA.equalTo("DEFAULT"))
     {
     _importPath = envVariables->variable("CAP_HISTOS_IMPORT_PATH");
     }
-  else if (importPathA.BeginsWith("/") || exportPathA.BeginsWith("./"))
+  else if (importPathA.beginsWith("/") || exportPathA.beginsWith("./"))
     {
     _importPath = importPathA;
     }
@@ -218,11 +219,11 @@ namespace CAP
     _importPath += "/";
     _importPath += importPathA;
     }
-  if (exportPathA.EqualTo("DEFAULT"))
+  if (exportPathA.equalTo("DEFAULT"))
     {
     _exportPath = envVariables->variable("CAP_HISTOS_EXPORT_PATH");
     }
-  else if (exportPathA.BeginsWith("/") || exportPathA.BeginsWith("./"))
+  else if (exportPathA.beginsWith("/") || exportPathA.beginsWith("./"))
     {
     _exportPath = exportPathA;
     }
@@ -268,7 +269,7 @@ namespace CAP
     {
     int temp = 1000*_model->temperature();
     _exportFileName = _exportBaseName + temp;
-    std::ofstream & outputFile = openOutputAsciiFile(_exportPath,_exportFileName,1);
+    std::ofstream & outputFile = openOutputAsciiFile(_exportPath,_exportFileName,".txt",true);
     _model->saveToAscii(outputFile);
     outputFile.close();
     }
@@ -277,13 +278,10 @@ namespace CAP
     {
     int temp = 1000*_model->temperature();
     _exportFileName = _exportBaseName + temp;
-    TFile * outputFile;
-    if (_forceRewrite)
-      outputFile = openRecreateRootFile(_exportPath,_exportFileName,1);
-    else
-      outputFile = openNewRootFile(_exportPath,_exportFileName,1);
+    std::unique_ptr<CapFile> outputFile(_forceRewrite ? CapFile::openRecreateCapFile(_exportPath,_exportFileName,true)
+                                                     : CapFile::openNewCapFile(_exportPath,_exportFileName,true));
     _histograms.saveTo(*outputFile);
-    outputFile->Close();
+    outputFile->write();
     }
   }
 

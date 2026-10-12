@@ -14,14 +14,16 @@
 #include "Object.hpp"
 
 //!
-//! Array
+//! @class CAP::Array
+//! @brief Array of objects of type T, enlarged as needed (work in progress).
 //!
-//! Generic base class for Array services.
-//! A Array can be used to generate and own a large collection of objects of the same type "T". Objects are allocated on the heap and pointers "T*" to these
-//! objects kept in a large array T ** objects. The array is nominally of fixed size but is enlarged whenever more objects are needed. The Array model is useful
-//! when objects need to be repeatedly used and discarded (e.g., in data analysis of particles) because no malloc or destroy is required. The memory remains allocated
-//! and so there is no time wasted creating and destroying the objects. The reset method is to be called on a Array to indicate that a new "event" is being considered.
-//! It must evidently be possible to initialize the objects with "set" methods specific to the class "T". Use the  T * nextObject() method to obtain an used object.
+//! Intended as a simpler variant of Factory: a collection of objects of type T allocated once and reused from event to
+//! event (reset() starts a new event), so that no time is spent creating and destroying objects.
+//!
+//! @warning This class is unfinished and does not compile (the declaration of the array and the variable last are
+//! invalid). It is not used and not part of the Base library build. Use Factory instead.
+//!
+//! @tparam T type of the objects
 //!
 
 namespace CAP
@@ -32,12 +34,13 @@ class Array
 {
 protected:
 
-  unsigned int defaultCapacity;
-  unsigned int defaultSizeIncrement;
-  T[] objects;
+  unsigned int defaultCapacity;  //!< number of objects allocated by initialize()
+  unsigned int defaultSizeIncrement;  //!< number of objects added when the array is full
+  T[] objects;  //!< objects
 
   public:
 
+  //! @brief Default constructor: allocates the default capacity.
   Array()
   :
   defaultCapacity(10),
@@ -47,38 +50,45 @@ protected:
     initialize();
   }
 
+  //! @brief Destructor: see clear().
   virtual ~Array()
   {
   clear();
   }
   
+  //! @brief Set the number of objects allocated by initialize(). @param _defaultCapacity number of objects
   void setDefaultCapacity(long _defaultCapacity)
   {
     defaultCapacity = _defaultCapacity;
   }
 
+  //! @brief Set the number of objects added when the array is full. @param _defaultSizeIncrement number of objects
   void setDefaultSizeIncrement(long _defaultSizeIncrement)
   {
   defaultSizeIncrement = _defaultSizeIncrement;
   }
 
+  //! @brief Allocate the default capacity.
   void initialize()
   {
   allocate(defaultCapacity);
   }
 
+  //! @brief Allocate an array of objects. @param size number of objects @param initialValue value given to each object
   void allocate(long size, T initialValue)
   {
     objects = new T[size];
     for (long k=0;k<size;k++) objects[k] = initialValue;
   }
 
+  //! @brief Start a new event: reset all objects.
   void reset()
   {
   for (auto & object : objects) object->reset();
   last = 0;
   }
 
+  //! @brief Reset and delete all objects.
   void clear()
   {
   for (auto & object : objects)

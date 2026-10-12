@@ -15,7 +15,8 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::ParticleSmearer);
 
@@ -24,7 +25,7 @@ namespace CAP
 
 ParticleSmearer::ParticleSmearer()
 :
-HistogramGroup(),
+HistogramFolder(),
 pt_nbins(0),
 phi_nbins(0),
 eta_nbins(0),
@@ -51,7 +52,7 @@ nSpecies(0)
 
 ParticleSmearer::ParticleSmearer(const ParticleSmearer & source)
 :
-HistogramGroup(source),
+HistogramFolder(source),
 pt_nbins(source.pt_nbins),
 phi_nbins(source.phi_nbins),
 eta_nbins(source.eta_nbins),
@@ -78,7 +79,7 @@ ParticleSmearer & ParticleSmearer::operator=(const ParticleSmearer & rhs)
 {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     pt_nbins  = rhs.pt_nbins;
     phi_nbins = rhs.phi_nbins;
     eta_nbins = rhs.eta_nbins;
@@ -96,12 +97,12 @@ ParticleSmearer & ParticleSmearer::operator=(const ParticleSmearer & rhs)
 void ParticleSmearer::cloneB(const ParticleSmearer & source)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_pt_bias  = safeCloneH2(source.h_pt_bias);
-  h_pt_rms   = safeCloneH2(source.h_pt_rms);
-  h_eta_bias = safeCloneH2(source.h_eta_bias);
-  h_eta_rms  = safeCloneH2(source.h_eta_rms);
-  h_phi_bias = safeCloneH2(source.h_phi_bias);
-  h_phi_rms  = safeCloneH2(source.h_phi_rms);
+  h_pt_bias = histogramLike(source.h_pt_bias);
+  h_pt_rms = histogramLike(source.h_pt_rms);
+  h_eta_bias = histogramLike(source.h_eta_bias);
+  h_eta_rms = histogramLike(source.h_eta_rms);
+  h_phi_bias = histogramLike(source.h_phi_bias);
+  h_phi_rms = histogramLike(source.h_phi_rms);
 }
 
 void ParticleSmearer::configure(const String & taskName,
@@ -110,7 +111,7 @@ void ParticleSmearer::configure(const String & taskName,
                                       unsigned int index)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  HistogramGroup::configure(taskName,typeName,configuration,index);
+  HistogramFolder::configure(taskName,typeName,configuration,index);
   n_nbins   = configuration.valueInt(   createKey(taskName,typeName,index,"n_nbins"));
   nSpecies  = configuration.valueBool(  createKey(taskName,typeName,index,"nSpecies"));
   pt_nbins  = configuration.valueInt(   createKey(taskName,typeName,index,"pt_nbins"));
@@ -150,24 +151,24 @@ void ParticleSmearer::create()
   h_eta_rms  = createHistogram("PART_RMS_ETA_ALL_ALL_etaPt",  eta_nbins, eta_min, eta_max, pt_nbins,  pt_min,  pt_max,  "#eta", "p_{T}","eta_{rms}", 2);
 }
 
-void ParticleSmearer::loadFrom(TFile & inputFile)
+void ParticleSmearer::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_pt_bias  = importH2(inputFile,"PART_BIAS_PT_ALL_ALL_etaPt");
-  h_pt_rms   = importH2(inputFile,"PART_RMS_PT_ALL_ALL_etaPt");
-  h_eta_bias = importH2(inputFile,"PART_BIAS_ETA_ALL_ALL_etaPt");
-  h_eta_rms  = importH2(inputFile,"PART_RMS_ETA_ALL_ALL_etaPt");
-  h_phi_bias = importH2(inputFile,"PART_BIAS_PHI_ALL_ALL_etaPt");
-  h_phi_rms  = importH2(inputFile,"PART_RMS_PHI_ALL_ALL_etaPt");
-  eta_nbins  = h_pt_bias->GetNbinsX();
-  pt_nbins   = h_pt_bias->GetNbinsY();
+  h_pt_bias  = importHistogram(inputFile,"PART_BIAS_PT_ALL_ALL_etaPt");
+  h_pt_rms   = importHistogram(inputFile,"PART_RMS_PT_ALL_ALL_etaPt");
+  h_eta_bias = importHistogram(inputFile,"PART_BIAS_ETA_ALL_ALL_etaPt");
+  h_eta_rms  = importHistogram(inputFile,"PART_RMS_ETA_ALL_ALL_etaPt");
+  h_phi_bias = importHistogram(inputFile,"PART_BIAS_PHI_ALL_ALL_etaPt");
+  h_phi_rms  = importHistogram(inputFile,"PART_RMS_PHI_ALL_ALL_etaPt");
+  eta_nbins  = h_pt_bias->nBins(0);
+  pt_nbins   = h_pt_bias->nBins(1);
 //  for (unsigned int k=0; k<nSpecies; k++)
 //    {
 //    String s = "PID"; s += k;
 //    int pid = configuration.valueBool(ptn,"s");
 //    pids.push_back(pid);
 //    s = "ProbPid"; s += k;
-//    TH2 * probHisto = importH2(inputFile,createName(_histogramBaseName,s));
+//    Histogram * probHisto = importHistogram(inputFile,createName(_histogramBaseName,s));
 //    }
 }
 
@@ -178,17 +179,17 @@ void ParticleSmearer::smear(const Particle & source, Particle & target)
   double phi  = in.phi();
   double eta  = in.pseudorapidity();
   double mass = in.modulus();
-  int    etaBin     = h_pt_bias->GetXaxis()->FindBin(eta);
-  int    ptBin      = h_pt_bias->GetYaxis()->FindBin(pt);
-  double pt_bias    = h_pt_bias->GetBinContent(etaBin,ptBin);
-  double pt_rms     = h_pt_rms->GetBinContent(etaBin,ptBin);
+  // bias and resolution maps vs (eta,pt): no smearing outside their range
+  int    k          = h_pt_bias->binIndex(eta,pt);
+  double pt_bias    = k<0 ? 0.0 : h_pt_bias->binValueAtGlobal(k);
+  double pt_rms     = k<0 ? 0.0 : h_pt_rms->binValueAtGlobal(k);
   double smearedPt  = gRandom->Gaus(pt+pt_bias,pt_rms);
   if (smearedPt<0.001) smearedPt = 0.001;
-  double eta_bias   = h_eta_bias->GetBinContent(etaBin,ptBin);
-  double eta_rms    = h_eta_rms->GetBinContent(etaBin,ptBin);
+  double eta_bias   = k<0 ? 0.0 : h_eta_bias->binValueAtGlobal(k);
+  double eta_rms    = k<0 ? 0.0 : h_eta_rms->binValueAtGlobal(k);
   double smearedEta = gRandom->Gaus(eta+eta_bias,eta_rms);
-  double phi_bias   = h_phi_bias->GetBinContent(etaBin,ptBin);
-  double phi_rms    = h_phi_rms->GetBinContent(etaBin,ptBin);
+  double phi_bias   = k<0 ? 0.0 : h_phi_bias->binValueAtGlobal(k);
+  double phi_rms    = k<0 ? 0.0 : h_phi_rms->binValueAtGlobal(k);
   double smearedPhi = gRandom->Gaus(phi+phi_bias,phi_rms);
   VectorLorentz & out = target.momentum();
   out.setMPhiPtY(mass,smearedPhi,smearedPt,smearedEta);

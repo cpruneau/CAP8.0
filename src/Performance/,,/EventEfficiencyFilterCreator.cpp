@@ -183,85 +183,85 @@ EventEfficiencyFilter *  EventEfficiencyFilterCreator::createFilter(const String
     String conditionSubtype = conditionSubtypes[k];
     //int type;
     int subtype;
-    if (conditionType.EqualTo("DoubleRange"))
+    if (conditionType.equalTo("DoubleRange"))
       {
-      if (conditionSubtype.EqualTo("MULT_0"))
+      if (conditionSubtype.equalTo("MULT_0"))
         subtype = EventEfficiencyFilter::kMult0;
-      else if (conditionSubtype.EqualTo("MULT_1"))
+      else if (conditionSubtype.equalTo("MULT_1"))
         subtype = EventEfficiencyFilter::kMult1;
-      else if (conditionSubtype.EqualTo("MULT_2"))
+      else if (conditionSubtype.equalTo("MULT_2"))
         subtype = EventEfficiencyFilter::kMult2;
-      else if (conditionSubtype.EqualTo("MULT_3"))
+      else if (conditionSubtype.equalTo("MULT_3"))
         subtype = EventEfficiencyFilter::kMult3;
-      else if (conditionSubtype.EqualTo("MULT_4"))
+      else if (conditionSubtype.equalTo("MULT_4"))
         subtype = EventEfficiencyFilter::kMult4;
-      else if (conditionSubtype.EqualTo("MULT_5"))
+      else if (conditionSubtype.equalTo("MULT_5"))
         subtype = EventEfficiencyFilter::kMult5;
-      else if (conditionSubtype.EqualTo("ENERGY_0"))
+      else if (conditionSubtype.equalTo("ENERGY_0"))
         subtype = EventEfficiencyFilter::kEnergy0;
-      else if (conditionSubtype.EqualTo("ENERGY_1"))
+      else if (conditionSubtype.equalTo("ENERGY_1"))
         subtype = EventEfficiencyFilter::kEnergy1;
-      else if (conditionSubtype.EqualTo("ENERGY_2"))
+      else if (conditionSubtype.equalTo("ENERGY_2"))
         subtype = EventEfficiencyFilter::kEnergy2;
-      else if (conditionSubtype.EqualTo("ENERGY_3"))
+      else if (conditionSubtype.equalTo("ENERGY_3"))
         subtype = EventEfficiencyFilter::kEnergy3;
-      else if (conditionSubtype.EqualTo("ENERGY_4"))
+      else if (conditionSubtype.equalTo("ENERGY_4"))
         subtype = EventEfficiencyFilter::kEnergy4;
-      else if (conditionSubtype.EqualTo("ENERGY_5"))
+      else if (conditionSubtype.equalTo("ENERGY_5"))
         subtype = EventEfficiencyFilter::kEnergy5;
-      else if (conditionSubtype.EqualTo("SPHERO_0"))
+      else if (conditionSubtype.equalTo("SPHERO_0"))
         subtype = EventEfficiencyFilter::kSphero0;
-      else if (conditionSubtype.EqualTo("SPHERO_1"))
+      else if (conditionSubtype.equalTo("SPHERO_1"))
         subtype = EventEfficiencyFilter::kSphero1;
-      else if (conditionSubtype.EqualTo("SPHERO_2"))
+      else if (conditionSubtype.equalTo("SPHERO_2"))
         subtype = EventEfficiencyFilter::kSphero2;
-      else if (conditionSubtype.EqualTo("SPHERO_3"))
+      else if (conditionSubtype.equalTo("SPHERO_3"))
         subtype = EventEfficiencyFilter::kSphero3;
-      else if (conditionSubtype.EqualTo("SPHERO_4"))
+      else if (conditionSubtype.equalTo("SPHERO_4"))
         subtype = EventEfficiencyFilter::kSphero4;
-      else if (conditionSubtype.EqualTo("SPHERO_5"))
+      else if (conditionSubtype.equalTo("SPHERO_5"))
         subtype = EventEfficiencyFilter::kSphero5;
       else
         throw FilterException(conditionSubtype,__FUNCTION__);
       filter->addCondition(subtype,conditionMinima[k],conditionMaxima[k]);
       }
-    else if (conditionType.EqualTo("DoubleDualRange"))
+    else if (conditionType.equalTo("DoubleDualRange"))
       {
-      if (conditionSubtype.EqualTo("MULT_0"))
+      if (conditionSubtype.equalTo("MULT_0"))
         subtype = EventEfficiencyFilter::kMult0;
-      else if (conditionSubtype.EqualTo("MULT_1"))
+      else if (conditionSubtype.equalTo("MULT_1"))
         subtype = EventEfficiencyFilter::kMult1;
-      else if (conditionSubtype.EqualTo("MULT_2"))
+      else if (conditionSubtype.equalTo("MULT_2"))
         subtype = EventEfficiencyFilter::kMult2;
-      else if (conditionSubtype.EqualTo("MULT_3"))
+      else if (conditionSubtype.equalTo("MULT_3"))
         subtype = EventEfficiencyFilter::kMult3;
-      else if (conditionSubtype.EqualTo("MULT_4"))
+      else if (conditionSubtype.equalTo("MULT_4"))
         subtype = EventEfficiencyFilter::kMult4;
-      else if (conditionSubtype.EqualTo("MULT_5"))
+      else if (conditionSubtype.equalTo("MULT_5"))
         subtype = EventEfficiencyFilter::kMult5;
-      else if (conditionSubtype.EqualTo("ENERGY_0"))
+      else if (conditionSubtype.equalTo("ENERGY_0"))
         subtype = EventEfficiencyFilter::kEnergy0;
-      else if (conditionSubtype.EqualTo("ENERGY_1"))
+      else if (conditionSubtype.equalTo("ENERGY_1"))
         subtype = EventEfficiencyFilter::kEnergy1;
-      else if (conditionSubtype.EqualTo("ENERGY_2"))
+      else if (conditionSubtype.equalTo("ENERGY_2"))
         subtype = EventEfficiencyFilter::kEnergy2;
-      else if (conditionSubtype.EqualTo("ENERGY_3"))
+      else if (conditionSubtype.equalTo("ENERGY_3"))
         subtype = EventEfficiencyFilter::kEnergy3;
-      else if (conditionSubtype.EqualTo("ENERGY_4"))
+      else if (conditionSubtype.equalTo("ENERGY_4"))
         subtype = EventEfficiencyFilter::kEnergy4;
-      else if (conditionSubtype.EqualTo("ENERGY_5"))
+      else if (conditionSubtype.equalTo("ENERGY_5"))
         subtype = EventEfficiencyFilter::kEnergy5;
-      else if (conditionSubtype.EqualTo("SPHERO_0"))
+      else if (conditionSubtype.equalTo("SPHERO_0"))
         subtype = EventEfficiencyFilter::kSphero0;
-      else if (conditionSubtype.EqualTo("SPHERO_1"))
+      else if (conditionSubtype.equalTo("SPHERO_1"))
         subtype = EventEfficiencyFilter::kSphero1;
-      else if (conditionSubtype.EqualTo("SPHERO_2"))
+      else if (conditionSubtype.equalTo("SPHERO_2"))
         subtype = EventEfficiencyFilter::kSphero2;
-      else if (conditionSubtype.EqualTo("SPHERO_3"))
+      else if (conditionSubtype.equalTo("SPHERO_3"))
         subtype = EventEfficiencyFilter::kSphero3;
-      else if (conditionSubtype.EqualTo("SPHERO_4"))
+      else if (conditionSubtype.equalTo("SPHERO_4"))
         subtype = EventEfficiencyFilter::kSphero4;
-      else if (conditionSubtype.EqualTo("SPHERO_5"))
+      else if (conditionSubtype.equalTo("SPHERO_5"))
         subtype = EventEfficiencyFilter::kSphero5;
       else
         throw FilterException(conditionSubtype,__FUNCTION__);

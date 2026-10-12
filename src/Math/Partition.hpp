@@ -1,6 +1,7 @@
 #ifndef CAP_Partition
 #define CAP_Partition
 #include <vector>
+#include <map>
 #include "Aliases.hpp"
 #include "Object.hpp"
 #include "MathExceptions.hpp"
@@ -46,6 +47,7 @@ namespace CAP
   std::vector<float> _maxima;         //!< Upper edge of each axis
   std::vector<float> _widths;         //!< Bin width of each axis
   std::vector<String> _titles;        //!< Title of each axis
+  std::vector<std::map<unsigned int,String>> _binLabels; //!< Optional labels of the bins of each axis (bin index -> label)
 
   public:
 
@@ -308,6 +310,21 @@ namespace CAP
   //! @throws IndexOutOfBoundException if k>=rank()
   //!
   const String & dimensionTitle(unsigned int k=0) const;
+  //! @brief Set the title of axis k. @param k axis index @param title title @throws Exception if k>=rank()
+  void setDimensionTitle(unsigned int k, const String & title);
+
+  //!
+  //! @brief Set the label of a bin of an axis (e.g., a particle name), used when the histogram is drawn.
+  //! @param binIndex bin index along axis dimIndex @param label label (an empty label removes it)
+  //! @param dimIndex axis index
+  //! @throws IndexOutOfBoundException if dimIndex>=rank() or binIndex>=nBins(dimIndex)
+  //!
+  void setBinLabel(unsigned int binIndex, const String & label, unsigned int dimIndex=0);
+  //! @brief Label of a bin of an axis. @param binIndex bin index along axis dimIndex @param dimIndex axis index
+  //! @return label, or an empty string if the bin has none
+  String binLabel(unsigned int binIndex, unsigned int dimIndex=0) const;
+  //! @brief Labels of the bins of an axis. @param dimIndex axis index @return map bin index -> label
+  const std::map<unsigned int,String> & binLabels(unsigned int dimIndex=0) const;
 
   //!
   //! @brief Remove all axes: the partition becomes empty (rank 0, no bins).
@@ -324,7 +341,7 @@ namespace CAP
   //!
   void checkDimIndex(unsigned int dimIndex, const char * source) const;
 
-  ClassDef(Partition,1)
+  ClassDef(Partition,2)
 
   };
 

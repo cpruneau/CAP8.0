@@ -62,7 +62,7 @@ namespace CAP
 
   _configuration.addProperty(createKey(taskName,"SEVERITY"),         "TRACE");
   _configuration.addProperty(createKey(taskName,"SUBTASK:N"),        0);
-  _configuration.addProperty(createKey(taskName,"EVENT:USE"),        1);
+  _configuration.addProperty(createKey(taskName,"EVENT:USE"),        true);
   _configuration.addProperty(createKey(taskName,"EVENT:REQUESTED:N"),1000);
   _configuration.addProperty(createKey(taskName,"EVENT:REPORT:N"),   100);
   _configuration.addProperty(createKey(taskName,"EVENT:N"),          1);

@@ -25,6 +25,10 @@
 namespace CAP
 {
 
+//!
+//! @brief Task reading EPOS events from ROOT trees (event number, multiplicity, impact parameter, PDG codes and
+//! momenta) and copying their particles into the current CAP event.
+//!
 class EposEventReader
 :
 public EventProcessor,
@@ -32,28 +36,42 @@ public RootChainManager
 {
 public:
 
+  //! @brief Default constructor.
   EposEventReader();
+  //! @brief Destructor.
   virtual ~EposEventReader() {}
+  //! @brief Add the default configuration of the task.
   void setDefaultConfiguration();
+  //! @brief Configure the task. @param configuration configuration
   void configure(const Configuration & configuration);
+  //! @brief Initialize the task.
   void initialize();
+  //! @brief Execute the task (process the current event).
   void execute();
 
 protected:
 
+  //! Maximum number of particles per event.
   static const int arraySize = 40000;
 
    // Declaration of leaf types
+   //! Event number.
    Int_t           events;
+   //! Number of particles.
    Int_t           nParticles;
+   //! Impact parameter.
    Float_t         impact;
+   //! PDG codes.
    Int_t           pid[arraySize];   //[Mult]
+   //! Momentum components and energy of the particles.
    Float_t         px[arraySize];   //[Mult]
    Float_t         py[arraySize];   //[Mult]
    Float_t         pz[arraySize];   //[Mult]
    Float_t         e[arraySize];   //[Mult]
 
    // List of branches
+   //! @name Tree branches
+   //! @{
    TBranch        *b_Events;   //!
    TBranch        *b_Mult;   //!
    TBranch        *b_Impact;   //!
@@ -63,6 +81,7 @@ protected:
    TBranch        *b_Pz;   //!
    TBranch        *b_E;   //!
  
+  //! @}
   ClassDef(EposEventReader,0)
 };
 

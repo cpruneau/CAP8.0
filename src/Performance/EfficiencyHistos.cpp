@@ -12,7 +12,8 @@
 #include "ParticlePerformanceHistos.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 
@@ -23,7 +24,7 @@ namespace CAP
 
   ParticlePerformanceHistos::ParticlePerformanceHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   h_n1_dpt(nullptr),
   h_n1_deta(nullptr),
   h_n1_dphi(nullptr),
@@ -91,13 +92,13 @@ namespace CAP
 
   }
 
-  void ParticlePerformanceHistos::loadFrom(TFile & inputFile)
+  void ParticlePerformanceHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_n1_dpt        = importH1(inputFile, createName(_histogramBaseName,"n1_dpPt"));
-  h_n1_deta       = importH1(inputFile, createName(_histogramBaseName,"n1_deta"));
-  h_n1_dphi       = importH1(inputFile, createName(_histogramBaseName,"n1_dphi"));
-  h_n1_dy         = importH1(inputFile, createName(_histogramBaseName,"n1_dy"));
+  h_n1_dpt        = importHistogram(inputFile, createName(_histogramBaseName,"n1_dpPt"));
+  h_n1_deta       = importHistogram(inputFile, createName(_histogramBaseName,"n1_deta"));
+  h_n1_dphi       = importHistogram(inputFile, createName(_histogramBaseName,"n1_dphi"));
+  h_n1_dy         = importHistogram(inputFile, createName(_histogramBaseName,"n1_dy"));
   p_n1_dptVsPt    = importProfile(inputFile, createName(_histogramBaseName,"dptVsPt"));
   p_n1_detaVsPt   = importProfile(inputFile, createName(_histogramBaseName,"detaVsPt"));
   p_n1_dyVsPt     = importProfile(inputFile, createName(_histogramBaseName,"dyVsPt"));
@@ -128,19 +129,19 @@ namespace CAP
   double dphi     = recoPhi - genPhi;
   double deta     = recoEta - genEta;
   double dy       = recoY   - genY;
-  h_n1_dpt  ->Fill(dpt,weight);
-  h_n1_deta ->Fill(deta,weight);
-  h_n1_dphi ->Fill(dphi,weight);
-  h_n1_dy   ->Fill(dy,weight);
+  h_n1_dpt  ->fill(dpt,weight);
+  h_n1_deta ->fill(deta,weight);
+  h_n1_dphi ->fill(dphi,weight);
+  h_n1_dy   ->fill(dy,weight);
 
-  p_n1_dptVsPt  ->Fill(genPt, dpt,  weight);
-  p_n1_detaVsPt ->Fill(genPt, deta, weight);
-  p_n1_dyVsPt   ->Fill(genPt, dy,   weight);
-  p_n1_dphiVsPt ->Fill(genPt, dphi, weight);
-  p_n1_dptVsEta ->Fill(genEta,dpt,  weight);
-  p_n1_detaVsEta->Fill(genEta,deta, weight);
-  p_n1_dyVsEta  ->Fill(genEta,dy,   weight);
-  p_n1_dphiVsEta->Fill(genEta,dphi, weight);
+  p_n1_dptVsPt  ->fill(genPt, dpt,  weight);
+  p_n1_detaVsPt ->fill(genPt, deta, weight);
+  p_n1_dyVsPt   ->fill(genPt, dy,   weight);
+  p_n1_dphiVsPt ->fill(genPt, dphi, weight);
+  p_n1_dptVsEta ->fill(genEta,dpt,  weight);
+  p_n1_detaVsEta->fill(genEta,deta, weight);
+  p_n1_dyVsEta  ->fill(genEta,dy,   weight);
+  p_n1_dphiVsEta->fill(genEta,dphi, weight);
   }
 
 } // namespace CAP

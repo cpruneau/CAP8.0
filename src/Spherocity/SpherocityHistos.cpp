@@ -14,7 +14,8 @@
 #include "GlobalHistos.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "Configuration.hpp"
 
@@ -25,7 +26,7 @@ namespace CAP
 
   SpherocityHistos::SpherocityHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   fillS0(true),
   fillS1(false),
   fillS1VsS0(false),
@@ -40,7 +41,7 @@ namespace CAP
 
   SpherocityHistos::SpherocityHistos(const SpherocityHistos & source)
   :
-  HistogramGroup(source),
+  HistogramFolder(source),
   fillS0(source.fillS0),
   fillS1(source.fillS1),
   fillS1VsS0(source.fillS1VsS0),
@@ -55,7 +56,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     fillS0     = rhs.fillS0;
     fillS1     = rhs.fillS1;
     fillS1VsS0 = rhs.fillS1VsS0;
@@ -67,9 +68,9 @@ namespace CAP
   void SpherocityHistos::cloneB(const SpherocityHistos & source)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  if (source.h_s0)     h_s0 = (TH1*) source.h_s0;
-  if (source.h_s1)     h_s1 = (TH1*) source.h_s1;
-  if (source.h_s1VsS0) h_s1VsS0 = (TH2*) source.h_s1VsS0;
+  if (source.h_s0)     h_s0 = source.h_s0;
+  if (source.h_s1)     h_s1 = source.h_s1;
+  if (source.h_s1VsS0) h_s1VsS0 = source.h_s1VsS0;
   }
 
   void SpherocityHistos::configure(const String & taskName,
@@ -77,7 +78,7 @@ namespace CAP
                                    const Configuration & configuration,
                                    unsigned int index)
   {
-  HistogramGroup::configure(taskName,objectType,configuration,index);
+  HistogramFolder::configure(taskName,objectType,configuration,index);
   fillS0     = configuration.valueBool(createKey(taskName,objectType,"FillS0"));
   fillS1     = configuration.valueBool(createKey(taskName,objectType,"FillS1"));
   fillS1VsS0 = configuration.valueBool(createKey(taskName,objectType,"FillS1VsS0"));
@@ -109,11 +110,11 @@ namespace CAP
 
   }
 
-  void SpherocityHistos::loadFrom(TFile & inputFile)
+  void SpherocityHistos::loadFrom(CapFile & inputFile)
   {
-  if (fillS0) h_s0 = importH1(inputFile, createName(_histogramBaseName,"S0"));
-  if (fillS1) h_s1 = importH1(inputFile, createName(_histogramBaseName,"S1"));
-  if (fillS1VsS0) h_s1VsS0 =  importH2(inputFile, createName(_histogramBaseName,"S1VsS0"));
+  if (fillS0) h_s0 = importHistogram(inputFile, createName(_histogramBaseName,"S0"));
+  if (fillS1) h_s1 = importHistogram(inputFile, createName(_histogramBaseName,"S1"));
+  if (fillS1VsS0) h_s1VsS0 =  importHistogram(inputFile, createName(_histogramBaseName,"S1VsS0"));
   }
 
   //!
@@ -121,9 +122,9 @@ namespace CAP
   //!
   void SpherocityHistos::fill(double s0, double s1, double weight)
   {
-  if (fillS0) h_s0->Fill(s0,weight);
-  if (fillS1) h_s1->Fill(s1,weight);
-  if (fillS1VsS0) h_s1VsS0->Fill(s0,s1,weight);
+  if (fillS0) h_s0->fill(s0,weight);
+  if (fillS1) h_s1->fill(s1,weight);
+  if (fillS1VsS0) h_s1VsS0->fill(s0,s1,weight);
   }
 
 } // namespace CAP

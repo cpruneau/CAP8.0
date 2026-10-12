@@ -10,10 +10,10 @@
  *
  * *********************************************************************/
 #include "GlobalHistos.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
 #include "Configuration.hpp"
 
 ClassImp(CAP::GlobalHistos);
@@ -23,7 +23,7 @@ namespace CAP
   
   GlobalHistos::GlobalHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   h_n(nullptr),
   h_e(nullptr),
   h_q(nullptr),
@@ -62,7 +62,7 @@ namespace CAP
   
   GlobalHistos::GlobalHistos(const GlobalHistos & source)
   :
-  HistogramGroup(),
+  HistogramFolder(),
   h_n(nullptr),
   h_e(nullptr),
   h_q(nullptr),
@@ -105,7 +105,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     cloneB(rhs);
     n_nbins = rhs.n_nbins;
     e_nbins = rhs.e_nbins;
@@ -135,19 +135,19 @@ namespace CAP
   
   void GlobalHistos::cloneB(const GlobalHistos & group)
   {
-  h_n  = safeCloneH1(group.h_n);
-  h_e  = safeCloneH1(group.h_e);
-  h_q  = safeCloneH1(group.h_q);
-  h_s  = safeCloneH1(group.h_s);
-  h_b  = safeCloneH1(group.h_b);
-  h_ptSum  = safeCloneH1(group.h_ptSum);
-  h_ptAvg  = safeCloneH1(group.h_ptAvg);
-  p_eVsN   = safeCloneProfile(group.p_eVsN);
-  p_qVsN   = safeCloneProfile(group.p_qVsN);
-  p_sVsN   = safeCloneProfile(group.p_sVsN);
-  p_bVsN   = safeCloneProfile( group.p_bVsN);
-  p_ptSumVsN  = safeCloneProfile(group.p_ptSumVsN);
-  p_ptAvgVsN  = safeCloneProfile( group.p_ptAvgVsN);
+  h_n  = histogramLike(group.h_n);
+  h_e  = histogramLike(group.h_e);
+  h_q  = histogramLike(group.h_q);
+  h_s  = histogramLike(group.h_s);
+  h_b  = histogramLike(group.h_b);
+  h_ptSum  = histogramLike(group.h_ptSum);
+  h_ptAvg  = histogramLike(group.h_ptAvg);
+  p_eVsN   = histogramLike(group.p_eVsN);
+  p_qVsN   = histogramLike(group.p_qVsN);
+  p_sVsN   = histogramLike(group.p_sVsN);
+  p_bVsN   = histogramLike(group.p_bVsN);
+  p_ptSumVsN  = histogramLike(group.p_ptSumVsN);
+  p_ptAvgVsN  = histogramLike(group.p_ptAvgVsN);
   }
   
   void GlobalHistos::configure(const String & taskName,
@@ -155,7 +155,7 @@ namespace CAP
                                const Configuration & configuration,
                                unsigned int index)
   {
-  HistogramGroup::configure(taskName,objectType,configuration,index);
+  HistogramFolder::configure(taskName,objectType,configuration,index);
   n_nbins     = configuration.valueInt(   createKey(taskName,objectType,index,"n_nbins"));
   n_min       = configuration.valueDouble(createKey(taskName,objectType,index,"n_min"));
   n_max       = configuration.valueDouble(createKey(taskName,objectType,index,"n_max"));
@@ -225,16 +225,16 @@ namespace CAP
   p_ptAvgVsN = createProfile(createName(_histogramBaseName,String("n"),String("ptAvgProf")),n_nbins, n_min,  n_max, "n", "ptAvg");
   }
   
-  void GlobalHistos::loadFrom(TFile & inputFile)
+  void GlobalHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_n  = importH1(inputFile, createName(_histogramBaseName,"n"));
-  h_e  = importH1(inputFile, createName(_histogramBaseName,"e"));
-  h_q  = importH1(inputFile, createName(_histogramBaseName,"q"));
-  h_s  = importH1(inputFile, createName(_histogramBaseName,"s"));
-  h_b  = importH1(inputFile, createName(_histogramBaseName,"b"));
-  h_ptSum  = importH1(inputFile, createName(_histogramBaseName,"ptSum"));
-  h_ptAvg  = importH1(inputFile, createName(_histogramBaseName,"ptAvg"));
+  h_n  = importHistogram(inputFile, createName(_histogramBaseName,"n"));
+  h_e  = importHistogram(inputFile, createName(_histogramBaseName,"e"));
+  h_q  = importHistogram(inputFile, createName(_histogramBaseName,"q"));
+  h_s  = importHistogram(inputFile, createName(_histogramBaseName,"s"));
+  h_b  = importHistogram(inputFile, createName(_histogramBaseName,"b"));
+  h_ptSum  = importHistogram(inputFile, createName(_histogramBaseName,"ptSum"));
+  h_ptAvg  = importHistogram(inputFile, createName(_histogramBaseName,"ptAvg"));
   p_eVsN   = importProfile(inputFile, createName(_histogramBaseName,"n","eProf"));
   p_qVsN   = importProfile(inputFile, createName(_histogramBaseName,"n","qProf"));
   p_sVsN   = importProfile(inputFile, createName(_histogramBaseName,"n","sProf"));
@@ -251,22 +251,22 @@ namespace CAP
                           double b,
                           double weight)
   {
-  h_n ->Fill(n ,weight);
-  h_e ->Fill(e ,weight);
-  h_q ->Fill(q ,weight);
-  h_s ->Fill(s ,weight);
-  h_b ->Fill(b ,weight);
-  h_ptSum ->Fill(ptSum, weight);
+  h_n ->fill(n ,weight);
+  h_e ->fill(e ,weight);
+  h_q ->fill(q ,weight);
+  h_s ->fill(s ,weight);
+  h_b ->fill(b ,weight);
+  h_ptSum ->fill(ptSum, weight);
   if (n>0)
     {
     double ptAvg = ptSum/n;
-    h_ptAvg ->Fill(ptAvg, weight);
-    p_eVsN  ->Fill(n,e );
-    p_qVsN  ->Fill(n,q );
-    p_sVsN  ->Fill(n,s );
-    p_bVsN  ->Fill(n,b );
-    p_ptSumVsN ->Fill(n,ptSum);
-    p_ptAvgVsN ->Fill(n,ptAvg);
+    h_ptAvg ->fill(ptAvg, weight);
+    p_eVsN  ->fill(n,e );
+    p_qVsN  ->fill(n,q );
+    p_sVsN  ->fill(n,s );
+    p_bVsN  ->fill(n,b );
+    p_ptSumVsN ->fill(n,ptSum);
+    p_ptAvgVsN ->fill(n,ptAvg);
     }
   }
   

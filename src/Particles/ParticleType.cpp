@@ -326,7 +326,7 @@ namespace CAP
   ParticleType * ParticleType::createNucleus(const String & _name)
     {
     ParticleType * type = new ParticleType;
-    if (_name.EqualTo("Proton"))
+    if (_name.equalTo("Proton"))
       {
       type->setName("Proton");
       type->setTitle("p");
@@ -338,7 +338,7 @@ namespace CAP
       type->setBeta(0.0);
 
       }
-    else if (_name.EqualTo("Neutron"))
+    else if (_name.equalTo("Neutron"))
       {
       type->setName("Neutron");
       type->setTitle("n");
@@ -350,7 +350,7 @@ namespace CAP
       type->setBeta(0.0);
 
       }
-    else if (_name.EqualTo("Deuteron"))
+    else if (_name.equalTo("Deuteron"))
       {
       type->setName("Deuteron");
       type->setTitle("d");
@@ -361,7 +361,7 @@ namespace CAP
       type->setLifeTime(Physics::protonLifetime_SI()); // seconds
       type->setBeta(0.0);
       }
-    else if (_name.EqualTo("Triton"))
+    else if (_name.equalTo("Triton"))
       {
       type->setName("Triton");
       type->setTitle("t");
@@ -372,7 +372,7 @@ namespace CAP
       type->setLifeTime(12.32*Physics::yearToSecond()); // seconds
       type->setBeta(0.0);
       }
-    else if (_name.EqualTo("Helium3"))
+    else if (_name.equalTo("Helium3"))
       {
       type->setName("Helium3");
       type->setTitle("3He");
@@ -383,7 +383,7 @@ namespace CAP
       type->setLifeTime(Physics::protonLifetime_SI()); // seconds
       type->setBeta(0.0);
       }
-    else if (_name.EqualTo("Helium4"))
+    else if (_name.equalTo("Helium4"))
       {
       type->setName("Helium4");
       type->setTitle("4He");
@@ -394,7 +394,7 @@ namespace CAP
       type->setLifeTime(Physics::protonLifetime_SI()); // seconds
       type->setBeta(0.0);
       }
-    else if (_name.EqualTo("Gold197"))
+    else if (_name.equalTo("Gold197"))
       {
       type->setName("Gold197");
       type->setTitle("197Au");
@@ -405,7 +405,7 @@ namespace CAP
       type->setLifeTime(Physics::protonLifetime_SI()); // seconds
       type->setBeta(0.0);
       }
-    else if (_name.EqualTo("Lead208"))
+    else if (_name.equalTo("Lead208"))
       {
       type->setName("Lead208");
       type->setTitle("208Pb");
@@ -416,7 +416,7 @@ namespace CAP
       type->setLifeTime(Physics::protonLifetime_SI()); // seconds
       type->setBeta(0.0);
       }
-    if (_name.EqualTo("AntiProton"))
+    if (_name.equalTo("AntiProton"))
       {
       type->setName("AntiProton");
       type->setTitle("#bar{p}");
@@ -428,7 +428,7 @@ namespace CAP
       type->setBeta(0.0);
 
       }
-    else if (_name.EqualTo("AntiNeutron"))
+    else if (_name.equalTo("AntiNeutron"))
       {
       type->setName("AntiNeutron");
       type->setTitle("#bar{n}");
@@ -440,7 +440,7 @@ namespace CAP
       type->setBeta(0.0);
 
       }
-    else if (_name.EqualTo("AntiDeuteron"))
+    else if (_name.equalTo("AntiDeuteron"))
       {
       type->setName("AntiDeuteron");
       type->setTitle("#bar{d}");
@@ -451,7 +451,7 @@ namespace CAP
       type->setLifeTime(Physics::protonLifetime_SI()); // seconds
       type->setBeta(0.0);
       }
-    else if (_name.EqualTo("AntiTriton"))
+    else if (_name.equalTo("AntiTriton"))
       {
       type->setName("AntiTriton");
       type->setTitle("#bar{t}");
@@ -462,7 +462,7 @@ namespace CAP
       type->setLifeTime(12.32*Physics::yearToSecond()); // seconds
       type->setBeta(0.0);
       }
-    else if (_name.EqualTo("AntiHelium3"))
+    else if (_name.equalTo("AntiHelium3"))
       {
       type->setName("AntiHelium3");
       type->setTitle("3#bar{He}");
@@ -473,7 +473,7 @@ namespace CAP
       type->setLifeTime(Physics::protonLifetime_SI()); // seconds
       type->setBeta(0.0);
       }
-    else if (_name.EqualTo("AntiHelium4"))
+    else if (_name.equalTo("AntiHelium4"))
       {
       type->setName("AntiHelium4");
       type->setTitle("4#bar{He}");
@@ -486,6 +486,27 @@ namespace CAP
       }
     return type;
     }
+
+  bool ParticleType::isStable() const
+  {
+  return _decayModes.size()<1 || !_decayEnabled;
+  }
+
+  int ParticleType::nDecayModes() const
+  {
+  return _decayModes.size();
+  }
+
+  bool  ParticleType::hasDecayModes() const
+  {
+  return _decayModes.size()>0;
+  }
+
+  ParticleDecayMode & ParticleType::getDecayMode(unsigned int _index)
+  {
+  if (_index >= _decayModes.size()) throw Exception("_index >= _decayModes.size()",__FUNCTION__);
+  return _decayModes[_index];
+  }
 
   ParticleType * ParticleType::protonType   = ParticleType::createNucleus("Proton");
   ParticleType * ParticleType::neutronType  = ParticleType::createNucleus("Neutron");

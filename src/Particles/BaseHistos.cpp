@@ -15,7 +15,8 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::BaseHistos);
 
@@ -24,7 +25,7 @@ namespace CAP
 
 BaseHistos::BaseHistos()
 :
-HistogramGroup()
+HistogramFolder()
 {
   appendClassName("BaseHistos");
   setMinimumReportLevel(Object::kInfo);
@@ -34,7 +35,7 @@ HistogramGroup()
 
 BaseHistos::BaseHistos(const BaseHistos & source)
 :
-HistogramGroup(source)
+HistogramFolder(source)
 {
   cloneB(source);
 }
@@ -44,7 +45,7 @@ BaseHistos & BaseHistos::operator=(const BaseHistos & rhs)
   if (reportWarning(__FUNCTION__)) { printCR(); }
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     cloneB(rhs);
     }
   return *this;

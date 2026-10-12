@@ -13,10 +13,11 @@
 #include "ParticleSingleHistos.hpp"
 #include "ParticleSingleDerivedHistos.hpp"
 #include "ParticlePairHistos.hpp"
-#include "HistogramGroup.hpp"
+#include "HistogramFolder.hpp"
 
 #include "ParticlePair3DBfHistos.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 #include "TRandom.h"
@@ -83,18 +84,18 @@ ParticlePair3DBfHistos & ParticlePair3DBfHistos::operator=(const ParticlePair3DB
 void ParticlePair3DBfHistos::cloneBF(const ParticlePair3DBfHistos & source)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_B12_Qinv     = safeCloneH1(source.h_B12_Qinv);
-  h_B12_DeltaPs  = safeCloneH1(source.h_B12_DeltaPs);
-  h_B12_DeltaPo  = safeCloneH1(source.h_B12_DeltaPo);
-  h_B12_DeltaPl  = safeCloneH1(source.h_B12_DeltaPl);
-  h_B21_Qinv     = safeCloneH1(source.h_B21_Qinv);
-  h_B21_DeltaPs  = safeCloneH1(source.h_B21_DeltaPs);
-  h_B21_DeltaPo  = safeCloneH1(source.h_B21_DeltaPo);
-  h_B21_DeltaPl  = safeCloneH1(source.h_B21_DeltaPl);
-  h_Bs_Qinv      = safeCloneH1(source.h_Bs_Qinv);
-  h_Bs_DeltaPs   = safeCloneH1(source.h_Bs_DeltaPs);
-  h_Bs_DeltaPo   = safeCloneH1(source.h_Bs_DeltaPo);
-  h_Bs_DeltaPl   = safeCloneH1(source.h_Bs_DeltaPl);
+  h_B12_Qinv     = histogramLike(source.h_B12_Qinv);
+  h_B12_DeltaPs  = histogramLike(source.h_B12_DeltaPs);
+  h_B12_DeltaPo  = histogramLike(source.h_B12_DeltaPo);
+  h_B12_DeltaPl  = histogramLike(source.h_B12_DeltaPl);
+  h_B21_Qinv     = histogramLike(source.h_B21_Qinv);
+  h_B21_DeltaPs  = histogramLike(source.h_B21_DeltaPs);
+  h_B21_DeltaPo  = histogramLike(source.h_B21_DeltaPo);
+  h_B21_DeltaPl  = histogramLike(source.h_B21_DeltaPl);
+  h_Bs_Qinv      = histogramLike(source.h_Bs_Qinv);
+  h_Bs_DeltaPs   = histogramLike(source.h_Bs_DeltaPs);
+  h_Bs_DeltaPo   = histogramLike(source.h_Bs_DeltaPo);
+  h_Bs_DeltaPl   = histogramLike(source.h_Bs_DeltaPl);
 }
 
 void ParticlePair3DBfHistos::configure(const String & taskName,
@@ -123,25 +124,25 @@ void ParticlePair3DBfHistos::create()
   h_Bs_DeltaPl    = createHistogram(createName(_histogramBaseName,"Bs_DeltaPl"),  DeltaPl_nbins,DeltaPl_min, DeltaPl_max, "p_{l}","B_{s1}");
 }
 
-void ParticlePair3DBfHistos::loadFrom(TFile & inputFile)
+void ParticlePair3DBfHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_B12_Qinv    = loadH1(inputFile,createName(_histogramBaseName,"B12_Qinv"));
-  h_B12_DeltaPs = loadH1(inputFile,createName(_histogramBaseName,"B12_DeltaPs"));
-  h_B12_DeltaPo = loadH1(inputFile,createName(_histogramBaseName,"B12_DeltaPo"));
-  h_B12_DeltaPl = loadH1(inputFile,createName(_histogramBaseName,"B12_DeltaPl"));
-  h_B21_Qinv    = loadH1(inputFile,createName(_histogramBaseName,"B21_Qinv"));
-  h_B21_DeltaPs = loadH1(inputFile,createName(_histogramBaseName,"B21_DeltaPs"));
-  h_B21_DeltaPo = loadH1(inputFile,createName(_histogramBaseName,"B21_DeltaPo"));
-  h_B21_DeltaPl = loadH1(inputFile,createName(_histogramBaseName,"B21_DeltaPl"));
-  h_Bs_Qinv     = loadH1(inputFile,createName(_histogramBaseName,"Bs_Qinv"));
-  h_Bs_DeltaPs  = loadH1(inputFile,createName(_histogramBaseName,"Bs_DeltaPs"));
-  h_Bs_DeltaPo  = loadH1(inputFile,createName(_histogramBaseName,"Bs_DeltaPo"));
-  h_Bs_DeltaPl  = loadH1(inputFile,createName(_histogramBaseName,"Bs_DeltaPl"));
+  h_B12_Qinv    = importHistogram(inputFile,createName(_histogramBaseName,"B12_Qinv"));
+  h_B12_DeltaPs = importHistogram(inputFile,createName(_histogramBaseName,"B12_DeltaPs"));
+  h_B12_DeltaPo = importHistogram(inputFile,createName(_histogramBaseName,"B12_DeltaPo"));
+  h_B12_DeltaPl = importHistogram(inputFile,createName(_histogramBaseName,"B12_DeltaPl"));
+  h_B21_Qinv    = importHistogram(inputFile,createName(_histogramBaseName,"B21_Qinv"));
+  h_B21_DeltaPs = importHistogram(inputFile,createName(_histogramBaseName,"B21_DeltaPs"));
+  h_B21_DeltaPo = importHistogram(inputFile,createName(_histogramBaseName,"B21_DeltaPo"));
+  h_B21_DeltaPl = importHistogram(inputFile,createName(_histogramBaseName,"B21_DeltaPl"));
+  h_Bs_Qinv     = importHistogram(inputFile,createName(_histogramBaseName,"Bs_Qinv"));
+  h_Bs_DeltaPs  = importHistogram(inputFile,createName(_histogramBaseName,"Bs_DeltaPs"));
+  h_Bs_DeltaPo  = importHistogram(inputFile,createName(_histogramBaseName,"Bs_DeltaPo"));
+  h_Bs_DeltaPl  = importHistogram(inputFile,createName(_histogramBaseName,"Bs_DeltaPl"));
 }
 
 //!
-//! HistogramGroup from ParticlePair3DBfHistos must be normalized "per event" before calling this function
+//! HistogramFolder from ParticlePair3DBfHistos must be normalized "per event" before calling this function
 //!
 //!  calculateBfHistograms(pair12, pair12B,pair1B2,pair1B2B);  // ++, +-, -+, --
 //!
@@ -152,22 +153,22 @@ void ParticlePair3DBfHistos::calculateBfHistograms(ParticlePair3DDerivedHistos &
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   // (-+) - (++)
-  h_B12_Qinv   ->Add(pair1B2.h_a12_Qinv,   pair12.h_a12_Qinv,   1.0,-1.0);
-  h_B12_DeltaPs->Add(pair1B2.h_a12_DeltaPs,pair12.h_a12_DeltaPs,1.0,-1.0);
-  h_B12_DeltaPo->Add(pair1B2.h_a12_DeltaPo,pair12.h_a12_DeltaPo,1.0,-1.0);
-  h_B12_DeltaPl->Add(pair1B2.h_a12_DeltaPl,pair12.h_a12_DeltaPl,1.0,-1.0);
+  h_B12_Qinv   ->setAsSumOf(*pair1B2.h_a12_Qinv,*pair12.h_a12_Qinv,1.0,-1.0);
+  h_B12_DeltaPs->setAsSumOf(*pair1B2.h_a12_DeltaPs,*pair12.h_a12_DeltaPs,1.0,-1.0);
+  h_B12_DeltaPo->setAsSumOf(*pair1B2.h_a12_DeltaPo,*pair12.h_a12_DeltaPo,1.0,-1.0);
+  h_B12_DeltaPl->setAsSumOf(*pair1B2.h_a12_DeltaPl,*pair12.h_a12_DeltaPl,1.0,-1.0);
 
   // (+-) - (--)
-  h_B21_Qinv   ->Add(pair12B.h_a21_Qinv,   pair1B2B.h_a21_Qinv,   1.0,-1.0);
-  h_B21_DeltaPs->Add(pair12B.h_a21_DeltaPs,pair1B2B.h_a21_DeltaPs,1.0,-1.0);
-  h_B21_DeltaPo->Add(pair12B.h_a21_DeltaPo,pair1B2B.h_a21_DeltaPo,1.0,-1.0);
-  h_B21_DeltaPl->Add(pair12B.h_a21_DeltaPl,pair1B2B.h_a21_DeltaPl,1.0,-1.0);
+  h_B21_Qinv   ->setAsSumOf(*pair12B.h_a21_Qinv,*pair1B2B.h_a21_Qinv,1.0,-1.0);
+  h_B21_DeltaPs->setAsSumOf(*pair12B.h_a21_DeltaPs,*pair1B2B.h_a21_DeltaPs,1.0,-1.0);
+  h_B21_DeltaPo->setAsSumOf(*pair12B.h_a21_DeltaPo,*pair1B2B.h_a21_DeltaPo,1.0,-1.0);
+  h_B21_DeltaPl->setAsSumOf(*pair12B.h_a21_DeltaPl,*pair1B2B.h_a21_DeltaPl,1.0,-1.0);
 
   // 0.5( (-+) - (++) ) + 0.5 (  (+-) - (--) )
-  h_Bs_Qinv    ->Add(h_B12_Qinv,    h_B21_Qinv,      0.5, 0.5);
-  h_Bs_DeltaPs ->Add(h_B12_DeltaPs, h_B12_DeltaPs,   0.5, 0.5);
-  h_Bs_DeltaPo ->Add(h_B12_DeltaPo, h_B12_DeltaPo,   0.5, 0.5);
-  h_Bs_DeltaPl ->Add(h_B12_DeltaPl, h_B12_DeltaPl,   0.5, 0.5);
+  h_Bs_Qinv    ->setAsSumOf(*h_B12_Qinv,*h_B21_Qinv,0.5,0.5);
+  h_Bs_DeltaPs ->setAsSumOf(*h_B12_DeltaPs,*h_B12_DeltaPs,0.5,0.5);
+  h_Bs_DeltaPo ->setAsSumOf(*h_B12_DeltaPo,*h_B12_DeltaPo,0.5,0.5);
+  h_Bs_DeltaPl ->setAsSumOf(*h_B12_DeltaPl,*h_B12_DeltaPl,0.5,0.5);
 }
 
 

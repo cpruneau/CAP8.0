@@ -28,14 +28,19 @@ namespace CAP
 class ParticleDecayMode;
 
 //!
+//! @brief Particle type: name, PDG code, mass, width, charge, spin, isospin, quark and lepton content, decay modes.
+//!
+//! Types are normally created by the particle database (ParticleDb) from its files. The quark and antiquark contents
+//! are 6-digit numbers tbcsud (number of top, bottom, charm, strange, up, down quarks); baryon number, strangeness,
+//! charm, ... are computed from them. Static singletons describe the nuclei used by the Glauber model (protonType,
+//! he4Type, auType, pbType, ...).
+//!
 //!This class defines the notion of particle type used in CAP.  Virtually all elementary particle properties
 //!are represented and stored. Property values are stored and read from a particle property file. Property values are based on
 //!the particle data book maintained by the particle data group (PDG).
 //!
 class ParticleType
 {
-  //friend class ParticleDbXmlWriter;
-
 protected:
 
   int    _index;            //!<Sequential _index on import
@@ -59,6 +64,7 @@ protected:
   bool   _decayEnabled;     //!<particle decays are turned off externally
   int    _antiParticleIndex; //!< _index (in the active DB) of the antiparticle of this particle.
   std::vector<ParticleDecayMode> _decayModes; //!<Array of decay modes
+  //! Random selection of a decay mode according to the branching ratios (see setupDecayGenerator()).
   SelectionGenerator _decayRndmSelector;
   double _beta;           //! GlauberNucleus deformation parameter
 
@@ -68,13 +74,21 @@ public:
   enum LeptonFlavors { kElectron, kElectronNeutrino, kMuon, kMuonNeutrino, kTau, kTauNeutrino };
 
 
+  //! @brief Default constructor: undefined type, no decay modes.
   ParticleType();
+  //! @brief Copy constructor. @param source type to copy
   ParticleType(const ParticleType & source);
+  //! @brief Destructor.
   virtual ~ParticleType();
+  //! @brief Copy assignment. @param source type to copy @return this type
   ParticleType & operator=(const ParticleType & source);
+  //! @brief Set up the random selection of the decay modes from their branching ratios.
+  //! @throws Exception if the type has no decay modes
   void setupDecayGenerator();
+  //! @brief Draw a decay mode and return its products. @param n number of products (set) @param pid PDG codes of the products (set)
   void generateDecay(int & n, int * pid);
 
+  //! @brief Index of the type in its database. @return index
   int index() const
   {
   return _index;
@@ -113,15 +127,26 @@ public:
   void setAntiQuarkNumbers(int value)
   {
   if (value/1000000 > 0) throw Exception("More than 6 quark flavors??? value/1000000 > 0",__FUNCTION__);
-  _quarks = value;
+  _antiquarks = value;   // was _quarks = value, which overwrote the quark content and left the antiquarks at 0
   }
 
+  //! @brief Set the lepton content (digits per lepton flavor, as for the quarks). @param value content
+  //! @throws Exception for more than 6 digits
   void setLeptonNumbers(int value)
   {
   if (value/1000000 > 0) throw Exception("More than 6 lepton flavors??? value/1000000 > 0",__FUNCTION__);
   _leptons = value;
   }
 
+  //! @brief Quark content as given to setQuarkNumbers() (digits tbcsud). @return quark content
+  int quarkNumbers() const { return _quarks; }
+  //! @brief Antiquark content as given to setAntiQuarkNumbers() (digits tbcsud). @return antiquark content
+  int antiQuarkNumbers() const { return _antiquarks; }
+  //! @brief Lepton content as given to setLeptonNumbers(). @return lepton content
+  int leptonNumbers() const { return _leptons; }
+
+  //! @brief Digit of a flavor in a content number (tbcsud). @param flavorIndex flavor (0: d, 1: u, 2: s, 3: c, 4: b, 5: t)
+  //! @param content content number @return number of quarks of that flavor @throws Exception for an invalid flavor
   int parseNumber(int flavorIndex, int content) const
   {
   if (content/1000000 > 0) throw Exception("More than 6 quark flavors??? value/1000000 > 0",__FUNCTION__);
@@ -149,16 +174,19 @@ public:
   return parseNumber(flavorIndex,_quarks);
   }
 
+  //! @brief Number of antiquarks of a flavor. @param flavorIndex flavor (see QuarkFlavors) @return number
   int antiQuarkNumber(unsigned int flavorIndex) const
   {
   return parseNumber(flavorIndex,_antiquarks);
   }
 
+  //! @brief Net number of quarks of a flavor (quarks minus antiquarks). @param flavorIndex flavor @return number
   int netQuarkNumber(unsigned int flavorIndex) const
   {
   return quarkNumber(flavorIndex) - antiQuarkNumber(flavorIndex);
   }
 
+  //! @brief Baryon number: (number of quarks - number of antiquarks)/3 (integer division). @return baryon number
   int baryonNumber() const
   {
   int nd = quarkNumber(kDown);
@@ -250,6 +278,14 @@ public:
   }
 
   //!
+  //! Get the mass uncertainty of this particle in GeV/c^2.
+  //!
+  inline double massUncertainty() const
+  {
+  return _massUncertainty;
+  }
+
+  //!
   //! Get the decay width uncertainty of this particle in GeV/c^2.
   //!
   inline double widthUncertainty() const
@@ -286,8 +322,8 @@ public:
   //!
   //! Set the electric charge of this particle.
   //!
-  void setCharge(int value)
-  { _charge  = value;}
+  void setCharge(double value)
+  { _charge  = value;}   // double: quarks have fractional charges (was int, which truncated them to 0)
 
 
   //!
@@ -435,6 +471,8 @@ public:
   return isBoson() ? -1.0 : +1.0;
   }
 
+  //! @brief Index of the antiparticle in the database (its own index if it has none, see ParticleDb::mapAntiParticleIndices()).
+  //! @return index
   inline int antiParticleIndex() const
   {
   return _antiParticleIndex;
@@ -480,6 +518,7 @@ public:
   _isospin  = value;
   }
 
+  //! @brief Set the third component of the isospin. @param value isospin3
   void setIsospin3(double value)
   {
   _isospin3 = value;
@@ -510,11 +549,27 @@ public:
   }
 
   //!
+  //! Set the mass uncertainty of this particle in GeV/c^2.
+  //!
+  void setMassUncertainty(double value)
+  {
+  _massUncertainty = value;
+  }
+
+  //!
   //! Set the width of this particle in GeV/c^2.
   //!
   void setWidth(double value)
   {
   _width = value;
+  }
+
+  //!
+  //! Set the width uncertainty of this particle in GeV/c^2.
+  //!
+  void setWidthUncertainty(double value)
+  {
+  _widthUncertainty = value;
   }
 
   //!
@@ -607,24 +662,28 @@ public:
   return absPdg>=11  &&  absPdg<=16;
   }
 
+  //! @brief Whether the type is a neutrino or antineutrino (|PDG| = 12, 14, 16). @return true if so
   bool isNeutrino() const
   {
   int code = std::abs(_pdgCode);
   return code==12 || code==14 || code==16;
   }
 
+  //! @brief Whether the type is an electron (anti)neutrino. @return true if so
   bool isElectronNeutrino() const
   {
   int code = std::abs(_pdgCode);
   return code==12;
   }
 
+  //! @brief Whether the type is a muon (anti)neutrino. @return true if so
   bool isMuonNeutrino() const
   {
   int code = std::abs(_pdgCode);
   return code==14 ;
   }
 
+  //! @brief Whether the type is a tau (anti)neutrino. @return true if so
   bool isTauNeutrino() const
   {
   int code = std::abs(_pdgCode);
@@ -694,11 +753,13 @@ public:
   return _pdgCode == 13 || _pdgCode ==-13 ;
   }
 
+  //! @brief Whether the type is a mu-. @return true if so
   bool isMuonMinus() const
   {
   return _pdgCode == 13;
   }
 
+  //! @brief Whether the type is a mu+. @return true if so
   bool isMuonPlus() const
   {
   return _pdgCode == -13;
@@ -712,16 +773,19 @@ public:
   return _pdgCode == 15 || _pdgCode == -15;
   }
 
+  //! @brief Whether the type is a tau-. @return true if so
   bool isTauMinus() const
   {
   return _pdgCode == 15;
   }
 
+  //! @brief Whether the type is a tau+. @return true if so
   bool isTauPlus() const
   {
   return _pdgCode == -15;
   }
 
+  //! @brief Whether the type is a meson (quark-antiquark content). @return true if so
   bool isMeson() const
   {
   int nd = quarkNumber(kDown);
@@ -1025,17 +1089,7 @@ public:
   //!
   //! Return true if this particle is 'stable'
   //!
-  inline bool isStable() const
-  {
-//    if (_name.Contains("Lambda2100zero"))
-//      {
-//      printValue("Found ",_name);
-//      printValue("isStable() _decayModes.size()",_decayModes.size());
-//      printValue("isStable() _decayEnabled",_decayEnabled);
-//      }
-  return _decayModes.size()<1 || !_decayEnabled;
-  }
-
+  bool isStable() const;
 
   //!
   //! Return true if this particle has been declared disabled.
@@ -1107,25 +1161,16 @@ public:
   //!
   //! Return the number of distinct decay modes of this particle
   //!
-  int nDecayModes() const
-  {
-  return _decayModes.size();
-  }
+  int nDecayModes() const;
 
-  //!
   //! Return true if this particle has known decay modes
   //!
-  bool  hasDecayModes() const
-  {
-  return _decayModes.size()>0;
-  }
+  bool  hasDecayModes() const;
 
-  ParticleDecayMode & getDecayMode(unsigned int _index)
-  {
-  if (_index >= _decayModes.size()) throw Exception("_index >= _decayModes.size()",__FUNCTION__);
-  return _decayModes[_index];
-  }
+  //! @brief Decay mode at an index. @param _index index @return decay mode
+  ParticleDecayMode & getDecayMode(unsigned int _index);
 
+  //! @brief Set the index of the antiparticle in the database. @param value index
   void  setAntiParticleIndex(unsigned int value)
   {
   _antiParticleIndex = value;
@@ -1170,36 +1215,46 @@ public:
   return a-z;
   }
 
+  //! @brief Deformation parameter beta (nuclei). @return beta
   double beta() const
   {
   return _beta;
   }
 
+  //! @brief Deformation parameter beta (nuclei). @return beta
   double deformationBeta() const
   {
   return _beta;
   }
 
+  //! @brief Set the deformation parameter beta. @param _deformationBeta beta
   void setBeta(double _deformationBeta)
   {
   _beta = _deformationBeta;
   }
 
+  //! @brief Set the deformation parameter beta. @param _deformationBeta beta
   void setDeformationBeta(double _deformationBeta)
   {
   _beta = _deformationBeta;
   }
 
+  //! @brief Binding energy of a nucleus: mass - (Z m_p + (A-Z) m_n). @return energy (GeV)
   double bindingEnergy() const;
 
+  //! @brief Add a decay mode given by PDG codes. @param branchingRatio ratio @param children PDG codes of the products
+  //! @throws Exception for a ratio outside [0,1] or fewer than 2 products
   void addDecayMode(double branchingRatio, std::vector<int> children);
+  //! @brief Add a decay mode (and enable the decays of the type). @param decayMode mode
   void addDecayMode(ParticleDecayMode & decayMode);
 
+  //! @brief Draw a decay mode according to the branching ratios (see setupDecayGenerator()). @return decay mode
   ParticleDecayMode & generateDecayMode();
 
   //!
   //!Return an array of decay modes for this particle
   //!
+  //! @brief Decay modes of the type. @return decay modes
   const std::vector<ParticleDecayMode> & decayModes() const
   {
   return _decayModes;
@@ -1210,30 +1265,39 @@ public:
   return _decayModes;
   }
 
+  //! @brief Set the atomic number (stored as the charge). @param value Z
   void setZ(int value)
   {
   _charge = value;
   }
 
+  //! @brief Set the atomic number (stored as the charge). @param value Z
   void setAtomicNumber(double value)
   {
   _charge = value;
   }
 
+  //! @brief Set the mass number. @param value A
+  //! @note Stored in _baryon, which baryonNumber() and massNumber() do not use (they use the quark content).
   void setA(int value)
   {
   _baryon = value;
   }
 
+  //! @brief Set the mass number (see setA()). @param value A
   void setMassNumber(int value)
   {
   _baryon = value;
   }
 
 
+  //! @brief Print the properties of the type.
   void print();
+  //! @brief Print the decay modes of the type.
   void printDecays();
 
+  //! @brief Create the type of a nucleus or nucleon. @param name Proton, Neutron, Deuteron, Triton, Helium3, Helium4,
+  //! Gold, Lead, or their Anti versions (AntiProton, ...) @return new type (owned by the caller)
   static  ParticleType * createNucleus(const String & name);
   static  ParticleType * protonType;      //!< Pointer to a singleton object coding a proton type
   static  ParticleType * neutronType;     //!< Pointer to a singleton object coding a neutron type
@@ -1249,6 +1313,7 @@ public:
   static  ParticleType * antiDeuteronType;    //!< Pointer to a singleton object coding a deuteron type
   static  ParticleType * antiTritonType;      //!< Pointer to a singleton object coding a triton type
   static  ParticleType * antiHe3Type;         //!< Pointer to a singleton object coding a 3He GlauberNucleus type
+  //! Singleton coding an anti-4He type.
   static  ParticleType * antiHe4Type;
 
   ClassDef(ParticleType,0)

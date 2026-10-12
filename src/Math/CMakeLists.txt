@@ -9,13 +9,17 @@ Complex.hpp
 CompositeFunction.hpp
 Constant.hpp
 Cubic.hpp
+DataPoint.hpp
+DataPointColumns.hpp
 DataPoint2D.hpp
+DataPoint3D.hpp
+DataPointND.hpp
 DataPoints.hpp
 DataPointsVector.hpp
 Exponential.hpp
-Folder.hpp
 Function.hpp
 Histogram.hpp
+Profile.hpp
 Partition.hpp
 Vector2D.hpp
 Vector3D.hpp
@@ -30,6 +34,7 @@ Normal.hpp
 Parabolic.hpp
 Parameter.hpp
 Polynomial.hpp
+Table2D.hpp
 Quartic.hpp
 ScalarField.hpp
 SphericalHarmonics.hpp
@@ -48,13 +53,18 @@ Complex.cpp
 CompositeFunction.cpp
 Constant.cpp
 Cubic.cpp
+DataPoint.cpp
+DataPointColumns.cpp
 DataPoint2D.cpp
+DataPoint3D.cpp
+DataPointND.cpp
 DataPoints.cpp
 DataPointsVector.cpp
 Exponential.cpp
-Folder.cpp
+FolderTypes.cpp
 Function.cpp
 Histogram.cpp
+Profile.cpp
 MathBasicFunctions.cpp
 MathBasicGeometry.cpp
 MathBasicInterpolation.cpp
@@ -78,9 +88,11 @@ Normal.cpp
 Parabolic.cpp
 Parameter.cpp
 Polynomial.cpp
+Table2D.cpp
 Quartic.cpp
 ScalarField.cpp
 SphericalHarmonics.cpp
+XmlScalarField.cpp
 G__Math.cxx)
 
 target_link_libraries(Math Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )

@@ -14,7 +14,8 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::ParticleFlowHistos);
 
@@ -23,7 +24,7 @@ namespace CAP
 
 ParticleFlowHistos::ParticleFlowHistos()
 :
-HistogramGroup()
+HistogramFolder()
 h_n1(nullptr)
 {
   appendClassName("ParticleFlowHistos");
@@ -33,7 +34,7 @@ h_n1(nullptr)
 
 ParticleFlowHistos::ParticleFlowHistos(const ParticleFlowHistos & source)
 :
-HistogramGroup(source),
+HistogramFolder(source),
 h_n1(nullptr)
 {
   cloneB(source);
@@ -43,7 +44,7 @@ ParticleFlowHistos & ParticleFlowHistos::operator=(const ParticleFlowHistos & rh
 {
   if (this!=& rhs)
     {
-    HistogramGroup::operator=( rhs);
+    HistogramFolder::operator=( rhs);
     cloneB( rhs);
     }
   return *this;
@@ -54,7 +55,7 @@ void ParticleFlowHistos::cloneB(const ParticleFlowHistos & group)
   if (reportStart(__FUNCTION__)) { /* noops*/ };
 
   // ony clone those that exist...
-  if (group.h_n1) h_n1   = (TH1*) group.h_n1->Clone();
+  if (group.h_n1) h_n1   = histogramLike(group.h_n1);
 }
 
 void ParticleFlowHistos::configure(const String & taskName,
@@ -62,7 +63,7 @@ void ParticleFlowHistos::configure(const String & taskName,
                                          const Configuration & configuration,
                                          unsigned int index)
 {
-  HistogramGroup::configure(taskName,objectType,configuration,index);
+  HistogramFolder::configure(taskName,objectType,configuration,index);
 }
 
 // for now use the same boundaries for eta and y histogram
@@ -71,7 +72,7 @@ void ParticleFlowHistos::create()
   if (reportStart(__FUNCTION__)) { /* noops*/ };
 }
 
-void ParticleFlowHistos::loadFrom(TFile & inputFile)
+void ParticleFlowHistos::loadFrom(CapFile & inputFile)
 {
   if (reportStart(__FUNCTION__)) { /* noops*/ };
 }

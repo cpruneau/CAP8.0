@@ -18,6 +18,12 @@
 namespace CAP
 {
 //!
+//! @brief Task computing the transverse spherocity of the accepted particles of each event, per (event filter,
+//! particle filter) combination.
+//!
+//! S0 = min over the unit vectors n of (sum |pT x n| / sum pT)^2 (pT-weighted), S1 = the same with unit pT vectors
+//! (unweighted); the minimum is searched over nSteps azimuthal directions. The values are not multiplied by pi^2/4.
+//!
 //!Task performing a transverse spherocity analysis of events of the incoming event stream.
 //!
 class SpherocityAnalyzer
@@ -26,12 +32,19 @@ public EventProcessorSingle<SpherocityHistos,SpherocityDerivedHistos>
 {
 public:
   
+  //! @brief Default constructor.
   SpherocityAnalyzer();
+  //! @brief Copy constructor. @param group task to copy
   SpherocityAnalyzer(const SpherocityAnalyzer & group);
+  //! @brief Copy assignment. @param group task to copy @return this task
   SpherocityAnalyzer & operator=(const SpherocityAnalyzer & group);
+  //! @brief Destructor.
   virtual ~SpherocityAnalyzer() {}
+  //! @brief Add the default configuration: fill options (S0, S1, S1 vs S0), number of steps, binning.
   virtual void setDefaultConfiguration();
+  //! @brief Configure the task. @param configuration configuration
   virtual void configure(const Configuration & configuration);
+  //! @brief Compute S0 and S1 for each accepted combination and fill the histograms.
   virtual void execute();
 
 protected:

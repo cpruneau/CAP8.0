@@ -30,7 +30,8 @@ namespace CAP
   _minima(src._minima),
   _maxima(src._maxima),
   _widths(src._widths),
-  _titles(src._titles)
+  _titles(src._titles),
+  _binLabels(src._binLabels)
   { }
 
   Partition::~Partition()
@@ -50,6 +51,7 @@ namespace CAP
     _maxima     = rhs._maxima;
     _widths     = rhs._widths;
     _titles     = rhs._titles;
+    _binLabels  = rhs._binLabels;
     }
   return *this;
   }
@@ -80,6 +82,7 @@ namespace CAP
   _maxima.push_back(maximum);
   _widths.push_back((maximum-minimum)/double(nBin));
   _titles.push_back(title);
+  _binLabels.push_back(std::map<unsigned int,String>());
   _rank++;
   }
 
@@ -108,6 +111,7 @@ namespace CAP
   _maxima.clear();
   _widths.clear();
   _titles.clear();
+  _binLabels.clear();
   }
 
   void Partition::createPartition(const Partition & partition1,const Partition & partition2)
@@ -328,6 +332,12 @@ namespace CAP
   newPartition.addDimension(_nBins[k2], _minima[k2], _maxima[k2], _titles[k2]);
   return newPartition;
   }
+  void Partition::setDimensionTitle(unsigned int k, const String & title)
+  {
+  checkDimIndex(k,__FUNCTION__);
+  _titles[k] = title;
+  }
+
 
   const String & Partition::dimensionTitle(unsigned int k) const
   {
@@ -335,5 +345,27 @@ namespace CAP
   return _titles[k];
   }
 
-  } // namespace MATH
+  
+  void Partition::setBinLabel(unsigned int binIndex, const String & label, unsigned int dimIndex)
+  {
+  checkDimIndex(dimIndex,__FUNCTION__);
+  if (binIndex>=_nBins[dimIndex]) throw IndexOutOfBoundException(binIndex,_nBins[dimIndex],"Invalid bin index",__FUNCTION__);
+  if (label.length()==0) _binLabels[dimIndex].erase(binIndex);
+  else                   _binLabels[dimIndex][binIndex] = label;
+  }
+
+  String Partition::binLabel(unsigned int binIndex, unsigned int dimIndex) const
+  {
+  checkDimIndex(dimIndex,__FUNCTION__);
+  auto it = _binLabels[dimIndex].find(binIndex);
+  return it==_binLabels[dimIndex].end() ? String("") : it->second;
+  }
+
+  const std::map<unsigned int,String> & Partition::binLabels(unsigned int dimIndex) const
+  {
+  checkDimIndex(dimIndex,__FUNCTION__);
+  return _binLabels[dimIndex];
+  }
+
+} // namespace MATH
 } // namespace CAP

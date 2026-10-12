@@ -12,7 +12,8 @@
 #include "ParticlePair3DAnalyzer.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "MathConstants.hpp"
 
 ClassImp(CAP::ParticlePair3DAnalyzer);
@@ -95,35 +96,34 @@ void ParticlePair3DAnalyzer::execute()
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
   if (! filterParticles(theEvent.particles()))  return;
-  unsigned int iEventFilter = 0;
-  unsigned int nPFsq = nParticleFilters()*nParticleFilters();
+  unsigned int nPFs  = nParticleFilters();
+  unsigned int nPFsq = nPFs*nPFs;
   std::vector<ParticlePair3DHistos*> & histograms = histograms_1();
-
-  for (auto accepted : _acceptedEventFilters)
+  if (histograms.size()<_acceptedEventFilters.size()*nPFsq)
+    throw Exception("histograms_1().size()<nEventFilters()*nParticleFilters()^2",__FUNCTION__);
+  // groups of event filter e at e*nPF*nPF + p1*nPF + p2 (e counts all the event filters, accepted or not)
+  for (unsigned int iEventFilter=0; iEventFilter<_acceptedEventFilters.size(); iEventFilter++)
     {
-    if (!accepted) continue;
-    for (unsigned int iParticleFilter1=0; iParticleFilter1<nParticleFilters();iParticleFilter1++)
+    if (!_acceptedEventFilters[iEventFilter]) continue;
+    for (unsigned int iParticleFilter1=0; iParticleFilter1<nPFs;iParticleFilter1++)
       {
-      unsigned int basePair = iEventFilter*nPFsq + iParticleFilter1*nParticleFilters();
+      unsigned int basePair = iEventFilter*nPFsq + iParticleFilter1*nPFs;
       std::vector<Particle*> & particlesSelected1 = acceptedParticles(iParticleFilter1);
-      //std::vector<double>   & weightSelected1    = acceptedWeights(iParticleFilter1);
-      //bool useWeights = 0; //weightSelected1.size()>0;
-      for (unsigned int iParticleFilter2=0; iParticleFilter2<nParticleFilters();iParticleFilter2++)
+      for (unsigned int iParticleFilter2=0; iParticleFilter2<nPFs;iParticleFilter2++)
         {
         bool same = iParticleFilter1==iParticleFilter2;
         std::vector<Particle*> & particlesSelected2 = acceptedParticles(iParticleFilter2);
-       //std::vector<double>   & weightSelected2    = acceptedWeights(iParticleFilter2);
         ParticlePair3DHistos * histosPair = histograms[basePair+iParticleFilter2];
         int n1 = particlesSelected1.size();
         int n2 = particlesSelected2.size();
         for (int i1=0; i1<n1; i1++)
           {
-          for (int i2=0; i2<n1; i2++)
+          for (int i2=0; i2<n2; i2++)   // was i2<n1 with particle 2 taken from the list of filter 1
             {
             if (!same || i1!=i2)
               {
-              double weight = 1.0; //useWeights ? weightSelected1[i1]*weightSelected2[i2] : 1.0;
-              histosPair->fill(*(particlesSelected1[i1]),*(particlesSelected1[i2]),weight);
+              double weight = 1.0;
+              histosPair->fill(*(particlesSelected1[i1]),*(particlesSelected2[i2]),weight);
               }
             }
           }
@@ -133,7 +133,6 @@ void ParticlePair3DAnalyzer::execute()
           histosPair->fillMultiplicity(double(n1*n2));
         }
       }
-    iEventFilter++;
     }
 }
 

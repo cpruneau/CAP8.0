@@ -4,6 +4,9 @@
 namespace CAP
 {
   //!
+    //! @brief Nucleon-nucleon collision probability vs transverse distance, with cross section fluctuations (gamma
+    //! distribution), ranging from a hard sphere (omega=0) to a Gaussian (omega=1).
+    //!
   //!Nucleon-Nucleon Profile function and cross section fluctuations
   //!
   //!Based on the paper by Maciej Rybczynski, Zbigniew Wlodarczyk
@@ -44,21 +47,35 @@ namespace CAP
   {
   public:
 
+  //! @brief Default constructor.
   NNProfile();
+  //! @brief Copy constructor. @param src object to copy
   NNProfile(const NNProfile & src);
+  //! @brief Copy assignment. @param rhs object to copy @return this object
   NNProfile & operator=(const NNProfile & rhs);
+  //! @brief Destructor.
   virtual ~NNProfile(){}
+  //! @brief Collision probability at a transverse distance. @param x distance (fm) @return probability
   virtual double evaluate(double x);
+  //! @brief Set the parameters. @param xSection inelastic cross section (mb) @param omega normalized variance of the
+  //! cross section fluctuations @param g normalization
   virtual void setParameters(double xSection,
                              double omega=0.4,
                              double g=1);
+  //! @brief Inelastic cross section (mb). @return cross section
   double xSection() { return _xSection; }
+  //! @brief Normalized variance of the cross section fluctuations. @return omega
   double omega() { return _omega; }
+  //! @brief Normalization. @return g
   double g() { return _g; }
+  //! @brief Squared radius corresponding to the cross section (fm^2). @return r^2
   double rSq() { return _r2; }
+  //! @brief 1/omega. @return value
   double omegaInv() { return _omegaInv; }
+  //! @brief g/(omega r^2). @return value
   double gOverOmegaR2() { return _gOverOmegaR2; }
 
+  //! @brief Reset the parameters.
   virtual void reset();
 
   protected:

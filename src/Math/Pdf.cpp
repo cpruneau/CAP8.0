@@ -1649,7 +1649,7 @@ double  KolmogorovProb(double  z)
 double  KolmogorovTest(int  na, const double  *a, int  nb, const double  *b, const char *option)
 {
 //  String opt = option;
-//  opt.ToUpper();
+//  opt.toUpper();
   double  prob = -1;
   if (!a || !b || na <= 2 || nb <= 2) throw  MathException("KolmogorovTest() Sets must have more than 2 points ")
   //     Constants needed
@@ -1699,10 +1699,10 @@ double  KolmogorovTest(int  na, const double  *a, int  nb, const double  *b, con
     prob = KolmogorovProb(z);
   }
   // debug printout
-//  if (opt.Contains("D")) {
+//  if (opt.contains("D")) {
 //    printf(" Kolmogorov Probability = %g, Max Dist = %g\n",prob,rdmax);
 //  }
-//  if(opt.Contains("M")) return rdmax;
+//  if(opt.contains("M")) return rdmax;
 //  else                  return prob;
 }
 

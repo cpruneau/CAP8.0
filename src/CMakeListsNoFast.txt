@@ -44,10 +44,10 @@ find_library(PYTHIA8_LIB pythia8 PATHS $ENV{PYTHIA8_LIB_PATH})
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 ################################################################################################
 include(${ROOT_USE_FILE})
-include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Xml" "ParticleDb" "Particles"  "SubSample"  "CAPPythia"  "Global" "Jets" "Spherocity" "ParticleSingle" "ParticlePair" "ParticlePair3D" "NuDyn" "PtPt"  "Plotting" "Therminator"  "Performance" "Exec" "$ENV{ROOTSYS}/include"
+include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "ParticleDb" "Particles"  "SubSample"  "CAPPythia"  "Global" "Jets" "Spherocity" "ParticleSingle" "ParticlePair" "ParticlePair3D" "NuDyn" "PtPt"  "Plotting" "Therminator"  "Performance" "Exec" "$ENV{ROOTSYS}/include"
 "$ENV{FASTJET_INCLUDE_PATH}" "$ENV{PYTHIA8_INCLUDE_PATH}" "$ENV{PYTHIA8_INCLUDE_PATH}/Pythia8/" )
 
-####include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Xml" "ParticleDb" "Particles"  "SubSample"  "CAPPythia"  "Global" "Jets" "Spherocity" "ParticleSingle" "ParticlePair" "ParticlePair3D" "NuDyn" "PtPt"  "Plotting" "Therminator"  "Performance" "Exec" "$ENV{ROOTSYS}/include" "$ENV{FASTJET_INCLUDE_PATH}" "$ENV{PYTHIA8_INCLUDE_PATH}" "$ENV{PYTHIA8_INCLUDE_PATH}/Pythia8/" )
+####include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "ParticleDb" "Particles"  "SubSample"  "CAPPythia"  "Global" "Jets" "Spherocity" "ParticleSingle" "ParticlePair" "ParticlePair3D" "NuDyn" "PtPt"  "Plotting" "Therminator"  "Performance" "Exec" "$ENV{ROOTSYS}/include" "$ENV{FASTJET_INCLUDE_PATH}" "$ENV{PYTHIA8_INCLUDE_PATH}" "$ENV{PYTHIA8_INCLUDE_PATH}/Pythia8/" )
 
 add_definitions(${ROOT_CXX_FLAGS})
 add_compile_options(-Wall -Wextra -pedantic)
@@ -59,7 +59,6 @@ set_target_properties(PYTHIA8_LIB PROPERTIES IMPORTED_LOCATION ${PYTHIA8_LIB})
 
 add_subdirectory(Base)
 add_subdirectory(Math)
-add_subdirectory(Xml)
 add_subdirectory(ParticleDb)
 add_subdirectory(Particles)
 add_subdirectory(Therminator)

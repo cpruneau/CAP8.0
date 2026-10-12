@@ -13,7 +13,8 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "MathConstants.hpp"
 
 ClassImp(CAP::ParticlePairAnalyzer);
@@ -109,33 +110,31 @@ void ParticlePairAnalyzer::execute()
     }
   if (!filterEvent(theEvent)) return;
   if (!filterParticles(theEvent.particles()))  return;
-  unsigned int iEventFilter = 0;
   unsigned int nPFs  = nParticleFilters();
   unsigned int nPFsq = nPFs*nPFs;
-  unsigned int index;
   std::vector<ParticlePairHistos*> & pairHistograms = histograms_1();
+  const std::vector<bool> & acceptedEF = acceptedEventFilters();
+  if (pairHistograms.size()<acceptedEF.size()*nPFsq)
+    throw Exception("histograms_1().size()<nEventFilters()*nParticleFilters()^2",__FUNCTION__);
   double weight = 1.0;
-  for (auto accepted : acceptedEventFilters())
+  // The pair groups of event filter e are at e*nPF*nPF + p1*nPF + p2. The event filter index must count all the event
+  // filters (it was only incremented for the accepted ones, which shifted the groups when a filter rejected the event).
+  for (unsigned int iEventFilter=0; iEventFilter<acceptedEF.size(); iEventFilter++)
     {
-    if (!accepted) continue;
+    if (!acceptedEF[iEventFilter]) continue;
     for (unsigned int iParticleFilter1=0; iParticleFilter1<nPFs;iParticleFilter1++)
       {
       unsigned int basePair = iEventFilter*nPFsq + iParticleFilter1*nPFs;
       std::vector<Particle*> & particlesSelected1 = acceptedParticles(iParticleFilter1);
-      //std::vector<double>   & weightSelected1    = acceptedWeights(iParticleFilter1);
-      //bool useWeights = weightSelected1.size()>0;
-      for (unsigned int iParticleFilter2=0; iParticleFilter2<nParticleFilters();iParticleFilter2++)
+      for (unsigned int iParticleFilter2=0; iParticleFilter2<nPFs;iParticleFilter2++)
         {
         bool same = iParticleFilter1==iParticleFilter2;
         std::vector<Particle*> & particlesSelected2 = acceptedParticles(iParticleFilter2);
-        //std::vector<double>   & weightSelected2    = acceptedWeights(iParticleFilter2);
-        index = basePair+iParticleFilter2;
-        if (index>3) throw Exception("index>3",__FUNCTION__);
-        ParticlePairHistos * histosPair = pairHistograms[index];
+        ParticlePairHistos * histosPair = pairHistograms[basePair+iParticleFilter2];
         if (!histosPair) throw Exception("!histosPair",__FUNCTION__);
         int n1 = particlesSelected1.size();
         int n2 = particlesSelected2.size();
-       for (int i1=0; i1<n1; i1++)
+        for (int i1=0; i1<n1; i1++)
           {
           Particle & particle1 = *(particlesSelected1[i1]);
           for (int i2=0; i2<n2; i2++)
@@ -153,9 +152,6 @@ void ParticlePairAnalyzer::execute()
           histosPair->fillMultiplicity(double(n1*n2));
         }
       }
-    //printValue("MYSTERY",15);
-
-    iEventFilter++;
     }
 }
 

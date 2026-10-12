@@ -81,7 +81,7 @@ namespace CAP
     subtype  = configuration.valueString(createKey(ownerName,typeName,index,"CONDITION",iCondition,"SUBTYPE"));
     minimum  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MINIMUM"));
     maximum  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MAXIMUM"));
-    if (type.EqualTo("DOUBLE_DUAL_RANGE"))
+    if (type.equalTo("DOUBLE_DUAL_RANGE"))
       {
       minimum2  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MINIMUM2"));
       maximum2  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MAXIMUM2"));
@@ -92,39 +92,39 @@ namespace CAP
       maximum2 = 0.0;
       }
     int subtypeIndex;
-    if (type.EqualTo("DOUBLE_RANGE"))
+    if (type.equalTo("DOUBLE_RANGE"))
       {
-      if (subtype.EqualTo("IMPACT"))
+      if (subtype.equalTo("IMPACT"))
         subtypeIndex = GlauberEventFilter::kImpact;
-      else if (subtype.EqualTo("NPARTS"))
+      else if (subtype.equalTo("NPARTS"))
         subtypeIndex = GlauberEventFilter::kNParts;
-      else if (subtype.EqualTo("NCOLLS"))
+      else if (subtype.equalTo("NCOLLS"))
         subtypeIndex = GlauberEventFilter::kNColls;
-      else if (subtype.EqualTo("NSPECS"))
+      else if (subtype.equalTo("NSPECS"))
         subtypeIndex = GlauberEventFilter::kNSpecs;
       else
         throw FilterException(subtype,__FUNCTION__);
       addCondition(subtypeIndex,minimum,maximum);
       }
-    else if (type.EqualTo("DOUBLE_DUAL_RANGE"))
+    else if (type.equalTo("DOUBLE_DUAL_RANGE"))
       {
-      if (subtype.EqualTo("IMPACT"))
+      if (subtype.equalTo("IMPACT"))
         subtypeIndex = GlauberEventFilter::kImpact;
-      else if (subtype.EqualTo("NPARTS"))
+      else if (subtype.equalTo("NPARTS"))
         subtypeIndex = GlauberEventFilter::kNParts;
-      else if (subtype.EqualTo("NCOLLS"))
+      else if (subtype.equalTo("NCOLLS"))
         subtypeIndex = GlauberEventFilter::kNColls;
-      else if (subtype.EqualTo("NSPECS"))
+      else if (subtype.equalTo("NSPECS"))
         subtypeIndex = GlauberEventFilter::kNSpecs;
       else
         throw FilterException(subtype,__FUNCTION__);
       addCondition(subtypeIndex,minimum,maximum,minimum2,maximum2);
       }
-    else if (type.EqualTo("INTEGER"))
+    else if (type.equalTo("INTEGER"))
       {
       throw FilterException(subtype,__FUNCTION__);
       }
-    else if (type.EqualTo("BOOL"))
+    else if (type.equalTo("BOOL"))
       {
       throw FilterException(subtype,__FUNCTION__);
       }

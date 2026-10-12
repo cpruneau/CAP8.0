@@ -5,6 +5,7 @@
 #include <vector>
 #include "Aliases.hpp"
 #include "BinaryIO.hpp"
+#include "DataPoint.hpp"
 
 namespace CAP
 {
@@ -12,10 +13,11 @@ namespace CAP
   {
 
   //!
-  //! @brief Data point in two dimensions, (x, y), with uncertainties.
+  //! @brief Data point of rank 1: one independent variable x and one dependent value y, with uncertainties.
   //!
   //!  - x : independent (control) variable, with uncertainty xError
-  //!  - y : dependent variable, with statistical uncertainty yStatError and systematic uncertainty ySysError
+  //!  - y : dependent value (DataPoint::value()), with statistical uncertainty yStatError (DataPoint::stat())
+  //!        and systematic uncertainty ySysError (DataPoint::syst())
   //!  - xyCovariance : statistical covariance between x and y
   //!
   //! The statistical uncertainties can be set as a whole from a 2 by 2 error (covariance) matrix
@@ -27,10 +29,11 @@ namespace CAP
   //! not part of the matrix.
   //!
   //! <b>Arithmetic.</b> Operations between two points act on y and require compatible x values
-  //! (see compatibleX()). The result has the mean x and the mean x uncertainty of the operands.
+  //! (see DataPoint::compatibleX()). The result has the mean x and the mean x uncertainty of the operands.
   //! Statistical and systematic y uncertainties are propagated separately, to first order,
   //! assuming the two points are independent. The x-y covariance is propagated to first order
-  //! as well. Operations with a number (e.g., p*2.0, p+1.0) act on y only.
+  //! as well. Operations with a number (e.g., p*2.0, p+1.0) act on y only. The binary operators
+  //! (+, -, *, /, unary -) are the DataPoint templates.
   //!
   //! Example:
   //! @code
@@ -39,15 +42,12 @@ namespace CAP
   //!   double rho = p.correlation();                       // 0.5
   //! @endcode
   //!
-  class DataPoint2D
+  class DataPoint2D : public DataPoint
   {
   protected:
 
   float _x;             //!< x value
   float _xError;        //!< uncertainty on x
-  float _y;             //!< y value
-  float _yStatError;    //!< statistical uncertainty on y
-  float _ySysError;     //!< systematic uncertainty on y
   float _xyCovariance;  //!< statistical covariance between x and y
 
   public:
@@ -74,6 +74,24 @@ namespace CAP
   virtual ~DataPoint2D() {}
   //! @brief Assignment operator. @param rhs point to copy @return reference to this point
   DataPoint2D & operator= (const DataPoint2D & rhs);
+  //! @brief Polymorphic copy. @return new DataPoint2D (owned by the caller)
+  DataPoint2D * clone() const override { return new DataPoint2D(*this); }
+
+  //! @}
+
+  //! @name DataPoint interface
+  //! @{
+
+  //! @brief Number of independent variables. @return 1
+  unsigned int rank() const override { return 1; }
+  //! @brief x value. @param index must be 0 @return x
+  float x(unsigned int index) const override;
+  //! @brief Uncertainty on x. @param index must be 0 @return xError
+  float xError(unsigned int index) const override;
+  //! @brief Set x. @param index must be 0 @param value x value
+  void setX(unsigned int index, double value) override;
+  //! @brief Set the uncertainty on x. @param index must be 0 @param error uncertainty (>= 0)
+  void setXError(unsigned int index, double error) override;
 
   //! @}
 
@@ -85,15 +103,15 @@ namespace CAP
   //! @brief Uncertainty on x. @return xError
   float xError() const { return _xError; }
   //! @brief y value. @return y
-  float y() const { return _y; }
+  float y() const { return _value; }
   //! @brief Statistical uncertainty on y. @return yStatError
-  float yStatError() const { return _yStatError; }
+  float yStatError() const { return _stat; }
   //! @brief Systematic uncertainty on y. @return ySysError
-  float ySysError() const { return _ySysError; }
+  float ySysError() const { return _syst; }
   //! @brief Systematic uncertainty on y (same as ySysError()). @return ySysError
-  float ySystError() const { return _ySysError; }
+  float ySystError() const { return _syst; }
   //! @brief Total uncertainty on y, statistical and systematic added in quadrature. @return sqrt(yStatError^2 + ySysError^2)
-  float yError() const { return std::sqrt(_yStatError*_yStatError + _ySysError*_ySysError); }
+  float yError() const { return error(); }
   //! @brief Statistical covariance between x and y. @return cov(x,y)
   float xyCovariance() const { return _xyCovariance; }
   //! @brief Statistical correlation coefficient between x and y. @return cov(x,y)/(xError*yStatError), or 0 if either uncertainty is zero
@@ -120,10 +138,10 @@ namespace CAP
   void setXError(double xError);
   //! @brief Set the statistical uncertainty on y (the covariance is kept). @param yStatError statistical uncertainty on y (must be >= 0)
   //! @throws MathException if yStatError<0
-  void setYStatError(double yStatError);
+  void setYStatError(double yStatError) { setStat(yStatError); }
   //! @brief Set the systematic uncertainty on y. @param ySysError systematic uncertainty on y (must be >= 0)
   //! @throws MathException if ySysError<0
-  void setYSysError(double ySysError);
+  void setYSysError(double ySysError) { setSyst(ySysError); }
 
   //! @}
 
@@ -182,56 +200,32 @@ namespace CAP
 
   //! @}
 
-  //! @name Comparison
-  //! @{
-
-  //!
-  //! @brief Check whether the x values of the two points are compatible.
-  //!
-  //! Compatible means |x1-x2| <= nSigma*sqrt(xError1^2 + xError2^2), with a small relative
-  //! tolerance (1e-6) so that equal values computed with rounding are accepted.
-  //! @param other other point @param nSigma number of standard deviations allowed
-  //! @return true if the x values are compatible
-  //!
-  bool compatibleX(const DataPoint2D & other, double nSigma=2.0) const;
-
-  //!
-  //! @brief Statistical equality: x values compatible and y values within two combined total uncertainties.
-  //! @param rhs point to compare with @return true if the points agree within uncertainties
-  //!
-  bool  operator== (const DataPoint2D & rhs) const;
-
-  //! @brief Negation of operator==. @param rhs point to compare with @return true if the points disagree
-  bool  operator!= (const DataPoint2D & rhs) const;
-
-  //! @}
-
   //! @name Arithmetic
   //! Operations between points require compatible x values (MathException otherwise); see the class description.
   //! @{
 
   //! @brief y = y + rhs.y. @param rhs point to add @return reference to this point
-  DataPoint2D & operator+= (const DataPoint2D & rhs);
+  DataPoint2D & operator+= (const DataPoint2D & rhs) { add(rhs);      return *this; }
   //! @brief y = y - rhs.y. @param rhs point to subtract @return reference to this point
-  DataPoint2D & operator-= (const DataPoint2D & rhs);
+  DataPoint2D & operator-= (const DataPoint2D & rhs) { subtract(rhs); return *this; }
   //! @brief y = y * rhs.y. @param rhs point to multiply by @return reference to this point
-  DataPoint2D & operator*= (const DataPoint2D & rhs);
+  DataPoint2D & operator*= (const DataPoint2D & rhs) { multiply(rhs); return *this; }
   //! @brief y = y / rhs.y. @param rhs point to divide by @return reference to this point @throws MathException if rhs.y==0
-  DataPoint2D & operator/= (const DataPoint2D & rhs);
+  DataPoint2D & operator/= (const DataPoint2D & rhs) { divide(rhs);   return *this; }
   //! @brief Add a constant to y (uncertainties unchanged). @param rhs constant @return reference to this point
-  DataPoint2D & operator+= (double rhs);
+  DataPoint2D & operator+= (double rhs) { shift(rhs);  return *this; }
   //! @brief Subtract a constant from y (uncertainties unchanged). @param rhs constant @return reference to this point
-  DataPoint2D & operator-= (double rhs);
+  DataPoint2D & operator-= (double rhs) { shift(-rhs); return *this; }
   //! @brief Multiply y, its uncertainties and the covariance by a constant (see scale()). @param rhs constant @return reference to this point
-  DataPoint2D & operator*= (double rhs);
+  DataPoint2D & operator*= (double rhs) { scale(rhs);  return *this; }
   //! @brief Divide y, its uncertainties and the covariance by a constant. @param rhs constant @return reference to this point
   //! @throws MathException if rhs==0
   DataPoint2D & operator/= (double rhs);
 
   //! @brief Multiply y by coefficient, its uncertainties by |coefficient| and the covariance by coefficient. @param coefficient scale factor
-  void scale(double coefficient);
+  void scale(double coefficient) override;
   //! @brief Replace y by 1/y; uncertainties become e/y^2 and the covariance -cov/y^2. @throws MathException if y==0
-  void inverse();
+  void inverse() override;
 
   //!
   //! @brief Set this point to coefficient1*p1 + coefficient2*p2.
@@ -277,14 +271,11 @@ namespace CAP
   //! @}
 
   //! @brief Reset all values, uncertainties and the covariance to zero.
-  void clear();
-  //! @brief Reset all values, uncertainties and the covariance to zero (same as clear()).
-  void reset();
+  void clear() override;
 
-  //! @brief Print the point to std::cout.
-  virtual void print() const;
-
-  friend std::ostream& operator<<(std::ostream& out, const DataPoint2D & p);
+  using DataPoint::print;
+  //! @brief Write the point as x +- xError, y +- yStatError (stat) +- ySysError (syst), cov to a stream. @param out output stream
+  void print(std::ostream & out) const override;
 
   //! @name Binary encoding (used by DataPointsVector::encodeBinary())
   //! A mask byte tells which of the six numbers (x, xError, y, yStatError, ySysError, xyCovariance) are non-zero;
@@ -332,56 +323,14 @@ namespace CAP
 
   //! @}
 
-  ClassDef(DataPoint2D,1)
+  protected:
+
+  //! @brief Extends DataPoint::combine() with first-order propagation of the x-y covariance (mean of d1*cov1 and d2*cov2).
+  void combine(const DataPoint & p1, const DataPoint & p2, double value, double d1, double d2) override;
+
+  ClassDefOverride(DataPoint2D,2)
 
   };
-
-  //! @relates DataPoint2D
-  //! @brief Sum of the y values of two points with compatible x. @param left first point @param right second point @return left+right
-  DataPoint2D operator+(const DataPoint2D & left, const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Difference of the y values of two points with compatible x. @param left first point @param right second point @return left-right
-  DataPoint2D operator-(const DataPoint2D & left, const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Product of the y values of two points with compatible x. @param left first point @param right second point @return left*right
-  DataPoint2D operator*(const DataPoint2D & left, const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Ratio of the y values of two points with compatible x. @param left numerator @param right denominator @return left/right
-  DataPoint2D operator/(const DataPoint2D & left, const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Add a constant to y. @param left point @param right constant @return left+right
-  DataPoint2D operator+(const DataPoint2D & left, double right);
-  //! @relates DataPoint2D
-  //! @brief Add a constant to y. @param left constant @param right point @return left+right
-  DataPoint2D operator+(double left, const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Subtract a constant from y. @param left point @param right constant @return left-right
-  DataPoint2D operator-(const DataPoint2D & left, double right);
-  //! @relates DataPoint2D
-  //! @brief Subtract y from a constant. @param left constant @param right point @return left-right
-  DataPoint2D operator-(double left, const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Scale y by a constant. @param left point @param right constant @return left*right
-  DataPoint2D operator*(const DataPoint2D & left, double right);
-  //! @relates DataPoint2D
-  //! @brief Scale y by a constant. @param left constant @param right point @return left*right
-  DataPoint2D operator*(double left, const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Divide y by a non-zero constant. @param left point @param right constant @return left/right
-  DataPoint2D operator/(const DataPoint2D & left, double right);
-  //! @relates DataPoint2D
-  //! @brief Divide a constant by y. @param left constant @param right point @return left/right
-  DataPoint2D operator/(double left, const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Unary plus: copy of the point. @param right point @return copy of right
-  DataPoint2D operator+(const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Unary minus: y and the covariance are negated. @param right point @return -right
-  DataPoint2D operator-(const DataPoint2D & right);
-  //! @relates DataPoint2D
-  //! @brief Write the point as x +- xError, y +- yStatError (stat) +- ySysError (syst), cov to a stream.
-  //! @param out output stream @param p point @return the output stream
-  std::ostream& operator<<(std::ostream& out, const DataPoint2D & p);
 
   } // namespace MATH
 } // namespace CAP

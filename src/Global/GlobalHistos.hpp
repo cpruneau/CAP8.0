@@ -11,7 +11,7 @@
  * *********************************************************************/
 #ifndef CAP__GlobalHistos
 #define CAP__GlobalHistos
-#include "HistogramGroup.hpp"
+#include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
 
 namespace CAP
@@ -19,8 +19,9 @@ namespace CAP
 class GlobalDerivedHistos;
 class GlobalCalculator;
 //!
+//! @brief Histograms of global event observables for one (event filter, particle filter) combination.
 //!
-//! HistogramGroup of "global" observables.
+//! HistogramFolder of "global" observables.
 //!
 //! Observables are computed in the acceptance defined by
 //! particle filters for each of the selected event filters. The particle filters can be set to select narrow
@@ -35,21 +36,27 @@ class GlobalCalculator;
 //! The fill method of this class must be called at most once per event
 //! otherwise weird multiple counting will happen..
 //!
-class GlobalHistos : public HistogramGroup
+class GlobalHistos : public HistogramFolder
 {
 public:
 
   friend GlobalDerivedHistos;
   friend GlobalCalculator;
 
+  //! @brief Default constructor.
   GlobalHistos();
 
+  //! @brief Copy constructor. @param group group to copy
   GlobalHistos(const GlobalHistos & group);
 
+  //! @brief Copy assignment. @param group group to copy @return this group
   GlobalHistos & operator=(const GlobalHistos & group);
 
+  //! @brief Destructor.
   virtual ~GlobalHistos() {}
 
+  //! @brief Read the binning of the observables (n, e, q, s, b, ptSum, ptAvg). @param taskName name of the task
+  //! @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
                                const String & objectType,
                                const Configuration & configuration,
@@ -61,7 +68,7 @@ public:
 
   //!
   //!Load histograms corresponding to the selected event and particle filters from the given file.
- virtual void loadFrom(TFile & inputFile);
+ virtual void loadFrom(CapFile & inputFile);
 
   //!
   //!Fill eventswise observables for the selected filters
@@ -90,43 +97,57 @@ public:
             double weight);
 
 protected:
+  //! @brief Copy the content of another group. @param group group to copy
   void cloneB(const GlobalHistos & group);
-  TH1 * h_n;
-  TH1 * h_e;
-  TH1 * h_q;
-  TH1 * h_s;
-  TH1 * h_b;
-  TH1 * h_ptSum;
-  TH1 * h_ptAvg;
+  //! Distribution of the multiplicity.
+  Histogram * h_n;
+  //! Distribution of the total energy.
+  Histogram * h_e;
+  //! Distribution of the net charge.
+  Histogram * h_q;
+  //! Distribution of the net strangeness.
+  Histogram * h_s;
+  //! Distribution of the net baryon number.
+  Histogram * h_b;
+  //! Distribution of the pT sum.
+  Histogram * h_ptSum;
+  //! Distribution of the event-wise average pT.
+  Histogram * h_ptAvg;
 
-  TProfile * p_eVsN;
-  TProfile * p_qVsN;
-  TProfile * p_sVsN;
-  TProfile * p_bVsN;
-  TProfile * p_ptSumVsN;
-  TProfile * p_ptAvgVsN;
+  //! Average total energy vs multiplicity.
+  Profile * p_eVsN;
+  //! Average net charge vs multiplicity.
+  Profile * p_qVsN;
+  //! Average net strangeness vs multiplicity.
+  Profile * p_sVsN;
+  //! Average net baryon number vs multiplicity.
+  Profile * p_bVsN;
+  //! Average pT sum vs multiplicity.
+  Profile * p_ptSumVsN;
+  //! Average event-wise average pT vs multiplicity.
+  Profile * p_ptAvgVsN;
 
-  int n_nbins;
-  int e_nbins;
-  int q_nbins;
-  int b_nbins;
-  int ptSum_nbins;
-  int s_nbins;
-  int ptAvg_nbins;
-  double n_min;
-  double n_max;
-  double e_min;
-  double e_max;
-  double q_min;
-  double q_max;
-  double b_min;
-  double b_max;
-  double s_min;
-  double s_max;
-  double ptSum_min;
-  double ptSum_max;
-  double ptAvg_min;
-  double ptAvg_max;
+  int n_nbins;  ///< number of bins of the multiplicity axis
+  int e_nbins;  ///< number of bins of the energy axis
+  int q_nbins;  ///< number of bins of the net charge axis
+  int b_nbins;  ///< number of bins of the net baryon number axis
+  int ptSum_nbins;  ///< number of bins of the pT sum axis
+  int s_nbins;  ///< number of bins of the net strangeness axis
+  int ptAvg_nbins;  ///< number of bins of the average pT axis
+  double n_min;  ///< lower edge of the multiplicity axis
+  double n_max;  ///< upper edge of the multiplicity axis
+  double e_min;  ///< lower edge of the energy axis
+  double e_max;  ///< upper edge of the energy axis
+  double q_min;  ///< lower edge of the net charge axis
+  double q_max;  ///< upper edge of the net charge axis
+  double b_min;  ///< lower edge of the net baryon number axis
+  double b_max;  ///< upper edge of the net baryon number axis
+  double s_min;  ///< lower edge of the net strangeness axis
+  double s_max;  ///< upper edge of the net strangeness axis
+  double ptSum_min;  ///< lower edge of the pT sum axis
+  double ptSum_max;  ///< upper edge of the pT sum axis
+  double ptAvg_min;  ///< lower edge of the average pT axis
+  double ptAvg_max;  ///< upper edge of the average pT axis
 
 
   ClassDef(GlobalHistos,0)

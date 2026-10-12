@@ -16,17 +16,30 @@
 namespace CAP
 {
 
+//!
+//! @brief Parser of command line arguments (placeholder).
+//!
+//! CommandLineParser only holds a name and a title for now: it does not parse arguments yet, and the version and
+//! pre-hash given to the constructor are not stored. The class is not part of the Base library build (CmdlineParser.cpp
+//! is not listed in CMakeLists.txt).
+//!
 class CommandLineParser : public Parser
 {
 public:
 
+  //! @brief Default constructor.
   CommandLineParser();
+  //! @brief Constructor. @param _name name of the parser @param _title title of the parser
+  //! @param _version version of the program (not stored yet) @param _preHash prefix of the options (not stored yet)
   CommandLineParser(const String & _name,
                 const String & _title,
                 const String & _version,
                 const String & _preHash);
+  //! @brief Copy constructor. @param parser parser to copy
   CommandLineParser(const CommandLineParser & parser);
+  //! @brief Destructor.
   virtual ~CommandLineParser(){}
+  //! @brief Copy assignment. @param parser parser to copy @return this parser
   CommandLineParser & operator=(const CommandLineParser & parser);
 
   ClassDef(CommandLineParser,0)

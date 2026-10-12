@@ -18,18 +18,28 @@ using CAP::MATH::twoPi;
 
 namespace CAP
 {
+  //!
+  //! @brief Database of nucleus types for the Glauber simulations (numbers of nucleons and density parameters of the
+  //! common nuclei).
+  //!
   class GlauberDb
   :
   public ManagedObject
   {
   public:
 
+  //! @brief Default constructor.
   GlauberDb();
+  //! @brief Copy constructor. @param src object to copy
   GlauberDb(const GlauberDb & src);
+  //! @brief Copy assignment. @param rhs object to copy @return this object
   GlauberDb operator=(const GlauberDb & rhs);
+  //! @brief Destructor.
   virtual ~GlauberDb() {}
+  //! @brief Set a nucleus type from its name. @param name name (e.g., Pb, Au, Cu, p, d) @param nucleus type set
   void findNucleus(const String & name, GlauberNucleusType & nucleus);
 
+  //! @brief Configure the database (nothing).
   virtual void configure(const String & taskName __attribute__((unused)),
                          const String & objectType __attribute__((unused)),
                          const Configuration & configuration __attribute__((unused)),
@@ -37,6 +47,7 @@ namespace CAP
   { }
 
 
+  //! @brief Load the database from ASCII files (not implemented).
   virtual void loadFromAscii2(std::ifstream & file1 __attribute__((unused)),
                               std::ifstream & file2 __attribute__((unused))) {} // fix me/
 

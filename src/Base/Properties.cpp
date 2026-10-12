@@ -44,8 +44,8 @@ namespace CAP
   String  Properties::standardize(const char * path, const char* keyword) const
   {
   String aKeyword = path;
-  if (aKeyword.Length()==0) return String(keyword); // no path: avoid producing ":keyword"
-  if (aKeyword.EndsWith(":")) aKeyword += keyword;
+  if (aKeyword.length()==0) return String(keyword); // no path: avoid producing ":keyword"
+  if (aKeyword.endsWith(":")) aKeyword += keyword;
   else
     {
     aKeyword += ":";
@@ -63,8 +63,8 @@ namespace CAP
   int Properties::findIndex(const char* keyword) const
   {
   String key = keyword;
-  while (key.BeginsWith(":")) key = String(key.Data()+1);
-  if (key.Length()==0) return -1;
+  while (key.beginsWith(":")) key = String(key.data()+1);
+  if (key.length()==0) return -1;
   for (unsigned int k=0; k<_properties.size(); k++)
     {
     if (_properties[k].isNamed(key)) return k;
@@ -73,7 +73,7 @@ namespace CAP
   suffix += key;
   for (unsigned int k=0; k<_properties.size(); k++)
     {
-    if (_properties[k].name().EndsWith(suffix)) return k;
+    if (_properties[k].name().endsWith(suffix)) return k;
     }
   return -1;
   }
@@ -251,8 +251,8 @@ namespace CAP
   bool Properties::hasEndColon(const char * path) const
   {
   String s = path;
-  int last = s.Last(':');
-  int size = s.Length() - 1;
+  int last = s.last(':');
+  int size = s.length() - 1;
   return (last>0  &&  last == size);
   }
 
@@ -266,7 +266,7 @@ namespace CAP
   String inner  = ":";       inner  += keyword;  inner += ":";
   for (auto & p : source.properties())
     {
-    if (p.name().BeginsWith(prefix) || p.name().Contains(inner))  addProperty(p);
+    if (p.name().beginsWith(prefix) || p.name().contains(inner))  addProperty(p);
     }
   }
 
@@ -284,6 +284,7 @@ namespace CAP
     if (p.sameNameAs(newProperty))
       {
       p.setValue(newProperty.string());
+      if (newProperty.type()!=Property::kString) p.setType(newProperty.type());  // the last typed definition sets the type
       return;
       }
     }

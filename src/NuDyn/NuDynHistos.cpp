@@ -12,7 +12,8 @@
 #include "NuDynHistos.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Configuration.hpp"
 #include "Task.hpp"
 #include "NameHelpers.hpp"
@@ -24,7 +25,7 @@ namespace CAP
 
   NuDynHistos::NuDynHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   h_evt(nullptr),
   h_f1_1_evt(nullptr),
   h_f1_2_evt(nullptr),
@@ -43,7 +44,7 @@ namespace CAP
 
   NuDynHistos::NuDynHistos(const NuDynHistos & source)
   :
-  HistogramGroup(source),
+  HistogramFolder(source),
   h_evt(nullptr),
   h_f1_1_evt(nullptr),
   h_f1_2_evt(nullptr),
@@ -62,7 +63,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs),
+    HistogramFolder::operator=(rhs),
     cloneB(rhs);
     evtName  = rhs.evtName;
     evt_nbins = rhs.evt_nbins;
@@ -75,12 +76,12 @@ namespace CAP
   void NuDynHistos::cloneB(const NuDynHistos & source)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_evt         = safeCloneH1(source.h_evt);
-  h_f1_1_evt    = safeCloneProfile(source.h_f1_1_evt);
-  h_f1_2_evt    = safeCloneProfile(source.h_f1_2_evt);
-  h_f2_11_evt   = safeCloneProfile(source.h_f2_11_evt);
-  h_f2_12_evt   = safeCloneProfile(source.h_f2_12_evt);
-  h_f2_22_evt   = safeCloneProfile(source.h_f2_22_evt);
+  h_evt         = histogramLike(source.h_evt);
+  h_f1_1_evt    = histogramLike(source.h_f1_1_evt);
+  h_f1_2_evt    = histogramLike(source.h_f1_2_evt);
+  h_f2_11_evt   = histogramLike(source.h_f2_11_evt);
+  h_f2_12_evt   = histogramLike(source.h_f2_12_evt);
+  h_f2_22_evt   = histogramLike(source.h_f2_22_evt);
   }
 
 
@@ -107,10 +108,10 @@ namespace CAP
   h_f2_22_evt = createProfile(createName(_histogramBaseName,"f2_22"),evt_nbins,evt_min,evt_max,"EvtClass","f_{2}^{22}");
   }
 
-  void NuDynHistos::loadFrom(TFile & inputFile)
+  void NuDynHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_evt       = importH1(inputFile,createName(_histogramBaseName,"mult"));
+  h_evt       = importHistogram(inputFile,createName(_histogramBaseName,"mult"));
   h_f1_1_evt  = importProfile(inputFile,createName(_histogramBaseName,"f1_1"));
   h_f1_2_evt  = importProfile(inputFile,createName(_histogramBaseName,"f1_2"));
   h_f2_11_evt = importProfile(inputFile,createName(_histogramBaseName,"f2_11"));
@@ -120,17 +121,17 @@ namespace CAP
 
   void NuDynHistos::fill(double mult, double n1_1, double n1_2, double n2_11, double n2_12, double n2_22)
   {
-  h_evt->Fill(mult);
-  h_f1_1_evt->Fill(mult,n1_1);
-  h_f1_2_evt->Fill(mult,n1_2);
-  h_f2_11_evt->Fill(mult,n2_11);
-  h_f2_12_evt->Fill(mult,n2_12);
-  h_f2_22_evt->Fill(mult,n2_22);
+  h_evt->fill(mult);
+  h_f1_1_evt->fill(mult,n1_1);
+  h_f1_2_evt->fill(mult,n1_2);
+  h_f2_11_evt->fill(mult,n2_11);
+  h_f2_12_evt->fill(mult,n2_12);
+  h_f2_22_evt->fill(mult,n2_22);
   }
 
   void NuDynHistos::scaleObject(double factor)
   {
-  h_evt->Scale(factor);
+  h_evt->scale(factor);
   }
 
 } // namespace CAP

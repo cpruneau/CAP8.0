@@ -13,7 +13,8 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::GlobalDerivedHistos);
 
@@ -28,7 +29,7 @@ namespace CAP
 
   void GlobalDerivedHistos::cloneD(const GlobalDerivedHistos & group)
   {
-  h_ptAvgIncVsN  = safeCloneH1(group.h_ptAvgIncVsN);
+  h_ptAvgIncVsN  = histogramLike(group.h_ptAvgIncVsN);
   }
 
   void GlobalDerivedHistos::configure(const String & taskName,
@@ -47,11 +48,11 @@ namespace CAP
   h_ptAvgIncVsN = createHistogram(createName(_histogramBaseName,"n","ptAvgIncl"),n_nbins, n_min,  n_max,"n","ptAvgIncl");
   }
 
-  void GlobalDerivedHistos::loadFrom(TFile & inputFile)
+  void GlobalDerivedHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   GlobalHistos::loadFrom(inputFile);
-  h_ptAvgIncVsN = importH1(inputFile, createName(_histogramBaseName,"n","ptAvgIncl"));
+  h_ptAvgIncVsN = importHistogram(inputFile, createName(_histogramBaseName,"n","ptAvgIncl"));
   }
 
   //!
@@ -59,14 +60,14 @@ namespace CAP
   //!
   void GlobalDerivedHistos::calculateDerivedHistograms(const GlobalHistos & baseHistos)
   {
-  unsigned int n = baseHistos.p_ptSumVsN->GetNbinsX();
+  unsigned int n = baseHistos.p_ptSumVsN->nBins(0);
   for (unsigned int k=1; k<n; k++)
     {
-    double v  = baseHistos.p_ptSumVsN->GetBinContent(k);
-    double ev = baseHistos.p_ptSumVsN->GetBinError(k);
-    double n  = baseHistos.p_ptSumVsN->GetXaxis()->GetBinCenter(k);
-    h_ptAvgIncVsN->SetBinContent(k,v/n);
-    h_ptAvgIncVsN->SetBinError(k,ev/n);
+    double v  = baseHistos.p_ptSumVsN->binValueAt((k)-1);
+    double ev = baseHistos.p_ptSumVsN->binUncertaintyAt((k)-1);
+    double n  = baseHistos.p_ptSumVsN->binCenter((k)-1,0);
+    h_ptAvgIncVsN->setBinValueAt(unsigned((k)-1),v/n);
+    h_ptAvgIncVsN->setBinUncertaintyAt(unsigned((k)-1),ev/n);
     }
   }
 

@@ -26,6 +26,9 @@
 namespace CAP
 {
 //!
+//! @brief Task reading PYTHIA 8 events from ROOT trees (TClonesArray of TParticle) and copying their particles into
+//! the current CAP event.
+//!
 //! Class defining a ROOT Tree reader for PYTHIA events produced by Pythia8.
 //! The Init() method maps the tree branch onto variables used by this reader
 //! Particles may be copied into a CAP event stream for analysis.
@@ -37,25 +40,41 @@ RootChainManager
 {
 public:
 
+  //! @brief Default constructor.
   PythiaEventReader();
+  //! @brief Copy constructor. @param task object to copy
   PythiaEventReader(const PythiaEventReader & task);
+  //! @brief Copy assignment. @param task object to copy @return this object
   PythiaEventReader & operator=(const PythiaEventReader & task);
+  //! @brief Destructor.
   virtual ~PythiaEventReader() {}
+  //! @brief Add the default configuration of the task.
   virtual void setDefaultConfiguration();
+  //! @brief Initialize the task.
   virtual void initialize();
+  //! @brief Execute the task (process the current event).
   virtual void execute();
   
 protected:
 
+  //! Whether only final-state particles are saved.
   bool saveFinalOnly;
+  //! Whether photons are saved.
   bool savePhotons;
+  //! Whether neutrinos are saved.
   bool saveNeutrinos;
+  //! Whether quarks are saved.
   bool saveQuarks;
+  //! Whether gauge bosons are saved.
   bool saveGaugeBosons;
   
+  //! Maximum number of particles per event.
   static const int nMaxTracks = 5000;
 
+  //! Number of particles of the current event.
   Int_t           nParticles;
+  //! @name Tree leaves (one entry per particle, TParticle data members)
+  //! @{
   UInt_t          tracks_fUniqueID[nMaxTracks];   //[tracks_]
   UInt_t          tracks_fBits[nMaxTracks];   //[tracks_]
   Short_t         tracks_fLineColor[nMaxTracks];   //[tracks_]
@@ -77,6 +96,10 @@ protected:
   Double_t        tracks_fVt[nMaxTracks];   //[tracks_]
   Double_t        tracks_fPolarTheta[nMaxTracks];   //[tracks_]
   Double_t        tracks_fPolarPhi[nMaxTracks];   //[tracks_]
+  //! @}
+
+  //! @name Indices of the incoming, outgoing, intermediate and kicked partons of the hard process
+  //! @{
   Int_t           HP_Inc1;
   Int_t           HP_Inc2;
   Int_t           HP_Inc3;
@@ -95,6 +118,10 @@ protected:
   Int_t           HP_Kick4;
 
   // List of branches
+  //! @}
+
+  //! @name Tree branches
+  //! @{
   TBranch        *b_tracks_;   //!
   TBranch        *b_tracks_fUniqueID;   //!
   TBranch        *b_tracks_fBits;   //!
@@ -135,6 +162,7 @@ protected:
   TBranch        *b_HP_Kick4;   //!
 
 
+  //! @}
   ClassDef(PythiaEventReader,0)
 };
 

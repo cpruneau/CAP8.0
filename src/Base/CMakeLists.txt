@@ -13,23 +13,31 @@ ConfigurationManager.hpp
 EnvironmentVariables.hpp
 Factory.hpp
 Filter.hpp
-###MessageLogger.hpp
+BinaryFile.hpp
+CapFile.hpp
+File.hpp
+Folder.hpp
+LongParameter.hpp
 Object.hpp
 Parser.hpp
 PrintHelpers.hpp
 Properties.hpp
 PropertiesParser.hpp
 Property.hpp
+String.hpp
 SelectionGenerator.hpp
 StreamHelpers.hpp
 Task.hpp
 Timer.hpp
+TxtFile.hpp
 LINKDEF BaseLinkDef.h)
 
 ################################################################################################
 # Create a shared library with geneated dictionary
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
+# The XML classes (XmlElement, XmlReader, XmlWriter, XmlDocument, XmlFile) are plain C++ (no ROOT dictionary); they are
+# part of Base so that Task and ConfigurationManager can read and write their configuration as XML.
 add_library(Base SHARED
 Accountant.cpp
 Condition.cpp
@@ -39,7 +47,11 @@ EnvironmentVariables.cpp
 Exceptions.cpp
 Factory.cpp
 Filter.cpp
-###MessageLogger.cpp
+BinaryFile.cpp
+CapFile.cpp
+File.cpp
+Folder.cpp
+LongParameter.cpp
 NameHelpers.cpp
 Object.cpp
 Parser.cpp
@@ -47,14 +59,21 @@ PrintHelpers.cpp
 Properties.cpp
 PropertiesParser.cpp
 Property.cpp
+String.cpp
 SelectionGenerator.cpp
 StreamHelpers.cpp
 Task.cpp
 Timer.cpp
+TxtFile.cpp
+XmlDocument.cpp
+XmlElement.cpp
+XmlFile.cpp
+XmlReader.cpp
+XmlWriter.cpp
 G__Base.cxx)
 
 target_link_libraries(Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
-target_include_directories(Base PUBLIC Base Math ${EXTRA_INCLUDES} )
+target_include_directories(Base PUBLIC Base ${EXTRA_INCLUDES} )
 
 # optimization for big histogram access within the pair inner loop
 # WARNING: the sumw2 structure is not used -> estimate uncertainties using sub-samples

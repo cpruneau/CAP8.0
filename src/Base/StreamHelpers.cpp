@@ -50,10 +50,10 @@ namespace
   String buildFileName(const String & path, const String & name, const String & extension)
   {
   String fileName = path;
-  int len = fileName.Length();
-  if (len>0  &&  fileName.Last('/')!=len-1) fileName += "/";
+  int len = fileName.length();
+  if (len>0  &&  fileName.last('/')!=len-1) fileName += "/";
   fileName += name;
-  if (!fileName.EndsWith(extension)) fileName += extension;
+  if (!fileName.endsWith(extension)) fileName += extension;
   return fileName;
   }
 
@@ -63,15 +63,15 @@ namespace
   if (verbose)
     {
     printCR();
-    printValue((String(fctName)+"(...) Opening file named").Data(),fileName);
-    printValue((String(fctName)+"(...) with option").Data(),static_cast<unsigned int>(mode));
+    printValue((String(fctName)+"(...) Opening file named").data(),fileName);
+    printValue((String(fctName)+"(...) with option").data(),static_cast<unsigned int>(mode));
     }
-  std::unique_ptr<S> file(new S(fileName.Data(),mode));
+  std::unique_ptr<S> file(new S(fileName.data(),mode));
   if (!file->is_open()) throw FileException(fileName,"Unable to open file",fctName);
   if (verbose)
     {
     printCR();
-    printValue((String(fctName)+"(...) Successfully opened file named").Data(),fileName);
+    printValue((String(fctName)+"(...) Successfully opened file named").data(),fileName);
     }
   return registerStream(std::move(file));
   }

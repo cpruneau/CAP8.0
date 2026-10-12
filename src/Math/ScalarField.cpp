@@ -12,16 +12,14 @@ namespace CAP
 
   ScalarField::ScalarField()
   :
-  Object("Null","Null","ScalarField"),
-  Function(1),
+  Function("Null","Null","ScalarField",1),
   _constValue(0.0),
   _minima(), _maxima(), _nPoints(), _values()
   { }
 
   ScalarField::ScalarField(const String & name, double value, unsigned int rank)
   :
-  Object(name,name,"ScalarField"),
-  Function(rank),
+  Function(name,name,"ScalarField",rank),
   _constValue(value),
   _minima(), _maxima(), _nPoints(), _values()
   { }
@@ -32,8 +30,7 @@ namespace CAP
                            const std::vector<unsigned int> & nPoints,
                            double initialValue)
   :
-  Object(name,name,"ScalarField"),
-  Function(1),
+  Function(name,name,"ScalarField",1),
   _constValue(0.0),
   _minima(), _maxima(), _nPoints(), _values()
   {
@@ -46,8 +43,7 @@ namespace CAP
                            double zMin, double zMax, unsigned int zNPts,
                            double initialValue)
   :
-  Object(name,name,"ScalarField"),
-  Function(3),
+  Function(name,name,"ScalarField",3),
   _constValue(0.0),
   _minima(), _maxima(), _nPoints(), _values()
   {
@@ -56,7 +52,6 @@ namespace CAP
 
   ScalarField::ScalarField(const ScalarField & source)
   :
-  Object(source),
   Function(source),
   _constValue(source._constValue),
   _minima(source._minima),
@@ -69,7 +64,6 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    Object::operator=(rhs);
     Function::operator=(rhs);
     _constValue = rhs._constValue;
     _minima     = rhs._minima;

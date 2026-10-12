@@ -14,7 +14,8 @@
 #include "PrintHelpers.hpp"
 #include "Task.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::EventCountHistos);
 
@@ -23,7 +24,7 @@ namespace CAP
 
 EventCountHistos::EventCountHistos()
 :
-HistogramGroup(),
+HistogramFolder(),
 h_taskExecuted(nullptr),
 h_eventAccepted(nullptr),
 h_particleAccepted(nullptr)
@@ -32,7 +33,7 @@ h_particleAccepted(nullptr)
 
 EventCountHistos::EventCountHistos(const EventCountHistos & group)
 :
-HistogramGroup(group),
+HistogramFolder(group),
 h_taskExecuted(nullptr),
 h_eventAccepted(nullptr),
 h_particleAccepted(nullptr),
@@ -46,7 +47,7 @@ EventCountHistos & EventCountHistos::operator=(const EventCountHistos & group)
 {
   if (this!=&group)
     {
-    HistogramGroup::operator=(group);
+    HistogramFolder::operator=(group);
     cloneAll(group);
     }
   return *this;
@@ -55,9 +56,9 @@ EventCountHistos & EventCountHistos::operator=(const EventCountHistos & group)
 void EventCountHistos::cloneAll(const EventCountHistos & group)
 {
   // ony clone those that exist...
-  if (group.h_taskExecuted)     h_taskExecuted = (TH1*) group.h_taskExecuted->Clone();
-  if (group.h_eventAccepted)    h_eventAccepted = (TH1*) group.h_eventAccepted->Clone();
-  if (group.h_particleAccepted) h_particleAccepted = (TH1*) group.h_particleAccepted->Clone();
+  if (group.h_taskExecuted)     h_taskExecuted = histogramLike(group.h_taskExecuted);
+  if (group.h_eventAccepted)    h_eventAccepted = histogramLike(group.h_eventAccepted);
+  if (group.h_particleAccepted) h_particleAccepted = histogramLike(group.h_particleAccepted);
   eventFilters    = group.eventFilters;
   particleFilters = group.particleFilters;
 }
@@ -74,13 +75,12 @@ void EventCountHistos::create()
  }
 
 //________________________________________________________________________
-void EventCountHistos::loadFrom(TFile & inputFile)
+void EventCountHistos::loadFrom(CapFile & inputFile)
 {
 
-  String bn = parentName();
-  h_taskExecuted     = importH1(inputFile,createName(_histogramBaseName,"taskExecuted"));
-  h_eventAccepted    = importH1(inputFile,createName(_histogramBaseName,"nEventAccepted"));
-  h_particleAccepted = importH1(inputFile,createName(_histogramBaseName,"nParticleAccepted"));
+  h_taskExecuted     = importHistogram(inputFile,createName(_histogramBaseName,"nTaskExecuted"));
+  h_eventAccepted    = importHistogram(inputFile,createName(_histogramBaseName,"nEventAccepted"));
+  h_particleAccepted = importHistogram(inputFile,createName(_histogramBaseName,"nParticleAccepted"));
 
 }
 
@@ -90,16 +90,16 @@ void EventCountHistos::fill(long taskExecuted,
                             vector<long> & nParticleAccepted)
 {
 
-  h_taskExecuted->Fill(0.0, double(taskExecuted));
+  h_taskExecuted->fill(0.0, double(taskExecuted));
   int ne = eventFilters.size();
   int np = particleFilters.size();
   for (int iEventFilter=0; iEventFilter<ne; iEventFilter++)
     {
-    h_eventAccepted->Fill(double(iEventFilter),double(nEventsAccepted[iEventFilter]));
+    h_eventAccepted->fill(double(iEventFilter),double(nEventsAccepted[iEventFilter]));
     for (int iParticleFilter=0; iParticleFilter<np; iParticleFilter++)
       {
       int index = iEventFilter*np + iParticleFilter;
-      h_particleAccepted->Fill(double(index),double(nParticleAccepted[index]));
+      h_particleAccepted->fill(double(index),double(nParticleAccepted[index]));
       }
     }
 

@@ -1,5 +1,5 @@
 #include "ModelHydro3D.hpp"
-#include "XmlParser.hpp"
+#include "XmlDocument.hpp"
 #include "XmlScalarField.hpp"
 
 ClassImp(CAP::ModelHydro3D);
@@ -84,50 +84,32 @@ namespace CAP
   printCR();
   printValue("Reading from xml file named",_inputFileName);
   printValue("from path named",_inputPath);
-  XmlParser parser;
-  XmlScalarField xmlDoc;
-  parser.read(xmlDoc,_inputPath,_inputFileName);
-  try
+  XmlDocument xmlDoc = XmlDocument::read(_inputPath,_inputFileName);
+  const XmlElement & root = xmlDoc.root();
+  // text of the PARAMETER element with the given name attribute
+  auto parameter = [&root](const char * name) -> String
     {
-    xmlDoc.getXmlTag("PARAMETER","name","Tau_i");
-    _tauI            = xmlDoc.getXmlContent().Atof() / CAP::Physics::hBarC();       // [GeV^-1]
-    xmlDoc.getXmlTag("PARAMETER","name","Temperature");
-    temperature     = xmlDoc.getXmlContent().Atof() * 0.001;  // [GeV]
-    xmlDoc.getXmlTag("PARAMETER","name","Mu_B");
-    muB             = xmlDoc.getXmlContent().Atof() * 0.001;
-    xmlDoc.getXmlTag("PARAMETER","name","Mu_I");
-    muI             = xmlDoc.getXmlContent().Atof() * 0.001;
-    xmlDoc.getXmlTag("PARAMETER","name","Mu_S");
-    muS             = xmlDoc.getXmlContent().Atof() * 0.001;
-    xmlDoc.getXmlTag("PARAMETER","name","Mu_C");
-    muC             = xmlDoc.getXmlContent().Atof() * 0.001;        // [GeV]
-    xmlDoc.getXmlTag("PARAMETER","name","colliding_energy");
-    systemEnergy = xmlDoc.getXmlContent().Atof();    // [GeV]
-    xmlDoc.getXmlTag("PARAMETER","name","centrality_min");
-    centralityMin   = xmlDoc.getXmlContent().Atof();      // [%]
-    xmlDoc.getXmlTag("PARAMETER","name","centrality_max");
-    centralityMax   = xmlDoc.getXmlContent().Atof();     // [%]
-    xmlDoc.getXmlTag("PARAMETER","name","impact_parameter");
-    impactParameter = xmlDoc.getXmlContent().Atof();    // [fm]
-    xmlDoc.getXmlTag("PARAMETER","name","temperature_at_center");
-    //_centerT = xmlDoc.getXmlContent().Atof();  // [MeV]
-    xmlDoc.getXmlTag("PARAMETER","name","device");
-    //deviceName      = xmlDoc.getXmlContent().Data();
-    xmlDoc.getXmlTag("PARAMETER","name","colliding_system");
-    systemName = xmlDoc.getXmlContent().Data();
-    xmlDoc.getXmlTag("VECTOR3D", "name","Distance");
-    _distanceField       = xmlDoc.getXmlScalarField();      // [GeV^-1]
-    xmlDoc.getXmlTag("VECTOR3D", "name","FluiduxFluidVelocity");
-    uxFluidVelocityField        = xmlDoc.getXmlScalarField();      // [1]
-    xmlDoc.getXmlTag("VECTOR3D", "name","FluiduyFluidVelocity");
-    uyFluidVelocityField        = xmlDoc.getXmlScalarField();      // [1]
-    xmlDoc.getXmlTag("VECTOR3D", "name","FluidRap");
-    rapidityFluidField  = xmlDoc.getXmlScalarField();      // [1]
-    }
-  catch (int exceptionIndex)
-    {
-    throw Exception("I/O Error",__FUNCTION__);
-    }
+    const XmlElement * e = root.findFirst("PARAMETER","name",name);
+    if (!e) throw XmlException(String("No PARAMETER named ")+name,"readFromXmlFile()");
+    return e->text();
+    };
+  _tauI            = parameter("Tau_i").atof() / CAP::Physics::hBarC();       // [GeV^-1]
+  temperature     = parameter("Temperature").atof() * 0.001;  // [GeV]
+  muB             = parameter("Mu_B").atof() * 0.001;
+  muI             = parameter("Mu_I").atof() * 0.001;
+  muS             = parameter("Mu_S").atof() * 0.001;
+  muC             = parameter("Mu_C").atof() * 0.001;        // [GeV]
+  systemEnergy = parameter("colliding_energy").atof();    // [GeV]
+  centralityMin   = parameter("centrality_min").atof();      // [%]
+  centralityMax   = parameter("centrality_max").atof();     // [%]
+  impactParameter = parameter("impact_parameter").atof();    // [fm]
+  //_centerT = xmlDoc.getXmlContent().atof();  // [MeV]
+  //deviceName      = xmlDoc.getXmlContent().data();
+  systemName = parameter("colliding_system");
+  _distanceField       = XmlScalarField::read(root,"Distance");      // [GeV^-1]
+  uxFluidVelocityField        = XmlScalarField::read(root,"FluiduxFluidVelocity");      // [1]
+  uyFluidVelocityField        = XmlScalarField::read(root,"FluiduyFluidVelocity");      // [1]
+  rapidityFluidField  = XmlScalarField::read(root,"FluidRap");      // [1]
   setTemperature(temperature);
   setMuB(muB);
   setMuI(muI);
@@ -138,35 +120,11 @@ namespace CAP
   setCentralityRange(centralityMin,centralityMax);
   setImpactParameter(impactParameter);
   // _distanceField derivatives
-  try
-    {
-    xmlDoc.getXmlTag("VECTOR3D","name","DistanceDZeta");
-    _distanceFieldDZeta = xmlDoc.getXmlScalarField();    // [GeV^-1/rad]
-    }
-  catch (int exceptionIndex)
-    {
-    throw Exception("I/O Error DistanceDZeta",__FUNCTION__);
-    }
+  _distanceFieldDZeta = XmlScalarField::read(root,"DistanceDZeta");    // [GeV^-1/rad]
 
-  try
-    {
-    xmlDoc.getXmlTag("VECTOR3D","name","DistanceDPhi");
-    _distanceFieldDPhi = xmlDoc.getXmlScalarField();    // [GeV^-1/rad]
-    }
-  catch (int exceptionIndex)
-    {
-    throw Exception("I/O Error DistanceDPhi",__FUNCTION__);
-    }
+  _distanceFieldDPhi = XmlScalarField::read(root,"DistanceDPhi");    // [GeV^-1/rad]
 
-  try
-    {
-    xmlDoc.getXmlTag("VECTOR3D","name","DistanceDTheta");
-    _distanceFieldDTheta = xmlDoc.getXmlScalarField();    // [GeV^-1/rad]
-    }
-  catch (int exceptionIndex)
-    {
-    throw Exception("I/O Error DistanceDTheta",__FUNCTION__);
-    }
+  _distanceFieldDTheta = XmlScalarField::read(root,"DistanceDTheta");    // [GeV^-1/rad]
   }
 
 } // namespace CAP

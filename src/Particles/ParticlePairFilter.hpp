@@ -18,7 +18,7 @@ namespace CAP
 {
 
 //!
-//! Two Particle Filter
+//! @brief Filter of particle pairs on their relative kinematics (differences of pT, azimuth and pseudorapidity).
 //!
 class ParticlePairFilter
 :
@@ -26,7 +26,9 @@ public Filter<Particle>
 {
 public:
 
+   //! @brief Default constructor.
    ParticlePairFilter();
+  //! @brief Destructor.
   virtual ~ParticlePairFilter(){}
   
   //!
@@ -36,12 +38,12 @@ public:
 
 protected:
   
-  double dpt_min;
-  double dpt_max;
-  double Dphi_min;
-  double Dphi_max;
-  double Deta_min;
-  double Deta_max;
+  double dpt_min;  ///< lower edge of the pT difference axis
+  double dpt_max;  ///< upper edge of the pT difference axis
+  double Dphi_min;  ///< lower edge of the Delta phi axis
+  double Dphi_max;  ///< upper edge of the Delta phi axis
+  double Deta_min;  ///< lower edge of the Delta eta axis
+  double Deta_max;  ///< upper edge of the Delta eta axis
 
   ClassDef(ParticlePairFilter,0)
 };

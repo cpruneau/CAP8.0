@@ -310,7 +310,7 @@ namespace CAP
   
     //!
     //! Span all bins of hAvg and h and  compute the difference between histo "h" and the reference "havg", and increment the value
-    //! havg accordingly. HistogramGroup must have the same exact dimensions. The histograms may be profiles.
+    //! havg accordingly. RootHistogramGroup must have the same exact dimensions. The histograms may be profiles.
     //!
     //!@param hAvg Histogram containing the running average
     //!@param h  Histogram to be compared to hAvg and use to update the average and the uncertainties.

@@ -9,6 +9,16 @@ namespace CAP
   namespace MATH
   {
 
+  DataPoints::DataPoints()
+  :
+  Object("DataPoints","DataPoints","DataPoints")
+  { }
+
+  DataPoints::DataPoints(const String & name, const String & title, const String & className)
+  :
+  Object(name,title,className)
+  { }
+
   void DataPoints::addPoint(float x, float xError, float y, float yStatError, float ySysError)
   {
   addPoint(DataPoint2D(x,xError,y,yStatError,ySysError));
@@ -70,6 +80,45 @@ namespace CAP
     }
   return best;
   }
+
+  double DataPoints::extremum(unsigned int index, bool findMaximum, const char * source) const
+  {
+  unsigned int n = size();
+  if (n==0) throw MathException("No points in container",source);
+  unsigned int r = rank();
+  if (index>r) throw MathException("Independent variable index>=rank()",source);
+  bool useValue = (index==r);
+  double best = 0.0;
+  for (unsigned int k=0; k<n; k++)
+    {
+    double v;
+    if (useValue)
+      v = valueAt(k);
+    else
+      {
+      std::vector<double> coordinates = coordinatesAt(k);
+      if (index>=coordinates.size()) throw MathException("Point has fewer coordinates than rank()",source);
+      v = coordinates[index];
+      }
+    if (k==0 || (findMaximum ? (v>best) : (v<best))) best = v;
+    }
+  return best;
+  }
+
+  double DataPoints::minimum(unsigned int index) const
+  {
+  if (index>=rank()) throw MathException("Independent variable index>=rank()",__FUNCTION__);
+  return extremum(index,false,__FUNCTION__);
+  }
+
+  double DataPoints::maximum(unsigned int index) const
+  {
+  if (index>=rank()) throw MathException("Independent variable index>=rank()",__FUNCTION__);
+  return extremum(index,true,__FUNCTION__);
+  }
+
+  double DataPoints::minimumValue() const { return extremum(rank(),false,__FUNCTION__); }
+  double DataPoints::maximumValue() const { return extremum(rank(),true,__FUNCTION__);  }
 
   float DataPoints::xMinimum()    const { return point(extremumIndex(false,false)).x(); }
   float DataPoints::xMaximum()    const { return point(extremumIndex(false,true)).x();  }

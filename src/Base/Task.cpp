@@ -15,6 +15,9 @@
 #include "NameHelpers.hpp"
 #include "TFile.h"
 #include "EnvironmentVariables.hpp"
+#include "XmlDocument.hpp"
+#include "TClassTable.h"
+#include <algorithm>
 #include <typeinfo>
 
 ClassImp(CAP::Task);
@@ -335,7 +338,7 @@ namespace CAP
       {
       work = task->name();
       work += colon;
-      if (result.Length()>0)
+      if (result.length()>0)
         {
         result = work + result;
         }
@@ -420,12 +423,7 @@ namespace CAP
     printValue(taskName+":TASK:NAME",taskName);
     printValue(taskName+":TASK:CLASS",taskClassName);
     }
-  TClass * taskClass = TClass::GetClass(taskClassName);
-  if (!taskClass) throw UnknownClassException(taskClassName,__FUNCTION__);
-  if (!taskClass->IsLoaded()) throw Exception("!taskClass->IsLoaded()",__FUNCTION__);
-  if (!taskClass->GetNew())  throw Exception("does not have the accelerator function/wrapper",__FUNCTION__);
-  Task * task = static_cast<Task*>(taskClass->New());
-  if (!task) throw NullPointerException("taskClass->New() returned nullptr for class "+taskClassName,__FUNCTION__);
+  Task * task = instantiateTask(taskClassName);
   task->setName(taskName);
   task->setClassName(taskClassName);
   if (parent) parent->addSubTask(task);
@@ -437,6 +435,261 @@ namespace CAP
 
 
 
+
+  Task * Task::instantiateTask(const String & taskClassName)
+  {
+  TClass * taskClass = TClass::GetClass(taskClassName);
+  if (!taskClass) throw UnknownClassException(taskClassName,__FUNCTION__);
+  if (!taskClass->IsLoaded()) throw Exception("!taskClass->IsLoaded()",__FUNCTION__);
+  if (!taskClass->GetNew())  throw Exception("does not have the accelerator function/wrapper",__FUNCTION__);
+  if (!taskClass->InheritsFrom(TClass::GetClass("CAP::Task")))
+    throw Exception(String("Class ")+taskClassName+" is not a CAP::Task",__FUNCTION__);
+  Task * task = static_cast<Task*>(taskClass->New());
+  if (!task) throw NullPointerException("taskClass->New() returned nullptr for class "+taskClassName,__FUNCTION__);
+  return task;
+  }
+
+  // ---------------------------------------------------------------- XML mapping
+
+  namespace
+  {
+    //! Whether a relative key is SUBTASK_<k>:NAME.
+    bool isSubtaskNameKey(const String & key)
+    {
+    const std::string & s = key.str();
+    const std::string head = "SUBTASK_", tail = ":NAME";
+    if (s.size()<=head.size()+tail.size() || s.compare(0,head.size(),head)!=0) return false;
+    if (s.compare(s.size()-tail.size(),tail.size(),tail)!=0) return false;
+    for (std::size_t k=head.size(); k<s.size()-tail.size(); k++) if (s[k]<'0' || s[k]>'9') return false;
+    return true;
+    }
+
+    //! Check that an element is a TASK element with a name.
+    void checkTaskElement(const XmlElement & element, const char * source)
+    {
+    if (!element.isNamed("TASK"))
+      throw ConfigurationException(element.name(),String("Expected a <TASK> element, got <")+element.name()+">",source);
+    if (element.attribute("name","").isNull())
+      throw ConfigurationException("TASK","<TASK> element without name attribute",source);
+    }
+  }
+
+  String Task::xmlKeyPath() const
+  {
+  return name();
+  }
+
+  bool Task::isXmlParameter(const String & relativeKey) const
+  {
+  return !(relativeKey=="TASK:NAME" || relativeKey=="TASK:CLASS" || relativeKey=="TASK:SEVERITY"
+           || relativeKey=="SUBTASK:N" || isSubtaskNameKey(relativeKey));
+  }
+
+  bool Task::readXmlChild(const XmlElement & child)
+  {
+  return child.isNamed("TASK");
+  }
+
+  void Task::unknownXmlParameter(const String & key)
+  {
+  if (reportWarning(__FUNCTION__))
+    std::cout << "Parameter " << key << " is not defined by " << className() << "::setDefaultConfiguration()" << std::endl;
+  }
+
+  XmlElement Task::createXmlElement() const
+  {
+  XmlElement element("TASK");
+  element.setAttribute("name",name());
+  element.setAttribute("class",className());
+  return element;
+  }
+
+  void Task::fillXmlElement(XmlElement & element) const
+  {
+  int index = _configuration.findIndex(createKey(name(),"TASK:SEVERITY"));
+  if (index>=0) element.setAttribute("severity",_configuration.properties()[index].value());
+  ConfigurationManager::fillXmlElement(element);
+  for (const Task * subtask : _subTasks)
+    {
+    XmlElement & child = element.addChild(subtask->createXmlElement());
+    subtask->fillXmlElement(child);
+    }
+  }
+
+  void Task::defineOwnXmlElement(XmlElement & element)
+  {
+  // template of this task: its default configuration only (the current configuration is unchanged)
+  Configuration defaults = defaultConfiguration();
+  int index = defaults.findIndex(createKey(name(),"TASK:SEVERITY"));
+  if (index>=0) element.setAttribute("severity",defaults.properties()[index].value());
+  fillXmlParameters(element,defaults);
+  }
+
+  void Task::defineXmlElement(XmlElement & element)
+  {
+  defineOwnXmlElement(element);
+  for (Task * subtask : _subTasks)
+    {
+    XmlElement & child = element.addChild(subtask->createXmlElement());
+    subtask->defineXmlElement(child);
+    }
+  }
+
+  String Task::xmlTemplateName() const
+  {
+  // class name without the namespaces, made a valid file name (e.g. CAP::PtPtAnalyzer -> PtPtAnalyzer)
+  String shortName = className();
+  shortName.replaceAll("CAP::","");
+  shortName.replaceAll("::","_");
+  shortName.replaceAll("<","_");
+  shortName.replaceAll(",","_");
+  shortName.replaceAll(">","");
+  shortName.replaceAll(" ","");
+  return shortName;
+  }
+
+  XmlDocument Task::createXmlTemplate()
+  {
+  XmlDocument document("CAP");
+  document.root().setAttribute("version",1);
+  document.root().setAttribute("type","template");
+  XmlElement & element = document.root().addChild(createXmlElement());
+  defineOwnXmlElement(element);
+  return document;
+  }
+
+  String Task::exportXmlTemplate(const String & path)
+  {
+  XmlDocument document = createXmlTemplate();
+  String fileName = XmlDocument::fileName(path,xmlTemplateName());
+  document.write(fileName);
+  return fileName;
+  }
+
+  std::vector<String> Task::taskClassNames()
+  {
+  std::vector<String> names;
+  TClass * taskClass = TClass::GetClass("CAP::Task");
+  TClassTable::Init();
+  while (const char * className = TClassTable::Next())
+    {
+    TClass * c = TClass::GetClass(className);
+    if (!c || !c->InheritsFrom(taskClass) || !c->GetNew()) continue;
+    if (c->Property() & kIsAbstract) continue;
+    if (String(className).contains("<")) continue;   // class templates are bases of the analysis tasks
+    names.push_back(className);
+    }
+  std::sort(names.begin(),names.end(),[](const String & a, const String & b) { return a.str()<b.str(); });
+  names.erase(std::unique(names.begin(),names.end()),names.end());
+  return names;
+  }
+
+  std::vector<String> Task::exportXmlTemplates(const String & path, const std::vector<String> & classNames)
+  {
+  std::vector<String> fileNames;
+  std::vector<String> names = classNames.empty() ? taskClassNames() : classNames;
+  for (const String & className : names)
+    {
+    Task * task = nullptr;
+    try
+      {
+      task = instantiateTask(className);
+      task->setClassName(className);
+      task->setName(task->xmlTemplateName());
+      fileNames.push_back(task->exportXmlTemplate(path));
+      }
+    catch (const std::exception & exception)   // CAP::Exception derives from std::exception
+      {
+      std::cout << "<WARNING> Task::exportXmlTemplates() no template for " << className << ": " << exception.what() << std::endl;
+      }
+    delete task;
+    }
+  return fileNames;
+  }
+
+  void Task::readXmlElement(const XmlElement & element)
+  {
+  checkTaskElement(element,__FUNCTION__);
+  if (element.attribute("name")!=name())
+    throw ConfigurationException(name(),String("<TASK> element of task ")+element.attribute("name")+" given to task "+name(),__FUNCTION__);
+  if (element.hasAttribute("class") && element.attribute("class")!=className())
+    throw ConfigurationException(name(),String("Class ")+element.attribute("class")+" given to task of class "+className(),__FUNCTION__);
+
+  Configuration updated = _configuration;
+  updated.addProperty(createKey(name(),"TASK:NAME"),name());
+  updated.addProperty(createKey(name(),"TASK:CLASS"),className());
+  if (element.hasAttribute("severity"))
+    updated.addProperty(createKey(name(),"TASK:SEVERITY"),element.attribute("severity"));
+  readXmlParameters(element,updated);
+  std::vector<const XmlElement *> subtaskElements = element.children("TASK");
+  for (const XmlElement * child : subtaskElements) checkTaskElement(*child,__FUNCTION__);
+  // Subtask keys: the existing subtasks (they are kept, whether or not the element lists them), then the subtasks
+  // of the element that will be created below, so that SUBTASK:N matches the resulting tree.
+  std::vector<String> subtaskNames;
+  for (const Task * subtask : _subTasks) subtaskNames.push_back(subtask->name());
+  for (const XmlElement * child : subtaskElements)
+    {
+    const String childName = child->attribute("name");
+    if (std::find(subtaskNames.begin(),subtaskNames.end(),childName)==subtaskNames.end()) subtaskNames.push_back(childName);
+    }
+  updated.addProperty(createKey(name(),"SUBTASK","N"),int(subtaskNames.size()));
+  for (unsigned int k=0; k<subtaskNames.size(); k++)
+    updated.addProperty(createKey(name(),"SUBTASK",k,"NAME"),subtaskNames[k]);
+  configure(updated);
+
+  for (const XmlElement * child : subtaskElements)
+    {
+    Task * existing = nullptr;
+    for (Task * subtask : _subTasks) if (subtask->name()==child->attribute("name")) { existing = subtask; break; }
+    if (existing)
+      existing->readXmlElement(*child);
+    else
+      createTask(this,*child);
+    }
+  }
+
+  Task * Task::createTask(Task * parent, const XmlElement & element)
+  {
+  checkTaskElement(element,__FUNCTION__);
+  String taskName      = element.attribute("name");
+  String taskClassName = element.attribute("class","");
+  if (taskClassName.isNull()) throw ConfigurationException(taskName,"<TASK> element without class attribute",__FUNCTION__);
+  if (reportInfo(__FUNCTION__))
+    {
+    printCR();
+    printValue(taskName+":TASK:NAME",taskName);
+    printValue(taskName+":TASK:CLASS",taskClassName);
+    }
+  Task * task = instantiateTask(taskClassName);
+  task->setName(taskName);
+  task->setClassName(taskClassName);
+  try
+    {
+    if (parent) parent->addSubTask(task);
+    }
+  catch (...)
+    {
+    delete task;
+    throw;
+    }
+  try
+    {
+    task->setDefaultConfiguration();
+    task->readXmlElement(element);
+    }
+  catch (...)
+    {
+    // do not leave a half-configured subtask in the parent's tree: detach it, then delete it (with its subtasks)
+    if (parent)
+      {
+      std::vector<Task*> & siblings = parent->_subTasks;
+      siblings.erase(std::remove(siblings.begin(),siblings.end(),task),siblings.end());
+      }
+    delete task;
+    throw;
+    }
+  return task;
+  }
 
 } // namespace CAP
 

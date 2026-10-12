@@ -16,7 +16,8 @@
 #include "PrintHelpers.hpp"
 #include "fastjet/ClusterSequence.hh"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::JetAnalyzer);
 

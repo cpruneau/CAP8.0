@@ -91,7 +91,7 @@ namespace CAP
     subtype  = configuration.valueString(createKey(ownerName,typeName,index,"CONDITION",iCondition,"SUBTYPE"));
     minimum  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MINIMUM"));
     maximum  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MAXIMUM"));
-    if (type.EqualTo("DOUBLE_DUAL_RANGE"))
+    if (type.equalTo("DOUBLE_DUAL_RANGE"))
       {
       minimum2  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MINIMUM2"));
       maximum2  = configuration.valueDouble(createKey(ownerName,typeName,index,"CONDITION",iCondition,"MAXIMUM2"));
@@ -102,73 +102,73 @@ namespace CAP
       maximum2 = 0.0;
       }
     int subtypeIndex;
-    if (type.EqualTo("DOUBLE_RANGE"))
+    if (type.equalTo("DOUBLE_RANGE"))
       {
-      if (subtype.EqualTo("PT"))
+      if (subtype.equalTo("PT"))
         subtypeIndex = ParticleFilter::kPt;
-      else if (subtype.EqualTo("PX"))
+      else if (subtype.equalTo("PX"))
         subtypeIndex = ParticleFilter::kPx;
-      else if (subtype.EqualTo("PY"))
+      else if (subtype.equalTo("PY"))
         subtypeIndex = ParticleFilter::kPy;
-      else if (subtype.EqualTo("PZ"))
+      else if (subtype.equalTo("PZ"))
         subtypeIndex = ParticleFilter::kPz;
-      else if (subtype.EqualTo("ENERGY"))
+      else if (subtype.equalTo("ENERGY"))
         subtypeIndex = ParticleFilter::kEnergy;
-      else if (subtype.EqualTo("ETA"))
+      else if (subtype.equalTo("ETA"))
         subtypeIndex = ParticleFilter::kEta;
-      else if (subtype.EqualTo("RAPIDITY"))
+      else if (subtype.equalTo("RAPIDITY"))
         subtypeIndex = ParticleFilter::kRapidity;
-      else if (subtype.EqualTo("PHI"))
+      else if (subtype.equalTo("PHI"))
         subtypeIndex = ParticleFilter::kPhi;
       else
         throw FilterException(subtype,__FUNCTION__);
       addCondition(subtypeIndex,minimum,maximum);
       }
-    else if (type.EqualTo("DOUBLE_DUAL_RANGE"))
+    else if (type.equalTo("DOUBLE_DUAL_RANGE"))
       {
-      if (subtype.EqualTo("PT"))
+      if (subtype.equalTo("PT"))
         subtypeIndex = ParticleFilter::kPt;
-      else if (subtype.EqualTo("PX"))
+      else if (subtype.equalTo("PX"))
         subtypeIndex = ParticleFilter::kPx;
-      else if (subtype.EqualTo("PY"))
+      else if (subtype.equalTo("PY"))
         subtypeIndex = ParticleFilter::kPy;
-      else if (subtype.EqualTo("PZ"))
+      else if (subtype.equalTo("PZ"))
         subtypeIndex = ParticleFilter::kPz;
-      else if (subtype.EqualTo("ENERGY"))
+      else if (subtype.equalTo("ENERGY"))
         subtypeIndex = ParticleFilter::kEnergy;
-      else if (subtype.EqualTo("ETA"))
+      else if (subtype.equalTo("ETA"))
         subtypeIndex = ParticleFilter::kEta;
-      else if (subtype.EqualTo("RAPIDITY"))
+      else if (subtype.equalTo("RAPIDITY"))
         subtypeIndex = ParticleFilter::kRapidity;
-      else if (subtype.EqualTo("PHI"))
+      else if (subtype.equalTo("PHI"))
         subtypeIndex = ParticleFilter::kPhi;
       else
         throw FilterException(subtype,__FUNCTION__);
       addCondition(subtypeIndex,minimum,maximum,minimum2,maximum2);
       }
-    else if (type.EqualTo("INTEGER"))
+    else if (type.equalTo("INTEGER"))
       {
-      if (subtype.EqualTo("PDG"))
+      if (subtype.equalTo("PDG"))
         subtypeIndex = ParticleFilter::kPdg;
-      else if (subtype.EqualTo("CHARGE"))
+      else if (subtype.equalTo("CHARGE"))
         subtypeIndex = ParticleFilter::kCharge;
-      else if (subtype.EqualTo("BARYON"))
+      else if (subtype.equalTo("BARYON"))
         subtypeIndex = ParticleFilter::kBaryon;
-      else if (subtype.EqualTo("STRANGE"))
+      else if (subtype.equalTo("STRANGE"))
         subtypeIndex = ParticleFilter::kStrange;
-      else if (subtype.EqualTo("CHARM"))
+      else if (subtype.equalTo("CHARM"))
         subtypeIndex = ParticleFilter::kCharm;
-      else if (subtype.EqualTo("CHARM"))
+      else if (subtype.equalTo("CHARM"))
         subtypeIndex = ParticleFilter::kCharm;
       else
         throw FilterException(subtype,__FUNCTION__);
       addCondition(subtypeIndex,int(minimum));
       }
-    else if (type.EqualTo("Bool"))
+    else if (type.equalTo("Bool"))
       {
-      if (subtype.EqualTo("LIVE"))
+      if (subtype.equalTo("LIVE"))
         subtypeIndex = ParticleFilter::kLive;
-      else if (subtype.EqualTo("ENABLED"))
+      else if (subtype.equalTo("ENABLED"))
         subtypeIndex = ParticleFilter::kEnabled;
       else
         throw FilterException(subtype,__FUNCTION__);

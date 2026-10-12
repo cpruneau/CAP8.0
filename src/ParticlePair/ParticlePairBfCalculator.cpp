@@ -61,9 +61,9 @@ void ParticlePairBfCalculator::setDefaultConfiguration()
 //void ParticlePairBfCalculator::create(const Configuration & configuration)
 //{
 //  String bn = valueString( "HistogramBaseName");
-//  HistogramGroup * histos;
+//  HistogramFolder * histos;
 //    printCR();
-//    printValue("Creating BF HistogramGroup",bn);
+//    printValue("Creating BF HistogramFolder",bn);
 //    printValue("NEventFilters",eventFilters.size());
 //    printValue("NParticleFilters",particleFilters.size());
 //    printCR();

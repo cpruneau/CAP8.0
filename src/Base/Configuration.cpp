@@ -53,7 +53,7 @@ void Configuration::generateKeyValuePairs(const char *  path, const char *  keyB
 {
   String sPath = path;
   String sKeyBaseName = keyBaseName;
-  if (sPath.EndsWith(":"))
+  if (sPath.endsWith(":"))
     generateKeyValuePairs(sPath+sKeyBaseName, defaultValue, nKeysToGenerate);
   else
     generateKeyValuePairs(sPath+String(":")+sKeyBaseName, defaultValue, nKeysToGenerate);
@@ -74,7 +74,7 @@ std::vector<String> Configuration::selectedValues(const char *  path, const char
 {
   String sPath = path;
   String sKeyBaseName = keyBaseName;
-  if (sPath.EndsWith(":"))
+  if (sPath.endsWith(":"))
     return selectedValues(sPath+sKeyBaseName, defaultValue);
   else
     return selectedValues(sPath+String(":")+sKeyBaseName, defaultValue);
@@ -96,7 +96,7 @@ int Configuration::nPossibleValues(const char *  path, const char *  keyBaseName
 {
   String sPath = path;
   String sKeyBaseName = keyBaseName;
-  if (sPath.EndsWith(":"))
+  if (sPath.endsWith(":"))
     return nPossibleValues(sPath+sKeyBaseName);
   else
     return nPossibleValues(sPath+String(":")+sKeyBaseName);

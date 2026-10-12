@@ -38,7 +38,7 @@ namespace CAP
   //!   double v = f.evaluateAt(0.55, 1.25);                         // 1.8 (interpolated)
   //! @endcode
   //!
-  class ScalarField : public Object, public Function
+  class ScalarField : public Function
   {
   public:
 

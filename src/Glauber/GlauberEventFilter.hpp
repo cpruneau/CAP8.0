@@ -6,6 +6,10 @@
 
 namespace CAP
 {
+  //!
+  //! @brief Filter selecting Glauber events on the impact parameter, number of participants, number of binary
+  //! collisions or number of spectators (all conditions must hold).
+  //!
   class GlauberEventFilter
   :
   public Filter<GlauberEvent>,
@@ -23,11 +27,18 @@ namespace CAP
   //!
   enum GlauberEventFilterType { kAny, kImpact, kNParts, kNColls, kNSpecs};
 
+  //! @brief Default constructor.
   GlauberEventFilter();
+  //! @brief Copy constructor. @param source object to copy
   GlauberEventFilter(const GlauberEventFilter & source);
+  //! @brief Copy assignment. @param source object to copy @return this object
   GlauberEventFilter & operator=(const GlauberEventFilter & source);
+  //! @brief Destructor.
   virtual ~GlauberEventFilter() {}
+  //! @brief Whether an event satisfies all the conditions. @param event event @return true if accepted
   virtual bool accept(const GlauberEvent & event) const;
+  //! @brief Configure the object from keys \<ownerName\>:\<objectType\>:... (binning, options).
+  //! @param ownerName name of the task @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & ownerName,
                          const String & typeName,
                          const Configuration & configuration,

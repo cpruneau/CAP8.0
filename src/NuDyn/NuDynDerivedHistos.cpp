@@ -12,7 +12,8 @@
 #include "NuDynDerivedHistos.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
@@ -65,13 +66,13 @@ NuDynDerivedHistos & NuDynDerivedHistos::operator=(const NuDynDerivedHistos & rh
 void NuDynDerivedHistos::cloneD(const NuDynDerivedHistos & source)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_F2_11_evt    = safeCloneH1(source.h_F2_11_evt);
-  h_F2_12_evt    = safeCloneH1(source.h_F2_12_evt);
-  h_F2_22_evt    = safeCloneH1(source.h_F2_22_evt);
-  h_R2_11_evt    = safeCloneH1(source.h_R2_11_evt);
-  h_R2_12_evt    = safeCloneH1(source.h_R2_12_evt);
-  h_R2_22_evt    = safeCloneH1(source.h_R2_22_evt);
-  h_nudyn_evt    = safeCloneH1(source.h_nudyn_evt);
+  h_F2_11_evt    = histogramLike(source.h_F2_11_evt);
+  h_F2_12_evt    = histogramLike(source.h_F2_12_evt);
+  h_F2_22_evt    = histogramLike(source.h_F2_22_evt);
+  h_R2_11_evt    = histogramLike(source.h_R2_11_evt);
+  h_R2_12_evt    = histogramLike(source.h_R2_12_evt);
+  h_R2_22_evt    = histogramLike(source.h_R2_22_evt);
+  h_nudyn_evt    = histogramLike(source.h_nudyn_evt);
 }
 
 void NuDynDerivedHistos::configure(const String & taskName,
@@ -95,17 +96,17 @@ void NuDynDerivedHistos::create()
   h_nudyn_evt = createHistogram(createName(_histogramBaseName,"Nu_dyn"),evt_nbins,evt_min,evt_max,"evtClass","#nu_{Dyn}");
 }
 
-void NuDynDerivedHistos::loadFrom(TFile & inputFile)
+void NuDynDerivedHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   NuDynHistos::loadFrom(inputFile);
-  h_F2_11_evt = importH1(inputFile,createName(_histogramBaseName,"F2_11"));
-  h_F2_12_evt = importH1(inputFile,createName(_histogramBaseName,"F2_12"));
-  h_F2_22_evt = importH1(inputFile,createName(_histogramBaseName,"F2_22"));
-  h_R2_11_evt = importH1(inputFile,createName(_histogramBaseName,"R2_11"));
-  h_R2_12_evt = importH1(inputFile,createName(_histogramBaseName,"R2_12"));
-  h_R2_22_evt = importH1(inputFile,createName(_histogramBaseName,"R2_22"));
-  h_nudyn_evt = importH1(inputFile,createName(_histogramBaseName,"Nu_dyn"));
+  h_F2_11_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_11"));
+  h_F2_12_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_12"));
+  h_F2_22_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_22"));
+  h_R2_11_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_11"));
+  h_R2_12_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_12"));
+  h_R2_22_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_22"));
+  h_nudyn_evt = importHistogram(inputFile,createName(_histogramBaseName,"Nu_dyn"));
 }
 
 void NuDynDerivedHistos::calculateDerivedHistograms(const NuDynHistos & source)
@@ -113,7 +114,7 @@ void NuDynDerivedHistos::calculateDerivedHistograms(const NuDynHistos & source)
   if (reportDebug(__FUNCTION__)) { printCR(); }
   calculateF2R2(source.h_f1_1_evt,source.h_f1_1_evt,source.h_f2_11_evt,h_F2_11_evt,h_R2_11_evt);
   calculateF2R2(source.h_f1_1_evt,source.h_f1_2_evt,source.h_f2_12_evt,h_F2_12_evt,h_R2_12_evt);
-  calculateF2R2(source.h_f1_2_evt,source.h_f1_2_evt,source.h_f2_22_evt,h_F2_12_evt,h_R2_22_evt);
+  calculateF2R2(source.h_f1_2_evt,source.h_f1_2_evt,source.h_f2_22_evt,h_F2_22_evt,h_R2_22_evt);
   calculateNudyn(h_R2_11_evt,h_R2_12_evt,h_R2_12_evt,h_R2_22_evt,h_nudyn_evt);
 }
 

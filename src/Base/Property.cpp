@@ -11,6 +11,9 @@
  * *********************************************************************/
 #include "Property.hpp"
 #include "PrintHelpers.hpp"
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
 
 ClassImp(CAP::Property);
 
@@ -38,25 +41,29 @@ void PropertyException::print() const
 Property::Property()
 :
 Object(),
-_value()
+_value(),
+_type(kString)
 { /* no ops */}
 
 Property::Property(const char * name, const char * value)
 :
 Object(name,"","Property"),
-_value(value)
+_value(value),
+_type(kString)
 {}
 
 Property::Property(const char * name, const String & value)
 :
 Object(name,"","Property"),
-_value(value)
+_value(value),
+_type(kString)
 {}
 
 Property::Property(const char * name, bool value)
 :
 Object(name,"","Property"),
-_value()
+_value(),
+_type(kString)
 {
   setValue(value);
 }
@@ -64,7 +71,8 @@ _value()
 Property::Property(const char * name, int value)
 :
 Object(name,"","Property"),
-_value()
+_value(),
+_type(kString)
 {
   setValue(value);
 }
@@ -72,7 +80,8 @@ _value()
 Property::Property(const char * name, long value)
 :
 Object(name,"","Property"),
-_value()
+_value(),
+_type(kString)
 {
   setValue(value);
 }
@@ -80,7 +89,8 @@ _value()
 Property::Property(const char * name, double value)
 :
 Object(name,"","Property"),
-_value()
+_value(),
+_type(kString)
 {
   setValue(value);
 }
@@ -88,19 +98,22 @@ _value()
 Property::Property(const char * name, const char * title, const char * value)
 :
 Object(name,title,"Property"),
-_value(value)
+_value(value),
+_type(kString)
 { }
 
 Property::Property(const char * name, const char * title, const String & value)
 :
 Object(name,title,"Property"),
-_value(value)
+_value(value),
+_type(kString)
 { }
 
 Property::Property(const char * name, const char * title, bool value)
 :
 Object(name,title,"Property"),
-_value()
+_value(),
+_type(kString)
 {
   setValue(value);
 }
@@ -108,7 +121,8 @@ _value()
 Property::Property(const char * name, const char * title, int value)
 :
 Object(name,title,"Property"),
-_value()
+_value(),
+_type(kString)
 {
   setValue(value);
 }
@@ -116,7 +130,8 @@ _value()
 Property::Property(const char * name, const char * title, long value)
 :
 Object(name,title,"Property"),
-_value()
+_value(),
+_type(kString)
 {
   setValue(value);
 }
@@ -124,7 +139,8 @@ _value()
 Property::Property(const char * name, const char * title, double value)
 :
 Object(name,title,"Property"),
-_value()
+_value(),
+_type(kString)
 {
   setValue(value);
 }
@@ -132,7 +148,8 @@ _value()
 Property::Property(const Property & property)
 :
 Object(property),
-_value(property._value)
+_value(property._value),
+_type(property._type)
 { }
 
 Property & Property::operator=(const Property & property)
@@ -141,6 +158,7 @@ Property & Property::operator=(const Property & property)
     {
     Object::operator=(property);
     _value = property._value;
+    _type  = property._type;
     }
   return *this;
 }
@@ -162,7 +180,7 @@ const String & Property::value() const
 
 bool Property::valueContains(const char * keyword) const
 {
-  return _value.Contains(keyword);
+  return _value.contains(keyword);
 }
 
 //!
@@ -177,9 +195,9 @@ bool Property::isEqualTo(const Property & rhs, int option) const
 {
   switch (option)
     {
-      case 0: return _name.EqualTo(rhs._name);
-      case 1: return _name.EqualTo(rhs._name)  &&  _value.EqualTo(rhs._value);
-      case 2: return _name.EqualTo(rhs._name)  &&  _title.EqualTo(rhs._title)  &&  _value.EqualTo(rhs._value);
+      case 0: return _name.equalTo(rhs._name);
+      case 1: return _name.equalTo(rhs._name)  &&  _value.equalTo(rhs._value);
+      case 2: return _name.equalTo(rhs._name)  &&  _title.equalTo(rhs._title)  &&  _value.equalTo(rhs._value);
     }
   return false; // should never get here...
 }
@@ -266,6 +284,7 @@ void Property::reset()
   _name  = "";
   _title = "";
   _value = "";
+  _type  = kString;
 }
 
 void Property::clear()
@@ -273,6 +292,7 @@ void Property::clear()
   _name  = "";
   _title = "";
   _value = "";
+  _type  = kString;
 }
 
 void Property::erase()
@@ -280,28 +300,33 @@ void Property::erase()
   _name  = "";
   _title = "";
   _value = "";
+  _type  = kString;
 }
 
 void Property::setValue(bool value)
 {
+  _type = kBool;
   _value = "";
   _value += value;
 }
 
 void Property::setValue(int value)
 {
+  _type = kInt;
   _value  = "";
   _value  += value;
 }
 
 void Property::setValue(long value)
 {
+  _type = kLong;
   _value  = "";
   _value  += value;
 }
 
 void Property::setValue(double value)
 {
+  _type = kDouble;
   _value  = "";
   _value  += value;
 }
@@ -357,33 +382,33 @@ void Property::setValue(double value)
 //}
 
 // extract bool, int, long, double
-// v.ToUpper();
+// v.toUpper();
 
 bool  Property::isBool() const
 {
   String v = _value;
-  v.ToUpper(); // same (case-insensitive) rules as getBool()
-  return v.EqualTo("0") || v.EqualTo("FALSE") || v.EqualTo("NO")
-      || v.EqualTo("1") || v.EqualTo("TRUE")  || v.EqualTo("YES");
+  v.toUpper(); // same (case-insensitive) rules as getBool()
+  return v.equalTo("0") || v.equalTo("FALSE") || v.equalTo("NO")
+      || v.equalTo("1") || v.equalTo("TRUE")  || v.equalTo("YES");
 }
 
 // not quite right... should return false if integer is too large
 bool Property::isInt() const
 {
-  if (!_value.IsDec()) return false;
+  if (!_value.isDec()) return false;
   return true;
 }
 
 // not quite right...
 bool Property::isLong() const
 {
-  if (!_value.IsDec()) return false;
+  if (!_value.isDec()) return false;
   return true;
 }
 
 bool Property::isDouble() const
 {
-  if (_value.IsFloat()) return true;
+  if (_value.isFloat()) return true;
   return false;
 }
 
@@ -396,12 +421,12 @@ bool Property::isString() const
 bool  Property::getBool() const
 {
   String v = _value;
-  v.ToUpper();
-  if (v.EqualTo("0") || v.EqualTo("FALSE") || v.EqualTo("NO") ) return false;
-  else if (v.EqualTo("1") || v.EqualTo("TRUE")  || v.EqualTo("YES")  ) return true;
-  else if (v.IsDec())
+  v.toUpper();
+  if (v.equalTo("0") || v.equalTo("FALSE") || v.equalTo("NO") ) return false;
+  else if (v.equalTo("1") || v.equalTo("TRUE")  || v.equalTo("YES")  ) return true;
+  else if (v.isDec())
     {
-    int vv = v.Atoi();
+    int vv = v.atoi();
     return vv>0;
     }
   return false;
@@ -410,7 +435,7 @@ bool  Property::getBool() const
 int Property::integer() const
 {
   String v = _value;
-  if (v.IsDec()) return v.Atoi();
+  if (v.isDec()) return v.atoi();
   return -9999;
   //throw Exception("Property value not an integer","Property::integer()");
 }
@@ -418,21 +443,21 @@ int Property::integer() const
 long Property::longInteger() const
 {
   String v = _value;
-  if (!v.IsDec())
+  if (!v.isDec())
     {
     return -99999;
     }
-  return v.Atoll();
+  return v.atoll();
 }
 
 double Property::doubleValue() const
 {
   String v = _value;
-  if (!v.IsFloat())
+  if (!v.isFloat())
     {
     return -1.0E100;
     }
-  return v.Atof();
+  return v.atof();
 }
 
 const String Property::string() const
@@ -442,20 +467,20 @@ const String Property::string() const
 
 const String Property::upperString() const
 {
-  String v = _value; v.ToUpper();
+  String v = _value; v.toUpper();
   return v;
 }
 
 const String Property::lowerString() const
 {
-  String v = _value; v.ToLower();
+  String v = _value; v.toLower();
   return v;
 }
 
 bool Property::nameHasEndColon() const
 {
-  int last = _name.Last(':');
-  int size = _name.Length() - 1;
+  int last = _name.last(':');
+  int size = _name.length() - 1;
   return (last>0  &&  last == size);
 }
 
@@ -480,6 +505,75 @@ void Property::saveTo(std::ostream & output)  const
   else
     output << "UNKNOWN";
   output << " : " << _value << std::endl;
+}
+
+const char * Property::typeName(Type type)
+{
+  switch (type)
+    {
+    case kBool:   return "bool";
+    case kInt:    return "int";
+    case kLong:   return "long";
+    case kDouble: return "double";
+    default:      return "string";
+    }
+}
+
+bool Property::typeFromName(const String & name, Type & type)
+{
+  String n = name; n.toLower();
+  if      (n=="bool"   || n=="boolean")             type = kBool;
+  else if (n=="int"    || n=="integer")             type = kInt;
+  else if (n=="long")                               type = kLong;
+  else if (n=="double" || n=="float" || n=="real")  type = kDouble;
+  else if (n=="string" || n=="text")                type = kString;
+  else return false;
+  return true;
+}
+
+bool Property::isValidValue(const String & value, Type type)
+{
+  String v = value; v.strip();
+  const char * c = v.data();
+  char * end = nullptr;
+  switch (type)
+    {
+    case kBool:
+      {
+      String u = v; u.toUpper();
+      return u=="0" || u=="1" || u=="TRUE" || u=="FALSE" || u=="YES" || u=="NO";
+      }
+    case kInt:
+      {
+      if (v.isNull()) return false;
+      errno = 0;
+      long x = std::strtol(c,&end,10);
+      return errno==0 && *end=='\0' && x>=INT_MIN && x<=INT_MAX;
+      }
+    case kLong:
+      if (v.isNull()) return false;
+      errno = 0;
+      std::strtol(c,&end,10);
+      return errno==0 && *end=='\0';
+    case kDouble:
+      if (v.isNull()) return false;
+      std::strtod(c,&end);
+      return *end=='\0';
+    default:
+      return true;
+    }
+}
+
+String Property::normalizedValue(const String & value, Type type)
+{
+  if (type==kString) return value;
+  String v = value; v.strip();
+  if (type==kBool)
+    {
+    String u = v; u.toUpper();
+    return (u=="1" || u=="TRUE" || u=="YES") ? String("1") : String("0");
+    }
+  return v;
 }
 
 } // namespace CAP

@@ -104,7 +104,7 @@ void ParticleEfficiencyFilterCreator::initialize()
       maximum  = getValueDouble(key);
       conditionMaxima.push_back(maximum);
 
-      if (conditionType.EqualTo("DoubleDualRange"))
+      if (conditionType.equalTo("DoubleDualRange"))
         {
         key = createName("ParticleEfficiencyFilter",iParticleEfficiencyFilter,":Condition",iCondition,":Minimum2");
         minimum2  = getValueDouble(key);
@@ -173,45 +173,45 @@ ParticleEfficiencyFilter * ParticleEfficiencyFilterCreator::createFilter(const S
     String conditionSubtype = conditionSubtypes[k];
     //int type;
     int subtype;
-    if (conditionType.EqualTo("DoubleRange"))
+    if (conditionType.equalTo("DoubleRange"))
       {
-      if (conditionSubtype.EqualTo("PT"))
+      if (conditionSubtype.equalTo("PT"))
         subtype = ParticleEfficiencyFilter::kPt;
-      else if (conditionSubtype.EqualTo("PX"))
+      else if (conditionSubtype.equalTo("PX"))
         subtype = ParticleEfficiencyFilter::kPx;
-      else if (conditionSubtype.EqualTo("PY"))
+      else if (conditionSubtype.equalTo("PY"))
         subtype = ParticleEfficiencyFilter::kPy;
-      else if (conditionSubtype.EqualTo("PZ"))
+      else if (conditionSubtype.equalTo("PZ"))
         subtype = ParticleEfficiencyFilter::kPz;
-      else if (conditionSubtype.EqualTo("ENERGY"))
+      else if (conditionSubtype.equalTo("ENERGY"))
         subtype = ParticleEfficiencyFilter::kEnergy;
-      else if (conditionSubtype.EqualTo("ETA"))
+      else if (conditionSubtype.equalTo("ETA"))
         subtype = ParticleEfficiencyFilter::kEta;
-      else if (conditionSubtype.EqualTo("RAPIDITY"))
+      else if (conditionSubtype.equalTo("RAPIDITY"))
         subtype = ParticleEfficiencyFilter::kRapidity;
-      else if (conditionSubtype.EqualTo("PHI"))
+      else if (conditionSubtype.equalTo("PHI"))
         subtype = ParticleEfficiencyFilter::kPhi;
       else
         throw FilterException(conditionSubtype,__FUNCTION__);
       filter->addCondition(subtype,conditionMinima[k],conditionMaxima[k]);
       }
-    else if (conditionType.EqualTo("DoubleDualRange"))
+    else if (conditionType.equalTo("DoubleDualRange"))
       {
-      if (conditionSubtype.EqualTo("PT"))
+      if (conditionSubtype.equalTo("PT"))
         subtype = ParticleEfficiencyFilter::kPt;
-      else if (conditionSubtype.EqualTo("PX"))
+      else if (conditionSubtype.equalTo("PX"))
         subtype = ParticleEfficiencyFilter::kPx;
-      else if (conditionSubtype.EqualTo("PY"))
+      else if (conditionSubtype.equalTo("PY"))
         subtype = ParticleEfficiencyFilter::kPy;
-      else if (conditionSubtype.EqualTo("PZ"))
+      else if (conditionSubtype.equalTo("PZ"))
         subtype = ParticleEfficiencyFilter::kPz;
-      else if (conditionSubtype.EqualTo("ENERGY"))
+      else if (conditionSubtype.equalTo("ENERGY"))
         subtype = ParticleEfficiencyFilter::kEnergy;
-      else if (conditionSubtype.EqualTo("ETA"))
+      else if (conditionSubtype.equalTo("ETA"))
         subtype = ParticleEfficiencyFilter::kEta;
-      else if (conditionSubtype.EqualTo("RAPIDITY"))
+      else if (conditionSubtype.equalTo("RAPIDITY"))
         subtype = ParticleEfficiencyFilter::kRapidity;
-      else if (conditionSubtype.EqualTo("PHI"))
+      else if (conditionSubtype.equalTo("PHI"))
         subtype = ParticleEfficiencyFilter::kPhi;
       else
         throw FilterException(conditionSubtype,__FUNCTION__);
@@ -219,27 +219,27 @@ ParticleEfficiencyFilter * ParticleEfficiencyFilterCreator::createFilter(const S
                            conditionMinima[k],conditionMaxima[k],
                            conditionMinima2[k],conditionMaxima2[k]);
       }
-    else if (conditionType.EqualTo("Integer"))
+    else if (conditionType.equalTo("Integer"))
       {
-      if (conditionSubtype.EqualTo("PDG"))
+      if (conditionSubtype.equalTo("PDG"))
         subtype = ParticleEfficiencyFilter::kPdg;
-      else if (conditionSubtype.EqualTo("CHARGE"))
+      else if (conditionSubtype.equalTo("CHARGE"))
         subtype = ParticleEfficiencyFilter::kCharge;
-      else if (conditionSubtype.EqualTo("BARYON"))
+      else if (conditionSubtype.equalTo("BARYON"))
         subtype = ParticleEfficiencyFilter::kBaryon;
-      else if (conditionSubtype.EqualTo("STRANGE"))
+      else if (conditionSubtype.equalTo("STRANGE"))
         subtype = ParticleEfficiencyFilter::kStrange;
-      else if (conditionSubtype.EqualTo("CHARM"))
+      else if (conditionSubtype.equalTo("CHARM"))
         subtype = ParticleEfficiencyFilter::kCharm;
       else
         throw FilterException(conditionSubtype,__FUNCTION__);
       filter->addCondition(subtype,int(conditionMinima[k]));
       }
-    else if (conditionType.EqualTo("Bool"))
+    else if (conditionType.equalTo("Bool"))
       {
-      if (conditionSubtype.EqualTo("LIVE"))
+      if (conditionSubtype.equalTo("LIVE"))
         subtype = ParticleEfficiencyFilter::kLive;
-      else if (conditionSubtype.EqualTo("ENABLED"))
+      else if (conditionSubtype.equalTo("ENABLED"))
         subtype = ParticleEfficiencyFilter::kEnabled;
       else
         throw FilterException(conditionSubtype,__FUNCTION__);

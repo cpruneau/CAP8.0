@@ -15,7 +15,8 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::BaseDerivedHistos);
 

@@ -10,10 +10,12 @@
  *
  * *********************************************************************/
 #include "GlauberHistos.hpp"
+#include "RootConversion.hpp"
 #include "MathConstants.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "VectorLorentz.hpp"
 #include "TEllipse.h"
 #include "TCanvas.h"
@@ -27,7 +29,7 @@ namespace CAP
 
   GlauberHistos::GlauberHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   _fillBasics(true),
   _fillMoments(false),
   _fillSmeared(false),
@@ -197,7 +199,7 @@ namespace CAP
 
   GlauberHistos::GlauberHistos(const GlauberHistos & src)
   :
-  HistogramGroup(src),
+  HistogramFolder(src),
   _fillBasics(src._fillBasics),
   _fillMoments(src._fillMoments),
   _fillSmeared(src._fillSmeared),
@@ -353,7 +355,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     cloneAll(rhs);
     _fillBasics  = rhs._fillBasics;
     _fillMoments = rhs._fillMoments;
@@ -369,12 +371,12 @@ namespace CAP
                                 const Configuration & configuration,
                                 unsigned int index)
   {
-  HistogramGroup::configure(taskName,objectType,configuration,index);
+  HistogramFolder::configure(taskName,objectType,configuration,index);
 
   printValue("GlauberHistos::configure() taskName",taskName);
   printValue("GlauberHistos::configure() objectType",objectType);
   String type;
-  if (objectType.Contains("HISTOGRAM"))
+  if (objectType.contains("HISTOGRAM"))
     type ="HISTOGRAM";
   else
     type = objectType;
@@ -472,70 +474,70 @@ namespace CAP
   void GlauberHistos::cloneAll(const GlauberHistos & src)
   {
   if (reportStart(__FUNCTION__)) { printCR(); }
-  h_impactPar      = safeCloneH1(src.h_impactPar);
-  h_nParts         = safeCloneH1(src.h_nParts);
-  h_nPartsA        = safeCloneH1(src.h_nPartsA);
-  h_nPartsB        = safeCloneH1(src.h_nPartsB);
-  h_nPartsProton   = safeCloneH1(src.h_nPartsProton);
-  h_nPartsProtonA  = safeCloneH1(src.h_nPartsProtonA);
-  h_nPartsProtonB  = safeCloneH1(src.h_nPartsProtonB);
-  h_nPartsNeutron  = safeCloneH1(src.h_nPartsNeutron);
-  h_nPartsNeutronA = safeCloneH1(src.h_nPartsNeutronA);
-  h_nPartsNeutronB = safeCloneH1(src.h_nPartsNeutronB);
+  h_impactPar      = histogramLike(src.h_impactPar);
+  h_nParts         = histogramLike(src.h_nParts);
+  h_nPartsA        = histogramLike(src.h_nPartsA);
+  h_nPartsB        = histogramLike(src.h_nPartsB);
+  h_nPartsProton   = histogramLike(src.h_nPartsProton);
+  h_nPartsProtonA  = histogramLike(src.h_nPartsProtonA);
+  h_nPartsProtonB  = histogramLike(src.h_nPartsProtonB);
+  h_nPartsNeutron  = histogramLike(src.h_nPartsNeutron);
+  h_nPartsNeutronA = histogramLike(src.h_nPartsNeutronA);
+  h_nPartsNeutronB = histogramLike(src.h_nPartsNeutronB);
 
-  h_nBinaries = safeCloneH1(src.h_nBinaries);
-  h_nBinariesA = safeCloneH1(src.h_nBinariesA);
-  h_nBinariesB = safeCloneH1(src.h_nBinariesB);
+  h_nBinaries = histogramLike(src.h_nBinaries);
+  h_nBinariesA = histogramLike(src.h_nBinariesA);
+  h_nBinariesB = histogramLike(src.h_nBinariesB);
 
-  h_nSpect = safeCloneH1(src.h_nSpect);
-  h_nSpectA = safeCloneH1(src.h_nSpectA);
-  h_nSpectB = safeCloneH1(src.h_nSpectB);
-  h_nSpectProton = safeCloneH1(src.h_nSpectProton);
-  h_nSpectProtonA = safeCloneH1(src.h_nSpectProtonA);
-  h_nSpectProtonB = safeCloneH1(src.h_nSpectProtonB);
-  h_nSpectNeutron = safeCloneH1(src.h_nSpectNeutron);
-  h_nSpectNeutronA = safeCloneH1(src.h_nSpectNeutronA);
-  h_nSpectNeutronB = safeCloneH1(src.h_nSpectNeutronB);
+  h_nSpect = histogramLike(src.h_nSpect);
+  h_nSpectA = histogramLike(src.h_nSpectA);
+  h_nSpectB = histogramLike(src.h_nSpectB);
+  h_nSpectProton = histogramLike(src.h_nSpectProton);
+  h_nSpectProtonA = histogramLike(src.h_nSpectProtonA);
+  h_nSpectProtonB = histogramLike(src.h_nSpectProtonB);
+  h_nSpectNeutron = histogramLike(src.h_nSpectNeutron);
+  h_nSpectNeutronA = histogramLike(src.h_nSpectNeutronA);
+  h_nSpectNeutronB = histogramLike(src.h_nSpectNeutronB);
 
-  h_nPP = safeCloneH1(src.h_nPP);
-  h_nPN = safeCloneH1(src.h_nPN);
-  h_nNP = safeCloneH1(src.h_nNP);
-  h_nNN = safeCloneH1(src.h_nNN);
-  h_nHard = safeCloneH1(src.h_nHard);
+  h_nPP = histogramLike(src.h_nPP);
+  h_nPN = histogramLike(src.h_nPN);
+  h_nNP = histogramLike(src.h_nNP);
+  h_nNN = histogramLike(src.h_nNN);
+  h_nHard = histogramLike(src.h_nHard);
 
-  h_nPartsVsImpact = safeCloneH2(src.h_nPartsVsImpact);
-  h_nBinariesVsImpact = safeCloneH2(src.h_nBinariesVsImpact);
-  h_nBinariesVsNParts = safeCloneH2(src.h_nBinariesVsNParts);
+  h_nPartsVsImpact = histogramLike(src.h_nPartsVsImpact);
+  h_nBinariesVsImpact = histogramLike(src.h_nBinariesVsImpact);
+  h_nBinariesVsNParts = histogramLike(src.h_nBinariesVsNParts);
 
-  h_nPartsAvgVsImpact = safeCloneProfile(src.h_nPartsAvgVsImpact);
-  h_nPartsAAvgVsImpact = safeCloneProfile(src.h_nPartsAAvgVsImpact);
-  h_nPartsBAvgVsImpact = safeCloneProfile(src.h_nPartsBAvgVsImpact);
-  h_nPartsProtonAvgVsImpact = safeCloneProfile(src.h_nPartsProtonAvgVsImpact);
-  h_nPartsProtonAAvgVsImpact = safeCloneProfile(src.h_nPartsProtonAAvgVsImpact);
-  h_nPartsProtonBAvgVsImpact = safeCloneProfile(src.h_nPartsProtonBAvgVsImpact);
-  h_nPartsNeutronAvgVsImpact = safeCloneProfile(src.h_nPartsNeutronAvgVsImpact);
-  h_nPartsNeutronAAvgVsImpact = safeCloneProfile(src.h_nPartsNeutronAAvgVsImpact);
-  h_nPartsNeutronBAvgVsImpact = safeCloneProfile(src.h_nPartsNeutronBAvgVsImpact);
+  h_nPartsAvgVsImpact = histogramLike(src.h_nPartsAvgVsImpact);
+  h_nPartsAAvgVsImpact = histogramLike(src.h_nPartsAAvgVsImpact);
+  h_nPartsBAvgVsImpact = histogramLike(src.h_nPartsBAvgVsImpact);
+  h_nPartsProtonAvgVsImpact = histogramLike(src.h_nPartsProtonAvgVsImpact);
+  h_nPartsProtonAAvgVsImpact = histogramLike(src.h_nPartsProtonAAvgVsImpact);
+  h_nPartsProtonBAvgVsImpact = histogramLike(src.h_nPartsProtonBAvgVsImpact);
+  h_nPartsNeutronAvgVsImpact = histogramLike(src.h_nPartsNeutronAvgVsImpact);
+  h_nPartsNeutronAAvgVsImpact = histogramLike(src.h_nPartsNeutronAAvgVsImpact);
+  h_nPartsNeutronBAvgVsImpact = histogramLike(src.h_nPartsNeutronBAvgVsImpact);
 
-  h_nBinariesAvgVsImpact = safeCloneProfile(src.h_nBinariesAvgVsImpact);
-  h_nBinariesAAvgVsImpact = safeCloneProfile(src.h_nBinariesAAvgVsImpact);
-  h_nBinariesBAvgVsImpact = safeCloneProfile(src.h_nBinariesBAvgVsImpact);
+  h_nBinariesAvgVsImpact = histogramLike(src.h_nBinariesAvgVsImpact);
+  h_nBinariesAAvgVsImpact = histogramLike(src.h_nBinariesAAvgVsImpact);
+  h_nBinariesBAvgVsImpact = histogramLike(src.h_nBinariesBAvgVsImpact);
 
-  h_nSpectAvgVsImpact = safeCloneProfile(src.h_nSpectAvgVsImpact);
-  h_nSpectAAvgVsImpact = safeCloneProfile(src.h_nSpectAAvgVsImpact);
-  h_nSpectBAvgVsImpact = safeCloneProfile(src.h_nSpectBAvgVsImpact);
-  h_nSpectProtonAvgVsImpact = safeCloneProfile(src.h_nSpectProtonAvgVsImpact);
-  h_nSpectProtonAAvgVsImpact = safeCloneProfile(src.h_nSpectProtonAAvgVsImpact);
-  h_nSpectProtonBAvgVsImpact = safeCloneProfile(src.h_nSpectProtonBAvgVsImpact);
-  h_nSpectNeutronAvgVsImpact = safeCloneProfile(src.h_nSpectNeutronAvgVsImpact);
-  h_nSpectNeutronAAvgVsImpact = safeCloneProfile(src.h_nSpectNeutronAAvgVsImpact);
-  h_nSpectNeutronBAvgVsImpact = safeCloneProfile(src.h_nSpectNeutronBAvgVsImpact);
+  h_nSpectAvgVsImpact = histogramLike(src.h_nSpectAvgVsImpact);
+  h_nSpectAAvgVsImpact = histogramLike(src.h_nSpectAAvgVsImpact);
+  h_nSpectBAvgVsImpact = histogramLike(src.h_nSpectBAvgVsImpact);
+  h_nSpectProtonAvgVsImpact = histogramLike(src.h_nSpectProtonAvgVsImpact);
+  h_nSpectProtonAAvgVsImpact = histogramLike(src.h_nSpectProtonAAvgVsImpact);
+  h_nSpectProtonBAvgVsImpact = histogramLike(src.h_nSpectProtonBAvgVsImpact);
+  h_nSpectNeutronAvgVsImpact = histogramLike(src.h_nSpectNeutronAvgVsImpact);
+  h_nSpectNeutronAAvgVsImpact = histogramLike(src.h_nSpectNeutronAAvgVsImpact);
+  h_nSpectNeutronBAvgVsImpact = histogramLike(src.h_nSpectNeutronBAvgVsImpact);
 
-  h_nPPAvgVsImpact = safeCloneProfile(src.h_nPPAvgVsImpact);
-  h_nPNAvgVsImpact = safeCloneProfile(src.h_nPNAvgVsImpact);
-  h_nNPAvgVsImpact = safeCloneProfile(src.h_nNPAvgVsImpact);
-  h_nNNAvgVsImpact = safeCloneProfile(src.h_nNNAvgVsImpact);
-  h_nHardAvgVsImpact = safeCloneProfile(src.h_nHardAvgVsImpact);
+  h_nPPAvgVsImpact = histogramLike(src.h_nPPAvgVsImpact);
+  h_nPNAvgVsImpact = histogramLike(src.h_nPNAvgVsImpact);
+  h_nNPAvgVsImpact = histogramLike(src.h_nNPAvgVsImpact);
+  h_nNNAvgVsImpact = histogramLike(src.h_nNNAvgVsImpact);
+  h_nHardAvgVsImpact = histogramLike(src.h_nHardAvgVsImpact);
   if (reportEnd(__FUNCTION__)) { printCR(); }
   }
 
@@ -679,7 +681,11 @@ namespace CAP
   {
   float xHalfWidth = 14.0;
   float yHalfWidth = 14.0;
-  TH2 * h = createNewHistogram(eventName,1, -xHalfWidth, xHalfWidth, 1, -yHalfWidth, yHalfWidth, "x(fm)", "y(fm)","");
+  // empty frame for the drawing
+  Histogram frame(eventName,eventName,1,-xHalfWidth,xHalfWidth,1,-yHalfWidth,yHalfWidth);
+  frame.setDimensionTitle(0,"x(fm)");
+  frame.setDimensionTitle(1,"y(fm)");
+  TH1 * h = toRootHistogram(frame);
   TCanvas * canvas = new TCanvas(eventName,eventName,5,5,800, 800);
   double protonRadius = 0.5*std::sqrt(event.eventXSection()/(pi()*10));
   h->Draw();
@@ -743,26 +749,26 @@ namespace CAP
   }
 
 
-  void GlauberHistos::loadFrom(TFile & inputFile)
+  void GlauberHistos::loadFrom(CapFile & inputFile)
   {
   if (reportStart(__FUNCTION__)) { /* noops*/ };
-  h_impactPar      = importH1(inputFile, createName(_histogramBaseName,"impact"));
-  h_nParts         = importH1(inputFile, createName(_histogramBaseName,"nParts"));
-  h_nPartsA        = importH1(inputFile, createName(_histogramBaseName,"nPartsA"));
-  h_nPartsB        = importH1(inputFile, createName(_histogramBaseName,"nPartsB"));
-  h_nPartsProton   = importH1(inputFile, createName(_histogramBaseName,"nPartsProton"));
-  h_nPartsProtonA  = importH1(inputFile, createName(_histogramBaseName,"nPartsProtonA"));
-  h_nPartsProtonB  = importH1(inputFile, createName(_histogramBaseName,"nPartsProtonB"));
-  h_nPartsNeutron  = importH1(inputFile, createName(_histogramBaseName,"nPartsNeutron"));
-  h_nPartsNeutronA = importH1(inputFile, createName(_histogramBaseName,"nPartsNeutronA"));
-  h_nPartsNeutronB = importH1(inputFile, createName(_histogramBaseName,"nPartsNeutronB"));
+  h_impactPar      = importHistogram(inputFile, createName(_histogramBaseName,"impact"));
+  h_nParts         = importHistogram(inputFile, createName(_histogramBaseName,"nParts"));
+  h_nPartsA        = importHistogram(inputFile, createName(_histogramBaseName,"nPartsA"));
+  h_nPartsB        = importHistogram(inputFile, createName(_histogramBaseName,"nPartsB"));
+  h_nPartsProton   = importHistogram(inputFile, createName(_histogramBaseName,"nPartsProton"));
+  h_nPartsProtonA  = importHistogram(inputFile, createName(_histogramBaseName,"nPartsProtonA"));
+  h_nPartsProtonB  = importHistogram(inputFile, createName(_histogramBaseName,"nPartsProtonB"));
+  h_nPartsNeutron  = importHistogram(inputFile, createName(_histogramBaseName,"nPartsNeutron"));
+  h_nPartsNeutronA = importHistogram(inputFile, createName(_histogramBaseName,"nPartsNeutronA"));
+  h_nPartsNeutronB = importHistogram(inputFile, createName(_histogramBaseName,"nPartsNeutronB"));
 
-  h_nBinaries         = importH1(inputFile, createName(_histogramBaseName,"nBinaries"));
-  h_nBinariesA        = importH1(inputFile, createName(_histogramBaseName,"nBinariesA"));
-  h_nBinariesB        = importH1(inputFile, createName(_histogramBaseName,"nBinariesB"));
+  h_nBinaries         = importHistogram(inputFile, createName(_histogramBaseName,"nBinaries"));
+  h_nBinariesA        = importHistogram(inputFile, createName(_histogramBaseName,"nBinariesA"));
+  h_nBinariesB        = importHistogram(inputFile, createName(_histogramBaseName,"nBinariesB"));
 
-  h_nPartsVsImpact     = importH2(inputFile, createName(_histogramBaseName,"nPartsVsImpact"));
-  h_nBinariesVsImpact  = importH2(inputFile, createName(_histogramBaseName,"nBinariesVsImpact"));
+  h_nPartsVsImpact     = importHistogram(inputFile, createName(_histogramBaseName,"nPartsVsImpact"));
+  h_nBinariesVsImpact  = importHistogram(inputFile, createName(_histogramBaseName,"nBinariesVsImpact"));
 
   h_nPartsAvgVsImpact     = importProfile(inputFile, createName(_histogramBaseName,"nPartsAvgVsImpact"));
   h_nPartsAAvgVsImpact    = importProfile(inputFile, createName(_histogramBaseName,"nPartsAAvgVsImpact"));
@@ -829,69 +835,69 @@ namespace CAP
 
   if (_fillBasics)
     {
-    h_impactPar->Fill(impact,weight);
-    h_xSection->Fill(impact,impact);
+    h_impactPar->fill(impact,weight);
+    h_xSection->fill(impact,impact);
 
-    h_nParts->Fill(nParts,weight);
-    h_nPartsA->Fill(nPartsA,weight);
-    h_nPartsB->Fill(nPartsB,weight);
-    h_nPartsProton->Fill(nPartsProton,weight);
-    h_nPartsProtonA->Fill(nPartsProtonA,weight);
-    h_nPartsProtonB->Fill(nPartsProtonB,weight);
-    h_nPartsNeutron->Fill(nPartsNeutron,weight);
-    h_nPartsNeutronA->Fill(nPartsNeutronA,weight);
-    h_nPartsNeutronB->Fill(nPartsNeutronB,weight);
+    h_nParts->fill(nParts,weight);
+    h_nPartsA->fill(nPartsA,weight);
+    h_nPartsB->fill(nPartsB,weight);
+    h_nPartsProton->fill(nPartsProton,weight);
+    h_nPartsProtonA->fill(nPartsProtonA,weight);
+    h_nPartsProtonB->fill(nPartsProtonB,weight);
+    h_nPartsNeutron->fill(nPartsNeutron,weight);
+    h_nPartsNeutronA->fill(nPartsNeutronA,weight);
+    h_nPartsNeutronB->fill(nPartsNeutronB,weight);
 
-    h_nPartsVsImpact->Fill(impact,nParts,weight);
-    h_nPartsAvgVsImpact->Fill(impact,nParts,weight);
-    h_nPartsAAvgVsImpact->Fill(impact,nPartsA,weight);
-    h_nPartsBAvgVsImpact->Fill(impact,nPartsB,weight);
-    h_nPartsProtonAvgVsImpact->Fill(impact,nPartsProton,weight);
-    h_nPartsProtonAAvgVsImpact->Fill(impact,nPartsProtonA,weight);
-    h_nPartsProtonBAvgVsImpact->Fill(impact,nPartsProtonB,weight);
-    h_nPartsNeutronAvgVsImpact->Fill(impact,nPartsNeutron,weight);
-    h_nPartsNeutronAAvgVsImpact->Fill(impact,nPartsNeutronA,weight);
-    h_nPartsNeutronBAvgVsImpact->Fill(impact,nPartsNeutronB,weight);
+    h_nPartsVsImpact->fill(impact,nParts,weight);
+    h_nPartsAvgVsImpact->fill(impact,nParts,weight);
+    h_nPartsAAvgVsImpact->fill(impact,nPartsA,weight);
+    h_nPartsBAvgVsImpact->fill(impact,nPartsB,weight);
+    h_nPartsProtonAvgVsImpact->fill(impact,nPartsProton,weight);
+    h_nPartsProtonAAvgVsImpact->fill(impact,nPartsProtonA,weight);
+    h_nPartsProtonBAvgVsImpact->fill(impact,nPartsProtonB,weight);
+    h_nPartsNeutronAvgVsImpact->fill(impact,nPartsNeutron,weight);
+    h_nPartsNeutronAAvgVsImpact->fill(impact,nPartsNeutronA,weight);
+    h_nPartsNeutronBAvgVsImpact->fill(impact,nPartsNeutronB,weight);
 
-    h_nBinaries->Fill(nBinaries,weight);
-    h_nBinariesA->Fill(nBinariesA,weight);
-    h_nBinariesB->Fill(nBinariesB,weight);
-    h_nBinariesVsImpact->Fill(impact,nBinaries,weight);
-    h_nBinariesAvgVsImpact->Fill(impact,nBinaries,weight);
-    h_nBinariesAAvgVsImpact->Fill(impact,nBinariesA,weight);
-    h_nBinariesBAvgVsImpact->Fill(impact,nBinariesB,weight);
+    h_nBinaries->fill(nBinaries,weight);
+    h_nBinariesA->fill(nBinariesA,weight);
+    h_nBinariesB->fill(nBinariesB,weight);
+    h_nBinariesVsImpact->fill(impact,nBinaries,weight);
+    h_nBinariesAvgVsImpact->fill(impact,nBinaries,weight);
+    h_nBinariesAAvgVsImpact->fill(impact,nBinariesA,weight);
+    h_nBinariesBAvgVsImpact->fill(impact,nBinariesB,weight);
 
-    h_nPP->Fill(nPP,weight);
-    h_nPN->Fill(nPN,weight);
-    h_nNP->Fill(nNP,weight);
-    h_nNN->Fill(nNN,weight);
-    h_nHard->Fill(nHard,weight);
+    h_nPP->fill(nPP,weight);
+    h_nPN->fill(nPN,weight);
+    h_nNP->fill(nNP,weight);
+    h_nNN->fill(nNN,weight);
+    h_nHard->fill(nHard,weight);
 
-    h_nPPAvgVsImpact->Fill(impact,nPP,weight);
-    h_nPNAvgVsImpact->Fill(impact,nPN,weight);
-    h_nNPAvgVsImpact->Fill(impact,nNP,weight);
-    h_nNNAvgVsImpact->Fill(impact,nNN,weight);
-    h_nHardAvgVsImpact->Fill(impact,nHard,weight);
+    h_nPPAvgVsImpact->fill(impact,nPP,weight);
+    h_nPNAvgVsImpact->fill(impact,nPN,weight);
+    h_nNPAvgVsImpact->fill(impact,nNP,weight);
+    h_nNNAvgVsImpact->fill(impact,nNN,weight);
+    h_nHardAvgVsImpact->fill(impact,nHard,weight);
 
-    h_nSpect->Fill(nSpect,weight);
-    h_nSpectA->Fill(nSpectA,weight);
-    h_nSpectB->Fill(nSpectB,weight);
-    h_nSpectProton->Fill(nSpectProton,weight);
-    h_nSpectProtonA->Fill(nSpectProtonA,weight);
-    h_nSpectProtonB->Fill(nSpectProtonB,weight);
-    h_nSpectNeutron->Fill(nSpectNeutron,weight);
-    h_nSpectNeutronA->Fill(nSpectNeutronA,weight);
-    h_nSpectNeutronB->Fill(nSpectNeutronB,weight);
+    h_nSpect->fill(nSpect,weight);
+    h_nSpectA->fill(nSpectA,weight);
+    h_nSpectB->fill(nSpectB,weight);
+    h_nSpectProton->fill(nSpectProton,weight);
+    h_nSpectProtonA->fill(nSpectProtonA,weight);
+    h_nSpectProtonB->fill(nSpectProtonB,weight);
+    h_nSpectNeutron->fill(nSpectNeutron,weight);
+    h_nSpectNeutronA->fill(nSpectNeutronA,weight);
+    h_nSpectNeutronB->fill(nSpectNeutronB,weight);
 
-    h_nSpectAvgVsImpact->Fill(impact,nSpect,weight);
-    h_nSpectAAvgVsImpact->Fill(impact,nSpectA,weight);
-    h_nSpectBAvgVsImpact->Fill(impact,nSpectB,weight);
-    h_nSpectProtonAvgVsImpact->Fill(impact,nSpectProton,weight);
-    h_nSpectProtonAAvgVsImpact->Fill(impact,nSpectProtonA,weight);
-    h_nSpectProtonBAvgVsImpact->Fill(impact,nSpectProtonB,weight);
-    h_nSpectNeutronAvgVsImpact->Fill(impact,nSpectNeutron,weight);
-    h_nSpectNeutronAAvgVsImpact->Fill(impact,nSpectNeutronA,weight);
-    h_nSpectNeutronBAvgVsImpact->Fill(impact,nSpectNeutronB,weight);
+    h_nSpectAvgVsImpact->fill(impact,nSpect,weight);
+    h_nSpectAAvgVsImpact->fill(impact,nSpectA,weight);
+    h_nSpectBAvgVsImpact->fill(impact,nSpectB,weight);
+    h_nSpectProtonAvgVsImpact->fill(impact,nSpectProton,weight);
+    h_nSpectProtonAAvgVsImpact->fill(impact,nSpectProtonA,weight);
+    h_nSpectProtonBAvgVsImpact->fill(impact,nSpectProtonB,weight);
+    h_nSpectNeutronAvgVsImpact->fill(impact,nSpectNeutron,weight);
+    h_nSpectNeutronAAvgVsImpact->fill(impact,nSpectNeutronA,weight);
+    h_nSpectNeutronBAvgVsImpact->fill(impact,nSpectNeutronB,weight);
 
     }
   if (_fillMoments)
@@ -899,52 +905,52 @@ namespace CAP
     const GlauberEventMoments & momentsSystem   = event.momentsSystem();
 
     //momentsSystem
-    h_sysMeanX   ->Fill(momentsSystem._meanX,weight);
-    h_sysMeanY   ->Fill(momentsSystem._meanY,weight);
-    h_sysVarX    ->Fill(momentsSystem._varX,weight);
-    h_sysVarY    ->Fill(momentsSystem._varY,weight);
-    h_sysVarXY   ->Fill(momentsSystem._varXY,weight);
-    h_sysRmsX    ->Fill(momentsSystem._rmsX,weight);
-    h_sysRmsY    ->Fill(momentsSystem._rmsY,weight);
-    h_sysEccX    ->Fill(momentsSystem._eccX,weight);
-    h_sysEccY    ->Fill(momentsSystem._eccY,weight);
-    h_sysEcc     ->Fill(momentsSystem._ecc,weight);
-    h_sysPsi     ->Fill(momentsSystem._psi,weight);
-    h_sysMeanXVsImpact   ->Fill(impact,momentsSystem._meanX);
-    h_sysMeanYVsImpact   ->Fill(impact,momentsSystem._meanY);
-    h_sysVarXVsImpact    ->Fill(impact,momentsSystem._varX);
-    h_sysVarYVsImpact    ->Fill(impact,momentsSystem._varY);
-    h_sysVarXYVsImpact   ->Fill(impact,momentsSystem._varXY);
-    h_sysRmsXVsImpact    ->Fill(impact,momentsSystem._rmsX);
-    h_sysRmsYVsImpact    ->Fill(impact,momentsSystem._rmsY);
-    h_sysEccXVsImpact    ->Fill(impact,momentsSystem._eccX);
-    h_sysEccYVsImpact    ->Fill(impact,momentsSystem._eccY);
-    h_sysEccVsImpact     ->Fill(impact,momentsSystem._ecc);
-    h_sysPsiVsImpact     ->Fill(impact,momentsSystem._psi);
+    h_sysMeanX   ->fill(momentsSystem._meanX,weight);
+    h_sysMeanY   ->fill(momentsSystem._meanY,weight);
+    h_sysVarX    ->fill(momentsSystem._varX,weight);
+    h_sysVarY    ->fill(momentsSystem._varY,weight);
+    h_sysVarXY   ->fill(momentsSystem._varXY,weight);
+    h_sysRmsX    ->fill(momentsSystem._rmsX,weight);
+    h_sysRmsY    ->fill(momentsSystem._rmsY,weight);
+    h_sysEccX    ->fill(momentsSystem._eccX,weight);
+    h_sysEccY    ->fill(momentsSystem._eccY,weight);
+    h_sysEcc     ->fill(momentsSystem._ecc,weight);
+    h_sysPsi     ->fill(momentsSystem._psi,weight);
+    h_sysMeanXVsImpact   ->fill(impact,momentsSystem._meanX);
+    h_sysMeanYVsImpact   ->fill(impact,momentsSystem._meanY);
+    h_sysVarXVsImpact    ->fill(impact,momentsSystem._varX);
+    h_sysVarYVsImpact    ->fill(impact,momentsSystem._varY);
+    h_sysVarXYVsImpact   ->fill(impact,momentsSystem._varXY);
+    h_sysRmsXVsImpact    ->fill(impact,momentsSystem._rmsX);
+    h_sysRmsYVsImpact    ->fill(impact,momentsSystem._rmsY);
+    h_sysEccXVsImpact    ->fill(impact,momentsSystem._eccX);
+    h_sysEccYVsImpact    ->fill(impact,momentsSystem._eccY);
+    h_sysEccVsImpact     ->fill(impact,momentsSystem._ecc);
+    h_sysPsiVsImpact     ->fill(impact,momentsSystem._psi);
 //    printValue("Check",4);
 //    printValue("_nOrders",_nOrders);
 //    for (int iOrder=0; iOrder<_nOrders; ++iOrder)
 //      {
 //      printValue("iOrder",iOrder);
-//      h_sysCosPhiN[iOrder]->Fill(momentsSystem._cosPhiN[iOrder],weight);
+//      h_sysCosPhiN[iOrder]->fill(momentsSystem._cosPhiN[iOrder],weight);
 //      printValue("Check","4a");
-//      h_sysSinPhiN[iOrder]->Fill(momentsSystem._sinPhiN[iOrder],weight);
+//      h_sysSinPhiN[iOrder]->fill(momentsSystem._sinPhiN[iOrder],weight);
 //      printValue("Check","4b");
-//      h_sysRnN[iOrder]    ->Fill(momentsSystem._rN[iOrder],weight);
+//      h_sysRnN[iOrder]    ->fill(momentsSystem._rN[iOrder],weight);
 //      printValue("Check","4c");
-//      h_sysPsiN[iOrder]   ->Fill(momentsSystem._psiN[iOrder],weight);
+//      h_sysPsiN[iOrder]   ->fill(momentsSystem._psiN[iOrder],weight);
 //      printValue("Check","4d");
-//      h_sysEccN[iOrder]   ->Fill(momentsSystem._eccN[iOrder],weight);
+//      h_sysEccN[iOrder]   ->fill(momentsSystem._eccN[iOrder],weight);
 //      printValue("Check","4e");
-//      h_sysCosPhiNVsImpact[iOrder]  ->Fill(impact,momentsSystem._cosPhiN[iOrder]);
+//      h_sysCosPhiNVsImpact[iOrder]  ->fill(impact,momentsSystem._cosPhiN[iOrder]);
 //      printValue("Check","4f");
-//      h_sysSinPhiNVsImpact[iOrder]  ->Fill(impact,momentsSystem._sinPhiN[iOrder]);
+//      h_sysSinPhiNVsImpact[iOrder]  ->fill(impact,momentsSystem._sinPhiN[iOrder]);
 //      printValue("Check","4g");
-//      h_sysRnNVsImpact[iOrder]      ->Fill(impact,momentsSystem._rN[iOrder]);
+//      h_sysRnNVsImpact[iOrder]      ->fill(impact,momentsSystem._rN[iOrder]);
 //      printValue("Check","4h");
-//      h_sysPsiNVsImpact[iOrder]     ->Fill(impact,momentsSystem._psiN[iOrder]);
+//      h_sysPsiNVsImpact[iOrder]     ->fill(impact,momentsSystem._psiN[iOrder]);
 //      printValue("Check","4i");
-//      h_sysEccNVsImpact[iOrder]     ->Fill(impact,momentsSystem._eccN[iOrder]);
+//      h_sysEccNVsImpact[iOrder]     ->fill(impact,momentsSystem._eccN[iOrder]);
 //      }
     }
   if (_fillArea) calculateArea(event);
@@ -993,7 +999,7 @@ namespace CAP
   return density;
   }
 
-  void GlauberHistos::calculateAreaAt(const GlauberNucleus & nucleus, TH2* area, double mx, double my, double rMaxSq)
+  void GlauberHistos::calculateAreaAt(const GlauberNucleus & nucleus, Histogram* area, double mx, double my, double rMaxSq)
   {
  // process nucleus A
   for (auto & nucleon : nucleus.allNucleons())
@@ -1002,17 +1008,15 @@ namespace CAP
     const VectorLorentz & position = nucleon.position();
     double x = position.x()-mx;
     double y = position.y()-my;
-    TAxis * xAxis = area->GetXaxis();
-    TAxis * yAxis = area->GetYaxis();
     for (int iX=1; iX<=_area_nBins; ++iX)
       {
       for (int iY=1; iY<=_area_nBins; ++iY)
         {
-        double val=area->GetBinContent(iX,iY);
+        double val=area->binValueAt((iX)-1,(iY)-1);
         if (val>0) continue;
-        double dx = x - xAxis->GetBinCenter(iX);
-        double dy = y - yAxis->GetBinCenter(iY);
-        if (dx*dx+dy*dy<rMaxSq) area->SetBinContent(iX,iY,1.0);
+        double dx = x - area->binCenter((iX)-1,0);
+        double dy = y - area->binCenter((iY)-1,1);
+        if (dx*dx+dy*dy<rMaxSq) area->setBinValueAt(unsigned((iX)-1),unsigned((iY)-1),1.0);
         }
       }
     }
@@ -1026,8 +1030,8 @@ namespace CAP
 //  const GlauberNucleusType & typeA = nucleusA.type();
 //  const GlauberNucleusType & typeB = nucleusB.type();
   double impact = event.impactParameter();
-  h_areaA->Reset();
-  h_areaB->Reset();
+  h_areaA->reset();
+  h_areaB->reset();
 
   const double tempo = 2.0*_area_max/double(_area_nBins);
   const double dArea = tempo*tempo;
@@ -1048,8 +1052,8 @@ namespace CAP
     {
     for (int iY=1; iY<=_area_nBins; ++iY)
       {
-      double vA = h_areaA->GetBinContent(iX,iY);
-      double vB = h_areaB->GetBinContent(iX,iY);
+      double vA = h_areaA->binValueAt((iX)-1,(iY)-1);
+      double vB = h_areaB->binValueAt((iX)-1,(iY)-1);
       if (vA>0) ++overlapA;
       if (vB>0) ++overlapB;
       if (vA>0 && vB>0) ++overlapAnd;
@@ -1061,12 +1065,12 @@ namespace CAP
   double areaB       = overlapB*dArea;
   double areaOverlap = overlapAnd*dArea;
   double areaTotal   = overlapOr*dArea;
-  h_areaOverlap->Fill(areaOverlap);
-  h_areaTotal->Fill(areaTotal);
-  h_areaAVsImpact->Fill(impact,areaA);
-  h_areaBVsImpact->Fill(impact,areaB);
-  h_areaOverlapVsImpact->Fill(impact,areaOverlap);
-  h_areaTotalVsImpact->Fill(impact,areaTotal);
+  h_areaOverlap->fill(areaOverlap);
+  h_areaTotal->fill(areaTotal);
+  h_areaAVsImpact->fill(impact,areaA);
+  h_areaBVsImpact->fill(impact,areaB);
+  h_areaOverlapVsImpact->fill(impact,areaOverlap);
+  h_areaTotalVsImpact->fill(impact,areaTotal);
 
   event.setAreaOverlap(areaOverlap);
   event.setAreaAll(areaTotal);

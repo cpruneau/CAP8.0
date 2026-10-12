@@ -17,17 +17,29 @@
 
 namespace CAP
 {
+//!
+//! @brief Task computing the pair balance functions (ParticlePairBfHistos) from the derived pair histograms
+//! (ParticlePairDerivedHistos) read from files.
+//!
+//! @warning Not part of the build: its base class CalculatorBF (Calculator.hpp) does not exist.
+//!
 class ParticlePairBfCalculator
 :
 public CalculatorBF<ParticlePairDerivedHistos,ParticlePairBfHistos,2>
 {
 public:
 
+  //! @brief Default constructor.
   ParticlePairBfCalculator();
+  //! @brief Copy constructor. @param task task to copy
   ParticlePairBfCalculator(const ParticlePairBfCalculator & task);
+  //! @brief Destructor.
   virtual ~ParticlePairBfCalculator() {}
+  //! @brief Copy assignment. @param task task to copy @return this task
   ParticlePairBfCalculator & operator=(const ParticlePairBfCalculator & task);
+  //! @brief Add the default configuration.
   virtual void setDefaultConfiguration();
+  //! @brief Compute the balance functions.
   virtual void execute();
 
   ClassDef(ParticlePairBfCalculator,0)

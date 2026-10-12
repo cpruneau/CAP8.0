@@ -10,6 +10,8 @@
  *
  * *********************************************************************/
 #include "GraphConfiguration.hpp"
+#include "TAttLine.h"
+#include "TAttMarker.h"
 
 ClassImp(CAP::GraphConfiguration);
 

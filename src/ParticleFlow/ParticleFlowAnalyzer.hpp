@@ -19,6 +19,12 @@ namespace CAP
 {
 
 //!
+//! @brief Analyzer of particle flow (azimuthal anisotropy) per (event filter, particle filter) combination.
+//!
+//! @warning Work in progress, not built (ParticleFlow is not in src/CMakeLists.txt): the class is declared as
+//! NuDynAnalyzer while its members are named ParticleFlowAnalyzer, and the description below is copied from
+//! NuDynAnalyzer.
+//!
 //!Task used for the determination of multiplicity moments of second, third, and fourth order. These moments
 //!can then be used, in a "derived" stage, to compute cumulants of 2nd, 3rd, and 4th order, as well as other
 //!variables such as the nu-dynamic variable.
@@ -35,11 +41,17 @@ public EventProcessorSingle<ParticleFlowHistos,ParticleFlowDerivedHistos>
 {
 public:
   
+  //! @brief Default constructor.
   ParticleFlowAnalyzer();
+  //! @brief Copy constructor. @param analyzer analyzer to copy
   ParticleFlowAnalyzer(const ParticleFlowAnalyzer & analyzer);
+  //! @brief Copy assignment. @param analyzer analyzer to copy @return this analyzer
   ParticleFlowAnalyzer & operator=(const ParticleFlowAnalyzer & analyzer);
+  //! @brief Destructor.
   virtual ~ParticleFlowAnalyzer() {}
+  //! @brief Add the default configuration.
   virtual void setDefaultConfiguration();
+  //! @brief Analyze the current event.
   virtual void execute();
 
   ClassDef(ParticleFlowAnalyzer,0)

@@ -572,7 +572,7 @@ double GlauberMC::CalcDens(TF1 & prof, double xval, double yval) const
 
 void GlauberMC::Draw(Option_t* option)
 {
-  static TH2F *h2f = new TH2F("hGlauberMC",";x (fm);y(fm)",1,-18,18,1,-12,12);
+  static Histogram *h2f = new Histogram("hGlauberMC",";x (fm);y(fm)",1,-18,18,1,-12,12);
 
   h2f->GlauberNucleon();
   h2f->setStats(0);
@@ -629,10 +629,10 @@ TObjArray *GlauberMC::allNucleons()
   TObjArray *allNucleons=new TObjArray(_nucleonsA.size()+_nucleonsB.size());
   allNucleons->setOwner();
   for (Int_t i = 0; i<_nucleonsA.size(); ++i) {
-    allNucleons->Add(_nucleonsA->At(i));
+    allNucleons->add(*(_nucleonsA->At(i)));
   }
   for (Int_t i = 0; i<_nucleonsB.size(); ++i) {
-    allNucleons->Add(_nucleonsB->At(i));
+    allNucleons->add(*(_nucleonsB->At(i)));
   }
   _nucleonsAB = allNucleons;
   return allNucleons;
@@ -648,7 +648,7 @@ bool GlauberMC::nextEvent(double impactPar)
 
 bool GlauberMC::readNextEvent(bool calc, const char *fname)
 {
-  static TFile *inf = 0;
+  static CapFile *inf = 0;
   static Int_t iev  = 0;
   if (fname) {
     cout << "readNextEvent: setting up file " << fname << endl;
@@ -801,7 +801,7 @@ void GlauberMC::run(Int_t nevents, double b)
 
   for (Int_t i = 0; i<nevents; ++i) {
     while (!NextEvent(b)) {}
-    fNt->Fill((Float_t*)(&eventStat.nParticipants));
+    fNt->fill((Float_t*)(&eventStat.nParticipants));
     if ((i>0)&&(i%100)==0) 
       cout << "eventStat # " << i << " x-sect = " << totXSect() << " +- " << totXSectErr() << " b        \r" << flush;
   }

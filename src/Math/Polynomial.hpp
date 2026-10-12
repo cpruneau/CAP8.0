@@ -222,12 +222,12 @@ namespace CAP
   //!
   //! @brief Make this the zero polynomial: coefficients are removed, or set to zero if the degree is fixed.
   //!
-  void clear();
+  void clear() override;
 
   //! @}
 
   //! @brief Print the polynomial to std::cout.
-  virtual void print() const;
+  virtual void print() const override;
 
   //!
   //! @brief Write the polynomial as c0 + c1*x + c2*x^2 + ... to a stream.

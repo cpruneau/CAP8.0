@@ -11,7 +11,8 @@
  * *********************************************************************/
 #include "ParticleFlowDerivedHistos.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
@@ -23,7 +24,7 @@ namespace CAP
 
 ParticleFlowDerivedHistos::ParticleFlowDerivedHistos()
 :
-HistogramGroup(),
+HistogramFolder(),
 eta_fill(false),
 rapidity_fill(false),
 p2_fill(false),
@@ -65,7 +66,7 @@ h_avg_pt_phiY(nullptr)
 
 ParticleFlowDerivedHistos::ParticleFlowDerivedHistos(const ParticleFlowDerivedHistos & group)
 :
-HistogramGroup(group),
+HistogramFolder(group),
 eta_fill(group.eta_fill ),
 rapidity_fill(group.rapidity_fill ),
 p2_fill(group.p2_fill ),
@@ -107,7 +108,7 @@ ParticleFlowDerivedHistos & ParticleFlowDerivedHistos::operator=(const ParticleF
 {
   if (this!=&group)
     {
-    HistogramGroup::operator=(group);
+    HistogramFolder::operator=(group);
     eta_fill   = group.eta_fill;
     rapidity_fill     = group.rapidity_fill;
     p2_fill    = group.p2_fill;
@@ -138,17 +139,17 @@ ParticleFlowDerivedHistos & ParticleFlowDerivedHistos::operator=(const ParticleF
 void ParticleFlowDerivedHistos::cloneAll(const ParticleFlowDerivedHistos & group)
 {
   // only clone those that exist...
-  if (group.h_n1_phi) h_n1_phi       = (TH1*) group.h_n1_phi->Clone();
-  if (group.h_n1_eta) h_n1_eta       = (TH1*) group.h_n1_eta->Clone();
-  if (group.h_n1_y) h_n1_y           = (TH1*) group.h_n1_y->Clone();
-  if (group.h_spt_phi) h_spt_phi     = (TH1*) group.h_spt_phi->Clone();
-  if (group.h_spt_eta) h_spt_eta     = (TH1*) group.h_spt_eta->Clone();
-  if (group.h_spt_y) h_spt_y         = (TH1*) group.h_spt_y->Clone();
-  if (group.h_avg_pt_phi) h_avg_pt_phi       = (TH1*) group.h_avg_pt_phi->Clone();
-  if (group.h_avg_pt_eta) h_avg_pt_eta       = (TH1*) group.h_avg_pt_eta->Clone();
-  if (group.h_avg_pt_phiEta) h_avg_pt_phiEta = (TH2*) group.h_avg_pt_phiEta->Clone();
-  if (group.h_avg_pt_y) h_avg_pt_y           = (TH1*) group.h_avg_pt_y->Clone();
-  if (group.h_avg_pt_phiY) h_avg_pt_phiY     = (TH2*) group.h_avg_pt_phiY->Clone();
+  if (group.h_n1_phi) h_n1_phi       = histogramLike(group.h_n1_phi);
+  if (group.h_n1_eta) h_n1_eta       = histogramLike(group.h_n1_eta);
+  if (group.h_n1_y) h_n1_y           = histogramLike(group.h_n1_y);
+  if (group.h_spt_phi) h_spt_phi     = histogramLike(group.h_spt_phi);
+  if (group.h_spt_eta) h_spt_eta     = histogramLike(group.h_spt_eta);
+  if (group.h_spt_y) h_spt_y         = histogramLike(group.h_spt_y);
+  if (group.h_avg_pt_phi) h_avg_pt_phi       = histogramLike(group.h_avg_pt_phi);
+  if (group.h_avg_pt_eta) h_avg_pt_eta       = histogramLike(group.h_avg_pt_eta);
+  if (group.h_avg_pt_phiEta) h_avg_pt_phiEta = histogramLike(group.h_avg_pt_phiEta);
+  if (group.h_avg_pt_y) h_avg_pt_y           = histogramLike(group.h_avg_pt_y);
+  if (group.h_avg_pt_phiY) h_avg_pt_phiY     = histogramLike(group.h_avg_pt_phiY);
 }
 
 
@@ -157,7 +158,7 @@ void ParticleFlowDerivedHistos::create()
   if ( reportStart(__FUNCTION__))  {/* no ops */};
 }
 
-void ParticleFlowDerivedHistos::loadFrom(TFile & inputFile)
+void ParticleFlowDerivedHistos::loadFrom(CapFile & inputFile)
 {
 }
 
@@ -167,33 +168,33 @@ void ParticleFlowDerivedHistos::loadFrom(TFile & inputFile)
 void ParticleFlowDerivedHistos::calculateDerivedHistograms(ParticleFlowHistos & baseHistos)
 {
   String bn = parentName();
-  TH1* hTemp;
+  Histogram* hTemp;
 
   if (baseHistos.h_n1_phiEta)
     {
     if (reportDebug(__FUNCTION__)) cout << "Compute h_n1_phi" << endl;
-    hTemp = baseHistos.h_n1_phiEta->ProjectionY();
-    h_n1_phi->Add(hTemp);
+    hTemp = new Histogram(baseHistos.h_n1_phiEta->project2DOnto1D(1));
+    h_n1_phi->add(*hTemp);
     delete hTemp;
 
     if (reportDebug(__FUNCTION__)) cout << "Compute h_n1_eta" << endl;
-    hTemp = baseHistos.h_n1_phiEta->ProjectionX();
-    h_n1_eta->Add(hTemp);
+    hTemp = new Histogram(baseHistos.h_n1_phiEta->project2DOnto1D(0));
+    h_n1_eta->add(*hTemp);
     delete hTemp;
 
     if (p2_fill)
       {
 
-      hTemp = baseHistos.h_spt_phiEta->ProjectionY();
-      h_spt_phi->Add(hTemp);
+      hTemp = new Histogram(baseHistos.h_spt_phiEta->project2DOnto1D(1));
+      h_spt_phi->add(*hTemp);
       delete hTemp;
 
 
       calculateInclusiveAvg(h_spt_phi, h_n1_phi, h_avg_pt_phi);
 
 
-      hTemp = baseHistos.h_spt_phiEta->ProjectionX();
-      h_spt_eta->Add(hTemp);
+      hTemp = new Histogram(baseHistos.h_spt_phiEta->project2DOnto1D(0));
+      h_spt_eta->add(*hTemp);
       delete hTemp;
 
 
@@ -204,14 +205,14 @@ void ParticleFlowDerivedHistos::calculateDerivedHistograms(ParticleFlowHistos & 
   if (baseHistos.h_n1_phiY)
     {
 
-    hTemp = baseHistos.h_n1_phiY->ProjectionY();
-    h_n1_phi->Reset();
-    h_n1_phi->Add(hTemp);
+    hTemp = new Histogram(baseHistos.h_n1_phiY->project2DOnto1D(1));
+    h_n1_phi->reset();
+    h_n1_phi->add(*hTemp);
     delete hTemp;
 
 
-    hTemp = baseHistos.h_n1_phiY->ProjectionX();
-    h_n1_y->Add(hTemp);
+    hTemp = new Histogram(baseHistos.h_n1_phiY->project2DOnto1D(0));
+    h_n1_y->add(*hTemp);
     delete hTemp;
 
     if (p2_fill)
@@ -219,8 +220,8 @@ void ParticleFlowDerivedHistos::calculateDerivedHistograms(ParticleFlowHistos & 
       if (baseHistos.h_spt_phiY)
         {
 
-        hTemp = baseHistos.h_spt_phiY->ProjectionY();
-        h_spt_phi->Add(hTemp);
+        hTemp = new Histogram(baseHistos.h_spt_phiY->project2DOnto1D(1));
+        h_spt_phi->add(*hTemp);
         delete hTemp;
 
 
@@ -228,8 +229,8 @@ void ParticleFlowDerivedHistos::calculateDerivedHistograms(ParticleFlowHistos & 
         }
 
 
-      hTemp = baseHistos.h_spt_phiY->ProjectionX();
-      h_spt_y->Add(hTemp);
+      hTemp = new Histogram(baseHistos.h_spt_phiY->project2DOnto1D(0));
+      h_spt_y->add(*hTemp);
       delete hTemp;
 
 

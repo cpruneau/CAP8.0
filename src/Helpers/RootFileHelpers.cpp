@@ -22,18 +22,16 @@ TFile * openRootFile(const String & path,
                      bool verbose)
 {
   String fileName;
-  if (name.BeginsWith("/"))
+  if (name.beginsWith("/"))
     fileName = name;
   else
     {
     String filePath = path;
-    int slash = filePath.First('/');
-    int len   = filePath.Length();
-    if (len>0  &&  (len-1)!=slash) filePath += "/";
+    if (filePath.length()>0 && !filePath.endsWith("/")) filePath += "/";
     fileName = filePath;
     fileName += name;
     }
-  if (!fileName.EndsWith(".root")) fileName += ".root";
+  if (!fileName.endsWith(".root")) fileName += ".root";
   if (verbose)
     {
     printCR();
@@ -52,7 +50,7 @@ TFile * openRootFile(const String & name,
                      bool verbose)
 {
   String fileName = name;
-  if (!fileName.EndsWith(".root")) fileName += ".root";
+  if (!fileName.endsWith(".root")) fileName += ".root";
   if (verbose)
     {
     printCR();
@@ -155,23 +153,23 @@ std::vector<TFile*> openRootFiles(const String & path,
   return files;
 }
 
-std::vector<TString> listDirsIn(const TString & pathname,
+std::vector<String> listDirsIn(const String & pathname,
                                 bool verbose)
 {
-  TString directoryName = pathname;
-  std::vector<TString>  subdirectories;
-  if (!directoryName.EndsWith("/")) directoryName += "/";
+  String directoryName = pathname;
+  std::vector<String>  subdirectories;
+  if (!directoryName.endsWith("/")) directoryName += "/";
   if (verbose) printValue("listDirsIn() Search path",pathname);
   TSystemDirectory topDirectory(directoryName, directoryName);
   TList *files = topDirectory.GetListOfFiles();
   if (!files) throw FileException("TList* is a nullpointer","File not found/opened",__FUNCTION__);
   TSystemFile *file;
-  TString fname;
+  String fname;
   TIter next(files);
   while ((file=(TSystemFile*) next()) )
     {
     fname = file->GetName();
-    if (file->IsDirectory()   &&  !fname.BeginsWith(".")  ) subdirectories.push_back(fname);
+    if (file->IsDirectory()   &&  !fname.beginsWith(".")  ) subdirectories.push_back(fname);
     }
   return subdirectories;
 }
@@ -186,7 +184,7 @@ std::vector<String> listFilesInDir(const String & pathname,
 {
   String dirname = pathname;
   int depth = currentDepth;
-  if (!dirname.EndsWith("/")) dirname += "/";
+  if (!dirname.endsWith("/")) dirname += "/";
   if (verbose)
     {
     printCR();
@@ -205,17 +203,17 @@ std::vector<String> listFilesInDir(const String & pathname,
   while ((file=(TSystemFile*)next()))
     {
     fname = file->GetName();
-    if (file->IsDirectory()  &&  !fname.BeginsWith(".") )
+    if (file->IsDirectory()  &&  !fname.beginsWith(".") )
       {
       subdirs.push_back(fname);
       }
-    else if (fname.EndsWith(ext))
+    else if (fname.endsWith(ext))
       {
       if (prependPath)
         fileNames.push_back(dirname+fname);
       else
         fileNames.push_back(fname);
-      //std::cout << fname.Data() << std::endl;
+      //std::cout << fname.data() << std::endl;
       //if (verbose) std::cout << fname << std::endl;
       }
     }
@@ -263,7 +261,7 @@ std::vector<String>  listFilesInDir(const String & pathName,
                                     int  currentDepth)
 {
   std::vector<String> outputList;
-  std::vector<String> fileList = listFilesInDir(pathName,".root",prependPath,verbose,maximumDepth,currentDepth);
+  std::vector<String> fileList = listFilesInDir(pathName,".cap",prependPath,verbose,maximumDepth,currentDepth);
   unsigned int nNames = fileList.size();
   if (verbose)
     {
@@ -277,18 +275,18 @@ std::vector<String>  listFilesInDir(const String & pathName,
     {
     bool include = true;
     for (auto & pattern : includePatterns)
-      if (!name.Contains(pattern)) { include = false; break;}
+      if (!name.contains(pattern)) { include = false; break;}
     if (!include) continue;
     for (auto & pattern : excludePatterns)
-      if (!name.Contains(pattern)) { include = false; break;}
+      if (!name.contains(pattern)) { include = false; break;}
     if (include)
       {
-      if (name.Contains(".root"))
+      if (name.contains(".root"))
         {
-        int dot = name.First('.');
-        int len = name.Length();
+        int dot = name.first('.');
+        int len = name.length();
         if (dot==len-5 )
-          name.Remove(dot,len-dot);
+          name.remove(dot,len-dot);
         }
       //String check = pathName+name;
       //std::cout << " CHECK:::: " << check << std::endl;
@@ -301,9 +299,9 @@ std::vector<String>  listFilesInDir(const String & pathName,
 String removeRootExtension(const String fileName)
 {
   String name = fileName;
-  int dot = name.Last('.');
-  int len = name.Length();
-  if (dot==len-5 ) name.Remove(dot,len-dot);
+  int dot = name.last('.');
+  int len = name.length();
+  if (dot==len-5 ) name.remove(dot,len-dot);
   return name;
 }
 
@@ -358,20 +356,20 @@ void exportAccountant(Accountant & accountant, TFile & outputFile, bool verbose)
   String outputName;
 
   // output the number of elements
-  outputName = className;
-  outputName = "_";
-  outputName = objectName;
-  outputName = "_N";
+  outputName  = className;
+  outputName += "_";
+  outputName += objectName;
+  outputName += "_N";
   if (verbose) printValue(outputName,size);
   exportParameter(outputFile,outputName,size);
 
   unsigned int k = 0;
   for (auto value : accountant.values())
     {
-    outputName = className;
-    outputName = "_";
-    outputName = objectName;
-    outputName = "_";
+    outputName  = className;
+    outputName += "_";
+    outputName += objectName;
+    outputName += "_";
     outputName += k;
     if (verbose) printValue(outputName,value);
     exportParameter(outputFile,outputName,value);
@@ -390,10 +388,10 @@ void importAccountant(Accountant & accountant, TFile & inputFile, bool verbose)
 
   if (size==0) // need to read the size first
     {
-    inputName = className;
-    inputName = "_";
-    inputName = objectName;
-    inputName = "_N";
+    inputName  = className;
+    inputName += "_";
+    inputName += objectName;
+    inputName += "_N";
     n = importParameter(inputFile,inputName);
     if (verbose) printValue(inputName,n);
     }
@@ -401,13 +399,13 @@ void importAccountant(Accountant & accountant, TFile & inputFile, bool verbose)
     {
     n = size;
     }
-  for (unsigned int k = 0; k<size; k++)
+  for (unsigned int k = 0; k<n; k++)
     {
-    inputName = className;
-    inputName = "_";
-    inputName = objectName;
-    inputName = "_";
-    inputName = k;
+    inputName  = className;
+    inputName += "_";
+    inputName += objectName;
+    inputName += "_";
+    inputName += k;
     long value = importParameter(inputFile,inputName);
     if (verbose) printValue(inputName,value);
     if (size==0)
@@ -423,13 +421,9 @@ String makeFileName(const String & inputPath,
 {
   String inputFileName = inputPath;
   // make sure that if an inputPath is given, it ends with '/'
-  int slash = inputFileName.First('/');
-  int len   = inputFileName.Length();
-  //  std::cout << slash << std::endl;
-  //  std::cout << len << std::endl;
-  if (len>0  &&  (len-1)!=slash) inputFileName += "/";
+  if (inputFileName.length()>0 && !inputFileName.endsWith("/")) inputFileName += "/";
   inputFileName += fileName;
-  if (!inputFileName.EndsWith(extension)) inputFileName += extension;
+  if (!inputFileName.endsWith(extension)) inputFileName += extension;
   return inputFileName;
 }
 
@@ -449,7 +443,7 @@ String substitute(const String & inputString,
                   const String & newSubString)
 {
   String outputString(inputString);
-  outputString.ReplaceAll(subString,newSubString);
+  outputString.replaceAll(subString,newSubString);
   return outputString;
 }
 

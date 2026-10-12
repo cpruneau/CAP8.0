@@ -17,6 +17,10 @@ namespace CAP
 {
 
 //!
+//! @brief Task producing particle efficiency histograms from the ratios of reconstructed to generated single-particle
+//! yields of a closure test.
+//! @note Not part of the build (not listed in Performance/CMakeLists.txt).
+//!
 //! Task loads ratio histograms of single particle yields obtain for reconstructed events and generator level events (from a closure test w/o corrections) and
 //! produces a new file root file containing efficiency histograms. Nominally, there will be one histogram for each collision class present in the input file.
 //!  The name of the histograms should contain the event filter class they were calculated for and the specific single particle histogram
@@ -46,11 +50,17 @@ public ManagedList<Event>, public Analyzer
   
 public:
   
+  //! @brief Default constructor.
   CalibrationProducer();
+  //! @brief Destructor.
   virtual ~CalibrationProducer() {}
+  //! @brief Add the default configuration of the task.
   virtual void setDefaultConfiguration();
+  //! @brief Configure the task. @param configuration configuration
   virtual void configure(const Configuration & configuration);
+  //! @brief Initialize the task.
   virtual void initialize();
+  //! @brief Execute the task (process the current event).
   virtual void execute();
   
   ClassDef(CalibrationProducer,0)

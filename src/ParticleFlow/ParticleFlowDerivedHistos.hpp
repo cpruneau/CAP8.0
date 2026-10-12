@@ -11,63 +11,79 @@
  * *********************************************************************/
 #ifndef CAP__ParticleFlowDerivedHistos
 #define CAP__ParticleFlowDerivedHistos
+#include "Profile.hpp"
 #include "ParticleFlowHistos.hpp"
 
 namespace CAP
 {
 
-class ParticleFlowDerivedHistos : public HistogramGroup
+//!
+//! @brief Histograms derived from the particle flow histograms: projections of the densities and pT sums, average pT.
+//! @warning Work in progress, not built (loadFrom() has a syntax error in its declaration).
+//!
+class ParticleFlowDerivedHistos : public HistogramFolder
 {
 public:
 
+  //! @brief Default constructor.
   ParticleFlowDerivedHistos();
+  //! @brief Copy constructor. @param group group to copy
   ParticleFlowDerivedHistos(const ParticleFlowDerivedHistos & group);
+  //! @brief Copy assignment. @param group group to copy @return this group
   ParticleFlowDerivedHistos & operator=(const ParticleFlowDerivedHistos & group);
+  //! @brief Destructor.
   virtual ~ParticleFlowDerivedHistos() {}
+  //! @brief Create the derived histograms.
   virtual void create();
-  virtual void loadFrom(TFile & inputFile,);
+  //! @brief Load the derived histograms from a file. @param inputFile file
+  virtual void loadFrom(CapFile & inputFile,);
+  //! @brief Compute the derived histograms. @param baseHistos base histograms
   virtual void calculateDerivedHistograms(ParticleFlowHistos & baseHistos);
+  //! @brief Copy the content of another group. @param group group to copy
   void cloneAll(const ParticleFlowDerivedHistos & group);
 
 
   ////////////////////////////////////////////////////////////////////////////
-  // Data Members - HistogramGroup
+  // Data Members - HistogramFolder
   ////////////////////////////////////////////////////////////////////////////
+  //! Whether the eta histograms are filled.
   bool eta_fill;
+  //! Whether the rapidity histograms are filled.
   bool rapidity_fill;
+  //! Whether the pT-weighted histograms are filled.
   bool p2_fill;
-  unsigned int n1_nbins;
-  float        n1_min;
-  float        n1_max;
-  unsigned int pt_nbins;
-  float        pt_min;
-  float        pt_max;
-  float        pt_scale;
-  unsigned int phi_nbins;
-  float        phi_min;
-  float        phi_max;
-  float        phi_scale;
-  unsigned int eta_nbins;
-  float        eta_min;
-  float        eta_max;
+  unsigned int n1_nbins;  ///< number of bins of the multiplicity axis
+  float        n1_min;  ///< lower edge of the multiplicity axis
+  float        n1_max;  ///< upper edge of the multiplicity axis
+  unsigned int pt_nbins;  ///< number of bins of the pT axis
+  float        pt_min;  ///< lower edge of the pT axis
+  float        pt_max;  ///< upper edge of the pT axis
+  float        pt_scale;  ///< inverse bin width of the pT axis
+  unsigned int phi_nbins;  ///< number of bins of the azimuth axis
+  float        phi_min;  ///< lower edge of the azimuth axis
+  float        phi_max;  ///< upper edge of the azimuth axis
+  float        phi_scale;  ///< inverse bin width of the azimuth axis
+  unsigned int eta_nbins;  ///< number of bins of the pseudorapidity axis
+  float        eta_min;  ///< lower edge of the pseudorapidity axis
+  float        eta_max;  ///< upper edge of the pseudorapidity axis
   float        eta_range;
-  unsigned int rapidity_nbins;
-  float        rapidity_minimum;
-  float        rapidity_maximum;
+  unsigned int rapidity_nbins;  ///< number of bins of the rapidity axis
+  float        rapidity_minimum;  ///< lower edge of the rapidity axis
+  float        rapidity_maximum;  ///< upper edge of the rapidity axis
   float        range_y;
 
-  TH1 * h_n1_phi;
-  TH1 * h_n1_eta;
-  TH1 * h_n1_y;
+  Histogram * h_n1_phi;  ///< single-particle density vs phi
+  Histogram * h_n1_eta;  ///< single-particle density vs eta
+  Histogram * h_n1_y;  ///< single-particle density vs y
 
-  TH1 * h_spt_phi;
-  TH1 * h_spt_eta;
-  TH1 * h_spt_y;
-  TH1 * h_avg_pt_phi;
-  TH1 * h_avg_pt_eta;
-  TH2 * h_avg_pt_phiEta;
-  TH1 * h_avg_pt_y;
-  TH2 * h_avg_pt_phiY;
+  Histogram * h_spt_phi;  ///< pT-weighted density vs phi
+  Histogram * h_spt_eta;  ///< pT-weighted density vs eta
+  Histogram * h_spt_y;  ///< pT-weighted density vs y
+  Histogram * h_avg_pt_phi;  ///< average pT vs phi
+  Histogram * h_avg_pt_eta;  ///< average pT vs eta
+  Histogram * h_avg_pt_phiEta;  ///< average pT vs (eta, phi)
+  Histogram * h_avg_pt_y;  ///< average pT vs y
+  Histogram * h_avg_pt_phiY;  ///< average pT vs (y, phi)
 
   ClassDef(ParticleFlowDerivedHistos,0)
 

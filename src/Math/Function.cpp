@@ -11,6 +11,15 @@ namespace CAP
 
   Function::Function(unsigned int rank)
   :
+  Object("Function","Function","Function"),
+  _rank(1)
+  {
+  setRank(rank);
+  }
+
+  Function::Function(const String & name, const String & title, const String & className, unsigned int rank)
+  :
+  Object(name,title,className),
   _rank(1)
   {
   setRank(rank);
@@ -18,6 +27,7 @@ namespace CAP
 
   Function::Function(const Function & source)
   :
+  Object(source),
   _rank(source._rank)
   {}
 
@@ -25,6 +35,7 @@ namespace CAP
   {
   if (this != &rhs)
     {
+    Object::operator=(rhs);
     _rank = rhs._rank;
     }
   return *this;

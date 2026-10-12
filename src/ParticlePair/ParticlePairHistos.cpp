@@ -15,7 +15,8 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::ParticlePairHistos);
 
@@ -23,7 +24,7 @@ namespace CAP
 {
   ParticlePairHistos::ParticlePairHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   eta_fill(false),
   rapidity_fill(false),
   p2_fill(false),
@@ -80,7 +81,7 @@ namespace CAP
 
   ParticlePairHistos::ParticlePairHistos(const ParticlePairHistos & source)
   :
-  HistogramGroup(),
+  HistogramFolder(),
   eta_fill(source.eta_fill),
   rapidity_fill(source.rapidity_fill),
   p2_fill(source.p2_fill),
@@ -138,7 +139,7 @@ namespace CAP
   if (reportDebug(__FUNCTION__)) { printCR(); }
   if (this!=&source)
     {
-    HistogramGroup::operator=(source);
+    HistogramFolder::operator=(source);
     eta_fill      =  source.eta_fill;
     rapidity_fill =  source.rapidity_fill;
     p2_fill       =  source.p2_fill;
@@ -183,18 +184,18 @@ namespace CAP
   void ParticlePairHistos::cloneB(const ParticlePairHistos & source)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_n2              = safeCloneH1(source.h_n2);
-  h_n2_ptpt         = safeCloneH2(source.h_n2_ptpt);
-  h_n2_etaeta       = safeCloneH2(source.h_n2_etaeta);
-  h_DptDpt_etaeta   = safeCloneH2(source.h_DptDpt_etaeta);
-  h_n2_phiphi       = safeCloneH2(source.h_n2_phiphi);
-  h_DptDpt_phiphi   = safeCloneH2(source.h_DptDpt_phiphi);
-  h_n2_yY           = safeCloneH2(source.h_n2_yY);
-  h_DptDpt_yY       = safeCloneH2(source.h_DptDpt_yY);
-  h_n2_DetaDphi     = safeCloneH2(source.h_n2_DetaDphi);
-  h_DptDpt_DetaDphi = safeCloneH2(source.h_DptDpt_DetaDphi);
-  h_n2_DyDphi       = safeCloneH2(source.h_n2_DyDphi);
-  h_DptDpt_DyDphi   = safeCloneH2(source.h_DptDpt_DyDphi);
+  h_n2              = histogramLike(source.h_n2);
+  h_n2_ptpt         = histogramLike(source.h_n2_ptpt);
+  h_n2_etaeta       = histogramLike(source.h_n2_etaeta);
+  h_DptDpt_etaeta   = histogramLike(source.h_DptDpt_etaeta);
+  h_n2_phiphi       = histogramLike(source.h_n2_phiphi);
+  h_DptDpt_phiphi   = histogramLike(source.h_DptDpt_phiphi);
+  h_n2_yY           = histogramLike(source.h_n2_yY);
+  h_DptDpt_yY       = histogramLike(source.h_DptDpt_yY);
+  h_n2_DetaDphi     = histogramLike(source.h_n2_DetaDphi);
+  h_DptDpt_DetaDphi = histogramLike(source.h_DptDpt_DetaDphi);
+  h_n2_DyDphi       = histogramLike(source.h_n2_DyDphi);
+  h_DptDpt_DyDphi   = histogramLike(source.h_DptDpt_DyDphi);
   }
 
   void ParticlePairHistos::configure(const String & taskName,
@@ -203,7 +204,7 @@ namespace CAP
                                      unsigned int index)
   {
   String objectType = "HISTOGRAM";
-  HistogramGroup::configure(taskName,type,configuration,index);
+  HistogramFolder::configure(taskName,type,configuration,index);
   eta_fill         = configuration.valueBool(createKey(taskName,objectType,"eta_fill"));
   rapidity_fill    = configuration.valueBool(createKey(taskName,objectType,"rapidity_fill"));
   p2_fill          = configuration.valueBool(createKey(taskName,objectType,"p2_fill"));
@@ -319,36 +320,36 @@ namespace CAP
     }
   }
 
-  void ParticlePairHistos::loadFrom(TFile & inputFile)
+  void ParticlePairHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_n2          = importH1(inputFile,createName(_histogramBaseName,"n2"));
-  h_n2_ptpt     = importH2(inputFile,createName(_histogramBaseName,"n2_ptpt"));
-  h_n2_phiphi   = importH2(inputFile,createName(_histogramBaseName,"n2_phiphi"));
+  h_n2          = importHistogram(inputFile,createName(_histogramBaseName,"n2"));
+  h_n2_ptpt     = importHistogram(inputFile,createName(_histogramBaseName,"n2_ptpt"));
+  h_n2_phiphi   = importHistogram(inputFile,createName(_histogramBaseName,"n2_phiphi"));
 
   if (p2_fill)
     {
-    h_DptDpt_phiphi = importH2(inputFile,createName(_histogramBaseName,"ptpt_phiphi"));
+    h_DptDpt_phiphi = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_phiphi"));
     }
 
   if (eta_fill)
     {
-    h_n2_etaeta   = importH2(inputFile,createName(_histogramBaseName,"n2_etaeta"));
-    h_n2_DetaDphi = importH2(inputFile,createName(_histogramBaseName,"n2_DetaDphi"));
+    h_n2_etaeta   = importHistogram(inputFile,createName(_histogramBaseName,"n2_etaeta"));
+    h_n2_DetaDphi = importHistogram(inputFile,createName(_histogramBaseName,"n2_DetaDphi"));
     if (p2_fill)
       {
-      h_DptDpt_etaeta   = importH2(inputFile,createName(_histogramBaseName,"ptpt_etaeta"));
-      h_DptDpt_DetaDphi = importH2(inputFile,createName(_histogramBaseName,"ptpt_DetaDphi"));
+      h_DptDpt_etaeta   = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_etaeta"));
+      h_DptDpt_DetaDphi = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_DetaDphi"));
       }
     }
   if (rapidity_fill)
     {
-    h_n2_yY     = importH2(inputFile,createName(_histogramBaseName,"n2_yY"));
-    h_n2_DyDphi = importH2(inputFile,createName(_histogramBaseName,"n2_DyDphi"));
+    h_n2_yY     = importHistogram(inputFile,createName(_histogramBaseName,"n2_yY"));
+    h_n2_DyDphi = importHistogram(inputFile,createName(_histogramBaseName,"n2_DyDphi"));
     if (p2_fill)
       {
-      h_DptDpt_yY     = importH2(inputFile,createName(_histogramBaseName,"ptpt_yY"));
-      h_DptDpt_DyDphi = importH2(inputFile,createName(_histogramBaseName,"ptpt_DyDphi"));
+      h_DptDpt_yY     = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_yY"));
+      h_DptDpt_DyDphi = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_DyDphi"));
       }
     }
   }
@@ -358,12 +359,6 @@ namespace CAP
   {
   int iPhi1, iPt1, iEta1, iY1;
   int iPhi2, iPt2, iEta2, iY2;
-  int iGptpt;
-  int iGphiphi;
-  int iGetaeta;
-  int iGYY;
-  int iGDeltaEtaDeltaPhi;
-  int iGDeltaYDeltaPhi;
 
   VectorLorentz & momentum1 = particle1.momentum();
   double pt1   = momentum1.perp();  iPt1 = ptBinFor(pt1);
@@ -386,105 +381,74 @@ namespace CAP
   double eta2  = momentum2.pseudorapidity(); iEta2 = eta_fill      ? getEtaBinFor(eta2) : 0;
   double y2    = momentum2.rapidity();       iY2   = rapidity_fill ? getYBinFor(y2)     : 0;
 
+  // bin indices from the *BinFor() functions start at 1; 0 means out of range
   if (iPt1==0  || iPt2==0)  return;
-  if (iPhi1==0 || iPhi1==0) return;
+  if (iPhi1==0 || iPhi2==0) return;
   if (iEta1==0  &&  iY1==0) return;
   if (iEta2==0  &&  iY2==0) return;
   int iDeltaEta  = iEta1-iEta2 + eta_nbins-1;
   int iDeltaY    = iY1-iY2 + rapidity_nbins-1;
   int iDeltaPhi  = iPhi1-iPhi2;
   if (iDeltaPhi < 0) iDeltaPhi += phi_nbins;
-  //cout <<  "iDeltaY:" << iDeltaY << " iDeltaPhi: " << iDeltaPhi << endl;
-  p2_fill = false;
-  rapidity_fill  = true;
-  //  printValue("ParticlePairHistos::fill() iPt1",iPt1);
-  //  printValue("ParticlePairHistos::fill() iPt2",iPt2);
   if (!h_n2_ptpt) throw Exception("!h_n2_ptpt",__FUNCTION__);
   if (!h_n2_phiphi) throw Exception("!h_n2_phiphi",__FUNCTION__);
-  // printValue("ParticlePairHistos::fill()",6);
-  iGptpt   = h_n2_ptpt->GetBin(iPt1,iPt2);
-  //printValue("ParticlePairHistos::fill()",7);
-  iGphiphi = h_n2_phiphi->GetBin(iPhi1,iPhi2);
-  //printValue("ParticlePairHistos::fill()",8);
-  h_n2_ptpt   ->AddBinContent(iGptpt,    weight);  h_n2_ptpt  ->SetEntries(h_n2_ptpt  ->GetEntries()+1);
-  h_n2_phiphi ->AddBinContent(iGphiphi,  weight);  h_n2_phiphi->SetEntries(h_n2_phiphi->GetEntries()+1);
-  //printValue("ParticlePairHistos::fill()",9);
-
-  if (p2_fill)
-    {
-    //printValue("ParticlePairHistos::fill()",10);
-
-    h_DptDpt_phiphi->AddBinContent(iGphiphi,weight*pt1*pt2);
-    h_DptDpt_phiphi->SetEntries(h_DptDpt_phiphi->GetEntries()+1);
-    }
-  //printValue("ParticlePairHistos::fill()",11);
+  double ptpt = weight*pt1*pt2;
+  h_n2_ptpt  ->fillBin(iPt1-1,  iPt2-1,  weight);
+  h_n2_phiphi->fillBin(iPhi1-1, iPhi2-1, weight);
+  if (p2_fill) h_DptDpt_phiphi->fillBin(iPhi1-1,iPhi2-1,ptpt);
 
   if (eta_fill  &&  iEta1!=0  &&  iEta2!=0 )
     {
-    //printValue("ParticlePairHistos::fill()",12);
-
-    iGetaeta           = h_n2_etaeta->GetBin(iEta1,iEta2);
-    iGDeltaEtaDeltaPhi = h_n2_DetaDphi->GetBin(iDeltaEta+1,iDeltaPhi+1);
-    h_n2_etaeta->AddBinContent(iGetaeta,weight);             h_n2_etaeta  ->SetEntries(h_n2_etaeta  ->GetEntries()+1);
-    h_n2_DetaDphi->AddBinContent(iGDeltaEtaDeltaPhi,weight); h_n2_DetaDphi->SetEntries(h_n2_DetaDphi->GetEntries()+1);
-
+    h_n2_etaeta  ->fillBin(iEta1-1,  iEta2-1,   weight);
+    h_n2_DetaDphi->fillBin(iDeltaEta,iDeltaPhi, weight);
     if (p2_fill)
       {
-      h_DptDpt_etaeta   ->AddBinContent(iGetaeta,           weight*pt1*pt2); h_DptDpt_etaeta->SetEntries(h_DptDpt_etaeta    ->GetEntries()+1);
-      h_DptDpt_DetaDphi ->AddBinContent(iGDeltaEtaDeltaPhi, weight*pt1*pt2); h_DptDpt_DetaDphi->SetEntries(h_DptDpt_DetaDphi->GetEntries()+1);
+      h_DptDpt_etaeta  ->fillBin(iEta1-1,  iEta2-1,   ptpt);
+      h_DptDpt_DetaDphi->fillBin(iDeltaEta,iDeltaPhi, ptpt);
       }
     }
-  //printValue("ParticlePairHistos::fill()",13);
 
   if (rapidity_fill  &&  iY1!=0  &&  iY2!=0 )
     {
-    //printValue("ParticlePairHistos::fill()",14);
-
-    iGYY             = h_n2_yY->GetBin(iY1,iY2);
-    iGDeltaYDeltaPhi = h_n2_DyDphi->GetBin(iDeltaY+1,iDeltaPhi+1);
-    h_n2_yY      ->AddBinContent(iGYY,weight);              h_n2_yY      ->SetEntries(h_n2_yY      ->GetEntries()+1);
-    h_n2_DyDphi  ->AddBinContent(iGDeltaYDeltaPhi,weight);  h_n2_DyDphi  ->SetEntries(h_n2_DyDphi  ->GetEntries()+1);
+    h_n2_yY    ->fillBin(iY1-1,  iY2-1,   weight);
+    h_n2_DyDphi->fillBin(iDeltaY,iDeltaPhi, weight);
     if (p2_fill)
       {
-      //printValue("ParticlePairHistos::fill()",15);
-
-      h_DptDpt_yY     ->AddBinContent(iGYY, weight*pt1*pt2);               h_DptDpt_yY ->SetEntries(   h_DptDpt_yY     ->GetEntries()+1);
-      h_DptDpt_DyDphi ->AddBinContent(iGDeltaEtaDeltaPhi, weight*pt1*pt2); h_DptDpt_DyDphi->SetEntries(h_DptDpt_DyDphi->GetEntries()+1);
+      h_DptDpt_yY    ->fillBin(iY1-1,  iY2-1,   ptpt);
+      h_DptDpt_DyDphi->fillBin(iDeltaY,iDeltaPhi, ptpt);
       }
     }
-  //printValue("ParticlePairHistos::fill()",20);
-
   }
 
   void ParticlePairHistos::fillMultiplicity(double nPairs, double weight)
   {
-  h_n2->Fill(nPairs, weight);
+  h_n2->fill(nPairs, weight);
   }
 
   void ParticlePairHistos::scaleObject(double factor)
   {
-  h_n2->Scale(factor);
-  h_n2_ptpt->Scale(factor);
-  h_n2_phiphi->Scale(factor);
-  if (p2_fill) h_DptDpt_phiphi->Scale(factor);
+  h_n2->scale(factor);
+  h_n2_ptpt->scale(factor);
+  h_n2_phiphi->scale(factor);
+  if (p2_fill) h_DptDpt_phiphi->scale(factor);
   if (eta_fill)
     {
-    h_n2_etaeta->Scale(factor);
-    h_n2_DetaDphi->Scale(factor);
+    h_n2_etaeta->scale(factor);
+    h_n2_DetaDphi->scale(factor);
     if (p2_fill)
       {
-      h_DptDpt_etaeta->Scale(factor);
-      h_DptDpt_DetaDphi->Scale(factor);
+      h_DptDpt_etaeta->scale(factor);
+      h_DptDpt_DetaDphi->scale(factor);
       }
     }
   if (rapidity_fill)
     {
-    h_n2_yY->Scale(factor);
-    h_n2_DyDphi->Scale(factor);
+    h_n2_yY->scale(factor);
+    h_n2_DyDphi->scale(factor);
     if (p2_fill)
       {
-      h_DptDpt_yY->Scale(factor);
-      h_DptDpt_DyDphi->Scale(factor);
+      h_DptDpt_yY->scale(factor);
+      h_DptDpt_DyDphi->scale(factor);
       }
     }
   }

@@ -10,7 +10,7 @@
  *
  * *********************************************************************/
 #include "BalanceFunctionCalculator.hpp"
-#include "HistogramGroup.hpp"
+#include "HistogramFolder.hpp"
 #include "MathConstants.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
@@ -137,246 +137,246 @@ void BalanceFunctionCalculator::setDefaultConfiguration()
 }
 
 
-TH2* BalanceFunctionCalculator::calculate_CI(const String & histoBaseName,
+Histogram* BalanceFunctionCalculator::calculate_CI(const String & histoBaseName,
                                              const String & en,
                                              const String & pn1,
                                              const String & pn2,
                                              const String & obsName,
-                                             TH2* obs_1_2,
-                                             TH2* obs_1Bar_2,
-                                             TH2* obs_1_2Bar,
-                                             TH2* obs_1Bar_2Bar,
-                                             HistogramGroup * hGroup)
+                                             Histogram* obs_1_2,
+                                             Histogram* obs_1Bar_2,
+                                             Histogram* obs_1_2Bar,
+                                             Histogram* obs_1Bar_2Bar,
+                                             HistogramFolder * hGroup)
 {
   String name = createName(name(),en,pn1,pn2,obsName, "CI" );
-  TH2 * obs;
-  TH1 * obs_x;
-  TH1 * obs_y;
-  obs = (TH2*) obs_1Bar_2->Clone();
-  obs->SetName(name);
-  obs->SetTitle(name);
-  obs->Add(obs_1_2Bar);
-  obs->Add(obs_1_2);
-  obs->Add(obs_1Bar_2Bar);
-  obs->Scale(0.25);
+  Histogram * obs;
+  Histogram * obs_x;
+  Histogram * obs_y;
+  obs = obs_1Bar_2->clone();
+  obs->setName(name);
+  obs->setTitle(name);
+  obs->add(*obs_1_2Bar);
+  obs->add(*obs_1_2);
+  obs->add(*obs_1Bar_2Bar);
+  obs->scale(0.25);
   hGroup->push_back(obs);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,"CI_x");
-  obs_x = obs->ProjectionX();
-  obs_x->SetName(name);
-  obs_x->SetTitle(name);
+  obs_x = new Histogram(obs->project2DOnto1D(0));
+  obs_x->setName(name);
+  obs_x->setTitle(name);
   hGroup->push_back(obs_x);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,"CI_y");
-  obs_y = obs->ProjectionY();
-  obs_y->SetName(name);
-  obs_y->SetTitle(name);
+  obs_y = new Histogram(obs->project2DOnto1D(1));
+  obs_y->setName(name);
+  obs_y->setTitle(name);
   hGroup->push_back(obs_y);
 
   return obs;
 }
 
-TH2* BalanceFunctionCalculator::calculate_CD(const String & histoBaseName,
+Histogram* BalanceFunctionCalculator::calculate_CD(const String & histoBaseName,
                                              const String & en,
                                              const String & pn1,
                                              const String & pn2,
                                              const String & obsName,
-                                             TH2* obs_1_2,
-                                             TH2* obs_1Bar_2,
-                                             TH2* obs_1_2Bar,
-                                             TH2* obs_1Bar_2Bar,
-                                             HistogramGroup * hGroup)
+                                             Histogram* obs_1_2,
+                                             Histogram* obs_1Bar_2,
+                                             Histogram* obs_1_2Bar,
+                                             Histogram* obs_1Bar_2Bar,
+                                             HistogramFolder * hGroup)
 {
   String name = createName(histoBaseName,en,pn1,pn2,obsName, "CD" );
-  TH2 * obs;
-  TH1 * obs_x;
-  TH1 * obs_y;
-  obs = (TH2*) obs_1Bar_2->Clone();
-  obs->SetName(name);
-  obs->SetTitle(name);
-  obs->Add(obs_1_2Bar);
-  obs->Add(obs_1_2, -1.0);
-  obs->Add(obs_1Bar_2Bar, -1.0);
-  obs->Scale(0.5);
+  Histogram * obs;
+  Histogram * obs_x;
+  Histogram * obs_y;
+  obs = obs_1Bar_2->clone();
+  obs->setName(name);
+  obs->setTitle(name);
+  obs->add(*obs_1_2Bar);
+  obs->add(*obs_1_2,-1.0);
+  obs->add(*obs_1Bar_2Bar,-1.0);
+  obs->scale(0.5);
   hGroup->push_back(obs);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,"CD_x");
-  obs_x = obs->ProjectionX();
-  obs_x->SetName(name);
-  obs_x->SetTitle(name);
+  obs_x = new Histogram(obs->project2DOnto1D(0));
+  obs_x->setName(name);
+  obs_x->setTitle(name);
   hGroup->push_back(obs_x);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,"CD_y");
-  obs_y = obs->ProjectionY();
-  obs_y->SetName(name);
-  obs_y->SetTitle(name);
+  obs_y = new Histogram(obs->project2DOnto1D(1));
+  obs_y->setName(name);
+  obs_y->setTitle(name);
   hGroup->push_back(obs_y);
 
   return obs;
 }
 
-TH2* BalanceFunctionCalculator::calculate_BalFct(const String & histoBaseName,
+Histogram* BalanceFunctionCalculator::calculate_BalFct(const String & histoBaseName,
                                                  const String & en,
                                                  const String & pn1,
                                                  const String & pn2,
                                                  const String & obsName,
                                                  const String & comboName,
-                                                 TH1* rho1_2,
-                                                 TH2* obs_US,
-                                                 TH2* obs_LS,
-                                                 HistogramGroup * hGroup)
+                                                 Histogram* rho1_2,
+                                                 Histogram* obs_US,
+                                                 Histogram* obs_LS,
+                                                 HistogramFolder * hGroup)
 {
   String name = createName(histoBaseName,en,pn1,pn2,obsName,comboName);
-  TH2 * obs;
-  TH1 * obs_x;
-  TH1 * obs_y;
-  obs = (TH2*) obs_US->Clone();
-  obs->SetName(name);
-  obs->SetTitle(name);
-  obs->Add(obs_LS, -1.0);
+  Histogram * obs;
+  Histogram * obs_x;
+  Histogram * obs_y;
+  obs = obs_US->clone();
+  obs->setName(name);
+  obs->setTitle(name);
+  obs->add(*obs_LS,-1.0);
 
-  double wx = obs->GetXaxis()->GetBinWidth(1);
-  //double wy = obs->GetYaxis()->GetBinWidth(1);
-  obs->Scale(1.0/wx); // make this a function of delta y
-  double rho1Integral = rho1_2->Integral();
+  double wx = obs->binWidth(0,0);
+  //double wy = obs->binWidth(0,1);
+  obs->scale(1.0/wx); // make this a function of delta y
+  double rho1Integral = rho1_2->integral();
   printValue("rho1Integral",rho1Integral);
-  //obs->Scale(1.0/rho1Integral);
+  //obs->scale(1.0/rho1Integral);
   hGroup->push_back(obs);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_x");
-  obs_x = obs->ProjectionX();
-  obs_x->SetName(name);
-  obs_x->SetTitle(name);
+  obs_x = new Histogram(obs->project2DOnto1D(0));
+  obs_x->setName(name);
+  obs_x->setTitle(name);
   hGroup->push_back(obs_x);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_y");
-  obs_y = obs->ProjectionY();
-  obs_y->SetName(name);
-  obs_y->SetTitle(name);
+  obs_y = new Histogram(obs->project2DOnto1D(1));
+  obs_y->setName(name);
+  obs_y->setTitle(name);
   hGroup->push_back(obs_y);
 
   return obs;
 }
 
-TH2* BalanceFunctionCalculator::calculate_BalFctSum(const String & histoBaseName,
+Histogram* BalanceFunctionCalculator::calculate_BalFctSum(const String & histoBaseName,
                                                     const String & en,
                                                     const String & pn1,
                                                     const String & pn2,
                                                     const String & obsName,
                                                     const String & comboName,
-                                                    TH2* obs_12Bar,
-                                                    TH2* obs_1Bar2,
-                                                    HistogramGroup * hGroup)
+                                                    Histogram* obs_12Bar,
+                                                    Histogram* obs_1Bar2,
+                                                    HistogramFolder * hGroup)
 {
   String name = createName(histoBaseName,en,pn1,pn2,obsName,comboName);
-  TH2 * obs;
-  TH1 * obs_x;
-  TH1 * obs_y;
-  obs = (TH2*) obs_12Bar->Clone();
-  obs->SetName(name);
-  obs->SetTitle(name);
-  obs->Add(obs_1Bar2, 1.0);
+  Histogram * obs;
+  Histogram * obs_x;
+  Histogram * obs_y;
+  obs = obs_12Bar->clone();
+  obs->setName(name);
+  obs->setTitle(name);
+  obs->add(*obs_1Bar2,1.0);
 
-  //double rho1Integral = rho1_2->Integral();
-  //obs->Scale(0.5/wx);
-  obs->Scale(0.5);
+  //double rho1Integral = rho1_2->integral();
+  //obs->scale(0.5/wx);
+  obs->scale(0.5);
   hGroup->push_back(obs);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_x");
-  obs_x = obs->ProjectionX();
-  obs_x->SetName(name);
-  obs_x->SetTitle(name);
+  obs_x = new Histogram(obs->project2DOnto1D(0));
+  obs_x->setName(name);
+  obs_x->setTitle(name);
   hGroup->push_back(obs_x);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_y");
-  obs_y = obs->ProjectionY();
-  obs_y->SetName(name);
-  obs_y->SetTitle(name);
+  obs_y = new Histogram(obs->project2DOnto1D(1));
+  obs_y->setName(name);
+  obs_y->setTitle(name);
   hGroup->push_back(obs_y);
 
   return obs;
 }
 
-//TH2* BalanceFunctionCalculator::calculate_BalFct2(const String & histoBaseName,
+//Histogram* BalanceFunctionCalculator::calculate_BalFct2(const String & histoBaseName,
 //                                                  const String & en,
 //                                                  const String & pn1,
 //                                                  const String & pn2,
 //                                                  const String & obsName,
 //                                                  const String & comboName,
-//                                                  TH1* rho1_1,
-//                                                  TH1* rho1_2,
-//                                                  TH2* obs_US,
-//                                                  TH2* obs_LS,
-//                                                  HistogramGroup * hGroup)
+//                                                  Histogram* rho1_1,
+//                                                  Histogram* rho1_2,
+//                                                  Histogram* obs_US,
+//                                                  Histogram* obs_LS,
+//                                                  HistogramFolder * hGroup)
 //{
 //  String name = createName(histoBaseName,en,pn1,pn2,obsName,comboName);
-//  TH2 * obs;
-//  TH1 * obs_x;
-//  TH1 * obs_y;
-//  double rho1_1_Integral = rho1_1->Integral();
-//  //double rho1_2_Integral = rho1_2->Integral();
+//  Histogram * obs;
+//  Histogram * obs_x;
+//  Histogram * obs_y;
+//  double rho1_1_Integral = rho1_1->integral();
+//  //double rho1_2_Integral = rho1_2->integral();
 //
-////  double low  = rho1_1->GetXaxis()->GetXmin();
-////  double high = rho1_1->GetXaxis()->GetXmax();
+////  double low  = rho1_1->minimum(0);
+////  double high = rho1_1->maximum(0);
 ////  double yieldA = yieldA/(high-low)/CAP::MATH::twoPi();
 ////  double yieldB = yieldB/(high-low)/CAP::MATH::twoPi();
 //
 //
-//  obs = (TH2*) obs_US->Clone();
-//  obs->SetName(name);
-//  obs->SetTitle(name);
-//  obs->Add(obs_LS, -1.0);
-//  obs->Scale(rho1_1_Integral);
+//  obs = obs_US->clone();
+//  obs->setName(name);
+//  obs->setTitle(name);
+//  obs->add(*obs_LS,-1.0);
+//  obs->scale(rho1_1_Integral);
 //  hGroup->push_back(obs);
 //
 //  name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_x");
-//  obs_x = obs->ProjectionX();
-//  obs_x->SetName(name);
-//  obs_x->SetTitle(name);
+//  obs_x = new Histogram(obs->project2DOnto1D(0));
+//  obs_x->setName(name);
+//  obs_x->setTitle(name);
 //  hGroup->push_back(obs_x);
 //
 //  name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_y");
-//  obs_y = obs->ProjectionY();
-//  obs_y->SetName(name);
-//  obs_y->SetTitle(name);
+//  obs_y = new Histogram(obs->project2DOnto1D(1));
+//  obs_y->setName(name);
+//  obs_y->setTitle(name);
 //  hGroup->push_back(obs_y);
 //
 //  return obs;
 //}
 
-//TH2* BalanceFunctionCalculator::calculate_BalFct3(const String & histoBaseName,
+//Histogram* BalanceFunctionCalculator::calculate_BalFct3(const String & histoBaseName,
 //                                                  const String & en,
 //                                                  const String & pn1,
 //                                                  const String & pn2,
 //                                                  const String & obsName,
 //                                                  const String & comboName,
-//                                                  TH1* rho1_2 __attribute__((unused)),
-//                                                  TH2* obs_US,
-//                                                  TH2* obs_LS,
-//                                                  HistogramGroup * hGroup)
+//                                                  Histogram* rho1_2 __attribute__((unused)),
+//                                                  Histogram* obs_US,
+//                                                  Histogram* obs_LS,
+//                                                  HistogramFolder * hGroup)
 //{
 //  String name = createName(histoBaseName,en,pn1,pn2,obsName,comboName);
-//  TH2 * obs;
-//  TH1 * obs_x;
-//  TH1 * obs_y;
-//  obs = (TH2*) obs_US->Clone();
-//  obs->SetName(name);
-//  obs->SetTitle(name);
-//  obs->Add(obs_LS, -1.0);
+//  Histogram * obs;
+//  Histogram * obs_x;
+//  Histogram * obs_y;
+//  obs = obs_US->clone();
+//  obs->setName(name);
+//  obs->setTitle(name);
+//  obs->add(*obs_LS,-1.0);
 ////  double rho1Integral = rho1_2->Integral("Width");
-////  obs->Scale(rho1Integral);
+////  obs->scale(rho1Integral);
 //  hGroup->push_back(obs);
 //
 //  name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_x");
-//  obs_x = obs->ProjectionX();
-//  obs_x->SetName(name);
-//  obs_x->SetTitle(name);
+//  obs_x = new Histogram(obs->project2DOnto1D(0));
+//  obs_x->setName(name);
+//  obs_x->setTitle(name);
 //  hGroup->push_back(obs_x);
 //
 //  name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_y");
-//  obs_y = obs->ProjectionY();
-//  obs_y->SetName(name);
-//  obs_y->SetTitle(name);
+//  obs_y = new Histogram(obs->project2DOnto1D(1));
+//  obs_y->setName(name);
+//  obs_y->setTitle(name);
 //  hGroup->push_back(obs_y);
 //
 //  return obs;
@@ -384,36 +384,36 @@ TH2* BalanceFunctionCalculator::calculate_BalFctSum(const String & histoBaseName
 
 
 
-TH2* BalanceFunctionCalculator::calculate_Diff(const String & histoBaseName,
+Histogram* BalanceFunctionCalculator::calculate_Diff(const String & histoBaseName,
                                                  const String & en,
                                                  const String & pn1,
                                                  const String & pn2,
                                                  const String & obsName,
                                                  const String & comboName,
-                                                 TH2* obs_first,
-                                               TH2* obs_second,
-                                               HistogramGroup * hGroup)
+                                                 Histogram* obs_first,
+                                               Histogram* obs_second,
+                                               HistogramFolder * hGroup)
 {
   String name = createName(histoBaseName,en,pn1,pn2,obsName,comboName);
-  TH2 * obs;
-  TH1 * obs_x;
-  TH1 * obs_y;
-  obs = (TH2*) obs_first->Clone();
-  obs->SetName(name);
-  obs->SetTitle(name);
-  obs->Add(obs_second, -1.0);
+  Histogram * obs;
+  Histogram * obs_x;
+  Histogram * obs_y;
+  obs = obs_first->clone();
+  obs->setName(name);
+  obs->setTitle(name);
+  obs->add(*obs_second,-1.0);
   hGroup->push_back(obs);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_x");
-  obs_x = obs->ProjectionX();
-  obs_x->SetName(name);
-  obs_x->SetTitle(name);
+  obs_x = new Histogram(obs->project2DOnto1D(0));
+  obs_x->setName(name);
+  obs_x->setTitle(name);
   hGroup->push_back(obs_x);
 
   name = createName(histoBaseName,en,pn1,pn2,obsName,comboName+"_y");
-  obs_y = obs->ProjectionY();
-  obs_y->SetName(name);
-  obs_y->SetTitle(name);
+  obs_y = new Histogram(obs->project2DOnto1D(1));
+  obs_y->setName(name);
+  obs_y->setTitle(name);
   hGroup->push_back(obs_y);
 
   return obs;
@@ -434,11 +434,11 @@ void BalanceFunctionCalculator::execute()
 //  calculateDiffs      = valueBool("calculateDiffs" );
 //
 //
-//  if (histogramsImportFile.Contains("DEFAULT") ||
-//      histogramsImportFile.Contains("none") ||
-//      histogramsImportFile.Contains("null") ||
-//      histogramsImportFile.Contains("nil") ||
-//      histogramsImportFile.IsNull() )
+//  if (histogramsImportFile.contains("DEFAULT") ||
+//      histogramsImportFile.contains("none") ||
+//      histogramsImportFile.contains("null") ||
+//      histogramsImportFile.contains("nil") ||
+//      histogramsImportFile.isNull() )
 //    {
 //    if (reportDebug(__FUNCTION__))
 //      {
@@ -487,11 +487,11 @@ void BalanceFunctionCalculator::execute()
 //  for (auto & histogramImportFile : allFilesToAnalyze)
 //    {
 //    histogramExportFile  = removeRootExtension(histogramImportFile);
-//    histogramExportFile.ReplaceAll(String("Derived"),appendedString);
-//    TFile & inputFile = *openRootFile("",histogramImportFile,"OLD");
+//    histogramExportFile.replaceAll(String("Derived"),appendedString);
+//    CapFile & inputFile = *CapFile::openCapFile("",histogramImportFile,"OLD");
 //    String option = "NEW";
 //    if (histogramForceRewrite) option = "RECREATE";
-//    TFile & outputFile = *openRootFile("",histogramExportFile,option);
+//    CapFile & outputFile = *CapFile::openCapFile("",histogramExportFile,option);
 //    if (reportDebug(__FUNCTION__))
 //      {
 //      printCR();
@@ -500,7 +500,7 @@ void BalanceFunctionCalculator::execute()
 //      printValue("Saved to",histogramExportFile);
 //      }
 //    // Use hGroup  as helper to load and calculate histograms, etc.
-//    HistogramGroup * hGroup  = new HistogramGroup();
+//    HistogramFolder * hGroup  = new HistogramFolder();
 //    //hGroup ->setOwnership(false);
 //    hGroup ->setName(name());
 //    hGroup ->setParentTask(this);
@@ -596,14 +596,14 @@ void BalanceFunctionCalculator::execute()
 //            String pn1Bar = (particleFilter1+nSpecies)->name();
 //            String pn2    = particleFilter2->name();
 //            String pn2Bar = (particleFilter2+nSpecies)->name();
-//            //TH1 * rho1_1         = hGroup ->importH1(inputFile,createName(name(),en,pn1,   sObsNames[0]));
-//            //TH1 * rho1_1Bar      = hGroup ->importH1(inputFile,createName(name(),en,pn1Bar,sObsNames[0]));
-//            TH1 * rho1_2         = hGroup ->importH1(inputFile,createName(name(),en,pn2,   sObsNames[0]));
-//            TH1 * rho1_2Bar      = hGroup ->importH1(inputFile,createName(name(),en,pn2Bar,sObsNames[0]));
-//            TH2 * obs_1_2        = hGroup ->importH2(inputFile,createName(name(),en,pn1,    pn2,    pObsName));
-//            TH2 * obs_1Bar_2     = hGroup ->importH2(inputFile,createName(name(),en,pn1Bar, pn2,    pObsName));
-//            TH2 * obs_1_2Bar     = hGroup ->importH2(inputFile,createName(name(),en,pn1,    pn2Bar, pObsName));
-//            TH2 * obs_1Bar_2Bar  = hGroup ->importH2(inputFile,createName(name(),en,pn1Bar, pn2Bar, pObsName));
+//            //Histogram * rho1_1         = hGroup ->importHistogram(inputFile,createName(name(),en,pn1,   sObsNames[0]));
+//            //Histogram * rho1_1Bar      = hGroup ->importHistogram(inputFile,createName(name(),en,pn1Bar,sObsNames[0]));
+//            Histogram * rho1_2         = hGroup ->importHistogram(inputFile,createName(name(),en,pn2,   sObsNames[0]));
+//            Histogram * rho1_2Bar      = hGroup ->importHistogram(inputFile,createName(name(),en,pn2Bar,sObsNames[0]));
+//            Histogram * obs_1_2        = hGroup ->importHistogram(inputFile,createName(name(),en,pn1,    pn2,    pObsName));
+//            Histogram * obs_1Bar_2     = hGroup ->importHistogram(inputFile,createName(name(),en,pn1Bar, pn2,    pObsName));
+//            Histogram * obs_1_2Bar     = hGroup ->importHistogram(inputFile,createName(name(),en,pn1,    pn2Bar, pObsName));
+//            Histogram * obs_1Bar_2Bar  = hGroup ->importHistogram(inputFile,createName(name(),en,pn1Bar, pn2Bar, pObsName));
 //
 //            if (calculateCI)
 //              calculate_CI(name(),en,pn1,pn2, pObsName,obs_1_2,obs_1Bar_2,obs_1_2Bar,obs_1Bar_2Bar,hGroup );
@@ -613,8 +613,8 @@ void BalanceFunctionCalculator::execute()
 //
 //            if (calculateBF)
 //              {
-//              TH2* bfa = calculate_BalFct(name(),en,pn1,pn2, pObsName, "B2_1_2Bar",rho1_2Bar, obs_1_2Bar, obs_1Bar_2Bar,hGroup );
-//              TH2* bfb = calculate_BalFct(name(),en,pn1,pn2, pObsName, "B2_1Bar_2",rho1_2,    obs_1Bar_2, obs_1_2,hGroup );
+//              Histogram* bfa = calculate_BalFct(name(),en,pn1,pn2, pObsName, "B2_1_2Bar",rho1_2Bar, obs_1_2Bar, obs_1Bar_2Bar,hGroup );
+//              Histogram* bfb = calculate_BalFct(name(),en,pn1,pn2, pObsName, "B2_1Bar_2",rho1_2,    obs_1Bar_2, obs_1_2,hGroup );
 //              calculate_BalFctSum(name(),en,pn1,pn2, pObsName, "B2_12Sum",bfa,bfb,hGroup );
 //              }
 //            if (calculateDiffs)

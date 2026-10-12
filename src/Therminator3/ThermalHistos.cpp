@@ -1,7 +1,9 @@
 #include "ThermalHistos.hpp"
+#include "RootConversion.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "TCanvas.h"
 #include "TLine.h"
 #include "TArrow.h"
@@ -44,7 +46,7 @@ namespace CAP
   
   ThermalHistos::ThermalHistos()
   :
-  HistogramGroup()
+  HistogramFolder()
   {
   appendClassName("ThermalHistos");
   setMinimumReportLevel(Object::kInfo);
@@ -149,36 +151,36 @@ namespace CAP
   }
   
   // Fix me...
-  void ThermalHistos::loadFrom(TFile & inputFile __attribute__((unused)))
+  void ThermalHistos::loadFrom(CapFile & inputFile __attribute__((unused)))
   {
   
   }
   
   void ThermalHistos::cloneB(const ThermalHistos & source)
   {
-  h_numberDensityVsIndex     = safeCloneH1(source.h_numberDensityVsIndex);
-  h_energyDensityVsIndex     = safeCloneH1(source.h_energyDensityVsIndex);
-  h_entropyDensityVsIndex    = safeCloneH1(source.h_entropyDensityVsIndex);
-  h_pressureVsIndex          = safeCloneH1(source.h_pressureVsIndex);
-  h_densityWFDVsIndex      = safeCloneH1(source.h_densityWFDVsIndex);
-  h_netBaryonDensityVsIndex  = safeCloneH1(source.h_netBaryonDensityVsIndex);
-  h_netChargeDensityVsIndex  = safeCloneH1(source.h_netChargeDensityVsIndex);
-  h_netStrangeDensityVsIndex = safeCloneH1(source.h_netStrangeDensityVsIndex);
-  h_charmDensityVsIndex   = safeCloneH1(source.h_charmDensityVsIndex);
-  h_bottomDensityVsIndex  = safeCloneH1(source.h_bottomDensityVsIndex);
-  h_topDensityVsIndex     = safeCloneH1(source.h_topDensityVsIndex);
+  h_numberDensityVsIndex     = histogramLike(source.h_numberDensityVsIndex);
+  h_energyDensityVsIndex     = histogramLike(source.h_energyDensityVsIndex);
+  h_entropyDensityVsIndex    = histogramLike(source.h_entropyDensityVsIndex);
+  h_pressureVsIndex          = histogramLike(source.h_pressureVsIndex);
+  h_densityWFDVsIndex      = histogramLike(source.h_densityWFDVsIndex);
+  h_netBaryonDensityVsIndex  = histogramLike(source.h_netBaryonDensityVsIndex);
+  h_netChargeDensityVsIndex  = histogramLike(source.h_netChargeDensityVsIndex);
+  h_netStrangeDensityVsIndex = histogramLike(source.h_netStrangeDensityVsIndex);
+  h_charmDensityVsIndex   = histogramLike(source.h_charmDensityVsIndex);
+  h_bottomDensityVsIndex  = histogramLike(source.h_bottomDensityVsIndex);
+  h_topDensityVsIndex     = histogramLike(source.h_topDensityVsIndex);
   
-  h_numberDensityVsMass      = safeCloneProfile(source.h_numberDensityVsMass);
-  h_energyDensityVsMass      = safeCloneProfile(source.h_energyDensityVsMass);
-  h_entropyDensityVsMass     = safeCloneProfile(source.h_entropyDensityVsMass);
-  h_pressureVsMass           = safeCloneProfile(source.h_pressureVsMass);
-  h_densityWFDVsMass       = safeCloneProfile(source.h_densityWFDVsMass);
-  h_netBaryonDensityVsMass   = safeCloneProfile(source.h_netBaryonDensityVsMass);
-  h_netChargeDensityVsMass   = safeCloneProfile(source.h_netChargeDensityVsMass);
-  h_netStrangeDensityVsMass  = safeCloneProfile(source.h_netStrangeDensityVsMass);
-  h_charmDensityVsMass    = safeCloneProfile(source.h_charmDensityVsMass);
-  h_bottomDensityVsMass   = safeCloneProfile(source.h_bottomDensityVsMass);
-  h_topDensityVsMass      = safeCloneProfile(source.h_topDensityVsMass);
+  h_numberDensityVsMass      = histogramLike(source.h_numberDensityVsMass);
+  h_energyDensityVsMass      = histogramLike(source.h_energyDensityVsMass);
+  h_entropyDensityVsMass     = histogramLike(source.h_entropyDensityVsMass);
+  h_pressureVsMass           = histogramLike(source.h_pressureVsMass);
+  h_densityWFDVsMass       = histogramLike(source.h_densityWFDVsMass);
+  h_netBaryonDensityVsMass   = histogramLike(source.h_netBaryonDensityVsMass);
+  h_netChargeDensityVsMass   = histogramLike(source.h_netChargeDensityVsMass);
+  h_netStrangeDensityVsMass  = histogramLike(source.h_netStrangeDensityVsMass);
+  h_charmDensityVsMass    = histogramLike(source.h_charmDensityVsMass);
+  h_bottomDensityVsMass   = histogramLike(source.h_bottomDensityVsMass);
+  h_topDensityVsMass      = histogramLike(source.h_topDensityVsMass);
   }
   
   double NoInf(double num,double denom1,double denom2=1.0)
@@ -207,57 +209,57 @@ namespace CAP
     double _mass  = hadron.type().mass();
     double width = hadron.type().width();
     double gspin = hadron.type().spinFactor()/pionSpinFactor;
-    h_massVsIndex->SetBinContent(iHadron,_mass);
-    h_massVsIndex->SetBinError(iHadron,width);
+    h_massVsIndex->setBinValueAt(unsigned((iHadron)-1),_mass);
+    h_massVsIndex->setBinUncertaintyAt(unsigned((iHadron)-1),width);
     //double _gSpin = hadron.type().spinFactor();
     if (index_fill)
       {
-      h_numberDensityVsIndex    ->SetBinContent(iHadron,hadron.numberDensity());
-      h_energyDensityVsIndex    ->SetBinContent(iHadron,hadron.energyDensity());
-      h_entropyDensityVsIndex   ->SetBinContent(iHadron,hadron.entropyDensity());
-      h_pressureVsIndex         ->SetBinContent(iHadron,hadron.partialPressure());
-      h_netBaryonDensityVsIndex ->SetBinContent(iHadron,hadron.baryonDensity());
-      h_netChargeDensityVsIndex ->SetBinContent(iHadron,hadron.chargeDensity());
-      h_netStrangeDensityVsIndex->SetBinContent(iHadron,hadron.strangeDensity());
-      h_charmDensityVsIndex     ->SetBinContent(iHadron,hadron.charmDensity());
-      h_bottomDensityVsIndex    ->SetBinContent(iHadron,hadron.bottomDensity());
-      h_topDensityVsIndex       ->SetBinContent(iHadron,hadron.topDensity());
-      h_densityWFDVsIndex       ->SetBinContent(iHadron,hadron.numberDensityWFD());
-      h_relNumberDensityVsIndex ->SetBinContent(iHadron,NoInf(hadron.numberDensity(),pion.numberDensity(),gspin));
-      h_relDensityWFDVsIndex    ->SetBinContent(iHadron,NoInf(hadron.numberDensityWFD(),pion.numberDensityWFD(),gspin));
+      h_numberDensityVsIndex    ->setBinValueAt(unsigned((iHadron)-1),hadron.numberDensity());
+      h_energyDensityVsIndex    ->setBinValueAt(unsigned((iHadron)-1),hadron.energyDensity());
+      h_entropyDensityVsIndex   ->setBinValueAt(unsigned((iHadron)-1),hadron.entropyDensity());
+      h_pressureVsIndex         ->setBinValueAt(unsigned((iHadron)-1),hadron.partialPressure());
+      h_netBaryonDensityVsIndex ->setBinValueAt(unsigned((iHadron)-1),hadron.baryonDensity());
+      h_netChargeDensityVsIndex ->setBinValueAt(unsigned((iHadron)-1),hadron.chargeDensity());
+      h_netStrangeDensityVsIndex->setBinValueAt(unsigned((iHadron)-1),hadron.strangeDensity());
+      h_charmDensityVsIndex     ->setBinValueAt(unsigned((iHadron)-1),hadron.charmDensity());
+      h_bottomDensityVsIndex    ->setBinValueAt(unsigned((iHadron)-1),hadron.bottomDensity());
+      h_topDensityVsIndex       ->setBinValueAt(unsigned((iHadron)-1),hadron.topDensity());
+      h_densityWFDVsIndex       ->setBinValueAt(unsigned((iHadron)-1),hadron.numberDensityWFD());
+      h_relNumberDensityVsIndex ->setBinValueAt(unsigned((iHadron)-1),NoInf(hadron.numberDensity(),pion.numberDensity(),gspin));
+      h_relDensityWFDVsIndex    ->setBinValueAt(unsigned((iHadron)-1),NoInf(hadron.numberDensityWFD(),pion.numberDensityWFD(),gspin));
       
-      h_numberDensityVsIndex    ->SetBinError(iHadron,zero);
-      h_energyDensityVsIndex    ->SetBinError(iHadron,zero);
-      h_entropyDensityVsIndex   ->SetBinError(iHadron,zero);
-      h_pressureVsIndex         ->SetBinError(iHadron,zero);
-      h_netBaryonDensityVsIndex ->SetBinError(iHadron,zero);
-      h_netChargeDensityVsIndex ->SetBinError(iHadron,zero);
-      h_netStrangeDensityVsIndex->SetBinError(iHadron,zero);
-      h_charmDensityVsIndex     ->SetBinError(iHadron,zero);
-      h_bottomDensityVsIndex    ->SetBinError(iHadron,zero);
-      h_topDensityVsIndex       ->SetBinError(iHadron,zero);
-      h_densityWFDVsIndex       ->SetBinError(iHadron,zero);
-      h_relNumberDensityVsIndex ->SetBinError(iHadron,zero);
-      h_relDensityWFDVsIndex    ->SetBinError(iHadron,zero);
+      h_numberDensityVsIndex    ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_energyDensityVsIndex    ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_entropyDensityVsIndex   ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_pressureVsIndex         ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_netBaryonDensityVsIndex ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_netChargeDensityVsIndex ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_netStrangeDensityVsIndex->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_charmDensityVsIndex     ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_bottomDensityVsIndex    ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_topDensityVsIndex       ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_densityWFDVsIndex       ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_relNumberDensityVsIndex ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
+      h_relDensityWFDVsIndex    ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
       
       iHadron++;
       }
     
     if (mass_fill)
       {
-      h_numberDensityVsMass    ->Fill(_mass,hadron.numberDensity()/gspin);
-      h_energyDensityVsMass    ->Fill(_mass,hadron.energyDensity());
-      h_entropyDensityVsMass   ->Fill(_mass,hadron.entropyDensity());
-      h_pressureVsMass         ->Fill(_mass,hadron.partialPressure());
-      h_densityWFDVsMass       ->Fill(_mass,hadron.numberDensityWFD());
-      h_netBaryonDensityVsMass ->Fill(_mass,hadron.baryonDensity());
-      h_netChargeDensityVsMass ->Fill(_mass,hadron.chargeDensity());
-      h_netStrangeDensityVsMass->Fill(_mass,hadron.strangeDensity());
-      h_charmDensityVsMass     ->Fill(_mass,hadron.charmDensity());
-      h_bottomDensityVsMass    ->Fill(_mass,hadron.bottomDensity());
-      h_topDensityVsMass       ->Fill(_mass,hadron.topDensity());
-      h_relNumberDensityVsMass ->Fill(_mass,NoInf(hadron.numberDensity(),pion.numberDensity(),gspin));
-      h_relDensityWFDVsMass    ->Fill(_mass,NoInf(hadron.numberDensityWFD(),pion.numberDensityWFD(),gspin));
+      h_numberDensityVsMass    ->fill(_mass,hadron.numberDensity()/gspin);
+      h_energyDensityVsMass    ->fill(_mass,hadron.energyDensity());
+      h_entropyDensityVsMass   ->fill(_mass,hadron.entropyDensity());
+      h_pressureVsMass         ->fill(_mass,hadron.partialPressure());
+      h_densityWFDVsMass       ->fill(_mass,hadron.numberDensityWFD());
+      h_netBaryonDensityVsMass ->fill(_mass,hadron.baryonDensity());
+      h_netChargeDensityVsMass ->fill(_mass,hadron.chargeDensity());
+      h_netStrangeDensityVsMass->fill(_mass,hadron.strangeDensity());
+      h_charmDensityVsMass     ->fill(_mass,hadron.charmDensity());
+      h_bottomDensityVsMass    ->fill(_mass,hadron.bottomDensity());
+      h_topDensityVsMass       ->fill(_mass,hadron.topDensity());
+      h_relNumberDensityVsMass ->fill(_mass,NoInf(hadron.numberDensity(),pion.numberDensity(),gspin));
+      h_relDensityWFDVsMass    ->fill(_mass,NoInf(hadron.numberDensityWFD(),pion.numberDensityWFD(),gspin));
       }
     }
   
@@ -265,17 +267,17 @@ namespace CAP
   for (unsigned int iHadron = 1; iHadron<nStableHadrons; iHadron++)
     {
     unsigned int iHadron1 = iHadron + 1;
-    h_singleDensityVsIndex->SetBinContent(iHadron1,stableHadrons[iHadron]->numberDensity());
-    h_singleDensityVsIndex->SetBinError(iHadron1,0.0);
-    h_singleDensityWFDVsIndex->SetBinContent(iHadron1,stableHadrons[iHadron]->numberDensityWFD());
-    h_singleDensityWFDVsIndex->SetBinError(iHadron1,0.0);
+    h_singleDensityVsIndex->setBinValueAt(unsigned((iHadron1)-1),stableHadrons[iHadron]->numberDensity());
+    h_singleDensityVsIndex->setBinUncertaintyAt(unsigned((iHadron1)-1),0.0);
+    h_singleDensityWFDVsIndex->setBinValueAt(unsigned((iHadron1)-1),stableHadrons[iHadron]->numberDensityWFD());
+    h_singleDensityWFDVsIndex->setBinUncertaintyAt(unsigned((iHadron1)-1),0.0);
     }
-  h_singleDensityRatioVsIndex->Divide(h_singleDensityWFDVsIndex,h_singleDensityVsIndex);
+  h_singleDensityRatioVsIndex->setAsRatioOf(*h_singleDensityWFDVsIndex,*h_singleDensityVsIndex);
   
   for (unsigned int iHadron1 = 0; iHadron1<nStableHadrons; iHadron1++)
     {
-    TH1 * hPair = h_pairDensityVsIndex[iHadron1];
-    TH1 * hNormPair= h_normPairDensityVsIndex[iHadron1];
+    Histogram * hPair = h_pairDensityVsIndex[iHadron1];
+    Histogram * hNormPair= h_normPairDensityVsIndex[iHadron1];
     //unsigned int iHadron1P = iHadron1+1;
     double sum = 0;
     for (unsigned int iHadron2 = 1; iHadron2<nStableHadrons; iHadron2++)
@@ -284,15 +286,15 @@ namespace CAP
       unsigned int aIndex = iHadron1*nStableHadrons+iHadron2;
       double stableYield = stableHadronPairs[aIndex];
       sum += stableYield;
-      hPair->SetBinContent(iHadron2P,stableYield);
-      hPair->SetBinError(iHadron2P,0.0);
-      hNormPair->SetBinContent(iHadron2P,stableYield);
-      hNormPair->SetBinError(iHadron2P,0.0);
+      hPair->setBinValueAt(unsigned((iHadron2P)-1),stableYield);
+      hPair->setBinUncertaintyAt(unsigned((iHadron2P)-1),0.0);
+      hNormPair->setBinValueAt(unsigned((iHadron2P)-1),stableYield);
+      hNormPair->setBinUncertaintyAt(unsigned((iHadron2P)-1),0.0);
       }
     if (sum>0.0)
       {
-      hPair->SetBinContent(nStableHadrons+2,sum);
-      hNormPair->Scale(1.0/sum);
+      hPair->setBinValueAt(unsigned((nStableHadrons+2)-1),sum);
+      hNormPair->scale(1.0/sum);
       }
     //    else
     //      {
@@ -316,7 +318,7 @@ namespace CAP
   //    {
   //    int bin = iSpecies+1;
   //    String label = hadrons[iSpecies].type().title();
-  //    h_numberDensityVsIndex  ->GetXaxis()->SetBinLabel(bin,label);
+  //    h_numberDensityVsIndex  ->setBinLabel((bin)-1,label,0);
   //    }
   String base = "#rho_{2}(#alpha|";
   String label;
@@ -325,8 +327,8 @@ namespace CAP
     {
     label = stableHadrons[iSpecies]->type().title();
     title = base + label + ")";
-    h_pairDensityVsIndex[iSpecies]->SetTitle(title);
-    h_normPairDensityVsIndex[iSpecies]->SetTitle(title);
+    h_pairDensityVsIndex[iSpecies]->setTitle(title);
+    h_normPairDensityVsIndex[iSpecies]->setTitle(title);
     }
   
   
@@ -338,15 +340,15 @@ namespace CAP
     else
       label = stableHadrons[iSpecies2]->type().title();
 
-    h_singleDensityVsIndex->GetXaxis()->SetBinLabel(binLabel,label);
-    h_singleDensityWFDVsIndex->GetXaxis()->SetBinLabel(binLabel,label);
-    h_singleDensityRatioVsIndex->GetXaxis()->SetBinLabel(binLabel,label);
+    h_singleDensityVsIndex->setBinLabel((binLabel)-1,label,0);
+    h_singleDensityWFDVsIndex->setBinLabel((binLabel)-1,label,0);
+    h_singleDensityRatioVsIndex->setBinLabel((binLabel)-1,label,0);
     for (unsigned int iSpecies1=0; iSpecies1<nStable; iSpecies1++)
       {
       //      std::cout << binLabel <<  " LABEL= " << label <<  std::endl;
-      h_pairDensityVsIndex[iSpecies1]->GetXaxis()->SetBinLabel(binLabel,label);
-      h_normPairDensityVsIndex[iSpecies1]->GetXaxis()->SetBinLabel(binLabel,label);
-      h_pairDensityVsIndex[iSpecies1]->GetXaxis()->SetBinLabel(nStable+2,"#Sigma_{#alpha}");
+      h_pairDensityVsIndex[iSpecies1]->setBinLabel((binLabel)-1,label,0);
+      h_normPairDensityVsIndex[iSpecies1]->setBinLabel((binLabel)-1,label,0);
+      h_pairDensityVsIndex[iSpecies1]->setBinLabel((nStable+2)-1,"#Sigma_{#alpha}",0);
       }
     }
   }
@@ -366,13 +368,13 @@ namespace CAP
   //c->SetWindowSize(2000, 500);
   double parentMass;
   double daughterMass;
-  diag->SetMinimum(0.0);
-  diag->SetMaximum(2.2);
-  diag->GetXaxis()->SetTickLength(0); // Removes tick marks
-  diag->GetXaxis()->SetLabelOffset(999); //
-                                         //diag->GetYaxis()->SetTitle("Mass (GeV/c^{2})"); //
-  diag->GetYaxis()->SetTitleOffset(1.3); //
-  diag->Draw();
+  TH1 * diagRoot = toRootHistogram(*diag);   // ROOT copy, drawn as the frame of the diagram
+  diagRoot->SetMinimum(0.0);
+  diagRoot->SetMaximum(2.2);
+  diagRoot->GetXaxis()->SetTickLength(0); // Removes tick marks
+  diagRoot->GetXaxis()->SetLabelOffset(999); //
+  diagRoot->GetYaxis()->SetTitleOffset(1.3); //
+  diagRoot->Draw();
   double _position = 0.5;
   const std::vector<ThermalHadron> & hadrons = thermalGas.hadrons();
   

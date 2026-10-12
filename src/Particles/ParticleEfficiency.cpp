@@ -13,7 +13,8 @@
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "ParticleEfficiency.hpp"
 
 ClassImp(CAP::ParticleEfficiency);
@@ -23,7 +24,7 @@ namespace CAP
 
   ParticleEfficiency::ParticleEfficiency()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   h_efficiency_etaPt(nullptr),
   h_weight_etaPt(nullptr),
   pt_nbins(0),
@@ -39,7 +40,7 @@ namespace CAP
 
   ParticleEfficiency::ParticleEfficiency(const ParticleEfficiency & source)
   :
-  HistogramGroup(source),
+  HistogramFolder(source),
   h_efficiency_etaPt(nullptr),
   h_weight_etaPt(nullptr),
   pt_nbins(source.pt_nbins),
@@ -51,13 +52,15 @@ namespace CAP
   eta_max(source.eta_max),
   phi_min(source.phi_min),
   phi_max(source.phi_max)
-  { /* no ops */}
+  {
+  cloneB(source);
+  }
 
   ParticleEfficiency & ParticleEfficiency::operator=(const ParticleEfficiency & rhs)
   {
   if (this!=&rhs)
     {
-    ParticleEfficiency::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     cloneB(rhs);
     pt_nbins   = rhs.pt_nbins;
     eta_nbins  = rhs.eta_nbins;
@@ -74,33 +77,17 @@ namespace CAP
 
   double ParticleEfficiency::efficiencyAt(const VectorLorentz & momentum)
   {
-  TAxis * xAxis = h_efficiency_etaPt->GetXaxis();
-  TAxis * yAxis = h_efficiency_etaPt->GetYaxis();
-  double eta = momentum.pseudorapidity();
-  if (eta <  xAxis->GetXmin() ||
-      eta >= yAxis->GetXmax()) return 0.0;
-  double pt = momentum.perp();
-  if (pt <  yAxis->GetXmin() ||
-      pt >= yAxis->GetXmax()) return 0.0;
-  int iEta = xAxis->FindBin(eta);
-  int iPt  = yAxis->FindBin(pt);
-  return h_efficiency_etaPt->GetBinContent(iEta,iPt);
+  int k = h_efficiency_etaPt->binIndex(momentum.pseudorapidity(),momentum.perp());
+  if (k<0) return 0.0;   // outside the (eta,pt) range of the histogram
+  return h_efficiency_etaPt->binValueAtGlobal(k);
   }
 
   double ParticleEfficiency::weightAt(const VectorLorentz & momentum)
   {
   if (!h_weight_etaPt) calculateWeights();
-  TAxis * xAxis = h_weight_etaPt->GetXaxis();
-  TAxis * yAxis = h_weight_etaPt->GetYaxis();
-  double eta = momentum.pseudorapidity();
-  if (eta <  xAxis->GetXmin() ||
-      eta >= xAxis->GetXmax()) return 0.0;
-  double pt = momentum.perp();
-  if (pt <  yAxis->GetXmin() ||
-      pt >= yAxis->GetXmax()) return 0.0;
-  int iEta = xAxis->FindBin(eta);
-  int iPt  = yAxis->FindBin(pt);
-  return h_weight_etaPt->GetBinContent(iEta,iPt);
+  int k = h_weight_etaPt->binIndex(momentum.pseudorapidity(),momentum.perp());
+  if (k<0) return 0.0;   // outside the (eta,pt) range of the histogram
+  return h_weight_etaPt->binValueAtGlobal(k);
   }
 
   bool ParticleEfficiency::accept(const Particle & particle)
@@ -118,23 +105,21 @@ namespace CAP
   if (h_weight_etaPt) delete h_weight_etaPt;
   if (h_efficiency_etaPt)
     {
-    h_weight_etaPt = (TH2*) h_efficiency_etaPt->Clone();
-    unsigned int n = h_weight_etaPt->GetNbinsX();
-    for (unsigned int k=1; k<n; k++)
+    h_weight_etaPt = h_efficiency_etaPt->clone();
+    // weight = 1/efficiency in bins with an efficiency in (0,1]; 0 elsewhere
+    for (unsigned int k=0; k<h_weight_etaPt->nBinsTotal(); k++)
       {
-      double v = h_weight_etaPt->GetBinContent(k);
-      double ev = h_weight_etaPt->GetBinError(k);
-      if (v>0  &&  v<1.0)
+      double v  = h_weight_etaPt->binValueAtGlobal(k);
+      double ev = h_weight_etaPt->binUncertaintyAtGlobal(k);
+      if (v>0.0  &&  v<=1.0)
         {
-        double w = 1.0/v;
+        double w  = 1.0/v;
         double ew = w*ev/v;
-        h_weight_etaPt->SetBinContent(k,w);
-        h_weight_etaPt->SetBinError(k,ew);
+        h_weight_etaPt->setBinAtGlobal(k,1,w,ew);
         }
       else
         {
-        h_weight_etaPt->SetBinContent(k,0.0);
-        h_weight_etaPt->SetBinError(k,0.0);
+        h_weight_etaPt->setBinAtGlobal(k,0,0.0,0.0);
         }
       }
     }
@@ -148,8 +133,10 @@ namespace CAP
 
   void ParticleEfficiency::cloneB(const ParticleEfficiency & source)
   {
-  h_efficiency_etaPt = safeCloneH2(source.h_efficiency_etaPt);
-  h_weight_etaPt     = safeCloneH2(source.h_weight_etaPt);
+  // the efficiency histogram belongs to the group (copied with it); the weight histogram is owned by this object
+  h_efficiency_etaPt = histogramLike(source.h_efficiency_etaPt);
+  delete h_weight_etaPt;
+  h_weight_etaPt     = safeClone(source.h_weight_etaPt);
   }
 
   void ParticleEfficiency::configure(const String & ownerName,
@@ -157,7 +144,7 @@ namespace CAP
                                      const Configuration & configuration,
                                      unsigned int index)
   {
-  HistogramGroup::configure(ownerName,typeName,configuration,index);
+  HistogramFolder::configure(ownerName,typeName,configuration,index);
   int pt_nbins   = configuration.valueInt(   createKey(ownerName,typeName,index,"pt_nbins"));
   double pt_min  = configuration.valueDouble(createKey(ownerName,typeName,index,"pt_min"));
   double pt_max  = configuration.valueDouble(createKey(ownerName,typeName,index,"pt_max"));
@@ -189,11 +176,11 @@ namespace CAP
 
   }
 
-  void ParticleEfficiency::loadFrom(TFile & inputFile)
+  void ParticleEfficiency::loadFrom(CapFile & inputFile)
   {
   String name = "PART_EFF_ALL_ALL_etaPt";
   printValue(name,name);
-  h_efficiency_etaPt  = importH2(inputFile,name);
+  h_efficiency_etaPt  = importHistogram(inputFile,name);
   }
 
 } // namespace CAP

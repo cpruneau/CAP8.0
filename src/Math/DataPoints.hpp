@@ -2,6 +2,7 @@
 #define CAP_MATH_DataPoints
 #include <vector>
 #include "Aliases.hpp"
+#include "Object.hpp"
 #include "DataPoint2D.hpp"
 
 namespace CAP
@@ -34,9 +35,14 @@ namespace CAP
   //!   float yMax = data.yMaximum();       // 7
   //! @endcode
   //!
-  class DataPoints
+  class DataPoints : public Object
   {
   public:
+
+  //! @brief Default constructor: name and title "DataPoints".
+  DataPoints();
+  //! @brief Constructor with a name. @param name object name @param title object title @param className class name
+  DataPoints(const String & name, const String & title, const String & className);
 
   //! @brief Destructor.
   virtual ~DataPoints() {}
@@ -168,8 +174,36 @@ namespace CAP
 
   //! @}
 
+  //! @name Extrema of points of any rank
+  //! Read through coordinatesAt() and valueAt(), so they apply to every rank and every derived class.
+  //! They throw MathException if the container is empty. Derived classes may declare functions with the same
+  //! names; those are then used on objects of that class (Histogram uses minimumInRange() and maximumInRange()
+  //! for searches over a range of bins, so the functions below apply to histograms as well).
+  //! @{
+
+  //!
+  //! @brief Smallest value of one independent variable over all points.
+  //! @param index independent variable, 0 to rank()-1 (0 is x)
+  //! @return minimum of the variable
+  //! @throws MathException if the container is empty or index>=rank()
+  //!
+  double minimum(unsigned int index) const;
+  //!
+  //! @brief Largest value of one independent variable over all points.
+  //! @param index independent variable, 0 to rank()-1 (0 is x)
+  //! @return maximum of the variable
+  //! @throws MathException if the container is empty or index>=rank()
+  //!
+  double maximum(unsigned int index) const;
+  //! @brief Smallest dependent value over all points. @return minimum value @throws MathException if the container is empty
+  double minimumValue() const;
+  //! @brief Largest dependent value over all points. @return maximum value @throws MathException if the container is empty
+  double maximumValue() const;
+
+  //! @}
+
   //! @brief Print all points to std::cout, one per line.
-  virtual void print() const;
+  virtual void print() const override;
 
   protected:
 
@@ -181,7 +215,16 @@ namespace CAP
   //!
   unsigned int extremumIndex(bool useY, bool findMaximum) const;
 
-  ClassDef(DataPoints,1)
+  //!
+  //! @brief Extremum of one independent variable (index<rank()) or of the dependent value (index==rank()).
+  //! @param index variable index, or rank() for the dependent value @param findMaximum true for the maximum, false for the minimum
+  //! @param source name of the calling function, reported in exceptions
+  //! @return the extremum
+  //! @throws MathException if the container is empty or index>rank()
+  //!
+  double extremum(unsigned int index, bool findMaximum, const char * source) const;
+
+  //ClassDef(DataPoints,1)
   };
 
   } // namespace MATH

@@ -172,14 +172,14 @@ namespace CAP
   _eventAccepted.initialize("EventAccepted",nEventFilters());
   _acceptedEventFilters.assign(nEventFilters(),false);
   _acceptedParticleFilters.assign(nParticleFilters(),false);
-  _particleMomentsFilter0.assign(_ptMomentOrder,0.0);
-  _particleMomentsFilter1.assign(_ptMomentOrder,0.0);
-  _particleMomentsFilter2.assign(_ptMomentOrder,0.0);
-  _particleMomentsFilter3.assign(_ptMomentOrder,0.0);
-  _particleMomentsFilter4.assign(_ptMomentOrder,0.0);
-  _particleMomentsFilter5.assign(_ptMomentOrder,0.0);
-  _particleMomentsFilter6.assign(_ptMomentOrder,0.0);
-  _particleMomentsFilter7.assign(_ptMomentOrder,0.0);
+  _particleMomentsFilter0.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
+  _particleMomentsFilter1.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
+  _particleMomentsFilter2.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
+  _particleMomentsFilter3.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
+  _particleMomentsFilter4.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
+  _particleMomentsFilter5.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
+  _particleMomentsFilter6.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
+  _particleMomentsFilter7.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
 
   _allAcceptedParticlesFilter0.reserve(4000);
   _allAcceptedParticlesFilter1.reserve(4000);

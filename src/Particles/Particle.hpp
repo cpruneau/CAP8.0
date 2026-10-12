@@ -23,6 +23,8 @@ namespace CAP
 {
 
 //!
+//! @brief Particle (or nucleus, or interaction) of an event: type, momentum, position, parent, children, state.
+//!
 //!This class encapsualtes the notion of particles as encounted in particle and nuclear physics simulations of
 //!elementary particle collisions or GlauberNucleus-GlauberNucleus collisions. Particle object can be created and handled on their
 //!own or in small aggregates but they are better handled based on a particle factory that keeps track and handle
@@ -53,9 +55,13 @@ class Particle
 {
 public:
   
+  //! @brief Default constructor: no type, null momentum and position, live, no parent.
   Particle();
+  //! @brief Destructor.
   virtual ~Particle(){}
+  //! @brief Copy constructor. @param other particle to copy
   Particle(const Particle& other);
+  //! @brief Copy assignment. @param other particle to copy @return this particle
   Particle & operator=(const Particle & other);
 
   //!
@@ -77,6 +83,7 @@ public:
   //!
   //! Set the ParticleType of this particle.
   //!
+  //! @brief Set the type of the particle. @param type type (owned by the particle database)
   void setType(ParticleType * type) { _type = type;  }
 
   
@@ -84,9 +91,12 @@ public:
   //! Get the ParticleType of this particle.
   //!
   ParticleType & type() { return *_type;  }
+  //! @brief Type of the particle. @return type
   const ParticleType & type() const { return *_type;  }
 
+  //! @brief Type of the particle. @return pointer to the type (may be null)
   ParticleType * typePtr() { return _type;  }
+  //! @brief Type of the particle. @return pointer to the type (may be null)
   const ParticleType * typePtr() const { return _type;  }
 
   
@@ -506,9 +516,13 @@ public:
   bool hasTruth() const
   { return _truth!=nullptr; }
 
+  //! @brief PDG code of the type. @return code
   int pdgCode() const;
+  //! @brief Private code of the type. @return code
   int privateCode() const;
+  //! @brief Mass of the type (GeV/c^2). @return mass
   double mass() const;
+  //! @brief Mean lifetime of the type. @return lifetime
   double lifeTime() const;
 
   //!
@@ -534,25 +548,40 @@ protected:
   int  _sourceIndex;  //!<  source index  used in some applications
 
 public:
+  //! Indices of the (eta, phi) and (y, phi) bins of the particle (set by analyzers).
   int   _ixEtaPhi, _ixYPhi;
 
 protected:
 
+  //! Default ownership of the particle factory.
   static bool _defaultOwner;
+  //! Default initial capacity of the particle factory.
   static long _defaultSize;
+  //! Default capacity increment of the particle factory.
   static long _defaultSizeIncrement;
+  //! Particle factory (created by factory()).
   static Factory<Particle> * _factory;
 
 public:
 
+  //! @name Particle factory
+  //! Particles of the events are created by a shared factory, reset at each event, to avoid allocations in the event
+  //! loop.
+  //! @{
+
+  //! @brief Set the default ownership of the factory. @param _owner flag
   static void setFactoryDefaultOwner(bool _owner);
+  //! @brief Set the default initial capacity of the factory. @param _defaultCapacity number of particles
   static void setFactoryDefaultCapacity(long _defaultCapacity);
+  //! @brief Set the default capacity increment of the factory. @param _defaultIncrement number of particles
   static void setFactoryDefaultIncrement(long _defaultIncrement);
+  //! @brief Particle factory, created on first use. @return factory
   static Factory<Particle> & factory();
 
   //!
   //!Get a proton object singleton
   //!
+  //! @}
   static Particle * proton();
 
   //!

@@ -11,7 +11,8 @@
  * *********************************************************************/
 #include "ParticlePair3DHistos.hpp"
 #include "MathConstants.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 #include "Task.hpp"
@@ -24,7 +25,7 @@ namespace CAP
 
   ParticlePair3DHistos::ParticlePair3DHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   n2_nbins(0),
   Qinv_nbins(0),
   DeltaPs_nbins(0),
@@ -57,7 +58,7 @@ namespace CAP
 
   ParticlePair3DHistos::ParticlePair3DHistos(const ParticlePair3DHistos & source)
   :
-  HistogramGroup(source),
+  HistogramFolder(source),
   n2_nbins(source.n2_nbins),
   Qinv_nbins(source.Qinv_nbins),
   DeltaPs_nbins(source.DeltaPs_nbins),
@@ -90,7 +91,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs),
+    HistogramFolder::operator=(rhs),
     n2_nbins      = rhs.n2_nbins;
     Qinv_nbins    = rhs.Qinv_nbins;
     DeltaPs_nbins = rhs.DeltaPs_nbins;
@@ -169,20 +170,20 @@ namespace CAP
                                 "p_{s}","p_{o}", "p_{l}");
   }
 
-  void ParticlePair3DHistos::loadFrom(TFile & inputFile)
+  void ParticlePair3DHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_n2        = importH1(inputFile, createName(_histogramBaseName,"n2"));
-  h_n2_Qinv   = importH1(inputFile, createName(_histogramBaseName,"n2_Qinv"));
-  h_n2_DeltaP = importH3(inputFile, createName(_histogramBaseName,"n2_DeltaP"));
+  h_n2        = importHistogram(inputFile, createName(_histogramBaseName,"n2"));
+  h_n2_Qinv   = importHistogram(inputFile, createName(_histogramBaseName,"n2_Qinv"));
+  h_n2_DeltaP = importHistogram(inputFile, createName(_histogramBaseName,"n2_DeltaP"));
   }
 
   void ParticlePair3DHistos::cloneB(const ParticlePair3DHistos & source)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_n2        = safeCloneH1(source.h_n2);
-  h_n2_Qinv   = safeCloneH1(source.h_n2_Qinv);
-  h_n2_DeltaP = safeCloneH3(source.h_n2_DeltaP);
+  h_n2        = histogramLike(source.h_n2);
+  h_n2_Qinv   = histogramLike(source.h_n2_Qinv);
+  h_n2_DeltaP = histogramLike(source.h_n2_DeltaP);
   }
 
 
@@ -227,14 +228,14 @@ namespace CAP
   qout=(roots/Mlong)*(ptot[1]*q[1]+ptot[2]*q[2])/pt;
   qinv=std::sqrt(qinv);
 
-  h_n2_Qinv->Fill(qinv,weight);
-  h_n2_DeltaP->Fill(qside,qout,qlong,weight);
+  h_n2_Qinv->fill(qinv,weight);
+  h_n2_DeltaP->fill(qside,qout,qlong,weight);
   }
 
 
   void ParticlePair3DHistos::fillMultiplicity(double nPairs, double weight)
   {
-  h_n2->Fill(nPairs, weight);
+  h_n2->fill(nPairs, weight);
   }
 
 

@@ -14,7 +14,8 @@
 #include "GlobalHistos.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Task.hpp"
 #include "Configuration.hpp"
 
@@ -71,7 +72,7 @@ void SpherocityDerivedHistos::create()
 
 //!
 //!Load histograms corresponding to the selected event and particle filters from the given file.
-void SpherocityDerivedHistos::loadFrom(TFile & inputFile)
+void SpherocityDerivedHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   SpherocityHistos::loadFrom(inputFile);

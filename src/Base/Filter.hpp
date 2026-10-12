@@ -19,23 +19,52 @@
 namespace CAP
 {
 
+//!
+//! @brief Exception thrown by filters (e.g., Filter::accept() called on the base class).
+//!
 class FilterException : public Exception
 {
 public:
+  //! @brief Constructor. @param _message description of the problem @param _source function where it happened
   FilterException(const String & _message,
                   const String & _source);
+  //! @brief Destructor.
   virtual ~FilterException() {}
 };
 
+//!
+//! @brief Base class of the filters selecting objects of type T (events, particles, ...).
+//!
+//! A filter holds a list of conditions (see Condition) and decides whether an object, or a pair of objects, is
+//! accepted. Derived classes (EventFilter, ParticleFilter, ...) override accept(): typically, for each condition, they
+//! compute the quantity selected by the condition's subtype and test it with Condition::accept().
+//!
+//! The filter owns its conditions: they are created by addCondition(), deep-copied with the filter and deleted with it.
+//!
+//! Example:
+//! @code
+//!   class PtFilter : public CAP::Filter<Particle>
+//!   {
+//!   public:
+//!     bool accept(const Particle & p) const override { return _conditions[0]->accept(p.pt()); }
+//!   };
+//!   PtFilter f;
+//!   f.addCondition(0, 0.2, 2.0);   // 0.2 <= pT < 2.0
+//! @endcode
+//!
+//! @tparam T type of the filtered objects
+//!
 template < class T >
 class Filter
 {
 protected:
 
+  //! @brief Conditions of the filter (owned).
   std::vector<Condition*> _conditions;
 
 public:
 
+  //! @brief Default constructor: no conditions.
   Filter()
   :
   _conditions()
@@ -65,13 +94,17 @@ public:
   return *this;
   }
 
+  //! @brief Destructor: the conditions are deleted.
   virtual ~Filter()
   {
   deleteConditions();
   }
 
+  //! @brief Number of conditions. @return number of conditions
   unsigned int nConditions() const {  return _conditions.size(); }
+  //! @brief Conditions (owned by the filter). @return conditions
   std::vector<Condition*> & conditions() { return _conditions; }
+  //! @brief Conditions (owned by the filter). @return conditions
   const std::vector<Condition*> & conditions() const { return _conditions; }
 
   //!
@@ -95,18 +128,22 @@ public:
 //  for (auto & condition : _conditions) condition->print();
 //  }
 
+  //! @brief Add a ConditionBool. @param _subtype subtype @param _requested accepted value
   void addCondition(int _subtype,
                     bool _requested)
   {
   _conditions.push_back(new ConditionBool(_subtype,_requested));
   }
 
+  //! @brief Add a ConditionInteger. @param _subtype subtype @param _requested accepted value
   void addCondition(int _subtype,
                     int _requested)
   {
   _conditions.push_back(new ConditionInteger(_subtype,_requested));
   }
 
+  //! @brief Add a ConditionIntegerRange accepting [_minimum, _maximum]. @param _subtype subtype
+  //! @param _minimum smallest accepted value @param _maximum largest accepted value
   void addCondition(int _subtype,
                     int _minimum,
                     int _maximum)
@@ -114,6 +151,8 @@ public:
   _conditions.push_back(new ConditionIntegerRange(_subtype,_minimum,_maximum));
   }
 
+  //! @brief Add a ConditionDoubleRange accepting [_minimum, _maximum). @param _subtype subtype
+  //! @param _minimum lower edge (included) @param _maximum upper edge (excluded)
   void addCondition(int _subtype,
                     double _minimum,
                     double _maximum)
@@ -121,6 +160,9 @@ public:
   _conditions.push_back(new ConditionDoubleRange(_subtype,_minimum,_maximum));
   }
 
+  //! @brief Add a ConditionDoubleDualRange accepting [_minimum, _maximum) or [_minimum2, _maximum2).
+  //! @param _subtype subtype @param _minimum lower edge of the first range @param _maximum upper edge of the first range
+  //! @param _minimum2 lower edge of the second range @param _maximum2 upper edge of the second range
   void addCondition(int _subtype,
                     double _minimum,
                     double _maximum,
@@ -153,6 +195,7 @@ protected:
   return copies;
   }
 
+  //! @brief Delete all conditions.
   void deleteConditions()
   {
   for (auto & condition : _conditions) delete condition;

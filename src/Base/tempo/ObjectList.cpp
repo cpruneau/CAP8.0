@@ -117,7 +117,7 @@ void createClassReference(const String & className)
 {
   if (objectClass)
     throw NameObjectListException(className, "TClass object already defined", __FUNCTION__);
-  if (className.Length()<2 || className.EqualTo("NOCLASS"))
+  if (className.length()<2 || className.equalTo("NOCLASS"))
     throw NameObjectListException(className, "Invalid object class", __FUNCTION__);
   objectClass = TClass::GetClass(className);
 }

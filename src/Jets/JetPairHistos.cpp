@@ -13,7 +13,8 @@
 #include "NameHelpers.hpp"
 #include "JetHelpers.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
 #include "Task.hpp"
@@ -25,7 +26,7 @@ namespace CAP
 
 JetPairHistos::JetPairHistos()
 :
-HistogramGroup(),
+HistogramFolder(),
 particleTypeList(ParticleTypeList::list()),
 h_jet_n2_ptpt(nullptr),
 h_jet_n2_phiphi(nullptr),
@@ -67,7 +68,7 @@ z_max(0)
 
 JetPairHistos::JetPairHistos(const JetPairHistos & source)
 :
-HistogramGroup(source),
+HistogramFolder(source),
 particleTypeList(ParticleTypeList::list()),
 h_jet_n2_ptpt(nullptr),
 h_jet_n2_phiphi(nullptr),
@@ -112,7 +113,7 @@ JetPairHistos & JetPairHistos::operator=(const JetPairHistos & rhs)
 {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     cloneB(rhs);
     pt_nbins   = rhs.pt_nbins;
     phi_nbins  = rhs.phi_nbins;
@@ -138,33 +139,33 @@ JetPairHistos & JetPairHistos::operator=(const JetPairHistos & rhs)
 
 void JetPairHistos::cloneB(const JetPairHistos & source)
 {
-  h_jet_n2_ptpt   = safeCloneH2(source.h_jet_n2_ptpt);
-  h_jet_n2_phiphi = safeCloneH2(source.h_jet_n2_phiphi);
-  h_jet_n2_etaeta = safeCloneH2(source.h_jet_n2_etaeta);
-  h_jet_n2_thth   = safeCloneH2(source.h_jet_n2_thth);
-  h_jet_n2_jtjt   = safeCloneH2(source.h_jet_n2_jtjt);
-  h_jet_n2_zz     = safeCloneH2(source.h_jet_n2_zz);
+  h_jet_n2_ptpt   = histogramLike(source.h_jet_n2_ptpt);
+  h_jet_n2_phiphi = histogramLike(source.h_jet_n2_phiphi);
+  h_jet_n2_etaeta = histogramLike(source.h_jet_n2_etaeta);
+  h_jet_n2_thth   = histogramLike(source.h_jet_n2_thth);
+  h_jet_n2_jtjt   = histogramLike(source.h_jet_n2_jtjt);
+  h_jet_n2_zz     = histogramLike(source.h_jet_n2_zz);
 
-  h_jet_n2pp_ptpt   = safeCloneH2(source.h_jet_n2pp_ptpt);
-  h_jet_n2pp_phiphi = safeCloneH2(source.h_jet_n2pp_phiphi);
-  h_jet_n2pp_etaeta = safeCloneH2(source.h_jet_n2pp_etaeta);
-  h_jet_n2pp_thth   = safeCloneH2(source.h_jet_n2pp_thth);
-  h_jet_n2pp_jtjt   = safeCloneH2(source.h_jet_n2pp_jtjt);
-  h_jet_n2pp_zz     = safeCloneH2(source.h_jet_n2pp_zz);
+  h_jet_n2pp_ptpt   = histogramLike(source.h_jet_n2pp_ptpt);
+  h_jet_n2pp_phiphi = histogramLike(source.h_jet_n2pp_phiphi);
+  h_jet_n2pp_etaeta = histogramLike(source.h_jet_n2pp_etaeta);
+  h_jet_n2pp_thth   = histogramLike(source.h_jet_n2pp_thth);
+  h_jet_n2pp_jtjt   = histogramLike(source.h_jet_n2pp_jtjt);
+  h_jet_n2pp_zz     = histogramLike(source.h_jet_n2pp_zz);
 
-  h_jet_n2pm_ptpt   = safeCloneH2(source.h_jet_n2pm_ptpt);
-  h_jet_n2pm_phiphi = safeCloneH2(source.h_jet_n2pm_phiphi);
-  h_jet_n2pm_etaeta = safeCloneH2(source.h_jet_n2pm_etaeta);
-  h_jet_n2pm_thth   = safeCloneH2(source.h_jet_n2pm_thth);
-  h_jet_n2pm_jtjt   = safeCloneH2(source.h_jet_n2pm_jtjt);
-  h_jet_n2pm_zz     = safeCloneH2(source.h_jet_n2pm_zz);
+  h_jet_n2pm_ptpt   = histogramLike(source.h_jet_n2pm_ptpt);
+  h_jet_n2pm_phiphi = histogramLike(source.h_jet_n2pm_phiphi);
+  h_jet_n2pm_etaeta = histogramLike(source.h_jet_n2pm_etaeta);
+  h_jet_n2pm_thth   = histogramLike(source.h_jet_n2pm_thth);
+  h_jet_n2pm_jtjt   = histogramLike(source.h_jet_n2pm_jtjt);
+  h_jet_n2pm_zz     = histogramLike(source.h_jet_n2pm_zz);
 
-  h_jet_n2mm_ptpt   = safeCloneH2(source.h_jet_n2mm_ptpt);
-  h_jet_n2mm_phiphi = safeCloneH2(source.h_jet_n2mm_phiphi);
-  h_jet_n2mm_etaeta = safeCloneH2(source.h_jet_n2mm_etaeta);
-  h_jet_n2mm_thth   = safeCloneH2(source.h_jet_n2mm_thth);
-  h_jet_n2mm_jtjt   = safeCloneH2(source.h_jet_n2mm_jtjt);
-  h_jet_n2mm_zz     = safeCloneH2(source.h_jet_n2mm_zz);
+  h_jet_n2mm_ptpt   = histogramLike(source.h_jet_n2mm_ptpt);
+  h_jet_n2mm_phiphi = histogramLike(source.h_jet_n2mm_phiphi);
+  h_jet_n2mm_etaeta = histogramLike(source.h_jet_n2mm_etaeta);
+  h_jet_n2mm_thth   = histogramLike(source.h_jet_n2mm_thth);
+  h_jet_n2mm_jtjt   = histogramLike(source.h_jet_n2mm_jtjt);
+  h_jet_n2mm_zz     = histogramLike(source.h_jet_n2mm_zz);
 }
 
 
@@ -174,7 +175,7 @@ void JetPairHistos::configure(const String & taskName,
                                     unsigned int index)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  HistogramGroup::configure(taskName,objectType,configuration,index);
+  HistogramFolder::configure(taskName,objectType,configuration,index);
   pt_nbins   = configuration.valueInt(createKey(taskName,objectType,index,    "pt_nbins"));
   phi_nbins  = configuration.valueInt(createKey(taskName,objectType,index,    "phi_nbins"));
   eta_nbins  = configuration.valueInt(createKey(taskName,objectType,index,    "eta_nbins"));
@@ -250,37 +251,37 @@ void JetPairHistos::create()
   h_jet_n2mm_zz      = createHistogram(createName(_histogramBaseName,"jet_n2mm_zz"),z_nbins,z_min,z_max, z_nbins,z_min,z_max,"z_{1}","z_{2}","N_{2}^{--}");
 }
 
-void JetPairHistos::loadFrom(TFile & inputFile)
+void JetPairHistos::loadFrom(CapFile & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  HistogramGroup::loadFrom(inputFile);
-  h_jet_n2_ptpt      = loadH2(inputFile,createName(_histogramBaseName,"jet_n2_ptpt"));
-  h_jet_n2_phiphi    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2_phiphi"));
-  h_jet_n2_etaeta    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2_etaeta"));
-  h_jet_n2_thth      = loadH2(inputFile,createName(_histogramBaseName,"jet_n2_thth"));
-  h_jet_n2_jtjt      = loadH2(inputFile,createName(_histogramBaseName,"jet_n2_jtjt"));
-  h_jet_n2_zz        = loadH2(inputFile,createName(_histogramBaseName,"jet_n2_zz"));
+  HistogramFolder::loadFrom(inputFile);
+  h_jet_n2_ptpt      = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2_ptpt"));
+  h_jet_n2_phiphi    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2_phiphi"));
+  h_jet_n2_etaeta    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2_etaeta"));
+  h_jet_n2_thth      = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2_thth"));
+  h_jet_n2_jtjt      = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2_jtjt"));
+  h_jet_n2_zz        = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2_zz"));
 
-  h_jet_n2pp_ptpt    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pp_ptpt"));
-  h_jet_n2pp_phiphi  = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pp_phiphi"));
-  h_jet_n2pp_etaeta  = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pp_etaeta"));
-  h_jet_n2pp_thth    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pp_thth"));
-  h_jet_n2pp_jtjt    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pp_jtjt"));
-  h_jet_n2pp_zz      = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pp_zz"));
+  h_jet_n2pp_ptpt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pp_ptpt"));
+  h_jet_n2pp_phiphi  = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pp_phiphi"));
+  h_jet_n2pp_etaeta  = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pp_etaeta"));
+  h_jet_n2pp_thth    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pp_thth"));
+  h_jet_n2pp_jtjt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pp_jtjt"));
+  h_jet_n2pp_zz      = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pp_zz"));
 
-  h_jet_n2pm_ptpt    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pm_ptpt"));
-  h_jet_n2pm_phiphi  = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pm_phiphi"));
-  h_jet_n2pm_etaeta  = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pm_etaeta"));
-  h_jet_n2pm_thth    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pm_thth"));
-  h_jet_n2pm_jtjt    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pm_jtjt"));
-  h_jet_n2pm_zz      = loadH2(inputFile,createName(_histogramBaseName,"jet_n2pm_zz"));
+  h_jet_n2pm_ptpt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pm_ptpt"));
+  h_jet_n2pm_phiphi  = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pm_phiphi"));
+  h_jet_n2pm_etaeta  = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pm_etaeta"));
+  h_jet_n2pm_thth    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pm_thth"));
+  h_jet_n2pm_jtjt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pm_jtjt"));
+  h_jet_n2pm_zz      = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2pm_zz"));
 
-  h_jet_n2mm_ptpt    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2mm_ptpt"));
-  h_jet_n2mm_phiphi  = loadH2(inputFile,createName(_histogramBaseName,"jet_n2mm_phiphi"));
-  h_jet_n2mm_etaeta  = loadH2(inputFile,createName(_histogramBaseName,"jet_n2mm_etaeta"));
-  h_jet_n2mm_thth    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2mm_thth"));
-  h_jet_n2mm_jtjt    = loadH2(inputFile,createName(_histogramBaseName,"jet_n2mm_jtjt"));
-  h_jet_n2mm_zz      = loadH2(inputFile,createName(_histogramBaseName,"jet_n2mm_zz"));
+  h_jet_n2mm_ptpt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2mm_ptpt"));
+  h_jet_n2mm_phiphi  = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2mm_phiphi"));
+  h_jet_n2mm_etaeta  = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2mm_etaeta"));
+  h_jet_n2mm_thth    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2mm_thth"));
+  h_jet_n2mm_jtjt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2mm_jtjt"));
+  h_jet_n2mm_zz      = importHistogram(inputFile,createName(_histogramBaseName,"jet_n2mm_zz"));
 }
 
 void JetPairHistos::fill(PseudoJet& jet)
@@ -322,48 +323,48 @@ void JetPairHistos::fill(PseudoJet& jet)
       double part2_th  = 0;
       //calculateJtTheta(jet_px,jet_py,jet_pz,jet_p,part1_px,part2_py,part2_pz,part2_p,part2_jt,part2_th);
 
-      h_jet_n2_ptpt->Fill(part1_pt,part2_pt);
-      h_jet_n2_phiphi->Fill(part1_phi,part2_phi);
-      h_jet_n2_etaeta->Fill(part1_eta,part2_eta);
-      h_jet_n2_thth->Fill(part1_th,part2_th);
-      h_jet_n2_jtjt->Fill(part1_jt,part2_jt);
-      h_jet_n2_zz->Fill(part1_z,part2_z);
+      h_jet_n2_ptpt->fill(part1_pt,part2_pt,1.0);
+      h_jet_n2_phiphi->fill(part1_phi,part2_phi,1.0);
+      h_jet_n2_etaeta->fill(part1_eta,part2_eta,1.0);
+      h_jet_n2_thth->fill(part1_th,part2_th,1.0);
+      h_jet_n2_jtjt->fill(part1_jt,part2_jt,1.0);
+      h_jet_n2_zz->fill(part1_z,part2_z,1.0);
 
       if (q1>0  &&  q2>0)
         {
-        h_jet_n2pp_ptpt->Fill(part1_pt,part2_pt);
-        h_jet_n2pp_phiphi->Fill(part1_phi,part2_phi);
-        h_jet_n2pp_etaeta->Fill(part1_eta,part2_eta);
-        h_jet_n2pp_thth->Fill(part1_th,part2_th);
-        h_jet_n2pp_jtjt->Fill(part1_jt,part2_jt);
-        h_jet_n2pp_zz->Fill(part1_z,part2_z);
+        h_jet_n2pp_ptpt->fill(part1_pt,part2_pt,1.0);
+        h_jet_n2pp_phiphi->fill(part1_phi,part2_phi,1.0);
+        h_jet_n2pp_etaeta->fill(part1_eta,part2_eta,1.0);
+        h_jet_n2pp_thth->fill(part1_th,part2_th,1.0);
+        h_jet_n2pp_jtjt->fill(part1_jt,part2_jt,1.0);
+        h_jet_n2pp_zz->fill(part1_z,part2_z,1.0);
         }
       else if (q1>0  &&  q2<0)
         {
-        h_jet_n2pm_ptpt->Fill(part1_pt,part2_pt);
-        h_jet_n2pm_phiphi->Fill(part1_phi,part2_phi);
-        h_jet_n2pm_etaeta->Fill(part1_eta,part2_eta);
-        h_jet_n2pm_thth->Fill(part1_th,part2_th);
-        h_jet_n2pm_jtjt->Fill(part1_jt,part2_jt);
-        h_jet_n2pm_zz->Fill(part1_z,part2_z);
+        h_jet_n2pm_ptpt->fill(part1_pt,part2_pt,1.0);
+        h_jet_n2pm_phiphi->fill(part1_phi,part2_phi,1.0);
+        h_jet_n2pm_etaeta->fill(part1_eta,part2_eta,1.0);
+        h_jet_n2pm_thth->fill(part1_th,part2_th,1.0);
+        h_jet_n2pm_jtjt->fill(part1_jt,part2_jt,1.0);
+        h_jet_n2pm_zz->fill(part1_z,part2_z,1.0);
         }
       else if (q1<0  &&  q2>0)
         {
-        h_jet_n2pm_ptpt->Fill(part2_pt,part1_pt);
-        h_jet_n2pm_phiphi->Fill(part2_phi,part1_phi);
-        h_jet_n2pm_etaeta->Fill(part2_eta,part1_eta);
-        h_jet_n2pm_thth->Fill(part2_th,part1_th);
-        h_jet_n2pm_jtjt->Fill(part2_jt,part1_jt);
-        h_jet_n2pm_zz->Fill(part2_z,part1_z);
+        h_jet_n2pm_ptpt->fill(part2_pt,part1_pt,1.0);
+        h_jet_n2pm_phiphi->fill(part2_phi,part1_phi,1.0);
+        h_jet_n2pm_etaeta->fill(part2_eta,part1_eta,1.0);
+        h_jet_n2pm_thth->fill(part2_th,part1_th,1.0);
+        h_jet_n2pm_jtjt->fill(part2_jt,part1_jt,1.0);
+        h_jet_n2pm_zz->fill(part2_z,part1_z,1.0);
         }
       else if (q1<0  &&  q2<0)
         {
-        h_jet_n2mm_ptpt->Fill(part1_pt,part2_pt);
-        h_jet_n2mm_phiphi->Fill(part1_phi,part2_phi);
-        h_jet_n2mm_etaeta->Fill(part1_eta,part2_eta);
-        h_jet_n2mm_thth->Fill(part1_th,part2_th);
-        h_jet_n2mm_jtjt->Fill(part1_jt,part2_jt);
-        h_jet_n2mm_zz->Fill(part1_z,part2_z);
+        h_jet_n2mm_ptpt->fill(part1_pt,part2_pt,1.0);
+        h_jet_n2mm_phiphi->fill(part1_phi,part2_phi,1.0);
+        h_jet_n2mm_etaeta->fill(part1_eta,part2_eta,1.0);
+        h_jet_n2mm_thth->fill(part1_th,part2_th,1.0);
+        h_jet_n2mm_jtjt->fill(part1_jt,part2_jt,1.0);
+        h_jet_n2mm_zz->fill(part1_z,part2_z,1.0);
         }
       }
     }
@@ -371,33 +372,33 @@ void JetPairHistos::fill(PseudoJet& jet)
 
 void JetPairHistos::scaleHistograms(double scale)
 {
-  h_jet_n2_ptpt->Scale(scale);
-  h_jet_n2_phiphi->Scale(scale);
-  h_jet_n2_etaeta->Scale(scale);
-  h_jet_n2_thth->Scale(scale);
-  h_jet_n2_jtjt->Scale(scale);
-  h_jet_n2_zz->Scale(scale);
+  h_jet_n2_ptpt->scale(scale);
+  h_jet_n2_phiphi->scale(scale);
+  h_jet_n2_etaeta->scale(scale);
+  h_jet_n2_thth->scale(scale);
+  h_jet_n2_jtjt->scale(scale);
+  h_jet_n2_zz->scale(scale);
 
-  h_jet_n2pp_ptpt->Scale(scale);
-  h_jet_n2pp_phiphi->Scale(scale);
-  h_jet_n2pp_etaeta->Scale(scale);
-  h_jet_n2pp_thth->Scale(scale);
-  h_jet_n2pp_jtjt->Scale(scale);
-  h_jet_n2pp_zz->Scale(scale);
+  h_jet_n2pp_ptpt->scale(scale);
+  h_jet_n2pp_phiphi->scale(scale);
+  h_jet_n2pp_etaeta->scale(scale);
+  h_jet_n2pp_thth->scale(scale);
+  h_jet_n2pp_jtjt->scale(scale);
+  h_jet_n2pp_zz->scale(scale);
 
-  h_jet_n2pm_ptpt->Scale(scale);
-  h_jet_n2pm_phiphi->Scale(scale);
-  h_jet_n2pm_etaeta->Scale(scale);
-  h_jet_n2pm_thth->Scale(scale);
-  h_jet_n2pm_jtjt->Scale(scale);
-  h_jet_n2pm_zz->Scale(scale);
+  h_jet_n2pm_ptpt->scale(scale);
+  h_jet_n2pm_phiphi->scale(scale);
+  h_jet_n2pm_etaeta->scale(scale);
+  h_jet_n2pm_thth->scale(scale);
+  h_jet_n2pm_jtjt->scale(scale);
+  h_jet_n2pm_zz->scale(scale);
 
-  h_jet_n2mm_ptpt->Scale(scale);
-  h_jet_n2mm_phiphi->Scale(scale);
-  h_jet_n2mm_etaeta->Scale(scale);
-  h_jet_n2mm_thth->Scale(scale);
-  h_jet_n2mm_jtjt->Scale(scale);
-  h_jet_n2mm_zz->Scale(scale);
+  h_jet_n2mm_ptpt->scale(scale);
+  h_jet_n2mm_phiphi->scale(scale);
+  h_jet_n2mm_etaeta->scale(scale);
+  h_jet_n2mm_thth->scale(scale);
+  h_jet_n2mm_jtjt->scale(scale);
+  h_jet_n2mm_zz->scale(scale);
 
 }
 

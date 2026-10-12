@@ -15,7 +15,8 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 
 ClassImp(CAP::ParticleSingleHistos);
 
@@ -24,7 +25,7 @@ namespace CAP
 
   ParticleSingleHistos::ParticleSingleHistos()
   :
-  HistogramGroup(),
+  HistogramFolder(),
   eta_fill(0),
   rapidity_fill(0),
   p2_fill(0),
@@ -63,7 +64,7 @@ namespace CAP
 
   ParticleSingleHistos::ParticleSingleHistos(const ParticleSingleHistos & source )
   :
-  HistogramGroup(source ),
+  HistogramFolder(source ),
   eta_fill(source.eta_fill ),
   rapidity_fill(source.rapidity_fill ),
   p2_fill(source.p2_fill ),
@@ -102,7 +103,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    HistogramGroup::operator=(rhs);
+    HistogramFolder::operator=(rhs);
     eta_fill           = rhs.eta_fill;
     rapidity_fill      = rhs.rapidity_fill;
     p2_fill            = rhs.p2_fill;
@@ -131,16 +132,16 @@ namespace CAP
   void ParticleSingleHistos::cloneB(const ParticleSingleHistos & source )
   {
   if (reportStart(__FUNCTION__)) { printCR(); }
-  h_n1         = safeCloneH1(source.h_n1);
-  h_n1_eTotal  = safeCloneH1(source.h_n1_eTotal);
-  h_n1_pt      = safeCloneH1(source.h_n1_pt);
-  h_n1_ptXS    = safeCloneH1(source.h_n1_ptXS) ;
-  h_n1_phiEta  = safeCloneH2(source.h_n1_phiEta) ;
-  h_spt_phiEta = safeCloneH2(source.h_spt_phiEta) ;
-  h_n1_phiY    = safeCloneH2(source.h_n1_phiY);
-  h_spt_phiY   = safeCloneH2(source.h_spt_phiY);
-  h_n1_ptY     = safeCloneH2(source.h_n1_ptY);
-  h_pdgId      = safeCloneH1(source.h_pdgId);
+  h_n1         = histogramLike(source.h_n1);
+  h_n1_eTotal  = histogramLike(source.h_n1_eTotal);
+  h_n1_pt      = histogramLike(source.h_n1_pt);
+  h_n1_ptXS    = histogramLike(source.h_n1_ptXS);
+  h_n1_phiEta  = histogramLike(source.h_n1_phiEta);
+  h_spt_phiEta = histogramLike(source.h_spt_phiEta);
+  h_n1_phiY    = histogramLike(source.h_n1_phiY);
+  h_spt_phiY   = histogramLike(source.h_spt_phiY);
+  h_n1_ptY     = histogramLike(source.h_n1_ptY);
+  h_pdgId      = histogramLike(source.h_pdgId);
   if (reportEnd(__FUNCTION__)) { printCR(); }
   }
 
@@ -149,9 +150,9 @@ namespace CAP
                                        const Configuration & configuration,
                                        unsigned int index)
   {
-  HistogramGroup::configure(taskName,objectType,configuration,index);
+  HistogramFolder::configure(taskName,objectType,configuration,index);
   String type;
-  if (objectType.Contains("HISTOGRAM"))
+  if (objectType.contains("HISTOGRAM"))
     type = "HISTOGRAM";
   else
     type = objectType;
@@ -239,37 +240,37 @@ namespace CAP
   if (reportDebug(__FUNCTION__)) { printCR(); }
   }
 
-  void ParticleSingleHistos::loadFrom(TFile & inputFile)
+  void ParticleSingleHistos::loadFrom(CapFile & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  h_n1         = importH1(inputFile,  createName(_histogramBaseName,"n1"));
-  h_n1_eTotal  = importH1(inputFile,  createName(_histogramBaseName,"n1_eTotal"));
-  h_n1_pt      = importH1(inputFile,  createName(_histogramBaseName,"n1_pt"));
-  h_n1_ptXS    = importH1(inputFile,  createName(_histogramBaseName,"n1_ptXS"));
+  h_n1         = importHistogram(inputFile,  createName(_histogramBaseName,"n1"));
+  h_n1_eTotal  = importHistogram(inputFile,  createName(_histogramBaseName,"n1_eTotal"));
+  h_n1_pt      = importHistogram(inputFile,  createName(_histogramBaseName,"n1_pt"));
+  h_n1_ptXS    = importHistogram(inputFile,  createName(_histogramBaseName,"n1_ptXS"));
 
   if (eta_fill)
     {
-    h_n1_phiEta  = importH2(inputFile,createName(_histogramBaseName,"n1_phiEta"));
+    h_n1_phiEta  = importHistogram(inputFile,createName(_histogramBaseName,"n1_phiEta"));
     if (p2_fill)
       {
-      h_spt_phiEta  = importH2(inputFile,createName(_histogramBaseName,"spt_phiEta"));
+      h_spt_phiEta  = importHistogram(inputFile,createName(_histogramBaseName,"spt_phiEta"));
       }
     }
   if (rapidity_fill)
     {
-    h_n1_phiY  = importH2(inputFile,createName(_histogramBaseName,"n1_phiY"));
+    h_n1_phiY  = importHistogram(inputFile,createName(_histogramBaseName,"n1_phiY"));
     if (p2_fill)
       {
-      h_spt_phiY  = importH2(inputFile,  createName(_histogramBaseName,"spt_phiY"));
+      h_spt_phiY  = importHistogram(inputFile,  createName(_histogramBaseName,"spt_phiY"));
       }
     }
   if (ptVsRapidity_fill)
     {
-    h_n1_ptY  = importH2(inputFile,  createName(_histogramBaseName,"n1_ptY"));
+    h_n1_ptY  = importHistogram(inputFile,  createName(_histogramBaseName,"n1_ptY"));
     }
 
   if (pid_fill)
-    h_pdgId  = importH1(inputFile,  createName(_histogramBaseName,"n1_indexId"));
+    h_pdgId  = importHistogram(inputFile,  createName(_histogramBaseName,"n1_indexId"));
   }
 
   //!
@@ -283,26 +284,26 @@ namespace CAP
   float phi  = momentum.phi();
   if (phi<0) phi += CAP::MATH::twoPi();
   float rapidity = momentum.rapidity();
-  h_n1_pt  ->Fill(pt,weight);
-  h_n1_ptXS->Fill(pt,weight/pt);
+  h_n1_pt  ->fill(pt,weight);
+  if (pt>0) h_n1_ptXS->fill(pt,weight/pt);
   if (eta_fill)
     {
-    h_n1_phiEta->Fill(eta,phi,weight);
-    if (p2_fill) h_spt_phiEta->Fill(eta,phi,weight*pt);
+    h_n1_phiEta->fill(eta,phi,weight);
+    if (p2_fill) h_spt_phiEta->fill(eta,phi,weight*pt);
     }
   if (rapidity_fill)
     {
-    h_n1_phiY->Fill(rapidity,phi,weight);
-    if (p2_fill) h_spt_phiY->Fill(rapidity,phi,weight*pt);
+    h_n1_phiY->fill(rapidity,phi,weight);
+    if (p2_fill) h_spt_phiY->fill(rapidity,phi,weight*pt);
     }
   if (ptVsRapidity_fill)
     {
-    h_n1_ptY->Fill(rapidity,pt);
+    h_n1_ptY->fill(rapidity,pt,weight);
     }
   if (pid_fill)
     {
     int pdgIndex = particle.type().pdgCode();
-    h_pdgId->Fill(pdgIndex);
+    h_pdgId->fill(pdgIndex,weight);
     }
   }
 
@@ -312,33 +313,33 @@ namespace CAP
   //!
   void ParticleSingleHistos::fillMultiplicity(double nAccepted, double totalEnergy, double weight)
   {
-  h_n1->Fill(nAccepted, weight);
-  h_n1_eTotal->Fill(totalEnergy, weight);
+  h_n1->fill(nAccepted, weight);
+  h_n1_eTotal->fill(totalEnergy, weight);
   }
 
   void ParticleSingleHistos::scaleObject(double factor)
   {
-  h_n1->Scale(factor);
-  h_n1_eTotal->Scale(factor);
-  h_n1_pt->Scale(factor);
-  h_n1_ptXS->Scale(factor);  // 1/pt dN/dptdy
+  h_n1->scale(factor);
+  h_n1_eTotal->scale(factor);
+  h_n1_pt->scale(factor);
+  h_n1_ptXS->scale(factor);  // 1/pt dN/dptdy
   if (eta_fill)
     {
-    h_n1_phiEta->Scale(factor);
-    if (p2_fill) h_spt_phiEta->Scale(factor);
+    h_n1_phiEta->scale(factor);
+    if (p2_fill) h_spt_phiEta->scale(factor);
     }
   if (rapidity_fill)
     {
-    h_n1_phiY->Scale(factor);
-    if (p2_fill) h_spt_phiY->Scale(factor);
+    h_n1_phiY->scale(factor);
+    if (p2_fill) h_spt_phiY->scale(factor);
     }
   if (ptVsRapidity_fill)
     {
-    h_n1_ptY->Scale(factor);
+    h_n1_ptY->scale(factor);
     }
   if (pid_fill)
     {
-    h_pdgId->Scale(factor);
+    h_pdgId->scale(factor);
     }
 
 

@@ -16,19 +16,36 @@
 namespace CAP
 {
 
+//!
+//! @brief Base class of the pair analyzers: an EventProcessor managing pair and single histogram groups.
+//!
+//! The groups are managed objects (configuration keys \<name\>:HISTOGRAM_\<n\>_\<k\>:...):
+//! - HISTOGRAM_1: base pair histograms, one per (event filter e, particle filters p1, p2): index e*nPF*nPF+p1*nPF+p2;
+//! - HISTOGRAM_2: derived pair histograms (same indexing), computed by calculateDerived();
+//! - HISTOGRAM_3: base single histograms, one per (event filter e, particle filter p): index e*nPF+p;
+//! - HISTOGRAM_4: derived single histograms (same indexing).
+//!
+//! @tparam HISTOGRAM_1 base pair histograms @tparam HISTOGRAM_2 derived pair histograms
+//! @tparam HISTOGRAM_3 base single histograms @tparam HISTOGRAM_4 derived single histograms
+//!
 template <class HISTOGRAM_1,class HISTOGRAM_2,class HISTOGRAM_3,class HISTOGRAM_4>
 class EventProcessorPair
 :
 public EventProcessor
 {
   protected :
+  //! Base pair histogram groups.
   ManagedObjects<HISTOGRAM_1>  _managedHistogram_1s;
+  //! Derived pair histogram groups.
   ManagedObjects<HISTOGRAM_2>  _managedHistogram_2s;
+  //! Base single histogram groups.
   ManagedObjects<HISTOGRAM_3>  _managedHistogram_3s;
+  //! Derived single histogram groups.
   ManagedObjects<HISTOGRAM_4>  _managedHistogram_4s;
 
 public:
 
+  //! @brief Default constructor.
   EventProcessorPair()
   :
   EventProcessor(),
@@ -43,6 +60,7 @@ public:
   EventProcessor::setTitle("EventProcessorPair");
   }
 
+  //! @brief Copy constructor. @param source task to copy
   EventProcessorPair(const EventProcessorPair & source)
   :
   EventProcessor(source),
@@ -52,6 +70,7 @@ public:
   _managedHistogram_4s(source._managedHistogram_4s)
   {  }
 
+  //! @brief Copy assignment. @param rhs task to copy @return this task
   EventProcessorPair & operator=(const EventProcessorPair & rhs)
   {
   if (this!=&rhs)
@@ -65,8 +84,10 @@ public:
   return *this;
   }
 
+  //! @brief Destructor.
   virtual ~EventProcessorPair() {}
 
+  //! @brief Add the default configuration of the task and of the histogram groups (HISTOGRAM_1 to HISTOGRAM_4).
   virtual void setDefaultConfiguration()
   {
   EventProcessor::setDefaultConfiguration();
@@ -78,20 +99,33 @@ public:
   _managedHistogram_4s.setDefaultObjectConfiguration(taskName,"HISTOGRAM_4",config);
   }
 
+  //! @brief Number of base pair histogram groups. @return number
   unsigned int nhistograms_1() const { return _managedHistogram_1s.size();  }
+  //! @brief Number of derived pair histogram groups. @return number
   unsigned int nhistograms_2() const { return _managedHistogram_2s.size();  }
+  //! @brief Number of base single histogram groups. @return number
   unsigned int nhistograms_3() const { return _managedHistogram_3s.size();  }
+  //! @brief Number of derived single histogram groups. @return number
   unsigned int nhistograms_4() const { return _managedHistogram_4s.size();  }
+  //! @brief Base pair histogram groups. @return groups
   const std::vector<HISTOGRAM_1*> & histograms_1() const { return _managedHistogram_1s.getObjects(); }
+  //! @brief Derived pair histogram groups. @return groups
   const std::vector<HISTOGRAM_2*> & histograms_2() const { return _managedHistogram_2s.getObjects(); }
+  //! @brief Base single histogram groups. @return groups
   const std::vector<HISTOGRAM_3*> & histograms_3() const { return _managedHistogram_3s.getObjects(); }
+  //! @brief Derived single histogram groups. @return groups
   const std::vector<HISTOGRAM_4*> & histograms_4() const { return _managedHistogram_4s.getObjects(); }
+  //! @brief Base pair histogram groups. @return groups
   std::vector<HISTOGRAM_1*>      & histograms_1()       { return _managedHistogram_1s.getObjects(); }
+  //! @brief Derived pair histogram groups. @return groups
   std::vector<HISTOGRAM_2*>      & histograms_2()       { return _managedHistogram_2s.getObjects(); }
+  //! @brief Base single histogram groups. @return groups
   std::vector<HISTOGRAM_3*>      & histograms_3()       { return _managedHistogram_3s.getObjects(); }
+  //! @brief Derived single histogram groups. @return groups
   std::vector<HISTOGRAM_4*>      & histograms_4()       { return _managedHistogram_4s.getObjects(); }
 
 
+  //! @brief Configure the task and the histogram groups. @param configuration configuration
   virtual void configure(const Configuration & configuration)
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();  }
@@ -102,6 +136,7 @@ public:
   _managedHistogram_4s.configureObjects(configuration);
   }
 
+  //! @brief Initialize the task and the histogram groups.
   virtual void initialize()
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();}
@@ -113,6 +148,7 @@ public:
   }
 
 
+  //! @brief Finalize the task and the histogram groups.
   virtual void finalize()
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();}
@@ -123,6 +159,7 @@ public:
   _managedHistogram_4s.finalize();
   }
 
+  //! @brief Reset the task and the histogram groups.
   virtual void reset()
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();}
@@ -133,6 +170,7 @@ public:
   _managedHistogram_4s.reset();
   }
 
+  //! @brief Clear the task and the histogram groups.
   virtual void clear()
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();}
@@ -143,6 +181,7 @@ public:
   _managedHistogram_4s.clear();
   }
 
+  //! @brief Print the task and the histogram groups.
   virtual void print() const
   {
   EventProcessor::print();
@@ -152,6 +191,8 @@ public:
   _managedHistogram_4s.print();
   }
 
+  //! @brief Compute the derived pair histograms of each (event filter, p1, p2) combination from the derived single
+  //! histograms of p1 and p2 and the base pair histograms.
   virtual void calculateDerived()
   {
   if (EventProcessor::reportDebug(__FUNCTION__))  { printCR(); };
@@ -197,6 +238,9 @@ public:
     }
   }
 
+  //! @brief Scale the base pair histograms (HISTOGRAM_1) of each event filter by its factor: all the (p1, p2) groups of
+  //! event filter e (indices e*nPF*nPF+p1*nPF+p2). @param factors factor of each event filter
+  //! @throws Exception if there are fewer factors than event filters or fewer groups than combinations
   void scaleHistograms(const std::vector<double> & factors)
   {
   if (reportDebug(__FUNCTION__))
@@ -206,17 +250,17 @@ public:
     printValue("nEventFilters()", _managedEventFilters.size());
     printValue("nParticleFilters()", _managedParticleFilters.size());
     }
-  std::vector<HISTOGRAM_1*> histos_1 = histograms_1();
-  std::vector<HISTOGRAM_2*> histos_2 = histograms_2();
-  unsigned int baseSingleIndex = 0;
-  for (unsigned int iEventFilter=0; iEventFilter<_managedEventFilters.size(); iEventFilter++)
+  std::vector<HISTOGRAM_1*> & histos_1 = histograms_1();
+  unsigned int nEF  = nEventFilters();
+  unsigned int nPF  = nParticleFilters();
+  unsigned int nPF2 = nPF*nPF;
+  if (factors.size()<nEF)        throw Exception("factors.size()<nEventFilters()",__FUNCTION__);
+  if (histos_1.size()<nEF*nPF2)  throw Exception("histograms_1().size()<nEventFilters()*nParticleFilters()^2",__FUNCTION__);
+  for (unsigned int iEventFilter=0; iEventFilter<nEF; iEventFilter++)
     {
-    baseSingleIndex = iEventFilter*nParticleFilters();
-    for (unsigned int iParticleFilter=0; iParticleFilter<nParticleFilters(); iParticleFilter++)
-      {
-      histos_1[baseSingleIndex + iParticleFilter]->scaleHistograms(factors[iEventFilter]);
-      histos_1[baseSingleIndex + iParticleFilter]->scaleHistograms(factors[iEventFilter]);
-      }
+    unsigned int basePairIndex = iEventFilter*nPF2;
+    for (unsigned int iPair=0; iPair<nPF2; iPair++)
+      histos_1[basePairIndex + iPair]->scaleHistograms(factors[iEventFilter]);   // all pair groups, once each
     }
   if (reportDebug(__FUNCTION__))
     {

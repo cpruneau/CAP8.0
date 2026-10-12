@@ -22,16 +22,22 @@
 #pragma link C++ class CAP::MATH::ScalarField+;
 #pragma link C++ class CAP::MATH::Complex<float>+;
 #pragma link C++ class CAP::MATH::Complex<double>+;
+#pragma link C++ class CAP::MATH::DataPoint+;
 #pragma link C++ class CAP::MATH::DataPoint2D+;
+#pragma link C++ class CAP::MATH::DataPoint3D+;
+#pragma link C++ class CAP::MATH::DataPointND+;
 #pragma link C++ class CAP::MATH::DataPoints+;
 #pragma link C++ class CAP::MATH::DataPointsVector+;
+#pragma link C++ class CAP::MATH::DataPointColumns+;
+#pragma link C++ class CAP::MATH::Table2D+;
 #pragma link C++ class CAP::MATH::Partition+;
+#pragma link C++ class CAP::MATH::BinValues+;
 #pragma link C++ class CAP::MATH::Histogram+;
+#pragma link C++ class CAP::MATH::Profile+;
 #pragma link C++ class CAP::MATH::ChiSquare+;
 #pragma link C++ class CAP::MATH::Vector2D+;
 #pragma link C++ class CAP::MATH::Vector3D+;
 #pragma link C++ class CAP::MATH::VectorLorentz+;
 #pragma link C++ class CAP::MATH::VectorND+;
 #pragma link C++ class CAP::MATH::Matrix+;
-#pragma link C++ class CAP::MATH::Folder+;
 #endif

@@ -11,7 +11,8 @@
  * *********************************************************************/
 #include "CalibrationProducer.hpp"
 #include "PrintHelpers.hpp"
-#include "RootHistogramHelpers.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
 #include "NameHelpers.hpp"
 
 ClassImp(CAP::CalibrationProducer);
@@ -79,12 +80,12 @@ void CalibrationProducer::execute()
       }
     }
 
-  TFile * inputFile = openRootFile(histoInputPath, histoRatioFileName, "READ");
-  TFile * outputFile;
+  CapFile * inputFile = CapFile::openCapFile(histoInputPath, histoRatioFileName, "READ");
+  CapFile * outputFile;
   if (HistogramsForceRewrite)
-    outputFile   = openRootFile(HistogramsExportPath,histoEffFileName,"RECREATE");
+    outputFile   = CapFile::openCapFile(HistogramsExportPath,histoEffFileName,"RECREATE");
   else
-    outputFile   = openRootFile(HistogramsExportPath,histoEffFileName,"NEW");
+    outputFile   = CapFile::openCapFile(HistogramsExportPath,histoEffFileName,"NEW");
 
   if (!inputFile || !outputFile) return;
   

@@ -11,13 +11,9 @@
  * *********************************************************************/
 #include "Object.hpp"
 #include "PrintHelpers.hpp"
-#include <iomanip>
 
 using std::cout;
 using std::endl;
-using std::left;
-using std::setw;
-using std::setfill;
 
 ClassImp(CAP::Object);
 
@@ -25,7 +21,7 @@ namespace CAP
 {
 
   String Object::kUnknownName   = "UNKNOWN";
-  String Object::kTraceName     = "TRACE";;
+  String Object::kTraceName     = "TRACE";
   String Object::kEndName       = "ENDF";
   String Object::kStartName     = "STARTF";
   String Object::kDebug0Name    = "DEBUG0";
@@ -43,7 +39,8 @@ namespace CAP
   _className("Object"),
   _minimumReportLevel(kInfo),
   _holdMinimumReportLevel(kInfo),
-  _loggerStyle(0)
+  _loggerStyle(0),
+  _index(0)
   { /* no ops */}
 
 
@@ -54,7 +51,8 @@ namespace CAP
   _className(className),
   _minimumReportLevel(kInfo),
   _holdMinimumReportLevel(kInfo),
-  _loggerStyle(0)
+  _loggerStyle(0),
+  _index(0)
   {}
 
   Object::Object(const Object & source)
@@ -64,7 +62,8 @@ namespace CAP
   _className(source._className),
   _minimumReportLevel(source._minimumReportLevel),
   _holdMinimumReportLevel(source._holdMinimumReportLevel),
-  _loggerStyle(source._loggerStyle)
+  _loggerStyle(source._loggerStyle),
+  _index(source._index)
   { /* no ops */}
 
   Object & Object::operator=(const Object & rhs)
@@ -77,30 +76,17 @@ namespace CAP
     _minimumReportLevel = rhs._minimumReportLevel;
     _holdMinimumReportLevel = rhs._holdMinimumReportLevel;
     _loggerStyle = rhs._loggerStyle;
+    _index = rhs._index;
     }
   return *this;
   }
 
   Object::~Object()
-  {
-  clear();
-  }
+  { }
 
   bool Object::nameHasEndColon() const
   {
-  int last = _name.Last(':');
-  int size = _name.Length() - 1;
-  return (last>0  &&  last == size);
-  }
-
-  void Object::clear()
-  {
-  _name  = "";
-  _title = "";
-  _className ="";
-  _minimumReportLevel  = kInfo;
-  _holdMinimumReportLevel = kInfo;
-  _loggerStyle = 0;
+  return _name.endsWith(":");
   }
 
   void Object::print()  const
@@ -137,27 +123,27 @@ namespace CAP
 
   void Object::setMinimumReportLevel(const String & severityName)
   {
-  if (severityName.EqualTo(kTraceName))
+  if (severityName.equalTo(kTraceName))
     setMinimumReportLevel(kTrace);
-  else if (severityName.EqualTo(kEndName))
+  else if (severityName.equalTo(kEndName))
     setMinimumReportLevel(kEnd);
-  else if (severityName.EqualTo(kStartName))
+  else if (severityName.equalTo(kStartName))
     setMinimumReportLevel(kStart);
-  else if (severityName.EqualTo(kDebug0Name))
+  else if (severityName.equalTo(kDebug0Name))
     setMinimumReportLevel(kDebug0);
-  else if (severityName.EqualTo(kDebug1Name))
+  else if (severityName.equalTo(kDebug1Name))
     setMinimumReportLevel(kDebug1);
-  else if (severityName.EqualTo(kDebug2Name))
+  else if (severityName.equalTo(kDebug2Name))
     setMinimumReportLevel(kDebug2);
-  else if (severityName.EqualTo(kInfoName))
+  else if (severityName.equalTo(kInfoName))
     setMinimumReportLevel(kInfo);
-  else if (severityName.EqualTo(kWarningName))
+  else if (severityName.equalTo(kWarningName))
     setMinimumReportLevel(kWarning);
-  else if (severityName.EqualTo(kErrorName))
+  else if (severityName.equalTo(kErrorName))
     setMinimumReportLevel(kError);
-  else if (severityName.EqualTo(kFatalName))
+  else if (severityName.equalTo(kFatalName))
     setMinimumReportLevel(kFatal);
-  else if (severityName.Length()>0 && !severityName.EqualTo("NONE"))
+  else if (severityName.length()>0 && !severityName.equalTo("NONE"))
     {
     // Unrecognized name: keep the current level but say so ("NONE" is the value returned
     // by Properties::valueString() for a missing key, so it stays silent).

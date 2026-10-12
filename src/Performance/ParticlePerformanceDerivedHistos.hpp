@@ -15,18 +15,29 @@
 
 namespace CAP
 {
+//!
+//! @brief Quantities derived from the performance histograms (resolutions and biases).
+//!
 class ParticlePerformanceDerivedHistos : public ParticlePerformanceHistos
 {
 public:
   
+  //! @brief Default constructor.
+  //! @brief Default constructor.
   ParticlePerformanceDerivedHistos();
+  //! @brief Destructor.
   virtual ~ParticlePerformanceDerivedHistos() {}
+  //! @brief Configure the object from keys \<taskName\>:\<objectType\>:... (binning, options).
+  //! @param taskName name of the task @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String& taskName,
                                const String & objectType,
                                const Configuration & configuration,
                                unsigned int index);
+  //! @brief Create the histograms.
   virtual void create();
-  virtual void loadFrom(TFile & inputFile);
+  //! @brief Load the histograms from a file. @param inputFile file
+  virtual void loadFrom(CapFile & inputFile);
+  //! @brief Compute the derived histograms. @param base performance histograms
   virtual void calculateDerivedHistograms(const ParticlePerformanceHistos & base);
 
   ClassDef(ParticlePerformanceDerivedHistos,0)
