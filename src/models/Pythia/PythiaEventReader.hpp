@@ -29,14 +29,14 @@ namespace CAP
 //! @brief Task reading PYTHIA 8 events from ROOT trees (TClonesArray of TParticle) and copying their particles into
 //! the current CAP event.
 //!
-//! Class defining a ROOT Tree reader for PYTHIA events produced by Pythia8.
-//! The Init() method maps the tree branch onto variables used by this reader
-//! Particles may be copied into a CAP event stream for analysis.
+//! The input is set by \<name\>:DataImportPath (default $CAP_DATA_IMPORT_PATH), \<name\>:DataImportFile (file name,
+//! wildcards allowed) and \<name\>:TreeName; initialize() maps the branches of the tree onto the members of the reader.
+//! Which particles are kept is set by SaveFinalOnly, SavePhotons, SaveNeutrinos, SaveQuarks, SaveGaugeBosons.
 //!
 class PythiaEventReader
 :
 public EventProcessor,
-RootChainManager
+public RootChainManager
 {
 public:
 
@@ -163,6 +163,9 @@ protected:
 
 
   //! @}
+  //! Input file(s) (DataImportPath/DataImportFile).
+  String          _inputFiles;
+
   ClassDef(PythiaEventReader,0)
 };
 

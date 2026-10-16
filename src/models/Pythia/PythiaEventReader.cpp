@@ -9,7 +9,9 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
+#include <cstdlib>
 #include "PythiaEventReader.hpp"
+#include "Exceptions.hpp"
 
 ClassImp(CAP::PythiaEventReader);
 
@@ -18,17 +20,19 @@ namespace CAP
 
 PythiaEventReader::PythiaEventReader()
 :
-ProcessorSingle(),
+EventProcessor(),
 RootChainManager(),
 saveFinalOnly(true),
 savePhotons(false),
 saveNeutrinos(false),
 saveQuarks(false),
-saveGaugeBosons(false)
+saveGaugeBosons(false),
+nParticles(0)
 {
- appendClassName("PythiaEventReader");
- setName("PythiaEventReader");
- setTitle("PythiaEventReader");
+  appendClassName("PythiaEventReader");
+  setMinimumReportLevel(Object::kInfo);
+  setName("PythiaEventReader");
+  setTitle("PythiaEventReader");
 }
 
 PythiaEventReader::PythiaEventReader(const PythiaEventReader & source)
@@ -39,7 +43,8 @@ saveFinalOnly(source.saveFinalOnly),
 savePhotons(source.savePhotons),
 saveNeutrinos(source.saveNeutrinos),
 saveQuarks(source.saveQuarks),
-saveGaugeBosons(source.saveGaugeBosons)
+saveGaugeBosons(source.saveGaugeBosons),
+nParticles(0)
 {  }
 
 PythiaEventReader & PythiaEventReader::operator=(const PythiaEventReader & rhs)
@@ -57,12 +62,15 @@ PythiaEventReader & PythiaEventReader::operator=(const PythiaEventReader & rhs)
   return *this;
 }
 
-
 void PythiaEventReader::setDefaultConfiguration()
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  ProcessorSingle::setDefaultConfiguration();
-  const String & taskName = name();
+  EventProcessor::setDefaultConfiguration();
+  String taskName = name();
+  const char * importPath = std::getenv("CAP_DATA_IMPORT_PATH");
+  _configuration.addProperty(createKey(taskName,"DataImportPath"),   String(importPath ? importPath : ""));
+  _configuration.addProperty(createKey(taskName,"DataImportFile"),   String(""));
+  _configuration.addProperty(createKey(taskName,"TreeName"),         String(""));
   _configuration.addProperty(createKey(taskName,"SaveFinalOnly"),    true);
   _configuration.addProperty(createKey(taskName,"SavePhotons"),      false);
   _configuration.addProperty(createKey(taskName,"SaveNeutrinos"),    false);
@@ -70,68 +78,36 @@ void PythiaEventReader::setDefaultConfiguration()
   _configuration.addProperty(createKey(taskName,"SaveGaugeBosons"),  false);
 }
 
-//!
-//! Read a PYTHIA  event from file
-//! Copy the event into Event for convenience..
-//!
-void PythiaEventReader::execute()
-{
-  //if (reportDebug(__FUNCTION__)) { printCR(); }
-  ParticleTypeList & particleTypeList = ParticleTypeList::list();
-  Event & theEvent = event();
-  event.reset();
-  Particle::factory().reset();
-  bool seekingEvent = true;
-  while (seekingEvent)
-    {
-    Long64_t ientry = LoadTree(entryIndex++);
-    if (ientry < 0) return;
-    nb = GetEntry(entryIndex);   nBytes += nb;
-    if (reportDebug(__FUNCTION__)) cout << " nb:" << nb << " nParticles:" <<  nParticles << endl;
-    if (nParticles>2) seekingEvent = false;
-    }
-  ParticleType * type;
-
-  for (int iParticle = 0; iParticle < nParticles; iParticle++)
-    {
-    int ist = tracks_fStatusCode[iParticle];
-    if (saveFinalOnly    &&  ist <= 0) continue;
-    int pdg = tracks_fPdgCode[iParticle];
-    if (!saveQuarks      &&  abs(pdg)<10) continue; // skip quarks, gluons, etc
-    if (!saveNeutrinos   &&  (abs(pdg)==12 || abs(pdg)==14  || abs(pdg)==16 || abs(pdg)==18)) continue;
-    if (!savePhotons     &&  pdg==22) continue;
-    if (!saveGaugeBosons  &&  (abs(pdg)>22  &&  abs(pdg)<40)) continue;
-    type = particleTypeList.findPdgCode(pdg);
-    if (type==nullptr) continue;
-    double px = tracks_fPx[iParticle];
-    double py = tracks_fPy[iParticle];
-    double pz = tracks_fPz[iParticle];
-    double e  = tracks_fE[iParticle];
-    double sourceX = 0.0;
-    double sourceY = 0.0;
-    double sourceZ = 0.0;
-    double sourceT = 0.0;
-    Particle & particle = Particle::factory().nextObject();
-    particle.set(type,px,py,pz,e,sourceX,sourceY,sourceZ,sourceT,true);
-    event.addParticle(&particle);
-    }
-  _taskExecuted.increment();;
-}
-
 void PythiaEventReader::initialize()
 {
-  if (reportDebug(__FUNCTION__)) { printCR(); }
-  ProcessorSingle::initialize();
-  const String & taskName = name();
+  if (reportStart(__FUNCTION__)) { printCR(); }
+  EventProcessor::initialize();
+  String taskName = name();
   saveFinalOnly   = _configuration.valueBool(createKey(taskName,"SaveFinalOnly"));
   savePhotons     = _configuration.valueBool(createKey(taskName,"SavePhotons"));
-  saveNeutrinos   = _configuration.valueBool(createKey(taskName,"SaveNeutrinos");
+  saveNeutrinos   = _configuration.valueBool(createKey(taskName,"SaveNeutrinos"));
   saveQuarks      = _configuration.valueBool(createKey(taskName,"SaveQuarks"));
-  saveGaugeBosons = _configuration.valueBool(createKey(taskName,"SaveGaugeBosons");
+  saveGaugeBosons = _configuration.valueBool(createKey(taskName,"SaveGaugeBosons"));
+
+  String treeName = _configuration.valueString(createKey(taskName,"TreeName"));
+  String path     = _configuration.valueString(createKey(taskName,"DataImportPath"));
+  String files    = _configuration.valueString(createKey(taskName,"DataImportFile"));
+  if (treeName.isNull())
+    throw ConfigurationException(createKey(taskName,"TreeName"),"Name of the tree of PYTHIA events not set",__FUNCTION__);
+  if (files.isNull())
+    throw ConfigurationException(createKey(taskName,"DataImportFile"),"PYTHIA event file(s) not set",__FUNCTION__);
+  _inputFiles = path;
+  if (!_inputFiles.isNull() && !_inputFiles.str().empty() && _inputFiles.str().back()!='/') _inputFiles += "/";
+  _inputFiles += files;
+  initializeImportTree(treeName);
+  if (chain()->Add(_inputFiles.data())==0)
+    throw FileException(_inputFiles,"No PYTHIA event file found",__FUNCTION__);
+  importEvent();
+  printValue("Pythia:Input",_inputFiles);
+  printValue("Pythia:Tree",treeName);
 
   TTree * tree = chain();
   tree->SetMakeClass(1);
-
   tree->SetBranchAddress("tracks", & nParticles, & b_tracks_);
   tree->SetBranchAddress("tracks.fUniqueID", tracks_fUniqueID, & b_tracks_fUniqueID);
   tree->SetBranchAddress("tracks.fBits", tracks_fBits, & b_tracks_fBits);
@@ -172,6 +148,51 @@ void PythiaEventReader::initialize()
   tree->SetBranchAddress("HP_Kick4", & HP_Kick4, & b_HP_Kick4);
 }
 
+//!
+//! Read the next PYTHIA event with more than two particles and add its particles to the current event (the event is
+//! reset by the event iterator). Throws EndOfDataException at the end of the input, which ends the event loop.
+//! Particles whose PDG code is not in the particle database are skipped; a particle is added if it passes the first
+//! particle filter of the task (or always if the task has no particle filter).
+//!
+void PythiaEventReader::execute()
+{
+  do
+    {
+    if (loadTree(_entryIndex) < 0)
+      throw EndOfDataException(_inputFiles,"End of the PYTHIA input",__FUNCTION__);
+    _nb = chain()->GetEntry(_entryIndex++);
+    _nBytes += _nb;
+    if (reportDebug(__FUNCTION__)) { printValue("Bytes read",long(_nb)); printValue("nParticles",nParticles); }
+    }
+  while (nParticles<=2);
+  if (nParticles>nMaxTracks)
+    throw Exception("More particles in the event than the reader can hold (nMaxTracks)",__FUNCTION__);
 
+  Event & theEvent = event();
+  ParticleDb & particleDb = db();
+  ParticleFilter * particleFilter = particleFilters().empty() ? nullptr : particleFilters()[0];
+  for (int iParticle = 0; iParticle < nParticles; iParticle++)
+    {
+    if (saveFinalOnly && tracks_fStatusCode[iParticle] <= 0) continue;
+    int pdg = tracks_fPdgCode[iParticle];
+    int absPdg = std::abs(pdg);
+    if (!saveQuarks      &&  absPdg<10) continue;    // quarks
+    if (!saveQuarks      &&  absPdg==21) continue;   // gluons
+    if (!saveNeutrinos   &&  (absPdg==12 || absPdg==14 || absPdg==16 || absPdg==18)) continue;
+    if (!savePhotons     &&  pdg==22) continue;
+    if (!saveGaugeBosons &&  absPdg>22 && absPdg<40) continue;
+    ParticleType * type = particleDb.findPdgCode(pdg);
+    if (type==nullptr) continue;
+    Particle & particle = Particle::factory().nextObject();
+    particle.reset();
+    particle.setType(type);
+    particle.setLive(true);
+    particle.setEPxPyPz(tracks_fE[iParticle],tracks_fPx[iParticle],tracks_fPy[iParticle],tracks_fPz[iParticle]);
+    particle.setXYZT(0.0,0.0,0.0,0.0);
+    if (!particleFilter || particleFilter->accept(particle)) theEvent.addParticle(&particle);
+    }
+  _eventAccepted.increment();
+  _taskExecuted.increment();
+}
 
 } // namespace CAP

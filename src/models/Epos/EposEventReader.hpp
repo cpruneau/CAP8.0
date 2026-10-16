@@ -40,14 +40,13 @@ public:
   EposEventReader();
   //! @brief Destructor.
   virtual ~EposEventReader() {}
-  //! @brief Add the default configuration of the task.
-  void setDefaultConfiguration();
-  //! @brief Configure the task. @param configuration configuration
-  void configure(const Configuration & configuration);
-  //! @brief Initialize the task.
-  void initialize();
-  //! @brief Execute the task (process the current event).
-  void execute();
+  //! @brief Add the default configuration of the task (input files and tree name).
+  virtual void setDefaultConfiguration();
+  //! @brief Open the input files and map the branches of the tree.
+  virtual void initialize();
+  //! @brief Read the next event and add its particles to the current event.
+  //! @throws EndOfDataException at the end of the input
+  virtual void execute();
 
 protected:
 
@@ -82,6 +81,9 @@ protected:
    TBranch        *b_E;   //!
  
   //! @}
+  //! Input file(s) (DataImportPath/DataImportFile).
+  String          _inputFiles;
+
   ClassDef(EposEventReader,0)
 };
 

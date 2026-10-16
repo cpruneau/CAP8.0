@@ -30,8 +30,10 @@ namespace CAP
 //! current CAP event.
 //!
 //! PYTHIA settings are given by keys \<name\>:Beams:idA, Beams:idB, Beams:frameType, Beams:eCM, Beams:eA, Beams:eB,
-//! SetSeed, SeedValue, UseQCDCR, UseRopes, UseShoving, Print:Banner, ...; which particles are saved is set by
-//! saveFinalOnly, savePhotons, saveNeutrinos, saveQuarks, saveGaugeBosons.
+//! SetSeed, SeedValue, UseQCDCR, UseRopes, UseShoving, Option0..Option29 (any PYTHIA setting string), Print:Banner,
+//! Print:Statistics and xmlInputPath (PYTHIA xml directory; default $PYTHIA8DATA, then
+//! $CAP_PYTHIA8_PATH/share/Pythia8/xmldoc); which particles are saved is set by SaveFinalOnly, SavePhotons,
+//! SaveNeutrinos, SaveQuarks, SaveGaugeBosons.
 //!
 class PythiaEventGenerator
 :
