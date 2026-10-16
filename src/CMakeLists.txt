@@ -14,6 +14,7 @@
 option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
 option(CAP_WITH_GRAPHICS     "Build the Graphics module (2D drawing; macOS window and demo)"  ON)
+option(CAP_WITH_GUI          "Build bin/CapGui, the graphical interface (Dear ImGui; requires Graphics)" ON)
 option(CAP_WITH_JETS         "Build the Jets module (requires FastJet)"                       OFF)
 option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader)"                      OFF)
 option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      OFF)
@@ -170,6 +171,15 @@ endif()
 if(CAP_WITH_GRAPHICS)   # not linked into the CAP executable (nothing in CAP uses it yet)
   add_subdirectory(core/Graphics)
   list(APPEND CAP_OPTIONAL_BUILT Graphics)
+endif()
+
+if(CAP_WITH_GUI)        # bin/CapGui: Dear ImGui + GLFW (distributed in <CAP>/external), OpenGL
+  if(CAP_WITH_GRAPHICS)
+    add_subdirectory(gui)
+    list(APPEND CAP_OPTIONAL_BUILT CapGui)
+  else()
+    message(WARNING "CAP_WITH_GUI requires CAP_WITH_GRAPHICS: bin/CapGui is not built.")
+  endif()
 endif()
 
 if(CAP_WITH_EPOS)
