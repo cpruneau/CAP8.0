@@ -41,11 +41,11 @@ namespace CAP
     }
   if (const MarkerVector * markers = dynamic_cast<const MarkerVector*>(&drawable))
     {
-    const Data2D * data = markers->data();
+    const MATH::DataPoints * data = markers->data();
     if (!data) return;
     for (unsigned int k=0; k<data->size(); k++)
       {
-      DataPoint2D p = data->point(k);
+      MATH::DataPoint2D p = data->point(k);
       painter.drawMarker(markers->toCanvas(p.x(), p.y()), markers->markerAttributes());
       }
     }

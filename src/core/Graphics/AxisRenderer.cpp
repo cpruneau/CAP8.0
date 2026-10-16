@@ -137,7 +137,7 @@ namespace CAP
     }
 
   // title, centered beyond the labels and parallel to the axis
-  if (!Painter::isEmpty(axis->title()))
+  if (!axis->title().isNull())
     {
     Point2D middle((a.x()+b.x())/2, (a.y()+b.y())/2);
     // beyond the labels, plus a gap and half the title height (in fractions of H)

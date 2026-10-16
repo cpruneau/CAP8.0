@@ -13,6 +13,7 @@
 ################################################################################################
 option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
+option(CAP_WITH_GRAPHICS     "Build the Graphics module (2D drawing; macOS window and demo)"  ON)
 option(CAP_WITH_JETS         "Build the Jets module (requires FastJet)"                       OFF)
 option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader)"                      OFF)
 option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      OFF)
@@ -61,7 +62,7 @@ find_package(ROOT REQUIRED COMPONENTS EG MathCore MathMore RIO Hist Tree Net )
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 ################################################################################################
 include(${ROOT_USE_FILE})
-include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Helpers" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
+include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Helpers" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
  )
 add_definitions(${ROOT_CXX_FLAGS})
 add_compile_options(-Wall -Wextra -pedantic)
@@ -164,6 +165,11 @@ if(CAP_WITH_LATEX)
   add_subdirectory(core/Latex)
   list(APPEND CAP_LINKED_MODULES Latex)
   list(APPEND CAP_OPTIONAL_BUILT Latex)
+endif()
+
+if(CAP_WITH_GRAPHICS)   # not linked into the CAP executable (nothing in CAP uses it yet)
+  add_subdirectory(core/Graphics)
+  list(APPEND CAP_OPTIONAL_BUILT Graphics)
 endif()
 
 if(CAP_WITH_EPOS)

@@ -14,12 +14,10 @@ Axis.hpp
 AxisRange.hpp
 AxisRenderer.hpp
 Canvas.hpp
-Data2D.hpp
-Data2DColumns.hpp
-Data2DPoints.hpp
 Drawable2D.hpp
 FillAttributes.hpp
 Geom2D.hpp
+Graph.hpp
 GraphRenderer.hpp
 Line.hpp
 LineAttributes.hpp
@@ -30,9 +28,12 @@ MarkerAttributes.hpp
 MarkerRenderer.hpp
 MarkerVector.hpp
 Painter.hpp
+Point2D.hpp
+Point3D.hpp
 Polygon.hpp
 PolygonRenderer.hpp
 Renderer.hpp
+SvgPainter.hpp
 TextAttributes.hpp
 TextRenderer.hpp)
 
@@ -42,12 +43,10 @@ Axis.cpp
 AxisRange.cpp
 AxisRenderer.cpp
 Canvas.cpp
-Data2D.cpp
-Data2DColumns.cpp
-Data2DPoints.cpp
 Drawable2D.cpp
 FillAttributes.cpp
 Geom2D.cpp
+Graph.cpp
 GraphRenderer.cpp
 Line.cpp
 LineAttributes.cpp
@@ -61,6 +60,7 @@ Painter.cpp
 Polygon.cpp
 PolygonRenderer.cpp
 Renderer.cpp
+SvgPainter.cpp
 TextAttributes.cpp
 TextRenderer.cpp)
 
@@ -83,7 +83,7 @@ add_library(Graphics SHARED
 ${GRAPHICS_SOURCES}
 G__Graphics.cxx)
 
-target_link_libraries(Graphics Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(Graphics Base Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 if(APPLE)
   target_link_libraries(Graphics "-framework Cocoa" "-framework CoreText")
 endif()
@@ -92,3 +92,11 @@ target_include_directories(Graphics PUBLIC Base Math Graphics ${EXTRA_INCLUDES} 
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libGraphics.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libGraphics_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Graphics  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+
+# macOS demo program: bin/MacOsCanvasDemo opens a window showing a sample canvas
+if(APPLE)
+  add_executable(MacOsCanvasDemo MacOsCanvasDemo.C)
+  set_source_files_properties(MacOsCanvasDemo.C PROPERTIES LANGUAGE CXX)
+  target_link_libraries(MacOsCanvasDemo Graphics Math Base ${ROOT_LIBRARIES})
+  install(TARGETS MacOsCanvasDemo RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+endif()

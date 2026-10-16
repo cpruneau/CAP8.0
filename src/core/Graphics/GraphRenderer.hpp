@@ -8,7 +8,7 @@ namespace CAP
   {
 
   //!
-  //! Placeholder for Graph2D; draws nothing for now (Graph2D is not in the build yet).
+  //! Draws a Graph: frame, functions and data points (clipped to the frame), axes (linear or log), title, legend.
   //!
   class GraphRenderer : public Renderer
   {

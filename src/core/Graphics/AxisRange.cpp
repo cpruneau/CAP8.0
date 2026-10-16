@@ -39,7 +39,12 @@ namespace CAP
 
   void AxisRange::set(float minimum, float maximum)
   {
-  if (maximum<=minimum) throw RangeException(minimum, maximum, "Invalid range: maximum<=minimum", __FUNCTION__);
+  if (maximum<=minimum)
+    {
+    String message = "Invalid axis range [";
+    message += minimum; message += ","; message += maximum; message += "]: maximum<=minimum";
+    throw Exception(message,__FUNCTION__,"RangeException");
+    }
   _minimum = minimum;
   _maximum = maximum;
   }

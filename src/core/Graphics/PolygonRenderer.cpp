@@ -38,7 +38,7 @@ namespace CAP
   std::vector<Point2D> vertices = polygon->vertices();
   if (vertices.size() < 3) return;
   painter.drawPolygon(vertices, polygon->fillAttributes(), polygon->lineAttributes());
-  if (!Painter::isEmpty(polygon->text()))
+  if (!polygon->text().isNull())
     painter.drawText(polygon->center(), polygon->text(), polygon->textAttributes(), polygon->angle());
   }
 

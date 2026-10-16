@@ -26,7 +26,7 @@ namespace CAP
   _textAttributes(*TextAttributes::defaultTextAttributes())
   {  }
 
-  Graph2D::Graph2D(Data2D* dataSet)
+  Graph2D::Graph2D(MATH::DataPoints* dataSet)
   :
   Drawable2D(),
   _axesStyle(kOneSide),
@@ -47,7 +47,7 @@ namespace CAP
   _dataSets.push_back(dataSet);
   }
 
-  Graph2D::Graph2D(std:vector<Data2D*> & dataSets)
+  Graph2D::Graph2D(std:vector<MATH::DataPoints*> & dataSets)
   :
   Drawable2D(),
   _axesStyle(kOneSide),

@@ -193,7 +193,7 @@ namespace CAP
                                                       backing:NSBackingStoreBuffered
                                                         defer:NO];
     window.releasedWhenClosed = NO; // ARC owns it
-    NSString * title = [NSString stringWithUTF8String:cString(_canvas->title())];
+    NSString * title = [NSString stringWithUTF8String:_canvas->title().data()];
     window.title = title ? title : @"Canvas";
 
     CAPCanvasView * view = [[CAPCanvasView alloc] initWithFrame:frame];
@@ -376,7 +376,7 @@ namespace CAP
   {
   CGContextRef context = (CGContextRef) _context;
   if (!context) return;
-  const char * utf8 = cString(text);
+  const char * utf8 = text.data();
   if (!utf8 || !*utf8) return;
   CGFloat fontSize = attributes.size()*_height;
   if (fontSize <= 0) return;
@@ -403,7 +403,7 @@ namespace CAP
 
   float MacOsCanvas::textWidth(const String & text, const TextAttributes & attributes) const
   {
-  const char * utf8 = cString(text);
+  const char * utf8 = text.data();
   if (!utf8 || !*utf8) return 0.0;
   CGFloat fontSize = attributes.size()*_height;
   if (fontSize <= 0) return 0.0;

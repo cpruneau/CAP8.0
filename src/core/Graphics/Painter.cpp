@@ -10,7 +10,7 @@ namespace CAP
   float Painter::textWidth(const String & text, const TextAttributes & attributes) const
   {
   int n = 0;
-  for (const char * c = cString(text); *c; c++) if ((*c & 0xC0) != 0x80) n++; // count UTF-8 characters
+  for (const char * c = text.data(); *c; c++) if ((*c & 0xC0) != 0x80) n++; // count UTF-8 characters
   return 0.55*attributes.size()*height()*n;
   }
 

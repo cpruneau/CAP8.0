@@ -5,6 +5,7 @@
 #include "Drawable2D.hpp"
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
+#include "Graph.hpp"
 
 namespace CAP
 {
@@ -28,7 +29,7 @@ namespace CAP
   Canvas(const String & name, const String & title, int width=800, int height=600);
   Canvas(const Canvas & src);
   Canvas  & operator=(const Canvas & rhs);
-  virtual ~Canvas() { }
+  virtual ~Canvas() { clearGraphs(); }
 
   void setSize(int width, int height) { _width = width; _height = height; }
   int  width()  const { return _width;  }
@@ -38,7 +39,25 @@ namespace CAP
   FillAttributes & background() { return _background; }
   const FillAttributes & background() const { return _background; }
 
-  //! Paint the background, then draw all children.
+  //! @name Grid of graphs
+  //! @{
+  //! @brief Divide the canvas into nColumns x nRows cells, one Graph per cell (owned by the canvas). Existing graphs
+  //! are kept, in order (row by row from the top left), and moved to their new cells; graphs beyond the new count
+  //! are deleted. A new canvas has no graphs (only its children are drawn) until divide() is called.
+  void divide(int nColumns, int nRows);
+  int nColumns() const { return _nColumns; }
+  int nRows()    const { return _nRows; }
+  int nGraphs()  const { return (int)_graphs.size(); }
+  //! @brief Graph k, row by row from the top left. @param k index in [0,nGraphs())
+  Graph & graph(int k) { return *_graphs.at(k); }
+  const Graph & graph(int k) const { return *_graphs.at(k); }
+  //! @brief Graph in column column and row row (row 0 at the top).
+  Graph & graph(int column, int row) { return *_graphs.at(row*_nColumns + column); }
+  //! @brief Index of the graph whose cell contains the canvas point p, or -1.
+  int graphAt(const Point2D & p) const;
+  //! @}
+
+  //! Paint the background, then draw the graphs and the other children.
   virtual void draw(Painter & painter) const;
   virtual void reset();
 
@@ -47,6 +66,12 @@ namespace CAP
   int _width;
   int _height;
   FillAttributes _background;
+  int _nColumns;
+  int _nRows;
+  std::vector<Graph*> _graphs; //! owned; not streamed
+
+  void layout();
+  void clearGraphs();
 
   ClassDef(Canvas,0)
   };

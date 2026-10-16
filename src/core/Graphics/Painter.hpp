@@ -1,8 +1,7 @@
 #ifndef CAP__Painter
 #define CAP__Painter
-#include <string>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Point2D.hpp"
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
@@ -60,11 +59,6 @@ namespace CAP
   //! Convert a ROOT color index to RGB components in [0,1].
   //! Uses ROOT's color table when available, otherwise a built-in table of the basic colors.
   static void rgb(int color, float & red, float & green, float & blue);
-
-  //! Convert CAP's String alias (std::string or TString) to a C string.
-  static const char * cString(const std::string & s) { return s.c_str(); }
-  template <class T> static const char * cString(const T & s) { return s.data(); }
-  template <class T> static bool isEmpty(const T & s) { return cString(s)[0] == '\0'; }
 
   };
 

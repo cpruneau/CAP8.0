@@ -15,8 +15,8 @@ Usage (from anywhere; the script locates CAP from its own position):
 The window has three parts:
   * a toolbar (top): Build, Stop, Save output, Clear, the build directory name, the build type, the number of parallel
     jobs and whether to install;
-  * the options (upper half): the core modules (always built), the optional modules (Therminator3, Latex, Jets, Epos,
-    PHSD, Pythia) and the Herwig generator, with the locations of ROOT and of the external packages;
+  * the options (upper half): the core modules (always built), the optional modules (Therminator3, Latex, Graphics, Jets,
+    Epos, PHSD, Pythia) and the Herwig generator, with the locations of ROOT and of the external packages;
   * the output of cmake and make (lower half), which can be saved to a file.
 
 Build steps (each command is printed in the output pane before it runs):
@@ -63,6 +63,7 @@ CORE_MODULES = ["Base", "Math", "Helpers", "Particles", "Global", "ParticleSingl
 OPTIONAL_MODULES = [
     ("CAP_WITH_THERMINATOR3", "Therminator3", "Thermal model event generator", True),
     ("CAP_WITH_LATEX",        "Latex",        "LaTeX documents of results", True),
+    ("CAP_WITH_GRAPHICS",     "Graphics",     "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)", True),
     ("CAP_WITH_JETS",         "Jets",         "Jet analysis (needs FastJet; in progress)", False),
     ("CAP_WITH_EPOS",         "Epos",         "EPOS event reader", False),
     ("CAP_WITH_PHSD",         "PHSD",         "PHSD event reader (in progress)", False),

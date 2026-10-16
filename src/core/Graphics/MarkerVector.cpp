@@ -23,7 +23,7 @@ namespace CAP
   setRenderer(MarkerRenderer::defaultRenderer());
   }
 
-  MarkerVector::MarkerVector(Data2D * data)
+  MarkerVector::MarkerVector(const MATH::DataPoints * data)
   :
   MarkerVector()
   {

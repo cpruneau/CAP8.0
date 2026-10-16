@@ -1,6 +1,6 @@
 #ifndef CAP__Graph2D
 #define CAP__Graph2D
-#include "Data2D.hpp"
+#include "DataPoints.hpp"
 #include "Drawable2D.hpp"
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
@@ -23,8 +23,8 @@ namespace CAP
   enum AxisStyle { kOneSide, kBothSides}
 
   Graph2D();
-  Graph2D(Data2D* dataSet);
-  Graph2D(std:vector<Data2D*> & dataSets);
+  Graph2D(MATH::DataPoints* dataSet);
+  Graph2D(std:vector<MATH::DataPoints*> & dataSets);
   Graph2D(const Graph2D & src);
   Graph2D  & operator=(const Graph2D & rhs);
   virtual ~Graph2D() { }
@@ -39,7 +39,7 @@ namespace CAP
   void setLineAttributes(const LineAttributes & lineAttributes) { _lineAttributes = lineAttributes; }
   void setTextAttributes(const TextAttributes & textAttributes) { _textAttributes = textAttributes; }
 
-  void addDataSet(Data2D* dataSet); //  { _dataSets; }
+  void addDataSet(MATH::DataPoints* dataSet); //  { _dataSets; }
 
   AxisStyle axisStyle() const { return _axesStyle; }
   const Margins & margins() const { return _margins; }
@@ -55,8 +55,8 @@ namespace CAP
   Polygon & boundaryBox  { return *_boundaryBox; }
   const Polygon & boundaryBox const { return *_boundaryBox; }
 
-  std:vector<Data2D*> & dataSets { return _dataSets; }
-  const std:vector<Data2D*> & dataSets  const  { return _dataSets; }
+  std:vector<MATH::DataPoints*> & dataSets { return _dataSets; }
+  const std:vector<MATH::DataPoints*> & dataSets  const  { return _dataSets; }
 
   FillAttributes & fillAttributes() { return _fillAttributes; }
   LineAttributes & lineAttributes() { return _lineAttributes; }
@@ -75,7 +75,7 @@ namespace CAP
   Axis *  _yAxis;
   Axis *  _yAxis2;
   Polygon * _boundaryBox; //! This is the box surrounding the actual graph(s)
-  std:vector<Data2D*> _dataSets;
+  std:vector<MATH::DataPoints*> _dataSets;
 
   FillAttributes _fillAttributes;
   LineAttributes _lineAttributes;

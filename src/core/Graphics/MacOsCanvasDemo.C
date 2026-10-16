@@ -1,8 +1,7 @@
 //
 // MacOsCanvasDemo.C -- shows a CAP Graphics canvas in a native macOS window.
-// Not part of the library build. Run as a ROOT macro once libGraphics is built and loaded,
-// e.g.  root -l -e 'gSystem->Load("libGraphics")' MacOsCanvasDemo.C
-// or compile it into a small program linked against libGraphics.
+// Built on macOS with the Graphics library and installed as <CAP>/bin/MacOsCanvasDemo: run that program; the
+// window stays open until it is closed. (main() is left out when the file is read by ROOT's interpreter.)
 //
 #include <cmath>
 #include <vector>
@@ -12,7 +11,7 @@
 #include "Polygon.hpp"
 #include "Marker.hpp"
 #include "MarkerVector.hpp"
-#include "Data2DColumns.hpp"
+#include "DataPointColumns.hpp"
 #include "MacOsCanvas.hpp"
 
 using namespace CAP::GRAPHICS;
@@ -39,9 +38,9 @@ void MacOsCanvasDemo()
   canvas.addChild(&y);
 
   // data points y = exp(-x/3), red full circles
-  std::vector<float> xs, ys;
+  std::vector<double> xs, ys;
   for (int i=0; i<=20; i++) { xs.push_back(0.5*i); ys.push_back(std::exp(-0.5*i/3.0)); }
-  Data2DColumns data(xs, ys);
+  CAP::MATH::DataPointColumns data(xs, ys);
   MarkerVector markers(&data);
   markers.setRanges(AxisRange(0,10), AxisRange(0,1));
   markers.setFrame(0.15, 0.15, 0.90, 0.90);
