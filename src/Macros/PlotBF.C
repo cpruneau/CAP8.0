@@ -463,7 +463,7 @@ int PlotBF(const TString & path="/Volumes/ClaudeDisc4/OutputFiles/GaussTest/",
 
 void loadBase(const TString & includeBasePath)
 {
-  TString includePath = includeBasePath + "/Base/";
+  TString includePath = includeBasePath + "/core/Base/";
 //  gSystem->Load(includePath+"Exceptions.hpp");
 //  gSystem->Load(includePath+"Timer.hpp");
 //  gSystem->Load(includePath+"MessageLogger.hpp");
@@ -476,7 +476,7 @@ void loadBase(const TString & includeBasePath)
 
 void loadPlotting(const TString & includeBasePath)
 {
-  TString includePath = includeBasePath + "/Plotting/";
+  TString includePath = includeBasePath + "/core/Plotting/";
 //  gSystem->Load(includePath+"CanvasCollection.hpp");
 //  gSystem->Load(includePath+"GraphConfiguration.hpp");
 //  gSystem->Load(includePath+"CanvasConfiguration.hpp");

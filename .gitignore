@@ -19,7 +19,7 @@ src/LambdaAnalysis
 src/Misc
 src/Music
 src/StatStudies
-src/*/cmake_install*
+src/**/cmake_install*
 documentation
 presentations
 Makefile

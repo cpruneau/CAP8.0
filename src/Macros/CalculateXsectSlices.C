@@ -10,7 +10,7 @@
 int CalculateXsectSlices()
 {
   TString includesPath = getenv("WAC_SRC");
-  includesPath += "/Base/";
+  includesPath += "/core/Base/";
   gSystem->Load(includesPath+"CanvasCollection.hpp");
   gSystem->Load(includesPath+"CanvasConfiguration.hpp");
   gSystem->Load(includesPath+"TaskConfiguration.hpp");

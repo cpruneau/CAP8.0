@@ -1775,7 +1775,7 @@ int Plots(bool print=0, bool latex=1)
 
 void loadLatex(const TString & includeBasePath)
 {
-  TString includePath = includeBasePath + "/Latex/";
+  TString includePath = includeBasePath + "/core/Latex/";
   gSystem->Load(includePath+"LatexDocument.hpp");
   gSystem->Load(includePath+"LatexElement.hpp");
   gSystem->Load(includePath+"LatexFigure.hpp");

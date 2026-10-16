@@ -17,7 +17,7 @@ add_library(Jets SHARED JetHistos.cpp JetSingleHistos.cpp JetPairHistos.cpp JetH
 JetHistosDerived.cpp JetSingleHistosDerived.cpp  JetPairHistosDerived.cpp G__Jets.cxx)
 
 target_link_libraries(Jets Base Particles FASTJET_LIB ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
-target_include_directories(Jets PUBLIC Jets Particles CAPPythia Base Math ${CAP_FASTJET_INCLUDE_PATH}  ${EXTRA_INCLUDES} )
+target_include_directories(Jets PUBLIC Jets Particles Pythia Base Math ${CAP_FASTJET_INCLUDE_PATH}  ${EXTRA_INCLUDES} )
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libJets.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libJets_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Jets LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
