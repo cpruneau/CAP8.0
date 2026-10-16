@@ -66,4 +66,29 @@ set_target_properties(CapGui PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON
 target_compile_definitions(CapGui PRIVATE CAP_SOURCE_ROOT="${CAP_TOP_DIR}")
 target_include_directories(CapGui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(CapGui PRIVATE CapImGui Graphics Math Base ${ROOT_LIBRARIES})
-install(TARGETS CapGui RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+
+if(APPLE)
+  # macOS: CapGui.app, an application bundle that can be opened from the Finder or the Dock. Started that way it gets
+  # none of the environment of SetupCAP.sh, so it finds the CAP libraries through its rpath. bin/CapGui is a symbolic
+  # link to the executable in the bundle, for use from a terminal.
+  set(MACOSX_BUNDLE_BUNDLE_NAME          "CapGui")
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER       "CAP.CapGui")
+  set(CAP_GUI_VERSION "${PROJECT_VERSION}")
+  if(CAP_GUI_VERSION STREQUAL "")
+    set(CAP_GUI_VERSION "1.0")
+  endif()
+  set(MACOSX_BUNDLE_BUNDLE_VERSION       "${CAP_GUI_VERSION}")
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${CAP_GUI_VERSION}")
+  set_target_properties(CapGui PROPERTIES
+    MACOSX_BUNDLE            TRUE
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
+    INSTALL_RPATH            "$ENV{CAP_LIB_PATH}")
+  install(TARGETS CapGui BUNDLE DESTINATION "${CAP_INSTALL_BIN_DIR}")
+  install(CODE "
+    file(REMOVE \"${CAP_INSTALL_BIN_DIR}/CapGui\")
+    file(CREATE_LINK \"CapGui.app/Contents/MacOS/CapGui\" \"${CAP_INSTALL_BIN_DIR}/CapGui\" SYMBOLIC)
+    message(STATUS \"Installing: ${CAP_INSTALL_BIN_DIR}/CapGui -> CapGui.app/Contents/MacOS/CapGui\")")
+else()
+  set_target_properties(CapGui PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")
+  install(TARGETS CapGui RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+endif()

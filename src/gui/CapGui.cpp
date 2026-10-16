@@ -78,6 +78,9 @@ namespace CAP
   {
   _settings = settings;
   glfwSetErrorCallback(glfwError);
+#ifdef __APPLE__
+  glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);   // keep the current folder (CapGui.app starts in the home folder)
+#endif
   if (!glfwInit()) return false;
 
 #if defined(__APPLE__)

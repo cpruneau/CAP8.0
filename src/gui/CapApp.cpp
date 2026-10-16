@@ -164,8 +164,13 @@ namespace CAP
     {
     String argument(argv[k]);
     if ((argument == "--config" || argument == "-c") && k+1 < argc) _configurationFile = argv[++k];
+    else if (argument.str().rfind("-psn_", 0) == 0) continue;   // process serial number added by older macOS Finders
     else _arguments.push_back(argument);
     }
+  // Opened from the Finder or the Dock (CapGui.app), the current folder is "/": start in the home folder instead.
+  std::error_code ec;
+  const char * home = std::getenv("HOME");
+  if (home && fs::current_path(ec) == fs::path("/")) fs::current_path(home, ec);
   }
 
   CapApp::~CapApp()
