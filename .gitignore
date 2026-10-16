@@ -5,6 +5,7 @@ bin
 lib
 bin*
 lib*
+!src/**/Binary*
 DOC
 DOC/*
 build
