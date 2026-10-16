@@ -30,6 +30,7 @@ MarkerVector.hpp
 Painter.hpp
 Point2D.hpp
 Point3D.hpp
+Rect2D.hpp
 Polygon.hpp
 PolygonRenderer.hpp
 Renderer.hpp

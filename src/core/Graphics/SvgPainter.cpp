@@ -164,8 +164,15 @@ namespace CAP
   const char * anchor = attributes.justification() == TextAttributes::kCenter ? "middle"
                       : attributes.justification() == TextAttributes::kRight  ? "end" : "start";
   float x = px(position), y = py(position);
-  _body << "<text x=\"" << x << "\" y=\"" << y << "\" font-family=\"Helvetica, Arial, sans-serif\" font-size=\"" << size
-        << "\" fill=\"" << color(attributes.color()).data() << "\" fill-opacity=\"" << attributes.alpha()
+  const int font = attributes.font();
+  const char * family = TextAttributes::fontFamily(font) == TextAttributes::kSerif ? "Times New Roman, Times, serif"
+                      : TextAttributes::fontFamily(font) == TextAttributes::kMono  ? "Courier New, Courier, monospace"
+                      : TextAttributes::fontFamily(font) == TextAttributes::kSymbol ? "Symbol"
+                      : "Helvetica, Arial, sans-serif";
+  _body << "<text x=\"" << x << "\" y=\"" << y << "\" font-family=\"" << family << "\" font-size=\"" << size << "\"";
+  if (TextAttributes::isBold(font))   _body << " font-weight=\"bold\"";
+  if (TextAttributes::isItalic(font)) _body << " font-style=\"italic\"";
+  _body << " fill=\"" << color(attributes.color()).data() << "\" fill-opacity=\"" << attributes.alpha()
         << "\" text-anchor=\"" << anchor << "\" dominant-baseline=\"central\"";
   if (angle != 0) _body << " transform=\"rotate(" << -angle << " " << x << " " << y << ")\"";
   _body << ">" << escape(text).data() << "</text>\n";

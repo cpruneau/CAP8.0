@@ -28,7 +28,15 @@ namespace CAP
   _userRange(),
   _currentRange(),
   _lineAttributes(*LineAttributes::defaultLineAttributes()),
-  _textAttributes(*TextAttributes::defaultTextAttributes())
+  _textAttributes(*TextAttributes::defaultTextAttributes()),
+  _titleAttributes(*TextAttributes::defaultTextAttributes()),
+  _titleOffsetX(0.0),
+  _titleOffsetY(0.0),
+  _labelPointSize(0.0),
+  _titlePointSize(0.0),
+  _labelGap(1.0),
+  _titleRect(),
+  _bodyRect()
   {
   setName("x");
   setTitle("x");
@@ -63,7 +71,15 @@ namespace CAP
   _userRange(src._userRange),
   _currentRange(src._currentRange),
   _lineAttributes(src._lineAttributes),
-  _textAttributes(src._textAttributes)
+  _textAttributes(src._textAttributes),
+  _titleAttributes(src._titleAttributes),
+  _titleOffsetX(src._titleOffsetX),
+  _titleOffsetY(src._titleOffsetY),
+  _labelPointSize(src._labelPointSize),
+  _titlePointSize(src._titlePointSize),
+  _labelGap(src._labelGap),
+  _titleRect(src._titleRect),
+  _bodyRect(src._bodyRect)
   { }
 
   Axis  & Axis::operator=(const Axis & rhs)
@@ -88,6 +104,14 @@ namespace CAP
     _currentRange   = rhs._currentRange;
     _lineAttributes = rhs._lineAttributes;
     _textAttributes = rhs._textAttributes;
+    _titleAttributes = rhs._titleAttributes;
+    _titleOffsetX   = rhs._titleOffsetX;
+    _titleOffsetY   = rhs._titleOffsetY;
+    _labelPointSize = rhs._labelPointSize;
+    _titlePointSize = rhs._titlePointSize;
+    _labelGap       = rhs._labelGap;
+    _titleRect      = rhs._titleRect;
+    _bodyRect       = rhs._bodyRect;
     }
   return *this;
   }
@@ -110,6 +134,12 @@ namespace CAP
   _currentRange   = _nominalRange;
   _lineAttributes.reset();
   _textAttributes.reset();
+  _titleAttributes.reset();
+  _titleOffsetX   = 0.0;
+  _titleOffsetY   = 0.0;
+  _labelPointSize = 0.0;
+  _titlePointSize = 0.0;
+  _labelGap       = 1.0;
   }
 
   void Axis::setEndPoints(const Point2D & start, const Point2D & end)

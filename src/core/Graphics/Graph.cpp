@@ -28,7 +28,13 @@ namespace CAP
   _marker(*MarkerAttributes::defaultMarkerAttributes()),
   _showLine(true),
   _showMarkers(false),
-  _showErrors(false)
+  _showErrors(false),
+  _showSysErrors(false),
+  _sysStyle(kSysBoxes),
+  _sysFill(*FillAttributes::defaultFillAttributes()),
+  _sysLine(*LineAttributes::defaultLineAttributes()),
+  _sysUsesMarkerColor(true),
+  _sysWidth(0.012f)
   {
   if (_label.isNull() && function) _label = function->name();
   _line.setWidth(2.0);
@@ -47,10 +53,18 @@ namespace CAP
   _marker(*MarkerAttributes::defaultMarkerAttributes()),
   _showLine(false),
   _showMarkers(true),
-  _showErrors(true)
+  _showErrors(true),
+  _showSysErrors(true),
+  _sysStyle(kSysBoxes),
+  _sysFill(*FillAttributes::defaultFillAttributes()),
+  _sysLine(*LineAttributes::defaultLineAttributes()),
+  _sysUsesMarkerColor(true),
+  _sysWidth(0.012f)
   {
   if (_label.isNull() && data) _label = data->name();
   _marker.setStyle(20);
+  _sysFill.set(1, 0.25, 1001);    // translucent solid fill (the color follows the markers)
+  _sysLine.set(1, 1.0, 1, 1.0);
   }
 
   // ------------------------------------------------------------------------------------------------ Graph
@@ -70,8 +84,18 @@ namespace CAP
   _frameFill(*FillAttributes::defaultFillAttributes()),
   _frameLine(*LineAttributes::defaultLineAttributes()),
   _titleAttributes(*TextAttributes::defaultTextAttributes()),
-  _showLegend(true)
+  _showLegend(true),
+  _titleOffsetX(0.0), _titleOffsetY(0.0),
+  _titlePointSize(0.0),
+  _autoLegend(true),
+  _legendX(0.6), _legendY(0.95),
+  _legendPointSize(0.0),
+  _legendFill(*FillAttributes::defaultFillAttributes()),
+  _legendLine(*LineAttributes::defaultLineAttributes()),
+  _titleRect(), _legendRect(), _pointPositions()
   {
+  _legendFill.set(0, 1.0, 0);       // no background
+  _legendLine.set(1, 1.0, 0, 1.0);  // no border
   _frameFill.set(0, 1.0, 1001);     // white, solid
   _frameLine.set(1, 1.0, 1, 1.0);   // black, solid, 1 point
   _titleAttributes.setJustification(TextAttributes::kCenter);
@@ -97,7 +121,15 @@ namespace CAP
   _frameFill(src._frameFill),
   _frameLine(src._frameLine),
   _titleAttributes(src._titleAttributes),
-  _showLegend(src._showLegend)
+  _showLegend(src._showLegend),
+  _titleOffsetX(src._titleOffsetX), _titleOffsetY(src._titleOffsetY),
+  _titlePointSize(src._titlePointSize),
+  _autoLegend(src._autoLegend),
+  _legendX(src._legendX), _legendY(src._legendY),
+  _legendPointSize(src._legendPointSize),
+  _legendFill(src._legendFill),
+  _legendLine(src._legendLine),
+  _titleRect(src._titleRect), _legendRect(src._legendRect), _pointPositions(src._pointPositions)
   { }
 
   Graph & Graph::operator=(const Graph & rhs)
@@ -118,6 +150,14 @@ namespace CAP
     _frameLine = rhs._frameLine;
     _titleAttributes = rhs._titleAttributes;
     _showLegend = rhs._showLegend;
+    _titleOffsetX = rhs._titleOffsetX; _titleOffsetY = rhs._titleOffsetY;
+    _titlePointSize = rhs._titlePointSize;
+    _autoLegend = rhs._autoLegend;
+    _legendX = rhs._legendX; _legendY = rhs._legendY;
+    _legendPointSize = rhs._legendPointSize;
+    _legendFill = rhs._legendFill;
+    _legendLine = rhs._legendLine;
+    _titleRect = rhs._titleRect; _legendRect = rhs._legendRect; _pointPositions = rhs._pointPositions;
     }
   return *this;
   }
@@ -141,6 +181,30 @@ namespace CAP
   {
   return p.x() >= frameXLow() && p.x() <= frameXHigh() && p.y() >= frameYLow() && p.y() <= frameYHigh();
   }
+
+  Graph::Pick Graph::pick(const Point2D & p, float toleranceX, float toleranceY) const
+  {
+  Pick result;
+  if (_legendRect.contains(p)) { result.part = kLegend; return result; }
+  if (_titleRect.contains(p))  { result.part = kTitle;  return result; }
+  for (int k=0; k<nAxes(); k++)
+    if (axis(k).titleRect().contains(p)) { result.part = kAxisTitle; result.axis = k; return result; }
+  // nearest data point within the tolerance (distance in units of the tolerance)
+  double best = 1.0;
+  for (const auto & point : _pointPositions)
+    {
+    double dx = (point.position.x() - p.x())/toleranceX, dy = (point.position.y() - p.y())/toleranceY;
+    double d = dx*dx + dy*dy;
+    if (d <= best) { best = d; result.part = kDataPoint; result.item = point.item; result.index = point.index; }
+    }
+  if (result.part == kDataPoint) return result;
+  if (frameContains(p)) { result.part = kFrame; return result; }
+  for (int k=0; k<nAxes(); k++)
+    if (axis(k).bodyRect().expanded(0.5f*toleranceX, 0.5f*toleranceY).contains(p)) { result.part = kAxis; result.axis = k; return result; }
+  if (cellContains(p)) result.part = kCell;
+  return result;
+  }
+
 
   GraphItem & Graph::add(const GraphItem & item)
   {
@@ -264,7 +328,9 @@ namespace CAP
         {
         MATH::DataPoint2D p = d.point(k);
         if (p.x() < xLow || p.x() > xHigh) continue;
-        double e = item.showErrors() ? p.yError() : 0.0;
+        double stat = item.showErrors()    ? p.yStatError() : 0.0;
+        double sys  = item.showSysErrors() ? p.ySysError()  : 0.0;
+        double e = std::max(stat, sys);
         if (p.y() < yCentralMinimum) yCentralMinimum = p.y();
         include(p.y() - e, _logY, yLow, yHigh);
         include(p.y() + e, _logY, yLow, yHigh);

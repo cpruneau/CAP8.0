@@ -86,6 +86,116 @@ namespace CAP
   }
   } // namespace
 
+  namespace
+  {
+  //! The part of the rectangle [x0,x1] x [y0,y1] inside the box. @return false if nothing is inside
+  bool clipRect(const Box & box, float & x0, float & y0, float & x1, float & y1)
+  {
+  if (x0 > x1) std::swap(x0, x1);
+  if (y0 > y1) std::swap(y0, y1);
+  x0 = std::max(x0, box.x0); x1 = std::min(x1, box.x1);
+  y0 = std::max(y0, box.y0); y1 = std::min(y1, box.y1);
+  return x1 > x0 && y1 >= y0;
+  }
+
+  void drawSegment(Painter & painter, const Box & box, Point2D a, Point2D b, const LineAttributes & line)
+  {
+  if (clip(box, a, b)) painter.drawLine({a, b}, line);
+  }
+
+  //! Systematic uncertainties of a data item (boxes, brackets or band), drawn behind the points.
+  void drawSysErrors(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view,
+                     const GraphItem & item)
+  {
+  const MATH::DataPoints & d = *item.data();
+  FillAttributes fill = item.sysFillAttributes();
+  LineAttributes line = item.sysLineAttributes();
+  if (item.sysUsesMarkerColor())
+    {
+    fill.setColor(item.markerAttributes().color(), fill.alpha());
+    line.setColor(item.markerAttributes().color(), line.alpha());
+    }
+  LineAttributes noLine;
+  noLine.setStyle(0);
+  const float frameWidth = box.x1 - box.x0;
+  const float aspect = painter.width()/painter.height();   // canvas y units per canvas x unit, for equal lengths
+  std::vector<Point2D> upper, lower;                        // band
+  auto flushBand = [&]()
+    {
+    if (upper.size() >= 2)
+      {
+      std::vector<Point2D> polygon = upper;
+      polygon.insert(polygon.end(), lower.rbegin(), lower.rend());
+      painter.drawPolygon(polygon, fill, noLine);
+      if (line.style() != 0) { painter.drawLine(upper, line); painter.drawLine(lower, line); }
+      }
+    upper.clear(); lower.clear();
+    };
+  for (unsigned int k=0; k<d.size(); k++)
+    {
+    MATH::DataPoint2D p = d.point(k);
+    double sys = p.ySysError();
+    bool ok = std::isfinite(p.x()) && std::isfinite(p.y()) && (!view.logX || p.x() > 0) && (!view.logY || p.y() > 0);
+    if (!ok || !(sys > 0)) { if (item.sysStyle() == GraphItem::kSysBand) flushBand(); continue; }
+    double low = p.y() - sys;
+    if (view.logY && low <= 0) low = view.yMinimum;
+    Point2D c  = graph.toCanvas(view, p.x(), p.y());
+    float yLow  = graph.toCanvas(view, p.x(), low).y();
+    float yHigh = graph.toCanvas(view, p.x(), p.y() + sys).y();
+    float xLow, xHigh;
+    if (p.xError() > 0 && (!view.logX || p.x() - p.xError() > 0))
+      {
+      xLow  = graph.toCanvas(view, p.x() - p.xError(), p.y()).x();
+      xHigh = graph.toCanvas(view, p.x() + p.xError(), p.y()).x();
+      }
+    else
+      {
+      xLow  = c.x() - item.sysWidth()*frameWidth;
+      xHigh = c.x() + item.sysWidth()*frameWidth;
+      }
+    switch (item.sysStyle())
+      {
+      case GraphItem::kSysBoxes:
+        {
+        float x0 = xLow, y0 = yLow, x1 = xHigh, y1 = yHigh;
+        if (!clipRect(box, x0, y0, x1, y1)) break;
+        std::vector<Point2D> corners{ Point2D(x0,y0), Point2D(x1,y0), Point2D(x1,y1), Point2D(x0,y1) };
+        painter.drawPolygon(corners, fill, line);
+        break;
+        }
+      case GraphItem::kSysBrackets:
+        {
+        LineAttributes bracket = line;
+        if (bracket.style() == 0) bracket.setStyle(1);
+        float t = 0.35f*(xHigh - xLow)*aspect;   // length of the bracket ends
+        drawSegment(painter, box, Point2D(xLow, yHigh), Point2D(xHigh, yHigh), bracket);
+        drawSegment(painter, box, Point2D(xLow, yHigh), Point2D(xLow, yHigh - t), bracket);
+        drawSegment(painter, box, Point2D(xHigh, yHigh), Point2D(xHigh, yHigh - t), bracket);
+        drawSegment(painter, box, Point2D(xLow, yLow), Point2D(xHigh, yLow), bracket);
+        drawSegment(painter, box, Point2D(xLow, yLow), Point2D(xLow, yLow + t), bracket);
+        drawSegment(painter, box, Point2D(xHigh, yLow), Point2D(xHigh, yLow + t), bracket);
+        break;
+        }
+      case GraphItem::kSysBand:
+        {
+        if (c.x() < box.x0 || c.x() > box.x1) { flushBand(); break; }
+        upper.push_back(Point2D(c.x(), std::min(std::max(yHigh, box.y0), box.y1)));
+        lower.push_back(Point2D(c.x(), std::min(std::max(yLow,  box.y0), box.y1)));
+        break;
+        }
+      }
+    }
+  flushBand();
+  }
+
+  bool hasSysErrors(const GraphItem & item)
+  {
+  if (item.kind() != GraphItem::kData || !item.data() || !item.showSysErrors()) return false;
+  for (unsigned int k=0; k<item.data()->size(); k++) if (item.data()->point(k).ySysError() > 0) return true;
+  return false;
+  }
+  } // namespace
+
   void GraphRenderer::draw(const Drawable2D & drawable, Painter & painter) const
   {
   const Graph * graph = dynamic_cast<const Graph*>(&drawable);
@@ -94,12 +204,16 @@ namespace CAP
 
   const Graph::View view = graph->view();
   const Box box { graph->frameXLow(), graph->frameYLow(), graph->frameXHigh(), graph->frameYHigh() };
+  const float H = painter.height(), W = painter.width();
   const float cellHeight = graph->cellYHigh() - graph->cellYLow();
   const float cellWidth  = graph->cellXHigh() - graph->cellXLow();
   // text and tick sizes follow the size of the cell (fractions of the canvas height)
-  const float scale = std::min(cellHeight, cellWidth*painter.width()/painter.height());
+  const float scale = std::min(cellHeight, cellWidth*W/H);
   // ... within 9 to 17 device units, so that labels stay readable without dominating a large canvas
-  const float textSize = std::min(std::max(0.045f*scale, 9.0f/painter.height()), 17.0f/painter.height());
+  const float textSize = std::min(std::max(0.045f*scale, 9.0f/H), 17.0f/H);
+  // a size in points (device units) if set, otherwise the automatic size
+  auto sized = [&](float points, float automatic) { return points > 0 ? points/H : automatic; };
+  std::vector<Graph::PointPosition> pointPositions;
 
   // frame background
   std::vector<Point2D> corners{ Point2D(box.x0,box.y0), Point2D(box.x1,box.y0), Point2D(box.x1,box.y1), Point2D(box.x0,box.y1) };
@@ -108,8 +222,9 @@ namespace CAP
   painter.drawPolygon(corners, graph->frameFill(), noLine);
 
   // items
-  for (const auto & item : graph->items())
+  for (size_t iItem=0; iItem<graph->items().size(); iItem++)
     {
+    const GraphItem & item = graph->items()[iItem];
     if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
       {
       double a = std::max<double>(item.xMinimum(), view.xMinimum);
@@ -135,6 +250,7 @@ namespace CAP
     else if (item.kind() == GraphItem::kData && item.data())
       {
       const MATH::DataPoints & d = *item.data();
+      if (item.showSysErrors()) drawSysErrors(painter, box, *graph, view, item);
       std::vector<Point2D> points;
       std::vector<bool> valid;
       LineAttributes errorLine;
@@ -147,25 +263,23 @@ namespace CAP
         points.push_back(c);
         valid.push_back(ok);
         if (!ok) continue;
+        if (inside(box, c)) pointPositions.push_back({ int(iItem), int(k), c });
         if (item.showErrors())
           {
-          double ey = p.yError();
+          // statistical uncertainty on y (the systematic one is drawn separately), uncertainty on x
+          double ey = p.yStatError();
           if (ey > 0)
             {
             double low = p.y() - ey;
             if (view.logY && low <= 0) low = view.yMinimum;
-            Point2D e0 = graph->toCanvas(view, p.x(), low);
-            Point2D e1 = graph->toCanvas(view, p.x(), p.y() + ey);
-            if (clip(box, e0, e1)) painter.drawLine({e0, e1}, errorLine);
+            drawSegment(painter, box, graph->toCanvas(view, p.x(), low), graph->toCanvas(view, p.x(), p.y() + ey), errorLine);
             }
           double ex = p.xError();
           if (ex > 0)
             {
             double low = p.x() - ex;
             if (view.logX && low <= 0) low = view.xMinimum;
-            Point2D e0 = graph->toCanvas(view, low, p.y());
-            Point2D e1 = graph->toCanvas(view, p.x() + ex, p.y());
-            if (clip(box, e0, e1)) painter.drawLine({e0, e1}, errorLine);
+            drawSegment(painter, box, graph->toCanvas(view, low, p.y()), graph->toCanvas(view, p.x() + ex, p.y()), errorLine);
             }
           }
         }
@@ -195,51 +309,96 @@ namespace CAP
   yAxis.setRange(view.yMinimum, view.yMaximum);
   for (Axis * axis : { &xAxis, &yAxis })
     {
-    axis->textAttributes().setSize(textSize);
+    float labelSize = sized(axis->labelPointSize(), textSize);
+    axis->textAttributes().setSize(labelSize);
+    axis->titleAttributes().setSize(sized(axis->titlePointSize(), textSize));
     axis->setMajorTickSize(0.6*textSize);
     axis->setMinorTickSize(0.3*textSize);
-    axis->setLabelOffset(0.35*textSize);
+    axis->setLabelOffset(0.35*labelSize*axis->labelGap());
     axis->setNMinorTicks(5);
+    // the title offset of the template is in fractions of the cell
+    axis->setTitleOffset(axis->titleOffsetX()*cellWidth, axis->titleOffsetY()*cellHeight);
     }
-  xAxis.setLabelOffset(0.9*textSize);   // labels centered below the axis: clear the ticks
+  // labels centered below the x axis: clear the ticks
+  xAxis.setLabelOffset((0.6*textSize + 0.3*xAxis.textAttributes().size())*xAxis.labelGap());
   if (!view.logX) xAxis.setNMajorTicks(Graph::niceTickCount(view.xMinimum, view.xMaximum));
   if (!view.logY) yAxis.setNMajorTicks(Graph::niceTickCount(view.yMinimum, view.yMaximum));
   xAxis.draw(painter);
   yAxis.draw(painter);
+  graph->xAxis().setDrawnRects(xAxis.titleRect(), xAxis.bodyRect());
+  graph->yAxis().setDrawnRects(yAxis.titleRect(), yAxis.bodyRect());
 
-  // title above the frame
+  // title above the frame, moved by the title offset (fractions of the cell)
+  Rect2D titleRect;
   if (!graph->title().isNull())
     {
     TextAttributes titleAttributes = graph->titleAttributes();
-    titleAttributes.setSize(1.15*textSize);
+    titleAttributes.setSize(sized(graph->titlePointSize(), 1.15*textSize));
     titleAttributes.setJustification(TextAttributes::kCenter);
-    float yTitle = 0.5*(box.y1 + graph->cellYHigh());
-    painter.drawText(Point2D(0.5*(box.x0+box.x1), yTitle), graph->title(), titleAttributes);
+    Point2D position(0.5*(box.x0+box.x1) + graph->titleOffsetX()*cellWidth,
+                     0.5*(box.y1 + graph->cellYHigh()) + graph->titleOffsetY()*cellHeight);
+    painter.drawText(position, graph->title(), titleAttributes);
+    titleRect = Rect2D::centered(position, painter.textWidth(graph->title(), titleAttributes)/W, titleAttributes.size());
     }
 
-  // legend, upper right corner inside the frame
+  // legend: upper right corner inside the frame, or where it was put (upper left corner, fractions of the frame)
+  Rect2D legendRect;
   if (graph->showLegend() && !graph->items().empty())
     {
     TextAttributes legendText = *TextAttributes::defaultTextAttributes();
-    legendText.setSize(0.9*textSize);
+    legendText.setSize(sized(graph->legendPointSize(), 0.9*textSize));
     legendText.setJustification(TextAttributes::kLeft);
-    const float H = painter.height(), W = painter.width();
     const float lineHeight = 1.4f*legendText.size();                 // fractions of the canvas height
     const float sample     = 2.2f*legendText.size()*H/W;             // sample length, fractions of the width
+    const float gap        = 0.6f*legendText.size()*H/W;
+    const float padX       = 0.5f*legendText.size()*H/W;
+    const float padY       = 0.25f*lineHeight;
     float maxLabel = 0.0;
     for (const auto & item : graph->items()) maxLabel = std::max(maxLabel, painter.textWidth(item.label(), legendText)/W);
-    float x0 = box.x1 - (sample + 0.6f*legendText.size()*H/W + maxLabel) - 0.5f*legendText.size()*H/W;
-    float y  = box.y1 - 0.8f*lineHeight;
+    const float legendWidth  = padX + sample + gap + maxLabel + padX;
+    const float legendHeight = graph->items().size()*lineHeight + 2*padY;
+    float left, top;
+    if (graph->isAutoLegendPosition())
+      {
+      left = box.x1 - legendWidth;
+      top  = box.y1;
+      }
+    else
+      {
+      left = box.x0 + graph->legendX()*(box.x1 - box.x0);
+      top  = box.y0 + graph->legendY()*(box.y1 - box.y0);
+      }
+    legendRect = Rect2D(left, top - legendHeight, left + legendWidth, top);
+    std::vector<Point2D> frame{ Point2D(legendRect.x0, legendRect.y0), Point2D(legendRect.x1, legendRect.y0),
+                                Point2D(legendRect.x1, legendRect.y1), Point2D(legendRect.x0, legendRect.y1) };
+    if (graph->legendFill().style() != 0 || graph->legendLine().style() != 0)
+      painter.drawPolygon(frame, graph->legendFill(), graph->legendLine());
+    float x0 = left + padX;
+    float y  = top - padY - 0.5f*lineHeight;
     for (const auto & item : graph->items())
       {
-      Point2D left(x0, y), right(x0 + sample, y), middle(x0 + 0.5f*sample, y);
-      if (item.showLine())    painter.drawLine({left, right}, item.lineAttributes());
+      Point2D l(x0, y), r(x0 + sample, y), middle(x0 + 0.5f*sample, y);
+      if (hasSysErrors(item))
+        {
+        FillAttributes fill = item.sysFillAttributes();
+        LineAttributes line = item.sysLineAttributes();
+        if (item.sysUsesMarkerColor())
+          {
+          fill.setColor(item.markerAttributes().color(), fill.alpha());
+          line.setColor(item.markerAttributes().color(), line.alpha());
+          }
+        float hw = 0.3f*sample, hh = 0.35f*lineHeight;
+        std::vector<Point2D> swatch{ Point2D(middle.x()-hw, y-hh), Point2D(middle.x()+hw, y-hh),
+                                     Point2D(middle.x()+hw, y+hh), Point2D(middle.x()-hw, y+hh) };
+        painter.drawPolygon(swatch, fill, item.sysStyle() == GraphItem::kSysBand ? noLine : line);
+        }
+      if (item.showLine())    painter.drawLine({l, r}, item.lineAttributes());
       if (item.showMarkers()) painter.drawMarker(middle, item.markerAttributes());
-      painter.drawText(Point2D(x0 + sample + 0.6f*legendText.size()*H/W, y), item.label(), legendText);
+      painter.drawText(Point2D(x0 + sample + gap, y), item.label(), legendText);
       y -= lineHeight;
-      if (y < box.y0) break;
       }
     }
+  graph->setDrawnLayout(titleRect, legendRect, pointPositions);
   }
 
   } // namespace GRAPHICS

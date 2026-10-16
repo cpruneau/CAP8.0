@@ -8,6 +8,7 @@
 #include "LineAttributes.hpp"
 #include "MarkerAttributes.hpp"
 #include "TextAttributes.hpp"
+#include "Rect2D.hpp"
 
 namespace CAP
 {
@@ -31,6 +32,9 @@ namespace CAP
   public:
 
   enum Kind { kFunction, kData };
+  //! How the systematic uncertainties of data points are drawn: boxes around the points, brackets above and below
+  //! the points, or a band joining the points.
+  enum SysStyle { kSysBoxes, kSysBrackets, kSysBand };
 
   //! @brief Function f(x) drawn as a curve over [xMinimum, xMaximum]. @param function function of rank 1
   //! @param xMinimum lower end of the curve @param xMaximum upper end @param label legend label (the function's
@@ -64,13 +68,33 @@ namespace CAP
   const LineAttributes   & lineAttributes()   const { return _line; }
   const MarkerAttributes & markerAttributes() const { return _marker; }
 
-  //! What is drawn: line through the points (functions: the curve), markers, error bars.
-  bool showLine()    const { return _showLine; }
-  bool showMarkers() const { return _showMarkers; }
-  bool showErrors()  const { return _showErrors; }
-  void setShowLine(bool v)    { _showLine = v; }
-  void setShowMarkers(bool v) { _showMarkers = v; }
-  void setShowErrors(bool v)  { _showErrors = v; }
+  //! What is drawn: line through the points (functions: the curve), markers, error bars of the statistical
+  //! uncertainties (and of the x uncertainties), systematic uncertainties (drawn as set by sysStyle()).
+  bool showLine()      const { return _showLine; }
+  bool showMarkers()   const { return _showMarkers; }
+  bool showErrors()    const { return _showErrors; }
+  bool showSysErrors() const { return _showSysErrors; }
+  void setShowLine(bool v)      { _showLine = v; }
+  void setShowMarkers(bool v)   { _showMarkers = v; }
+  void setShowErrors(bool v)    { _showErrors = v; }
+  void setShowSysErrors(bool v) { _showSysErrors = v; }
+
+  //! @name Systematic uncertainties
+  //! @{
+  SysStyle sysStyle() const { return _sysStyle; }
+  void setSysStyle(SysStyle style) { _sysStyle = style; }
+  //! @brief Fill and outline of the boxes or band. Unless sysUsesMarkerColor() is false, their colors are those of
+  //! the markers (the alpha of the fill is kept).
+  FillAttributes & sysFillAttributes() { return _sysFill; }
+  LineAttributes & sysLineAttributes() { return _sysLine; }
+  const FillAttributes & sysFillAttributes() const { return _sysFill; }
+  const LineAttributes & sysLineAttributes() const { return _sysLine; }
+  bool sysUsesMarkerColor() const { return _sysUsesMarkerColor; }
+  void setSysUsesMarkerColor(bool v) { _sysUsesMarkerColor = v; }
+  //! @brief Half width of the boxes and brackets of points without x uncertainty, as a fraction of the frame width.
+  float sysWidth() const { return _sysWidth; }
+  void  setSysWidth(float width) { _sysWidth = width < 0 ? 0 : width; }
+  //! @}
 
   protected:
 
@@ -86,6 +110,12 @@ namespace CAP
   bool   _showLine;
   bool   _showMarkers;
   bool   _showErrors;
+  bool   _showSysErrors;
+  SysStyle _sysStyle;
+  FillAttributes _sysFill;
+  LineAttributes _sysLine;
+  bool   _sysUsesMarkerColor;
+  float  _sysWidth;
   };
 
   //!
@@ -99,6 +129,14 @@ namespace CAP
   //! Items are added with add() or replace() (clear the graph, then add). The graph does not own the objects shown.
   //! dimension() is k2D; k3D (surfaces, 3D points) is reserved for the 3D views to come.
   //!
+  //! The title, the axis titles and the legend have automatic positions, which can be changed by the program or
+  //! with the mouse: setTitleOffset(), Axis::setTitleOffset() (fractions of the cell), setLegendPosition()
+  //! (fractions of the frame). Text sizes are automatic (following the size of the cell) unless set in points with
+  //! setTitlePointSize(), setLegendPointSize(), Axis::setLabelPointSize() and Axis::setTitlePointSize().
+  //!
+  //! Each drawing records where the parts of the graph went (titleRect(), legendRect(), Axis::titleRect(),
+  //! Axis::bodyRect(), the positions of the data points); pick() uses them to tell what is at a canvas position.
+  //!
   class Graph : public Drawable2D
   {
   public:
@@ -110,6 +148,27 @@ namespace CAP
   {
   float xMinimum, xMaximum, yMinimum, yMaximum;
   bool  logX, logY;
+  };
+
+  //! @brief Parts of a graph, as found by pick().
+  enum Part { kNothing, kCell, kFrame, kTitle, kLegend, kAxis, kAxisTitle, kDataPoint };
+
+  //! @brief What is at a canvas position: the part, and for an axis its index (0 x, 1 y; 2 z for the 3D graphs),
+  //! for a data point the index of the item and of the point.
+  struct Pick
+  {
+  Part part  = kNothing;
+  int  axis  = -1;
+  int  item  = -1;
+  int  index = -1;
+  };
+
+  //! @brief Position at which a data point was drawn (canvas units).
+  struct PointPosition
+  {
+  int     item;
+  int     index;
+  Point2D position;
   };
 
   Graph();
@@ -165,6 +224,8 @@ namespace CAP
   void setYRange(float minimum, float maximum) { _yMinimum = minimum; _yMaximum = maximum; _autoY = false; }
   //! @brief Back to automatic ranges.
   void setAutoRange() { _autoX = true; _autoY = true; }
+  void setAutoX() { _autoX = true; }
+  void setAutoY() { _autoY = true; }
   bool isAutoX() const { return _autoX; }
   bool isAutoY() const { return _autoY; }
   //! @brief Ranges and scales used for drawing: automatic ranges cover all the items (rounded to nice values; on a
@@ -188,6 +249,10 @@ namespace CAP
   Axis & yAxis() { return _yAxis; }
   const Axis & xAxis() const { return _xAxis; }
   const Axis & yAxis() const { return _yAxis; }
+  //! @brief Axis k: 0 x, 1 y (2 z, for the 3D graphs to come). @param k index in [0,nAxes())
+  int nAxes() const { return 2; }
+  Axis & axis(int k) { return k == 0 ? _xAxis : _yAxis; }
+  const Axis & axis(int k) const { return k == 0 ? _xAxis : _yAxis; }
   FillAttributes & frameFill() { return _frameFill; }
   LineAttributes & frameLine() { return _frameLine; }
   const FillAttributes & frameFill() const { return _frameFill; }
@@ -196,6 +261,46 @@ namespace CAP
   const TextAttributes & titleAttributes() const { return _titleAttributes; }
   bool showLegend() const { return _showLegend; }
   void setShowLegend(bool v) { _showLegend = v; }
+  //! @}
+
+  //! @name Positions and sizes of the texts
+  //! @{
+  //! @brief Displacement of the title from its automatic position (centered above the frame), in fractions of the
+  //! cell. @param dx horizontal displacement @param dy vertical displacement
+  void  setTitleOffset(float dx, float dy) { _titleOffsetX = dx; _titleOffsetY = dy; }
+  float titleOffsetX() const { return _titleOffsetX; }
+  float titleOffsetY() const { return _titleOffsetY; }
+  //! @brief Size of the title in device units (points); 0: automatic.
+  void  setTitlePointSize(float size) { _titlePointSize = size < 0 ? 0 : size; }
+  float titlePointSize() const { return _titlePointSize; }
+  //! @brief Upper left corner of the legend, in fractions of the frame ((0,0) lower left, (1,1) upper right).
+  //! The default, automatic, position is the upper right corner of the frame.
+  void  setLegendPosition(float x, float y) { _legendX = x; _legendY = y; _autoLegend = false; }
+  void  setAutoLegendPosition() { _autoLegend = true; }
+  bool  isAutoLegendPosition() const { return _autoLegend; }
+  float legendX() const { return _legendX; }
+  float legendY() const { return _legendY; }
+  //! @brief Size of the legend text in device units (points); 0: automatic.
+  void  setLegendPointSize(float size) { _legendPointSize = size < 0 ? 0 : size; }
+  float legendPointSize() const { return _legendPointSize; }
+  //! @brief Background and border of the legend (default: none).
+  FillAttributes & legendFill() { return _legendFill; }
+  LineAttributes & legendLine() { return _legendLine; }
+  const FillAttributes & legendFill() const { return _legendFill; }
+  const LineAttributes & legendLine() const { return _legendLine; }
+  //! @}
+
+  //! @name Layout of the last drawing
+  //! @{
+  const Rect2D & titleRect()  const { return _titleRect; }
+  const Rect2D & legendRect() const { return _legendRect; }
+  const std::vector<PointPosition> & pointPositions() const { return _pointPositions; }
+  //! Set by the renderer.
+  void setDrawnLayout(const Rect2D & title, const Rect2D & legend, const std::vector<PointPosition> & points) const
+  { _titleRect = title; _legendRect = legend; _pointPositions = points; }
+  //! @brief What is at the canvas position p, according to the last drawing: legend, title, axis titles, data
+  //! points (within toleranceX, toleranceY of p, canvas units), axes, frame, cell. @return pick
+  Pick pick(const Point2D & p, float toleranceX, float toleranceY) const;
   //! @}
 
   virtual void reset();
@@ -215,6 +320,16 @@ namespace CAP
   LineAttributes _frameLine;
   TextAttributes _titleAttributes;
   bool _showLegend;
+  float _titleOffsetX, _titleOffsetY;
+  float _titlePointSize;
+  bool  _autoLegend;
+  float _legendX, _legendY;
+  float _legendPointSize;
+  FillAttributes _legendFill;
+  LineAttributes _legendLine;
+  mutable Rect2D _titleRect;                          //! not streamed (set when drawn)
+  mutable Rect2D _legendRect;                         //! not streamed (set when drawn)
+  mutable std::vector<PointPosition> _pointPositions; //! not streamed (set when drawn)
 
   ClassDef(Graph,0)
   };
