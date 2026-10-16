@@ -2,6 +2,7 @@
 #define CAP__GUI__CapGui
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 #include "String.hpp"
 #include "MenuBar.hpp"
@@ -38,8 +39,11 @@ namespace CAP
   };
 
   //!
-  //! @brief Main window of the CAP graphical interface: menu bar, a grid of n x m canvas panes, file browser,
-  //! status bar.
+  //! @brief Main window of the CAP graphical interface: menu bar, canvas panes, file browser, status bar.
+  //!
+  //! The canvas panes are docked windows, first arranged in a grid of n x m (setLayout()): the borders between them
+  //! can be dragged to resize them, a pane can be dragged elsewhere (by its tab), added (addPane(), or the + button of
+  //! a toolbar) and closed (the x of its tab; the last pane cannot be closed).
   //!
   //! The file browser is docked on the left of the canvases, or in a window of its own (setBrowserDocked()); it can
   //! also be docked elsewhere or dragged out with the mouse.
@@ -86,17 +90,25 @@ namespace CAP
   //! @{
   //! @brief Arrange the canvases in nColumns x nRows panes; existing panes are kept, in order.
   void setLayout(int nColumns, int nRows);
+  //! @brief Set the number of panes, arranged in a grid as square as possible (does nothing if it is already n).
+  void setPaneCount(int n);
+  //! @brief Add a pane, docked beside the current one, and make it current. @return the new pane
+  CanvasPane & addPane();
+  //! @brief Close pane k (not the last one). @param k index of the pane
+  void closePane(int k);
   int  nColumns() const { return _columns; }
   int  nRows()    const { return _rows; }
   int  nPanes()   const { return (int)_panes.size(); }
   CanvasPane & pane(int k) { return *_panes.at(k); }
   CanvasPane & currentPane() { return *_panes.at(_currentPane); }
   int  currentPaneIndex() const { return _currentPane; }
-  void setCurrentPane(int k) { if (k >= 0 && k < nPanes()) _currentPane = k; }
+  void setCurrentPane(int k) { if (k >= 0 && k < nPanes()) { _currentPane = k; _focusRequested = true; } }
   void setShowToolbars(bool v);
   bool showToolbars() const { return _settings.toolbars; }
   //! Called for each new pane (to set its graphs and undo hook).
   std::function<void(CanvasPane &)> onNewPane;
+  //! Called before a pane is added or closed by the user (undo).
+  std::function<void()> beforePanesChange;
   //! @}
 
   //! @name Messages
@@ -145,6 +157,12 @@ namespace CAP
   bool   _firstFrame;
   bool   _layoutRequested;   //!< rebuild the dock layout (browser on the left of the canvases)
   bool   _undockRequested;   //!< move the browser to a window of its own
+  int    _gridColumns;       //!< columns of the grid in which the panes are laid out by the next layout
+  std::vector<std::pair<std::string,std::string>> _dockBeside;   //!< (added pane, pane beside which it is docked)
+  std::vector<int> _closeRequests;   //!< panes closed by the user during the frame
+  bool   _addRequested;      //!< the + button of a toolbar was clicked
+  int    _focusedPane;       //!< pane whose window had the focus at the last frame
+  bool   _focusRequested;    //!< give the focus to the current pane (changed by the program)
 
   void renderFrame();
   void renderStatusBar(const MenuItem * hovered, const String & hoverText);
@@ -152,6 +170,8 @@ namespace CAP
   void renderMessage();
   void renderBrowser();
   void buildDockLayout(unsigned int dockId);
+  void buildPaneGrid(unsigned int nodeId);
+  CanvasPane & newPane();
   void loadFonts();
   };
 

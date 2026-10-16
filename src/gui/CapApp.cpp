@@ -204,6 +204,7 @@ namespace CAP
     }
 
   _gui.onNewPane = [this](CanvasPane & pane) { setupPane(pane); };
+  _gui.beforePanesChange = [this]() { recordUndo(); };
   if (!_gui.initialize(_configuration.gui))
     {
     std::fprintf(stderr, "CapGui: cannot open the window (is a display available?)\n");
@@ -329,6 +330,9 @@ namespace CAP
   graphs.addSeparator();
   graphs.addItem("Custom...", "window.graphs.custom", "", "Choose the number of columns and rows of graphs");
   window.addSeparator();
+  window.addItem("New Canvas",      "window.new",      "Ctrl+T", "Add a canvas pane beside the current one");
+  window.addItem("Close Canvas",    "window.close",    "Ctrl+W", "Close the current canvas pane");
+  window.addSeparator();
   window.addItem("Next Canvas",     "window.next",     "Ctrl+]", "Make the next canvas current");
   window.addItem("Previous Canvas", "window.previous", "Ctrl+[", "Make the previous canvas current");
 
@@ -449,6 +453,8 @@ namespace CAP
     }
   else if (std::sscanf(c.data(), "window.layout.%dx%d", &columns, &rows) == 2) setLayout(columns, rows);
   else if (std::sscanf(c.data(), "window.graphs.%dx%d", &columns, &rows) == 2) setGraphs(columns, rows);
+  else if (c == "window.new")      { recordUndo(); _gui.addPane(); }
+  else if (c == "window.close")    { if (_gui.nPanes() > 1) { recordUndo(); _gui.closePane(_gui.currentPaneIndex()); } }
   else if (c == "window.next")     _gui.setCurrentPane((_gui.currentPaneIndex() + 1) % _gui.nPanes());
   else if (c == "window.previous") _gui.setCurrentPane((_gui.currentPaneIndex() + _gui.nPanes() - 1) % _gui.nPanes());
   else if (c == "help.about")      _showAbout = true;
@@ -715,7 +721,7 @@ namespace CAP
 
   void CapApp::restore(const Snapshot & s)
   {
-  _gui.setLayout(s.columns, s.rows);
+  if (_gui.nPanes() != int(s.canvases.size())) _gui.setPaneCount(int(s.canvases.size()));
   for (int k=0; k<_gui.nPanes() && k<int(s.canvases.size()); k++)
     {
     _gui.pane(k).canvas() = s.canvases[k];
@@ -751,7 +757,7 @@ namespace CAP
 
   void CapApp::createDemo()
   {
-  // a Gaussian and pseudo-data scattered around it
+  // a Gaussian and pseudo-data scattered around it, with statistical (bars) and systematic (boxes) uncertainties
   MATH::Normal * gaussian = new MATH::Normal(1.0, 0.0, 1.0);
   gaussian->setName("Gaussian(0,1)");
   std::vector<double> x, ex, y, ey, sy;
@@ -760,7 +766,7 @@ namespace CAP
     double v = -3.0 + 0.25*k, t = std::exp(-0.5*v*v);
     x.push_back(v); ex.push_back(0.0);
     y.push_back(t*(1.0 + 0.08*std::sin(7.0*v)));
-    ey.push_back(0.03 + 0.05*t); sy.push_back(0.0);
+    ey.push_back(0.03 + 0.05*t); sy.push_back(0.02 + 0.06*t);
     }
   MATH::DataPointsVector * data = new MATH::DataPointsVector(x, ex, y, ey, sy);
   data->setName("pseudo-data");
@@ -898,6 +904,27 @@ namespace CAP
           ImGui::TableNextColumn(); ImGui::TextUnformatted(MenuBar::displayShortcut(item->shortcut()).data());
           ImGui::TableNextColumn(); ImGui::Text("%s > %s", menuName, item->name().data());
           }
+        }
+      ImGui::EndTable();
+      }
+    ImGui::SeparatorText("Mouse on a graph");
+    if (ImGui::BeginTable("mouse", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV))
+      {
+      const char * rows[][2] = {
+        { "Drag in the frame",           "Zoom on the rectangle" },
+        { "Drag along an axis",          "Zoom on that axis" },
+        { "Double-click in the frame",   "Automatic ranges" },
+        { "Drag a title or the legend",  "Move it" },
+        { "Shift + drag an axis",        "Move its labels closer or farther" },
+        { "Right-click a part",          "Edit it: title, axis, axis title, legend, data points" },
+        { "Right-click elsewhere",       "Menu of the graph" },
+        { "Escape",                      "Cancel the drag" },
+        { "Drag a border between panes", "Resize the panes (x of a tab: close the pane; +: new pane)" } };
+      for (const auto & row : rows)
+        {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn(); ImGui::TextUnformatted(row[0]);
+        ImGui::TableNextColumn(); ImGui::TextUnformatted(row[1]);
         }
       ImGui::EndTable();
       }

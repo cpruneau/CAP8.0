@@ -58,6 +58,7 @@ add_executable(CapGui
   CanvasPane.cpp
   FileBrowser.cpp
   FileDialog.cpp
+  GraphEditor.cpp
   ImGuiPainter.cpp
   Menu.cpp
   MenuBar.cpp

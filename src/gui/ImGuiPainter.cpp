@@ -31,7 +31,25 @@ namespace CAP
     default: return {};
     }
   }
+  ImFont * gFonts[16] = { nullptr };
   } // namespace
+
+  void ImGuiPainter::setFont(int index, ImFont * font)
+  {
+  if (index >= 1 && index <= 15) gFonts[index] = font;
+  }
+
+  ImFont * ImGuiPainter::fontFor(int font)
+  {
+  return gFonts[TextAttributes::fontIndex(font)];
+  }
+
+  ImFont * ImGuiPainter::font(const TextAttributes & attributes) const
+  {
+  ImFont * f = fontFor(attributes.font());
+  if (!f) f = _font;
+  return f ? f : ImGui::GetFont();
+  }
 
   ImGuiPainter::ImGuiPainter(ImDrawList * drawList, ImFont * font, float x, float y, float width, float height)
   :
@@ -154,7 +172,7 @@ namespace CAP
   if (text.isNull()) return;
   float size = attributes.size()*_height;
   if (size < 1.0f) return;
-  ImFont * font = _font ? _font : ImGui::GetFont();
+  ImFont * font = this->font(attributes);
   ImVec2 extent = font->CalcTextSizeA(size, FLT_MAX, 0.0f, text.data());
   float dx = 0.0f;
   if      (attributes.justification() == TextAttributes::kCenter) dx = -0.5f*extent.x;
@@ -182,8 +200,7 @@ namespace CAP
   if (text.isNull()) return 0.0f;
   float size = attributes.size()*_height;
   if (size <= 0) return 0.0f;
-  ImFont * font = _font ? _font : ImGui::GetFont();
-  return font->CalcTextSizeA(size, FLT_MAX, 0.0f, text.data()).x;
+  return font(attributes)->CalcTextSizeA(size, FLT_MAX, 0.0f, text.data()).x;
   }
 
   } // namespace GUI

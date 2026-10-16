@@ -1,7 +1,10 @@
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include "imgui.h"
 #include "CanvasPane.hpp"
 #include "ImGuiPainter.hpp"
+#include "GraphEditor.hpp"
 
 namespace CAP
 {
@@ -13,6 +16,7 @@ namespace CAP
   :
   beforeChange(),
   onDrop(),
+  onAddPane(),
   _name(name),
   _canvas(name, name),
   _mode(kAdd),
@@ -22,7 +26,13 @@ namespace CAP
   _gridColumns(1),
   _gridRows(1),
   _hoverText(),
-  _rectX(0), _rectY(0), _rectW(0), _rectH(0)
+  _rectX(0), _rectY(0), _rectW(0), _rectH(0),
+  _drag(),
+  _editGraph(-1),
+  _editPick(),
+  _editRecorded(false),
+  _openEditor(false),
+  _editBefore()
   {
   _canvas.divide(1,1);
   }
@@ -92,6 +102,15 @@ namespace CAP
     ImGui::SameLine(0, 18);
     ImGui::TextDisabled("graph %d of %d", _selectedGraph+1, _canvas.nGraphs());
     }
+  if (onAddPane)
+    {
+    float buttonWidth = ImGui::CalcTextSize("+").x + 2*ImGui::GetStyle().FramePadding.x;
+    ImGui::SameLine(0, 18);
+    float available = ImGui::GetContentRegionAvail().x;   // right-aligned
+    if (available > buttonWidth) ImGui::SetCursorPosX(ImGui::GetCursorPosX() + available - buttonWidth);
+    if (ImGui::Button("+")) onAddPane();
+    ImGui::SetItemTooltip("New canvas pane, beside this one (close a pane with the x of its tab)");
+    }
   ImGui::PopID();
   }
 
@@ -101,6 +120,40 @@ namespace CAP
   if (_contextGraph < 0 || _contextGraph >= _canvas.nGraphs()) { ImGui::EndPopup(); return; }
   Graph & graph = _canvas.graph(_contextGraph);
   ImGui::TextDisabled("%s", graph.title().isNull() ? "Graph" : graph.title().data());
+  ImGui::Separator();
+  Graph::Pick pick;
+  if (ImGui::MenuItem("Edit Title..."))  { pick.part = Graph::kTitle;  edit(_contextGraph, pick); }
+  for (int k=0; k<graph.nAxes(); k++)
+    {
+    char label[48];
+    std::snprintf(label, sizeof(label), "Edit %s Axis...", k == 0 ? "X" : (k == 1 ? "Y" : "Z"));
+    if (ImGui::MenuItem(label)) { pick.part = Graph::kAxis; pick.axis = k; edit(_contextGraph, pick); }
+    std::snprintf(label, sizeof(label), "Edit %s Axis Title...", k == 0 ? "X" : (k == 1 ? "Y" : "Z"));
+    if (ImGui::MenuItem(label)) { pick.part = Graph::kAxisTitle; pick.axis = k; edit(_contextGraph, pick); }
+    }
+  if (ImGui::MenuItem("Edit Legend...")) { pick.part = Graph::kLegend; edit(_contextGraph, pick); }
+  if (ImGui::BeginMenu("Edit Item", !graph.items().empty()))
+    {
+    for (size_t k=0; k<graph.items().size(); k++)
+      {
+      String label = graph.items()[k].label();
+      if (label.isNull()) label = "(unnamed)";
+      label += "...##"; label += int(k);
+      if (ImGui::MenuItem(label.data())) { pick.part = Graph::kDataPoint; pick.item = int(k); pick.index = -1; edit(_contextGraph, pick); }
+      }
+    ImGui::EndMenu();
+    }
+  if (!graph.isAutoLegendPosition() || graph.titleOffsetX() != 0 || graph.titleOffsetY() != 0
+      || graph.xAxis().titleOffsetX() != 0 || graph.xAxis().titleOffsetY() != 0
+      || graph.yAxis().titleOffsetX() != 0 || graph.yAxis().titleOffsetY() != 0)
+    if (ImGui::MenuItem("Reset Text Positions"))
+      {
+      changing();
+      graph.setAutoLegendPosition();
+      graph.setTitleOffset(0, 0);
+      graph.xAxis().setTitleOffset(0, 0);
+      graph.yAxis().setTitleOffset(0, 0);
+      }
   ImGui::Separator();
   bool logX = graph.isLogX(), logY = graph.isLogY(), legend = graph.showLegend();
   if (ImGui::MenuItem("Log X", nullptr, logX)) { changing(); graph.setLogX(!logX); }
@@ -182,32 +235,242 @@ namespace CAP
       }
     ImGui::EndDragDropTarget();
     }
-  drawList->PopClipRect();
 
-  // mouse: select, context menu, coordinates
-  _hoverText = "";
-  if (hovered)
+  // mouse: select, drags, dialogs, coordinates
+  if (handleMouse(painter, hovered)) clicked = true;
+  drawList->PopClipRect();
+  renderContextMenu();
+  if (_openEditor) { ImGui::OpenPopup("editor"); _openEditor = false; }
+  renderEditor();
+  ImGui::PopID();
+  return clicked;
+  }
+
+  void CanvasPane::edit(int k, const Graph::Pick & pick)
+  {
+  if (k < 0 || k >= _canvas.nGraphs()) return;
+  _editGraph    = k;
+  _editPick     = pick;
+  _editBefore   = _canvas.graph(k);
+  _editRecorded = false;
+  _openEditor   = true;
+  }
+
+  void CanvasPane::renderEditor()
+  {
+  if (!ImGui::BeginPopup("editor", ImGuiWindowFlags_AlwaysAutoResize)) return;
+  if (_editGraph < 0 || _editGraph >= _canvas.nGraphs()) { ImGui::CloseCurrentPopup(); ImGui::EndPopup(); return; }
+  Graph & graph = _canvas.graph(_editGraph);
+  bool changed = false;
+  switch (_editPick.part)
     {
-    ImVec2 mouse = ImGui::GetMousePos();
-    Point2D p = painter.toCanvas(mouse.x, mouse.y);
-    int k = _canvas.graphAt(p);
-    if (k >= 0)
+    case Graph::kTitle:     changed = GraphEditor::editTitle(graph); break;
+    case Graph::kAxis:      changed = GraphEditor::editAxis(graph, _editPick.axis); break;
+    case Graph::kAxisTitle: changed = GraphEditor::editAxisTitle(graph, _editPick.axis); break;
+    case Graph::kLegend:    changed = GraphEditor::editLegend(graph); break;
+    case Graph::kDataPoint: changed = GraphEditor::editItem(graph, _editPick.item, _editPick.index); break;
+    default: ImGui::CloseCurrentPopup(); break;
+    }
+  // the first change of the dialog records the undo state of the graph as it was when the dialog was opened
+  if (changed && !_editRecorded)
+    {
+    Graph after = graph;
+    graph = _editBefore;
+    changing();
+    graph = after;
+    _editRecorded = true;
+    }
+  ImGui::EndPopup();
+  }
+
+  void CanvasPane::applyMove(float dx, float dy)
+  {
+  if (_drag.graph < 0 || _drag.graph >= _canvas.nGraphs()) return;
+  Graph & g = _canvas.graph(_drag.graph);
+  // screen pixels to fractions of the cell, of the frame (y up on the canvas, down on the screen)
+  float cellW  = (g.cellXHigh()  - g.cellXLow())*_rectW, cellH  = (g.cellYHigh()  - g.cellYLow())*_rectH;
+  float frameW = (g.frameXHigh() - g.frameXLow())*_rectW, frameH = (g.frameYHigh() - g.frameYLow())*_rectH;
+  // texts stay within reach: titles within half a cell of their automatic position, the corner of the legend near
+  // the frame (a drag released outside the window cannot lose them)
+  auto clamp = [](float v, float low, float high) { return std::min(std::max(v, low), high); };
+  switch (_drag.kind)
+    {
+    case kMoveTitle:
+      g.setTitleOffset(clamp(_drag.initialX + dx/cellW, -0.5f, 0.5f), clamp(_drag.initialY - dy/cellH, -0.5f, 0.5f));
+      break;
+    case kMoveAxisTitle:
+      g.axis(_drag.axis).setTitleOffset(clamp(_drag.initialX + dx/cellW, -0.5f, 0.5f), clamp(_drag.initialY - dy/cellH, -0.5f, 0.5f));
+      break;
+    case kMoveLegend:
+      g.setLegendPosition(clamp(_drag.initialX + dx/frameW, -0.3f, 0.95f), clamp(_drag.initialY - dy/frameH, 0.05f, 1.3f));
+      break;
+    case kMoveLabels:
       {
-      const Graph & g = _canvas.graph(k);
-      if (g.frameContains(p))
+      // away from the frame: down for the x axis, left for the y axis; 20 pixels per unit of the automatic distance
+      float away = (_drag.axis == 0) ? dy : -dx;
+      g.axis(_drag.axis).setLabelGap(std::min(std::max(_drag.initialX + away/20.0f, 0.0f), 5.0f));
+      break;
+      }
+    default: break;
+    }
+  }
+
+  bool CanvasPane::handleMouse(ImGuiPainter & painter, bool hovered)
+  {
+  bool clicked = false;
+  ImDrawList * drawList = ImGui::GetWindowDrawList();
+  ImVec2 mouse = ImGui::GetMousePos();
+  Point2D p = painter.toCanvas(mouse.x, mouse.y);
+  const float tolerance = 6.0f;   // pixels
+  const float tolX = tolerance/_rectW, tolY = tolerance/_rectH;
+  int k = _canvas.graphAt(p);
+  Graph::Pick pick;
+  if (k >= 0) pick = _canvas.graph(k).pick(p, tolX, tolY);
+
+  // ---- a drag in progress
+  if (_drag.kind != kNoDrag)
+    {
+    float dx = mouse.x - _drag.startX, dy = mouse.y - _drag.startY;
+    if (!_drag.moved && std::fabs(dx) + std::fabs(dy) > 3.0f)
+      {
+      _drag.moved = true;
+      if (_drag.kind >= kMoveTitle) changing();
+      }
+    bool isMove = _drag.kind >= kMoveTitle;
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+      {
+      if (isMove && _drag.moved) applyMove(0, 0);   // back to where it was
+      _drag = Drag();
+      return false;
+      }
+    if (_drag.graph >= _canvas.nGraphs()) { _drag = Drag(); return false; }
+    Graph & g = _canvas.graph(_drag.graph);
+    if (isMove)
+      {
+      if (_drag.moved) applyMove(dx, dy);
+      ImGui::SetMouseCursor(_drag.kind == kMoveLabels ? (_drag.axis == 0 ? ImGuiMouseCursor_ResizeNS : ImGuiMouseCursor_ResizeEW)
+                                                      : ImGuiMouseCursor_ResizeAll);
+      }
+    // zoom: rectangle (or band along an axis) from the start to the mouse, within the frame
+    float fx0, fy0, fx1, fy1;
+    painter.toScreen(Point2D(g.frameXLow(), g.frameYHigh()), fx0, fy0);
+    painter.toScreen(Point2D(g.frameXHigh(), g.frameYLow()), fx1, fy1);
+    float x0 = std::min(std::max(_drag.startX, fx0), fx1), x1 = std::min(std::max(mouse.x, fx0), fx1);
+    float y0 = std::min(std::max(_drag.startY, fy0), fy1), y1 = std::min(std::max(mouse.y, fy0), fy1);
+    if (_drag.kind == kZoomX) { y0 = fy0; y1 = fy1; }
+    if (_drag.kind == kZoomY) { x0 = fx0; x1 = fx1; }
+    if (!isMove && _drag.moved)
+      {
+      ImU32 blue = ImGui::GetColorU32(ImVec4(0.18f, 0.43f, 0.85f, 1.0f));
+      drawList->AddRectFilled(ImVec2(std::min(x0,x1), std::min(y0,y1)), ImVec2(std::max(x0,x1), std::max(y0,y1)),
+                              ImGui::GetColorU32(ImVec4(0.18f, 0.43f, 0.85f, 0.12f)));
+      drawList->AddRect(ImVec2(std::min(x0,x1), std::min(y0,y1)), ImVec2(std::max(x0,x1), std::max(y0,y1)), blue, 0, 0, 1.5f);
+      }
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
+      {
+      if (!isMove && _drag.moved && std::fabs(x1 - x0) > 4 && std::fabs(y1 - y0) > 4)
         {
-        double x, y;
-        g.fromCanvas(g.view(), p, x, y);
-        char text[96];
-        std::snprintf(text, sizeof(text), "x = %.5g   y = %.5g", x, y);
-        _hoverText = text;
+        const Graph::View view = g.view();
+        double xa, ya, xb, yb;
+        g.fromCanvas(view, painter.toCanvas(std::min(x0,x1), std::max(y0,y1)), xa, ya);   // lower left
+        g.fromCanvas(view, painter.toCanvas(std::max(x0,x1), std::min(y0,y1)), xb, yb);   // upper right
+        changing();
+        if (_drag.kind != kZoomY && xb > xa) g.setXRange(xa, xb);
+        if (_drag.kind != kZoomX && yb > ya) g.setYRange(ya, yb);
         }
-      if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))  { _selectedGraph = k; clicked = true; }
-      if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) { _selectedGraph = k; _contextGraph = k; clicked = true; ImGui::OpenPopup("graphContext"); }
+      _drag = Drag();
+      }
+    return false;
+    }
+
+  if (!hovered) { _hoverText = ""; return false; }
+
+  // ---- coordinates under the mouse
+  _hoverText = "";
+  if (k >= 0 && _canvas.graph(k).frameContains(p))
+    {
+    const Graph & g = _canvas.graph(k);
+    double x, y;
+    g.fromCanvas(g.view(), p, x, y);
+    char text[96];
+    std::snprintf(text, sizeof(text), "x = %.5g   y = %.5g", x, y);
+    _hoverText = text;
+    }
+  if (k < 0) return false;
+  Graph & g = _canvas.graph(k);
+  const bool shift = ImGui::GetIO().KeyShift;
+
+  // ---- cursor: what a drag would do
+  switch (pick.part)
+    {
+    case Graph::kTitle: case Graph::kAxisTitle: case Graph::kLegend: ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); break;
+    case Graph::kAxis:
+      ImGui::SetMouseCursor((pick.axis == 0) != shift ? ImGuiMouseCursor_ResizeEW : ImGuiMouseCursor_ResizeNS);
+      break;
+    case Graph::kDataPoint: ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); break;
+    default: break;
+    }
+
+  // ---- double-click in the frame: automatic ranges
+  if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && (pick.part == Graph::kFrame || pick.part == Graph::kDataPoint))
+    {
+    if (!g.isAutoX() || !g.isAutoY()) { changing(); g.setAutoRange(); }
+    return true;
+    }
+
+  // ---- left button pressed: select the graph and start a drag
+  if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+    _selectedGraph = k;
+    clicked = true;
+    Drag drag;
+    drag.graph  = k;
+    drag.axis   = pick.axis;
+    drag.startX = mouse.x;
+    drag.startY = mouse.y;
+    switch (pick.part)
+      {
+      case Graph::kTitle:
+        drag.kind = kMoveTitle; drag.initialX = g.titleOffsetX(); drag.initialY = g.titleOffsetY(); break;
+      case Graph::kAxisTitle:
+        drag.kind = kMoveAxisTitle;
+        drag.initialX = g.axis(pick.axis).titleOffsetX(); drag.initialY = g.axis(pick.axis).titleOffsetY(); break;
+      case Graph::kLegend:
+        {
+        drag.kind = kMoveLegend;
+        const Rect2D & r = g.legendRect();
+        float w = g.frameXHigh() - g.frameXLow(), h = g.frameYHigh() - g.frameYLow();
+        drag.initialX = (r.x0 - g.frameXLow())/w;   // upper left corner, fractions of the frame
+        drag.initialY = (r.y1 - g.frameYLow())/h;
+        break;
+        }
+      case Graph::kAxis:
+        if (shift) { drag.kind = kMoveLabels; drag.initialX = g.axis(pick.axis).labelGap(); }
+        else drag.kind = (pick.axis == 0) ? kZoomX : kZoomY;
+        break;
+      case Graph::kFrame: case Graph::kDataPoint:
+        drag.kind = kZoom; break;
+      default: break;
+      }
+    _drag = drag;
+    }
+
+  // ---- right button: dialog editing the part under the mouse, or the context menu of the graph
+  if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+    {
+    _selectedGraph = k;
+    clicked = true;
+    switch (pick.part)
+      {
+      case Graph::kTitle: case Graph::kAxis: case Graph::kAxisTitle: case Graph::kLegend: case Graph::kDataPoint:
+        edit(k, pick);
+        break;
+      default:
+        _contextGraph = k;
+        ImGui::OpenPopup("graphContext");
+        break;
       }
     }
-  renderContextMenu();
-  ImGui::PopID();
   return clicked;
   }
 

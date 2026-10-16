@@ -37,6 +37,12 @@ namespace CAP
   virtual float textWidth(const String & text, const GRAPHICS::TextAttributes & attributes) const;
 
   //! @brief Screen position of a canvas point. @param p canvas point @param x screen x @param y screen y
+  //! @brief Font used for the ROOT font index (1 to 15, see TextAttributes); texts in a font without an entry use
+  //! the font given to the constructor. @param index ROOT font index @param font font (may be null)
+  static void setFont(int index, ImFont * font);
+  //! @brief Font used for a ROOT font code. @param font font code (e.g. 42) @return font, or null if none was set
+  static ImFont * fontFor(int font);
+
   void toScreen(const GRAPHICS::Point2D & p, float & x, float & y) const;
   //! @brief Canvas point of a screen position. @return canvas coordinates
   GRAPHICS::Point2D toCanvas(float x, float y) const;
@@ -46,6 +52,8 @@ namespace CAP
   ImDrawList * _drawList;
   ImFont     * _font;
   float _x, _y, _width, _height;
+
+  ImFont * font(const GRAPHICS::TextAttributes & attributes) const;
   };
 
   } // namespace GUI

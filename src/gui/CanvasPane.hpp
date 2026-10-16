@@ -11,14 +11,23 @@ namespace CAP
   namespace GUI
   {
 
+  class ImGuiPainter;
+
   //!
   //! @brief One canvas pane of the CapGui window: a GRAPHICS::Canvas (divided into graphs) with a toolbar.
   //!
   //! Toolbar: Add / Replace (what showing an object does to the selected graph), Log X, Log Y (scales of the
-  //! selected graph), Graphs (divide the canvas into n' x m' graphs), Clear (empty the selected graph).
-  //! Clicking a graph selects it (blue frame); right-clicking opens its context menu; the mouse position is reported
-  //! in data coordinates (hoverText()). Objects dragged from the file browser can be dropped on any graph (onDrop):
-  //! the graph under the mouse is highlighted while dragging.
+  //! selected graph), Graphs (divide the canvas into n' x m' graphs), Clear (empty the selected graph), + (new pane).
+  //! Clicking a graph selects it (blue frame); the mouse position is reported in data coordinates (hoverText()).
+  //! Objects dragged from the file browser can be dropped on any graph (onDrop): the graph under the mouse is
+  //! highlighted while dragging.
+  //!
+  //! Mouse on a graph:
+  //!  - drag in the frame: zoom on the rectangle; drag along an axis: zoom on that axis; double-click: automatic ranges
+  //!  - drag the title, an axis title or the legend: move it; Shift + drag an axis: move its labels
+  //!  - right-click the title, an axis, an axis title, the legend or a data point: dialog editing it (GraphEditor);
+  //!    elsewhere: context menu of the graph
+  //!  - Escape cancels a drag
   //!
   //! beforeChange is called before any change made from the pane, so that the application can record an undo state.
   //!
@@ -63,6 +72,8 @@ namespace CAP
   std::function<void()> beforeChange;
   //! Called when an object of the file browser is dropped on graph k of the pane.
   std::function<void(int graph, const ObjectReference & object)> onDrop;
+  //! Called by the + button of the toolbar (new canvas pane).
+  std::function<void()> onAddPane;
 
   protected:
 
@@ -76,9 +87,34 @@ namespace CAP
   String _hoverText;
   float _rectX, _rectY, _rectW, _rectH;
 
+  //! What a drag of the left mouse button does.
+  enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels };
+  struct Drag
+  {
+  DragKind kind = kNoDrag;
+  int   graph = -1;
+  int   axis  = -1;
+  float startX = 0, startY = 0;      //!< screen position where the drag started (pixels)
+  float initialX = 0, initialY = 0;  //!< position (offset, legend corner, label gap) before the drag
+  bool  moved = false;
+  };
+  Drag _drag;
+  int  _editGraph;                     //!< graph whose part is edited in the "editor" popup
+  GRAPHICS::Graph::Pick _editPick;     //!< part edited
+  bool _editRecorded;                  //!< undo state recorded for the current dialog
+  bool _openEditor;                    //!< open the editor popup at the next opportunity
+  GRAPHICS::Graph _editBefore;         //!< graph when the dialog was opened (for undo)
+
   void changing() { if (beforeChange) beforeChange(); }
   void renderToolbar();
   void renderContextMenu();
+  void renderEditor();
+  //! Open the dialog editing the part pick of graph k.
+  void edit(int k, const GRAPHICS::Graph::Pick & pick);
+  //! Mouse buttons on the canvas: drags (zoom, move), double-click, right-click. @return true if the pane was clicked
+  bool handleMouse(ImGuiPainter & painter, bool hovered);
+  //! Apply the move of the current drag (screen displacement dx, dy in pixels).
+  void applyMove(float dx, float dy);
   };
 
   } // namespace GUI

@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -8,6 +10,7 @@
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 #include "CapGui.hpp"
+#include "ImGuiPainter.hpp"
 #include "SvgPainter.hpp"
 
 #ifndef CAP_SOURCE_ROOT
@@ -22,6 +25,7 @@ namespace CAP
   CapGui::CapGui()
   :
   onNewPane(),
+  beforePanesChange(),
   onFrame(),
   onCloseRequest(),
   _window(nullptr),
@@ -43,7 +47,13 @@ namespace CAP
   _browser(),
   _firstFrame(true),
   _layoutRequested(false),
-  _undockRequested(false)
+  _undockRequested(false),
+  _gridColumns(1),
+  _dockBeside(),
+  _closeRequests(),
+  _addRequested(false),
+  _focusedPane(-1),
+  _focusRequested(false)
   { }
 
   CapGui::~CapGui()
@@ -131,6 +141,42 @@ namespace CAP
     config.SizePixels = _settings.fontSize;
     _font = io.Fonts->AddFontDefault(&config);
     }
+
+  // fonts of the plots, by ROOT font index (see TextAttributes): Helvetica is the interface font, its other styles
+  // and the Times and Courier families come from the system (macOS, or Liberation fonts on Linux) when available
+  std::vector<std::string> directories{ "/System/Library/Fonts/Supplemental/", "/Library/Fonts/",
+                                        "/usr/share/fonts/truetype/liberation/", "/usr/share/fonts/liberation-sans/",
+                                        "/usr/share/fonts/liberation-serif/", "/usr/share/fonts/liberation-mono/",
+                                        "/usr/share/fonts/truetype/msttcorefonts/" };
+  struct PlotFont { int index; std::vector<std::string> names; };
+  const std::vector<PlotFont> plotFonts = {
+    {  5, { "Arial Italic.ttf",                "LiberationSans-Italic.ttf" } },
+    {  6, { "Arial Bold.ttf",                  "LiberationSans-Bold.ttf" } },
+    {  7, { "Arial Bold Italic.ttf",           "LiberationSans-BoldItalic.ttf" } },
+    { 13, { "Times New Roman.ttf",             "LiberationSerif-Regular.ttf" } },
+    {  1, { "Times New Roman Italic.ttf",      "LiberationSerif-Italic.ttf" } },
+    {  2, { "Times New Roman Bold.ttf",        "LiberationSerif-Bold.ttf" } },
+    {  3, { "Times New Roman Bold Italic.ttf", "LiberationSerif-BoldItalic.ttf" } },
+    {  8, { "Courier New.ttf",                 "LiberationMono-Regular.ttf" } },
+    {  9, { "Courier New Italic.ttf",          "LiberationMono-Italic.ttf" } },
+    { 10, { "Courier New Bold.ttf",            "LiberationMono-Bold.ttf" } },
+    { 11, { "Courier New Bold Italic.ttf",     "LiberationMono-BoldItalic.ttf" } } };
+  ImGuiPainter::setFont(4, _font);
+  for (const auto & plotFont : plotFonts)
+    {
+    std::vector<std::string> files;
+    for (const auto & name : plotFont.names) for (const auto & directory : directories) files.push_back(directory + name);
+    std::string fontFile = firstExisting(files);
+    ImFont * font = fontFile.empty() ? nullptr : io.Fonts->AddFontFromFileTTF(fontFile.c_str(), _settings.fontSize);
+    ImGuiPainter::setFont(plotFont.index, font);
+    }
+  // Courier without a system font: the monospaced font distributed with Dear ImGui
+  if (!ImGuiPainter::fontFor(82))
+    {
+    std::string cousine = firstExisting({ std::string(root ? root : "") + "/external/imgui/misc/fonts/Cousine-Regular.ttf",
+                                          std::string(CAP_SOURCE_ROOT) + "/external/imgui/misc/fonts/Cousine-Regular.ttf" });
+    if (!cousine.empty()) ImGuiPainter::setFont(8, io.Fonts->AddFontFromFileTTF(cousine.c_str(), _settings.fontSize));
+    }
   }
 
   void CapGui::setTheme(const String & theme)
@@ -143,7 +189,20 @@ namespace CAP
   style.WindowRounding = 0.0f;
   style.FrameRounding  = 3.0f;
   style.ChildBorderSize = 1.0f;
+  style.FrameBorderSize = 1.0f;   // check boxes and input fields stay visible on white backgrounds
   if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+  }
+
+  CanvasPane & CapGui::newPane()
+  {
+  char name[32];
+  std::snprintf(name, sizeof(name), "Canvas %d", ++_paneCounter);
+  _panes.emplace_back(new CanvasPane(name));
+  CanvasPane & pane = *_panes.back();
+  pane.setShowToolbar(_settings.toolbars);
+  pane.onAddPane = [this]() { _addRequested = true; };
+  if (onNewPane) onNewPane(pane);
+  return pane;
   }
 
   void CapGui::setLayout(int nColumns, int nRows)
@@ -152,17 +211,49 @@ namespace CAP
   nRows    = nRows    < 1 ? 1 : (nRows    > 6 ? 6 : nRows);
   size_t n = size_t(nColumns*nRows);
   while (_panes.size() > n) _panes.pop_back();
-  while (_panes.size() < n)
-    {
-    char name[32];
-    std::snprintf(name, sizeof(name), "Canvas %d", ++_paneCounter);
-    _panes.emplace_back(new CanvasPane(name));
-    _panes.back()->setShowToolbar(_settings.toolbars);
-    if (onNewPane) onNewPane(*_panes.back());
-    }
+  while (_panes.size() < n) newPane();
   _columns = nColumns;
   _rows    = nRows;
+  _gridColumns = nColumns;
+  _layoutRequested = true;
   if (_currentPane >= nPanes()) _currentPane = 0;
+  }
+
+  void CapGui::setPaneCount(int n)
+  {
+  n = n < 1 ? 1 : (n > 36 ? 36 : n);
+  if (n == nPanes()) return;
+  while (nPanes() > n) _panes.pop_back();
+  while (nPanes() < n) newPane();
+  _gridColumns = int(std::ceil(std::sqrt(double(n))));
+  _columns = _gridColumns;
+  _rows    = (n + _gridColumns - 1)/_gridColumns;
+  _layoutRequested = true;
+  if (_currentPane >= nPanes()) _currentPane = 0;
+  }
+
+  CanvasPane & CapGui::addPane()
+  {
+  std::string beside = _panes.empty() ? std::string() : currentPane().name().str();
+  CanvasPane & pane = newPane();
+  _dockBeside.push_back(std::make_pair(pane.name().str(), beside));
+  setCurrentPane(nPanes() - 1);
+  return pane;
+  }
+
+  void CapGui::closePane(int k)
+  {
+  if (k < 0 || k >= nPanes() || nPanes() <= 1) return;
+  // a dock space keeps its central node even when empty: lay the panes out again rather than leave a hole
+  ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->name().data()) : nullptr;
+  if (window && window->DockNode && window->DockNode->IsCentralNode())
+    {
+    _gridColumns = int(std::ceil(std::sqrt(double(nPanes() - 1))));
+    _layoutRequested = true;
+    }
+  _panes.erase(_panes.begin() + k);
+  if (_currentPane > k || _currentPane >= nPanes()) _currentPane = std::max(0, _currentPane - 1);
+  _focusedPane = -1;
   }
 
   void CapGui::setShowToolbars(bool v)
@@ -188,6 +279,7 @@ namespace CAP
   {
   _exitRequested = true;
   }
+
 
   void CapGui::run()
   {
@@ -246,27 +338,13 @@ namespace CAP
   ImGuiID dockspace = ImHashStr("CapDockSpace");
   if (_firstFrame)
     {
-    // the layout saved in the ini file is kept if it agrees with the settings
-    ImGuiWindowSettings * saved = ImGui::FindWindowSettingsByID(ImHashStr(FileBrowser::windowName()));
-    bool savedDocked = saved && saved->DockId != 0;
-    if (!ImGui::DockBuilderGetNode(dockspace)) _layoutRequested = true;
-    if (_settings.browserDocked && !savedDocked) _layoutRequested = true;
-    if (!_settings.browserDocked && savedDocked) _undockRequested = true;
+    // the canvas panes are laid out at startup; the browser follows the settings
+    _layoutRequested = true;
     _firstFrame = false;
     }
   if (_layoutRequested) { buildDockLayout(dockspace); _layoutRequested = false; }
-  ImGui::DockSpaceOverViewport(dockspace, viewport, ImGuiDockNodeFlags_NoDockingOverCentralNode);
-  ImGuiDockNode * central = ImGui::DockBuilderGetCentralNode(dockspace);
-
-  ImGuiWindowClass canvasClass;
-  canvasClass.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoUndocking;
-  ImGui::SetNextWindowClass(&canvasClass);
-  ImGui::SetNextWindowDockID(central ? central->ID : dockspace, ImGuiCond_Always);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
-  if (ImGui::Begin("Canvases", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse))
-    renderCanvases(hoverText);
-  ImGui::End();
-  ImGui::PopStyleVar();
+  ImGui::DockSpaceOverViewport(dockspace, viewport);
+  renderCanvases(hoverText);
 
   renderBrowser();
   _fileDialog.render();
@@ -296,8 +374,38 @@ namespace CAP
     ImGui::DockBuilderSplitNode(dockId, ImGuiDir_Left, 0.22f, &left, &canvases);
     ImGui::DockBuilderDockWindow(FileBrowser::windowName(), left);
     }
-  ImGui::DockBuilderDockWindow("Canvases", canvases);
+  buildPaneGrid(canvases);
   ImGui::DockBuilderFinish(dockId);
+  }
+
+  void CapGui::buildPaneGrid(unsigned int nodeId)
+  {
+  // rows from the top, then the panes of each row from the left (the last row may have fewer panes)
+  int n = nPanes();
+  if (n == 0) return;
+  int columns = std::min(std::max(_gridColumns, 1), n);
+  int rows = (n + columns - 1)/columns;
+  std::vector<ImGuiID> rowNodes;
+  ImGuiID remaining = nodeId;
+  for (int r=0; r<rows-1; r++)
+    {
+    ImGuiID top = 0;
+    ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Up, 1.0f/float(rows - r), &top, &remaining);
+    rowNodes.push_back(top);
+    }
+  rowNodes.push_back(remaining);
+  for (int r=0; r<rows; r++)
+    {
+    int count = std::min(columns, n - r*columns);
+    ImGuiID rest = rowNodes[r];
+    for (int c=0; c<count-1; c++)
+      {
+      ImGuiID left = 0;
+      ImGui::DockBuilderSplitNode(rest, ImGuiDir_Left, 1.0f/float(count - c), &left, &rest);
+      ImGui::DockBuilderDockWindow(_panes[r*columns + c]->name().data(), left);
+      }
+    ImGui::DockBuilderDockWindow(_panes[r*columns + count - 1]->name().data(), rest);
+    }
   }
 
   void CapGui::renderBrowser()
@@ -331,32 +439,67 @@ namespace CAP
 
   void CapGui::renderCanvases(String & hoverText)
   {
-  ImVec2 origin = ImGui::GetCursorScreenPos();
-  ImVec2 available = ImGui::GetContentRegionAvail();
-  _areaX = origin.x; _areaY = origin.y; _areaWidth = available.x; _areaHeight = available.y;
-  float spacing = 4.0f;
-  float w = (available.x - spacing*(_columns-1))/_columns;
-  float h = (available.y - spacing*(_rows-1))/_rows;
-  if (w < 40 || h < 40) return;
-  for (int row=0; row<_rows; row++)
-    for (int column=0; column<_columns; column++)
+  // panes added since the last frame: docked beside the pane that was current, splitting its area
+  ImGuiID dockspace = ImHashStr("CapDockSpace");
+  for (const auto & request : _dockBeside)
+    {
+    ImGuiWindow * target = request.second.empty() ? nullptr : ImGui::FindWindowByName(request.second.c_str());
+    ImGuiDockNode * node = target ? target->DockNode : nullptr;
+    if (!node) node = ImGui::DockBuilderGetCentralNode(dockspace);
+    if (!node) continue;
+    ImGuiID atDir = 0, other = 0;
+    ImGuiDir direction = node->Size.x >= node->Size.y ? ImGuiDir_Right : ImGuiDir_Down;
+    ImGui::DockBuilderSplitNode(node->ID, direction, 0.5f, &atDir, &other);
+    ImGui::DockBuilderDockWindow(request.first.c_str(), atDir);
+    ImGui::DockBuilderFinish(dockspace);
+    }
+  _dockBeside.clear();
+
+  float areaX0 = 1e9f, areaY0 = 1e9f, areaX1 = -1e9f, areaY1 = -1e9f;
+  for (int k=0; k<nPanes(); k++)
+    {
+    CanvasPane & pane = *_panes[k];
+    bool open = true;
+    if (_focusRequested && k == _currentPane) ImGui::SetNextWindowFocus();
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
+    bool visible = ImGui::Begin(pane.name().data(), nPanes() > 1 ? &open : nullptr,
+                                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
+    ImGui::PopStyleVar();
+    if (visible)
       {
-      int k = row*_columns + column;
-      CanvasPane & pane = *_panes[k];
-      ImGui::SetCursorScreenPos(ImVec2(origin.x + column*(w + spacing), origin.y + row*(h + spacing)));
-      bool current = (k == _currentPane);
-      if (current) ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.18f, 0.43f, 0.85f, 1.0f));
-      ImGui::BeginChild(pane.name().data(), ImVec2(w, h), ImGuiChildFlags_Borders,
-                        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-      if (current) ImGui::PopStyleColor();
-      bool clicked = pane.render(w, h, current, _font);
-      if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) && (ImGui::IsMouseClicked(0) || ImGui::IsMouseClicked(1)))
-        clicked = true;
+      // the pane whose window gets the focus (click, tab) becomes current
+      bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+      if (focused && _focusedPane != k) { _currentPane = k; _focusedPane = k; }
+      ImVec2 size = ImGui::GetContentRegionAvail();
+      bool clicked = pane.render(size.x, size.y, k == _currentPane, _font);
       if (clicked) _currentPane = k;
       if (!pane.hoverText().isNull()) hoverText = pane.hoverText();
-      ImGui::EndChild();
+      float x, y, w, h;
+      pane.canvasRect(x, y, w, h);
+      areaX0 = std::min(areaX0, x); areaY0 = std::min(areaY0, y);
+      areaX1 = std::max(areaX1, x + w); areaY1 = std::max(areaY1, y + h);
       }
+    ImGui::End();
+    if (!open) _closeRequests.push_back(k);
+    }
+  _focusRequested = false;
   _hoverText = hoverText;
+  if (areaX1 > areaX0) { _areaX = areaX0; _areaY = areaY0; _areaWidth = areaX1 - areaX0; _areaHeight = areaY1 - areaY0; }
+
+  // panes added (+ button) or closed (x of their tab) by the user
+  if (_addRequested)
+    {
+    if (beforePanesChange) beforePanesChange();
+    addPane();
+    _addRequested = false;
+    }
+  if (!_closeRequests.empty())
+    {
+    if (beforePanesChange) beforePanesChange();
+    std::sort(_closeRequests.rbegin(), _closeRequests.rend());
+    for (int k : _closeRequests) closePane(k);
+    _closeRequests.clear();
+    }
   }
 
   void CapGui::renderStatusBar(const MenuItem * hovered, const String & /*hoverText*/)
@@ -367,11 +510,11 @@ namespace CAP
   else if (!_status.isNull() && ImGui::GetTime() - _statusTime < 10.0)
     ImGui::TextUnformatted(_status.data());
   else
-    ImGui::TextDisabled("Click a graph to select it; right-click for its menu");
+    ImGui::TextDisabled("Drag to zoom (double-click: automatic ranges); drag titles and legends to move them; right-click to edit");
   // right: coordinates under the mouse, current canvas
   char right[160];
-  std::snprintf(right, sizeof(right), "%s    %s  (%d x %d)", _hoverText.data(),
-                _panes.empty() ? "" : currentPane().name().data(), _columns, _rows);
+  std::snprintf(right, sizeof(right), "%s    %s  (%d canvas%s)", _hoverText.data(),
+                _panes.empty() ? "" : currentPane().name().data(), nPanes(), nPanes() > 1 ? "es" : "");
   float textWidth = ImGui::CalcTextSize(right).x;
   ImGui::SameLine(ImGui::GetWindowWidth() - textWidth - 12.0f);
   ImGui::TextUnformatted(right);
