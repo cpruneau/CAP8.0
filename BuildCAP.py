@@ -15,8 +15,8 @@ Usage (from anywhere; the script locates CAP from its own position):
 The window has three parts:
   * a toolbar (top): Build, Stop, Save output, Clear, the build directory name, the build type, the number of parallel
     jobs and whether to install;
-  * the options (upper half): the core modules (always built), the optional modules (Therminator3, Latex, Jets, Epos,
-    PHSD) and the event generators (Pythia8, Herwig), with the locations of ROOT and of the external packages;
+  * the options (upper half): the core modules (always built), the optional modules (Therminator3, Latex, Graphics, Jets,
+    Epos, PHSD, Pythia) and the Herwig generator, with the locations of ROOT and of the external packages;
   * the output of cmake and make (lower half), which can be saved to a file.
 
 Build steps (each command is printed in the output pane before it runs):
@@ -63,9 +63,12 @@ CORE_MODULES = ["Base", "Math", "Helpers", "Particles", "Global", "ParticleSingl
 OPTIONAL_MODULES = [
     ("CAP_WITH_THERMINATOR3", "Therminator3", "Thermal model event generator", True),
     ("CAP_WITH_LATEX",        "Latex",        "LaTeX documents of results", True),
+    ("CAP_WITH_GRAPHICS",     "Graphics",     "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)", True),
+    ("CAP_WITH_GUI",          "CapGui",       "Graphical interface bin/CapGui (Dear ImGui; needs Graphics)", True),
     ("CAP_WITH_JETS",         "Jets",         "Jet analysis (needs FastJet; in progress)", False),
     ("CAP_WITH_EPOS",         "Epos",         "EPOS event reader", False),
     ("CAP_WITH_PHSD",         "PHSD",         "PHSD event reader (in progress)", False),
+    ("CAP_WITH_PYTHIA8",      "Pythia",       "Pythia8 event generator interface (needs Pythia8)", False),
 ]
 
 #: External packages: key, label, CMake prefix variable, file identifying a valid prefix, bundled globs (relative to
@@ -84,7 +87,6 @@ EXTERNALS = {
 
 #: Event generators: CMake option, external package key, description.
 GENERATORS = [
-    ("CAP_WITH_PYTHIA8", "PYTHIA8", "Pythia8 generator (CAPPythia)"),
     ("CAP_WITH_HERWIG",  "HERWIG",  "Herwig generator (CAP interface not written yet)"),
 ]
 
@@ -139,6 +141,15 @@ def save_settings(s):
             json.dump(s, f, indent=2)
     except OSError:
         pass
+
+
+def module_dir(folder):
+    """Directory of a module: src/<folder>, or src/<group>/<folder> for the module groups (core, models, analysis, tools)."""
+    for group in ("", "core", "models", "analysis", "tools"):
+        path = os.path.join(SRC_DIR, group, folder)
+        if os.path.isdir(path):
+            return path
+    return None
 
 
 def search_path():
@@ -394,7 +405,7 @@ def run_gui():
                 ttk.Checkbutton(optional, text=folder, variable=var,
                                 command=self._update_dependent_rows).grid(row=i, column=0, sticky="w")
                 ttk.Label(optional, text=desc, foreground="gray35").grid(row=i, column=1, sticky="w", padx=(6, 0))
-                if not os.path.isdir(os.path.join(SRC_DIR, folder)):
+                if not module_dir(folder):
                     ttk.Label(optional, text="(missing from src)", foreground="red").grid(row=i, column=2, sticky="w")
 
             ext = ttk.LabelFrame(parent, text="Event generators and external packages", padding=8)
@@ -411,6 +422,10 @@ def run_gui():
                                 command=self._update_dependent_rows).grid(row=row, column=0, sticky="w")
                 ttk.Label(ext, text=desc, foreground="gray35").grid(row=row, column=1, columnspan=3, sticky="w")
                 row = self._make_prefix_row(ext, row + 1, key, "location:")
+            ttk.Separator(ext).grid(row=row, column=0, columnspan=4, sticky="ew", pady=6)
+            row += 1
+            ttk.Label(ext, text="Pythia8 (for Pythia)").grid(row=row, column=0, columnspan=2, sticky="w")
+            row = self._make_prefix_row(ext, row + 1, "PYTHIA8", "location:")
             ttk.Separator(ext).grid(row=row, column=0, columnspan=4, sticky="ew", pady=6)
             row += 1
             ttk.Label(ext, text="FastJet (for Jets)").grid(row=row, column=0, columnspan=2, sticky="w")

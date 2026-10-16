@@ -56,7 +56,7 @@ void resetPlotArrays()
 int PlotHGPtSpectraVsData()
 {
   TString includesPath = getenv("WAC_SRC");
-  includesPath += "/Base/";
+  includesPath += "/core/Base/";
   gSystem->Load(includesPath+"CanvasConfiguration.hpp");
   gSystem->Load(includesPath+"GraphConfiguration.hpp");
   gSystem->Load(includesPath+"Plotter.hpp");
