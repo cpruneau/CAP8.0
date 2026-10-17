@@ -37,6 +37,18 @@ namespace CAP
   return String(colon == std::string::npos ? typeName : typeName.substr(colon+2));
   }
 
+  //! Whether an object not read yet (lazily opened file) can probably be shown in a graph, from its type: histograms,
+  //! profiles and data points (whether it is 1D is known once it is read).
+  bool showableType(const std::string & typeName)
+  {
+  for (const char * type : {"Histogram", "Profile", "DataPointsVector", "DataPointColumns"})
+    {
+    std::string t(type);
+    if (typeName.size() >= t.size() && typeName.compare(typeName.size()-t.size(), t.size(), t) == 0) return true;
+    }
+  return false;
+  }
+
   //! Path of the object currently pressed in the tree (to tell a click from the start of a drag).
   std::string pressedObject;
   } // namespace
@@ -370,8 +382,18 @@ namespace CAP
 
   void FileBrowser::renderObject(int fileId, const Folder & folder, const String & name, const std::string & path)
   {
+  // an object of a lazily opened file is read when it is hovered (tooltip) or shown, not when it is listed
   String kind, details;
-  bool showable = describe(folder, name, kind, details);
+  bool loaded = folder.isLoaded(name);
+  bool showable;
+  if (loaded) showable = describe(folder, name, kind, details);
+  else
+    {
+    std::string type = folder.typeName(name);
+    kind     = shortTypeName(type);
+    details  = String(type) + String("\n(not read yet)");
+    showable = showableType(type);
+    }
   ImGui::PushID(name.data());
   bool selected = (_selected.file == fileId && _selected.path.str() == path);
   ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -400,7 +422,15 @@ namespace CAP
     ImGui::TextDisabled("%s", kind.data());
     ImGui::EndDragDropSource();
     }
-  else if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) ImGui::SetTooltip("%s", details.data());
+  else if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    {
+    if (!loaded)
+      {
+      try { describe(folder, name, kind, details); }
+      catch (const std::exception & e) { details = String("Cannot read it: ") + String(e.what()); }
+      }
+    ImGui::SetTooltip("%s", details.data());
+    }
 
   if (ImGui::BeginPopupContextItem("##objectMenu"))
     {

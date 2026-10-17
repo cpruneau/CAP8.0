@@ -1,5 +1,8 @@
 #include "Folder.hpp"
 #include "LongParameter.hpp"
+#include "FileSystem.hpp"
+#include <algorithm>
+#include <fstream>
 #include <sstream>
 #include <utility>
 #include <iostream>
@@ -401,6 +404,19 @@ namespace CAP
 
   // ---------------------------------------------------------------- binary files
 
+  std::map<std::string,const std::type_info *> & Folder::typeRegistry()
+  {
+  static std::map<std::string,const std::type_info *> types;
+  return types;
+  }
+
+  const std::type_info * Folder::registeredType(const std::string & tag)
+  {
+  registry();   // registers Folder and LongParameter on first use
+  auto found = typeRegistry().find(tag);
+  return found==typeRegistry().end() ? nullptr : found->second;
+  }
+
   std::map<std::string,Folder::Factory> & Folder::registry()
   {
   static std::map<std::string,Factory> types;
@@ -413,6 +429,279 @@ namespace CAP
     // Other libraries register their own classes when they are loaded (Math/FolderTypes.cpp, Graphics/Data2DPoints.cpp, ...).
     }
   return types;
+  }
+
+  // ---------------------------------------------------------------- lazy loading
+
+  bool Folder::isLoaded(const String & path) const
+  {
+  const Entry * e = findPath(path);
+  return e && e->item->isLoaded();
+  }
+
+  unsigned int Folder::nNotLoaded() const
+  {
+  unsigned int n = 0;
+  for (const auto & e : _entries)
+    {
+    if (const Folder * f = e.item->asFolder()) n += f->nNotLoaded();
+    else if (!e.item->isLoaded()) n++;
+    }
+  return n;
+  }
+
+  void Folder::loadAll()
+  {
+  for (auto & e : _entries)
+    {
+    if (Folder * f = e.item->asFolder()) f->loadAll();
+    else e.item->load();
+    }
+  }
+
+  FolderLazyItem::FolderLazyItem(const std::shared_ptr<const LazySource> & source, const std::string & tag,
+                                 std::uint64_t offset, std::uint64_t length)
+  :
+  _source(source),
+  _tag(tag),
+  _offset(offset),
+  _length(length),
+  _decoded()
+  { }
+
+  FolderItem * FolderLazyItem::clone() const
+  {
+  if (_decoded) return _decoded->clone();
+  return new FolderLazyItem(_source,_tag,_offset,_length);
+  }
+
+  const std::type_info & FolderLazyItem::type() const
+  {
+  if (_decoded) return _decoded->type();
+  const std::type_info * type = Folder::registeredType(_tag);
+  return type ? *type : decoded()->type();
+  }
+
+  std::string FolderLazyItem::typeName() const
+  {
+  return demangledTypeName(type());
+  }
+
+  std::string FolderLazyItem::record() const
+  {
+  const String & path = _source->path;
+  if (!FileSystem::isFile(path) || FileSystem::size(path)!=_source->size || FileSystem::modified(path)!=_source->modified)
+    throw FileException(path,"The file changed since it was read lazily: open it again","FolderLazyItem");
+  std::ifstream in(path.data(),std::ios::binary);
+  std::string bytes(std::size_t(_length),'\0');
+  in.seekg(std::streamoff(_offset));
+  if (_length>0) in.read(&bytes[0],std::streamsize(_length));
+  if (!in || std::uint64_t(in.gcount())!=_length) throw FileException(path,"Cannot read a record of the file","FolderLazyItem");
+  return bytes;
+  }
+
+  FolderItem * FolderLazyItem::decoded() const
+  {
+  if (_decoded) return _decoded.get();
+  const String & where = _source->path;
+  std::string bytes = record();
+  BinaryReader r(bytes.data(),bytes.size());
+  std::string tag;
+  unsigned int version;
+  const char * payload;
+  std::size_t length;
+  readBinaryRecord(r,tag,version,payload,length,where);
+  auto factory = Folder::registry().find(tag);
+  if (factory==Folder::registry().end())
+    throw FileException(where,String("Type tag ")+tag.c_str()+" is not registered","FolderLazyItem");
+  try
+    {
+    _decoded.reset(factory->second(std::string(payload,length),version,where));
+    }
+  catch (FileException &)
+    {
+    throw;
+    }
+  catch (Exception & e)
+    {
+    throw FileException(where,String("Invalid binary record: ")+e.what(),"FolderLazyItem");
+    }
+  return _decoded.get();
+  }
+
+  void FolderLazyItem::writeRecord(std::ostream & out, bool skipUnsavable) const
+  {
+  if (_decoded) { _decoded->writeRecord(out,skipUnsavable); return; }
+  std::string bytes = record();   // not decoded: the record is copied as it is
+  out.write(bytes.data(),std::streamsize(bytes.size()));
+  if (!out) throw FileException(_source->path,"Error writing binary record","FolderLazyItem");
+  }
+
+  namespace
+  {
+  //! Reads a stream once, keeping the position and the checksums of the records being read (nested records each have
+  //! their own); skipped bytes count in the checksums but are not kept.
+  class ScanReader
+  {
+  public:
+  ScanReader(std::istream & in, const String & where) : _in(in), _where(where), _position(0), _crcs() {}
+  std::uint64_t position() const { return _position; }
+  bool atEnd() { return _in.peek()==EOF; }
+  void read(char * data, std::size_t n)
+  {
+    _in.read(data,std::streamsize(n));
+    if (std::size_t(_in.gcount())!=n) fail("Truncated binary record");
+    for (auto & c : _crcs) c = crc32Update(c,data,n);
+    _position += n;
+  }
+  void skip(std::uint64_t n)
+  {
+    char buffer[1<<16];
+    while (n>0)
+      {
+      std::size_t k = std::size_t(std::min<std::uint64_t>(n,sizeof(buffer)));
+      read(buffer,k);
+      n -= k;
+      }
+  }
+  std::uint8_t u8() { char c; read(&c,1); return std::uint8_t(c); }
+  std::uint32_t u32()
+  {
+    char b[4];
+    read(b,4);
+    std::uint32_t v = 0;
+    for (int i=0; i<4; i++) v |= std::uint32_t(std::uint8_t(b[i]))<<(8*i);
+    return v;
+  }
+  std::uint64_t varUInt()
+  {
+    std::uint64_t v = 0;
+    for (int shift=0; shift<64; shift+=7)
+      {
+      std::uint8_t b = u8();
+      v |= std::uint64_t(b & 0x7F)<<shift;
+      if (!(b & 0x80)) return v;
+      }
+    fail("Malformed binary record");
+  }
+  String string(std::uint64_t limit)
+  {
+    std::uint64_t n = varUInt();
+    if (n>limit) fail("Malformed binary record");
+    std::string s(std::size_t(n),'\0');
+    if (n>0) read(&s[0],std::size_t(n));
+    return String(s);
+  }
+  std::string tag()
+  {
+    char t[4];
+    read(t,4);
+    if (t[0]!='C' || t[1]!='A' || t[2]!='P') fail("Not a CAP binary record (bad tag)");
+    return std::string(t,4);
+  }
+  //! Start the checksum of a record whose payload follows.
+  void beginRecord() { _crcs.push_back(0xFFFFFFFFu); }
+  //! End of the payload of the innermost record: read its checksum and compare.
+  void endRecord()
+  {
+    std::uint32_t computed = _crcs.back() ^ 0xFFFFFFFFu;
+    _crcs.pop_back();
+    if (u32()!=computed) fail("Corrupted binary record (checksum mismatch)");
+  }
+  [[noreturn]] void fail(const char * message) const { throw FileException(_where,message,"Folder::scanBinary()"); }
+
+  private:
+  std::istream & _in;
+  String _where;
+  std::uint64_t _position;
+  std::vector<std::uint32_t> _crcs;
+  };
+  } // namespace
+
+  //! Builds the tree of a lazily read folder (friend of Folder).
+  struct FolderScanner
+  {
+  //! The entries of a folder payload, up to position end.
+  static void entries(Folder & folder, ScanReader & r, const std::shared_ptr<const LazySource> & source, std::uint64_t end)
+  {
+    std::uint64_t n = r.varUInt();
+    if (n > end - r.position()) r.fail("More entries than data");
+    for (std::uint64_t i=0; i<n; i++)
+      {
+      String entryName = r.string(end - r.position());
+      std::uint64_t length = r.varUInt();
+      std::uint64_t start = r.position();
+      if (length > end - start) r.fail("Entry larger than the data");
+      std::string tag = r.tag();
+      unsigned int version = r.u8();
+      std::uint64_t payloadLength = r.varUInt();
+      std::uint64_t payloadStart = r.position();
+      if (payloadStart + payloadLength + 4 != start + length) r.fail("Malformed binary record");
+      r.beginRecord();
+      if (tag==Folder::binaryTag())
+        {
+        if (version==0 || version>Folder::binaryVersion()) r.fail("Binary record of an unsupported format version");
+        std::unique_ptr<Folder> sub(new Folder());
+        sub->setName(r.string(payloadLength));
+        entries(*sub,r,source,payloadStart+payloadLength);
+        if (r.position()!=payloadStart+payloadLength) r.fail("Unexpected data at the end of a folder record");
+        r.endRecord();
+        folder.addItem(entryName,new FolderItemOf<Folder>(sub.release()));
+        }
+      else
+        {
+        if (!Folder::registeredType(tag))
+          throw FileException(source->path,String("Entry ")+entryName+" has type tag "+tag.c_str()+
+                              ", which is not registered: call Folder::registerType<T>() for its class","Folder::scanBinary()");
+        r.skip(payloadLength);
+        r.endRecord();
+        folder.addItem(entryName,new FolderLazyItem(source,tag,start,length));
+        }
+      }
+  }
+  };
+
+  bool Folder::scanBinary(std::istream & in, const std::shared_ptr<const LazySource> & source, const String * folderName)
+  {
+  ScanReader r(in,source->path);
+  while (!r.atEnd())
+    {
+    std::string tag = r.tag();
+    unsigned int version = r.u8();
+    std::uint64_t length = r.varUInt();
+    if (length > (std::uint64_t(1)<<40)) r.fail("Implausible binary record length");
+    std::uint64_t start = r.position();
+    r.beginRecord();
+    if (tag==binaryTag())
+      {
+      String name = r.string(length);
+      if (!folderName || name.equalTo(*folderName))
+        {
+        if (version==0 || version>binaryVersion()) r.fail("Binary record of an unsupported format version");
+        Folder loaded;
+        try
+          {
+          loaded.setName(name);
+          FolderScanner::entries(loaded,r,source,start+length);
+          }
+        catch (FileException &)
+          {
+          throw;
+          }
+        catch (Exception & e)
+          {
+          throw FileException(source->path,String("Invalid binary record: ")+e.what(),"Folder::scanBinary()");
+          }
+        if (r.position()!=start+length) r.fail("Unexpected data at the end of a folder record");
+        r.endRecord();
+        *this = std::move(loaded);   // the parent of this folder is kept
+        return true;
+        }
+      }
+    r.skip(start + length - r.position());
+    r.endRecord();
+    }
+  return false;
   }
 
   void Folder::encodeBinary(BinaryWriter & w) const

@@ -8,6 +8,9 @@
 #include <type_traits>
 #include <functional>
 #include <ostream>
+#include <cstdint>
+#include <ctime>
+#include <istream>
 #include "Aliases.hpp"
 #include "Exceptions.hpp"
 #include "BinaryIO.hpp"
@@ -54,6 +57,21 @@ namespace CAP
   //! @throws Exception if the types differ, the type has no arithmetic, or the objects are incompatible
   //!
   virtual FolderItem * combine(const FolderItem & other, bool subtract, const std::string & path) const = 0;
+  //! @brief Whether the object is in memory (false for an entry of a lazily loaded file not decoded yet). @return true if so
+  virtual bool isLoaded() const { return true; }
+  //! @brief Bring the object into memory (decode it, for an entry of a lazily loaded file). @throws FileException on failure
+  virtual void load() const {}
+  };
+
+  //!
+  //! @brief The file from which the entries of a lazily loaded folder are decoded, as it was when it was scanned
+  //! (see Folder::scanBinary()): an entry is decoded only if the file still has that size and date.
+  //!
+  struct LazySource
+  {
+    String         path;          //!< path of the file
+    std::uintmax_t size = 0;      //!< size when scanned
+    std::time_t    modified = 0;  //!< time of the last modification when scanned
   };
 
   //! @brief Whether T has T + T and T - T.
@@ -297,6 +315,16 @@ namespace CAP
   //! @brief Read the next folder record of a stream into this folder (replacing its content), skipping records of other classes.
   //! @param in stream @return false at the end of the stream (unchanged) @throws FileException if the data is invalid (unchanged)
   bool readBinary(std::istream & in);
+  //!
+  //! @brief Read the next folder record of a stream lazily into this folder (replacing its content): the tree of
+  //! sub-folders is built, and every object becomes a placeholder holding the type and the position of its record in
+  //! the file. An object is decoded when it is first used (get(), typeName() does not decode), or by loadAll(). All
+  //! the bytes are read once, to check the checksums of every record, but nothing is decoded or kept in memory.
+  //! @param in stream of the file, positioned before the record @param source the file, as it is now
+  //! @param folderName name of the folder record to read, or null for the first one
+  //! @return false if no such folder record (unchanged) @throws FileException if the data is invalid (unchanged)
+  //!
+  bool scanBinary(std::istream & in, const std::shared_ptr<const LazySource> & source, const String * folderName=nullptr);
   //! @brief Save this folder (with its tree) to a binary file. @param fileName file name @param append add at the end of the file
   //! @param skipUnsavable leave out objects without binary support instead of throwing
   //! @throws FileException if the file cannot be written or an object cannot be saved
@@ -317,6 +345,21 @@ namespace CAP
   //!
   template <typename T>
   static void registerType();
+  //! @brief Type registered for a binary tag. @param tag 4-character tag @return type, or null if none
+  static const std::type_info * registeredType(const std::string & tag);
+
+  //! @name Lazy loading (see scanBinary())
+  //! @{
+
+  //! @brief Whether the object at path is in memory (true for objects added in memory and for sub-folders).
+  //! @param path path @return false for an object of a lazily read file not decoded yet, or if there is no such entry
+  bool isLoaded(const String & path) const;
+  //! @brief Number of objects of the tree not decoded yet. @return number
+  unsigned int nNotLoaded() const;
+  //! @brief Decode every object of the tree not decoded yet. @throws FileException if one cannot be decoded
+  void loadAll();
+
+  //! @}
 
   //! @}
 
@@ -332,6 +375,10 @@ namespace CAP
   using Factory = std::function<FolderItem *(const std::string & payload, unsigned int version, const String & where)>;
   //! @brief Registry: tag -> factory.
   static std::map<std::string,Factory> & registry();
+  //! @brief Registry: tag -> type of the objects.
+  static std::map<std::string,const std::type_info *> & typeRegistry();
+  friend class FolderLazyItem;
+  friend struct FolderScanner;
 
   //! @brief Throw if name is empty or contains '/'. @param name name @param source name of the calling function
   static void checkName(const String & name, const char * source);
@@ -411,6 +458,45 @@ namespace CAP
 
   private:
   T * _object;  //!< owned object
+  };
+
+  //!
+  //! @brief Folder entry of a lazily read file (internal to Folder): the type of the object and the position of its
+  //! record in the file. The object is decoded when it is first needed, then kept; type(), typeName() and savable()
+  //! do not decode, and a record not decoded is saved by copying its bytes.
+  //!
+  class FolderLazyItem : public FolderItem
+  {
+  public:
+  //! @brief Constructor. @param source file @param tag type tag @param offset position of the record in the file
+  //! @param length length of the record (header, payload and checksum)
+  FolderLazyItem(const std::shared_ptr<const LazySource> & source, const std::string & tag, std::uint64_t offset, std::uint64_t length);
+  FolderItem * clone() const override;
+  const std::type_info & type() const override;
+  std::string typeName() const override;
+  void * pointer() const override { return decoded()->pointer(); }
+  Object * asObject() const override { return decoded()->asObject(); }
+  Folder * asFolder() const override { return nullptr; }   // sub-folders are read when the file is scanned
+  bool savable() const override { return true; }            // only registered types are read
+  void writeRecord(std::ostream & out, bool skipUnsavable) const override;
+  void * release() override { return decoded()->release(); }
+  bool combinable() const override { return decoded()->combinable(); }
+  FolderItem * combine(const FolderItem & other, bool subtract, const std::string & path) const override
+  { return decoded()->combine(other,subtract,path); }
+  bool isLoaded() const override { return _decoded!=nullptr; }
+  void load() const override { decoded(); }
+
+  private:
+  //! The object, decoded on first use. @throws FileException if the file changed or the record is invalid
+  FolderItem * decoded() const;
+  //! The bytes of the record, read from the file. @throws FileException if the file changed or cannot be read
+  std::string record() const;
+
+  std::shared_ptr<const LazySource> _source;
+  std::string   _tag;
+  std::uint64_t _offset;
+  std::uint64_t _length;
+  mutable std::unique_ptr<FolderItem> _decoded;
   };
 
   // ---------------------------------------------------------------- template implementations
@@ -515,6 +601,7 @@ namespace CAP
   template <typename T>
   void Folder::registerType()
   {
+    typeRegistry()[T::binaryTag()] = &typeid(T);
     registry()[T::binaryTag()] = [](const std::string & payload, unsigned int version, const String & where) -> FolderItem *
       {
       if (version==0 || version>T::binaryVersion())

@@ -111,27 +111,51 @@ private:
   std::size_t  _position;
 };
 
+inline uint32_t crc32Update(uint32_t state, const char * data, std::size_t n);
+
 //!
 //! @brief Standard CRC-32 (polynomial 0xEDB88320, as used by zip, gzip and png) of n bytes.
 //! @param data bytes @param n number of bytes @return checksum
 //!
 inline uint32_t crc32(const char * data, std::size_t n)
 {
-  // table built once, on first use (thread-safe initialization of a function-local static)
-  static const std::array<uint32_t,256> table = []
+  return crc32Update(0xFFFFFFFFu,data,n) ^ 0xFFFFFFFFu;
+}
+
+//!
+//! @brief Incremental CRC-32: crc32(data,n) is crc32Update(0xFFFFFFFF, data, n) ^ 0xFFFFFFFF, and the data can be
+//! given in pieces, each call continuing from the state returned by the previous one.
+//! @param state 0xFFFFFFFF to start, then the value returned by the previous call @param data bytes @param n number of
+//! bytes @return new state
+//!
+inline uint32_t crc32Update(uint32_t state, const char * data, std::size_t n)
+{
+  // "slicing by 8": 8 tables, built once on first use (thread-safe initialization of a function-local static), let
+  // the loop take 8 bytes at a time; t[0] is the usual byte table
+  static const std::array<std::array<uint32_t,256>,8> t = []
     {
-    std::array<uint32_t,256> t{};
+    std::array<std::array<uint32_t,256>,8> tables{};
     for (uint32_t i=0; i<256; i++)
       {
       uint32_t c = i;
       for (int k=0; k<8; k++) c = (c & 1) ? 0xEDB88320u ^ (c>>1) : (c>>1);
-      t[i] = c;
+      tables[0][i] = c;
       }
-    return t;
+    for (uint32_t i=0; i<256; i++)
+      for (int k=1; k<8; k++) tables[k][i] = (tables[k-1][i]>>8) ^ tables[0][tables[k-1][i] & 0xFF];
+    return tables;
     }();
-  uint32_t crc = 0xFFFFFFFFu;
-  for (std::size_t i=0; i<n; i++) crc = table[(crc ^ uint8_t(data[i])) & 0xFF] ^ (crc>>8);
-  return crc ^ 0xFFFFFFFFu;
+  const uint8_t * p = reinterpret_cast<const uint8_t *>(data);
+  uint32_t crc = state;
+  for (; n>=8; n-=8, p+=8)
+    {
+    uint32_t low  = crc ^ (uint32_t(p[0]) | uint32_t(p[1])<<8 | uint32_t(p[2])<<16 | uint32_t(p[3])<<24);
+    uint32_t high =        uint32_t(p[4]) | uint32_t(p[5])<<8 | uint32_t(p[6])<<16 | uint32_t(p[7])<<24;
+    crc = t[7][low & 0xFF] ^ t[6][(low>>8) & 0xFF] ^ t[5][(low>>16) & 0xFF] ^ t[4][low>>24]
+        ^ t[3][high & 0xFF] ^ t[2][(high>>8) & 0xFF] ^ t[1][(high>>16) & 0xFF] ^ t[0][high>>24];
+    }
+  for (; n>0; n--, p++) crc = t[0][(crc ^ *p) & 0xFF] ^ (crc>>8);
+  return crc;
 }
 
 //! @name Arrays of doubles

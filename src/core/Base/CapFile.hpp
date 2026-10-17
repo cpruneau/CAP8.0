@@ -29,6 +29,11 @@ namespace CAP
 //!
 //! As a File, the name of the object is the path of the file; the name of the folder is folderName().
 //!
+//! load(File::Loading::kLazy) reads the file without decoding it: the tree of sub-folders is built at once, with the
+//! names and types of all the objects, and each object is decoded when it is first used (get()), or by loadAll(). The
+//! file is read once, to check its checksums, so a corrupted file is still refused at once. If the file changes on disk
+//! afterwards, objects not decoded yet can no longer be (FileException): open it again.
+//!
 //! Classes of the stored objects must be registered with Folder::registerType<T>() to be read back (the Math and
 //! Graphics classes register themselves when their libraries are loaded).
 //!
@@ -130,7 +135,8 @@ public:
   void read(const String & folderName);
 
   //!
-  //! @brief Replace the content of the file by the folder held.
+  //! @brief Replace the content of the file by the folder held (objects not decoded are copied as they are, or decoded
+  //! first if the file is the one they come from).
   //! @param skipUnsavable leave out objects without binary support instead of throwing
   //! @throws FileException if the file cannot be written or an object cannot be saved (and skipUnsavable is false)
   //!
@@ -148,9 +154,17 @@ public:
   //! @name Content in memory
   //! @{
 
-  //! @brief Load the first folder of the file (read()). The lazy mode (objects decoded when first used) is not
-  //! available yet: kLazy loads everything. @param loading kEager or kLazy
+  //! @brief Load the first folder of the file: decoded (kEager, read()), or with objects decoded when first used
+  //! (kLazy). @param loading kEager or kLazy @throws FileException if the file cannot be read, holds no folder, or is
+  //! corrupted (the folder held is then unchanged)
   void load(Loading loading = Loading::kEager) override;
+  //! @brief Decode the objects not decoded yet (after load(kLazy)). @throws FileException if one cannot be decoded
+  void loadAll() { _folder.loadAll(); }
+  //! @brief Number of objects not decoded yet. @return number
+  unsigned int nNotLoaded() const { return _folder.nNotLoaded(); }
+  //! @brief Whether the object at path is decoded. @param path path @return true if so
+  bool isLoaded(const String & path) const { return _folder.isLoaded(path); }
+  using File::isLoaded;
   //! @brief Empty the folder held, its name included (the file is not changed).
   void unload() override;
   //! @brief Replace the content of the file by the folder held (write()).
@@ -269,7 +283,11 @@ protected:
   //! @return true if found @throws FileException if the file cannot be read or is corrupted
   bool readFolder(const String * folderName, Folder & folder);
 
+  //! @brief Before writing to the file the objects come from: decode them all (the writing changes the file).
+  void loadAllBeforeWriting();
+
   Folder _folder;  //!<! folder held (not streamed by ROOT)
+  std::shared_ptr<const LazySource> _source;  //!<! file the objects not decoded come from (lazy loading)
 
   ClassDefOverride(CapFile,0)
 };

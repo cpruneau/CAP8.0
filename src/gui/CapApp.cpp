@@ -510,7 +510,7 @@ namespace CAP
   try
     {
     auto file = std::make_shared<CapFile>(path, File::kReadOnly);
-    file->read();
+    file->load(File::Loading::kLazy);   // the tree at once; objects read when first shown
     return file;
     }
   catch (const std::exception & e) { error = e.what(); }
@@ -587,11 +587,13 @@ namespace CAP
         {
         if (item.kind() != GraphItem::kData) continue;
         for (const auto & path : paths)
-          if (old->get<MATH::DataPoints>(path) == item.data())
-            {
-            if (const MATH::DataPoints * d = fresh->get<MATH::DataPoints>(path)) { item.setData(d); updated++; }
-            break;
-            }
+          {
+          if (!old->isLoaded(path)) continue;   // never read: no graph shows it (and the file has changed)
+          if (old->get<MATH::DataPoints>(path) != item.data()) continue;
+          try { if (const MATH::DataPoints * d = fresh->get<MATH::DataPoints>(path)) { item.setData(d); updated++; } }
+          catch (const std::exception &) { }   // no longer readable in the new version: the graph keeps the old one
+          break;
+          }
         }
   BrowserFile retired = *entry;
   _closedFiles.push_back(retired);
@@ -611,7 +613,9 @@ namespace CAP
   {
   BrowserFile * entry = file(object.file);
   if (!entry || !entry->file) { _gui.setStatus("That file is no longer open"); return false; }
-  const MATH::DataPoints * data = entry->file->get<MATH::DataPoints>(object.path);
+  const MATH::DataPoints * data = nullptr;
+  try { data = entry->file->get<MATH::DataPoints>(object.path); }   // read now if the file was opened lazily
+  catch (const std::exception & e) { _gui.setStatus(object.path + String(": cannot be read: ") + String(e.what())); return false; }
   if (!data) { _gui.setStatus(object.path + String(": cannot be shown in a graph")); return false; }
   const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram *>(data);
   if ((histogram && histogram->rank() != 1) || data->rank() != 1)
@@ -654,7 +658,8 @@ namespace CAP
     {
     if (folder->folder(name)) continue;
     String kind, details;
-    if (!FileBrowser::describe(*folder, name, kind, details)) continue;
+    try { if (!FileBrowser::describe(*folder, name, kind, details)) continue; }
+    catch (const std::exception & e) { _gui.setStatus(name + String(": cannot be read: ") + String(e.what())); continue; }
     ObjectReference reference;
     reference.file = fileId;
     reference.path = folderPath.isNull() ? name : folderPath + String("/") + name;

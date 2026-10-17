@@ -27,7 +27,8 @@ namespace CAP
   CapFile::CapFile(const String & path, Access access)
   :
   BinaryFile(path,access),
-  _folder("")
+  _folder(""),
+  _source()
   {
   setClassName("CapFile");
   }
@@ -69,6 +70,8 @@ namespace CAP
   Folder loaded;
   if (!readFolder(nullptr,loaded)) throw FileException(_path,"No folder in the file","CapFile::read()");
   _folder = std::move(loaded);
+  _source.reset();
+  _lazy = false;
   _loaded = true;
   }
 
@@ -78,23 +81,49 @@ namespace CAP
   if (!readFolder(&folderName,loaded))
     throw FileException(_path,String("No folder named ")+folderName+" in the file","CapFile::read()");
   _folder = std::move(loaded);
+  _source.reset();
+  _lazy = false;
   _loaded = true;
   }
 
-  void CapFile::load(Loading /*loading*/)
+  void CapFile::load(Loading loading)
   {
-  read();
+  if (loading==Loading::kEager) { read(); return; }
+  if (!FileSystem::isFile(_path)) throw FileException(_path,"File does not exist","CapFile::load()");
+  auto source = std::make_shared<LazySource>();
+  source->path     = FileSystem::normalize(_path);
+  source->size     = FileSystem::size(_path);
+  source->modified = FileSystem::modified(_path);
+  Folder loaded;
+  open(kRead);
+  bool found;
+  try { found = loaded.scanBinary(_stream,source); }
+  catch (...) { close(); throw; }
+  close();
+  if (!found) throw FileException(_path,"No folder in the file","CapFile::load()");
+  _folder = std::move(loaded);
+  _source = source;
+  _lazy = true;
+  _loaded = true;
   }
 
   void CapFile::unload()
   {
   _folder = Folder();
+  _source.reset();
+  _lazy = false;
   _loaded = false;
+  }
+
+  void CapFile::loadAllBeforeWriting()
+  {
+  if (_source && _source->path.equalTo(FileSystem::normalize(_path)) && _folder.nNotLoaded()>0) _folder.loadAll();
   }
 
   void CapFile::writeFolder(Mode mode, bool skipUnsavable)
   {
   // Encode the whole folder first: the file is not touched if an object cannot be saved.
+  loadAllBeforeWriting();
   std::ostringstream out;
   _folder.writeBinary(out,skipUnsavable);
   if (mode==kWrite) writeAll(out.str());
