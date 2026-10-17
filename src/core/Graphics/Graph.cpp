@@ -198,9 +198,10 @@ namespace CAP
     if (d <= best) { best = d; result.part = kDataPoint; result.item = point.item; result.index = point.index; }
     }
   if (result.part == kDataPoint) return result;
-  if (frameContains(p)) { result.part = kFrame; return result; }
+  // the axes before the frame: their line and ticks lie on the edge of the frame and inside it
   for (int k=0; k<nAxes(); k++)
     if (axis(k).bodyRect().expanded(0.5f*toleranceX, 0.5f*toleranceY).contains(p)) { result.part = kAxis; result.axis = k; return result; }
+  if (frameContains(p)) { result.part = kFrame; return result; }
   if (cellContains(p)) result.part = kCell;
   return result;
   }

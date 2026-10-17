@@ -181,8 +181,12 @@ namespace CAP
   if (!automatic)
     {
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(120);
-    changed |= ImGui::DragFloat("##points", &points, 0.2f, 4.0f, 72.0f, "%.1f pt");
+    ImGui::SetNextItemWidth(130);
+    if (ImGui::InputFloat("##points", &points, 1.0f, 4.0f, "%.1f pt"))   // typed, or - and + buttons
+      {
+      points = points < 4.0f ? 4.0f : (points > 72.0f ? 72.0f : points);
+      changed = true;
+      }
     }
   ImGui::SameLine();
   ImGui::TextUnformatted(label);
@@ -224,14 +228,41 @@ namespace CAP
     }
   ImGui::SameLine(0, 20);
   if (ImGui::Checkbox("logarithmic", &log)) { if (k == 0) graph.setLogX(log); else graph.setLogY(log); changed = true; }
-  ImGui::SetNextItemWidth(240);
-  if (ImGui::InputFloat2("minimum, maximum", range, "%.5g", ImGuiInputTextFlags_EnterReturnsTrue) && range[1] > range[0]
-      && (!log || range[0] > 0))
+  // minimum and maximum: the values typed are kept until they make a valid range, which is applied when a field is
+  // left (Enter, Tab, click elsewhere); until then the fields follow the range of the graph (e.g. after a zoom)
+  ImGuiStorage * storage = ImGui::GetStateStorage();
+  ImGuiID pendingId = ImGui::GetID("rangePending"), minimumId = ImGui::GetID("rangeMinimum"), maximumId = ImGui::GetID("rangeMaximum");
+  if (ImGui::IsWindowAppearing()) storage->SetBool(pendingId, false);
+  bool pending = storage->GetBool(pendingId, false);
+  float minimum = pending ? storage->GetFloat(minimumId) : range[0];
+  float maximum = pending ? storage->GetFloat(maximumId) : range[1];
+  ImGui::SetNextItemWidth(110);
+  bool edited = ImGui::InputFloat("minimum", &minimum, 0.0f, 0.0f, "%.6g");
+  bool left   = ImGui::IsItemDeactivatedAfterEdit();
+  ImGui::SetItemTooltip("Type a value; it is applied when the field is left (Enter, Tab or click elsewhere)");
+  ImGui::SameLine(0, 16);
+  ImGui::SetNextItemWidth(110);
+  edited |= ImGui::InputFloat("maximum", &maximum, 0.0f, 0.0f, "%.6g");
+  left   |= ImGui::IsItemDeactivatedAfterEdit();
+  ImGui::SetItemTooltip("Type a value; it is applied when the field is left (Enter, Tab or click elsewhere)");
+  if (edited)
     {
-    if (k == 0) graph.setXRange(range[0], range[1]); else graph.setYRange(range[0], range[1]);
+    pending = true;
+    storage->SetBool(pendingId, true);
+    storage->SetFloat(minimumId, minimum);
+    storage->SetFloat(maximumId, maximum);
+    }
+  bool valid = maximum > minimum && (!log || minimum > 0);
+  if (pending && left && valid)
+    {
+    if (k == 0) graph.setXRange(minimum, maximum); else graph.setYRange(minimum, maximum);
+    storage->SetBool(pendingId, false);
     changed = true;
     }
-  ImGui::SetItemTooltip("Press Enter to apply (or drag along the axis with the mouse; double-click the frame for automatic ranges)");
+  if (pending && !valid)
+    ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1.0f), "%s", log ? "The minimum must be positive (logarithmic scale) and below the maximum"
+                                                              : "The minimum must be below the maximum");
+  ImGui::TextDisabled("Or drag along the axis with the mouse; double-click the frame for automatic ranges");
 
   section("Line and ticks");
   int lineColor = axis.lineAttributes().color();

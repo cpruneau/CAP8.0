@@ -299,7 +299,7 @@ namespace CAP
   void setDrawnLayout(const Rect2D & title, const Rect2D & legend, const std::vector<PointPosition> & points) const
   { _titleRect = title; _legendRect = legend; _pointPositions = points; }
   //! @brief What is at the canvas position p, according to the last drawing: legend, title, axis titles, data
-  //! points (within toleranceX, toleranceY of p, canvas units), axes, frame, cell. @return pick
+  //! points (within toleranceX, toleranceY of p, canvas units), axes (line, ticks and labels), frame, cell. @return pick
   Pick pick(const Point2D & p, float toleranceX, float toleranceY) const;
   //! @}
 
