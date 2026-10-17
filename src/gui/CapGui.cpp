@@ -27,6 +27,7 @@
 #include "CapGui.hpp"
 #include "ImGuiPainter.hpp"
 #include "LatexRenderer.hpp"
+#include "LatexTextures.hpp"
 #include "SvgPainter.hpp"
 
 #ifndef CAP_SOURCE_ROOT
@@ -79,6 +80,8 @@ namespace CAP
   {
   if (_window)
     {
+    GRAPHICS::LatexRenderer::instance().setReadyCallback(nullptr);
+    LatexTextures::instance().clear();                  // while the OpenGL context exists
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -137,6 +140,8 @@ namespace CAP
   loadFonts();
   ImGui_ImplGlfw_InitForOpenGL(_window, true);
   ImGui_ImplOpenGL3_Init(glslVersion);
+  // texts typeset by LaTeX in the background: wake up the event loop to draw them
+  GRAPHICS::LatexRenderer::instance().setReadyCallback([]() { glfwPostEmptyEvent(); });
   setLayout(_settings.columns, _settings.rows);
   return true;
   }
@@ -345,6 +350,7 @@ namespace CAP
       glfwMakeContextCurrent(context);
       }
     glfwSwapBuffers(_window);
+    LatexTextures::instance().collect(ImGui::GetFrameCount());
     }
   }
 

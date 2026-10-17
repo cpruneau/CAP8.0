@@ -19,6 +19,7 @@
 // and said so). The disk cache is a temporary directory, removed at the end. Prints each failed check and exits with
 // the number of failures (0: all passed).
 //
+#include <atomic>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -191,6 +192,27 @@ int main()
     other.setPreamble("\\usepackage{nosuchpackagecap}");
     const LatexImage * broken = other.image("$y$");
     CHECK(broken && !broken->ok && contains(broken->error, "preamble"));
+  }
+
+  // ---- typesetting in the background
+  {
+    std::vector<String> texts = {"$\\omega_{1}$", "$\\omega_{2}$", "$\\omega_{3}$"};
+    std::atomic<int> calls(0);
+    latex.setReadyCallback([&calls]() { calls++; });
+    runs = latex.nRuns();
+    for (const auto & text : texts) CHECK(latex.imageLater(text) == nullptr);   // queued
+    CHECK(latex.imageLater(texts[0]) == nullptr);                             // queued once
+    CHECK(latex.imageLater("plain") == nullptr && latex.imageLater("$x$") == x);   // plain; already cached
+    for (int k=0; k<2000 && latex.busy(); k++) usleep(5000);
+    CHECK(!latex.busy() && calls == 1);
+    CHECK(latex.nRuns() == runs + 1);                                         // one run for the three texts
+    for (const auto & text : texts) { const LatexImage * image = latex.imageLater(text); CHECK(image && image->ok); }
+    const LatexImage * bad = nullptr;
+    latex.imageLater("$\\nosuchmacro y$");
+    for (int k=0; k<2000 && latex.busy(); k++) usleep(5000);
+    bad = latex.imageLater("$\\nosuchmacro y$");
+    CHECK(bad && !bad->ok && latex.nRuns() == runs + 2);                    // failed, and not queued again
+    latex.setReadyCallback(nullptr);
   }
 
   // ---- SvgPainter

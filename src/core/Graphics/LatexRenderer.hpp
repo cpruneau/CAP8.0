@@ -13,8 +13,13 @@
 //! @brief LatexRenderer: texts typeset by the LaTeX installation of the system, as SVG paths.
 #ifndef CAP__LatexRenderer
 #define CAP__LatexRenderer
+#include <atomic>
+#include <condition_variable>
 #include <cstdint>
+#include <functional>
 #include <mutex>
+#include <thread>
+#include <unordered_set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -58,6 +63,10 @@ namespace CAP
   //! memory, and on disk (cacheDirectory()), so that a text is typeset only once, ever. prepare() typesets many texts
   //! in a single run (e.g. all the labels of a canvas, see prepare(const Drawable2D&,float,float)).
   //!
+  //! A graphical interface must not wait for LaTeX: imageLater() returns the image if it is cached, otherwise queues
+  //! the text and returns nullptr (draw plainText() meanwhile). A background thread typesets the queued texts in one
+  //! run, then calls the ready callback (e.g. to wake up the event loop of the interface).
+  //!
   //! Without LaTeX (available() false), or when disabled, image() returns no image and the painters draw the text
   //! with their fonts (plainText()); a text that LaTeX cannot typeset gives an image with its error.
   //!
@@ -83,8 +92,8 @@ namespace CAP
 
   //! @brief Renderer with the tools found on the system and the default cache directory.
   LatexRenderer();
-  //! @brief Destructor.
-  virtual ~LatexRenderer() { }
+  //! @brief Destructor: stops the background thread (and a LaTeX run in progress).
+  virtual ~LatexRenderer();
 
   //! @brief How a text is drawn: kLatex if it contains '$' or '\', kRoot if it contains '#' (ROOT syntax, drawn as
   //! plain text for now), kPlain otherwise. @param text text @return kind
@@ -139,10 +148,32 @@ namespace CAP
   //! @param drawable drawable @param width width of the painter @param height height of the painter
   //!
   void prepare(const Drawable2D & drawable, float width, float height);
-  //! @brief Forget the images held in memory (the disk cache is kept).
+  //! @brief Forget the images held in memory (the disk cache is kept). The images given before are deleted: only
+  //! for programs that hold none (e.g. tests).
   void clearMemoryCache();
   //! @brief Number of LaTeX runs made so far. @return number
   int nRuns() const { return _nRuns; }
+
+  //! @}
+
+  //! @name Typesetting in the background
+  //! @{
+
+  //!
+  //! @brief The image of a text if it is cached (in memory or on disk); otherwise the text is queued for the
+  //! background thread, and the image will be there after the ready callback.
+  //! @param text text
+  //! @return image (possibly with an error), or nullptr if not ready yet or not typeset by LaTeX
+  //!
+  const LatexImage * imageLater(const String & text);
+  //! @brief Whether texts are queued or being typeset in the background. @return true if so
+  bool busy();
+  //! @brief Function called by the background thread after it typeset texts (from that thread; keep it short and
+  //! thread-safe, e.g. glfwPostEmptyEvent). @param callback function, or nullptr for none
+  void setReadyCallback(std::function<void()> callback);
+  //! @brief Time the background thread waits after the first queued text, to typeset all the texts of a frame
+  //! together. @param seconds delay
+  void setBatchDelay(double seconds) { _batchDelay = seconds; }
 
   //! @}
 
@@ -176,6 +207,8 @@ namespace CAP
   String cachePath(std::uint64_t key) const;
   //! @brief Look for latex and dvisvgm.
   void findTools();
+  //! @brief Loop of the background thread: typeset the queued texts, in batches.
+  void work();
 
   bool        _enabled;          //!< use LaTeX
   String      _binDirectory;     //!< directory of the tools
@@ -184,9 +217,18 @@ namespace CAP
   String      _preamble;         //!< preamble of the documents
   String      _cacheDirectory;   //!< directory of the disk cache, or empty
   double      _timeLimit;        //!< time limit of a run (seconds)
-  int         _nRuns;            //!< LaTeX runs made so far
-  std::unordered_map<std::uint64_t,LatexImage> _images;   //!< images in memory, by key
+  std::atomic<int> _nRuns;       //!< LaTeX runs made so far
+  std::unordered_map<std::uint64_t,LatexImage> _images;   //!< images in memory, by key (never replaced once there)
   std::recursive_mutex _mutex;   //!< guards the images (the renderer may be used from several threads)
+
+  std::mutex                 _queueMutex;       //!< guards the queue, the queued keys and the callback
+  std::condition_variable    _queueCondition;   //!< wakes up the background thread
+  std::vector<std::pair<std::uint64_t,String>> _queue;   //!< texts waiting for the background thread, with their keys
+  std::unordered_set<std::uint64_t> _queued;    //!< keys of the texts queued or being typeset
+  std::function<void()>      _ready;            //!< called after the background thread typeset texts
+  std::thread                _worker;           //!< background thread (started by the first queued text)
+  std::atomic<bool>          _stopping;         //!< the renderer is being destroyed
+  double                     _batchDelay;       //!< wait after the first queued text (seconds)
   };
 
   } // namespace GRAPHICS

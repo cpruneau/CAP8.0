@@ -61,12 +61,15 @@ add_executable(CapGui
   FileDialog.cpp
   GraphEditor.cpp
   ImGuiPainter.cpp
+  LatexTextures.cpp
+  NanoSvg.cpp
   Menu.cpp
   MenuBar.cpp
   MenuItem.cpp)
 set_target_properties(CapGui PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 target_compile_definitions(CapGui PRIVATE CAP_SOURCE_ROOT="${CAP_TOP_DIR}")
-target_include_directories(CapGui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(CapGui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CAP_TOP_DIR}/external/nanosvg)
+set_source_files_properties(NanoSvg.cpp PROPERTIES COMPILE_OPTIONS "-w")   # nanosvg: third-party code, no warnings
 target_link_libraries(CapGui PRIVATE CapImGui Graphics Math Base ${ROOT_LIBRARIES})
 
 if(APPLE)

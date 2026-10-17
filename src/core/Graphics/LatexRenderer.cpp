@@ -98,12 +98,31 @@ namespace CAP
   _timeLimit(10.0),
   _nRuns(0),
   _images(),
-  _mutex()
+  _mutex(),
+  _queueMutex(),
+  _queueCondition(),
+  _queue(),
+  _queued(),
+  _ready(),
+  _worker(),
+  _stopping(false),
+  _batchDelay(0.01)
   {
   findTools();
   const char * cache = std::getenv("CAP_LATEX_CACHE");
   if (cache)                         _cacheDirectory = FileSystem::expand(cache);
   else if (!FileSystem::home().isNull()) _cacheDirectory = FileSystem::join(FileSystem::home(), ".cache/CAP/latex");
+  }
+
+  LatexRenderer::~LatexRenderer()
+  {
+  {
+  std::lock_guard<std::mutex> lock(_queueMutex);
+  _stopping = true;
+  _ready = nullptr;
+  }
+  _queueCondition.notify_all();
+  if (_worker.joinable()) _worker.join();
   }
 
   // ---------------------------------------------------------------- texts
@@ -263,7 +282,7 @@ namespace CAP
   std::string svg;
   LatexImage image;
   if (path.isNull() || !readFile(path, svg) || !parseSvg(svg, image)) return nullptr;
-  return &(_images[k] = image);
+  return &_images.emplace(k, image).first->second;
   }
 
   const LatexImage * LatexRenderer::image(const String & text)
@@ -323,7 +342,7 @@ namespace CAP
     pid_t done = waitpid(pid, &status, WNOHANG);
     if (done == pid) return WIFEXITED(status) && WEXITSTATUS(status) == 0;
     if (done < 0) return false;
-    if (std::chrono::steady_clock::now() > deadline)
+    if (std::chrono::steady_clock::now() > deadline || _stopping)
       {
       kill(pid, SIGKILL);
       waitpid(pid, &status, 0);
@@ -335,6 +354,7 @@ namespace CAP
 
   void LatexRenderer::typeset(const std::vector<String> & texts)
   {
+  if (_stopping) return;
   String preamble;
   {
   std::lock_guard<std::recursive_mutex> lock(_mutex);
@@ -450,7 +470,78 @@ namespace CAP
 
   std::lock_guard<std::recursive_mutex> lock(_mutex);
   if (!preamble.equalTo(_preamble)) return;   // the preamble changed meanwhile: these images are stale
-  for (std::size_t k=0; k<texts.size(); k++) _images[key(preamble, texts[k])] = images[k];
+  for (std::size_t k=0; k<texts.size(); k++) _images.emplace(key(preamble, texts[k]), images[k]);
+  }
+
+  // ---------------------------------------------------------------- background
+
+  const LatexImage * LatexRenderer::imageLater(const String & text)
+  {
+  if (kind(text) != kLatex || !enabled()) return nullptr;
+  std::uint64_t k;
+  {
+  std::lock_guard<std::recursive_mutex> lock(_mutex);
+  k = key(_preamble, text);
+  auto found = _images.find(k);
+  if (found != _images.end()) return &found->second;
+  }
+  {
+  std::lock_guard<std::mutex> lock(_queueMutex);
+  if (_queued.count(k)) return nullptr;                  // already on its way
+  }
+  const LatexImage * image = cached(text);              // on disk
+  if (image) return image;
+  {
+  std::lock_guard<std::mutex> lock(_queueMutex);
+  if (_stopping || !_queued.insert(k).second) return nullptr;
+  _queue.emplace_back(k, text);
+  if (!_worker.joinable()) _worker = std::thread(&LatexRenderer::work, this);
+  }
+  _queueCondition.notify_one();
+  return nullptr;
+  }
+
+  bool LatexRenderer::busy()
+  {
+  std::lock_guard<std::mutex> lock(_queueMutex);
+  return !_queued.empty();
+  }
+
+  void LatexRenderer::setReadyCallback(std::function<void()> callback)
+  {
+  std::lock_guard<std::mutex> lock(_queueMutex);
+  _ready = callback;
+  }
+
+  void LatexRenderer::work()
+  {
+  std::unique_lock<std::mutex> lock(_queueMutex);
+  while (true)
+    {
+    _queueCondition.wait(lock, [this] { return _stopping || !_queue.empty(); });
+    if (_stopping) return;
+    // let the frame that queued the first text queue the others, then typeset them all at once
+    _queueCondition.wait_for(lock, std::chrono::duration<double>(_batchDelay), [this] { return bool(_stopping); });
+    if (_stopping) return;
+    std::vector<std::pair<std::uint64_t,String>> queued;
+    queued.swap(_queue);
+    lock.unlock();
+    String preamble;
+    {
+    std::lock_guard<std::recursive_mutex> images(_mutex);
+    preamble = _preamble;
+    }
+    std::vector<String> missing;
+    for (const auto & entry : queued)
+      {
+      std::lock_guard<std::recursive_mutex> images(_mutex);
+      if (!_images.count(key(preamble, entry.second))) missing.push_back(entry.second);
+      }
+    if (!missing.empty()) typeset(missing);
+    lock.lock();
+    for (const auto & entry : queued) _queued.erase(entry.first);   // the keys they were queued with
+    if (_ready && !_stopping) _ready();
+    }
   }
 
   } // namespace GRAPHICS

@@ -49,7 +49,8 @@ namespace CAP
                            const GRAPHICS::LineAttributes & line);
   //! @brief One marker (see Painter::drawMarker()).
   virtual void drawMarker(const GRAPHICS::Point2D & position, const GRAPHICS::MarkerAttributes & marker);
-  //! @brief Text, in the font of its ROOT font code (see Painter::drawText(), setFont()).
+  //! @brief Text (see Painter::drawText()): the texture of its LaTeX image for a text with '$' or '\' once LaTeX
+  //! typeset it in the background (see drawLatex()), otherwise in the font of its ROOT font code (see setFont()).
   virtual void drawText(const GRAPHICS::Point2D & position, const String & text, const GRAPHICS::TextAttributes & attributes,
                         float angle=0.0);
   //! @brief Width of a text in pixels, measured with its font.
@@ -77,6 +78,10 @@ namespace CAP
 
   //! @brief Font used for a text. @param attributes attributes of the text @return font
   ImFont * font(const GRAPHICS::TextAttributes & attributes) const;
+  //! @brief Draw the LaTeX image of a text (see GRAPHICS::LatexRenderer::imageLater(), LatexTextures).
+  //! @param position anchor @param text text @param attributes attributes @param angle angle (degrees)
+  //! @return false if the image is not available (not ready yet, failed, or LaTeX not available)
+  bool drawLatex(const GRAPHICS::Point2D & position, const String & text, const GRAPHICS::TextAttributes & attributes, float angle);
   };
 
   } // namespace GUI

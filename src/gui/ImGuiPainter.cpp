@@ -15,6 +15,8 @@
 #include <cfloat>
 #include "imgui.h"
 #include "ImGuiPainter.hpp"
+#include "LatexRenderer.hpp"
+#include "LatexTextures.hpp"
 
 namespace CAP
 {
@@ -185,8 +187,10 @@ namespace CAP
   if (text.isNull()) return;
   float size = attributes.size()*_height;
   if (size < 1.0f) return;
+  if (LatexRenderer::kind(text) == LatexRenderer::kLatex && drawLatex(position, text, attributes, angle)) return;
+  String shown = LatexRenderer::plainText(text);   // plain text, or LaTeX not available, not ready yet or failed
   ImFont * font = this->font(attributes);
-  ImVec2 extent = font->CalcTextSizeA(size, FLT_MAX, 0.0f, text.data());
+  ImVec2 extent = font->CalcTextSizeA(size, FLT_MAX, 0.0f, shown.data());
   float dx = 0.0f;
   if      (attributes.justification() == TextAttributes::kCenter) dx = -0.5f*extent.x;
   else if (attributes.justification() == TextAttributes::kRight)  dx = -extent.x;
@@ -194,7 +198,7 @@ namespace CAP
   float x, y;
   toScreen(position, x, y);
   int first = _drawList->VtxBuffer.Size;
-  _drawList->AddText(font, size, ImVec2(x + dx, y + dy), color(attributes.color(), attributes.alpha()), text.data());
+  _drawList->AddText(font, size, ImVec2(x + dx, y + dy), color(attributes.color(), attributes.alpha()), shown.data());
   if (angle != 0.0f)
     {
     // rotate the glyphs just added about the anchor (counter-clockwise on screen)
@@ -208,12 +212,44 @@ namespace CAP
     }
   }
 
+  bool ImGuiPainter::drawLatex(const Point2D & position, const String & text, const TextAttributes & attributes, float angle)
+  {
+  const LatexImage * image = LatexRenderer::instance().imageLater(text);
+  if (!image || !image->ok) return false;
+  float size = attributes.size()*_height;                         // font size (screen units)
+  float pixelsPerUnit = ImGui::GetIO().DisplayFramebufferScale.x;  // 2 on a Retina display
+  if (pixelsPerUnit <= 0) pixelsPerUnit = 1.0f;
+  const LatexTextures::Texture * texture = LatexTextures::instance().texture(*image, size*pixelsPerUnit, ImGui::GetFrameCount());
+  if (!texture) return false;
+  // the texture covers the ink box and its padding; screen units per texture pixel:
+  float unit = (size/LatexImage::kFontSize)/texture->scale;
+  float w = texture->width*unit, h = texture->height*unit, pad = LatexTextures::kPadding*unit;
+  float ink = w - 2*pad;
+  float left = attributes.justification() == TextAttributes::kCenter ? -0.5f*ink
+             : attributes.justification() == TextAttributes::kRight  ? -ink : 0.0f;
+  left -= pad;
+  float top = -0.5f*h;                                            // the ink box centered vertically on position
+  float x, y;
+  toScreen(position, x, y);
+  float a = -angle*kPi/180.0f, ca = std::cos(a), sa = std::sin(a);  // counter-clockwise on screen
+  auto corner = [&](float u, float v) { return ImVec2(x + u*ca - v*sa, y + u*sa + v*ca); };
+  _drawList->AddImageQuad(ImTextureRef(ImTextureID(texture->id)),
+                          corner(left, top), corner(left + w, top), corner(left + w, top + h), corner(left, top + h),
+                          ImVec2(0, 0), ImVec2(1, 0), ImVec2(1, 1), ImVec2(0, 1), color(attributes.color(), attributes.alpha()));
+  return true;
+  }
+
   float ImGuiPainter::textWidth(const String & text, const TextAttributes & attributes) const
   {
   if (text.isNull()) return 0.0f;
   float size = attributes.size()*_height;
   if (size <= 0) return 0.0f;
-  return font(attributes)->CalcTextSizeA(size, FLT_MAX, 0.0f, text.data()).x;
+  if (LatexRenderer::kind(text) == LatexRenderer::kLatex)
+    {
+    const LatexImage * image = LatexRenderer::instance().imageLater(text);
+    if (image && image->ok) return image->width*size/LatexImage::kFontSize;
+    }
+  return font(attributes)->CalcTextSizeA(size, FLT_MAX, 0.0f, LatexRenderer::plainText(text).data()).x;
   }
 
   } // namespace GUI
