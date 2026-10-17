@@ -13,6 +13,8 @@ namespace CAP
   namespace GRAPHICS
   {
 
+  struct LatexImage;
+
   //!
   //! Abstract drawing surface used by all renderers.
   //!
@@ -52,9 +54,16 @@ namespace CAP
   //! vertically centered on position). angle is in degrees, counter-clockwise.
   virtual void drawText(const Point2D & position, const String & text, const TextAttributes & attributes, float angle=0.0) = 0;
 
-  //! Width of text in device units. The default is an estimate (0.55 x height per character);
-  //! backends that can measure text (e.g. MacOsCanvas) override it.
+  //! Width of text in device units: the width of its LaTeX image (see latexImage()), otherwise
+  //! plainTextWidth(). Backends that can measure text (e.g. MacOsCanvas) override it.
   virtual float textWidth(const String & text, const TextAttributes & attributes) const;
+
+  //! Estimated width of text drawn with a font, in device units (0.55 x height per character).
+  float plainTextWidth(const String & text, const TextAttributes & attributes) const;
+
+  //! The LaTeX image of text, typeset if needed (see LatexRenderer::image()), or nullptr if text is
+  //! drawn with a font. The image may hold an error instead (ok false): draw LatexRenderer::plainText().
+  static const LatexImage * latexImage(const String & text);
 
   //! Convert a ROOT color index to RGB components in [0,1].
   //! Uses ROOT's color table when available, otherwise a built-in table of the basic colors.

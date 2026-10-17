@@ -1,4 +1,5 @@
 #include "Painter.hpp"
+#include "LatexRenderer.hpp"
 #include "TROOT.h"
 #include "TColor.h"
 
@@ -9,9 +10,21 @@ namespace CAP
 
   float Painter::textWidth(const String & text, const TextAttributes & attributes) const
   {
+  const LatexImage * image = latexImage(text);
+  if (image && image->ok) return image->width*attributes.size()*height()/LatexImage::kFontSize;
+  return plainTextWidth(LatexRenderer::plainText(text), attributes);   // without LaTeX: drawn without the $
+  }
+
+  float Painter::plainTextWidth(const String & text, const TextAttributes & attributes) const
+  {
   int n = 0;
   for (const char * c = text.data(); *c; c++) if ((*c & 0xC0) != 0x80) n++; // count UTF-8 characters
   return 0.55*attributes.size()*height()*n;
+  }
+
+  const LatexImage * Painter::latexImage(const String & text)
+  {
+  return LatexRenderer::instance().image(text);
   }
 
   void Painter::rgb(int color, float & red, float & green, float & blue)

@@ -26,6 +26,7 @@
 #include <GLFW/glfw3.h>
 #include "CapGui.hpp"
 #include "ImGuiPainter.hpp"
+#include "LatexRenderer.hpp"
 #include "SvgPainter.hpp"
 
 #ifndef CAP_SOURCE_ROOT
@@ -581,6 +582,12 @@ namespace CAP
   {
   if (_areaWidth <= 0 || _areaHeight <= 0) return false;
   GRAPHICS::SvgPainter svg(_areaWidth, _areaHeight);
+  for (auto & pane : _panes)        // typeset the LaTeX texts of all the canvases in one run
+    {
+    float x, y, w, h;
+    pane->canvasRect(x, y, w, h);
+    if (w > 0 && h > 0) GRAPHICS::LatexRenderer::instance().prepare(pane->canvas(), w, h);
+    }
   for (auto & pane : _panes)
     {
     float x, y, w, h;

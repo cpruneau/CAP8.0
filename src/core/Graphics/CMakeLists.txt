@@ -49,6 +49,7 @@ FillAttributes.cpp
 Geom2D.cpp
 Graph.cpp
 GraphRenderer.cpp
+LatexRenderer.cpp
 Line.cpp
 LineAttributes.cpp
 LineRenderer.cpp
@@ -90,6 +91,11 @@ if(APPLE)
 endif()
 target_include_directories(Graphics PUBLIC Base Math Graphics ${EXTRA_INCLUDES} )
 
+
+# Tests (run with ctest in the build directory; not installed)
+add_executable(TestLatexRenderer tests/TestLatexRenderer.cpp)
+target_link_libraries(TestLatexRenderer Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME LatexRenderer COMMAND TestLatexRenderer)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libGraphics.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libGraphics_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Graphics  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

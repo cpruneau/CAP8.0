@@ -1,0 +1,214 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file TestLatexRenderer.cpp
+//! @brief Test program of LatexRenderer and of the LaTeX texts of SvgPainter (run by ctest).
+//
+// TestLatexRenderer -- tests of CAP::GRAPHICS::LatexRenderer.
+//
+// The pieces that do not need LaTeX (kinds of texts, checks, documents, keys, reading SVG) are always tested; the
+// typesetting, the caches and SvgPainter only if latex and dvisvgm are installed (otherwise these checks are skipped,
+// and said so). The disk cache is a temporary directory, removed at the end. Prints each failed check and exits with
+// the number of failures (0: all passed).
+//
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <unistd.h>
+#include "FileSystem.hpp"
+#include "LatexRenderer.hpp"
+#include "SvgPainter.hpp"
+
+using namespace CAP;
+using namespace CAP::GRAPHICS;
+
+namespace
+{
+int nChecks = 0, nFailures = 0;
+
+void check(bool ok, const std::string & what, int line)
+{
+  nChecks++;
+  if (ok) return;
+  nFailures++;
+  std::printf("FAILED (line %d): %s\n", line, what.c_str());
+}
+
+bool contains(const String & text, const char * part) { return text.contains(part); }
+
+int count(const std::string & text, const std::string & part)
+{
+  int n = 0;
+  for (std::size_t at = text.find(part); at != std::string::npos; at = text.find(part, at+1)) n++;
+  return n;
+}
+
+// SVG document of one text drawn at the center of a 400 x 300 page
+std::string drawn(const String & text)
+{
+  SvgPainter svg(400, 300);
+  TextAttributes attributes;
+  attributes.setSize(0.05f);
+  svg.drawText(Point2D(0.5f, 0.5f), text, attributes);
+  return svg.document().str();
+}
+} // namespace
+
+//! @brief Count a check, and report it if the condition is false.
+#define CHECK(condition) check((condition), #condition, __LINE__)
+
+//! @brief Run the checks. @return number of failed checks (0: all passed)
+int main()
+{
+  // ---- kinds of texts
+  CHECK(LatexRenderer::kind("p_{T} (GeV/c)") == LatexRenderer::kPlain);
+  CHECK(LatexRenderer::kind("$p_{T}$ (GeV/$c$)") == LatexRenderer::kLatex);
+  CHECK(LatexRenderer::kind("\\LaTeX") == LatexRenderer::kLatex);
+  CHECK(LatexRenderer::kind("#Delta p_{T}") == LatexRenderer::kRoot);
+  CHECK(LatexRenderer::plainText("$p_{T}$ (GeV/$c$)").equalTo("p_{T} (GeV/c)"));
+  CHECK(LatexRenderer::plainText("x").equalTo("x"));
+
+  // ---- checks made before running LaTeX
+  CHECK(LatexRenderer::check("$\\frac{a}{b}$ \\{ \\$").isNull());
+  CHECK(LatexRenderer::check("100\\% {x}").isNull());
+  CHECK(contains(LatexRenderer::check("$x^{2$"), "'{' without '}'"));
+  CHECK(contains(LatexRenderer::check("x}"), "'}' without '{'"));
+  CHECK(contains(LatexRenderer::check("$x"), "'$'"));
+
+  // ---- documents and keys
+  {
+    String preamble("\\usepackage{amsmath}\n\\usepackage{amssymb}");
+    std::string d = LatexRenderer::document(preamble, {"a", "two\nlines", "c"});
+    std::vector<std::string> lines;
+    std::istringstream in(d);
+    for (std::string line; std::getline(in, line); ) lines.push_back(line);
+    int first = LatexRenderer::firstLine(preamble);
+    CHECK(int(lines.size()) > first + 6);
+    CHECK(lines[first-1] == "a" && lines[first+2] == "two lines" && lines[first+5] == "c");
+    CHECK(lines[first-2] == "\\begin{preview}" && lines[first] == "\\end{preview}");
+    CHECK(count(d, "\\begin{preview}") == 3);
+    CHECK(LatexRenderer::key("p", "$x$") == LatexRenderer::key("p", "$x$"));
+    CHECK(LatexRenderer::key("p", "$x$") != LatexRenderer::key("p", "$y$"));
+    CHECK(LatexRenderer::key("p", "$x$") != LatexRenderer::key("q", "$x$"));
+    CHECK(LatexRenderer::key("ab", "c") != LatexRenderer::key("a", "bc"));
+  }
+
+  // ---- reading the SVG of dvisvgm
+  {
+    LatexImage image;
+    std::string svg = "<?xml version='1.0'?>\n<svg version='1.1' xmlns='http://www.w3.org/2000/svg' width='10pt' height='8pt' "
+                      "viewBox='-0.5 -6 10 8'>\n<g id='page1'>\n<path d='M0 0L1 1'/>\n</g>\n</svg>";
+    CHECK(LatexRenderer::parseSvg(svg, image));
+    CHECK(image.ok && image.x == -0.5f && image.width == 10.0f && image.height == 6.0f && image.depth == 2.0f);
+    CHECK(image.svg.find("<path d='M0 0L1 1'/>") != std::string::npos && image.svg.find("id=") == std::string::npos);
+    LatexImage bad;
+    CHECK(!LatexRenderer::parseSvg("<svg width='1pt'></svg>", bad) && !bad.ok);
+  }
+
+  LatexRenderer & latex = LatexRenderer::instance();
+  if (!latex.available())
+    {
+    std::printf("TestLatexRenderer: latex or dvisvgm not found, typesetting not tested\n");
+    std::string plain = drawn("$x$");
+    CHECK(plain.find("<text") != std::string::npos && plain.find(">x</text>") != std::string::npos);
+    std::printf("TestLatexRenderer: %d checks, %d failed\n", nChecks, nFailures);
+    return nFailures;
+    }
+
+  char buffer[] = "/tmp/CapTestLatex.XXXXXX";
+  String cache(mkdtemp(buffer));
+  latex.setCacheDirectory(cache);
+  latex.clearMemoryCache();
+
+  // ---- typesetting one text
+  int runs = latex.nRuns();
+  const LatexImage * x = latex.image("$x$");
+  CHECK(x && x->ok);
+  CHECK(latex.nRuns() == runs + 1);
+  if (x && x->ok)
+    {
+    // the x of Computer Modern at 10 pt: about 5.7 pt wide, 4.3 pt high (x-height), on the baseline
+    CHECK(x->width > 4.0f && x->width < 7.0f);
+    CHECK(std::fabs(x->height - 4.3f) < 0.6f);
+    CHECK(std::fabs(x->depth) < 0.3f);
+    CHECK(count(x->svg, "<path") >= 1);
+    }
+  CHECK(latex.image("$x$") == x && latex.nRuns() == runs + 1);              // from the memory cache
+  const LatexImage * pt = latex.image("$p_{\\mathrm{T}}$");
+  CHECK(pt && pt->ok && pt->depth > 1.0f);                                  // the p descends below the baseline
+  CHECK(latex.image("p_T") == nullptr);                                     // plain text: not typeset
+  CHECK(latex.image("#Delta") == nullptr);                                  // ROOT syntax: not yet
+
+  // ---- errors
+  runs = latex.nRuns();
+  const LatexImage * unbalanced = latex.image("$x^{2$");
+  CHECK(unbalanced && !unbalanced->ok && contains(unbalanced->error, "Unbalanced"));
+  CHECK(latex.nRuns() == runs);                                             // found without running LaTeX
+  const LatexImage * undefined = latex.image("$\\nosuchmacro x$");
+  CHECK(undefined && !undefined->ok && contains(undefined->error, "Undefined control sequence"));
+
+  // ---- one run for many texts, with a bad one among them
+  {
+    std::vector<String> texts = {"$\\alpha$", "$\\alpha\\beta$", "$\\nosuchmacro$", "$\\alpha\\beta\\gamma$", "$\\sqrt{s_{NN}}$"};
+    runs = latex.nRuns();
+    latex.prepare(texts);
+    CHECK(latex.nRuns() == runs + 1);
+    const LatexImage * a = latex.cached(texts[0]);
+    const LatexImage * ab = latex.cached(texts[1]);
+    const LatexImage * bad = latex.cached(texts[2]);
+    const LatexImage * abc = latex.cached(texts[3]);
+    const LatexImage * root = latex.cached(texts[4]);
+    CHECK(a && a->ok && ab && ab->ok && abc && abc->ok && root && root->ok);
+    CHECK(bad && !bad->ok && contains(bad->error, "Undefined control sequence"));
+    if (a && ab && abc && a->ok && ab->ok && abc->ok) CHECK(a->width < ab->width && ab->width < abc->width);   // pages in order
+    latex.prepare(texts);
+    CHECK(latex.nRuns() == runs + 1);                                       // all cached (the bad one in memory)
+  }
+
+  // ---- disk cache
+  {
+    CHECK(FileSystem::isFile(FileSystem::join(cache, String([&]{ char n[32]; std::snprintf(n, 32, "%016llx.svg",
+          (unsigned long long)LatexRenderer::key(latex.preamble(), "$x$")); return std::string(n); }()))));
+    LatexRenderer other;
+    other.setCacheDirectory(cache);
+    const LatexImage * again = other.image("$x$");
+    CHECK(again && again->ok && other.nRuns() == 0);                        // read from the disk
+    if (again && x && again->ok && x->ok) CHECK(again->width == x->width && again->svg == x->svg);
+    other.setCacheDirectory("");
+    other.setPreamble("\\usepackage{amsmath}");
+    CHECK(other.image("$x$") && other.nRuns() == 1);                        // another preamble: typeset again
+    other.setPreamble("\\usepackage{nosuchpackagecap}");
+    const LatexImage * broken = other.image("$y$");
+    CHECK(broken && !broken->ok && contains(broken->error, "preamble"));
+  }
+
+  // ---- SvgPainter
+  {
+    std::string svg = drawn("$x^{2}$");
+    CHECK(svg.find("<path") != std::string::npos && svg.find("<text") == std::string::npos);
+    CHECK(svg.find("scale(") != std::string::npos);
+    std::string plain = drawn("plain");
+    CHECK(plain.find(">plain</text>") != std::string::npos);
+    std::string failed = drawn("$\\nosuchmacro x$");                        // drawn as plain text, without the $
+    CHECK(failed.find("\\nosuchmacro x</text>") != std::string::npos);
+    latex.setEnabled(false);
+    CHECK(latex.image("$x$") == nullptr);
+    CHECK(drawn("$x$").find(">x</text>") != std::string::npos);
+    latex.setEnabled(true);
+  }
+
+  FileSystem::removeTree(cache);
+  std::printf("TestLatexRenderer: %d checks, %d failed (%s)\n", nChecks, nFailures, latex.binDirectory().data());
+  return nFailures;
+}

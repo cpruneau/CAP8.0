@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <fstream>
 #include "SvgPainter.hpp"
+#include "LatexRenderer.hpp"
 
 namespace CAP
 {
@@ -174,9 +175,26 @@ namespace CAP
   if (text.isNull()) return;
   float size = attributes.size()*_regionHeight;
   if (size <= 0) return;
+  float x = px(position), y = py(position);
+  const LatexImage * image = latexImage(text);
+  if (image && image->ok)
+    {
+    // the paths typeset by LaTeX, scaled to the size, with the ink box centered vertically on position
+    float scale = size/LatexImage::kFontSize, w = image->width*scale;
+    float dx = attributes.justification() == TextAttributes::kCenter ? -0.5f*w
+             : attributes.justification() == TextAttributes::kRight  ? -w : 0.0f;
+    float dy = 0.5f*(image->height - image->depth)*scale;
+    _body << "<g fill=\"" << color(attributes.color()).data() << "\" fill-opacity=\"" << attributes.alpha()
+          << "\" transform=\"translate(" << x << " " << y << ")";
+    if (angle != 0) _body << " rotate(" << -angle << ")";
+    _body.precision(5);
+    _body << " translate(" << dx << " " << dy << ") scale(" << scale << ") translate(" << -image->x << " 0)\">";
+    _body.precision(2);
+    _body << image->svg << "</g>\n";
+    return;
+    }
   const char * anchor = attributes.justification() == TextAttributes::kCenter ? "middle"
                       : attributes.justification() == TextAttributes::kRight  ? "end" : "start";
-  float x = px(position), y = py(position);
   const int font = attributes.font();
   const char * family = TextAttributes::fontFamily(font) == TextAttributes::kSerif ? "Times New Roman, Times, serif"
                       : TextAttributes::fontFamily(font) == TextAttributes::kMono  ? "Courier New, Courier, monospace"
@@ -188,7 +206,7 @@ namespace CAP
   _body << " fill=\"" << color(attributes.color()).data() << "\" fill-opacity=\"" << attributes.alpha()
         << "\" text-anchor=\"" << anchor << "\" dominant-baseline=\"central\"";
   if (angle != 0) _body << " transform=\"rotate(" << -angle << " " << x << " " << y << ")\"";
-  _body << ">" << escape(text).data() << "</text>\n";
+  _body << ">" << escape(LatexRenderer::plainText(text)).data() << "</text>\n";
   }
 
   String SvgPainter::document() const
