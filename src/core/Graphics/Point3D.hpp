@@ -54,14 +54,14 @@ namespace CAP
   //! @brief Projection on the (x,y) plane. @return (x,y)
   Point2D xy() const { return Point2D(_x,_y); }
 
-  Point3D operator+(const Point3D & p) const { return Point3D(_x+p._x, _y+p._y, _z+p._z); }
-  Point3D operator-(const Point3D & p) const { return Point3D(_x-p._x, _y-p._y, _z-p._z); }
+  Point3D operator+(const Point3D & p) const { return Point3D(_x+p._x, _y+p._y, _z+p._z); }   //!< Sum
+  Point3D operator-(const Point3D & p) const { return Point3D(_x-p._x, _y-p._y, _z-p._z); }   //!< Difference
   Point3D operator*(float a) const { return Point3D(a*_x, a*_y, a*_z); }   //!< Product by a number
-  Point3D & operator+=(const Point3D & p) { _x += p._x; _y += p._y; _z += p._z; return *this; }
-  Point3D & operator-=(const Point3D & p) { _x -= p._x; _y -= p._y; _z -= p._z; return *this; }
-  Point3D & operator*=(float a) { _x *= a; _y *= a; _z *= a; return *this; }
+  Point3D & operator+=(const Point3D & p) { _x += p._x; _y += p._y; _z += p._z; return *this; }   //!< Add a point
+  Point3D & operator-=(const Point3D & p) { _x -= p._x; _y -= p._y; _z -= p._z; return *this; }   //!< Subtract a point
+  Point3D & operator*=(float a) { _x *= a; _y *= a; _z *= a; return *this; }   //!< Multiply by a number
   bool operator==(const Point3D & p) const { return _x==p._x && _y==p._y && _z==p._z; }   //!< Equality of the three coordinates
-  bool operator!=(const Point3D & p) const { return !(*this==p); }
+  bool operator!=(const Point3D & p) const { return !(*this==p); }   //!< Whether a coordinate differs
 
   protected:
 

@@ -48,7 +48,8 @@ namespace CAP
   {
   public:
 
-  enum Mode { kAdd, kReplace };   //!< What showing an object does to the selected graph: add it, or replace its contents
+  //! @brief What showing an object does to the selected graph: add it, or replace its contents
+  enum Mode { kAdd, kReplace };
 
   //! @brief Constructor: one graph. @param name name of the pane, unique in the window (e.g. "Canvas 1")
   CanvasPane(const String & name);
@@ -73,14 +74,16 @@ namespace CAP
   bool showToolbar() const { return _showToolbar; }   //!< Whether the toolbar is shown
   void setShowToolbar(bool v) { _showToolbar = v; }   //!< Show or hide the toolbar
 
-  //! @brief Draw the pane (toolbar and canvas) in the current ImGui window. @param size size available
-  //! @param isCurrent whether this pane is the current pane (highlighted) @param font font of the plots
+  //! @brief Draw the pane (toolbar and canvas) in the current ImGui window. @param width width available
+  //! @param height height available @param isCurrent whether this pane is the current pane (highlighted)
+  //! @param font font of the plots
   //! @return true if the pane was clicked (it should become the current pane)
   bool render(float width, float height, bool isCurrent, ImFont * font);
 
   //! @brief Position under the mouse in data coordinates, or empty. @return text
   const String & hoverText() const { return _hoverText; }
-  //! @brief Screen rectangle of the canvas at the last render (pixels). @param x @param y @param w @param h
+  //! @brief Screen rectangle of the canvas at the last render (pixels). @param x left edge
+  //! @param y top edge @param w width @param h height
   void canvasRect(float & x, float & y, float & w, float & h) const { x = _rectX; y = _rectY; w = _rectW; h = _rectH; }
 
   //! Called before the pane changes its canvas (undo).
@@ -100,9 +103,13 @@ namespace CAP
   int  _selectedGraph;   //!< index of the selected graph
   bool _showToolbar;   //!< the toolbar is shown
   int  _contextGraph;   //!< graph whose context menu is open
-  int  _gridColumns, _gridRows;   //!< values edited in the Graphs popup
+  int  _gridColumns;   //!< values edited in the Graphs popup
+  int  _gridRows;   //!< values edited in the Graphs popup
   String _hoverText;   //!< data coordinates under the mouse, or empty
-  float _rectX, _rectY, _rectW, _rectH;   //!< screen rectangle of the canvas at the last render (pixels)
+  float _rectX;   //!< screen rectangle of the canvas at the last render (pixels)
+  float _rectY;   //!< screen rectangle of the canvas at the last render (pixels)
+  float _rectW;   //!< screen rectangle of the canvas at the last render (pixels)
+  float _rectH;   //!< screen rectangle of the canvas at the last render (pixels)
 
   //! What a drag of the left mouse button does.
   enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels };
@@ -112,8 +119,10 @@ namespace CAP
   DragKind kind = kNoDrag;   //!< what the drag does
   int   graph = -1;   //!< graph dragged in
   int   axis  = -1;   //!< axis zoomed, or whose title or labels are moved
-  float startX = 0, startY = 0;      //!< screen position where the drag started (pixels)
-  float initialX = 0, initialY = 0;  //!< position (offset, legend corner, label gap) before the drag
+  float startX = 0;      //!< screen position where the drag started (pixels)
+  float startY = 0;      //!< screen position where the drag started (pixels)
+  float initialX = 0;  //!< position (offset, legend corner, label gap) before the drag
+  float initialY = 0;  //!< position (offset, legend corner, label gap) before the drag
   bool  moved = false;   //!< the mouse moved enough to start the drag
   };
   Drag _drag;   //!< drag in progress (kind kNoDrag if none)

@@ -68,8 +68,12 @@ namespace CAP
 
   protected:
 
-  float _pageWidth, _pageHeight;   //!< size of the page (points)
-  float _regionX, _regionY, _regionWidth, _regionHeight;   //!< rectangle of the page drawn into (points, y down)
+  float _pageWidth;   //!< size of the page (points)
+  float _pageHeight;   //!< size of the page (points)
+  float _regionX;   //!< rectangle of the page drawn into (points, y down)
+  float _regionY;   //!< rectangle of the page drawn into (points, y down)
+  float _regionWidth;   //!< rectangle of the page drawn into (points, y down)
+  float _regionHeight;   //!< rectangle of the page drawn into (points, y down)
   std::ostringstream _body;   //!< SVG elements written so far
 
   float px(const Point2D & p) const { return _regionX + p.x()*_regionWidth; }   //!< Page x of a canvas point

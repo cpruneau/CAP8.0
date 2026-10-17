@@ -75,7 +75,7 @@ namespace CAP
   //! (functions, data points, and later the contents of the files opened) and keeps the undo/redo history.
   //!
   //! Command line: CapGui [--config file.xml] [file ...]
-  //! Without --config, the configuration is $HOME/.CapGui.xml if it exists, otherwise <CAP>/config/CapGui.xml.
+  //! Without --config, the configuration is $HOME/.CapGui.xml if it exists, otherwise \<CAP\>/config/CapGui.xml.
   //!
   class CapApp : public ActionListener
   {
@@ -94,6 +94,7 @@ namespace CAP
 
   //! @name Objects
   //! @{
+
   //! @brief Take ownership of a function and show it in the current graph. @param function function of rank 1
   //! @param xMinimum lower end of the curve @param xMaximum upper end @return the item shown
   GRAPHICS::GraphItem & show(MATH::Function * function, float xMinimum, float xMaximum);
@@ -103,6 +104,7 @@ namespace CAP
 
   //! @name Files
   //! @{
+
   //! @brief Open a CAP file and show its contents in the browser (if already open, reveal it).
   //! @param fileName file @return id of the open file, or -1 if it cannot be read
   int  openFile(const String & fileName);
@@ -132,6 +134,7 @@ namespace CAP
 
   //! @name Undo
   //! @{
+
   //! @brief Record the state of the canvases before a change.
   void recordUndo();
   //! @brief Go back to the state before the last change (canvases and their graphs).
@@ -148,7 +151,9 @@ namespace CAP
   //! State of all the canvases, for undo/redo.
   struct Snapshot
   {
-  int columns, rows, current;   //!< grid layout and index of the current pane
+  int columns;   //!< grid layout and index of the current pane
+  int rows;   //!< grid layout and index of the current pane
+  int current;   //!< grid layout and index of the current pane
   std::vector<GRAPHICS::Canvas> canvases;   //!< copies of the canvases of the panes
   std::vector<int> selected;   //!< selected graph of each pane
   };
@@ -170,8 +175,10 @@ namespace CAP
   bool _showAbout;   //!< About window shown
   bool _showShortcuts;   //!< Keyboard Shortcuts window shown
   bool _showImGuiDemo;   //!< Dear ImGui demonstration window shown
-  int  _customColumns, _customRows;   //!< values edited in the Custom layout dialog
-  bool _customLayoutRequested, _customGraphsRequested;   //!< Custom layout dialog to open, for the canvases or the graphs
+  int  _customColumns;   //!< values edited in the Custom layout dialog
+  int  _customRows;   //!< values edited in the Custom layout dialog
+  bool _customLayoutRequested;   //!< Custom layout dialog to open, for the canvases or the graphs
+  bool _customGraphsRequested;   //!< Custom layout dialog to open, for the canvases or the graphs
 
   //! @brief First configuration file found: $HOME/.CapGui.xml, $CAP_ROOT_PATH/config/CapGui.xml, the one of the sources. @return path, or ""
   String findConfigurationFile() const;

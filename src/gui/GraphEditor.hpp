@@ -39,21 +39,24 @@ namespace CAP
   bool editTitle(GRAPHICS::Graph & graph);
   //! @brief Legend: shown, position, text size, background and border.
   bool editLegend(GRAPHICS::Graph & graph);
-  //! @brief Item k of the graph (data points or function): label, markers, line, uncertainties. @param point index
-  //! of the data point that was clicked, or -1
+  //! @brief Item of the graph (data points or function): label, markers, line, uncertainties. @param graph graph
+  //! @param item index of the item @param point index of the data point that was clicked, or -1
   bool editItem(GRAPHICS::Graph & graph, int item, int point=-1);
 
   //! @name Widgets
   //! @{
+
   //! @brief Color swatch opening a palette of ROOT colors. @param label label @param color ROOT color index
   bool colorEdit(const char * label, int & color);
   //! @brief Font family and style (ROOT font code). @param label label @param font font code
   bool fontEdit(const char * label, int & font);
   //! @brief Marker style, with previews. @param label label @param style ROOT marker style
+  //! @param color color of the previews
   bool markerEdit(const char * label, int & style, int color);
   //! @brief Text size in points, or automatic (0). @param label label @param points size (0: automatic)
   bool pointSizeEdit(const char * label, float & points);
   //! @brief Line style (solid, dashed, dotted, dash-dot, none). @param label label @param style ROOT line style
+  //! @param allowNone offer "none" (no line)
   bool lineStyleEdit(const char * label, int & style, bool allowNone=true);
   //! @}
   } // namespace GraphEditor

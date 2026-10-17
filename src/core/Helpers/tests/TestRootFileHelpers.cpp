@@ -50,9 +50,12 @@ std::string joined(const std::vector<String> & values)
 }
 } // namespace
 
+//! @brief Count a check, and report it if the condition is false.
 #define CHECK(condition) check((condition), #condition, __LINE__)
+//! @brief Count a check, and report it if the joined values differ from the expected text.
 #define CHECK_LIST(values, expected) check(joined(values)==(expected), std::string(#values) + ": got \"" + joined(values) + "\"", __LINE__)
 
+//! @brief Run the checks. @return number of failed checks (0: all passed)
 int main()
 {
   // root/ b_Gen.cap  a_Gen.cap  a_Reco.cap  notes.txt  sub/ c_Gen.cap  sub/deep/ d_Gen.cap  other/

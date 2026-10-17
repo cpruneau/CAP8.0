@@ -44,7 +44,8 @@ namespace CAP
   {
   public:
 
-  enum Kind { kFunction, kData };   //!< What the item shows: a function or data points
+  //! @brief What the item shows: a function or data points
+  enum Kind { kFunction, kData };
   //! How the systematic uncertainties of data points are drawn: boxes around the points, brackets above and below
   //! the points, or a band joining the points.
   enum SysStyle { kSysBoxes, kSysBrackets, kSysBand };
@@ -94,7 +95,7 @@ namespace CAP
 
   //! @name Systematic uncertainties
   //! @{
-  SysStyle sysStyle() const { return _sysStyle; }
+  SysStyle sysStyle() const { return _sysStyle; }   //!< How the systematic uncertainties are drawn
   void setSysStyle(SysStyle style) { _sysStyle = style; }   //!< Set how the systematic uncertainties are drawn
   //! @brief Fill and outline of the boxes or band. Unless sysUsesMarkerColor() is false, their colors are those of
   //! the markers (the alpha of the fill is kept).
@@ -155,13 +156,18 @@ namespace CAP
   {
   public:
 
-  enum Dimension { k2D, k3D };   //!< Graph of a function of one variable (k2D), or of two (k3D, for the 3D graphs to come)
+  //! @brief Graph of a function of one variable (k2D), or of two (k3D, for the 3D graphs to come)
+  enum Dimension { k2D, k3D };
 
   //! @brief Ranges and scales actually used to draw the graph (automatic or user ranges).
   struct View
   {
-  float xMinimum, xMaximum, yMinimum, yMaximum;   //!< ranges of the axes
-  bool  logX, logY;   //!< logarithmic axes
+  float xMinimum;   //!< ranges of the axes
+  float xMaximum;   //!< ranges of the axes
+  float yMinimum;   //!< ranges of the axes
+  float yMaximum;   //!< ranges of the axes
+  bool  logX;   //!< logarithmic axes
+  bool  logY;   //!< logarithmic axes
   };
 
   //! @brief Parts of a graph, as found by pick().
@@ -196,6 +202,7 @@ namespace CAP
 
   //! @name Placement
   //! @{
+
   //! @brief Cell occupied by the graph (normalized canvas coordinates, lower-left and upper-right corners).
   void setCell(float xLow, float yLow, float xHigh, float yHigh);
   float cellXLow()  const { return _cellXLow;  }   //!< Left edge of the cell
@@ -219,6 +226,7 @@ namespace CAP
 
   //! @name Items
   //! @{
+
   //! @brief Add an item (an object already shown is not added twice). @return the item in the graph
   GraphItem & add(const GraphItem & item);
   //! @brief Remove all the items, then add item. @return the item in the graph
@@ -233,7 +241,7 @@ namespace CAP
 
   //! @name Scales and ranges
   //! @{
-  void setLogX(bool v) { _logX = v; }
+  void setLogX(bool v) { _logX = v; }   //!< Logarithmic x axis or not
   void setLogY(bool v) { _logY = v; }   //!< Logarithmic y axis or not
   bool isLogX() const { return _logX; }   //!< Whether the x axis is logarithmic
   bool isLogY() const { return _logY; }   //!< Whether the y axis is logarithmic
@@ -260,14 +268,14 @@ namespace CAP
 
   //! @name Appearance
   //! @{
-  Dimension dimension() const { return _dimension; }
+  Dimension dimension() const { return _dimension; }   //!< 2D or 3D
   void setDimension(Dimension dimension) { _dimension = dimension; }   //!< Set 2D or 3D
   //! Axis templates: title, ticks, line and text attributes (ranges and scales are set from the graph).
   Axis & xAxis() { return _xAxis; }
   Axis & yAxis() { return _yAxis; }   //!< Template of the y axis
   const Axis & xAxis() const { return _xAxis; }   //!< Template of the x axis
   const Axis & yAxis() const { return _yAxis; }   //!< Template of the y axis
-  //! @brief Axis k: 0 x, 1 y (2 z, for the 3D graphs to come). @param k index in [0,nAxes())
+  //! @brief Number of axes: 2 (3, for the 3D graphs to come). @return number
   int nAxes() const { return 2; }
   Axis & axis(int k) { return k == 0 ? _xAxis : _yAxis; }   //!< Axis k: 0 x, 1 y
   const Axis & axis(int k) const { return k == 0 ? _xAxis : _yAxis; }   //!< Axis k: 0 x, 1 y
@@ -283,6 +291,7 @@ namespace CAP
 
   //! @name Positions and sizes of the texts
   //! @{
+
   //! @brief Displacement of the title from its automatic position (centered above the frame), in fractions of the
   //! cell. @param dx horizontal displacement @param dy vertical displacement
   void  setTitleOffset(float dx, float dy) { _titleOffsetX = dx; _titleOffsetY = dy; }
@@ -310,7 +319,7 @@ namespace CAP
 
   //! @name Layout of the last drawing
   //! @{
-  const Rect2D & titleRect()  const { return _titleRect; }
+  const Rect2D & titleRect()  const { return _titleRect; }    //!< Where the title was drawn (empty if not)
   const Rect2D & legendRect() const { return _legendRect; }   //!< Where the legend was drawn (empty if not)
   const std::vector<PointPosition> & pointPositions() const { return _pointPositions; }   //!< Where the data points were drawn (inside the frame)
   //! Set by the renderer.
@@ -326,12 +335,20 @@ namespace CAP
 
   protected:
 
-  float _cellXLow, _cellYLow, _cellXHigh, _cellYHigh;   //!< cell of the graph (normalized canvas coordinates)
+  float _cellXLow;   //!< cell of the graph (normalized canvas coordinates)
+  float _cellYLow;   //!< cell of the graph (normalized canvas coordinates)
+  float _cellXHigh;   //!< cell of the graph (normalized canvas coordinates)
+  float _cellYHigh;   //!< cell of the graph (normalized canvas coordinates)
   Margins _margins;   //!< margins between the cell and the frame
   std::vector<GraphItem> _items; //!<! items shown (not streamed: the objects shown are not owned)
-  bool  _logX, _logY;   //!< logarithmic axes
-  bool  _autoX, _autoY;   //!< automatic ranges
-  float _xMinimum, _xMaximum, _yMinimum, _yMaximum;   //!< fixed ranges (when not automatic)
+  bool  _logX;   //!< logarithmic axes
+  bool  _logY;   //!< logarithmic axes
+  bool  _autoX;   //!< automatic ranges
+  bool  _autoY;   //!< automatic ranges
+  float _xMinimum;   //!< fixed ranges (when not automatic)
+  float _xMaximum;   //!< fixed ranges (when not automatic)
+  float _yMinimum;   //!< fixed ranges (when not automatic)
+  float _yMaximum;   //!< fixed ranges (when not automatic)
   Dimension _dimension;   //!< 2D or 3D
   Axis _xAxis;   //!< template of the x axis
   Axis _yAxis;   //!< template of the y axis
@@ -339,10 +356,12 @@ namespace CAP
   LineAttributes _frameLine;   //!< outline of the frame
   TextAttributes _titleAttributes;   //!< color and font of the title
   bool _showLegend;   //!< the legend is shown
-  float _titleOffsetX, _titleOffsetY;   //!< displacement of the title (fractions of the cell)
+  float _titleOffsetX;   //!< displacement of the title (fractions of the cell)
+  float _titleOffsetY;   //!< displacement of the title (fractions of the cell)
   float _titlePointSize;   //!< size of the title in points (0: automatic)
   bool  _autoLegend;   //!< the legend is at its automatic position
-  float _legendX, _legendY;   //!< upper left corner of the legend (fractions of the frame)
+  float _legendX;   //!< upper left corner of the legend (fractions of the frame)
+  float _legendY;   //!< upper left corner of the legend (fractions of the frame)
   float _legendPointSize;   //!< size of the legend text in points (0: automatic)
   FillAttributes _legendFill;   //!< background of the legend
   LineAttributes _legendLine;   //!< border of the legend

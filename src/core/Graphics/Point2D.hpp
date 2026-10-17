@@ -46,14 +46,14 @@ namespace CAP
   //! @brief Set both coordinates. @param x first coordinate @param y second coordinate
   void set(float x, float y) { _x = x; _y = y; }
 
-  Point2D operator+(const Point2D & p) const { return Point2D(_x+p._x, _y+p._y); }
-  Point2D operator-(const Point2D & p) const { return Point2D(_x-p._x, _y-p._y); }
+  Point2D operator+(const Point2D & p) const { return Point2D(_x+p._x, _y+p._y); }   //!< Sum
+  Point2D operator-(const Point2D & p) const { return Point2D(_x-p._x, _y-p._y); }   //!< Difference
   Point2D operator*(float a) const { return Point2D(a*_x, a*_y); }   //!< Product by a number
-  Point2D & operator+=(const Point2D & p) { _x += p._x; _y += p._y; return *this; }
-  Point2D & operator-=(const Point2D & p) { _x -= p._x; _y -= p._y; return *this; }
-  Point2D & operator*=(float a) { _x *= a; _y *= a; return *this; }
+  Point2D & operator+=(const Point2D & p) { _x += p._x; _y += p._y; return *this; }   //!< Add a point
+  Point2D & operator-=(const Point2D & p) { _x -= p._x; _y -= p._y; return *this; }   //!< Subtract a point
+  Point2D & operator*=(float a) { _x *= a; _y *= a; return *this; }   //!< Multiply by a number
   bool operator==(const Point2D & p) const { return _x==p._x && _y==p._y; }   //!< Equality of both coordinates
-  bool operator!=(const Point2D & p) const { return !(*this==p); }
+  bool operator!=(const Point2D & p) const { return !(*this==p); }   //!< Whether a coordinate differs
 
   protected:
 

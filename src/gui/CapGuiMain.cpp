@@ -18,6 +18,8 @@
 //
 #include "CapApp.hpp"
 
+//! @brief Start the graphical interface. @param argc number of arguments @param argv arguments
+//! @return exit status
 int main(int argc, char ** argv)
 {
   CAP::GUI::CapApp application(argc, argv);

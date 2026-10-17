@@ -26,6 +26,8 @@
 #include "TRandom3.h"
 #include "TString.h"
 
+//! @brief Create, fill and save the test histograms. @param fileName CAP file (".cap" is added if missing)
+//! @param nEntries entries per histogram @return 0 if the file was written
 int MakeTestHistograms(const char * fileName="TestHistograms.cap", long nEntries=100000)
 {
   using namespace CAP;

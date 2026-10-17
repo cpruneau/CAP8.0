@@ -79,11 +79,16 @@ void writeFile(const String & path, const std::string & content)
 }
 } // namespace
 
+//! @brief Count a check, and report it if the condition is false.
 #define CHECK(condition)            check((condition), #condition, __LINE__)
+//! @brief Count a check, and report it with both texts if the value differs from the expected one.
 #define CHECK_EQUAL(value, expected) checkEqual((value), (expected), #value, __LINE__)
+//! @brief Count a check, and report it if the statement does not throw.
 #define CHECK_THROWS(statement)     checkThrows([&]() { statement; }, #statement, __LINE__)
+//! @brief Count a check, and report it if the paths differ from the expected ones.
 #define CHECK_PATHS(paths, ...)     checkPaths((paths), std::vector<String>{__VA_ARGS__}, #paths, __LINE__)
 
+//! @brief Run the checks. @return number of failed checks (0: all passed)
 int main()
 {
   // ---- a temporary tree

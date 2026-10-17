@@ -29,7 +29,10 @@ namespace CAP
   //!
   struct Rect2D
   {
-  float x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f;   //!< Lower left (x0,y0) and upper right (x1,y1) corners
+  float x0 = 0.0f;   //!< Lower left (x0,y0) and upper right (x1,y1) corners
+  float y0 = 0.0f;   //!< Lower left (x0,y0) and upper right (x1,y1) corners
+  float x1 = 0.0f;   //!< Lower left (x0,y0) and upper right (x1,y1) corners
+  float y1 = 0.0f;   //!< Lower left (x0,y0) and upper right (x1,y1) corners
   bool  empty = true;   //!< Whether the rectangle is empty (contains no point)
 
   //! @brief Empty rectangle.

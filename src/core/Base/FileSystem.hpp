@@ -197,7 +197,7 @@ namespace FileSystem
   //! @brief Paths matching a pattern (expanded first, see expand()). Each component of the pattern may use * (any
   //! characters), ? (one character) and [abc], [a-z], [!abc] (one character of, or not of, a set); a component **
   //! matches any number of directories. Hidden entries match only a component that starts with '.'.
-  //! @param pattern pattern, e.g. "data/run*.cap", "data/**/*.cap" @return paths, sorted
+  //! @param pattern pattern, e.g. "data/run*.cap", "data/\*\*/\*.cap" @return paths, sorted
   //!
   std::vector<String> glob(const String & pattern);
   //! @brief Whether a name matches a glob pattern (*, ?, [abc], [a-z], [!abc]; no '/'). @param name name

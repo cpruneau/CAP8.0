@@ -35,7 +35,8 @@ namespace CAP
   {
   public:
 
-  enum Mode { kOpenFile, kOpenFolder, kSaveFile };   //!< What the dialog chooses: a file to open, a folder, or a file to save to
+  //! @brief What the dialog chooses: a file to open, a folder, or a file to save to
+  enum Mode { kOpenFile, kOpenFolder, kSaveFile };
   using Callback = std::function<void(const String & path)>;   //!< Function receiving the chosen path
 
   //! @brief Constructor: a closed dialog starting in the current folder.
@@ -54,7 +55,13 @@ namespace CAP
 
   protected:
 
-  struct Entry { std::string name; bool folder; std::uintmax_t size; };   //!< Entry of the folder shown: name, whether it is a folder, size in bytes
+  //! @brief Entry of the folder shown.
+  struct Entry
+  {
+    std::string    name;     //!< name
+    bool           folder;   //!< whether it is a folder
+    std::uintmax_t size;     //!< size in bytes
+  };
 
   Mode _mode;   //!< what the dialog chooses
   std::string _title;   //!< window title

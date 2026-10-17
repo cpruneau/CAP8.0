@@ -29,6 +29,7 @@
 #include "CapFile.hpp"
 
 #ifndef CAP_SOURCE_ROOT
+//! Top directory of the CAP sources (set by the build; empty if not).
 #define CAP_SOURCE_ROOT ""
 #endif
 

@@ -70,7 +70,10 @@ namespace CAP
 
   ImDrawList * _drawList;   //!< draw list receiving the drawing
   ImFont     * _font;   //!< font of texts whose ROOT font has no entry (null: the current font)
-  float _x, _y, _width, _height;   //!< rectangle of the canvas on the screen (pixels, y down)
+  float _x;   //!< rectangle of the canvas on the screen (pixels, y down)
+  float _y;   //!< rectangle of the canvas on the screen (pixels, y down)
+  float _width;   //!< rectangle of the canvas on the screen (pixels, y down)
+  float _height;   //!< rectangle of the canvas on the screen (pixels, y down)
 
   //! @brief Font used for a text. @param attributes attributes of the text @return font
   ImFont * font(const GRAPHICS::TextAttributes & attributes) const;

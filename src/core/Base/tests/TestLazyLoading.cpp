@@ -69,9 +69,12 @@ void writeBytes(const String & path, const std::string & bytes)
 }
 } // namespace
 
+//! @brief Count a check, and report it if the condition is false.
 #define CHECK(condition)        check((condition), #condition, __LINE__)
+//! @brief Count a check, and report it if the statement does not throw.
 #define CHECK_THROWS(statement) checkThrows([&]() { statement; }, #statement, __LINE__)
 
+//! @brief Run the checks. @return number of failed checks (0: all passed)
 int main()
 {
   // ---- the checksum: standard CRC-32 values, whole or in pieces of any size

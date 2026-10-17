@@ -96,7 +96,7 @@ namespace CAP
 
   //! @name File browser
   //! @{
-  FileBrowser & browser() { return _browser; }
+  FileBrowser & browser() { return _browser; }   //!< The file browser
   bool browserVisible() const { return _settings.browserVisible; }   //!< Whether the file browser is shown
   void setBrowserVisible(bool visible) { _settings.browserVisible = visible; }   //!< Show or hide the file browser
   bool browserDocked() const { return _settings.browserDocked; }   //!< Whether the browser is docked in the main window
@@ -106,6 +106,7 @@ namespace CAP
 
   //! @name Canvas panes
   //! @{
+
   //! @brief Arrange the canvases in nColumns x nRows panes; existing panes are kept, in order.
   void setLayout(int nColumns, int nRows);
   //! @brief Set the number of panes, arranged in a grid as square as possible (does nothing if it is already n).
@@ -136,6 +137,7 @@ namespace CAP
 
   //! @name Messages
   //! @{
+
   //! @brief Message shown in the status bar for a few seconds.
   void setStatus(const String & message);
   //! @brief Modal message box. @param title title @param text message
@@ -144,7 +146,7 @@ namespace CAP
 
   //! @name Appearance
   //! @{
-  void setTheme(const String & theme);
+  void setTheme(const String & theme);   //!< Set the color theme: "dark", "light" or "classic"
   const GuiSettings & settings() const { return _settings; }   //!< Current settings of the window
   //! @brief Font of the plots and the interface. @return font
   ImFont * font() const { return _font; }
@@ -166,14 +168,20 @@ namespace CAP
   MenuBar      _menuBar;   //!< menu bar
   FileDialog   _fileDialog;   //!< file dialog
   std::vector<std::unique_ptr<CanvasPane>> _panes;   //!< canvas panes
-  int    _columns, _rows, _currentPane;   //!< last grid layout, and index of the current pane
+  int    _columns;   //!< last grid layout, and index of the current pane
+  int    _rows;   //!< last grid layout, and index of the current pane
+  int    _currentPane;   //!< last grid layout, and index of the current pane
   int    _paneCounter;   //!< for the names of new canvas panes
   String _status;   //!< message of the status bar
   double _statusTime;   //!< time the status message was set (it is shown for 10 s)
-  String _messageTitle, _messageText;   //!< message box to show
+  String _messageTitle;   //!< message box to show
+  String _messageText;   //!< message box to show
   bool   _messageRequested;   //!< the message box opens at the next frame
   bool   _exitRequested;   //!< close the window at the end of the frame
-  float  _areaX, _areaY, _areaWidth, _areaHeight;   //!< screen rectangle covering the canvas panes (for savePageSvg())
+  float  _areaX;   //!< screen rectangle covering the canvas panes (for savePageSvg())
+  float  _areaY;   //!< screen rectangle covering the canvas panes (for savePageSvg())
+  float  _areaWidth;   //!< screen rectangle covering the canvas panes (for savePageSvg())
+  float  _areaHeight;   //!< screen rectangle covering the canvas panes (for savePageSvg())
   std::string _iniFile;   //!< file where ImGui keeps window positions (kept alive for ImGui)
   String _hoverText;   //!< data coordinates under the mouse (shown in the status bar on the next frame)
   FileBrowser _browser;   //!< file browser
