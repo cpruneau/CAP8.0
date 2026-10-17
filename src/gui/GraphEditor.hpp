@@ -55,6 +55,12 @@ namespace CAP
   bool markerEdit(const char * label, int & style, int color);
   //! @brief Text size in points, or automatic (0). @param label label @param points size (0: automatic)
   bool pointSizeEdit(const char * label, float & points);
+  //!
+  //! @brief Preview of a text typeset by LaTeX (nothing for a plain text): the image, or the LaTeX error, or why the
+  //! text is drawn with a font; for a text in ROOT syntax, its translation too. The text is typeset in the background
+  //! (see GRAPHICS::LatexRenderer::imageLater()). @param text text
+  //!
+  void latexPreview(const String & text);
   //! @brief Line style (solid, dashed, dotted, dash-dot, none). @param label label @param style ROOT line style
   //! @param allowNone offer "none" (no line)
   bool lineStyleEdit(const char * label, int & style, bool allowNone=true);

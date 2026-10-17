@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <sstream>
 #include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
 #include "FileSystem.hpp"
 #include "CapApp.hpp"
 #include "XmlDocument.hpp"
@@ -27,6 +28,8 @@
 #include "DataPointsVector.hpp"
 #include "Histogram.hpp"
 #include "CapFile.hpp"
+#include "LatexRenderer.hpp"
+#include "GraphEditor.hpp"
 
 #ifndef CAP_SOURCE_ROOT
 //! Top directory of the CAP sources (set by the build; empty if not).
@@ -98,6 +101,13 @@ namespace CAP
       gui.browserDocked  = e->attributeBool("docked", gui.browserDocked);
       }
     if (const XmlElement * e = root.child("Demo")) demo = e->attributeBool("enabled", demo);
+    if (const XmlElement * e = root.child("Latex"))
+      {
+      latex         = e->attributeBool("enabled", latex);
+      latexBin      = e->attribute("bin", latexBin);
+      latexPreamble = e->attribute("preamble", latexPreamble);
+      rootSyntax    = e->attributeBool("rootSyntax", rootSyntax);
+      }
     }
   catch (const std::exception & exception)
     {
@@ -142,6 +152,11 @@ namespace CAP
     browser.setAttribute("visible", gui.browserVisible);
     browser.setAttribute("docked", gui.browserDocked);
     root.addChild("Demo").setAttribute("enabled", demo);
+    XmlElement & latexElement = root.addChild("Latex");
+    latexElement.setAttribute("enabled", latex);
+    latexElement.setAttribute("bin", latexBin);
+    latexElement.setAttribute("preamble", latexPreamble);
+    latexElement.setAttribute("rootSyntax", rootSyntax);
     document.write(fileName);
     }
   catch (const std::exception &)
@@ -236,6 +251,8 @@ namespace CAP
   if (configured)                          _gui.setStatus(String("Configuration: ") + _configurationFile);
   else if (!configurationError.isNull())   _gui.showMessage("Configuration not read", _configurationFile + String(":\n") + configurationError);
   else                                     _gui.setStatus("No configuration file found: default settings");
+  String latexProblem = applyLatex();
+  if (!latexProblem.isNull()) _gui.setStatus(latexProblem);
 
   if (_configuration.demo) createDemo();
   for (const auto & argument : _arguments)
@@ -854,6 +871,26 @@ namespace CAP
   if (_showImGuiDemo) ImGui::ShowDemoWindow(&_showImGuiDemo);
   }
 
+  String CapApp::applyLatex()
+  {
+  GRAPHICS::LatexRenderer & latex = GRAPHICS::LatexRenderer::instance();
+  latex.setEnabled(_configuration.latex);
+  latex.setRootSyntax(_configuration.rootSyntax);
+  latex.setPreamble(_configuration.latexPreamble);
+  String problem;
+  if (!_configuration.latexBin.isNull())
+    {
+    String directory = FileSystem::expand(_configuration.latexBin);
+    if (!latex.setBinDirectory(directory))
+      problem = String("LaTeX: latex and dvisvgm not found in ") + directory
+              + (latex.available() ? String(", using those of ") + latex.binDirectory() : String(""));
+    }
+  else if (!latex.available()) latex.findTools();
+  if (_configuration.latex && !latex.available() && problem.isNull())
+    problem = "LaTeX: latex and dvisvgm not found, texts drawn with the fonts (see Edit > Preferences)";
+  return problem;
+  }
+
   void CapApp::renderPreferences()
   {
   if (!_showPreferences) return;
@@ -899,6 +936,33 @@ namespace CAP
 
   ImGui::SeparatorText("Startup");
   ImGui::Checkbox("Show the demonstration objects", &c.demo);
+
+  ImGui::SeparatorText("LaTeX");
+  GRAPHICS::LatexRenderer & latex = GRAPHICS::LatexRenderer::instance();
+  if (latex.available()) ImGui::TextDisabled("latex and dvisvgm: %s", latex.binDirectory().data());
+  else ImGui::TextColored(ImVec4(0.85f, 0.25f, 0.1f, 1.0f), "latex and dvisvgm not found: texts drawn with the fonts");
+  if (ImGui::Checkbox("Typeset the texts with $ or \\ by LaTeX", &c.latex)) latex.setEnabled(c.latex);
+  if (ImGui::Checkbox("Translate the ROOT syntax (#Delta, p_{T}, ...)", &c.rootSyntax)) latex.setRootSyntax(c.rootSyntax);
+  std::string bin = c.latexBin.str();
+  ImGui::SetNextItemWidth(300);
+  if (ImGui::InputTextWithHint("TeX directory", "looked for", &bin)) c.latexBin = String(bin);
+  ImGui::SetItemTooltip("Directory of latex and dvisvgm, e.g. /Library/TeX/texbin (empty: looked for in the PATH and the usual TeX installations); applied when you leave the field");
+  if (ImGui::IsItemDeactivatedAfterEdit())
+    {
+    if (c.latexBin.isNull()) latex.findTools();
+    String problem = applyLatex();
+    _gui.setStatus(problem.isNull() ? String("LaTeX: ") + latex.binDirectory() : problem);
+    }
+  std::string preamble = c.latexPreamble.str();
+  ImGui::SetNextItemWidth(300);
+  if (ImGui::InputText("Preamble", &preamble)) c.latexPreamble = String(preamble);
+  ImGui::SetItemTooltip("Packages and macros of the LaTeX documents, e.g. \\usepackage{amsmath,amssymb,siunitx}; applied when you leave the field (the texts are typeset again)");
+  if (ImGui::IsItemDeactivatedAfterEdit()) latex.setPreamble(c.latexPreamble);
+  static std::string sample = "$\\sqrt{s_{NN}} = 5.02$ TeV";
+  ImGui::SetNextItemWidth(300);
+  ImGui::InputText("Try a text", &sample);
+  GraphEditor::latexPreview(String(sample));
+  if (!latex.cacheDirectory().isNull()) ImGui::TextDisabled("Cache: %s", latex.cacheDirectory().data());
 
   ImGui::Separator();
   String target = _configurationFile;

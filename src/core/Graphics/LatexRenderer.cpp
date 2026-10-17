@@ -428,7 +428,7 @@ namespace CAP
 
   // ---------------------------------------------------------------- configuration
 
-  void LatexRenderer::findTools()
+  bool LatexRenderer::findTools()
   {
   std::vector<String> candidates;
   const char * bin = std::getenv("CAP_LATEX_BIN");
@@ -444,7 +444,8 @@ namespace CAP
   std::vector<String> texlive = FileSystem::glob("/usr/local/texlive/*/bin/*");
   for (auto k=texlive.rbegin(); k!=texlive.rend(); ++k) candidates.push_back(*k);   // newest first
   candidates.push_back("/usr/bin");
-  for (const auto & directory : candidates) if (setBinDirectory(directory)) return;
+  for (const auto & directory : candidates) if (setBinDirectory(directory)) return true;
+  return false;
   }
 
   bool LatexRenderer::setBinDirectory(const String & directory)

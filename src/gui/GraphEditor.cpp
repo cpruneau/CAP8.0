@@ -18,6 +18,8 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "GraphEditor.hpp"
 #include "ImGuiPainter.hpp"
+#include "LatexRenderer.hpp"
+#include "LatexTextures.hpp"
 #include "DataPoints.hpp"
 
 namespace CAP
@@ -72,6 +74,7 @@ namespace CAP
   bool changed = false;
   ImGui::SetNextItemWidth(260);
   changed |= textEdit("text", title);
+  latexPreview(title);
   int color = attributes.color();
   if (colorEdit("color", color)) { attributes.setColor(color, attributes.alpha()); changed = true; }
   ImGui::SameLine(0, 20);
@@ -85,6 +88,45 @@ namespace CAP
   } // namespace
 
   // ------------------------------------------------------------------------------------------------ widgets
+
+  void latexPreview(const String & text)
+  {
+  using GRAPHICS::LatexRenderer;
+  using GRAPHICS::LatexImage;
+  LatexRenderer & latex = LatexRenderer::instance();
+  LatexRenderer::TextKind kind = LatexRenderer::kind(text);
+  if (kind == LatexRenderer::kPlain) return;
+  if (!latex.available())  { ImGui::TextDisabled("LaTeX not found: drawn with the font (see Edit > Preferences)"); return; }
+  if (!latex.enabled())    { ImGui::TextDisabled("LaTeX off: drawn with the font (see Edit > Preferences)"); return; }
+  if (kind == LatexRenderer::kRoot)
+    {
+    if (!latex.rootSyntax()) { ImGui::TextDisabled("ROOT syntax not translated: drawn with the font"); return; }
+    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + 420.0f);
+    ImGui::TextDisabled("ROOT syntax, as LaTeX: %s", latex.source(text).data());
+    ImGui::PopTextWrapPos();
+    }
+  const LatexImage * image = latex.imageLater(text);
+  if (!image) { ImGui::TextDisabled("Typesetting..."); return; }
+  if (!image->ok)
+    {
+    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + 420.0f);
+    ImGui::TextColored(ImVec4(0.85f, 0.25f, 0.1f, 1.0f), "LaTeX error: %s", image->error.data());
+    ImGui::PopTextWrapPos();
+    return;
+    }
+  float size = 1.6f*ImGui::GetFontSize();                         // font size of the preview (screen units)
+  float pixelsPerUnit = ImGui::GetIO().DisplayFramebufferScale.x;
+  if (pixelsPerUnit <= 0) pixelsPerUnit = 1.0f;
+  const LatexTextures::Texture * texture = LatexTextures::instance().texture(*image, size*pixelsPerUnit, ImGui::GetFrameCount());
+  if (!texture) return;
+  float unit = (size/LatexImage::kFontSize)/texture->scale;
+  ImVec2 extent(texture->width*unit, texture->height*unit);
+  if (extent.x > 420.0f) { extent.y *= 420.0f/extent.x; extent.x = 420.0f; }   // a long text: smaller
+  ImVec2 p = ImGui::GetCursorScreenPos();
+  ImGui::Dummy(extent);
+  ImGui::GetWindowDrawList()->AddImage(ImTextureRef(ImTextureID(texture->id)), p, ImVec2(p.x + extent.x, p.y + extent.y),
+                                       ImVec2(0, 0), ImVec2(1, 1), ImGui::GetColorU32(ImGuiCol_Text));
+  }
 
   bool colorEdit(const char * label, int & color)
   {
@@ -403,6 +445,7 @@ namespace CAP
   String label = item.label();
   ImGui::SetNextItemWidth(260);
   if (textEdit("legend label", label)) { item.setLabel(label); changed = true; }
+  latexPreview(label);
 
   if (item.kind() == GraphItem::kData)
     {

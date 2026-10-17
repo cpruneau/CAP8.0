@@ -43,6 +43,7 @@ namespace CAP
   //!     <Files directory="" extensions=".cap .root .xml"/>
   //!     <Browser visible="true" docked="true"/>                   <!-- docked: in the main window -->
   //!     <Demo enabled="true"/>
+  //!     <Latex enabled="true" bin="" preamble="\usepackage{amsmath,amssymb}" rootSyntax="true"/>  <!-- bin: "" to search -->
   //!   </CapGui>
   //! @endcode
   //! Missing elements or attributes keep their default values.
@@ -59,6 +60,10 @@ namespace CAP
   String directory;   //!< folder where the file dialogs start (empty: the current folder)
   std::vector<String> extensions{".cap"};   //!< types listed by the Open dialog (only those CapGui can open are used)
   bool   demo         = true;   //!< show the demonstration objects at startup
+  bool   latex        = true;   //!< typeset the texts with '$' or '\' by LaTeX (see GRAPHICS::LatexRenderer)
+  String latexBin;              //!< directory of latex and dvisvgm (empty: looked for)
+  String latexPreamble = "\\usepackage{amsmath,amssymb}";   //!< preamble of the LaTeX documents
+  bool   rootSyntax   = true;   //!< translate the texts in ROOT syntax (#, _{}, ^{}) and typeset them by LaTeX
 
   //! @brief Read a configuration file (missing values keep their defaults). @param fileName file
   //! @param error set to the problem if false is returned @return false if the file cannot be read
@@ -188,6 +193,8 @@ namespace CAP
   void setupPane(CanvasPane & pane);
   //! @brief Show the demonstration objects (a Gaussian with pseudo-data, an exponential).
   void createDemo();
+  //! @brief Give the LaTeX settings of the configuration to GRAPHICS::LatexRenderer. @return a problem to report, or ""
+  String applyLatex();
   //! @brief Arrange the canvases in columns x rows panes (undoable). @param columns columns @param rows rows
   void setLayout(int columns, int rows);
   //! @brief Divide the current canvas into columns x rows graphs (undoable). @param columns columns @param rows rows

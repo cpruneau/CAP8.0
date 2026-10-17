@@ -129,7 +129,10 @@ namespace CAP
   //! @brief Directory of latex and dvisvgm. @return directory, or "" if not found
   String binDirectory() const { return _binDirectory; }
   //! @brief Use latex and dvisvgm from this directory. @param directory directory @return true if both are there
+  //! (otherwise the tools are unchanged)
   bool setBinDirectory(const String & directory);
+  //! @brief Look for latex and dvisvgm in the usual places (see the class description). @return true if found
+  bool findTools();
   //! @brief Preamble of the documents (packages, macros). @return preamble
   const String & preamble() const { return _preamble; }
   //! @brief Set the preamble of the documents (the cached images belong to a preamble). @param preamble LaTeX code
@@ -226,8 +229,6 @@ namespace CAP
   bool run(const std::vector<std::string> & arguments) const;
   //! @brief Path of the cached SVG of a key. @param key key @return path, or "" without disk cache
   String cachePath(std::uint64_t key) const;
-  //! @brief Look for latex and dvisvgm.
-  void findTools();
   //! @brief Loop of the background thread: typeset the queued texts, in batches.
   void work();
 

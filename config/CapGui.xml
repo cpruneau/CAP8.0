@@ -18,4 +18,9 @@
   <Browser visible="true" docked="true"/>
   <!-- demonstration objects shown at startup -->
   <Demo enabled="true"/>
+  <!-- texts with $ or \ typeset by the LaTeX installation (latex and dvisvgm), e.g. "$p_{\mathrm{T}}$ (GeV/$c$)";
+       bin: directory of latex and dvisvgm (empty: looked for in the PATH and the usual TeX installations);
+       preamble: packages and macros of the documents; rootSyntax: texts in ROOT syntax (#Delta, p_{T}) translated
+       to LaTeX. Without LaTeX, texts are drawn with the fonts. -->
+  <Latex enabled="true" bin="" preamble="\usepackage{amsmath,amssymb}" rootSyntax="true"/>
 </CapGui>
