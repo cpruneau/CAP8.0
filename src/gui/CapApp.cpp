@@ -646,7 +646,7 @@ namespace CAP
   {
   BrowserFile * entry = file(fileId);
   if (!entry || !entry->file) return;
-  const Folder * folder = folderPath.isNull() ? entry->file.get() : entry->file->folder(folderPath);
+  const Folder * folder = folderPath.isNull() ? &entry->file->folder() : entry->file->folder(folderPath);
   if (!folder) return;
   // objects of the folder that can be shown (not those of its sub-folders)
   std::vector<ObjectReference> objects;

@@ -23,68 +23,68 @@ ClassImp(CAP::CapFile);
 namespace CAP
 {
 
-  CapFile::CapFile(const String & path, File::Access access)
+  CapFile::CapFile(const String & path, Access access)
   :
-  Folder(""),
-  _file(path,access)
+  BinaryFile(path,access),
+  _folder("")
   {
   setClassName("CapFile");
   }
 
   CapFile & CapFile::operator=(const Folder & folder)
   {
-  if (this!=&folder) adopt(folder);
+  if (&_folder!=&folder) _folder = folder;
   return *this;
-  }
-
-  void CapFile::adopt(const Folder & folder)
-  {
-  Folder::operator=(folder);   // copies the Object part too: restore the class name
-  setClassName("CapFile");
   }
 
   void CapFile::read()
   {
   // Read the file into memory first, so that the folder is unchanged if anything fails.
-  std::istringstream in(_file.readAll());
+  std::istringstream in(readAll());
   Folder loaded;
-  if (!loaded.readBinary(in)) throw FileException(_file.path(),"No folder in the file","CapFile::read()");
-  adopt(loaded);
+  if (!loaded.readBinary(in)) throw FileException(_path,"No folder in the file","CapFile::read()");
+  _folder = loaded;
   }
 
   void CapFile::read(const String & folderName)
   {
-  std::istringstream in(_file.readAll());
+  std::istringstream in(readAll());
   std::string tag, payload;
   unsigned int version;
-  while (readBinaryRecord(in,tag,version,payload,_file.path()))
+  while (readBinaryRecord(in,tag,version,payload,_path))
     {
     if (tag!=Folder::binaryTag() || !binaryPayloadName(payload).equalTo(folderName)) continue;
     Folder loaded;
-    decodeBinaryPayload(payload,version,loaded,_file.path());
-    adopt(loaded);
+    decodeBinaryPayload(payload,version,loaded,_path);
+    _folder = loaded;
     return;
     }
-  throw FileException(_file.path(),String("No folder named ")+folderName+" in the file","CapFile::read()");
+  throw FileException(_path,String("No folder named ")+folderName+" in the file","CapFile::read()");
   }
 
-  void CapFile::writeFolder(File::Mode mode, bool skipUnsavable)
+  void CapFile::writeFolder(Mode mode, bool skipUnsavable)
   {
   // Encode the whole folder first: the file is not touched if an object cannot be saved.
   std::ostringstream out;
-  writeBinary(out,skipUnsavable);
-  if (mode==File::kWrite) _file.writeAll(out.str());
-  else                    _file.appendAll(out.str());
+  _folder.writeBinary(out,skipUnsavable);
+  if (mode==kWrite) writeAll(out.str());
+  else              appendAll(out.str());
   }
 
   void CapFile::write(bool skipUnsavable)
   {
-  writeFolder(File::kWrite,skipUnsavable);
+  writeFolder(kWrite,skipUnsavable);
   }
 
   void CapFile::append(bool skipUnsavable)
   {
-  writeFolder(File::kAppend,skipUnsavable);
+  writeFolder(kAppend,skipUnsavable);
+  }
+
+  void CapFile::print() const
+  {
+  BinaryFile::print();
+  _folder.print();
   }
 
   // ---------------------------------------------------------------- opening files

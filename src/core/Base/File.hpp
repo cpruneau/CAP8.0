@@ -27,7 +27,10 @@ namespace CAP
 //! the content. Derived classes set, at construction,
 //!  - the format: text (kText) or binary (kBinary);
 //!  - the access the file allows: read only (kReadOnly), write only (kWriteOnly) or read and write (kReadWrite);
-//! and provide the operations on their type of content (e.g., TxtFile, BinaryFile, XmlFile, CapFile).
+//! and provide the operations on their type of content:
+//!
+//!     File ─┬─ TxtFile ──── XmlFile     text: lines held in memory; XML
+//!           └─ BinaryFile ── CapFile    raw bytes; one Folder of CAP objects
 //!
 //! A file is opened in one of four modes, which must be allowed by its access (FileException otherwise):
 //!  - kRead   : read an existing file;
