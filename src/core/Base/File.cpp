@@ -10,8 +10,8 @@
  *
  * *********************************************************************/
 #include "File.hpp"
+#include "FileSystem.hpp"
 #include "PrintHelpers.hpp"
-#include <sys/stat.h>
 
 ClassImp(CAP::File);
 
@@ -53,16 +53,13 @@ namespace CAP
 
   bool File::exists(const String & path)
   {
-  struct stat info;
-  return path.length()>0 && ::stat(path.data(),&info)==0 && S_ISREG(info.st_mode);
+  return FileSystem::isFile(path);
   }
 
   std::uintmax_t File::fileSize() const
   {
-  struct stat info;
-  if (_path.length()==0 || ::stat(_path.data(),&info)!=0 || !S_ISREG(info.st_mode))
-    throw FileException(_path,"File does not exist","File::fileSize()");
-  return std::uintmax_t(info.st_size);
+  if (!FileSystem::isFile(_path)) throw FileException(_path,"File does not exist","File::fileSize()");
+  return FileSystem::size(_path);
   }
 
   void File::open(Mode mode)

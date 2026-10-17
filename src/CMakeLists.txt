@@ -45,6 +45,7 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 ####set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+enable_testing()   # ctest runs the test programs of the modules
 set(CAP_ROOT_PATH "$ENV{CAP_ROOT_PATH}")
 
 ################################################################################################

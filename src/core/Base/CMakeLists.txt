@@ -16,6 +16,7 @@ Filter.hpp
 BinaryFile.hpp
 CapFile.hpp
 File.hpp
+FileSystem.hpp
 Folder.hpp
 LongParameter.hpp
 Object.hpp
@@ -50,6 +51,7 @@ Filter.cpp
 BinaryFile.cpp
 CapFile.cpp
 File.cpp
+FileSystem.cpp
 Folder.cpp
 LongParameter.cpp
 NameHelpers.cpp
@@ -79,6 +81,11 @@ target_include_directories(Base PUBLIC Base ${EXTRA_INCLUDES} )
 # WARNING: the sumw2 structure is not used -> estimate uncertainties using sub-samples
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
+
+# Tests (run with ctest in the build directory; not installed)
+add_executable(TestFileSystem tests/TestFileSystem.cpp)
+target_link_libraries(TestFileSystem Base ${ROOT_LIBRARIES})
+add_test(NAME FileSystem COMMAND TestFileSystem)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libBase.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libBase_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Base  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
