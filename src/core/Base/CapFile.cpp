@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <sstream>
+#include <utility>
 
 ClassImp(CAP::CapFile);
 
@@ -37,29 +38,58 @@ namespace CAP
   return *this;
   }
 
+  bool CapFile::readFolder(const String * folderName, Folder & folder)
+  {
+  open(kRead);
+  try
+    {
+    std::string tag, payload;
+    unsigned int version;
+    while (readBinaryRecord(_stream,tag,version,payload,_path))
+      {
+      if (tag!=Folder::binaryTag()) continue;
+      if (folderName && !binaryPayloadName(payload).equalTo(*folderName)) continue;
+      decodeBinaryPayload(payload,version,folder,_path);
+      close();
+      return true;
+      }
+    }
+  catch (...)
+    {
+    close();
+    throw;
+    }
+  close();
+  return false;
+  }
+
   void CapFile::read()
   {
-  // Read the file into memory first, so that the folder is unchanged if anything fails.
-  std::istringstream in(readAll());
+  // decoded into a separate folder first, so that the folder held is unchanged if anything fails
   Folder loaded;
-  if (!loaded.readBinary(in)) throw FileException(_path,"No folder in the file","CapFile::read()");
-  _folder = loaded;
+  if (!readFolder(nullptr,loaded)) throw FileException(_path,"No folder in the file","CapFile::read()");
+  _folder = std::move(loaded);
+  _loaded = true;
   }
 
   void CapFile::read(const String & folderName)
   {
-  std::istringstream in(readAll());
-  std::string tag, payload;
-  unsigned int version;
-  while (readBinaryRecord(in,tag,version,payload,_path))
-    {
-    if (tag!=Folder::binaryTag() || !binaryPayloadName(payload).equalTo(folderName)) continue;
-    Folder loaded;
-    decodeBinaryPayload(payload,version,loaded,_path);
-    _folder = loaded;
-    return;
-    }
-  throw FileException(_path,String("No folder named ")+folderName+" in the file","CapFile::read()");
+  Folder loaded;
+  if (!readFolder(&folderName,loaded))
+    throw FileException(_path,String("No folder named ")+folderName+" in the file","CapFile::read()");
+  _folder = std::move(loaded);
+  _loaded = true;
+  }
+
+  void CapFile::load(Loading /*loading*/)
+  {
+  read();
+  }
+
+  void CapFile::unload()
+  {
+  _folder = Folder();
+  _loaded = false;
   }
 
   void CapFile::writeFolder(Mode mode, bool skipUnsavable)
@@ -74,6 +104,7 @@ namespace CAP
   void CapFile::write(bool skipUnsavable)
   {
   writeFolder(kWrite,skipUnsavable);
+  _loaded = true;
   }
 
   void CapFile::append(bool skipUnsavable)

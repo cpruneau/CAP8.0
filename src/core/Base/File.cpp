@@ -24,6 +24,7 @@ namespace CAP
   _format(format),
   _access(access),
   _mode(kRead),
+  _loaded(false),
   _stream()
   { }
 
@@ -36,6 +37,17 @@ namespace CAP
   {
   if (isOpen()) throw FileException(_path,"Cannot change the path of an open file","File::setPath()");
   FileSystemEntry::setPath(path);
+  _loaded = false;   // the structure no longer comes from this file
+  }
+
+  void File::load(Loading /*loading*/)
+  {
+  throw FileException(_path,String("No content structure in class ")+className()+": use open() and stream()","File::load()");
+  }
+
+  void File::save()
+  {
+  throw FileException(_path,String("No content structure in class ")+className()+": use open() and stream()","File::save()");
   }
 
   bool File::allows(Mode mode) const
@@ -119,6 +131,7 @@ namespace CAP
   printValue("Format",String(_format==kText ? "text" : "binary"));
   printValue("Access",String(_access==kReadOnly ? "read only" : (_access==kWriteOnly ? "write only" : "read/write")));
   printValue("Open",String(isOpen() ? "yes" : "no"));
+  printValue("Loaded",String(_loaded ? "yes" : "no"));
   }
 
 } // namespace CAP

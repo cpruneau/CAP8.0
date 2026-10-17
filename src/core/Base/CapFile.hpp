@@ -145,6 +145,19 @@ public:
 
   //! @}
 
+  //! @name Content in memory
+  //! @{
+
+  //! @brief Load the first folder of the file (read()). The lazy mode (objects decoded when first used) is not
+  //! available yet: kLazy loads everything. @param loading kEager or kLazy
+  void load(Loading loading = Loading::kEager) override;
+  //! @brief Empty the folder held, its name included (the file is not changed).
+  void unload() override;
+  //! @brief Replace the content of the file by the folder held (write()).
+  void save() override { write(); }
+
+  //! @}
+
   //! @brief Print the file (path, format, access, state) and the folder.
   void print() const override;
 
@@ -251,6 +264,10 @@ protected:
 
   //! @brief Write the folder to the file. @param mode kWrite (replace the content) or kAppend @param skipUnsavable see write()
   void writeFolder(Mode mode, bool skipUnsavable);
+  //! @brief Decode the first folder of the file, or the first one of the given name, into folder (read straight from
+  //! the file: its records are copied once). @param folderName name, or null for the first folder @param folder output
+  //! @return true if found @throws FileException if the file cannot be read or is corrupted
+  bool readFolder(const String * folderName, Folder & folder);
 
   Folder _folder;  //!<! folder held (not streamed by ROOT)
 

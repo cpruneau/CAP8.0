@@ -134,6 +134,12 @@ namespace CAP
   //! @brief Assignment: deep copy of all objects and sub-folders (the current content is deleted). @param rhs folder to copy @return this folder
   //! @throws Exception if an object cannot be copied (this folder is then unchanged)
   Folder & operator=(const Folder & rhs);
+  //! @brief Move constructor: takes the objects and sub-folders of source (left empty); the new folder is a top folder.
+  //! @param source folder to take from
+  Folder(Folder && source);
+  //! @brief Move assignment: takes the objects and sub-folders of rhs (left empty); the parent of this folder is kept.
+  //! @param rhs folder to take from @return this folder
+  Folder & operator=(Folder && rhs);
   //! @brief Destructor: deletes all objects and sub-folders.
   virtual ~Folder();
 

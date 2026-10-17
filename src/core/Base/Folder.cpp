@@ -1,6 +1,7 @@
 #include "Folder.hpp"
 #include "LongParameter.hpp"
 #include <sstream>
+#include <utility>
 #include <iostream>
 #include <cstdlib>
 #if defined(__GNUG__)
@@ -59,6 +60,32 @@ namespace CAP
     Folder copy(rhs);              // copy first: this folder is unchanged if an object cannot be copied
     Object::operator=(copy);
     _entries.swap(copy._entries);
+    adoptSubFolders();
+    _currentPath.clear();          // the parent of this folder is kept
+    }
+  return *this;
+  }
+
+  Folder::Folder(Folder && source)
+  :
+  Object(source),
+  _entries(std::move(source._entries)),
+  _parent(nullptr),           // a moved folder is a top folder
+  _currentPath()
+  {
+  source._entries.clear();
+  source._currentPath.clear();
+  adoptSubFolders();
+  }
+
+  Folder & Folder::operator=(Folder && rhs)
+  {
+  if (this!=&rhs)
+    {
+    Object::operator=(rhs);
+    _entries = std::move(rhs._entries);
+    rhs._entries.clear();
+    rhs._currentPath.clear();
     adoptSubFolders();
     _currentPath.clear();          // the parent of this folder is kept
     }
@@ -428,18 +455,18 @@ namespace CAP
     String entryName = r.readString();
     uint64_t length = r.readVarUInt();
     if (length > r.remaining()) throw Exception("Entry larger than the data","Folder::decodeBinary()");
-    std::string bytes(std::size_t(length),'\0');
-    for (auto & c : bytes) c = char(r.readUInt8());
-    std::istringstream in(bytes);
-    std::string tag, payload;
+    // the entry's record is read in place; only its payload is copied, for the factory
+    BinaryReader entry(r.readSpan(std::size_t(length)),std::size_t(length));
+    std::string tag;
     unsigned int version;
-    if (!readBinaryRecord(in,tag,version,payload,entryName))
-      throw Exception(String("Empty record for entry ")+entryName,"Folder::decodeBinary()");
-    if (in.peek()!=EOF) throw Exception(String("Unexpected data after the record of entry ")+entryName,"Folder::decodeBinary()");
+    const char * payload;
+    std::size_t payloadLength;
+    readBinaryRecord(entry,tag,version,payload,payloadLength,entryName);
+    if (entry.remaining()!=0) throw Exception(String("Unexpected data after the record of entry ")+entryName,"Folder::decodeBinary()");
     auto factory = registry().find(tag);
     if (factory==registry().end())
       throw Exception(String("Entry ")+entryName+" has type tag "+tag.c_str()+", which is not registered: call Folder::registerType<T>() for its class","Folder::decodeBinary()");
-    addItem(entryName,factory->second(payload,version,entryName));
+    addItem(entryName,factory->second(std::string(payload,payloadLength),version,entryName));
     }
   }
 

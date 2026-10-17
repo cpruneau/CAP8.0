@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <utility>
 #include <vector>
 #include <istream>
 #include <ostream>
@@ -96,6 +97,9 @@ public:
     _position += std::size_t(n);
     return String(s.c_str());
   }
+  //! @brief Take the next n bytes without copying them. @param n number of bytes @return pointer to them, valid as long
+  //! as the data of the reader
+  const char * readSpan(std::size_t n) { need(n); const char * p = _data+_position; _position += n; return p; }
 
 private:
   void need(uint64_t n) const
@@ -263,6 +267,39 @@ inline bool readBinaryRecord(std::istream & in, std::string & tag, unsigned int 
   return true;
 }
 
+//!
+//! @brief Read one record held in memory, without copying its payload.
+//! @param r reader positioned at the start of the record @param tag output: 4-character tag @param version output:
+//! format version @param payload output: start of the payload (inside the reader's data) @param length output: payload
+//! length @param where file or object name, for error messages
+//! @throws FileException if the data is not a CAP record, or is truncated or corrupted
+//!
+inline void readBinaryRecord(BinaryReader & r, std::string & tag, unsigned int & version, const char * & payload,
+                             std::size_t & length, const String & where)
+{
+  try
+    {
+    const char * t = r.readSpan(4);
+    if (t[0]!='C' || t[1]!='A' || t[2]!='P') throw FileException(where,"Not a CAP binary record (bad tag)","readBinaryRecord()");
+    tag.assign(t,4);
+    version = r.readUInt8();
+    uint64_t n = r.readVarUInt();
+    if (n > r.remaining()) throw FileException(where,"Truncated binary record","readBinaryRecord()");
+    length  = std::size_t(n);
+    payload = r.readSpan(length);
+    if (r.readUInt32()!=crc32(payload,length))
+      throw FileException(where,"Corrupted binary record (checksum mismatch)","readBinaryRecord()");
+    }
+  catch (FileException &)
+    {
+    throw;
+    }
+  catch (Exception &)
+    {
+    throw FileException(where,"Truncated or malformed binary record","readBinaryRecord()");
+    }
+}
+
 //! @brief Name stored at the start of a payload. @param payload payload @return name
 inline String binaryPayloadName(const std::string & payload)
 {
@@ -283,7 +320,7 @@ void decodeBinaryPayload(const std::string & payload, unsigned int version, T & 
     T decoded;
     decoded.decodeBinary(r,name,version);
     if (r.remaining()!=0) throw Exception("Unexpected data at the end of the record","decodeBinaryPayload()");
-    object = decoded;
+    object = std::move(decoded);   // a copy for classes without move assignment
     }
   catch (FileException &)
     {

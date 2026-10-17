@@ -60,6 +60,9 @@ public:
   enum Access { kReadOnly, kWriteOnly, kReadWrite };
   //! @brief Mode of an open file.
   enum Mode   { kRead, kWrite, kAppend, kUpdate };
+  //! @brief How load() brings the content into memory: all of it (kEager), or only what is needed to reach it, the
+  //! rest being read on demand (kLazy; classes without a lazy mode load everything).
+  enum class Loading { kEager, kLazy };
 
 protected:
 
@@ -130,6 +133,27 @@ public:
 
   //! @}
 
+  //! @name Content in memory
+  //!
+  //! Each type of file has its structure in memory: lines (TxtFile), an XML document (XmlFile), bytes (BinaryFile),
+  //! a Folder of objects (CapFile). load() fills it from the file and save() writes it back; both open and close the
+  //! file themselves. isLoaded() is true after load() or save(), until unload() (which frees the structure; the file is
+  //! not changed) or a change of path.
+  //! @{
+
+  //! @brief Fill the structure from the file. @param loading kEager or kLazy
+  //! @throws FileException if the file cannot be read (or the class holds no structure)
+  virtual void load(Loading loading = Loading::kEager);
+  //! @brief Free the structure (the file is not changed).
+  virtual void unload() { _loaded = false; }
+  //! @brief Whether the structure was filled from the file (or saved to it), and not unloaded since. @return true if so
+  virtual bool isLoaded() const { return _loaded; }
+  //! @brief Write the structure to the file, replacing its content.
+  //! @throws FileException if the file cannot be written (or the class holds no structure)
+  virtual void save();
+
+  //! @}
+
   //! @brief Print the path, format, access and state.
   void print() const override;
 
@@ -145,6 +169,7 @@ protected:
   Format       _format;  //!< content format
   Access       _access;  //!< access allowed by the file type
   Mode         _mode;    //!< mode of the open file
+  bool         _loaded;  //!< the structure was loaded from the file, or saved to it
   std::fstream _stream;  //!<! stream of the open file (not streamed by ROOT)
 
   ClassDefOverride(File,0)

@@ -24,6 +24,8 @@ namespace CAP
 //! helpers specific to XML: the declaration line (<?xml version="1.0" encoding="UTF-8"?>), escaping of special
 //! characters, writing simple elements, and a check that the text is well formed (tags properly nested and closed,
 //! one root element). document() parses the text into an XmlDocument and setDocument() replaces the text by a document.
+//! The parsed document is kept until the lines change, so document() parses only once; load() reads the file and
+//! parses it.
 //!
 //! Example:
 //! @code
@@ -75,10 +77,23 @@ public:
   //!
   bool isWellFormed(String * reason=nullptr) const;
 
-  //! @brief The text parsed into a document. @return document @throws XmlException if the text is not well-formed XML
-  XmlDocument document() const;
+  //! @brief The text parsed into a document (parsed once, kept until the lines change). @return document
+  //! @throws XmlException if the text is not well-formed XML
+  const XmlDocument & document() const;
   //! @brief Replace the text by a document. @param document document @param indent spaces per nesting level
   void setDocument(const XmlDocument & document, unsigned int indent=2);
+
+  //! @}
+
+  //! @name Loading
+  //! @{
+
+  //! @brief Read the file and parse it (text files have no lazy mode). @param loading ignored
+  //! @throws FileException if the file cannot be read; XmlException if it is not well-formed XML (the lines are then
+  //! loaded, and can be corrected)
+  void load(Loading loading = Loading::kEager) override;
+  //! @brief Remove the lines and the document held (the file is not changed).
+  void unload() override;
 
   //! @}
 
@@ -91,6 +106,14 @@ public:
   static String unescape(const String & text);
 
   //! @}
+
+protected:
+
+  //! @brief The lines changed: the document must be parsed again.
+  void changed() override { _documentValid = false; }
+
+  mutable XmlDocument _document;       //!< document parsed from the lines
+  mutable bool        _documentValid;  //!< _document matches the lines
 };
 
 } // namespace CAP
