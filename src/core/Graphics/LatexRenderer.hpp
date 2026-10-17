@@ -56,7 +56,9 @@ namespace CAP
   //! @brief Texts typeset by the LaTeX installation of the system (latex and dvisvgm), for the painters.
   //!
   //! A text containing '$' or '\' is typeset by LaTeX, in text mode: write the math between $...$, e.g.
-  //! "$p_{\mathrm{T}}$ (GeV/$c$)". Other texts are drawn by the painters with their fonts (kind()).
+  //! "$p_{\mathrm{T}}$ (GeV/$c$)". A text in the syntax of ROOT's TLatex (with '#', "_{" or "^{", e.g.
+  //! "#Delta#varphi", "p_{T} (GeV/c)") is translated to LaTeX first (fromRoot()). Other texts are drawn by the painters
+  //! with their fonts (kind()).
   //!
   //! TeX is a program, not a library: each typesetting runs latex then dvisvgm on a small document, in a temporary
   //! directory (no shell escape, with a time limit), for about half a second. The results are therefore cached: in
@@ -95,9 +97,23 @@ namespace CAP
   //! @brief Destructor: stops the background thread (and a LaTeX run in progress).
   virtual ~LatexRenderer();
 
-  //! @brief How a text is drawn: kLatex if it contains '$' or '\', kRoot if it contains '#' (ROOT syntax, drawn as
-  //! plain text for now), kPlain otherwise. @param text text @return kind
+  //! @brief How a text is drawn: kLatex if it contains '$' or '\', kRoot (ROOT syntax) if it contains '#', "_{" or
+  //! "^{", kPlain otherwise. @param text text @return kind
   static TextKind kind(const String & text);
+  //!
+  //! @brief LaTeX (text mode) of a text in the syntax of ROOT's TLatex. As in ROOT, letters are upright unless in
+  //! \#it{}, and scripts are text: "p_{T,1}" gives "p$_{\text{T,1}}$", "#Delta#varphi" gives "$\Delta\varphi$".
+  //! Translated: _{} and ^{} (also on a single character), the Greek letters, the usual symbols and arrows (\#pm,
+  //! \#times, \#leq, \#infty, \#rightarrow, \#int, \#sum, ...), \#frac{}{}, \#sqrt{} and \#sqrt[]{}, the accents (\#bar, \#hat,
+  //! \#tilde, \#vec, \#dot, \#ddot, \#check, \#acute, \#grave), \#it{}, \#bf{}, \#splitline{}{}, \#left and \#right, \#{ and \#};
+  //! \#color[]{}, \#font[]{}, \#kern[]{}, \#lower[]{} and \#scale[]{} give their text only. An unknown command is shown
+  //! as written.
+  //! @param text text in ROOT syntax @return LaTeX
+  //!
+  static String fromRoot(const String & text);
+  //! @brief LaTeX typeset for a text: the text itself (kLatex), its translation (kRoot, if ROOT syntax is
+  //! translated), or "" if it is drawn with a font. @param text text @return LaTeX, or ""
+  String source(const String & text) const;
   //! @brief Text drawn with a font when LaTeX is not used: without its '$'. @param text text @return text
   static String plainText(const String & text);
 
@@ -124,6 +140,10 @@ namespace CAP
   void setCacheDirectory(const String & directory) { _cacheDirectory = directory; }
   //! @brief Time limit of a LaTeX run. @param seconds limit
   void setTimeLimit(double seconds) { _timeLimit = seconds; }
+  //! @brief Whether texts in ROOT syntax are translated and typeset by LaTeX. @return true if so
+  bool rootSyntax() const { return _rootSyntax; }
+  //! @brief Translate texts in ROOT syntax and typeset them by LaTeX, or draw them with a font. @param translate yes or no
+  void setRootSyntax(bool translate) { _rootSyntax = translate; }
 
   //! @}
 
@@ -134,7 +154,7 @@ namespace CAP
   //! @brief The image of a text, typeset now if it is not cached.
   //! @param text text
   //! @return image (with ok false and the error if LaTeX failed), or nullptr if the text is not typeset by LaTeX
-  //! (kind() not kLatex, or LaTeX not enabled). The image stays valid until clearMemoryCache().
+  //! (source() empty, or LaTeX not enabled). The image stays valid until clearMemoryCache().
   //!
   const LatexImage * image(const String & text);
   //! @brief The image of a text if it is cached (in memory or on disk), without typesetting it. @param text text
@@ -180,7 +200,8 @@ namespace CAP
   //! @name Pieces (public for the tests)
   //! @{
 
-  //! @brief The LaTeX document typesetting texts, one page each; text k is alone on line firstLine()+3k (its line
+  //! @brief The LaTeX document typesetting texts, one page each (amsmath is always loaded, for the translations of
+  //! texts in ROOT syntax); text k is alone on line firstLine()+3k (its line
   //! breaks replaced by spaces). @param preamble preamble @param texts texts @return document
   static std::string document(const String & preamble, const std::vector<String> & texts);
   //! @brief Line of the document holding the first text. @param preamble preamble @return line number (from 1)
@@ -211,6 +232,7 @@ namespace CAP
   void work();
 
   bool        _enabled;          //!< use LaTeX
+  std::atomic<bool> _rootSyntax; //!< translate the texts in ROOT syntax
   String      _binDirectory;     //!< directory of the tools
   std::string _latex;            //!< path of latex, or empty
   std::string _dvisvgm;          //!< path of dvisvgm, or empty

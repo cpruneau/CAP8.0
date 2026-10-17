@@ -73,12 +73,58 @@ std::string drawn(const String & text)
 int main()
 {
   // ---- kinds of texts
-  CHECK(LatexRenderer::kind("p_{T} (GeV/c)") == LatexRenderer::kPlain);
+  CHECK(LatexRenderer::kind("pT (GeV/c)") == LatexRenderer::kPlain);
+  CHECK(LatexRenderer::kind("file_name <y>") == LatexRenderer::kPlain);
+  CHECK(LatexRenderer::kind("p_{T} (GeV/c)") == LatexRenderer::kRoot);
+  CHECK(LatexRenderer::kind("M (GeV/c^{2})") == LatexRenderer::kRoot);
   CHECK(LatexRenderer::kind("$p_{T}$ (GeV/$c$)") == LatexRenderer::kLatex);
   CHECK(LatexRenderer::kind("\\LaTeX") == LatexRenderer::kLatex);
   CHECK(LatexRenderer::kind("#Delta p_{T}") == LatexRenderer::kRoot);
   CHECK(LatexRenderer::plainText("$p_{T}$ (GeV/$c$)").equalTo("p_{T} (GeV/c)"));
   CHECK(LatexRenderer::plainText("x").equalTo("x"));
+
+  // ---- translation of the ROOT syntax
+  {
+    struct { const char * root; const char * latex; } table[] = {
+      {"p_{T}",                    "p$_{\\text{T}}$"},
+      {"p_{T,1}",                  "p$_{\\text{T,1}}$"},
+      {"#Delta#varphi",            "$\\Delta\\varphi$"},
+      {"#Delta y",                 "$\\Delta$ y"},
+      {"#varphi_{1}",              "$\\varphi_{\\text{1}}$"},
+      {"x^2",                      "x$^{\\text{2}}$"},
+      {"x_{i}^{2}",                "x$_{\\text{i}}^{\\text{2}}$"},
+      {"M (GeV/c^{2})",            "M (GeV/c$^{\\text{2}}$)"},
+      {"1/(2#pi p_{T}) dN/dp_{T}", "1/(2$\\pi$ p$_{\\text{T}}$) dN/dp$_{\\text{T}}$"},
+      {"#rho_{#pi^{+}}",           "$\\rho_{\\text{$\\pi^{\\text{+}}$}}$"},
+      {"#frac{1}{N}",              "$\\frac{\\text{1}}{\\text{N}}$"},
+      {"#sqrt{s_{NN}}",            "$\\sqrt{\\text{s$_{\\text{NN}}$}}$"},
+      {"#sqrt[3]{x}",              "$\\sqrt[\\text{3}]{\\text{x}}$"},
+      {"#bar{p}",                  "$\\bar{\\text{p}}$"},
+      {"#it{p}_{T}",               "\\textit{p}$_{\\text{T}}$"},
+      {"#bf{x}",                   "\\textbf{x}"},
+      {"#splitline{a}{b}",         "\\shortstack[l]{a\\\\b}"},
+      {"#color[2]{red}",           "{red}"},
+      {"#kern[0.3]{x}",            "{x}"},
+      {"#left(x#right)",           "(x)"},
+      {"#{a#}",                    "\\{a\\}"},
+      {"a < b | c",                "a $<$ b $|$ c"},
+      {"100% & more",              "100\\% \\& more"},
+      {"#Alpha#Rho",               "$\\mathrm{A}\\mathrm{P}$"},
+      {"#pm#3dots",                "$\\pm\\ldots$"},
+      {"#nosuch x",                "\\#nosuch x"},
+      {"a}",                       "a\\}"},
+    };
+    for (const auto & t : table)
+      {
+      String latex = LatexRenderer::fromRoot(t.root);
+      check(latex.equalTo(t.latex), std::string("fromRoot(\"") + t.root + "\"): got \"" + latex.data() + "\", expected \"" + t.latex + "\"", __LINE__);
+      }
+    LatexRenderer & r = LatexRenderer::instance();
+    CHECK(r.source("plain").isNull() && r.source("$x$").equalTo("$x$") && r.source("p_{T}").equalTo("p$_{\\text{T}}$"));
+    r.setRootSyntax(false);
+    CHECK(r.source("p_{T}").isNull());
+    r.setRootSyntax(true);
+  }
 
   // ---- checks made before running LaTeX
   CHECK(LatexRenderer::check("$\\frac{a}{b}$ \\{ \\$").isNull());
@@ -149,7 +195,8 @@ int main()
   const LatexImage * pt = latex.image("$p_{\\mathrm{T}}$");
   CHECK(pt && pt->ok && pt->depth > 1.0f);                                  // the p descends below the baseline
   CHECK(latex.image("p_T") == nullptr);                                     // plain text: not typeset
-  CHECK(latex.image("#Delta") == nullptr);                                  // ROOT syntax: not yet
+  const LatexImage * delta = latex.image("#Delta");                         // ROOT syntax: translated
+  CHECK(delta && delta->ok && delta == latex.image("$\\Delta$"));           // the same image as its translation
 
   // ---- errors
   runs = latex.nRuns();
@@ -192,6 +239,27 @@ int main()
     other.setPreamble("\\usepackage{nosuchpackagecap}");
     const LatexImage * broken = other.image("$y$");
     CHECK(broken && !broken->ok && contains(broken->error, "preamble"));
+  }
+
+  // ---- labels of CAP in ROOT syntax: all typeset, in one run
+  {
+    std::vector<String> labels = {"p_{T}", "#Delta#varphi", "#varphi_{1}", "#Delta#eta", "#Delta y", "#alpha", "#eta_{2}",
+      "p_{T,2}", "#Delta#phi", "p_{T} (GeV/c)", "Q_{inv}", "#theta_{1}", "M (GeV/c^{2})", "#rho_{1}(pT)", "p_{T}(GeV)",
+      "1/(2#pi p_{T}) dN/dp_{T}", "j_{T,2}", "N_{part}", "#Delta #rho_{2}(Q_{inv})", "#Delta q_{1}#Delta q_{1}",
+      "#bar{p}", "#sqrt{s_{NN}}", "#int f(x) dx", "#sum_{i} x_{i}^{2}", "#pm 1#sigma", "#varepsilon", "#Lambda",
+      "#frac{dN}{d#eta}", "#it{p}_{T} (GeV/#it{c})", "#splitline{line 1}{line 2}", "#color[2]{a} #kern[0.5]{b}",
+      "x < y | z_{1}", "50% & #infty", "#left(#frac{a}{b}#right)", "#AA #rightarrow #nu#bar{#nu}"};
+    runs = latex.nRuns();
+    latex.prepare(labels);
+    CHECK(latex.nRuns() == runs + 1);
+    for (const auto & label : labels)
+      {
+      const LatexImage * image = latex.cached(label);
+      check(image && image->ok, std::string("ROOT label \"") + label.data() + "\": " + (image ? image->error.data() : "no image"), __LINE__);
+      }
+    const LatexImage * pt = latex.cached("p_{T}");
+    const LatexImage * ptTwo = latex.cached("p_{T,2}");
+    if (pt && ptTwo && pt->ok && ptTwo->ok) CHECK(pt->width < ptTwo->width && pt->depth > 1.0f);
   }
 
   // ---- typesetting in the background

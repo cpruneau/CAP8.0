@@ -49,7 +49,7 @@ namespace CAP
                            const GRAPHICS::LineAttributes & line);
   //! @brief One marker (see Painter::drawMarker()).
   virtual void drawMarker(const GRAPHICS::Point2D & position, const GRAPHICS::MarkerAttributes & marker);
-  //! @brief Text (see Painter::drawText()): the texture of its LaTeX image for a text with '$' or '\' once LaTeX
+  //! @brief Text (see Painter::drawText()): the texture of its LaTeX image for a LaTeX or ROOT-syntax text once LaTeX
   //! typeset it in the background (see drawLatex()), otherwise in the font of its ROOT font code (see setFont()).
   virtual void drawText(const GRAPHICS::Point2D & position, const String & text, const GRAPHICS::TextAttributes & attributes,
                         float angle=0.0);

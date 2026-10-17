@@ -187,7 +187,7 @@ namespace CAP
   if (text.isNull()) return;
   float size = attributes.size()*_height;
   if (size < 1.0f) return;
-  if (LatexRenderer::kind(text) == LatexRenderer::kLatex && drawLatex(position, text, attributes, angle)) return;
+  if (LatexRenderer::kind(text) != LatexRenderer::kPlain && drawLatex(position, text, attributes, angle)) return;
   String shown = LatexRenderer::plainText(text);   // plain text, or LaTeX not available, not ready yet or failed
   ImFont * font = this->font(attributes);
   ImVec2 extent = font->CalcTextSizeA(size, FLT_MAX, 0.0f, shown.data());
@@ -244,7 +244,7 @@ namespace CAP
   if (text.isNull()) return 0.0f;
   float size = attributes.size()*_height;
   if (size <= 0) return 0.0f;
-  if (LatexRenderer::kind(text) == LatexRenderer::kLatex)
+  if (LatexRenderer::kind(text) != LatexRenderer::kPlain)
     {
     const LatexImage * image = LatexRenderer::instance().imageLater(text);
     if (image && image->ok) return image->width*size/LatexImage::kFontSize;

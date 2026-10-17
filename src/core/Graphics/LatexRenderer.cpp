@@ -15,9 +15,11 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cctype>
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
+#include <map>
 #include <signal.h>
 #include <spawn.h>
 #include <sstream>
@@ -55,6 +57,14 @@ namespace CAP
   float _width, _height;
   };
 
+  // name of the SVG file of a page written by dvisvgm (-o p%6p.svg)
+  String pageName(int page)
+  {
+  char name[32];
+  std::snprintf(name, sizeof(name), "p%06d.svg", page);
+  return String(name);
+  }
+
   bool readFile(const String & path, std::string & contents)
   {
   std::ifstream in(path.data(), std::ios::binary);
@@ -79,6 +89,183 @@ namespace CAP
   value = svg.substr(at+1, end-at-1);
   return true;
   }
+
+  // ---------------------------------------------------------------- ROOT syntax
+
+  // Commands of ROOT's TLatex typeset in math mode, without argument: Greek letters, symbols, arrows
+  const std::map<std::string,std::string> & rootSymbols()
+  {
+  static const std::map<std::string,std::string> symbols = []
+    {
+    std::map<std::string,std::string> m;
+    for (const char * g : {"alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "lambda",
+                           "mu", "nu", "xi", "pi", "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega",
+                           "varepsilon", "vartheta", "varphi", "varsigma",
+                           "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi", "Sigma", "Upsilon", "Phi", "Psi", "Omega",
+                           "pm", "mp", "times", "div", "cdot", "bullet", "circ", "leq", "geq", "neq", "approx", "equiv",
+                           "propto", "sim", "simeq", "cong", "ll", "gg", "infty", "partial", "nabla", "in", "notin",
+                           "subset", "supset", "subseteq", "supseteq", "cap", "cup", "wedge", "vee", "forall", "exists",
+                           "hbar", "ell", "Re", "Im", "aleph", "wp", "perp", "parallel", "angle", "prime", "surd",
+                           "oplus", "otimes", "oslash", "ominus", "odot", "dagger", "ddagger",
+                           "leftarrow", "rightarrow", "Leftarrow", "Rightarrow", "leftrightarrow", "Leftrightarrow",
+                           "uparrow", "downarrow", "Uparrow", "Downarrow", "sum", "int", "prod", "oint", "ldots", "cdots",
+                           "clubsuit", "diamondsuit", "heartsuit", "spadesuit"})
+      m[g] = std::string("\\") + g;
+    const char * capitals[][2] = {{"Alpha", "A"}, {"Beta", "B"}, {"Epsilon", "E"}, {"Zeta", "Z"}, {"Eta", "H"}, {"Iota", "I"},
+                                  {"Kappa", "K"}, {"Mu", "M"}, {"Nu", "N"}, {"Omicron", "O"}, {"Rho", "P"}, {"Tau", "T"},
+                                  {"Chi", "X"}};
+    for (const auto & c : capitals) m[c[0]] = std::string("\\mathrm{") + c[1] + "}";
+    m["omicron"] = "o";            m["varomega"] = "\\varpi";   m["varUpsilon"] = "\\Upsilon";
+    m["upoint"]  = "\\cdot";       m["3dots"]    = "\\ldots";   m["lt"] = "<";   m["gt"] = ">";
+    return m;
+    }();
+  return symbols;
+  }
+
+  //!
+  //! Translation of a text in ROOT syntax to LaTeX in text mode (see LatexRenderer::fromRoot()). Consecutive math
+  //! pieces are merged into one $...$ (two adjacent $ would start display math).
+  //!
+  class RootTranslator
+  {
+  public:
+  explicit RootTranslator(const std::string & text) : _s(text), _i(0) { }
+  std::string translate() { return text(false); }
+
+  private:
+  struct Output
+  {
+    std::string s;
+    bool math = false;   // s ends with a math piece
+    void add(const std::string & t) { s += t; if (!t.empty()) math = false; }
+    void addMath(const std::string & m) { if (math) s.pop_back(); else s += '$'; s += m + '$'; math = true; }
+  };
+
+  const std::string & _s;
+  std::size_t _i;
+
+  bool more() const { return _i < _s.size(); }
+
+  // text up to the end, or up to the '}' closing a group (consumed) if nested
+  std::string text(bool nested)
+  {
+  Output out;
+  while (more()) if (!token(out, nested)) break;
+  return out.s;
+  }
+
+  // argument of a command or a script: a group {...}, or a single character or command
+  std::string argument()
+  {
+  if (!more()) return "";
+  if (_s[_i] == '{') { _i++; return text(true); }
+  Output out;
+  token(out, false);
+  return out.s;
+  }
+
+  // text in a math argument
+  static std::string asText(const std::string & t) { return "\\text{" + t + "}"; }
+
+  // [...] after a command (e.g. #color[2]): its contents, or "" if there is none
+  std::string bracket()
+  {
+  if (!more() || _s[_i] != '[') return "";
+  std::size_t end = _s.find(']', _i);
+  if (end == std::string::npos) end = _s.size();
+  std::string contents = _s.substr(_i+1, end-_i-1);
+  _i = end < _s.size() ? end+1 : end;
+  return contents;
+  }
+
+  // one piece of text; false at the '}' closing a nested group
+  bool token(Output & out, bool nested)
+  {
+  char c = _s[_i];
+  if (c == '}')
+    {
+    _i++;
+    if (nested) return false;
+    out.add("\\}");                                   // unmatched
+    return true;
+    }
+  if (c == '{') { _i++; out.add("{" + text(true) + "}"); return true; }
+  if (c == '_' || c == '^')
+    {
+    _i++;
+    std::string m = std::string(1, c) + "{" + asText(argument()) + "}";
+    if (more() && (_s[_i] == '_' || _s[_i] == '^') && _s[_i] != c)   // both scripts: stacked
+      {
+      char d = _s[_i++];
+      m += std::string(1, d) + "{" + asText(argument()) + "}";
+      }
+    out.addMath(m);
+    return true;
+    }
+  if (c == '#') { _i++; command(out); return true; }
+  _i++;
+  switch (c)
+    {
+    case '%':  out.add("\\%"); break;
+    case '&':  out.add("\\&"); break;
+    case '$':  out.add("\\$"); break;
+    case '~':  out.add("\\textasciitilde{}"); break;
+    case '\\': out.add("\\textbackslash{}"); break;
+    case '<': case '>': case '|': out.addMath(std::string(1, c)); break;   // not in the text fonts of TeX
+    default:   out.add(std::string(1, c));
+    }
+  return true;
+  }
+
+  void command(Output & out)
+  {
+  if (!more()) { out.add("\\#"); return; }
+  char c = _s[_i];
+  if (c == '{' || c == '}' || c == '#') { _i++; out.add(std::string("\\") + c); return; }
+  if (c == '[' || c == ']')             { _i++; out.add(std::string(1, c)); return; }
+  if (c == '|' && _i+1 < _s.size() && _s[_i+1] == '|') { _i += 2; out.addMath("\\|"); return; }
+  std::string name;
+  while (more() && std::isalnum((unsigned char)_s[_i])) name += _s[_i++];
+  if (name.empty()) { out.add("\\#"); return; }
+  const auto & symbols = rootSymbols();
+  auto symbol = symbols.find(name);
+  if (symbol != symbols.end()) { out.addMath(symbol->second); return; }
+  if (name == "frac")
+    {
+    std::string a = argument(), b = argument();
+    out.addMath("\\frac{" + asText(a) + "}{" + asText(b) + "}");
+    }
+  else if (name == "sqrt")
+    {
+    std::string n = bracket();
+    std::string a = argument();
+    out.addMath("\\sqrt" + (n.empty() ? std::string() : "[" + asText(RootTranslator(n).translate()) + "]") + "{" + asText(a) + "}");
+    }
+  else if (name == "bar" || name == "hat" || name == "tilde" || name == "vec" || name == "dot" || name == "ddot"
+           || name == "check" || name == "acute" || name == "grave")
+    out.addMath("\\" + name + "{" + asText(argument()) + "}");
+  else if (name == "it")        out.add("\\textit{" + argument() + "}");
+  else if (name == "bf")        out.add("\\textbf{" + argument() + "}");
+  else if (name == "splitline")
+    {
+    std::string a = argument(), b = argument();
+    out.add("\\shortstack[l]{" + a + "\\\\" + b + "}");
+    }
+  else if (name == "color" || name == "font" || name == "kern" || name == "lower" || name == "scale")
+    {
+    bracket();
+    out.add("{" + argument() + "}");
+    }
+  else if (name == "left" || name == "right") { }     // the delimiter that follows is drawn as is
+  else if (name == "AA")          out.add("\\AA{}");
+  else if (name == "aa")          out.add("\\aa{}");
+  else if (name == "ocopyright")  out.add("\\copyright{}");
+  else if (name == "oright")      out.add("\\textregistered{}");
+  else if (name == "trademark")   out.add("\\texttrademark{}");
+  else if (name == "doublequote") out.add("\"");
+  else                            out.add("\\#" + name);   // unknown: shown as written
+  }
+  };
   } // namespace
 
   LatexRenderer & LatexRenderer::instance()
@@ -90,6 +277,7 @@ namespace CAP
   LatexRenderer::LatexRenderer()
   :
   _enabled(true),
+  _rootSyntax(true),
   _binDirectory(),
   _latex(),
   _dvisvgm(),
@@ -130,8 +318,23 @@ namespace CAP
   LatexRenderer::TextKind LatexRenderer::kind(const String & text)
   {
   if (text.contains('$') || text.contains('\\')) return kLatex;
-  if (text.contains('#')) return kRoot;
+  if (text.contains('#') || text.contains("_{") || text.contains("^{")) return kRoot;
   return kPlain;
+  }
+
+  String LatexRenderer::fromRoot(const String & text)
+  {
+  return String(RootTranslator(text.str()).translate());
+  }
+
+  String LatexRenderer::source(const String & text) const
+  {
+  switch (kind(text))
+    {
+    case kLatex: return text;
+    case kRoot:  return _rootSyntax ? fromRoot(text) : String();
+    default:     return String();
+    }
   }
 
   String LatexRenderer::plainText(const String & text)
@@ -161,7 +364,7 @@ namespace CAP
 
   std::string LatexRenderer::document(const String & preamble, const std::vector<String> & texts)
   {
-  std::string d = "\\documentclass[10pt]{article}\n";
+  std::string d = "\\documentclass[10pt]{article}\n\\usepackage{amsmath}\n";
   d += preamble.str();
   d += "\n\\usepackage[active,tightpage]{preview}\n\\begin{document}\n";
   for (const auto & text : texts)
@@ -176,7 +379,7 @@ namespace CAP
 
   int LatexRenderer::firstLine(const String & preamble)
   {
-  return 6 + preamble.countChar('\n');   // documentclass, preamble, preview, document, begin{preview}
+  return 7 + preamble.countChar('\n');   // documentclass, amsmath, preamble, preview, document, begin{preview}
   }
 
   std::uint64_t LatexRenderer::key(const String & preamble, const String & text)
@@ -273,9 +476,10 @@ namespace CAP
 
   const LatexImage * LatexRenderer::cached(const String & text)
   {
-  if (kind(text) != kLatex || !enabled()) return nullptr;
+  String latex = source(text);
+  if (latex.isNull() || !enabled()) return nullptr;
   std::lock_guard<std::recursive_mutex> lock(_mutex);
-  std::uint64_t k = key(_preamble, text);
+  std::uint64_t k = key(_preamble, latex);
   auto found = _images.find(k);
   if (found != _images.end()) return &found->second;
   String path = cachePath(k);
@@ -287,11 +491,12 @@ namespace CAP
 
   const LatexImage * LatexRenderer::image(const String & text)
   {
-  if (kind(text) != kLatex || !enabled()) return nullptr;
-  const LatexImage * image = cached(text);
+  String latex = source(text);
+  if (latex.isNull() || !enabled()) return nullptr;
+  const LatexImage * image = cached(latex);
   if (image) return image;
-  typeset({text});
-  return cached(text);
+  typeset({latex});
+  return cached(latex);
   }
 
   void LatexRenderer::prepare(const std::vector<String> & texts)
@@ -300,10 +505,11 @@ namespace CAP
   std::vector<String> missing;
   for (const auto & text : texts)
     {
-    if (kind(text) != kLatex || cached(text)) continue;
+    String latex = source(text);
+    if (latex.isNull() || cached(latex)) continue;
     bool seen = false;
-    for (const auto & m : missing) if (m.equalTo(text)) { seen = true; break; }
-    if (!seen) missing.push_back(text);
+    for (const auto & m : missing) if (m.equalTo(latex)) { seen = true; break; }
+    if (!seen) missing.push_back(latex);
     }
   if (!missing.empty()) typeset(missing);
   }
@@ -428,8 +634,9 @@ namespace CAP
       int nPages = 0;
       if (FileSystem::isFile(dvi))
         {
-        run({_dvisvgm, "--no-fonts=1", "--exact-bbox", "--page=1-", "-o", FileSystem::join(dir, "p%p.svg").str(), dvi.str()});
-        while (FileSystem::isFile(FileSystem::join(dir, String("p" + std::to_string(nPages+1) + ".svg")))) nPages++;
+        // pages named with 6 digits: with %p, dvisvgm pads the numbers to the number of digits of the page count
+        run({_dvisvgm, "--no-fonts=1", "--exact-bbox", "--page=1-", "-o", FileSystem::join(dir, "p%6p.svg").str(), dvi.str()});
+        while (FileSystem::isFile(FileSystem::join(dir, pageName(nPages+1)))) nPages++;
         }
       if ((nPages != int(valid.size()) || otherError) && valid.size() > 1 && !preambleError)
         {
@@ -446,7 +653,7 @@ namespace CAP
         else if (preambleError)               image.error = "Error in the preamble: " + firstMessage.str();
         else if (otherError)                  image.error = firstMessage.isNull() ? String("LaTeX error") : firstMessage;
         else if (int(j) >= nPages)            image.error = FileSystem::isFile(dvi) ? "dvisvgm failed" : "LaTeX produced no output";
-        else if (!readFile(FileSystem::join(dir, String("p" + std::to_string(j+1) + ".svg")), svg) || !parseSvg(svg, image))
+        else if (!readFile(FileSystem::join(dir, pageName(int(j)+1)), svg) || !parseSvg(svg, image))
           image.error = "Cannot read the SVG written by dvisvgm";
         if (image.ok)
           {
@@ -477,11 +684,12 @@ namespace CAP
 
   const LatexImage * LatexRenderer::imageLater(const String & text)
   {
-  if (kind(text) != kLatex || !enabled()) return nullptr;
+  String latex = source(text);
+  if (latex.isNull() || !enabled()) return nullptr;
   std::uint64_t k;
   {
   std::lock_guard<std::recursive_mutex> lock(_mutex);
-  k = key(_preamble, text);
+  k = key(_preamble, latex);
   auto found = _images.find(k);
   if (found != _images.end()) return &found->second;
   }
@@ -489,12 +697,12 @@ namespace CAP
   std::lock_guard<std::mutex> lock(_queueMutex);
   if (_queued.count(k)) return nullptr;                  // already on its way
   }
-  const LatexImage * image = cached(text);              // on disk
+  const LatexImage * image = cached(latex);             // on disk
   if (image) return image;
   {
   std::lock_guard<std::mutex> lock(_queueMutex);
   if (_stopping || !_queued.insert(k).second) return nullptr;
-  _queue.emplace_back(k, text);
+  _queue.emplace_back(k, latex);
   if (!_worker.joinable()) _worker = std::thread(&LatexRenderer::work, this);
   }
   _queueCondition.notify_one();

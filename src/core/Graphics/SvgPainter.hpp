@@ -58,7 +58,7 @@ namespace CAP
   virtual void drawPolygon(const std::vector<Point2D> & points, const FillAttributes & fill, const LineAttributes & line);
   //! @brief One marker, as SVG shapes (see Painter::drawMarker()).
   virtual void drawMarker(const Point2D & position, const MarkerAttributes & marker);
-  //! @brief Text (see Painter::drawText()): the paths typeset by LaTeX for a text with '$' or '\' (see LatexRenderer),
+  //! @brief Text (see Painter::drawText()): the paths typeset by LaTeX for a LaTeX or ROOT-syntax text (see LatexRenderer),
   //! otherwise an SVG text with the family, weight and style of its ROOT font code.
   virtual void drawText(const Point2D & position, const String & text, const TextAttributes & attributes, float angle=0.0);
 
