@@ -52,6 +52,8 @@ namespace CAP
   _gridColumns(1),
   _dockBeside(),
   _closeRequests(),
+  _dataPanes(),
+  _dataCounter(0),
   _addRequested(false),
   _focusedPane(-1),
   _focusRequested(false)
@@ -236,6 +238,17 @@ namespace CAP
   CanvasPane & pane = newPane();
   _dockBeside.push_back(std::make_pair(pane.name().str(), beside));
   setCurrentPane(nPanes() - 1);
+  return pane;
+  }
+
+  DataPane & CapGui::addDataPane()
+  {
+  char name[32];
+  std::snprintf(name, sizeof(name), "Data %d", ++_dataCounter);
+  _dataPanes.emplace_back(new DataPane(name));
+  DataPane & pane = *_dataPanes.back();
+  std::string beside = _panes.empty() ? std::string() : currentPane().name().str();
+  _dockBeside.push_back(std::make_pair(std::string("###") + name, beside));
   return pane;
   }
 
@@ -482,6 +495,20 @@ namespace CAP
     }
   _focusRequested = false;
   _hoverText = hoverText;
+
+  // data panes: tables of data points, closed with the x of their tab
+  for (std::size_t k=0; k<_dataPanes.size(); )
+    {
+    DataPane & pane = *_dataPanes[k];
+    bool open = true;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6, 6));
+    bool visible = ImGui::Begin(pane.windowTitle().data(), &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar);
+    ImGui::PopStyleVar();
+    if (visible) pane.render();
+    ImGui::End();
+    if (open) k++;
+    else _dataPanes.erase(_dataPanes.begin() + k);
+    }
   if (areaX1 > areaX0) { _areaX = areaX0; _areaY = areaY0; _areaWidth = areaX1 - areaX0; _areaHeight = areaY1 - areaY0; }
 
   // panes added (+ button) or closed (x of their tab) by the user

@@ -17,6 +17,7 @@ namespace CAP
   beforeChange(),
   onDrop(),
   onAddPane(),
+  onShowData(),
   _name(name),
   _canvas(name, name),
   _mode(kAdd),
@@ -140,6 +141,20 @@ namespace CAP
       if (label.isNull()) label = "(unnamed)";
       label += "...##"; label += int(k);
       if (ImGui::MenuItem(label.data())) { pick.part = Graph::kDataPoint; pick.item = int(k); pick.index = -1; edit(_contextGraph, pick); }
+      }
+    ImGui::EndMenu();
+    }
+  bool hasData = false;
+  for (const auto & item : graph.items()) if (item.kind() == GraphItem::kData && item.data()) hasData = true;
+  if (ImGui::BeginMenu("Show Data", hasData && onShowData))
+    {
+    for (size_t k=0; k<graph.items().size(); k++)
+      {
+      const GraphItem & item = graph.items()[k];
+      if (item.kind() != GraphItem::kData || !item.data()) continue;
+      String label = item.label().isNull() ? String("(unnamed)") : item.label();
+      String entry = label + String("##data") + String(std::to_string(k));
+      if (ImGui::MenuItem(entry.data())) onShowData(item.data(), label);
       }
     ImGui::EndMenu();
     }

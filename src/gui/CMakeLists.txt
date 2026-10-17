@@ -56,6 +56,7 @@ add_executable(CapGui
   CapApp.cpp
   CapGui.cpp
   CanvasPane.cpp
+  DataPane.cpp
   FileBrowser.cpp
   FileDialog.cpp
   GraphEditor.cpp

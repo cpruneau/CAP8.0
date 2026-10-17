@@ -213,6 +213,7 @@ namespace CAP
   browser.setFiles(&_files);
   browser.onOpenFile   = [this](const String & path) { return openFile(path); };
   browser.onShowObject = [this](const ObjectReference & object) { showObject(object); };
+  browser.onShowData   = [this](const ObjectReference & object) { showData(object); };
   browser.onShowFolder = [this](int file, const String & folder) { showFolder(file, folder); };
   browser.onCloseFile  = [this](int file) { closeFile(file); };
   browser.onReloadFile = [this](int file) { reloadFile(file); };
@@ -244,6 +245,7 @@ namespace CAP
   pane.setMode(_configuration.mode == "replace" ? CanvasPane::kReplace : CanvasPane::kAdd);
   pane.beforeChange = [this]() { recordUndo(); };
   pane.onDrop = [this, &pane](int graph, const ObjectReference & object) { showObject(pane, graph, object); };
+  pane.onShowData = [this](const MATH::DataPoints * data, const String & label) { showDataTable(data, label); };
   }
 
   // ------------------------------------------------------------------------------------------------ menus
@@ -587,12 +589,45 @@ namespace CAP
           break;
           }
         }
+  // the data panes showing objects of the old version show those of the new one
+  for (int k=0; k<_gui.nDataPanes(); k++)
+    {
+    DataPane & pane = _gui.dataPane(k);
+    for (const auto & path : paths)
+      {
+      if (!old->isLoaded(path) || old->get<MATH::DataPoints>(path) != pane.data()) continue;
+      try { if (const MATH::DataPoints * d = fresh->get<MATH::DataPoints>(path)) pane.setData(d, pane.label()); }
+      catch (const std::exception &) { }
+      break;
+      }
+    }
   BrowserFile retired = *entry;
   _closedFiles.push_back(retired);
   entry->file = fresh;
   char text[64];
   std::snprintf(text, sizeof(text), " (%d graph item(s) updated)", updated);
   _gui.setStatus(String("Reloaded ") + entry->path + String(text));
+  }
+
+  bool CapApp::showData(const ObjectReference & object)
+  {
+  BrowserFile * entry = file(object.file);
+  if (!entry || !entry->file) { _gui.setStatus("That file is no longer open"); return false; }
+  const MATH::DataPoints * data = nullptr;
+  try { data = entry->file->get<MATH::DataPoints>(object.path); }   // read now if the file was opened lazily
+  catch (const std::exception & e) { _gui.setStatus(object.path + String(": cannot be read: ") + String(e.what())); return false; }
+  if (!data) { _gui.setStatus(object.path + String(": has no values to show as a table")); return false; }
+  showDataTable(data, data->name().isNull() ? object.path : data->name());
+  return true;
+  }
+
+  void CapApp::showDataTable(const MATH::DataPoints * data, const String & label)
+  {
+  if (!data) return;
+  _gui.addDataPane().setData(data, label);
+  char text[64];
+  std::snprintf(text, sizeof(text), ": %u rows", data->size());
+  _gui.setStatus(String("Data table of ") + label + String(text));
   }
 
   bool CapApp::showObject(const ObjectReference & object)

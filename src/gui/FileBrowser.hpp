@@ -83,6 +83,7 @@ namespace CAP
   //! @{
   std::function<int(const String & path)>                      onOpenFile;    //!< open a CAP file: id, or -1
   std::function<void(const ObjectReference & object)>          onShowObject;  //!< show an object
+  std::function<void(const ObjectReference & object)>          onShowData;    //!< show the values of an object as a table
   std::function<void(int file, const String & folderPath)>     onShowFolder;  //!< show all the objects of a folder
   std::function<void(int file)>                                onCloseFile;   //!< close a file
   std::function<void(int file)>                                onReloadFile;  //!< read a file again

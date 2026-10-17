@@ -74,6 +74,8 @@ namespace CAP
   std::function<void(int graph, const ObjectReference & object)> onDrop;
   //! Called by the + button of the toolbar (new canvas pane).
   std::function<void()> onAddPane;
+  //! Called to show the values of data points shown in a graph as a table (graph menu, Show Data).
+  std::function<void(const MATH::DataPoints * data, const String & label)> onShowData;
 
   protected:
 

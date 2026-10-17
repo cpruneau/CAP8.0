@@ -103,6 +103,11 @@ namespace CAP
   //! @brief Show an object in a given graph of a pane. @param pane pane @param graph graph index @param object reference
   //! @return false if it cannot be shown
   bool showObject(CanvasPane & pane, int graph, const ObjectReference & object);
+  //! @brief Show the values of an object of an open file in a new data pane. @param object reference
+  //! @return false if it cannot be shown
+  bool showData(const ObjectReference & object);
+  //! @brief Show the values of data points in a new data pane. @param data data points @param label name shown
+  void showDataTable(const MATH::DataPoints * data, const String & label);
   //! @brief Show the objects of a folder, one per graph of the current canvas (divided as needed).
   //! @param file file id @param folderPath folder in the file ("" for the top)
   void showFolder(int file, const String & folderPath);

@@ -7,6 +7,7 @@
 #include "String.hpp"
 #include "MenuBar.hpp"
 #include "CanvasPane.hpp"
+#include "DataPane.hpp"
 #include "FileDialog.hpp"
 #include "FileBrowser.hpp"
 
@@ -40,6 +41,9 @@ namespace CAP
 
   //!
   //! @brief Main window of the CAP graphical interface: menu bar, canvas panes, file browser, status bar.
+  //!
+  //! Data panes (addDataPane()) show data points as tables; they are docked beside the canvases and closed the same
+  //! way, but are not part of the canvas layout.
   //!
   //! The canvas panes are docked windows, first arranged in a grid of n x m (setLayout()): the borders between them
   //! can be dragged to resize them, a pane can be dragged elsewhere (by its tab), added (addPane(), or the + button of
@@ -105,6 +109,10 @@ namespace CAP
   void setCurrentPane(int k) { if (k >= 0 && k < nPanes()) { _currentPane = k; _focusRequested = true; } }
   void setShowToolbars(bool v);
   bool showToolbars() const { return _settings.toolbars; }
+  //! @brief Add a data pane (a table of data points), docked beside the current canvas pane. @return the new pane
+  DataPane & addDataPane();
+  int  nDataPanes() const { return (int)_dataPanes.size(); }
+  DataPane & dataPane(int k) { return *_dataPanes.at(k); }
   //! Called for each new pane (to set its graphs and undo hook).
   std::function<void(CanvasPane &)> onNewPane;
   //! Called before a pane is added or closed by the user (undo).
@@ -160,6 +168,8 @@ namespace CAP
   int    _gridColumns;       //!< columns of the grid in which the panes are laid out by the next layout
   std::vector<std::pair<std::string,std::string>> _dockBeside;   //!< (added pane, pane beside which it is docked)
   std::vector<int> _closeRequests;   //!< panes closed by the user during the frame
+  std::vector<std::unique_ptr<DataPane>> _dataPanes;   //!< data panes (not part of the canvas layout)
+  int    _dataCounter;       //!< for the names of the data panes
   bool   _addRequested;      //!< the + button of a toolbar was clicked
   int    _focusedPane;       //!< pane whose window had the focus at the last frame
   bool   _focusRequested;    //!< give the focus to the current pane (changed by the program)

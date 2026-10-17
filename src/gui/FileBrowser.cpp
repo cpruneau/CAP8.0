@@ -440,6 +440,13 @@ namespace CAP
       _selected.path = String(path);
       onShowObject(_selected);
       }
+    if (ImGui::MenuItem("Show Data Table", nullptr, false, showable) && onShowData)
+      {
+      ObjectReference reference;
+      reference.file = fileId;
+      reference.path = String(path);
+      onShowData(reference);
+      }
     ImGui::EndPopup();
     }
   ImGui::SameLine();
