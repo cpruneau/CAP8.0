@@ -44,7 +44,7 @@ namespace CAP
   bool   logY         = false;
   String mode         = "add";
   String directory;
-  std::vector<String> extensions{".cap", ".root", ".xml"};
+  std::vector<String> extensions{".cap"};   //!< types listed by the Open dialog (only those CapGui can open are used)
   bool   demo         = true;
 
   //! @brief Read a configuration file (missing values keep their defaults). @param fileName file

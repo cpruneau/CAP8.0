@@ -176,17 +176,7 @@ namespace CAP
 
   String CapFile::makeFileName(const String & path, const String & name)
   {
-  String fileName;
-  if (name.beginsWith("/") || path.length()==0)
-    fileName = name;
-  else
-    {
-    fileName = path;
-    if (!fileName.endsWith("/")) fileName += "/";
-    fileName += name;
-    }
-  if (!fileName.endsWith(".cap")) fileName += ".cap";
-  return fileName;
+  return FileSystem::join(path,name,".cap");
   }
 
   CapFile * CapFile::openCapFile(const String & path, const String & name, const String & ioOption, bool verbose)

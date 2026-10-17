@@ -298,8 +298,8 @@ namespace CAP
     if (!l.error.empty()) ImGui::TextDisabled("%s", l.error.c_str());
     else if (l.directories.empty() && l.files.empty()) ImGui::TextDisabled("(no CAP files)");
     Listing copy = l;                                   // the cache may change while rendering the children
-    for (const auto & d : copy.directories) renderDirectory(directory + "/" + d, d, false);
-    for (const auto & f : copy.files)       renderCapFileInTree(directory + "/" + f, f);
+    for (const auto & d : copy.directories) renderDirectory(FileSystem::join(String(directory), String(d)).str(), d, false);
+    for (const auto & f : copy.files)       renderCapFileInTree(FileSystem::join(String(directory), String(f)).str(), f);
     ImGui::TreePop();
     }
   ImGui::PopID();

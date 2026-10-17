@@ -1,4 +1,5 @@
 #include "Therminator3.hpp"
+#include "FileSystem.hpp"
 #include <memory>
 #include "PrintHelpers.hpp"
 #include "ModelHadronGas.hpp"
@@ -202,37 +203,9 @@ namespace CAP
   _exportBaseName = configuration.valueString(createKey(taskName,typeName,"EXPORT:BASE_NAME"));
   exportPathA    = configuration.valueString(createKey(taskName,typeName,"EXPORT:PATH"));
   _forceRewrite   = configuration.valueBool(  createKey(taskName,typeName,"EXPORT:FORCE_REWRITE"));
-  EnvironmentVariables * envVariables = EnvironmentVariables::environmentVariables();
-  String basePath;
-
-  if (importPathA.equalTo("DEFAULT"))
-    {
-    _importPath = envVariables->variable("CAP_HISTOS_IMPORT_PATH");
-    }
-  else if (importPathA.beginsWith("/") || exportPathA.beginsWith("./"))
-    {
-    _importPath = importPathA;
-    }
-  else
-    {
-    _importPath = envVariables->variable("CAP_HISTOS_IMPORT_PATH");
-    _importPath += "/";
-    _importPath += importPathA;
-    }
-  if (exportPathA.equalTo("DEFAULT"))
-    {
-    _exportPath = envVariables->variable("CAP_HISTOS_EXPORT_PATH");
-    }
-  else if (exportPathA.beginsWith("/") || exportPathA.beginsWith("./"))
-    {
-    _exportPath = exportPathA;
-    }
-  else
-    {
-    _exportPath = envVariables->variable("CAP_HISTOS_IMPORT_PATH");
-    _exportPath += "/";
-    _exportPath += exportPathA;
-    }
+  // "DEFAULT", absolute, "./..." or relative to $CAP_HISTOS_IMPORT_PATH / $CAP_HISTOS_EXPORT_PATH
+  _importPath = FileSystem::configuredPath(importPathA,"CAP_HISTOS_IMPORT_PATH");
+  _exportPath = FileSystem::configuredPath(exportPathA,"CAP_HISTOS_EXPORT_PATH");
   _histograms.configure(taskName,"HISTOGRAM",configuration,0);
   }
 

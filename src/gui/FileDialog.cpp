@@ -103,8 +103,7 @@ namespace CAP
   ImGui::SameLine();
   if (ImGui::Button("Home"))
     {
-    const char * home = std::getenv("HOME");
-    if (home) enter(home);
+    if (!FileSystem::home().isNull()) enter(FileSystem::home().str());
     }
   ImGui::SameLine();
   ImGui::SetNextItemWidth(-130);

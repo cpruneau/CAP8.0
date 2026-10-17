@@ -10,6 +10,7 @@
  *
  * *********************************************************************/
 #include "HistogramFolder.hpp"
+#include "FileSystem.hpp"
 #include "SubSampleStatCalculator.hpp"
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
@@ -116,7 +117,7 @@ namespace CAP
   _totalEventAccepted.initialize("EventAccepted",0);
   for (auto & name : directories)
     {
-    String path = _importPath; path += "/"; path += name;
+    String path = FileSystem::join(_importPath,name);
     if (reportDebug(__FUNCTION__))
       {
       printCR();

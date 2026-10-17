@@ -1,6 +1,7 @@
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 #include "RootFileHelpers.hpp"
+#include "FileSystem.hpp"
 #include "MathConstants.hpp"
 #include "MathBasicFunctions.hpp"
 #include "TROOT.h"
@@ -21,17 +22,7 @@ TFile * openRootFile(const String & path,
                      const String & ioOption,
                      bool verbose)
 {
-  String fileName;
-  if (name.beginsWith("/"))
-    fileName = name;
-  else
-    {
-    String filePath = path;
-    if (filePath.length()>0 && !filePath.endsWith("/")) filePath += "/";
-    fileName = filePath;
-    fileName += name;
-    }
-  if (!fileName.endsWith(".root")) fileName += ".root";
+  String fileName = FileSystem::join(path,name,".root");
   if (verbose)
     {
     printCR();
@@ -156,24 +147,37 @@ std::vector<TFile*> openRootFiles(const String & path,
 std::vector<String> listDirsIn(const String & pathname,
                                 bool verbose)
 {
-  String directoryName = pathname;
-  std::vector<String>  subdirectories;
-  if (!directoryName.endsWith("/")) directoryName += "/";
   if (verbose) printValue("listDirsIn() Search path",pathname);
-  TSystemDirectory topDirectory(directoryName, directoryName);
-  TList *files = topDirectory.GetListOfFiles();
-  if (!files) throw FileException("TList* is a nullpointer","File not found/opened",__FUNCTION__);
-  TSystemFile *file;
-  String fname;
-  TIter next(files);
-  while ((file=(TSystemFile*) next()) )
-    {
-    fname = file->GetName();
-    if (file->IsDirectory()   &&  !fname.beginsWith(".")  ) subdirectories.push_back(fname);
-    }
+  FileSystem::ListOptions options;
+  options.files = false;
+  options.order = FileSystem::ListOptions::kName;
+  std::vector<String> subdirectories;
+  for (const auto & entry : FileSystem::list(pathname,options)) subdirectories.push_back(entry.name);
   return subdirectories;
 }
 
+namespace
+{
+//! Files of directory whose names end with ext (sorted by name), then those of its sub-directories down to
+//! maximumDepth; names relative to top, or full paths.
+void collectFiles(const String & top, const String & directory, const String & ext, bool prependPath,
+                  int maximumDepth, int depth, std::vector<String> & fileNames)
+{
+  FileSystem::ListOptions options;
+  options.order = FileSystem::ListOptions::kName;
+  std::vector<String> subdirectories;
+  std::size_t prefix = top.length() + (top.endsWith("/") ? 0 : 1);
+  for (const auto & entry : FileSystem::list(directory,options))
+    {
+    if (entry.isDirectory()) { subdirectories.push_back(entry.path); continue; }
+    if (!entry.name.endsWith(ext)) continue;
+    fileNames.push_back(prependPath ? entry.path : entry.path.subString(int(prefix)));
+    }
+  if (depth+1 > maximumDepth) return;
+  for (const auto & subdirectory : subdirectories)
+    collectFiles(top,subdirectory,ext,prependPath,maximumDepth,depth+1,fileNames);
+}
+} // namespace
 
 std::vector<String> listFilesInDir(const String & pathname,
                                    const String & ext,
@@ -182,59 +186,15 @@ std::vector<String> listFilesInDir(const String & pathname,
                                    int  maximumDepth,
                                    int  currentDepth)
 {
-  String dirname = pathname;
-  int depth = currentDepth;
-  if (!dirname.endsWith("/")) dirname += "/";
   if (verbose)
     {
     printCR();
     printString("listFilesInDir() Searching files");
     printValue("listFilesInDir() MaximumDepth:",maximumDepth);
-    printValue("listFilesInDir() CurrentDepth:",depth);
+    printValue("listFilesInDir() CurrentDepth:",currentDepth);
     }
-  TSystemDirectory dir(dirname, dirname);
-  TList *files = dir.GetListOfFiles();
-  std::vector<String>  fileNames;
-  std::vector<String>  subdirs;
-  if (!files) throw FileException("Null TList","No files found", __FUNCTION__);
-  TSystemFile *file;
-  String fname;
-  TIter next(files);
-  while ((file=(TSystemFile*)next()))
-    {
-    fname = file->GetName();
-    if (file->IsDirectory()  &&  !fname.beginsWith(".") )
-      {
-      subdirs.push_back(fname);
-      }
-    else if (fname.endsWith(ext))
-      {
-      if (prependPath)
-        fileNames.push_back(dirname+fname);
-      else
-        fileNames.push_back(fname);
-      //std::cout << fname.data() << std::endl;
-      //if (verbose) std::cout << fname << std::endl;
-      }
-    }
-
-  int nSubdirs = subdirs.size();
-  ++depth;
-  if (nSubdirs>0  &&  depth<=maximumDepth)
-    {
-    for (int iDir=0; iDir<nSubdirs; iDir++)
-      {
-      std::vector<String> additionalFiles;
-      String  subdirname = dirname;
-      subdirname += "/";
-      subdirname += subdirs[iDir];
-      subdirname += "/";
-      additionalFiles = listFilesInDir(subdirname,ext,prependPath,verbose,maximumDepth,depth);
-      int nAdditionalfiles = additionalFiles.size();
-      for (int iFile=0;iFile<nAdditionalfiles;iFile++)
-        fileNames.push_back(additionalFiles[iFile]);
-      }
-    }
+  std::vector<String> fileNames;
+  collectFiles(pathname,pathname,ext,prependPath,maximumDepth,currentDepth,fileNames);
   if (verbose)
     {
     printCR();
@@ -244,13 +204,13 @@ std::vector<String> listFilesInDir(const String & pathname,
       String s = "File "; s += k;
       printValue(s,fileNames[k]);
       }
-    printString("Returning up one level.... ");
     }
   return fileNames;
 }
 
 //!
-//! Get file  names at the given location that match all  patterns in includePatterns and exclude patterns in excludePatterns
+//! Get file names at the given location that contain all the patterns in includePatterns and none of those in
+//! excludePatterns
 //!
 std::vector<String>  listFilesInDir(const String & pathName,
                                     const std::vector<String> & includePatterns,
@@ -258,40 +218,24 @@ std::vector<String>  listFilesInDir(const String & pathName,
                                     bool prependPath,
                                     bool verbose,
                                     int  maximumDepth,
-                                    int  currentDepth)
+                                    int  currentDepth,
+                                    const String & ext)
 {
   std::vector<String> outputList;
-  std::vector<String> fileList = listFilesInDir(pathName,".cap",prependPath,verbose,maximumDepth,currentDepth);
-  unsigned int nNames = fileList.size();
+  std::vector<String> fileList = listFilesInDir(pathName,ext,prependPath,verbose,maximumDepth,currentDepth);
   if (verbose)
     {
     printCR();
-    printValue("nNames",nNames);
+    printValue("nNames",fileList.size());
     printValue("nIncludes",includePatterns.size());
     printValue("nExcludes",excludePatterns.size());
     }
-
-  for (auto & name : fileList)
+  for (const auto & name : fileList)
     {
     bool include = true;
-    for (auto & pattern : includePatterns)
-      if (!name.contains(pattern)) { include = false; break;}
-    if (!include) continue;
-    for (auto & pattern : excludePatterns)
-      if (!name.contains(pattern)) { include = false; break;}
-    if (include)
-      {
-      if (name.contains(".root"))
-        {
-        int dot = name.first('.');
-        int len = name.length();
-        if (dot==len-5 )
-          name.remove(dot,len-dot);
-        }
-      //String check = pathName+name;
-      //std::cout << " CHECK:::: " << check << std::endl;
-      outputList.push_back(name);
-      }
+    for (const auto & pattern : includePatterns) if (!name.contains(pattern)) { include = false; break; }
+    for (const auto & pattern : excludePatterns) if (include && name.contains(pattern)) { include = false; break; }
+    if (include) outputList.push_back(name);
     }
   return outputList;
 }
@@ -419,10 +363,7 @@ String makeFileName(const String & inputPath,
                          const String & fileName,
                          const String & extension)
 {
-  String inputFileName = inputPath;
-  // make sure that if an inputPath is given, it ends with '/'
-  if (inputFileName.length()>0 && !inputFileName.endsWith("/")) inputFileName += "/";
-  inputFileName += fileName;
+  String inputFileName = FileSystem::join(inputPath,fileName);   // an absolute fileName is used as it is
   if (!inputFileName.endsWith(extension)) inputFileName += extension;
   return inputFileName;
 }
@@ -435,7 +376,7 @@ void createDirectory(const String path,
     printCR();
     printValue("createDirectory(const String path) Creating directory (if non-existing)",path);
     }
-  gSystem->mkdir(path,1);
+  FileSystem::createDirectory(path,true);
 }
 
 String substitute(const String & inputString,

@@ -47,6 +47,7 @@
 #pragma link C++ function CAP::FileSystem::home;
 #pragma link C++ function CAP::FileSystem::current;
 #pragma link C++ function CAP::FileSystem::resolve;
+#pragma link C++ function CAP::FileSystem::configuredPath;
 #pragma link C++ function CAP::FileSystem::firstExisting;
 #pragma link C++ function CAP::FileSystem::list;
 #pragma link C++ function CAP::FileSystem::glob;

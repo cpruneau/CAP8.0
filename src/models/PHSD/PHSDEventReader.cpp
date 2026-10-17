@@ -9,8 +9,10 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
+#include <cstdlib>
 #include "PHSDEventReader.hpp"
 #include "StreamHelpers.hpp"
+#include "RootFileHelpers.hpp"
 #include "Exceptions.hpp"
 #include "NameHelpers.hpp"
 #include "Histogram.hpp"
@@ -105,21 +107,26 @@ void PHSDEventReader::execute()
 
 }
 
+void PHSDEventReader::setDefaultConfiguration()
+{
+  EventProcessor::setDefaultConfiguration();
+  String taskName = name();
+  const char * importPath = std::getenv("CAP_DATA_IMPORT_PATH");
+  _configuration.addProperty(createKey(taskName,"DataImportPath"), String(importPath ? importPath : ""));
+}
+
 void PHSDEventReader::initialize()
 {
   EventProcessor::initialize();
   currentFileIndex = 0;
-  inputPath = "/Volumes/ClaudeDisc5/PHSD/";
-//  inputFileNames.push_back(String("out0.dat"));
-//  inputFileNames.push_back(String("out0.dat"));
+  // the .dat files of the input directory and of its sub-directories (one level), with their paths
+  inputPath = _configuration.valueString(createKey(name(),"DataImportPath"));
+  if (inputPath.isNull())
+    throw ConfigurationException(createKey(name(),"DataImportPath"),"Directory of the PHSD event files not set",__FUNCTION__);
   inputFileName = "";
-
-  inputFileNames =  listFilesInDir(inputPath,".dat","",1,1,0);
-//                 const String & ext,
-//                 bool prependPath,
-//                 bool verbose,
-//                 int  maximumDepth,
-//                 int  currentDepth)
+  bool prependPath = true, verbose = true;
+  int  maximumDepth = 1, currentDepth = 0;
+  inputFileNames = listFilesInDir(inputPath,".dat",prependPath,verbose,maximumDepth,currentDepth);
   unsigned int  n = inputFileNames.size();
   printValue("inputFileNames.size()",n);
   for (unsigned int k = 0; k<n; k++)

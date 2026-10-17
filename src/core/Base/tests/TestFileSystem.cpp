@@ -174,6 +174,13 @@ int main()
   CHECK_EQUAL(FS::resolve("./x", "CAP_TEST_DIR"), FS::join(FS::current(), "x"));
   CHECK_EQUAL(FS::resolve("$CAP_TEST_DIR/y", "CAP_TEST_UNDEFINED"), "/test/dir/y");
   CHECK_THROWS(FS::resolve("sub/x", "CAP_TEST_UNDEFINED"));
+  CHECK_EQUAL(FS::configuredPath("DEFAULT", "CAP_TEST_DIR"), "/test/dir");
+  CHECK_EQUAL(FS::configuredPath("", "CAP_TEST_DIR"), "/test/dir");
+  CHECK_EQUAL(FS::configuredPath("sub/x", "CAP_TEST_DIR"), "/test/dir/sub/x");
+  CHECK_EQUAL(FS::configuredPath("/abs/x", "CAP_TEST_DIR"), "/abs/x");
+  CHECK_EQUAL(FS::configuredPath("./x", "CAP_TEST_DIR"), FS::join(FS::current(), "x"));
+  CHECK_EQUAL(FS::configuredPath("DEFAULT", "CAP_TEST_UNDEFINED"), "");            // never throws
+  CHECK_EQUAL(FS::configuredPath("sub/x", "CAP_TEST_UNDEFINED"), "sub/x");
   CHECK_EQUAL(FS::firstExisting({"", at("missing"), at("notes.txt"), at("a.cap")}), at("notes.txt"));
   CHECK_EQUAL(FS::firstExisting({at("missing")}), "");
 

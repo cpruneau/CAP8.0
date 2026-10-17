@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include "imgui.h"
+#include "FileSystem.hpp"
 #include "imgui_internal.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -75,12 +76,10 @@ namespace CAP
   std::fprintf(stderr, "CapGui: GLFW error %d: %s\n", code, description);
   }
 
-  //! First existing file among the candidates, or "".
+  //! First existing file among the candidates, or "" (see FileSystem::firstExisting()).
   std::string firstExisting(const std::vector<std::string> & candidates)
   {
-  std::error_code ec;
-  for (const auto & c : candidates) if (!c.empty() && std::filesystem::is_regular_file(c, ec)) return c;
-  return std::string();
+  return FileSystem::firstExisting(std::vector<String>(candidates.begin(), candidates.end())).str();
   }
   } // namespace
 
@@ -129,8 +128,7 @@ namespace CAP
   ImGuiIO & io = ImGui::GetIO();
   std::vector<std::string> candidates;
   candidates.push_back(_settings.fontFile.str());
-  const char * root = std::getenv("CAP_ROOT_PATH");
-  if (root) candidates.push_back(std::string(root) + "/external/imgui/misc/fonts/Roboto-Medium.ttf");
+  candidates.push_back(FileSystem::expand("$CAP_ROOT_PATH/external/imgui/misc/fonts/Roboto-Medium.ttf").str());
   candidates.push_back(std::string(CAP_SOURCE_ROOT) + "/external/imgui/misc/fonts/Roboto-Medium.ttf");
   std::string file = firstExisting(candidates);
   _font = nullptr;
@@ -173,7 +171,7 @@ namespace CAP
   // Courier without a system font: the monospaced font distributed with Dear ImGui
   if (!ImGuiPainter::fontFor(82))
     {
-    std::string cousine = firstExisting({ std::string(root ? root : "") + "/external/imgui/misc/fonts/Cousine-Regular.ttf",
+    std::string cousine = firstExisting({ FileSystem::expand("$CAP_ROOT_PATH/external/imgui/misc/fonts/Cousine-Regular.ttf").str(),
                                           std::string(CAP_SOURCE_ROOT) + "/external/imgui/misc/fonts/Cousine-Regular.ttf" });
     if (!cousine.empty()) ImGuiPainter::setFont(8, io.Fonts->AddFontFromFileTTF(cousine.c_str(), _settings.fontSize));
     }

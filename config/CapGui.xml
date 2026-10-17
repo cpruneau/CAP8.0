@@ -11,8 +11,9 @@
   <Canvases columns="2" rows="1" toolbars="true"/>
   <!-- graphs in each new canvas (columns x rows) and their defaults; mode: add or replace -->
   <Graphs columns="1" rows="1" legend="true" logX="false" logY="false" mode="add"/>
-  <!-- folder where the file dialogs start (empty: the current folder) and the file types they list -->
-  <Files directory="" extensions=".cap .root .xml"/>
+  <!-- folder where the file dialogs start (empty: the current folder) and the file types they list (only the types
+       CapGui can open are used: .cap) -->
+  <Files directory="" extensions=".cap"/>
   <!-- file browser: visible at startup; docked in the main window, or in a window of its own (docked="false") -->
   <Browser visible="true" docked="true"/>
   <!-- demonstration objects shown at startup -->

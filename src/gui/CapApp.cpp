@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <sstream>
 #include "imgui.h"
+#include "FileSystem.hpp"
 #include "CapApp.hpp"
 #include "XmlDocument.hpp"
 #include "Exceptions.hpp"
@@ -169,8 +170,8 @@ namespace CAP
     }
   // Opened from the Finder or the Dock (CapGui.app), the current folder is "/": start in the home folder instead.
   std::error_code ec;
-  const char * home = std::getenv("HOME");
-  if (home && fs::current_path(ec) == fs::path("/")) fs::current_path(home, ec);
+  String home = FileSystem::home();
+  if (!home.isNull() && FileSystem::current().equalTo("/")) fs::current_path(home.str(), ec);
   }
 
   CapApp::~CapApp()
@@ -178,15 +179,11 @@ namespace CAP
 
   String CapApp::findConfigurationFile() const
   {
-  std::error_code ec;
-  const char * home = std::getenv("HOME");
-  std::vector<std::string> candidates;
-  if (home) candidates.push_back(std::string(home) + "/.CapGui.xml");
-  const char * root = std::getenv("CAP_ROOT_PATH");
-  if (root) candidates.push_back(std::string(root) + "/config/CapGui.xml");
-  candidates.push_back(std::string(CAP_SOURCE_ROOT) + "/config/CapGui.xml");
-  for (const auto & c : candidates) if (fs::is_regular_file(c, ec)) return String(c);
-  return String();
+  // $CAP_ROOT_PATH left as written when not defined: that candidate then does not exist
+  String home = FileSystem::home();
+  return FileSystem::firstExisting({ home.isNull() ? String() : FileSystem::join(home, ".CapGui.xml"),
+                                     FileSystem::expand("$CAP_ROOT_PATH/config/CapGui.xml"),
+                                     FileSystem::join(CAP_SOURCE_ROOT, "config/CapGui.xml") });
   }
 
   int CapApp::run()
@@ -195,12 +192,10 @@ namespace CAP
   if (_configurationFile.isNull()) _configurationFile = findConfigurationFile();
   String configurationError;
   bool configured = !_configurationFile.isNull() && _configuration.read(_configurationFile, configurationError);
-  const char * home = std::getenv("HOME");
-  if (home) _configuration.gui.iniFile = String(home) + "/.CapGui.ini";
+  if (!FileSystem::home().isNull()) _configuration.gui.iniFile = FileSystem::join(FileSystem::home(), ".CapGui.ini");
   if (_configuration.directory.isNull())
     {
-    std::error_code ec;
-    _configuration.directory = String(fs::current_path(ec).string());
+    _configuration.directory = FileSystem::current();
     }
 
   _gui.onNewPane = [this](CanvasPane & pane) { setupPane(pane); };
@@ -230,8 +225,7 @@ namespace CAP
   if (_configuration.demo) createDemo();
   for (const auto & argument : _arguments)
     {
-    std::error_code ec;
-    if (fs::is_directory(argument.str(), ec)) openFolder(argument); else openFile(argument);
+    if (FileSystem::isDirectory(argument)) openFolder(argument); else openFile(argument);
     }
   _gui.run();
   return 0;
@@ -374,7 +368,11 @@ namespace CAP
   int columns = 0, rows = 0;
   if (c == "file.open")
     {
-    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a CAP file", _configuration.directory, _configuration.extensions, "",
+    // the configured types that can be opened (CAP files only, for now)
+    std::vector<String> types;
+    for (const auto & e : _configuration.extensions) if (FileSystem::hasExtension(String("x") + e, ".cap")) types.push_back(e);
+    if (types.empty()) types.push_back(".cap");
+    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a CAP file", _configuration.directory, types, "",
                            [this](const String & path) { openFile(path); });
     }
   else if (c == "file.openFolder")
@@ -385,7 +383,7 @@ namespace CAP
   else if (c == "file.save" && !_saveFile.isNull()) save(_saveFile);
   else if (c == "file.save" || c == "file.saveAs")
     {
-    String name = _saveFile.isNull() ? String("canvases.svg") : String(fs::path(_saveFile.str()).filename().string());
+    String name = _saveFile.isNull() ? String("canvases.svg") : FileSystem::name(_saveFile);
     _gui.fileDialog().open(FileDialog::kSaveFile, "Save the canvases", _configuration.directory, {".svg"}, name,
                            [this](const String & path) { save(path); });
     }
@@ -497,11 +495,7 @@ namespace CAP
   //! Absolute, normalized path (so that the same file is recognized whichever way it is named).
   String normalizedPath(const String & path)
   {
-  std::error_code ec;
-  fs::path p = fs::weakly_canonical(fs::absolute(path.str(), ec), ec);
-  std::string s = (ec ? fs::path(path.str()) : p).string();
-  while (s.size() > 1 && s.back() == '/') s.pop_back();
-  return String(s);
+  return FileSystem::normalize(path);
   }
 
   //! Read a CAP file. @param error set to the problem @return the file, or nullptr
@@ -530,8 +524,7 @@ namespace CAP
   String path = normalizedPath(fileName);
   for (const auto & f : _files)
     if (f.path == path) { _gui.setBrowserVisible(true); _gui.browser().reveal(path); return f.id; }
-  std::error_code ec;
-  if (!fs::is_regular_file(path.str(), ec)) { _gui.showMessage("Open", String("No such file: ") + path); return -1; }
+  if (!FileSystem::isFile(path)) { _gui.showMessage("Open", String("No such file: ") + path); return -1; }
   String error;
   std::shared_ptr<CapFile> capFile = readCapFile(path, error);
   if (!capFile) { _gui.showMessage("Open", String("Cannot read ") + path + String(":\n") + error); return -1; }
@@ -540,7 +533,7 @@ namespace CAP
   entry.path = path;
   entry.file = capFile;
   _files.push_back(entry);
-  _configuration.directory = String(fs::path(path.str()).parent_path().string());
+  _configuration.directory = FileSystem::parent(path);
   _gui.setBrowserVisible(true);
   _gui.browser().reveal(path);
   _gui.setStatus(String("Opened ") + path);
@@ -550,8 +543,7 @@ namespace CAP
   void CapApp::openFolder(const String & folder)
   {
   String path = normalizedPath(folder);
-  std::error_code ec;
-  if (!fs::is_directory(path.str(), ec)) { _gui.showMessage("Open Folder", String("No such folder: ") + path); return; }
+  if (!FileSystem::isDirectory(path)) { _gui.showMessage("Open Folder", String("No such folder: ") + path); return; }
   _gui.browser().addFolder(path);
   _gui.setBrowserVisible(true);
   _configuration.directory = path;
@@ -701,7 +693,7 @@ namespace CAP
   if (_gui.savePageSvg(name))
     {
     _saveFile = name;
-    _configuration.directory = String(fs::path(name.str()).parent_path().string());
+    _configuration.directory = FileSystem::parent(name);
     _gui.setStatus(String("Saved ") + name);
     }
   else _gui.showMessage("Save", String("Cannot write ") + name);
@@ -861,8 +853,7 @@ namespace CAP
 
   ImGui::Separator();
   String target = _configurationFile;
-  const char * home = std::getenv("HOME");
-  if (target.isNull() && home) target = String(home) + "/.CapGui.xml";
+  if (target.isNull() && !FileSystem::home().isNull()) target = FileSystem::join(FileSystem::home(), ".CapGui.xml");
   if (ImGui::Button("Save configuration"))
     {
     c.gui.columns = _gui.nColumns(); c.gui.rows = _gui.nRows();

@@ -396,6 +396,17 @@ namespace FileSystem
   return join(String(value),p);
   }
 
+  String configuredPath(const String & path, const String & variable)
+  {
+  const char * value = std::getenv(variable.data());
+  String directory(value ? value : "");
+  if (path.isNull() || path.equalTo("DEFAULT")) return directory;
+  String p = expand(path);
+  if (p.length()>0 && p[0]=='/') return p;
+  if (p.equalTo(".") || p.beginsWith("./")) return join(current(),String(p.length()>1 ? p.subString(2) : String("")));
+  return directory.isNull() ? p : join(directory,p);
+  }
+
   String firstExisting(const std::vector<String> & candidates)
   {
   for (const auto & candidate : candidates) if (exists(candidate)) return candidate;

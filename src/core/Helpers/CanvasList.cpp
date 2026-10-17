@@ -10,6 +10,7 @@
  *
  * *********************************************************************/
 #include "CanvasList.hpp"
+#include "FileSystem.hpp"
 
 ClassImp(CAP::CanvasList);
 
@@ -49,7 +50,7 @@ CanvasList & CanvasList::operator=(const CanvasList & source)
 //!
 void CanvasList::createDirectory(const String & dirName)
 {
-  gSystem->mkdir(dirName,1);
+  FileSystem::createDirectory(dirName,true);
 }
 
 //!
@@ -132,9 +133,7 @@ void CanvasList::printCanvas(TCanvas * canvas,
                               bool printC)
 {
   createDirectory(outputPath);
-  String fileName = outputPath;
-  fileName += "/";
-  fileName += canvas->GetName();
+  String fileName = FileSystem::join(outputPath,canvas->GetName());
   if (printGif) canvas->Print(fileName+".gif");
   if (printPdf) canvas->Print(fileName+".pdf");
   if (printSvg) canvas->Print(fileName+".svg");

@@ -1,4 +1,5 @@
 #include "Exceptions.hpp"
+#include "FileSystem.hpp"
 #include "LatexDocument.hpp"
 #include "PrintHelpers.hpp"
 #include "RootFileHelpers.hpp"
@@ -325,7 +326,7 @@ namespace CAP
   for (auto file : fileList)
     {
     addFrame(file);
-    addFigure(path+file,file,file);
+    addFigure(FileSystem::join(path,file),file,file);
     endSection();
     }
   }
@@ -358,10 +359,7 @@ namespace CAP
   for (auto dir : directories)
     {
     printValue("dir", dir);
-    String subPath = path;
-    subPath += "/";
-    subPath += dir;
-    subPath += "/";
+    String subPath = FileSystem::join(path,dir);
     addSubection(dir,dir);
     addFiguresFrom(subPath,"pdf",0);
     endSection();

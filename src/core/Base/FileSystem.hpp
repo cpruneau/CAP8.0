@@ -167,6 +167,15 @@ namespace FileSystem
   //! @return path @throws FileException if the path is relative to the variable and the variable is not defined
   //!
   String resolve(const String & path, const String & variable);
+  //!
+  //! @brief Path given in the configuration of a task, with the convention of the CAP tasks: "DEFAULT" (or an empty
+  //! path) is the directory held by the environment variable, any other path is resolved as by resolve(). Unlike
+  //! resolve(), it never throws, since tasks resolve paths they may not use: if the variable is not defined,
+  //! "DEFAULT" gives "" and a relative path is returned as given.
+  //! @param path path from the configuration @param variable environment variable, e.g. "CAP_HISTOS_IMPORT_PATH"
+  //! @return path
+  //!
+  String configuredPath(const String & path, const String & variable);
   //! @brief First candidate that exists (empty candidates are skipped). @param candidates paths @return path, or ""
   String firstExisting(const std::vector<String> & candidates);
 
