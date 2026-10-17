@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file TestRootFileHelpers.cpp
+//! @brief Test program of the file listing and file name helpers (run by ctest).
 //
 // TestRootFileHelpers -- tests of the file listing and file name helpers (listDirsIn, listFilesInDir, makeFileName),
 // now built on CAP::FileSystem, and of CapFile::makeFileName and XmlDocument::fileName.

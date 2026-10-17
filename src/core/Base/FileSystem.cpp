@@ -9,6 +9,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file FileSystem.cpp
+//! @brief Implementation of the FileSystem functions.
 #include "FileSystem.hpp"
 #include <algorithm>
 #include <cctype>

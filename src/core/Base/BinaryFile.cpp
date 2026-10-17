@@ -9,6 +9,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file BinaryFile.cpp
+//! @brief Implementation of BinaryFile.
 #include "BinaryFile.hpp"
 #include <algorithm>
 #include <iterator>

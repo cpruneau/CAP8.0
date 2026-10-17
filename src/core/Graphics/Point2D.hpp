@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file Point2D.hpp
+//! @brief Point2D: point or vector of the plane.
 #ifndef CAP_GRAPHICS_Point2D
 #define CAP_GRAPHICS_Point2D
 
@@ -35,11 +48,11 @@ namespace CAP
 
   Point2D operator+(const Point2D & p) const { return Point2D(_x+p._x, _y+p._y); }
   Point2D operator-(const Point2D & p) const { return Point2D(_x-p._x, _y-p._y); }
-  Point2D operator*(float a) const { return Point2D(a*_x, a*_y); }
+  Point2D operator*(float a) const { return Point2D(a*_x, a*_y); }   //!< Product by a number
   Point2D & operator+=(const Point2D & p) { _x += p._x; _y += p._y; return *this; }
   Point2D & operator-=(const Point2D & p) { _x -= p._x; _y -= p._y; return *this; }
   Point2D & operator*=(float a) { _x *= a; _y *= a; return *this; }
-  bool operator==(const Point2D & p) const { return _x==p._x && _y==p._y; }
+  bool operator==(const Point2D & p) const { return _x==p._x && _y==p._y; }   //!< Equality of both coordinates
   bool operator!=(const Point2D & p) const { return !(*this==p); }
 
   protected:
@@ -48,6 +61,7 @@ namespace CAP
   float _y; //!< second coordinate
   };
 
+  //! @brief Product of a number and a point. @param a number @param p point @return a*p
   inline Point2D operator*(float a, const Point2D & p) { return p*a; }
 
   } // namespace GRAPHICS

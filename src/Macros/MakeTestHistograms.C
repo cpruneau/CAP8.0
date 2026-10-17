@@ -7,6 +7,8 @@
  * For the licensing terms see LICENSE.
  *
  * *********************************************************************/
+//! @file MakeTestHistograms.C
+//! @brief ROOT macro creating test histograms in a HistogramFolder and saving them in a CAP file.
 //!
 //! Create test histograms in a HistogramFolder, fill them, and save the folder in a CAP file, to try the graphical
 //! interface (bin/CapGui) on known contents.

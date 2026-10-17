@@ -9,6 +9,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file FileSystem.hpp
+//! @brief FileSystem: functions asking the operating system about files and directories, and changing them.
 #ifndef CAP__FileSystem
 #define CAP__FileSystem
 #include <cstdint>

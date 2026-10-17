@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file DataPane.hpp
+//! @brief DataPane: pane of the CapGui window showing data points or a histogram as a table.
 #ifndef CAP__GUI__DataPane
 #define CAP__GUI__DataPane
 #include <vector>
@@ -34,8 +47,8 @@ namespace CAP
 
   //! @brief Show data points. @param data data points (not owned; may be null) @param label name shown in the tab and the heading
   void setData(const MATH::DataPoints * data, const String & label);
-  const MATH::DataPoints * data() const { return _data; }
-  const String & label() const { return _label; }
+  const MATH::DataPoints * data() const { return _data; }   //!< Data points shown (not owned), or nullptr
+  const String & label() const { return _label; }   //!< Name shown in the tab and the heading
   //! @brief Name of the pane (identifies its window). @return name
   const String & name() const { return _name; }
   //! @brief Title of its window: the label shown in the tab, the name identifying the window. @return title
@@ -48,9 +61,9 @@ namespace CAP
 
   protected:
 
-  String _name;
-  const MATH::DataPoints * _data;
-  String _label;
+  String _name;   //!< name of the pane (identifies its window)
+  const MATH::DataPoints * _data;   //!< data points shown (not owned)
+  String _label;   //!< name shown in the tab and the heading
   std::vector<bool> _shown;   //!< columns shown (uncertainties zero for every point are not), set by setData()
   };
 

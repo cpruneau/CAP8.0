@@ -9,6 +9,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file Directory.hpp
+//! @brief Directory: listing, searching, creating and removing directories of the file system.
 #ifndef CAP__Directory
 #define CAP__Directory
 #include <iostream>

@@ -9,6 +9,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file FileSystemEntry.hpp
+//! @brief FileSystemEntry: an entry of the file system, base of File and Directory.
 #ifndef CAP__FileSystemEntry
 #define CAP__FileSystemEntry
 #include "FileSystem.hpp"

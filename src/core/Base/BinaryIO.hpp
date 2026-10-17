@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file BinaryIO.hpp
+//! @brief Binary encoding of CAP objects: BinaryWriter, BinaryReader, CRC-32 and the CAP record format.
 #ifndef CAP__BinaryIO
 #define CAP__BinaryIO
 #include <array>
@@ -51,7 +64,7 @@ public:
   void writeString(const String & s) { writeVarUInt(std::size_t(s.length())); writeBytes(s.data(),std::size_t(s.length())); }
 
 private:
-  std::string _buffer;
+  std::string _buffer;   //!< bytes written so far
 };
 
 //!
@@ -102,13 +115,14 @@ public:
   const char * readSpan(std::size_t n) { need(n); const char * p = _data+_position; _position += n; return p; }
 
 private:
+  //! @brief Throw unless n more bytes can be read. @param n number of bytes @throws Exception at the end of the data
   void need(uint64_t n) const
   {
     if (n > remaining()) throw Exception("Unexpected end of binary data","BinaryReader");
   }
-  const char * _data;
-  std::size_t  _size;
-  std::size_t  _position;
+  const char * _data;   //!< data read (not owned)
+  std::size_t  _size;   //!< number of bytes of the data
+  std::size_t  _position;   //!< position of the next byte read
 };
 
 inline uint32_t crc32Update(uint32_t state, const char * data, std::size_t n);

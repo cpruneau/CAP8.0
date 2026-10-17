@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file CanvasPane.hpp
+//! @brief CanvasPane: canvas pane of the CapGui window, with its toolbar and mouse interactions.
 #ifndef CAP__GUI__CanvasPane
 #define CAP__GUI__CanvasPane
 #include <functional>
@@ -35,28 +48,30 @@ namespace CAP
   {
   public:
 
-  enum Mode { kAdd, kReplace };
+  enum Mode { kAdd, kReplace };   //!< What showing an object does to the selected graph: add it, or replace its contents
 
+  //! @brief Constructor: one graph. @param name name of the pane, unique in the window (e.g. "Canvas 1")
   CanvasPane(const String & name);
 
-  GRAPHICS::Canvas & canvas() { return _canvas; }
-  const GRAPHICS::Canvas & canvas() const { return _canvas; }
-  const String & name() const { return _name; }
+  GRAPHICS::Canvas & canvas() { return _canvas; }   //!< The canvas of the pane
+  const GRAPHICS::Canvas & canvas() const { return _canvas; }   //!< The canvas of the pane
+  const String & name() const { return _name; }   //!< Name of the pane (identifies its window)
 
-  Mode mode() const { return _mode; }
-  void setMode(Mode mode) { _mode = mode; }
+  Mode mode() const { return _mode; }   //!< Add or Replace
+  void setMode(Mode mode) { _mode = mode; }   //!< Set Add or Replace
   //! @brief Index of the selected graph (the target of Add/Replace, Log X/Y, Copy/Paste).
   int  selectedGraph() const { return _selectedGraph; }
+  //! @brief Select graph k (nothing if out of range). @param k index of the graph
   void setSelectedGraph(int k);
-  GRAPHICS::Graph & currentGraph() { return _canvas.graph(_selectedGraph); }
+  GRAPHICS::Graph & currentGraph() { return _canvas.graph(_selectedGraph); }   //!< The selected graph
 
   //! @brief Show an item in the selected graph, added or replacing the contents according to mode(). @return item
   GRAPHICS::GraphItem & show(const GRAPHICS::GraphItem & item);
   //! @brief Divide the canvas into nColumns x nRows graphs (keeps the existing graphs, see Canvas::divide()).
   void divide(int nColumns, int nRows);
 
-  bool showToolbar() const { return _showToolbar; }
-  void setShowToolbar(bool v) { _showToolbar = v; }
+  bool showToolbar() const { return _showToolbar; }   //!< Whether the toolbar is shown
+  void setShowToolbar(bool v) { _showToolbar = v; }   //!< Show or hide the toolbar
 
   //! @brief Draw the pane (toolbar and canvas) in the current ImGui window. @param size size available
   //! @param isCurrent whether this pane is the current pane (highlighted) @param font font of the plots
@@ -79,37 +94,41 @@ namespace CAP
 
   protected:
 
-  String _name;
-  GRAPHICS::Canvas _canvas;
-  Mode _mode;
-  int  _selectedGraph;
-  bool _showToolbar;
-  int  _contextGraph;
-  int  _gridColumns, _gridRows;
-  String _hoverText;
-  float _rectX, _rectY, _rectW, _rectH;
+  String _name;   //!< name of the pane
+  GRAPHICS::Canvas _canvas;   //!< the canvas, divided into graphs
+  Mode _mode;   //!< Add or Replace
+  int  _selectedGraph;   //!< index of the selected graph
+  bool _showToolbar;   //!< the toolbar is shown
+  int  _contextGraph;   //!< graph whose context menu is open
+  int  _gridColumns, _gridRows;   //!< values edited in the Graphs popup
+  String _hoverText;   //!< data coordinates under the mouse, or empty
+  float _rectX, _rectY, _rectW, _rectH;   //!< screen rectangle of the canvas at the last render (pixels)
 
   //! What a drag of the left mouse button does.
   enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels };
+  //! State of a drag of the left mouse button
   struct Drag
   {
-  DragKind kind = kNoDrag;
-  int   graph = -1;
-  int   axis  = -1;
+  DragKind kind = kNoDrag;   //!< what the drag does
+  int   graph = -1;   //!< graph dragged in
+  int   axis  = -1;   //!< axis zoomed, or whose title or labels are moved
   float startX = 0, startY = 0;      //!< screen position where the drag started (pixels)
   float initialX = 0, initialY = 0;  //!< position (offset, legend corner, label gap) before the drag
-  bool  moved = false;
+  bool  moved = false;   //!< the mouse moved enough to start the drag
   };
-  Drag _drag;
+  Drag _drag;   //!< drag in progress (kind kNoDrag if none)
   int  _editGraph;                     //!< graph whose part is edited in the "editor" popup
   GRAPHICS::Graph::Pick _editPick;     //!< part edited
   bool _editRecorded;                  //!< undo state recorded for the current dialog
   bool _openEditor;                    //!< open the editor popup at the next opportunity
   GRAPHICS::Graph _editBefore;         //!< graph when the dialog was opened (for undo)
 
-  void changing() { if (beforeChange) beforeChange(); }
+  void changing() { if (beforeChange) beforeChange(); }   //!< Record the undo state before a change
+  //! @brief Draw the toolbar: Add/Replace, Log X/Y, Graphs, Clear, +.
   void renderToolbar();
+  //! @brief Draw the context menu of a graph, if open.
   void renderContextMenu();
+  //! @brief Draw the dialog editing a part of a graph, if open (see GraphEditor).
   void renderEditor();
   //! Open the dialog editing the part pick of graph k.
   void edit(int k, const GRAPHICS::Graph::Pick & pick);

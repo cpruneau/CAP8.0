@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file GraphEditor.hpp
+//! @brief GraphEditor: dialogs editing the parts of a graph (title, axes, legend, items).
 #ifndef CAP__GUI__GraphEditor
 #define CAP__GUI__GraphEditor
 #include "Graph.hpp"

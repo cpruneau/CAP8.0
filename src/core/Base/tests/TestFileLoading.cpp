@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file TestFileLoading.cpp
+//! @brief Test program of load(), unload(), isLoaded() and save() of the file classes (run by ctest).
 //
 // TestFileLoading -- tests of load(), unload(), isLoaded() and save() for TxtFile, XmlFile, BinaryFile and CapFile,
 // of BinaryFile::readRange(), and of the moves of Folder used when reading a CapFile.

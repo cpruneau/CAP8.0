@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file Action.hpp
+//! @brief ActionEvent and ActionListener: actions of the menus of CapGui.
 #ifndef CAP__GUI__Action
 #define CAP__GUI__Action
 #include "String.hpp"
@@ -17,8 +30,8 @@ namespace CAP
   //!
   struct ActionEvent
   {
-  String     command;
-  MenuItem * source;
+  String     command;   //!< command identifying the action, e.g. "file.open"
+  MenuItem * source;   //!< menu item that fired the action, or nullptr
   };
 
   //!
@@ -32,6 +45,7 @@ namespace CAP
   class ActionListener
   {
   public:
+  //! @brief Destructor.
   virtual ~ActionListener() { }
   //! @brief Called when an action happens. @param event the action
   virtual void actionPerformed(const ActionEvent & event) = 0;

@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file CapApp.hpp
+//! @brief CapApp: the CAP graphical interface application (configuration, menus, files, undo).
 #ifndef CAP__GUI__CapApp
 #define CAP__GUI__CapApp
 #include <deque>
@@ -36,16 +49,16 @@ namespace CAP
   //!
   struct AppConfiguration
   {
-  GuiSettings gui;
-  int    graphColumns = 1;
-  int    graphRows    = 1;
-  bool   legend       = true;
-  bool   logX         = false;
-  bool   logY         = false;
-  String mode         = "add";
-  String directory;
+  GuiSettings gui;   //!< settings of the window
+  int    graphColumns = 1;   //!< columns of graphs of a new canvas
+  int    graphRows    = 1;   //!< rows of graphs of a new canvas
+  bool   legend       = true;   //!< legend shown in new graphs
+  bool   logX         = false;   //!< logarithmic x axis in new graphs
+  bool   logY         = false;   //!< logarithmic y axis in new graphs
+  String mode         = "add";   //!< what showing an object does: "add" or "replace"
+  String directory;   //!< folder where the file dialogs start (empty: the current folder)
   std::vector<String> extensions{".cap"};   //!< types listed by the Open dialog (only those CapGui can open are used)
-  bool   demo         = true;
+  bool   demo         = true;   //!< show the demonstration objects at startup
 
   //! @brief Read a configuration file (missing values keep their defaults). @param fileName file
   //! @param error set to the problem if false is returned @return false if the file cannot be read
@@ -68,7 +81,9 @@ namespace CAP
   {
   public:
 
+  //! @brief Constructor. @param argc number of arguments @param argv arguments: --config file.xml (or -c), then files or folders to open
   CapApp(int argc, char ** argv);
+  //! @brief Destructor.
   virtual ~CapApp();
 
   //! @brief Read the configuration, open the window, run until it is closed. @return exit code
@@ -111,6 +126,7 @@ namespace CAP
   //! @brief Show the objects of a folder, one per graph of the current canvas (divided as needed).
   //! @param file file id @param folderPath folder in the file ("" for the top)
   void showFolder(int file, const String & folderPath);
+  //! @brief Write the canvases, laid out as on screen, to an SVG file. @param fileName file name
   void save(const String & fileName);
   //! @}
 
@@ -118,57 +134,74 @@ namespace CAP
   //! @{
   //! @brief Record the state of the canvases before a change.
   void recordUndo();
+  //! @brief Go back to the state before the last change (canvases and their graphs).
   void undo();
+  //! @brief Redo the change undone last.
   void redo();
   //! @}
 
-  AppConfiguration & configuration() { return _configuration; }
-  CapGui & gui() { return _gui; }
+  AppConfiguration & configuration() { return _configuration; }   //!< Configuration (read from the XML file, changed by Preferences)
+  CapGui & gui() { return _gui; }   //!< The window
 
   protected:
 
   //! State of all the canvases, for undo/redo.
   struct Snapshot
   {
-  int columns, rows, current;
-  std::vector<GRAPHICS::Canvas> canvases;
-  std::vector<int> selected;
+  int columns, rows, current;   //!< grid layout and index of the current pane
+  std::vector<GRAPHICS::Canvas> canvases;   //!< copies of the canvases of the panes
+  std::vector<int> selected;   //!< selected graph of each pane
   };
 
-  std::vector<String> _arguments;
-  String _configurationFile;
-  AppConfiguration _configuration;
-  CapGui _gui;
-  std::vector<std::unique_ptr<MATH::Function>>   _functions;
-  std::vector<std::unique_ptr<MATH::DataPoints>> _data;
+  std::vector<String> _arguments;   //!< files and folders given on the command line
+  String _configurationFile;   //!< configuration file read (or given with --config)
+  AppConfiguration _configuration;   //!< configuration
+  CapGui _gui;   //!< the window
+  std::vector<std::unique_ptr<MATH::Function>>   _functions;   //!< functions created by the application (demo)
+  std::vector<std::unique_ptr<MATH::DataPoints>> _data;   //!< data points created by the application (demo)
   std::vector<BrowserFile> _files;        //!< open files, shown in the browser
   std::vector<BrowserFile> _closedFiles;  //!< closed or replaced files: kept, since graphs and undo states may show their objects
-  int _nextFileId;
-  String _saveFile;
-  std::deque<Snapshot> _undo;
-  std::deque<Snapshot> _redo;
-  std::vector<GRAPHICS::GraphItem> _clipboard;
-  bool _showPreferences;
-  bool _showAbout;
-  bool _showShortcuts;
-  bool _showImGuiDemo;
-  int  _customColumns, _customRows;
-  bool _customLayoutRequested, _customGraphsRequested;
+  int _nextFileId;   //!< identifier of the next file opened
+  String _saveFile;   //!< SVG file of the last Save As
+  std::deque<Snapshot> _undo;   //!< states before the last changes (at most 50)
+  std::deque<Snapshot> _redo;   //!< states undone
+  std::vector<GRAPHICS::GraphItem> _clipboard;   //!< items copied (Edit > Copy)
+  bool _showPreferences;   //!< Preferences window shown
+  bool _showAbout;   //!< About window shown
+  bool _showShortcuts;   //!< Keyboard Shortcuts window shown
+  bool _showImGuiDemo;   //!< Dear ImGui demonstration window shown
+  int  _customColumns, _customRows;   //!< values edited in the Custom layout dialog
+  bool _customLayoutRequested, _customGraphsRequested;   //!< Custom layout dialog to open, for the canvases or the graphs
 
+  //! @brief First configuration file found: $HOME/.CapGui.xml, $CAP_ROOT_PATH/config/CapGui.xml, the one of the sources. @return path, or ""
   String findConfigurationFile() const;
+  //! @brief Create the menus of the menu bar.
   void buildMenus();
+  //! @brief Prepare a new canvas pane: graphs, mode, callbacks (undo, drop, show data). @param pane pane
   void setupPane(CanvasPane & pane);
+  //! @brief Show the demonstration objects (a Gaussian with pseudo-data, an exponential).
   void createDemo();
+  //! @brief Arrange the canvases in columns x rows panes (undoable). @param columns columns @param rows rows
   void setLayout(int columns, int rows);
+  //! @brief Divide the current canvas into columns x rows graphs (undoable). @param columns columns @param rows rows
   void setGraphs(int columns, int rows);
+  //! @brief State of all the canvases. @return state
   Snapshot snapshot() const;
+  //! @brief Go back to a state of the canvases. @param state state
   void restore(const Snapshot & state);
+  //! @brief Enable, disable and check the menu items according to the state.
   void updateMenuStates();
+  //! @brief Draw the application windows (preferences, about, shortcuts, dialogs) every frame.
   void renderWindows();
+  //! @brief Draw the Preferences window, if shown.
   void renderPreferences();
+  //! @brief Draw the About window, if shown.
   void renderAbout();
+  //! @brief Draw the Keyboard Shortcuts window (keys of the menus, mouse actions), if shown.
   void renderShortcuts();
+  //! @brief Draw the Custom layout dialog, if open.
   void renderCustomLayout();
+  //! @brief Open file of an identifier. @param id identifier @return file, or null
   BrowserFile * file(int id);
   //! Style of the k-th item of a graph (colors and markers cycle).
   static void styleItem(GRAPHICS::GraphItem & item, int k);

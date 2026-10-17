@@ -9,6 +9,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file BinaryFile.hpp
+//! @brief BinaryFile: file of raw bytes, read whole, by ranges, or lazily.
 #ifndef CAP__BinaryFile
 #define CAP__BinaryFile
 #include <string>

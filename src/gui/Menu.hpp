@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file Menu.hpp
+//! @brief Menu: menu of the CapGui menu bar (items, separators, sub-menus).
 #ifndef CAP__GUI__Menu
 #define CAP__GUI__Menu
 #include <memory>
@@ -19,10 +32,10 @@ namespace CAP
   //! @brief Menu. @param name text shown in the menu bar (or in the parent menu) @param description tooltip
   Menu(const String & name, const String & description="");
 
-  const String & name() const        { return _name; }
-  const String & description() const { return _description; }
-  bool isEnabled() const  { return _enabled; }
-  void setEnabled(bool v) { _enabled = v; }
+  const String & name() const        { return _name; }   //!< Name shown in the menu bar or the parent menu
+  const String & description() const { return _description; }   //!< Description shown in the status bar
+  bool isEnabled() const  { return _enabled; }   //!< Whether the menu can be opened
+  void setEnabled(bool v) { _enabled = v; }   //!< Enable or disable the menu
 
   //! @brief Add an item at the end (see MenuItem). @return the new item (owned by the menu)
   MenuItem & addItem(const String & name, const String & command="", const String & shortcut="",
@@ -48,14 +61,14 @@ namespace CAP
   //! One entry: an item, a separator (both null) or a submenu.
   struct Entry
   {
-  std::unique_ptr<MenuItem> item;
-  std::unique_ptr<Menu>     menu;
+  std::unique_ptr<MenuItem> item;   //!< the item, or null
+  std::unique_ptr<Menu>     menu;   //!< the sub-menu, or null (both null: a separator)
   };
 
-  String _name;
-  String _description;
-  bool   _enabled;
-  std::vector<Entry> _entries;
+  String _name;   //!< name of the menu
+  String _description;   //!< description shown in the status bar
+  bool   _enabled;   //!< whether the menu can be opened
+  std::vector<Entry> _entries;   //!< items, sub-menus and separators, in order
   };
 
   } // namespace GUI

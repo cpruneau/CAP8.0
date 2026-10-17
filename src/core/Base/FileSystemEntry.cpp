@@ -9,6 +9,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file FileSystemEntry.cpp
+//! @brief Implementation of FileSystemEntry.
 #include "FileSystemEntry.hpp"
 #include "PrintHelpers.hpp"
 

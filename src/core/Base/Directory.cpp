@@ -9,6 +9,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file Directory.cpp
+//! @brief Implementation of Directory.
 #include <algorithm>
 #include <cstdio>
 #include <sstream>
