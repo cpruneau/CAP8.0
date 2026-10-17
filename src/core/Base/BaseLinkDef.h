@@ -18,6 +18,8 @@
 #pragma link C++ class CAP::Task+;
 #pragma link C++ class CAP::Timer+;
 #pragma link C++ class CAP::SelectionGenerator+;
+#pragma link C++ class CAP::FileSystemEntry+;
+#pragma link C++ class CAP::Directory+;
 #pragma link C++ class CAP::File+;
 #pragma link C++ namespace CAP::FileSystem;
 #pragma link C++ enum CAP::FileSystem::EntryType;

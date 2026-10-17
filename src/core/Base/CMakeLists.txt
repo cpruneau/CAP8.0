@@ -15,8 +15,10 @@ Factory.hpp
 Filter.hpp
 BinaryFile.hpp
 CapFile.hpp
+Directory.hpp
 File.hpp
 FileSystem.hpp
+FileSystemEntry.hpp
 Folder.hpp
 LongParameter.hpp
 Object.hpp
@@ -50,8 +52,10 @@ Factory.cpp
 Filter.cpp
 BinaryFile.cpp
 CapFile.cpp
+Directory.cpp
 File.cpp
 FileSystem.cpp
+FileSystemEntry.cpp
 Folder.cpp
 LongParameter.cpp
 NameHelpers.cpp
@@ -86,6 +90,9 @@ add_definitions(-DOPTIMIZEADDBINCONTENT)
 add_executable(TestFileSystem tests/TestFileSystem.cpp)
 target_link_libraries(TestFileSystem Base ${ROOT_LIBRARIES})
 add_test(NAME FileSystem COMMAND TestFileSystem)
+add_executable(TestDirectory tests/TestDirectory.cpp)
+target_link_libraries(TestDirectory Base ${ROOT_LIBRARIES})
+add_test(NAME Directory COMMAND TestDirectory)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libBase.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libBase_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Base  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

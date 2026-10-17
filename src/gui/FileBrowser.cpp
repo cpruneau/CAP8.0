@@ -1,18 +1,17 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
-#include <filesystem>
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "FileBrowser.hpp"
+#include "FileSystem.hpp"
 #include "CapFile.hpp"
 #include "Folder.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
 #include "DataPoints.hpp"
 
-namespace fs = std::filesystem;
 
 namespace CAP
 {
@@ -21,15 +20,6 @@ namespace CAP
 
   namespace
   {
-  //! Last component of a path ("/a/b/c.cap" -> "c.cap").
-  std::string baseName(const std::string & path)
-  {
-  std::string p = path;
-  while (p.size() > 1 && p.back() == '/') p.pop_back();
-  size_t slash = p.find_last_of('/');
-  return slash == std::string::npos ? p : p.substr(slash+1);
-  }
-
   //! Whether path is directory or below it.
   bool isBelow(const std::string & path, const std::string & directory)
   {
@@ -39,11 +29,6 @@ namespace CAP
   return path.compare(0, d.size(), d) == 0;
   }
 
-  bool lessIgnoreCase(const std::string & a, const std::string & b)
-  {
-  return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(),
-           [](char x, char y) { return std::tolower((unsigned char)x) < std::tolower((unsigned char)y); });
-  }
 
   //! "CAP::MATH::Matrix" -> "Matrix".
   String shortTypeName(const std::string & typeName)
@@ -130,20 +115,15 @@ namespace CAP
   auto found = _listings.find(directory);
   if (found != _listings.end()) return found->second;
   Listing & l = _listings[directory];
-  std::error_code ec;
-  fs::directory_iterator it(directory, fs::directory_options::skip_permission_denied, ec), end;
-  if (ec) { l.error = ec.message(); return l; }
-  for (; it != end; it.increment(ec))
+  // sub-directories and CAP files, directories first, by name (case-insensitive); hidden entries left out
+  FileSystem::ListOptions options;
+  options.extensions = { ".cap" };
+  try
     {
-    if (ec) break;
-    std::string name = it->path().filename().string();
-    if (name.empty() || name[0] == '.') continue;
-    std::error_code e2;
-    if (it->is_directory(e2)) l.directories.push_back(name);
-    else if (it->path().extension() == ".cap") l.files.push_back(name);
+    for (const auto & entry : FileSystem::list(String(directory), options))
+      (entry.isDirectory() ? l.directories : l.files).push_back(entry.name.str());
     }
-  std::sort(l.directories.begin(), l.directories.end(), lessIgnoreCase);
-  std::sort(l.files.begin(), l.files.end(), lessIgnoreCase);
+  catch (const FileException & e) { l.error = e.what(); }
   return l;
   }
 
@@ -237,7 +217,7 @@ namespace CAP
     {
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::CollapsingHeader("Files"))
-      for (const BrowserFile & f : loose) renderFile(f, String(baseName(f.path.str())));
+      for (const BrowserFile & f : loose) renderFile(f, FileSystem::name(f.path));
     }
   if (!_folders.empty())
     {

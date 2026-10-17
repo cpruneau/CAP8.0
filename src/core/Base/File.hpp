@@ -15,7 +15,7 @@
 #include <fstream>
 #include "Aliases.hpp"
 #include "Exceptions.hpp"
-#include "Object.hpp"
+#include "FileSystemEntry.hpp"
 
 namespace CAP
 {
@@ -23,8 +23,9 @@ namespace CAP
 //!
 //! @brief Proxy for a file of the operating system.
 //!
-//! File handles what all files share: a path, opening and closing, the stream, and checks. It makes no assumption on
-//! the content. Derived classes set, at construction,
+//! File handles what all files share: opening and closing, the stream, and checks. It makes no assumption on the
+//! content. The path and the questions to the operating system (size, date, permissions, ...) come from
+//! FileSystemEntry. Derived classes set, at construction,
 //!  - the format: text (kText) or binary (kBinary);
 //!  - the access the file allows: read only (kReadOnly), write only (kWriteOnly) or read and write (kReadWrite);
 //! and provide the operations on their type of content:
@@ -49,7 +50,7 @@ namespace CAP
 //!   notes.close();
 //! @endcode
 //!
-class File : public Object
+class File : public FileSystemEntry
 {
 public:
 
@@ -79,11 +80,9 @@ public:
   //! @name Path and type
   //! @{
 
-  //! @brief Path of the file. @return path
-  const String & path() const { return _path; }
   //! @brief Set the path of the file (the name of the object is unchanged). @param path new path
   //! @throws FileException if the file is open
-  void setPath(const String & path);
+  void setPath(const String & path) override;
   //! @brief Content format. @return kText or kBinary
   Format format() const { return _format; }
   //! @brief Whether the content is text. @return true for kText
@@ -104,12 +103,10 @@ public:
   //! @name File system
   //! @{
 
-  //! @brief Whether the file exists. @return true if a regular file exists at path()
-  bool exists() const { return exists(_path); }
+  //! @brief Whether the file exists. @return true if a regular file exists at path() (a directory does not count)
+  bool exists() const override { return exists(_path); }
   //! @brief Whether a regular file exists. @param path path of the file @return true if it exists
   static bool exists(const String & path);
-  //! @brief Size of the file in bytes. @return size @throws FileException if the file does not exist
-  std::uintmax_t fileSize() const;
 
   //! @}
 
@@ -145,7 +142,6 @@ protected:
   //! @brief Throw unless the file is open and its stream is in a good state. @param source caller name @param what operation
   void checkStream(const char * source, const char * what);
 
-  String       _path;    //!< path of the file
   Format       _format;  //!< content format
   Access       _access;  //!< access allowed by the file type
   Mode         _mode;    //!< mode of the open file

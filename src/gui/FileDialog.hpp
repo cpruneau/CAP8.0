@@ -59,7 +59,6 @@ namespace CAP
   void list();
   void enter(const std::string & directory);
   void confirm(const std::string & path);
-  bool accepts(const std::string & name) const;
   };
 
   } // namespace GUI
