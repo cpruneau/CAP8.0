@@ -42,6 +42,11 @@ endif()
 ################################################################################################
 # Project CAP
 ################################################################################################
+# Optimized build unless another type is asked for (-DCMAKE_BUILD_TYPE=Debug, RelWithDebInfo, ...): without a type,
+# CMake compiles without optimization, and CAP runs several times slower.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type: Release, Debug, RelWithDebInfo or MinSizeRel" FORCE)
+endif()
 set(CMAKE_CXX_STANDARD 14)
 ####set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
