@@ -42,7 +42,7 @@ namespace CAP
   //!     <Graphs columns="1" rows="1" legend="true" logX="false" logY="false" mode="add"/>  <!-- per new canvas -->
   //!     <Files directory="" extensions=".cap .root .xml"/>
   //!     <Browser visible="true" docked="true"/>                   <!-- docked: in the main window -->
-  //!     <Demo enabled="true"/>
+  //!     <Demo enabled="false"/>                                <!-- true: demonstration objects at startup -->
   //!     <Latex enabled="true" bin="" preamble="\usepackage{amsmath,amssymb}" rootSyntax="true"/>  <!-- bin: "" to search -->
   //!   </CapGui>
   //! @endcode
@@ -59,7 +59,7 @@ namespace CAP
   String mode         = "add";   //!< what showing an object does: "add" or "replace"
   String directory;   //!< folder where the file dialogs start (empty: the current folder)
   std::vector<String> extensions{".cap"};   //!< types listed by the Open dialog (only those CapGui can open are used)
-  bool   demo         = true;   //!< show the demonstration objects at startup
+  bool   demo         = false;  //!< show the demonstration objects at startup (otherwise the canvases start empty)
   bool   latex        = true;   //!< typeset the texts with '$' or '\' by LaTeX (see GRAPHICS::LatexRenderer)
   String latexBin;              //!< directory of latex and dvisvgm (empty: looked for)
   String latexPreamble = "\\usepackage{amsmath,amssymb}";   //!< preamble of the LaTeX documents
