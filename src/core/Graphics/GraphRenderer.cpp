@@ -201,6 +201,14 @@ namespace CAP
   const Graph * graph = dynamic_cast<const Graph*>(&drawable);
   if (!graph) return;
   if (painter.width() <= 0 || painter.height() <= 0) return;
+  // a graph showing nothing is not drawn (no frame, axes or title), and has no parts to pick
+  if (graph->items().empty())
+    {
+    graph->xAxis().setDrawnRects(Rect2D(), Rect2D());
+    graph->yAxis().setDrawnRects(Rect2D(), Rect2D());
+    graph->setDrawnLayout(Rect2D(), Rect2D(), std::vector<Graph::PointPosition>());
+    return;
+    }
 
   const Graph::View view = graph->view();
   const Box box { graph->frameXLow(), graph->frameYLow(), graph->frameXHigh(), graph->frameYHigh() };

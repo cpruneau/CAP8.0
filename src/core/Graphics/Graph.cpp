@@ -185,6 +185,7 @@ namespace CAP
   Graph::Pick Graph::pick(const Point2D & p, float toleranceX, float toleranceY) const
   {
   Pick result;
+  if (_items.empty()) { if (cellContains(p)) result.part = kCell; return result; }   // nothing drawn
   if (_legendRect.contains(p)) { result.part = kLegend; return result; }
   if (_titleRect.contains(p))  { result.part = kTitle;  return result; }
   for (int k=0; k<nAxes(); k++)

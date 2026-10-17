@@ -127,6 +127,7 @@ namespace CAP
   //! automatic (covering all the items, rounded to nice values) unless set with setXRange() / setYRange().
   //!
   //! Items are added with add() or replace() (clear the graph, then add). The graph does not own the objects shown.
+  //! A graph without items is not drawn at all (no frame, axes or title).
   //! dimension() is k2D; k3D (surfaces, 3D points) is reserved for the 3D views to come.
   //!
   //! The title, the axis titles and the legend have automatic positions, which can be changed by the program or

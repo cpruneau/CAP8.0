@@ -387,7 +387,7 @@ namespace CAP
 
   // ---- coordinates under the mouse
   _hoverText = "";
-  if (k >= 0 && _canvas.graph(k).frameContains(p))
+  if (k >= 0 && !_canvas.graph(k).items().empty() && _canvas.graph(k).frameContains(p))
     {
     const Graph & g = _canvas.graph(k);
     double x, y;
