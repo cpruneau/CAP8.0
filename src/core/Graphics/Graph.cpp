@@ -13,6 +13,7 @@
 //! @brief Implementation of Graph and GraphItem.
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include "Graph.hpp"
 #include "GraphRenderer.hpp"
@@ -36,7 +37,13 @@ namespace CAP
   _label(label),
   _xMinimum(xMinimum),
   _xMaximum(xMaximum),
+  _yMinimum(0.0),
+  _yMaximum(1.0),
   _nSamples(200),
+  _mapSamples(100),
+  _showColorMap(true),
+  _grid(),
+  _gridKey(),
   _line(*LineAttributes::defaultLineAttributes()),
   _marker(*MarkerAttributes::defaultMarkerAttributes()),
   _showLine(true),
@@ -61,7 +68,13 @@ namespace CAP
   _label(label),
   _xMinimum(0.0),
   _xMaximum(1.0),
+  _yMinimum(0.0),
+  _yMaximum(1.0),
   _nSamples(200),
+  _mapSamples(100),
+  _showColorMap(true),
+  _grid(),
+  _gridKey(),
   _line(*LineAttributes::defaultLineAttributes()),
   _marker(*MarkerAttributes::defaultMarkerAttributes()),
   _showLine(false),
@@ -80,6 +93,44 @@ namespace CAP
   _sysLine.set(1, 1.0, 1, 1.0);
   }
 
+  GraphItem::GraphItem(const MATH::Function * function, float xMinimum, float xMaximum, float yMinimum, float yMaximum,
+                       const String & label)
+  :
+  GraphItem(function, xMinimum, xMaximum, label)
+  {
+  _yMinimum = yMinimum;
+  _yMaximum = yMaximum;
+  }
+
+  unsigned int GraphItem::rank() const
+  {
+  if (_kind == kFunction) return _function ? _function->rank() : 1;
+  return _data ? _data->rank() : 1;
+  }
+
+  std::shared_ptr<const Grid2D> GraphItem::grid(double xLow, double xHigh, double yLow, double yHigh, bool logX, bool logY) const
+  {
+  if (!isMap()) return nullptr;
+  if (_kind == kData)
+    {
+    // made at each call: data may change between drawings, and histograms are quick to read
+    Grid2D grid;
+    if (!_data || !Grid2D::fromData(*_data, grid)) return nullptr;
+    return std::make_shared<const Grid2D>(grid);
+    }
+  if (!_function) return nullptr;
+  double x0 = std::max<double>(_xMinimum, xLow), x1 = std::min<double>(_xMaximum, xHigh);
+  double y0 = std::max<double>(_yMinimum, yLow), y1 = std::min<double>(_yMaximum, yHigh);
+  if (!(x1 > x0) || !(y1 > y0)) return nullptr;
+  std::vector<double> key = { double(reinterpret_cast<std::uintptr_t>(_function)), x0, x1, y0, y1,
+                              double(logX), double(logY), double(_mapSamples) };
+  if (_grid && key == _gridKey) return _grid;            // a function is evaluated again only when needed
+  Grid2D grid = Grid2D::fromFunction(*_function, x0, x1, _mapSamples, y0, y1, _mapSamples, logX, logY);
+  _grid = grid.isEmpty() ? nullptr : std::make_shared<const Grid2D>(grid);
+  _gridKey = key;
+  return _grid;
+  }
+
   // ------------------------------------------------------------------------------------------------ Graph
 
   Graph::Graph()
@@ -94,6 +145,9 @@ namespace CAP
   _dimension(k2D),
   _xAxis(),
   _yAxis(),
+  _zAxis(),
+  _logZ(false), _autoZ(true), _zMinimum(0.0), _zMaximum(1.0), _symmetricZ(false),
+  _paletteType(Palette::kViridis), _paletteSteps(0), _showColorScale(true),
   _frameFill(*FillAttributes::defaultFillAttributes()),
   _frameLine(*LineAttributes::defaultLineAttributes()),
   _titleAttributes(*TextAttributes::defaultTextAttributes()),
@@ -116,6 +170,8 @@ namespace CAP
   _xAxis.setTickSide(1);
   _xAxis.setTitle("");              // Axis titles itself "x" by default
   _yAxis.setTitle("");
+  _zAxis.setTitle("");
+  _zAxis.setTickSide(1);            // along the right edge of the color scale: ticks into it, labels to the right
   setRenderer(GraphRenderer::defaultRenderer());
   }
 
@@ -131,6 +187,9 @@ namespace CAP
   _dimension(src._dimension),
   _xAxis(src._xAxis),
   _yAxis(src._yAxis),
+  _zAxis(src._zAxis),
+  _logZ(src._logZ), _autoZ(src._autoZ), _zMinimum(src._zMinimum), _zMaximum(src._zMaximum), _symmetricZ(src._symmetricZ),
+  _paletteType(src._paletteType), _paletteSteps(src._paletteSteps), _showColorScale(src._showColorScale),
   _frameFill(src._frameFill),
   _frameLine(src._frameLine),
   _titleAttributes(src._titleAttributes),
@@ -159,6 +218,9 @@ namespace CAP
     _dimension = rhs._dimension;
     _xAxis = rhs._xAxis;
     _yAxis = rhs._yAxis;
+    _zAxis = rhs._zAxis;
+    _logZ = rhs._logZ; _autoZ = rhs._autoZ; _zMinimum = rhs._zMinimum; _zMaximum = rhs._zMaximum; _symmetricZ = rhs._symmetricZ;
+    _paletteType = rhs._paletteType; _paletteSteps = rhs._paletteSteps; _showColorScale = rhs._showColorScale;
     _frameFill = rhs._frameFill;
     _frameLine = rhs._frameLine;
     _titleAttributes = rhs._titleAttributes;
@@ -181,7 +243,28 @@ namespace CAP
   }
 
   float Graph::frameXLow()  const { return _cellXLow  + _margins.left()  *(_cellXHigh-_cellXLow); }
-  float Graph::frameXHigh() const { return _cellXHigh - _margins.right() *(_cellXHigh-_cellXLow); }
+  float Graph::frameXHigh() const { return _cellXHigh - (_margins.right() + colorScaleWidth())*(_cellXHigh-_cellXLow); }
+
+  bool Graph::hasMaps() const
+  {
+  for (const auto & item : _items) if (item.isMap()) return true;
+  return false;
+  }
+
+  float Graph::colorScaleWidth() const
+  {
+  return (_showColorScale && hasMaps()) ? 0.15f : 0.0f;
+  }
+
+  Color Graph::colorOf(const View & view, double z) const
+  {
+  double t;
+  if (view.logZ && view.zMinimum > 0)
+    t = z > 0 ? (std::log10(z) - std::log10(view.zMinimum))/(std::log10(view.zMaximum) - std::log10(view.zMinimum)) : 0.0;
+  else
+    t = view.zMaximum > view.zMinimum ? (z - view.zMinimum)/(view.zMaximum - view.zMinimum) : 0.5;
+  return palette().color(t);
+  }
   float Graph::frameYLow()  const { return _cellYLow  + _margins.bottom()*(_cellYHigh-_cellYLow); }
   float Graph::frameYHigh() const { return _cellYHigh - _margins.top()   *(_cellYHigh-_cellYLow); }
 
@@ -300,11 +383,35 @@ namespace CAP
   const double inf = std::numeric_limits<double>::infinity();
   double xLow = inf, xHigh = -inf, yLow = inf, yHigh = -inf;
   double yCentralMinimum = inf;   // smallest value without its uncertainty
+  bool hasCurves = false;         // items of rank 1
+  bool maps = false;              // items of rank 2
 
-  // x range: data extent, function curve ranges
+  // extent of an item of rank 2 in x or y: its grid, its points, or the range of its function
+  auto mapExtent = [&](const GraphItem & item, int k, double & low, double & high)
+    {
+    bool log = k == 0 ? _logX : _logY;
+    if (item.kind() == GraphItem::kFunction)
+      {
+      include(k == 0 ? item.xMinimum() : item.yMinimum(), log, low, high);
+      include(k == 0 ? item.xMaximum() : item.yMaximum(), log, low, high);
+      return;
+      }
+    if (std::shared_ptr<const Grid2D> grid = item.grid(-inf, inf, -inf, inf, _logX, _logY))
+      {
+      for (double edge : (k == 0 ? grid->xEdges() : grid->yEdges())) include(edge, log, low, high);
+      return;
+      }
+    const MATH::DataPoints & d = *item.data();             // scattered points
+    for (unsigned int n=0; n<d.size(); n++) include(d.coordinatesAt(n)[k], log, low, high);
+    };
+
+  // x range: data extent, function curve ranges, maps
   for (const auto & item : _items)
     {
-    if (item.kind() == GraphItem::kData && item.data())
+    if ((item.kind() == GraphItem::kData && !item.data()) || (item.kind() == GraphItem::kFunction && !item.function())) continue;
+    if (item.isMap()) { maps = true; mapExtent(item, 0, xLow, xHigh); continue; }
+    hasCurves = true;
+    if (item.kind() == GraphItem::kData)
       {
       const MATH::DataPoints & d = *item.data();
       for (unsigned int k=0; k<d.size(); k++)
@@ -315,16 +422,19 @@ namespace CAP
         include(p.x(), _logX, xLow, xHigh);
         }
       }
-    else if (item.kind() == GraphItem::kFunction && item.function())
+    else
       {
       include(item.xMinimum(), _logX, xLow, xHigh);
       include(item.xMaximum(), _logX, xLow, xHigh);
       }
     }
+  const bool mapsOnly = maps && !hasCurves;   // a graph of maps only takes the exact extent of the maps
   if (_autoX)
     {
     if (!(xHigh >= xLow)) { xLow = _logX ? 0.1 : 0.0; xHigh = _logX ? 10.0 : 1.0; }
-    if (_logX) niceLog(xLow, xHigh); else niceLinear(xLow, xHigh);
+    if (mapsOnly && xHigh > xLow) { }
+    else if (_logX) niceLog(xLow, xHigh);
+    else niceLinear(xLow, xHigh);
     }
   else
     {
@@ -333,10 +443,12 @@ namespace CAP
   v.xMinimum = xLow;
   v.xMaximum = xHigh;
 
-  // y range: data (with errors) and function values within the x range
+  // y range: data (with errors) and function values within the x range, maps
   for (const auto & item : _items)
     {
-    if (item.kind() == GraphItem::kData && item.data())
+    if ((item.kind() == GraphItem::kData && !item.data()) || (item.kind() == GraphItem::kFunction && !item.function())) continue;
+    if (item.isMap()) { mapExtent(item, 1, yLow, yHigh); continue; }
+    if (item.kind() == GraphItem::kData)
       {
       const MATH::DataPoints & d = *item.data();
       for (unsigned int k=0; k<d.size(); k++)
@@ -352,7 +464,7 @@ namespace CAP
         include(p.y(), _logY, yLow, yHigh);
         }
       }
-    else if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
+    else if (item.function()->rank() == 1)
       {
       double a = std::max<double>(item.xMinimum(), xLow);
       double b = std::min<double>(item.xMaximum(), xHigh);
@@ -373,12 +485,13 @@ namespace CAP
   if (_autoY)
     {
     if (!(yHigh >= yLow)) { yLow = _logY ? 0.1 : 0.0; yHigh = _logY ? 10.0 : 1.0; }
-    if (_logY)
+    if (mapsOnly && yHigh > yLow) { }
+    else if (_logY)
       niceLog(yLow, yHigh);
     else
       {
-      if (yLow > 0 && yLow < 0.25*yHigh) yLow = 0.0;   // start at zero when the data are well above it
-      if (yLow < 0 && yCentralMinimum >= 0) yLow = 0.0; // values >= 0: errors bars do not push the axis below zero
+      if (hasCurves && yLow > 0 && yLow < 0.25*yHigh) yLow = 0.0;    // start at zero when the data are well above it
+      if (hasCurves && yLow < 0 && yCentralMinimum >= 0) yLow = 0.0; // values >= 0: errors bars do not push the axis below zero
       niceLinear(yLow, yHigh);
       }
     }
@@ -388,6 +501,60 @@ namespace CAP
     }
   v.yMinimum = yLow;
   v.yMaximum = yHigh;
+
+  // z range: the values of the maps in view
+  v.hasZ = maps;
+  v.logZ = _logZ;
+  if (maps)
+    {
+    double zLow = inf, zHigh = -inf;
+    for (const auto & item : _items)
+      {
+      if (!item.isMap() || (item.kind() == GraphItem::kData && !item.data()) || (item.kind() == GraphItem::kFunction && !item.function())) continue;
+      double low, high;
+      if (std::shared_ptr<const Grid2D> grid = item.grid(xLow, xHigh, yLow, yHigh, _logX, _logY))
+        {
+        if (grid->range(xLow, xHigh, yLow, yHigh, _logZ, low, high)) { include(low, _logZ, zLow, zHigh); include(high, _logZ, zLow, zHigh); }
+        }
+      else if (item.kind() == GraphItem::kData)
+        {
+        const MATH::DataPoints & d = *item.data();
+        for (unsigned int n=0; n<d.size(); n++)
+          {
+          std::vector<double> c = d.coordinatesAt(n);
+          if (c[0] < xLow || c[0] > xHigh || c[1] < yLow || c[1] > yHigh) continue;
+          include(d.valueAt(n), _logZ, zLow, zHigh);
+          }
+        }
+      }
+    if (_autoZ)
+      {
+      if (!(zHigh >= zLow)) { zLow = _logZ ? 0.1 : 0.0; zHigh = _logZ ? 10.0 : 1.0; }
+      if (_logZ) niceLog(zLow, zHigh);
+      else
+        {
+        if (_symmetricZ)
+          {
+          double m = std::max(std::fabs(zLow), std::fabs(zHigh));
+          zLow = -m; zHigh = m;
+          niceLinear(zLow, zHigh);
+          m = std::max(std::fabs(zLow), std::fabs(zHigh));   // rounding may have made it lopsided
+          zLow = -m; zHigh = m;
+          }
+        else
+          {
+          if (zLow > 0 && zLow < 0.25*zHigh) zLow = 0.0;    // counts: the scale starts at zero
+          niceLinear(zLow, zHigh);
+          }
+        }
+      }
+    else
+      {
+      zLow = _zMinimum; zHigh = _zMaximum;
+      }
+    v.zMinimum = zLow;
+    v.zMaximum = zHigh;
+    }
   return v;
   }
 

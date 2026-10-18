@@ -272,17 +272,16 @@ namespace CAP
 
   section("Range");
   const Graph::View view = graph.view();
-  bool automatic = (k == 0) ? graph.isAutoX() : graph.isAutoY();
-  float range[2] = { k == 0 ? view.xMinimum : view.yMinimum, k == 0 ? view.xMaximum : view.yMaximum };
-  bool log = (k == 0) ? graph.isLogX() : graph.isLogY();
+  bool automatic = graph.isAuto(k);
+  float range[2] = { view.minimum(k), view.maximum(k) };
+  bool log = graph.isLog(k);
   if (ImGui::Checkbox("automatic", &automatic))
     {
-    if (automatic) { if (k == 0) graph.setAutoX(); else graph.setAutoY(); }
-    else if (k == 0) graph.setXRange(range[0], range[1]); else graph.setYRange(range[0], range[1]);
+    if (automatic) graph.setAuto(k); else graph.setRange(k, range[0], range[1]);
     changed = true;
     }
   ImGui::SameLine(0, 20);
-  if (ImGui::Checkbox("logarithmic", &log)) { if (k == 0) graph.setLogX(log); else graph.setLogY(log); changed = true; }
+  if (ImGui::Checkbox("logarithmic", &log)) { graph.setLog(k, log); changed = true; }
   // minimum and maximum: the values typed are kept until they make a valid range, which is applied when a field is
   // left (Enter, Tab, click elsewhere); until then the fields follow the range of the graph (e.g. after a zoom)
   ImGuiStorage * storage = ImGui::GetStateStorage();
@@ -310,7 +309,7 @@ namespace CAP
   bool valid = maximum > minimum && (!log || minimum > 0);
   if (pending && left && valid)
     {
-    if (k == 0) graph.setXRange(minimum, maximum); else graph.setYRange(minimum, maximum);
+    graph.setRange(k, minimum, maximum);
     storage->SetBool(pendingId, false);
     changed = true;
     }

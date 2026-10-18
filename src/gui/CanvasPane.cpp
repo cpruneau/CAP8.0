@@ -474,7 +474,7 @@ namespace CAP
         }
       case Graph::kAxis:
         if (shift) { drag.kind = kMoveLabels; drag.initialX = g.axis(pick.axis).labelGap(); }
-        else drag.kind = (pick.axis == 0) ? kZoomX : kZoomY;
+        else if (pick.axis < 2) drag.kind = (pick.axis == 0) ? kZoomX : kZoomY;   // the z axis: not by dragging
         break;
       case Graph::kFrame: case Graph::kDataPoint:
         drag.kind = kZoom; break;

@@ -13,6 +13,7 @@
 //! @brief Graph: a plot of functions and data points in a cell of a canvas; GraphItem: one object shown.
 #ifndef CAP__Graph
 #define CAP__Graph
+#include <memory>
 #include <vector>
 #include "Drawable2D.hpp"
 #include "Axis.hpp"
@@ -22,6 +23,8 @@
 #include "MarkerAttributes.hpp"
 #include "TextAttributes.hpp"
 #include "Rect2D.hpp"
+#include "Grid2D.hpp"
+#include "Palette.hpp"
 
 namespace CAP
 {
@@ -35,7 +38,14 @@ namespace CAP
   {
 
   //!
-  //! @brief One object shown in a Graph: a function of one variable or a set of data points, with its drawing style.
+  //! @brief One object shown in a Graph: a function or a set of data points, with its drawing style.
+  //!
+  //! Objects of rank 1 (f(x), points (x,y)) are drawn as curves and markers with error bars. Objects of rank 2
+  //! (f(x,y), histograms of rank 2, points (x,y) with a value z) are drawn as color maps on the cells of a Grid2D
+  //! (see grid()): the bins of a histogram, the nodes of points on a regular grid, or mapSamples() x mapSamples() cells
+  //! where a function is evaluated, over the part of its range that is visible (zooming in shows more detail).
+  //! Scattered points of rank 2 form no grid: they are drawn as markers colored by their value. The colors come
+  //! from the palette and the z range of the graph (see Graph).
   //!
   //! The objects are not owned: they must outlive the graphs that show them (in CapApp they are owned by the
   //! application or by the files it opened).
@@ -54,9 +64,20 @@ namespace CAP
   //! @param xMinimum lower end of the curve @param xMaximum upper end @param label legend label (the function's
   //! name if empty)
   GraphItem(const MATH::Function * function, float xMinimum, float xMaximum, const String & label="");
-  //! @brief Data points drawn as markers with error bars. @param data data points @param label legend label (the
-  //! name of the data if empty)
+  //! @brief Data points drawn as markers with error bars (rank 1) or as a color map (rank 2). @param data data
+  //! points @param label legend label (the name of the data if empty)
   GraphItem(const MATH::DataPoints * data, const String & label="");
+  //! @brief Function f(x,y) drawn as a color map over [xMinimum, xMaximum] x [yMinimum, yMaximum].
+  //! @param function function of rank 2 @param xMinimum left @param xMaximum right @param yMinimum bottom
+  //! @param yMaximum top @param label legend label (the function's name if empty)
+  GraphItem(const MATH::Function * function, float xMinimum, float xMaximum, float yMinimum, float yMaximum,
+            const String & label="");
+
+  //! @brief Number of variables of the object shown: 1 for f(x) and points (x,y), 2 for f(x,y) and points (x,y,z).
+  //! @return rank
+  unsigned int rank() const;
+  //! @brief Whether the item is drawn as a map (rank 2). @return true if so
+  bool isMap() const { return rank() == 2; }
 
   Kind kind() const { return _kind; }   //!< Function or data points
   const MATH::Function   * function() const { return _function; }   //!< The function shown (kFunction), or null
@@ -73,9 +94,34 @@ namespace CAP
   float xMinimum() const { return _xMinimum; }
   float xMaximum() const { return _xMaximum; }   //!< Upper end of the curve of a function
   void  setXRange(float xMinimum, float xMaximum) { _xMinimum = xMinimum; _xMaximum = xMaximum; }   //!< Set the range of the curve of a function
+  //! Range in y of a function of rank 2 (ignored otherwise).
+  float yMinimum() const { return _yMinimum; }
+  float yMaximum() const { return _yMaximum; }   //!< Upper end in y of a function of rank 2
+  void  setYRange(float yMinimum, float yMaximum) { _yMinimum = yMinimum; _yMaximum = yMaximum; }   //!< Set the range in y of a function of rank 2
   //! Number of points at which a function is evaluated to draw its curve.
   int   nSamples() const { return _nSamples; }
   void  setNSamples(int n) { _nSamples = n < 2 ? 2 : n; }   //!< Set the number of points of the curve (at least 2)
+
+  //! @name Maps (rank 2)
+  //! @{
+
+  //! @brief Whether the color map is drawn. @return true if so
+  bool showColorMap() const { return _showColorMap; }
+  //! @brief Draw the color map or not. @param v draw it
+  void setShowColorMap(bool v) { _showColorMap = v; }
+  //! @brief Number of cells along x and along y where a function of rank 2 is evaluated. @return number
+  int  mapSamples() const { return _mapSamples; }
+  //! @brief Set the number of cells along each axis where a function of rank 2 is evaluated. @param n number (2 to 1000)
+  void setMapSamples(int n) { _mapSamples = n < 2 ? 2 : (n > 1000 ? 1000 : n); }
+  //!
+  //! @brief The cells and values drawn for an item of rank 2 (see Grid2D). A function is evaluated over the part of
+  //! its range inside the given rectangle; the grid is kept until the rectangle, the scales or the number of
+  //! samples change. @param xLow left @param xHigh right @param yLow bottom @param yHigh top (visible range)
+  //! @param logX logarithmic x axis @param logY logarithmic y axis
+  //! @return grid, or nullptr for an item of rank 1, scattered points, or a function outside the rectangle
+  //!
+  std::shared_ptr<const Grid2D> grid(double xLow, double xHigh, double yLow, double yHigh, bool logX, bool logY) const;
+  //! @}
 
   LineAttributes   & lineAttributes()   { return _line; }   //!< Line of the curve, or through the data points
   MarkerAttributes & markerAttributes() { return _marker; }   //!< Markers of the data points (their color is that of the error bars)
@@ -118,7 +164,13 @@ namespace CAP
   String _label;   //!< label in the legend
   float  _xMinimum;   //!< lower end of the curve of a function
   float  _xMaximum;   //!< upper end of the curve of a function
+  float  _yMinimum;   //!< lower end in y of a function of rank 2
+  float  _yMaximum;   //!< upper end in y of a function of rank 2
   int    _nSamples;   //!< number of points of the curve
+  int    _mapSamples;   //!< cells along each axis where a function of rank 2 is evaluated
+  bool   _showColorMap;   //!< the color map of an item of rank 2 is drawn
+  mutable std::shared_ptr<const Grid2D> _grid;   //!< grid of the last drawing (kept while it is valid)
+  mutable std::vector<double> _gridKey;   //!< what the grid was made for (object, range, scales, samples)
   LineAttributes   _line;   //!< line of the curve or through the points
   MarkerAttributes _marker;   //!< markers of the data points
   bool   _showLine;   //!< the line is drawn
@@ -144,6 +196,12 @@ namespace CAP
   //! A graph without items is not drawn at all (no frame, axes or title).
   //! dimension() is k2D; k3D (surfaces, 3D points) is reserved for the 3D views to come.
   //!
+  //! Items of rank 2 (functions f(x,y), histograms of rank 2, points with a value z) are drawn as color maps: the
+  //! graph then has a third axis, z, drawn along a color scale on the right of the frame (showColorScale()), whose
+  //! range is automatic (the values in view, rounded to nice values; symmetric about zero with setSymmetricZ())
+  //! unless set with setZRange(), linear or logarithmic (setLogZ()), and whose colors come from palette(). Items of
+  //! rank 1 and 2 can be shown together (e.g. a curve over a map).
+  //!
   //! The title, the axis titles and the legend have automatic positions, which can be changed by the program or
   //! with the mouse: setTitleOffset(), Axis::setTitleOffset() (fractions of the cell), setLegendPosition()
   //! (fractions of the frame). Text sizes are automatic (following the size of the cell) unless set in points with
@@ -168,6 +226,16 @@ namespace CAP
   float yMaximum;   //!< ranges of the axes
   bool  logX;   //!< logarithmic axes
   bool  logY;   //!< logarithmic axes
+  float zMinimum = 0.0f;   //!< range of the values of the maps (when hasZ)
+  float zMaximum = 1.0f;   //!< range of the values of the maps (when hasZ)
+  bool  logZ = false;      //!< logarithmic z scale
+  bool  hasZ = false;      //!< the graph shows maps (items of rank 2)
+  //! @brief Lower end of axis k (0 x, 1 y, 2 z). @param k axis @return minimum
+  float minimum(int k) const { return k == 0 ? xMinimum : (k == 1 ? yMinimum : zMinimum); }
+  //! @brief Upper end of axis k (0 x, 1 y, 2 z). @param k axis @return maximum
+  float maximum(int k) const { return k == 0 ? xMaximum : (k == 1 ? yMaximum : zMaximum); }
+  //! @brief Whether axis k (0 x, 1 y, 2 z) is logarithmic. @param k axis @return true if so
+  bool  log(int k) const { return k == 0 ? logX : (k == 1 ? logY : logZ); }
   };
 
   //! @brief Parts of a graph, as found by pick().
@@ -248,14 +316,26 @@ namespace CAP
   //! @brief Fixed x range (the y range stays automatic unless set too).
   void setXRange(float minimum, float maximum) { _xMinimum = minimum; _xMaximum = maximum; _autoX = false; }
   void setYRange(float minimum, float maximum) { _yMinimum = minimum; _yMaximum = maximum; _autoY = false; }   //!< Fixed y range (the x range stays automatic unless set too)
-  //! @brief Back to automatic ranges.
-  void setAutoRange() { _autoX = true; _autoY = true; }
+  //! @brief Back to automatic ranges (x, y and z).
+  void setAutoRange() { _autoX = true; _autoY = true; _autoZ = true; }
   void setAutoX() { _autoX = true; }   //!< Back to an automatic x range
   void setAutoY() { _autoY = true; }   //!< Back to an automatic y range
   bool isAutoX() const { return _autoX; }   //!< Whether the x range is automatic
   bool isAutoY() const { return _autoY; }   //!< Whether the y range is automatic
-  //! @brief Ranges and scales used for drawing: automatic ranges cover all the items (rounded to nice values; on a
-  //! log axis, the positive values only). @return view
+  //! @brief Whether the range of axis k (0 x, 1 y, 2 z) is automatic. @param k axis @return true if so
+  bool isAuto(int k) const { return k == 0 ? _autoX : (k == 1 ? _autoY : _autoZ); }
+  //! @brief Back to an automatic range for axis k (0 x, 1 y, 2 z). @param k axis
+  void setAuto(int k) { if (k == 0) _autoX = true; else if (k == 1) _autoY = true; else _autoZ = true; }
+  //! @brief Fixed range of axis k (0 x, 1 y, 2 z). @param k axis @param minimum lower end @param maximum upper end
+  void setRange(int k, float minimum, float maximum)
+  { if (k == 0) setXRange(minimum, maximum); else if (k == 1) setYRange(minimum, maximum); else setZRange(minimum, maximum); }
+  //! @brief Whether axis k (0 x, 1 y, 2 z) is logarithmic. @param k axis @return true if so
+  bool isLog(int k) const { return k == 0 ? _logX : (k == 1 ? _logY : _logZ); }
+  //! @brief Logarithmic axis k (0 x, 1 y, 2 z) or not. @param k axis @param v logarithmic
+  void setLog(int k, bool v) { if (k == 0) _logX = v; else if (k == 1) _logY = v; else _logZ = v; }
+  //! @brief Ranges and scales used for drawing: automatic ranges cover all the items (rounded to nice values,
+  //! except the x and y ranges of a graph showing only maps, which are those of the maps; on a log axis, the
+  //! positive values only). @return view
   View view() const;
   //! @brief Number of major tick intervals that falls on nice values (1, 2, 5 x 10^k) for a linear axis whose
   //! range was rounded by view(). @param minimum lower end @param maximum upper end @return intervals (>= 1)
@@ -264,6 +344,34 @@ namespace CAP
   Point2D toCanvas(const View & view, double x, double y) const;
   //! @brief Data coordinates of a canvas point for the given view (inverse of toCanvas()).
   void fromCanvas(const View & view, const Point2D & p, double & x, double & y) const;
+  //! @}
+
+  //! @name Maps: values (z), palette and color scale
+  //! @{
+
+  //! @brief Whether the graph shows items of rank 2 (maps), and so has a z axis. @return true if so
+  bool hasMaps() const;
+  void setLogZ(bool v) { _logZ = v; }   //!< Logarithmic z scale or not
+  bool isLogZ() const { return _logZ; }   //!< Whether the z scale is logarithmic
+  //! @brief Fixed z range (values outside it take the color of the nearest end).
+  void setZRange(float minimum, float maximum) { _zMinimum = minimum; _zMaximum = maximum; _autoZ = false; }
+  void setAutoZ() { _autoZ = true; }   //!< Back to an automatic z range
+  bool isAutoZ() const { return _autoZ; }   //!< Whether the z range is automatic
+  //! @brief Automatic z range symmetric about zero (e.g. with the diverging palette, for values of both signs).
+  void setSymmetricZ(bool v) { _symmetricZ = v; }
+  bool isSymmetricZ() const { return _symmetricZ; }   //!< Whether the automatic z range is symmetric about zero
+  //! @brief Colors of the values. @return palette
+  Palette palette() const { return Palette(Palette::Type(_paletteType), _paletteSteps); }
+  //! @brief Set the colors of the values. @param palette palette
+  void setPalette(const Palette & palette) { _paletteType = int(palette.type()); _paletteSteps = palette.nSteps(); }
+  bool showColorScale() const { return _showColorScale; }   //!< Whether the color scale is shown (when the graph shows maps)
+  void setShowColorScale(bool v) { _showColorScale = v; }   //!< Show or hide the color scale
+  //! @brief Fraction of the cell width taken on the right of the frame by the color scale and its labels (0 when
+  //! it is not shown). @return fraction
+  float colorScaleWidth() const;
+  //! @brief Color of a value for the given view (palette, z range and scale). @param view view @param z value
+  //! @return color (values outside the range take the color of the nearest end)
+  Color colorOf(const View & view, double z) const;
   //! @}
 
   //! @name Appearance
@@ -275,10 +383,12 @@ namespace CAP
   Axis & yAxis() { return _yAxis; }   //!< Template of the y axis
   const Axis & xAxis() const { return _xAxis; }   //!< Template of the x axis
   const Axis & yAxis() const { return _yAxis; }   //!< Template of the y axis
-  //! @brief Number of axes: 2 (3, for the 3D graphs to come). @return number
-  int nAxes() const { return 2; }
-  Axis & axis(int k) { return k == 0 ? _xAxis : _yAxis; }   //!< Axis k: 0 x, 1 y
-  const Axis & axis(int k) const { return k == 0 ? _xAxis : _yAxis; }   //!< Axis k: 0 x, 1 y
+  Axis & zAxis() { return _zAxis; }   //!< Template of the z axis (the axis of the color scale)
+  const Axis & zAxis() const { return _zAxis; }   //!< Template of the z axis
+  //! @brief Number of axes: 3 when the graph shows maps (the z axis of the color scale), 2 otherwise. @return number
+  int nAxes() const { return hasMaps() ? 3 : 2; }
+  Axis & axis(int k) { return k == 0 ? _xAxis : (k == 1 ? _yAxis : _zAxis); }   //!< Axis k: 0 x, 1 y, 2 z
+  const Axis & axis(int k) const { return k == 0 ? _xAxis : (k == 1 ? _yAxis : _zAxis); }   //!< Axis k: 0 x, 1 y, 2 z
   FillAttributes & frameFill() { return _frameFill; }   //!< Background of the frame
   LineAttributes & frameLine() { return _frameLine; }   //!< Outline of the frame
   const FillAttributes & frameFill() const { return _frameFill; }   //!< Background of the frame
@@ -352,6 +462,15 @@ namespace CAP
   Dimension _dimension;   //!< 2D or 3D
   Axis _xAxis;   //!< template of the x axis
   Axis _yAxis;   //!< template of the y axis
+  Axis _zAxis;   //!< template of the z axis (color scale)
+  bool  _logZ;   //!< logarithmic z scale
+  bool  _autoZ;   //!< automatic z range
+  float _zMinimum;   //!< fixed z range (when not automatic)
+  float _zMaximum;   //!< fixed z range (when not automatic)
+  bool  _symmetricZ;   //!< automatic z range symmetric about zero
+  int   _paletteType;   //!< palette (Palette::Type)
+  int   _paletteSteps;   //!< bands of the palette (0: continuous)
+  bool  _showColorScale;   //!< the color scale is shown
   FillAttributes _frameFill;   //!< background of the frame
   LineAttributes _frameLine;   //!< outline of the frame
   TextAttributes _titleAttributes;   //!< color and font of the title

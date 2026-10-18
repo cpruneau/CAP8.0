@@ -11,6 +11,7 @@
  * *********************************************************************/
 //! @file SvgPainter.cpp
 //! @brief Implementation of SvgPainter.
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -52,6 +53,34 @@ namespace CAP
   char text[16];
   std::snprintf(text, sizeof(text), "#%02x%02x%02x", int(255*r+0.5), int(255*g+0.5), int(255*b+0.5));
   return String(text);
+  }
+
+  String SvgPainter::color(const Color & color)
+  {
+  auto byte = [](float v) { return v <= 0 ? 0 : (v >= 1 ? 255 : int(255*v + 0.5f)); };
+  char text[16];
+  std::snprintf(text, sizeof(text), "#%02x%02x%02x", byte(color.red), byte(color.green), byte(color.blue));
+  return String(text);
+  }
+
+  void SvgPainter::fillPolygon(const std::vector<Point2D> & points, const Color & c)
+  {
+  if (points.size() < 3) return;
+  _body << "<polygon points=\"";
+  for (const auto & p : points) _body << px(p) << "," << py(p) << " ";
+  _body << "\" fill=\"" << color(c).data() << "\"";
+  if (c.alpha < 1) _body << " fill-opacity=\"" << c.alpha << "\"";
+  _body << "/>\n";
+  }
+
+  void SvgPainter::fillRectangle(float x0, float y0, float x1, float y1, const Color & c)
+  {
+  float left = std::min(px(Point2D(x0, 0)), px(Point2D(x1, 0))), right  = std::max(px(Point2D(x0, 0)), px(Point2D(x1, 0)));
+  float top  = std::min(py(Point2D(0, y0)), py(Point2D(0, y1))), bottom = std::max(py(Point2D(0, y0)), py(Point2D(0, y1)));
+  _body << "<rect x=\"" << left << "\" y=\"" << top << "\" width=\"" << right - left << "\" height=\"" << bottom - top
+        << "\" fill=\"" << color(c).data() << "\"";
+  if (c.alpha < 1) _body << " fill-opacity=\"" << c.alpha << "\"";
+  _body << " shape-rendering=\"crispEdges\"/>\n";
   }
 
   String SvgPainter::dashArray(int style, float width)

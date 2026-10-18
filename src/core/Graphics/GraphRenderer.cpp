@@ -190,9 +190,55 @@ namespace CAP
 
   bool hasSysErrors(const GraphItem & item)
   {
-  if (item.kind() != GraphItem::kData || !item.data() || !item.showSysErrors()) return false;
+  if (item.kind() != GraphItem::kData || !item.data() || !item.showSysErrors() || item.isMap()) return false;
   for (unsigned int k=0; k<item.data()->size(); k++) if (item.data()->point(k).ySysError() > 0) return true;
   return false;
+  }
+
+  //! Color map of a grid: the cells with a value (> 0 on a logarithmic z scale), clipped to the frame.
+  void drawColorMap(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const Grid2D & grid)
+  {
+  const std::vector<double> & xEdges = grid.xEdges(), & yEdges = grid.yEdges();
+  // canvas positions of the edges; an edge <= 0 on a logarithmic axis goes to the lower end of the axis
+  std::vector<float> cx(xEdges.size()), cy(yEdges.size());
+  for (size_t i=0; i<xEdges.size(); i++)
+    cx[i] = graph.toCanvas(view, view.logX && xEdges[i] <= 0 ? view.xMinimum : xEdges[i], view.yMaximum).x();
+  for (size_t j=0; j<yEdges.size(); j++)
+    cy[j] = graph.toCanvas(view, view.xMaximum, view.logY && yEdges[j] <= 0 ? view.yMinimum : yEdges[j]).y();
+  for (int j=0; j<grid.nY(); j++)
+    for (int i=0; i<grid.nX(); i++)
+      {
+      double v = grid.value(i, j);
+      if (!std::isfinite(v) || (view.logZ && v <= 0)) continue;
+      float x0 = cx[i], x1 = cx[i+1], y0 = cy[j], y1 = cy[j+1];
+      if (!clipRect(box, x0, y0, x1, y1)) continue;
+      painter.fillRectangle(x0, y0, x1, y1, graph.colorOf(view, v));
+      }
+  }
+
+  //! Scattered points of rank 2: disks colored by their values (the size of the markers of the item).
+  void drawColoredPoints(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item,
+                         int iItem, std::vector<Graph::PointPosition> & positions)
+  {
+  const MATH::DataPoints & d = *item.data();
+  const float radius = 4.0f*std::max(0.3f, float(item.markerAttributes().size()));   // device units (size 1: 8 across)
+  const float rx = radius/painter.width(), ry = radius/painter.height();
+  for (unsigned int n=0; n<d.size(); n++)
+    {
+    std::vector<double> c = d.coordinatesAt(n);
+    double v = d.valueAt(n);
+    if (c.size() != 2 || !std::isfinite(v) || (view.logZ && v <= 0) || (view.logX && c[0] <= 0) || (view.logY && c[1] <= 0)) continue;
+    Point2D p = graph.toCanvas(view, c[0], c[1]);
+    if (!inside(box, p)) continue;
+    std::vector<Point2D> disk;
+    for (int k=0; k<16; k++)
+      {
+      double a = 2.0*3.14159265358979323846*k/16;
+      disk.push_back(Point2D(p.x() + rx*std::cos(a), p.y() + ry*std::sin(a)));
+      }
+    painter.fillPolygon(disk, graph.colorOf(view, v));
+    positions.push_back({ iItem, int(n), p });
+    }
   }
   } // namespace
 
@@ -206,6 +252,7 @@ namespace CAP
     {
     graph->xAxis().setDrawnRects(Rect2D(), Rect2D());
     graph->yAxis().setDrawnRects(Rect2D(), Rect2D());
+    graph->zAxis().setDrawnRects(Rect2D(), Rect2D());
     graph->setDrawnLayout(Rect2D(), Rect2D(), std::vector<Graph::PointPosition>());
     return;
     }
@@ -233,7 +280,14 @@ namespace CAP
   for (size_t iItem=0; iItem<graph->items().size(); iItem++)
     {
     const GraphItem & item = graph->items()[iItem];
-    if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
+    if (item.isMap())
+      {
+      if ((item.kind() == GraphItem::kData && !item.data()) || (item.kind() == GraphItem::kFunction && !item.function())) continue;
+      std::shared_ptr<const Grid2D> grid = item.grid(view.xMinimum, view.xMaximum, view.yMinimum, view.yMaximum, view.logX, view.logY);
+      if (grid) { if (item.showColorMap()) drawColorMap(painter, box, *graph, view, *grid); }
+      else if (item.kind() == GraphItem::kData) drawColoredPoints(painter, box, *graph, view, item, int(iItem), pointPositions);
+      }
+    else if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
       {
       double a = std::max<double>(item.xMinimum(), view.xMinimum);
       double b = std::min<double>(item.xMaximum(), view.xMaximum);
@@ -336,6 +390,40 @@ namespace CAP
   graph->xAxis().setDrawnRects(xAxis.titleRect(), xAxis.bodyRect());
   graph->yAxis().setDrawnRects(yAxis.titleRect(), yAxis.bodyRect());
 
+  // color scale of the maps, right of the frame: the palette over the z range, and the z axis along its right edge
+  if (view.hasZ && graph->showColorScale())
+    {
+    const Palette palette = graph->palette();
+    const float x0 = box.x1 + 0.025f*cellWidth, x1 = x0 + 0.035f*cellWidth;
+    const int nSlices = palette.nSteps() > 1 ? palette.nSteps() : 128;
+    for (int s=0; s<nSlices; s++)
+      painter.fillRectangle(x0, box.y0 + (box.y1 - box.y0)*s/nSlices, x1, box.y0 + (box.y1 - box.y0)*(s + 1)/nSlices,
+                            palette.color((s + 0.5)/nSlices));
+    LineAttributes outline = graph->frameLine();
+    if (outline.style() == 0) outline.set(1, 1.0, 1, 1.0);
+    painter.drawLine({ Point2D(x0, box.y0), Point2D(x1, box.y0), Point2D(x1, box.y1), Point2D(x0, box.y1), Point2D(x0, box.y0) }, outline);
+    Axis zAxis = graph->zAxis();
+    zAxis.setEndPoints(Point2D(x1, box.y0), Point2D(x1, box.y1));
+    zAxis.setTickSide(1);
+    zAxis.setLog(view.logZ);
+    zAxis.setRange(view.zMinimum, view.zMaximum);
+    float labelSize = sized(zAxis.labelPointSize(), textSize);
+    zAxis.textAttributes().setSize(labelSize);
+    zAxis.titleAttributes().setSize(sized(zAxis.titlePointSize(), textSize));
+    zAxis.setMajorTickSize(0.4*textSize);
+    zAxis.setMinorTickSize(0.2*textSize);
+    zAxis.setLabelOffset(0.35*labelSize*zAxis.labelGap());
+    zAxis.setNMinorTicks(5);
+    zAxis.setTitleOffset(zAxis.titleOffsetX()*cellWidth, zAxis.titleOffsetY()*cellHeight);
+    if (!view.logZ) zAxis.setNMajorTicks(Graph::niceTickCount(view.zMinimum, view.zMaximum));
+    zAxis.draw(painter);
+    Rect2D body = zAxis.bodyRect();
+    body.include(Rect2D(x0, box.y0, x1, box.y1));                    // the bar belongs to the axis (to pick it)
+    graph->zAxis().setDrawnRects(zAxis.titleRect(), body);
+    }
+  else
+    graph->zAxis().setDrawnRects(Rect2D(), Rect2D());
+
   // title above the frame, moved by the title offset (fractions of the cell)
   Rect2D titleRect;
   if (!graph->title().isNull())
@@ -351,7 +439,9 @@ namespace CAP
 
   // legend: upper right corner inside the frame, or where it was put (upper left corner, fractions of the frame)
   Rect2D legendRect;
-  if (graph->showLegend() && !graph->items().empty())
+  // (a map alone has no legend: its colors are explained by the color scale, its name by the title)
+  bool loneMap = graph->items().size() == 1 && graph->items()[0].isMap();
+  if (graph->showLegend() && !graph->items().empty() && !loneMap)
     {
     TextAttributes legendText = *TextAttributes::defaultTextAttributes();
     legendText.setSize(sized(graph->legendPointSize(), 0.9*textSize));
@@ -400,8 +490,18 @@ namespace CAP
                                      Point2D(middle.x()+hw, y+hh), Point2D(middle.x()-hw, y+hh) };
         painter.drawPolygon(swatch, fill, item.sysStyle() == GraphItem::kSysBand ? noLine : line);
         }
-      if (item.showLine())    painter.drawLine({l, r}, item.lineAttributes());
-      if (item.showMarkers()) painter.drawMarker(middle, item.markerAttributes());
+      if (item.isMap())          // a sample of the palette
+        {
+        const Palette palette = graph->palette();
+        float hh = 0.35f*lineHeight;
+        for (int s=0; s<3; s++)
+          painter.fillRectangle(x0 + sample*s/3.0f, y - hh, x0 + sample*(s + 1)/3.0f, y + hh, palette.color(0.15 + 0.35*s));
+        }
+      else
+        {
+        if (item.showLine())    painter.drawLine({l, r}, item.lineAttributes());
+        if (item.showMarkers()) painter.drawMarker(middle, item.markerAttributes());
+        }
       painter.drawText(Point2D(x0 + sample + gap, y), item.label(), legendText);
       y -= lineHeight;
       }

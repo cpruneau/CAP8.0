@@ -4,6 +4,7 @@
 //
 #import <Cocoa/Cocoa.h>
 #import <CoreText/CoreText.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <exception>
@@ -268,6 +269,29 @@ namespace CAP
   CGContextBeginPath(context);
   addPolygonPath(context, device);
   CGContextDrawPath(context, doFill ? (doStroke ? kCGPathFillStroke : kCGPathFill) : kCGPathStroke);
+  }
+
+  void MacOsCanvas::fillPolygon(const std::vector<Point2D> & points, const Color & color)
+  {
+  CGContextRef context = (CGContextRef) _context;
+  if (!context || points.size() < 3) return;
+  CGContextSetRGBFillColor(context, color.red, color.green, color.blue, color.alpha);
+  std::vector<CGPoint> device;
+  for (const auto & p : points) device.push_back(CGPointMake(p.x()*_width, p.y()*_height));
+  CGContextBeginPath(context);
+  addPolygonPath(context, device);
+  CGContextFillPath(context);
+  }
+
+  void MacOsCanvas::fillRectangle(float x0, float y0, float x1, float y1, const Color & color)
+  {
+  CGContextRef context = (CGContextRef) _context;
+  if (!context) return;
+  CGContextSetRGBFillColor(context, color.red, color.green, color.blue, color.alpha);
+  CGContextSetShouldAntialias(context, false);     // adjacent cells: no seam
+  CGContextFillRect(context, CGRectMake(std::min(x0, x1)*_width, std::min(y0, y1)*_height,
+                                        std::fabs(x1 - x0)*_width, std::fabs(y1 - y0)*_height));
+  CGContextSetShouldAntialias(context, true);
   }
 
   //!
