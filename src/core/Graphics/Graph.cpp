@@ -19,6 +19,7 @@
 #include "GraphRenderer.hpp"
 #include "Function.hpp"
 #include "DataPoints.hpp"
+#include "Histogram.hpp"
 
 ClassImp(CAP::GRAPHICS::Graph);
 
@@ -56,6 +57,9 @@ namespace CAP
   _showMapPoints(false),
   _pointSizeByValue(false),
   _pointOutline(true),
+  _style3D(kSurface),
+  _showSurfaceLines(true),
+  _surfaceSamples(40),
   _line(*LineAttributes::defaultLineAttributes()),
   _marker(*MarkerAttributes::defaultMarkerAttributes()),
   _showLine(true),
@@ -99,6 +103,9 @@ namespace CAP
   _showMapPoints(false),
   _pointSizeByValue(false),
   _pointOutline(true),
+  _style3D(kSurface),
+  _showSurfaceLines(true),
+  _surfaceSamples(40),
   _line(*LineAttributes::defaultLineAttributes()),
   _marker(*MarkerAttributes::defaultMarkerAttributes()),
   _showLine(false),
@@ -112,6 +119,7 @@ namespace CAP
   _sysWidth(0.012f)
   {
   if (_label.isNull() && data) _label = data->name();
+  if (dynamic_cast<const MATH::Histogram*>(data)) _style3D = kLego;   // bins: boxes
   _marker.setStyle(20);
   _sysFill.set(1, 0.25, 1001);    // translucent solid fill (the color follows the markers)
   _sysLine.set(1, 1.0, 1, 1.0);
@@ -132,8 +140,9 @@ namespace CAP
   return _data ? _data->rank() : 1;
   }
 
-  std::shared_ptr<const Grid2D> GraphItem::grid(double xLow, double xHigh, double yLow, double yHigh, bool logX, bool logY) const
+  std::shared_ptr<const Grid2D> GraphItem::grid(double xLow, double xHigh, double yLow, double yHigh, bool logX, bool logY, int samples) const
   {
+  if (samples <= 0) samples = _mapSamples;
   if (!isMap()) return nullptr;
   if (_kind == kData)
     {
@@ -147,9 +156,9 @@ namespace CAP
   double y0 = std::max<double>(_yMinimum, yLow), y1 = std::min<double>(_yMaximum, yHigh);
   if (!(x1 > x0) || !(y1 > y0)) return nullptr;
   std::vector<double> key = { double(reinterpret_cast<std::uintptr_t>(_function)), x0, x1, y0, y1,
-                              double(logX), double(logY), double(_mapSamples) };
+                              double(logX), double(logY), double(samples) };
   if (_grid && key == _gridKey) return _grid;            // a function is evaluated again only when needed
-  Grid2D grid = Grid2D::fromFunction(*_function, x0, x1, _mapSamples, y0, y1, _mapSamples, logX, logY);
+  Grid2D grid = Grid2D::fromFunction(*_function, x0, x1, samples, y0, y1, samples, logX, logY);
   _grid = grid.isEmpty() ? nullptr : std::make_shared<const Grid2D>(grid);
   _gridKey = key;
   return _grid;
@@ -167,6 +176,7 @@ namespace CAP
   _autoX(true), _autoY(true),
   _xMinimum(0.0), _xMaximum(1.0), _yMinimum(0.0), _yMaximum(1.0),
   _dimension(k2D),
+  _azimuth(30.0f), _elevation(30.0f),
   _xAxis(),
   _yAxis(),
   _zAxis(),
@@ -209,6 +219,7 @@ namespace CAP
   _autoX(src._autoX), _autoY(src._autoY),
   _xMinimum(src._xMinimum), _xMaximum(src._xMaximum), _yMinimum(src._yMinimum), _yMaximum(src._yMaximum),
   _dimension(src._dimension),
+  _azimuth(src._azimuth), _elevation(src._elevation),
   _xAxis(src._xAxis),
   _yAxis(src._yAxis),
   _zAxis(src._zAxis),
@@ -240,6 +251,7 @@ namespace CAP
     _autoX = rhs._autoX; _autoY = rhs._autoY;
     _xMinimum = rhs._xMinimum; _xMaximum = rhs._xMaximum; _yMinimum = rhs._yMinimum; _yMaximum = rhs._yMaximum;
     _dimension = rhs._dimension;
+    _azimuth = rhs._azimuth; _elevation = rhs._elevation;
     _xAxis = rhs._xAxis;
     _yAxis = rhs._yAxis;
     _zAxis = rhs._zAxis;
@@ -268,6 +280,14 @@ namespace CAP
 
   float Graph::frameXLow()  const { return _cellXLow  + _margins.left()  *(_cellXHigh-_cellXLow); }
   float Graph::frameXHigh() const { return _cellXHigh - (_margins.right() + colorScaleWidth())*(_cellXHigh-_cellXLow); }
+
+  void Graph::setViewAngles(float azimuth, float elevation)
+  {
+  azimuth = std::fmod(azimuth, 360.0f);
+  if (azimuth < 0) azimuth += 360.0f;
+  _azimuth = azimuth;
+  _elevation = std::min(90.0f, std::max(-90.0f, elevation));
+  }
 
   bool Graph::hasMaps() const
   {
@@ -570,6 +590,10 @@ namespace CAP
     if (_autoZ)
       {
       if (!(zHigh >= zLow)) { zLow = _logZ ? 0.1 : 0.0; zHigh = _logZ ? 10.0 : 1.0; }
+      // lego boxes rise from zero: in a 3D view, the automatic linear range includes it
+      bool lego = false;
+      for (const auto & item : _items) lego = lego || (item.isMap() && item.style3D() == GraphItem::kLego);
+      if (lego && is3D() && !_logZ) { zLow = std::min(zLow, 0.0); zHigh = std::max(zHigh, 0.0); }
       if (_logZ) niceLog(zLow, zHigh);
       else
         {

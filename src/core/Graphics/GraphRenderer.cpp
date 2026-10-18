@@ -405,6 +405,10 @@ namespace CAP
   std::vector<Point2D> corners{ Point2D(box.x0,box.y0), Point2D(box.x1,box.y0), Point2D(box.x1,box.y1), Point2D(box.x0,box.y1) };
   LineAttributes noLine;
   noLine.setStyle(0);
+  if (graph->is3D())
+    draw3D(*graph, painter, view, textSize, cellWidth, cellHeight);
+  else
+  {
   painter.drawPolygon(corners, graph->frameFill(), noLine);
 
   // items
@@ -524,6 +528,8 @@ namespace CAP
   graph->xAxis().setDrawnRects(xAxis.titleRect(), xAxis.bodyRect());
   graph->yAxis().setDrawnRects(yAxis.titleRect(), yAxis.bodyRect());
 
+  }
+
   // color scale of the maps, right of the frame: the palette over the z range, and the z axis along its right edge
   if (view.hasZ && graph->showColorScale())
     {
@@ -537,6 +543,7 @@ namespace CAP
     if (outline.style() == 0) outline.set(1, 1.0, 1, 1.0);
     painter.drawLine({ Point2D(x0, box.y0), Point2D(x1, box.y0), Point2D(x1, box.y1), Point2D(x0, box.y1), Point2D(x0, box.y0) }, outline);
     Axis zAxis = graph->zAxis();
+    if (graph->is3D()) zAxis.setTitle("");                           // shown along the vertical axis of the box
     zAxis.setEndPoints(Point2D(x1, box.y0), Point2D(x1, box.y1));
     zAxis.setTickSide(1);
     zAxis.setLog(view.logZ);

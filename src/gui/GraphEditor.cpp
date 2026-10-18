@@ -656,6 +656,34 @@ namespace CAP
       }
     section("Colors (of the graph)");
     changed |= colorsEdit(graph);
+
+    section("3D view");
+    bool view3D = graph.dimension() == Graph::k3D;
+    if (ImGui::Checkbox("3D view of the graph", &view3D)) { graph.setDimension(view3D ? Graph::k3D : Graph::k2D); changed = true; }
+    ImGui::SetItemTooltip("Drag in the graph to turn the view; double-click for the default view");
+    if (view3D)
+      {
+      static const char * styles[] = { "surface", "mesh", "lego" };
+      int style = int(item.style3D());
+      ImGui::SetNextItemWidth(120);
+      if (ImGui::Combo("drawn as", &style, styles, 3)) { item.setStyle3D(GraphItem::Style3D(style)); changed = true; }
+      ImGui::SetItemTooltip("surface: shaded, in the colors of the palette; mesh: wire frame without the hidden lines;\n"
+                            "lego: one box per cell");
+      bool lines = item.showSurfaceLines();
+      if (item.style3D() != GraphItem::kMesh && ImGui::Checkbox("lines of the cells", &lines)) { item.setShowSurfaceLines(lines); changed = true; }
+      if (item.kind() == GraphItem::kFunction)
+        {
+        int samples = item.surfaceSamples();
+        ImGui::SetNextItemWidth(160);
+        if (ImGui::SliderInt("cells along each axis (3D)", &samples, 4, 120)) { item.setSurfaceSamples(samples); changed = true; }
+        }
+      float angles[2] = { graph.azimuth(), graph.elevation() };
+      ImGui::SetNextItemWidth(160);
+      if (ImGui::SliderFloat("azimuth", &angles[0], 0.0f, 360.0f, "%.0f")) { graph.setViewAngles(angles[0], angles[1]); changed = true; }
+      ImGui::SetNextItemWidth(160);
+      if (ImGui::SliderFloat("elevation", &angles[1], -90.0f, 90.0f, "%.0f")) { graph.setViewAngles(angles[0], angles[1]); changed = true; }
+      if (ImGui::Button("Default view")) { graph.resetViewAngles(); changed = true; }
+      }
     }
   else if (item.kind() == GraphItem::kData)
     {

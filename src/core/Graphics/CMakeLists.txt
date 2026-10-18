@@ -35,6 +35,7 @@ Point2D.hpp
 Point3D.hpp
 Rect2D.hpp
 Polygon.hpp
+Projection3D.hpp
 PolygonRenderer.hpp
 Renderer.hpp
 SvgPainter.hpp
@@ -52,6 +53,7 @@ FillAttributes.cpp
 Geom2D.cpp
 Graph.cpp
 GraphRenderer.cpp
+GraphRenderer3D.cpp
 Grid2D.cpp
 LatexRenderer.cpp
 Line.cpp
@@ -65,6 +67,7 @@ MarkerVector.cpp
 Painter.cpp
 Palette.cpp
 Polygon.cpp
+Projection3D.cpp
 PolygonRenderer.cpp
 Renderer.cpp
 SvgPainter.cpp
@@ -104,6 +107,9 @@ add_test(NAME LatexRenderer COMMAND TestLatexRenderer)
 add_executable(TestGraph2D tests/TestGraph2D.cpp)
 target_link_libraries(TestGraph2D Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Graph2D COMMAND TestGraph2D)
+add_executable(TestGraph3D tests/TestGraph3D.cpp)
+target_link_libraries(TestGraph3D Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME Graph3D COMMAND TestGraph3D)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libGraphics.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libGraphics_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Graphics  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

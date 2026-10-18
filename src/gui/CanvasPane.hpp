@@ -112,7 +112,7 @@ namespace CAP
   float _rectH;   //!< screen rectangle of the canvas at the last render (pixels)
 
   //! What a drag of the left mouse button does.
-  enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels };
+  enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels, kRotate };
   //! State of a drag of the left mouse button
   struct Drag
   {

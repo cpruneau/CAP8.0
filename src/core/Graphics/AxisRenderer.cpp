@@ -137,7 +137,11 @@ namespace CAP
     std::vector<Point2D> tickLine{base, tip};
     painter.drawLine(tickLine, axis->lineAttributes());
     body.include(tip);
-    if (tick.major && axis->showLabels())
+    // a label at an end of the axis may be left out (where it would meet the label of another axis)
+    bool atStart = std::fabs((base.x()-a.x())*W) + std::fabs((base.y()-a.y())*H) < 0.5f;
+    bool atEnd   = std::fabs((base.x()-b.x())*W) + std::fabs((base.y()-b.y())*H) < 0.5f;
+    bool hidden  = (atStart && axis->hidesStartLabel()) || (atEnd && axis->hidesEndLabel());
+    if (tick.major && axis->showLabels() && !hidden)
       {
       char text[32];
       std::snprintf(text, sizeof(text), "%.6g", tick.value);

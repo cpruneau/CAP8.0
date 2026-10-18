@@ -122,10 +122,11 @@ namespace CAP
   //! @brief The cells and values drawn for an item of rank 2 (see Grid2D). A function is evaluated over the part of
   //! its range inside the given rectangle; the grid is kept until the rectangle, the scales or the number of
   //! samples change. @param xLow left @param xHigh right @param yLow bottom @param yHigh top (visible range)
-  //! @param logX logarithmic x axis @param logY logarithmic y axis
+  //! @param logX logarithmic x axis @param logY logarithmic y axis @param samples cells along each axis of a
+  //! function (0: mapSamples())
   //! @return grid, or nullptr for an item of rank 1, scattered points, or a function outside the rectangle
   //!
-  std::shared_ptr<const Grid2D> grid(double xLow, double xHigh, double yLow, double yHigh, bool logX, bool logY) const;
+  std::shared_ptr<const Grid2D> grid(double xLow, double xHigh, double yLow, double yHigh, bool logX, bool logY, int samples=0) const;
 
   //! @brief Whether contour lines are drawn. @return true if so
   bool showContours() const { return _showContours; }
@@ -179,6 +180,26 @@ namespace CAP
   bool pointOutline() const { return _pointOutline; }
   //! @brief Outline the disks or not. @param v outline them
   void setPointOutline(bool v) { _pointOutline = v; }
+  //! @}
+
+  //! @name 3D views (rank 2)
+  //! @{
+
+  //! @brief How a map is drawn in a 3D view: a shaded surface colored by the palette, a mesh (wire frame with the
+  //! hidden lines removed), or lego boxes (one per cell, from the bottom of the z range or from zero).
+  enum Style3D { kSurface, kMesh, kLego };
+  //! @brief How the item is drawn in a 3D view. @return style
+  Style3D style3D() const { return _style3D; }
+  //! @brief Set how the item is drawn in a 3D view. @param style style
+  void setStyle3D(Style3D style) { _style3D = style; }
+  //! @brief Whether the lines of the cells are drawn on a surface or on lego boxes. @return true if so
+  bool showSurfaceLines() const { return _showSurfaceLines; }
+  //! @brief Draw the lines of the cells on a surface or on lego boxes, or not. @param v draw them
+  void setShowSurfaceLines(bool v) { _showSurfaceLines = v; }
+  //! @brief Number of cells along each axis where a function of rank 2 is evaluated for a 3D view. @return number
+  int  surfaceSamples() const { return _surfaceSamples; }
+  //! @brief Set the number of cells along each axis of a function in a 3D view. @param n number (4 to 200)
+  void setSurfaceSamples(int n) { _surfaceSamples = n < 4 ? 4 : (n > 200 ? 200 : n); }
   //! @}
 
   LineAttributes   & lineAttributes()   { return _line; }   //!< Line of the curve, or through the data points
@@ -241,6 +262,9 @@ namespace CAP
   bool   _showMapPoints;   //!< points of a map drawn as colored disks
   bool   _pointSizeByValue;   //!< disk area proportional to the values
   bool   _pointOutline;   //!< disks outlined
+  Style3D _style3D;   //!< how the item is drawn in a 3D view
+  bool   _showSurfaceLines;   //!< lines of the cells drawn in a 3D view
+  int    _surfaceSamples;   //!< cells along each axis of a function in a 3D view
   LineAttributes   _line;   //!< line of the curve or through the points
   MarkerAttributes _marker;   //!< markers of the data points
   bool   _showLine;   //!< the line is drawn
@@ -264,11 +288,14 @@ namespace CAP
   //!
   //! Items are added with add() or replace() (clear the graph, then add). The graph does not own the objects shown.
   //! A graph without items is not drawn at all (no frame, axes or title).
-  //! dimension() is k2D; k3D (surfaces, 3D points) is reserved for the 3D views to come.
+  //! dimension() is k2D, or k3D for a 3D view of the maps: a box with the x, y and z axes, seen from the direction
+  //! given by azimuth() and elevation() (orthographic projection), in which each item of rank 2 is drawn as a
+  //! surface, a mesh or lego boxes (GraphItem::style3D()); items of rank 1 are not drawn in a 3D view.
   //!
   //! Items of rank 2 (functions f(x,y), histograms of rank 2, points with a value z) are drawn as color maps: the
   //! graph then has a third axis, z, drawn along a color scale on the right of the frame (showColorScale()), whose
-  //! range is automatic (the values in view, rounded to nice values; symmetric about zero with setSymmetricZ())
+  //! range is automatic (the values in view, rounded to nice values, and including zero for lego boxes in a 3D
+  //! view; symmetric about zero with setSymmetricZ())
   //! unless set with setZRange(), linear or logarithmic (setLogZ()), and whose colors come from palette(). Items of
   //! rank 1 and 2 can be shown together (e.g. a curve over a map).
   //!
@@ -284,7 +311,7 @@ namespace CAP
   {
   public:
 
-  //! @brief Graph of a function of one variable (k2D), or of two (k3D, for the 3D graphs to come)
+  //! @brief Plane view (k2D: curves, and maps as color maps), or 3D view of the maps (k3D)
   enum Dimension { k2D, k3D };
 
   //! @brief Ranges and scales actually used to draw the graph (automatic or user ranges).
@@ -452,6 +479,18 @@ namespace CAP
   //! @{
   Dimension dimension() const { return _dimension; }   //!< 2D or 3D
   void setDimension(Dimension dimension) { _dimension = dimension; }   //!< Set 2D or 3D
+  //! @brief Whether the graph is drawn as a 3D view (k3D, with maps to show). @return true if so
+  bool is3D() const { return _dimension == k3D && hasMaps(); }
+  //! @brief Direction from which a 3D view is seen: angle about the vertical (z) axis, in degrees (0: the x axis
+  //! runs to the right). @return azimuth
+  float azimuth() const { return _azimuth; }
+  //! @brief Height of the eye above the x-y plane of a 3D view, in degrees (90: from above). @return elevation
+  float elevation() const { return _elevation; }
+  //! @brief Set the direction of a 3D view. @param azimuth degrees (any, taken modulo 360) @param elevation degrees
+  //! (clamped to [-90, 90])
+  void setViewAngles(float azimuth, float elevation);
+  //! @brief Back to the default direction of a 3D view (azimuth 30, elevation 30).
+  void resetViewAngles() { setViewAngles(30.0f, 30.0f); }
   //! Axis templates: title, ticks, line and text attributes (ranges and scales are set from the graph).
   Axis & xAxis() { return _xAxis; }
   Axis & yAxis() { return _yAxis; }   //!< Template of the y axis
@@ -534,6 +573,8 @@ namespace CAP
   float _yMinimum;   //!< fixed ranges (when not automatic)
   float _yMaximum;   //!< fixed ranges (when not automatic)
   Dimension _dimension;   //!< 2D or 3D
+  float _azimuth;   //!< direction of a 3D view: angle about z (degrees)
+  float _elevation;   //!< direction of a 3D view: height of the eye (degrees)
   Axis _xAxis;   //!< template of the x axis
   Axis _yAxis;   //!< template of the y axis
   Axis _zAxis;   //!< template of the z axis (color scale)

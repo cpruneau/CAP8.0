@@ -72,6 +72,12 @@ namespace CAP
   void setTitlePointSize(float size) { _titlePointSize = size < 0 ? 0 : size; }
   //! @brief Distance of the labels from the axis, relative to the automatic distance (1; used by Graph).
   void setLabelGap(float gap) { _labelGap = gap < 0 ? 0 : gap; }
+  //! @brief Leave out the label of the tick at the start or at the end of the axis, for one drawing (e.g. where
+  //! two axes of a 3D view meet). Not copied: copies of the axis show all their labels.
+  //! @param start hide the label at the start @param end hide the label at the end
+  void hideEndLabels(bool start, bool end) { _hideStartLabel = start; _hideEndLabel = end; }
+  bool hidesStartLabel() const { return _hideStartLabel; }   //!< Whether the label at the start is left out
+  bool hidesEndLabel() const { return _hideEndLabel; }   //!< Whether the label at the end is left out
 
   bool  isLog() const          { return _log; }
   bool  isReversed() const     { return _reversed; }
@@ -132,6 +138,8 @@ namespace CAP
   bool  _showMajorTicks;
   bool  _showMinorTicks;
   bool  _showLabels;
+  bool  _hideStartLabel = false;   //!<! label at the start left out, for one drawing (not streamed, not copied)
+  bool  _hideEndLabel = false;     //!<! label at the end left out, for one drawing (not streamed, not copied)
   int   _nMajorTicks;
   int   _nMinorTicks;
   int   _tickSide;

@@ -147,6 +147,13 @@ namespace CAP
     if (ImGui::MenuItem(label)) { pick.part = Graph::kAxisTitle; pick.axis = k; edit(_contextGraph, pick); }
     }
   if (ImGui::MenuItem("Edit Legend...")) { pick.part = Graph::kLegend; edit(_contextGraph, pick); }
+  if (graph.hasMaps())
+    {
+    ImGui::Separator();
+    bool view3D = graph.dimension() == Graph::k3D;
+    if (ImGui::MenuItem("3D View", nullptr, view3D)) { changing(); graph.setDimension(view3D ? Graph::k2D : Graph::k3D); }
+    if (view3D && ImGui::MenuItem("Reset View Angles")) { changing(); graph.resetViewAngles(); }
+    }
   if (ImGui::BeginMenu("Edit Item", !graph.items().empty()))
     {
     for (size_t k=0; k<graph.items().size(); k++)
@@ -340,6 +347,9 @@ namespace CAP
       g.axis(_drag.axis).setLabelGap(std::min(std::max(_drag.initialX + away/20.0f, 0.0f), 5.0f));
       break;
       }
+    case kRotate:          // half a degree per pixel: right turns the box, up raises the eye
+      g.setViewAngles(_drag.initialX - 0.5f*dx, _drag.initialY + 0.5f*dy);
+      break;
     default: break;
     }
   }
@@ -420,6 +430,15 @@ namespace CAP
     {
     const Graph & g = _canvas.graph(k);
     const Graph::View view = g.view();
+    if (g.is3D())
+      {
+      char view3D[128];
+      std::snprintf(view3D, sizeof(view3D), "azimuth %.0f, elevation %.0f (drag to turn the view, double-click for the default)",
+                    g.azimuth(), g.elevation());
+      _hoverText = view3D;
+      }
+    else
+    {
     double x, y;
     g.fromCanvas(view, p, x, y);
     char text[160];
@@ -453,6 +472,7 @@ namespace CAP
       if (!z.isNull()) _hoverText = String(_hoverText.str() + "   " + z.str());
       }
     }
+    }
   if (k < 0) return false;
   Graph & g = _canvas.graph(k);
   const bool shift = ImGui::GetIO().KeyShift;
@@ -465,12 +485,14 @@ namespace CAP
       ImGui::SetMouseCursor((pick.axis == 0) != shift ? ImGuiMouseCursor_ResizeEW : ImGuiMouseCursor_ResizeNS);
       break;
     case Graph::kDataPoint: ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); break;
+    case Graph::kFrame: if (g.is3D()) ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); break;
     default: break;
     }
 
   // ---- double-click in the frame: automatic ranges
   if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && (pick.part == Graph::kFrame || pick.part == Graph::kDataPoint))
     {
+    if (g.is3D()) { changing(); g.resetViewAngles(); g.setAutoRange(); return true; }   // 3D: back to the default view
     if (!g.isAutoX() || !g.isAutoY()) { changing(); g.setAutoRange(); }
     return true;
     }
@@ -503,10 +525,12 @@ namespace CAP
         }
       case Graph::kAxis:
         if (shift) { drag.kind = kMoveLabels; drag.initialX = g.axis(pick.axis).labelGap(); }
-        else if (pick.axis < 2) drag.kind = (pick.axis == 0) ? kZoomX : kZoomY;   // the z axis: not by dragging
+        else if (pick.axis < 2 && !g.is3D()) drag.kind = (pick.axis == 0) ? kZoomX : kZoomY;   // the z axis, 3D views: not by dragging
         break;
       case Graph::kFrame: case Graph::kDataPoint:
-        drag.kind = kZoom; break;
+        if (g.is3D()) { drag.kind = kRotate; drag.initialX = g.azimuth(); drag.initialY = g.elevation(); }
+        else drag.kind = kZoom;
+        break;
       default: break;
       }
     _drag = drag;
