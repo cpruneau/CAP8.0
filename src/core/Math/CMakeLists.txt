@@ -73,6 +73,14 @@ MathBasicSearch.cpp
 MathBasicSortingFunctions.cpp
 MathBasicStatistics.cpp
 MathConstants.cpp
+ExtremumSearch.cpp
+GradientSearch.cpp
+GreedySearch.cpp
+HillClimbingSearch.cpp
+ScanSearch.cpp
+SearchDomain.cpp
+SearchEngine.cpp
+SearchProblem.cpp
 MathExceptions.cpp
 Partition.cpp
 Vector2D.cpp
@@ -97,6 +105,11 @@ G__Math.cxx)
 
 target_link_libraries(Math Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Math  PUBLIC Base ${EXTRA_INCLUDES} )
+
+# Tests (run with ctest in the build directory; not installed)
+add_executable(TestExtremumSearch tests/TestExtremumSearch.cpp)
+target_link_libraries(TestExtremumSearch Math Base ${ROOT_LIBRARIES})
+add_test(NAME ExtremumSearch COMMAND TestExtremumSearch)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
