@@ -6,14 +6,23 @@ namespace CAP
   namespace MATH
   {
 
+  //! @brief Exception thrown by the mathematical classes; the base of the more specific math exceptions.
   class MathException : public Exception
   {
   public:
+  //! @brief Exception. @param message what happened @param source function that throws
   MathException(const String & message, const String & source);
+  //! @brief Destructor.
   virtual ~MathException() {}
+
+  protected:
+  //! @brief Exception of a derived class. @param message what happened @param source function that throws
+  //! @param exceptionName name of the derived class
+  MathException(const String & message, const String & source, const String & exceptionName);
   };
 
-  class MathDomainException : public Exception
+  //! @brief A value outside its domain [min, max] (e.g. a parameter outside its bounds); a MathException.
+  class MathDomainException : public MathException
   {
   public:
   MathDomainException(double min, double max, double x, const String & message, const String & source);

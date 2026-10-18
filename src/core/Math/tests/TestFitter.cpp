@@ -134,7 +134,7 @@ int main()
     f.fixParameter(1); f.fixParameter(1, false);
     CHECK(f.parameter(1).type() == Parameter::LowHigh);
     bool thrown = false;
-    try { f.setParameterValue(1, 3.0); } catch (const CAP::Exception &) { thrown = true; }   // a MathDomainException
+    try { f.setParameterValue(1, 3.0); } catch (const MathException &) { thrown = true; }   // a MathDomainException
     CHECK(thrown);                                                          // outside its bounds
   }
 

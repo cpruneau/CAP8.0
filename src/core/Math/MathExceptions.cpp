@@ -12,9 +12,14 @@ namespace CAP
   Exception(message,source, __FUNCTION__)
   {   }
 
+  MathException::MathException(const String & message, const String & source, const String & exceptionName)
+  :
+  Exception(message,source,exceptionName)
+  {   }
+
   MathDomainException::MathDomainException(double min, double max, double x, const String & message, const String & source)
   :
-  Exception(message,source,__FUNCTION__),
+  MathException(message,source,__FUNCTION__),
   _min(min),
   _max(max),
   _x(x)
