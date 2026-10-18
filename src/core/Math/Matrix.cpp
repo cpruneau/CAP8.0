@@ -1,4 +1,5 @@
 #include "Matrix.hpp"
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <utility>
@@ -136,6 +137,73 @@ namespace CAP
       for (unsigned int j=0; j<rhs._nColumns; j++) c[j] += a*b[j];
       }
   return result;
+  }
+
+  Matrix Matrix::transpose() const
+  {
+  Matrix t(_nColumns, _nRows);
+  for (unsigned int r=0; r<_nRows; r++)
+    for (unsigned int c=0; c<_nColumns; c++) t._values[c*_nRows + r] = _values[r*_nColumns + c];
+  return t;
+  }
+
+  Matrix Matrix::identity(unsigned int n)
+  {
+  Matrix m(n, n, 0.0);
+  for (unsigned int k=0; k<n; k++) m._values[k*n + k] = 1.0;
+  return m;
+  }
+
+  namespace
+  {
+  //! Gauss-Jordan elimination of a (n x n) with partial pivoting, applied to b (n x m) as well: a becomes the
+  //! identity and b the solution. Throws if a pivot vanishes relative to the largest element.
+  void eliminate(std::vector<double> & a, std::vector<double> & b, unsigned int n, unsigned int m, const char * source)
+  {
+  double scale = 0;
+  for (double v : a) scale = std::max(scale, std::fabs(v));
+  if (!(scale > 0)) throw MathException("Singular matrix (all its elements are zero)", source);
+  for (unsigned int col=0; col<n; col++)
+    {
+    unsigned int pivot = col;
+    for (unsigned int r=col+1; r<n; r++) if (std::fabs(a[r*n + col]) > std::fabs(a[pivot*n + col])) pivot = r;
+    if (!(std::fabs(a[pivot*n + col]) > 1E-14*scale)) throw MathException("Singular matrix", source);
+    if (pivot != col)
+      {
+      for (unsigned int c=0; c<n; c++) std::swap(a[pivot*n + c], a[col*n + c]);
+      for (unsigned int c=0; c<m; c++) std::swap(b[pivot*m + c], b[col*m + c]);
+      }
+    double p = a[col*n + col];
+    for (unsigned int c=0; c<n; c++) a[col*n + c] /= p;
+    for (unsigned int c=0; c<m; c++) b[col*m + c] /= p;
+    for (unsigned int r=0; r<n; r++)
+      {
+      if (r == col) continue;
+      double f = a[r*n + col];
+      if (f == 0) continue;
+      for (unsigned int c=0; c<n; c++) a[r*n + c] -= f*a[col*n + c];
+      for (unsigned int c=0; c<m; c++) b[r*m + c] -= f*b[col*m + c];
+      }
+    }
+  }
+  } // namespace
+
+  Matrix Matrix::inverse() const
+  {
+  if (!isSquare()) throw MathException("Only a square matrix has an inverse", __FUNCTION__);
+  std::vector<double> a(_values);
+  Matrix result = identity(_nRows);
+  eliminate(a, result._values, _nRows, _nRows, __FUNCTION__);
+  return result;
+  }
+
+  std::vector<double> Matrix::solve(const std::vector<double> & b) const
+  {
+  if (!isSquare()) throw MathException("The matrix of a linear system must be square", __FUNCTION__);
+  if (b.size() != _nRows) throw MathException("The right-hand side has the wrong size", __FUNCTION__);
+  std::vector<double> a(_values), x(b);
+  eliminate(a, x, _nRows, 1, __FUNCTION__);
+  return x;
   }
 
   double Matrix::determinant() const

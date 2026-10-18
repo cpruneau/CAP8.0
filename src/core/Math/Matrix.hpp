@@ -115,6 +115,25 @@ namespace CAP
   //!
   double determinant() const;
 
+  //! @brief Transpose. @return matrix with rows and columns exchanged
+  Matrix transpose() const;
+  //!
+  //! @brief Inverse of a square matrix, by Gauss-Jordan elimination with partial pivoting.
+  //! @return inverse
+  //! @throws MathException if the matrix is not square, or singular (a pivot vanishes, relative to the size of the
+  //! elements)
+  //!
+  Matrix inverse() const;
+  //!
+  //! @brief Solution x of A x = b, A being this square matrix (Gaussian elimination with partial pivoting).
+  //! @param b right-hand side (nRows() values)
+  //! @return x
+  //! @throws MathException if the matrix is not square, the sizes differ, or the matrix is singular
+  //!
+  std::vector<double> solve(const std::vector<double> & b) const;
+  //! @brief Identity matrix. @param n size @return n x n identity
+  static Matrix identity(unsigned int n);
+
   //! @}
 
 

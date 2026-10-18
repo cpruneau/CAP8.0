@@ -62,6 +62,7 @@ DataPoints.cpp
 DataPointsVector.cpp
 Exponential.cpp
 FolderTypes.cpp
+Fitter.cpp
 Function.cpp
 Histogram.cpp
 Profile.cpp
@@ -114,6 +115,9 @@ target_include_directories(Math  PUBLIC Base ${EXTRA_INCLUDES} )
 add_executable(TestExtremumSearch tests/TestExtremumSearch.cpp)
 target_link_libraries(TestExtremumSearch Math Base ${ROOT_LIBRARIES})
 add_test(NAME ExtremumSearch COMMAND TestExtremumSearch)
+add_executable(TestFitter tests/TestFitter.cpp)
+target_link_libraries(TestFitter Math Base ${ROOT_LIBRARIES})
+add_test(NAME Fitter COMMAND TestFitter)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

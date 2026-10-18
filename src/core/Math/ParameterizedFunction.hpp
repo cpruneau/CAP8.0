@@ -81,6 +81,33 @@ namespace CAP
   //!
   const Parameter & parameter(unsigned int index) const;
 
+  //! @name Setting the parameters (e.g. by a fit)
+  //! @{
+
+  //! @brief Set the value of a parameter. @param index index of the parameter @param value new value
+  //! @throws MathException if index is out of range; MathDomainException if the value is outside its bounds
+  void setParameterValue(unsigned int index, double value);
+  //! @brief Set the values of all the parameters. @param values values, one per parameter
+  //! @throws MathException if the number of values differs from nParameters(); MathDomainException as setParameterValue()
+  void setParameterValues(const std::vector<double> & values);
+  //! @brief Values of all the parameters. @return values
+  std::vector<double> parameterValues() const;
+  //! @brief Indices of the parameters that are not Fixed. @return indices
+  std::vector<unsigned int> freeParameters() const;
+  //!
+  //! @brief Fix a parameter at its current value, or release it (its type then follows its bounds: Free, Low, High or
+  //! LowHigh). @param index index of the parameter @param fixed fix it, or release it
+  //! @throws MathException if index is out of range
+  //!
+  void fixParameter(unsigned int index, bool fixed=true);
+  //!
+  //! @brief Set the bounds of a parameter (its type becomes Low, High or LowHigh unless it is Fixed); its value is
+  //! moved within them if needed. @param index index of the parameter @param minimum lower bound @param maximum upper
+  //! bound @throws MathException if index is out of range or minimum > maximum
+  //!
+  void setParameterLimits(unsigned int index, double minimum, double maximum);
+  //! @}
+
   //!
   //! @brief Value of a function of rank 1. Implemented by derived classes of rank 1; by default, forwards to the vector version.
   //! @param x value of the independent variable
@@ -239,8 +266,6 @@ namespace CAP
 
   //! @brief Value of the parameter at index, without range check (for use by derived classes). @param index index of the parameter @return value of the parameter
   double parameterValue(unsigned int index) const { return _parameters[index].value(); }
-  //! @brief Set the value of the parameter at index, without range check (for use by derived classes). @param index index of the parameter @param value new value
-  void setParameterValue(unsigned int index, double value) { _parameters[index].setValue(value); }
 
   //!
   //! @brief Throw if power < 0 and the range [low, high] (in either order) contains 0, where x^power is singular.

@@ -56,6 +56,55 @@ namespace CAP
   return _parameters[index];
   }
 
+  void ParameterizedFunction::setParameterValue(unsigned int index, double value)
+  {
+  if (index >= _parameters.size()) throw MathException("Parameter index out of range",__FUNCTION__);
+  _parameters[index].setValue(value);
+  }
+
+  void ParameterizedFunction::setParameterValues(const std::vector<double> & values)
+  {
+  if (values.size() != _parameters.size()) throw MathException("One value per parameter is needed",__FUNCTION__);
+  for (unsigned int k=0; k<values.size(); k++) _parameters[k].setValue(values[k]);
+  }
+
+  std::vector<double> ParameterizedFunction::parameterValues() const
+  {
+  std::vector<double> values;
+  for (const auto & p : _parameters) values.push_back(p.value());
+  return values;
+  }
+
+  std::vector<unsigned int> ParameterizedFunction::freeParameters() const
+  {
+  std::vector<unsigned int> indices;
+  for (unsigned int k=0; k<_parameters.size(); k++) if (_parameters[k].type() != Parameter::Fixed) indices.push_back(k);
+  return indices;
+  }
+
+  void ParameterizedFunction::fixParameter(unsigned int index, bool fixed)
+  {
+  if (index >= _parameters.size()) throw MathException("Parameter index out of range",__FUNCTION__);
+  Parameter & p = _parameters[index];
+  if (fixed) { p.setType(Parameter::Fixed); return; }
+  bool low = p.minimum() > Parameter::defaultMinimum, high = p.maximum() < Parameter::defaultMaximum;
+  p.setType(low ? (high ? Parameter::LowHigh : Parameter::Low) : (high ? Parameter::High : Parameter::Free));
+  }
+
+  void ParameterizedFunction::setParameterLimits(unsigned int index, double minimum, double maximum)
+  {
+  if (index >= _parameters.size()) throw MathException("Parameter index out of range",__FUNCTION__);
+  if (minimum > maximum) throw MathException("The minimum is above the maximum",__FUNCTION__);
+  Parameter & p = _parameters[index];
+  bool fixed = p.type() == Parameter::Fixed;
+  p.setType(Parameter::Free);                         // the value is moved within the new bounds first
+  double v = std::min(std::max(p.value(), minimum), maximum);
+  p.setValue(v);
+  p.setMinimum(minimum);
+  p.setMaximum(maximum);
+  if (fixed) p.setType(Parameter::Fixed);
+  }
+
   namespace
   {
   // Function currently being evaluated by the vector version of evaluateAt() (per thread). The vector version

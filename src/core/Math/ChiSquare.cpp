@@ -1,4 +1,5 @@
 #include "ChiSquare.hpp"
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include "MathExceptions.hpp"
@@ -170,6 +171,47 @@ namespace CAP
   int ndf = nDegreesOfFreedom();
   if (ndf<=0) throw MathException("Number of degrees of freedom is not positive",__FUNCTION__);
   return chiSquare()/double(ndf);
+  }
+
+  double ChiSquare::regularizedGammaQ(double a, double x)
+  {
+  if (!(a > 0) || x < 0) throw MathException("Invalid arguments of the incomplete gamma function",__FUNCTION__);
+  if (x == 0) return 1.0;
+  const double logPrefactor = -x + a*std::log(x) - std::lgamma(a);
+  if (x < a + 1)
+    {
+    // series of P(a,x) = x^a e^-x / Gamma(a) sum x^n / (a (a+1) ... (a+n)); Q = 1 - P
+    double term = 1.0/a, sum = term;
+    for (int n=1; n<1000; n++)
+      {
+      term *= x/(a + n);
+      sum += term;
+      if (std::fabs(term) < std::fabs(sum)*1E-16) break;
+      }
+    return std::max(0.0, std::min(1.0, 1.0 - sum*std::exp(logPrefactor)));
+    }
+  // continued fraction of Q(a,x) (modified Lentz)
+  const double tiny = 1E-300;
+  double b = x + 1 - a, c = 1/tiny, d = 1/b, h = d;
+  for (int n=1; n<1000; n++)
+    {
+    double an = -n*(n - a);
+    b += 2;
+    d = an*d + b; if (std::fabs(d) < tiny) d = tiny;
+    c = b + an/c; if (std::fabs(c) < tiny) c = tiny;
+    d = 1/d;
+    double delta = d*c;
+    h *= delta;
+    if (std::fabs(delta - 1) < 1E-16) break;
+    }
+  return std::max(0.0, std::min(1.0, std::exp(logPrefactor)*h));
+  }
+
+  double ChiSquare::probability(double chiSquare, int ndf)
+  {
+  if (ndf <= 0) throw MathException("The number of degrees of freedom must be positive",__FUNCTION__);
+  if (chiSquare < 0) throw MathException("A chi square cannot be negative",__FUNCTION__);
+  return regularizedGammaQ(0.5*ndf, 0.5*chiSquare);
   }
 
   } // namespace MATH

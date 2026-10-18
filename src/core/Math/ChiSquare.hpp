@@ -135,6 +135,17 @@ namespace CAP
   //!
   double chiSquarePerDegreeOfFreedom() const;
 
+  //!
+  //! @brief Probability that a chi square of ndf degrees of freedom exceeds the given value (the p-value of a fit):
+  //! the regularized upper incomplete gamma function Q(ndf/2, chiSquare/2), computed by its series or its continued
+  //! fraction. @param chiSquare chi square (>= 0) @param ndf degrees of freedom (> 0)
+  //! @return probability in [0,1] @throws MathException if ndf is not positive or chiSquare is negative
+  //!
+  static double probability(double chiSquare, int ndf);
+  //! @brief Regularized upper incomplete gamma function Q(a,x) = Gamma(a,x)/Gamma(a). @param a a (> 0) @param x x
+  //! (>= 0) @return Q(a,x) @throws MathException if a <= 0 or x < 0
+  static double regularizedGammaQ(double a, double x);
+
   protected:
 
   //! @brief Throw NullPointerException if the function or the data is not set, MathException if their ranks differ. @param source name of the calling function
