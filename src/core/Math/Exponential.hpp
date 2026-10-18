@@ -31,6 +31,8 @@ namespace CAP
   Exponential(double a=1.0, double b=1.0);
   //! @brief Copy constructor. @param source function to copy
   Exponential(const Exponential & source) = default;
+  //! @brief Copy of the function (see ParameterizedFunction::clone()). @return new function (the caller owns it)
+  Exponential * clone() const override { return new Exponential(*this); }
   //! @brief Assignment operator. @param rhs function to copy @return reference to this function
   Exponential & operator=(const Exponential & rhs) = default;
   //! @brief Destructor.

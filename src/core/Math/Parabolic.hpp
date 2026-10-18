@@ -28,6 +28,8 @@ namespace CAP
   Parabolic(double c0=0.0, double c1=0.0, double c2=0.0);
   //! @brief Copy constructor. @param source function to copy
   Parabolic(const Parabolic & source) = default;
+  //! @brief Copy of the function (see ParameterizedFunction::clone()). @return new function (the caller owns it)
+  Parabolic * clone() const override { return new Parabolic(*this); }
   //! @brief Assignment operator. @param rhs function to copy @return reference to this function
   Parabolic & operator=(const Parabolic & rhs) = default;
   //! @brief Destructor.

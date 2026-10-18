@@ -40,6 +40,8 @@ namespace CAP
   Normal(double amplitude=1.0, double mean=0.0, double width=1.0);
   //! @brief Copy constructor. @param source function to copy
   Normal(const Normal & source) = default;
+  //! @brief Copy of the function (see ParameterizedFunction::clone()). @return new function (the caller owns it)
+  Normal * clone() const override { return new Normal(*this); }
   //! @brief Assignment operator. @param rhs function to copy @return reference to this function
   Normal & operator=(const Normal & rhs) = default;
   //! @brief Destructor.

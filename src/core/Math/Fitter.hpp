@@ -19,6 +19,9 @@
 #include "ChiSquare.hpp"
 #include "Likelihood.hpp"
 #include "ExtremumSearch.hpp"
+#include "DataPointsVector.hpp"
+#include "FitRecord.hpp"
+#include "FitResult.hpp"
 #include "Matrix.hpp"
 
 namespace CAP
@@ -28,35 +31,6 @@ namespace CAP
 
   class ParameterizedFunction;
   class DataPoints;
-
-  //!
-  //! @brief Outcome of a fit: the parameters with their uncertainties and covariance, and the quality of the fit.
-  //!
-  //! Values and errors are given for all the parameters (errors are 0 for Fixed ones); the covariance and correlation
-  //! matrices are those of the free parameters, in the order of freeParameters.
-  //!
-  struct FitResult
-  {
-    bool   converged = false;   //!< the minimization converged within the tolerances
-    bool   validErrors = false;   //!< the covariance could be computed (the curvature matrix is not singular)
-    String status;   //!< how the fit ended
-    String method;   //!< method used (e.g. "Levenberg-Marquardt", "differential evolution + Levenberg-Marquardt")
-    String statistic;   //!< statistic minimized (see Likelihood::name())
-    double chiSquare = 0;   //!< value of the statistic at the best parameters: the chi square, or -2 ln L
-    int    nPoints = 0;   //!< points (bins, events) used
-    int    nDegreesOfFreedom = 0;   //!< points used minus free parameters
-    double chiSquarePerDegreeOfFreedom = 0;   //!< chi square / degrees of freedom (0 if none)
-    double pValue = 0;   //!< probability of a larger chi square (see ChiSquare::probability()); 0 if no degree of
-                         //!< freedom, or for a statistic that is not chi square distributed (unbinned likelihood)
-    std::vector<double> values;   //!< best values of all the parameters
-    std::vector<double> errors;   //!< uncertainties of all the parameters (0 for fixed ones)
-    std::vector<bool>   atLimit;   //!< parameters that ended at one of their bounds (their errors are then unreliable)
-    std::vector<unsigned int> freeParameters;   //!< indices of the free parameters
-    Matrix covariance;   //!< covariance of the free parameters
-    Matrix correlation;   //!< correlations of the free parameters
-    long   nEvaluations = 0;   //!< evaluations of the chi square (or of all the residuals)
-    long   nIterations = 0;   //!< iterations
-  };
 
   //!
   //! @brief Fit of a ParameterizedFunction to data: the parameters that minimize a statistic, -2 ln L (see Likelihood):
@@ -86,7 +60,9 @@ namespace CAP
   //! -2 ln L. They can be scaled by chi square / degrees of freedom (setScaleErrors()) when the uncertainties of the
   //! data are not known absolutely.
   //!
-  //! The fit leaves the function at the best parameters.
+  //! The fit leaves the function at the best parameters. record() makes a FitRecord of the last fit (a copy of the
+  //! function, the result, the range), to attach to the data (DataPoints::addFit()) or to the function that was
+  //! fitted (Function::addFit(); a function is fitted through samples of it, see samples()).
   //!
   //! @code
   //!   CAP::MATH::Normal model(100.0, 0.0, 1.0);          // starting values
@@ -147,6 +123,22 @@ namespace CAP
   bool covarianceAt(Matrix & covariance);
   //! @brief Result of the last fit. @return result
   const FitResult & result() const { return _result; }
+  //!
+  //! @brief Record of the last fit, to attach to the data or the function fitted: a copy of the function (at the best
+  //! parameters), the result, the range covered by the points used, and a label.
+  //! @param label label (empty: the class of the function and "fit", e.g. "Normal fit")
+  //! @return record
+  //! @throws MathException if no fit was made, or the function cannot be copied (see ParameterizedFunction::clone())
+  //!
+  FitRecord record(const String & label="") const;
+  //!
+  //! @brief Samples of a function of rank 1, to fit another function to it: n points equally spaced over [low, high]
+  //! (ends included), each with the same uncertainty (the chi square is then the sum of the squared differences
+  //! divided by error^2). @param function function sampled @param low lower end @param high upper end @param n number
+  //! of points (at least 2) @param error uncertainty given to each point @return points
+  //! @throws MathException if the function is not of rank 1, n < 2 or error <= 0
+  //!
+  static DataPointsVector samples(const Function & function, double low, double high, unsigned int n, double error=1.0);
 
   protected:
 
@@ -189,6 +181,7 @@ namespace CAP
   std::vector<unsigned int> _free;   //!< indices of the free parameters
   std::vector<double> _scale;   //!< typical size of each free parameter (for the derivatives)
   long   _nEvaluations;   //!< evaluations of all the residuals
+  bool   _fitted = false;   //!< a fit was made
   FitResult _result;   //!< result of the last fit
   };
 

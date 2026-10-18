@@ -3,6 +3,7 @@
 #include <vector>
 #include "Aliases.hpp"
 #include "Object.hpp"
+#include "FitRecord.hpp"
 
 namespace CAP
 {
@@ -100,6 +101,25 @@ namespace CAP
   //!
   virtual double evaluateAt(const std::vector<double> & x) const = 0;
 
+  //! @name Fits attached (see FitRecord, Fitter::record())
+  //! @{
+
+  //! @brief Attach a copy of a fit. @param record record
+  void addFit(const FitRecord & record) { _fits.add(record); }
+  //! @brief Attach a fit (shared). @param record record
+  void addFit(const std::shared_ptr<const FitRecord> & record) { _fits.add(record); }
+  //! @brief Number of fits attached. @return number
+  unsigned int nFits() const { return _fits.size(); }
+  //! @brief Fit k. @param k index @return record @throws MathException if k is out of range
+  const FitRecord & fit(unsigned int k) const { return _fits.at(k); }
+  //! @brief Fit k, shared. @param k index @return record @throws MathException if k is out of range
+  std::shared_ptr<const FitRecord> fitPointer(unsigned int k) const { return _fits.pointer(k); }
+  //! @brief Detach fit k. @param k index @throws MathException if k is out of range
+  void removeFit(unsigned int k) { _fits.remove(k); }
+  //! @brief Detach all the fits.
+  void clearFits() { _fits.clear(); }
+  //! @}
+
   protected:
 
   //!
@@ -110,6 +130,7 @@ namespace CAP
   void checkRank(unsigned int nArguments, const char * source) const;
 
   unsigned int _rank;  //!< number of independent variables
+  FitList _fits;   //!<! fits attached (not streamed by ROOT; shared by copies)
 
   ClassDef(Function,1)
   };

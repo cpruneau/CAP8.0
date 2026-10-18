@@ -28,6 +28,8 @@ namespace CAP
   Quartic(double c0=0.0, double c1=0.0, double c2=0.0, double c3=0.0, double c4=0.0);
   //! @brief Copy constructor. @param source function to copy
   Quartic(const Quartic & source) = default;
+  //! @brief Copy of the function (see ParameterizedFunction::clone()). @return new function (the caller owns it)
+  Quartic * clone() const override { return new Quartic(*this); }
   //! @brief Assignment operator. @param rhs function to copy @return reference to this function
   Quartic & operator=(const Quartic & rhs) = default;
   //! @brief Destructor.

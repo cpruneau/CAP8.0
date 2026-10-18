@@ -92,6 +92,8 @@ namespace CAP
 
   //! @brief Copy constructor. @param source polynomial to copy
   Polynomial(const Polynomial & source);
+  //! @brief Copy of the function (see ParameterizedFunction::clone()). @return new function (the caller owns it)
+  Polynomial * clone() const override { return new Polynomial(*this); }
 
   //! @brief Destructor.
   virtual ~Polynomial() {}

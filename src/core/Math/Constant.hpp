@@ -26,6 +26,8 @@ namespace CAP
   Constant(double c0=0.0);
   //! @brief Copy constructor. @param source function to copy
   Constant(const Constant & source) = default;
+  //! @brief Copy of the function (see ParameterizedFunction::clone()). @return new function (the caller owns it)
+  Constant * clone() const override { return new Constant(*this); }
   //! @brief Assignment operator. @param rhs function to copy @return reference to this function
   Constant & operator=(const Constant & rhs) = default;
   //! @brief Destructor.

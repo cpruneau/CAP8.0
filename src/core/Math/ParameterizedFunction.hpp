@@ -65,6 +65,13 @@ namespace CAP
   ParameterizedFunction & operator=(const ParameterizedFunction & rhs);
   //! @brief Destructor (pure virtual: the class is abstract).
   virtual ~ParameterizedFunction() = 0;
+  //!
+  //! @brief Copy of the function, of its own class (e.g. to keep the result of a fit, see FitRecord). The functions of
+  //! CAP implement it; a class of a user should too, as @c MyFunction * clone() const override { return new MyFunction(*this); }.
+  //! @return new function (the caller owns it)
+  //! @throws MathException if the class does not implement it
+  //!
+  virtual ParameterizedFunction * clone() const;
 
   //! @brief Append a parameter. @param parameter parameter to add
   void addParameter(const Parameter & parameter);

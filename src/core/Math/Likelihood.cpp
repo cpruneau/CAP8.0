@@ -11,6 +11,7 @@
  * *********************************************************************/
 //! @file Likelihood.cpp
 //! @brief Implementation of ChiSquareLikelihood, PoissonLikelihood and UnbinnedLikelihood.
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include "Likelihood.hpp"
@@ -49,7 +50,24 @@ namespace CAP
   double d = 2*(f - n + n*std::log(n/f));
   return d < 0 ? 0 : d;                                 // rounding near f = n
   }
+
+  //! Extent of the coordinates of some points.
+  bool extent(const DataPoints & data, const std::vector<unsigned int> & used, std::vector<double> & low, std::vector<double> & high)
+  {
+  low.clear(); high.clear();
+  for (unsigned int i : used)
+    {
+    std::vector<double> c = data.rank() == 1 ? std::vector<double>{ double(data.point(i).x()) } : data.coordinatesAt(i);
+    if (low.empty()) { low = c; high = c; continue; }
+    for (std::size_t k=0; k<c.size(); k++) { low[k] = std::min(low[k], c[k]); high[k] = std::max(high[k], c[k]); }
+    }
+  return !low.empty();
+  }
+
   } // namespace
+
+  bool ChiSquareLikelihood::range(std::vector<double> & low, std::vector<double> & high) const { return extent(_data, _used, low, high); }
+  bool PoissonLikelihood::range(std::vector<double> & low, std::vector<double> & high) const { return extent(_data, _used, low, high); }
 
   // ------------------------------------------------------------------------------------------------ chi square
 

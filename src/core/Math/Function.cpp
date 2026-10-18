@@ -28,7 +28,8 @@ namespace CAP
   Function::Function(const Function & source)
   :
   Object(source),
-  _rank(source._rank)
+  _rank(source._rank),
+  _fits(source._fits)
   {}
 
   Function & Function::operator=(const Function & rhs)
@@ -37,6 +38,7 @@ namespace CAP
     {
     Object::operator=(rhs);
     _rank = rhs._rank;
+    _fits = rhs._fits;
     }
   return *this;
   }

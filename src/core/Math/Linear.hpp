@@ -28,6 +28,8 @@ namespace CAP
   Linear(double c0=0.0, double c1=0.0);
   //! @brief Copy constructor. @param source function to copy
   Linear(const Linear & source) = default;
+  //! @brief Copy of the function (see ParameterizedFunction::clone()). @return new function (the caller owns it)
+  Linear * clone() const override { return new Linear(*this); }
   //! @brief Assignment operator. @param rhs function to copy @return reference to this function
   Linear & operator=(const Linear & rhs) = default;
   //! @brief Destructor.

@@ -65,6 +65,9 @@ namespace CAP
   virtual bool residuals(std::vector<double> & r) const { r.clear(); return false; }
   //! @brief Whether statistic() is asymptotically chi square distributed (it then gives a p-value). @return true if so
   virtual bool goodnessOfFit() const { return false; }
+  //! @brief Range covered by the points used (after prepare()). @param low lower ends @param high upper ends
+  //! @return false if there is none
+  virtual bool range(std::vector<double> & low, std::vector<double> & high) const = 0;
 
   protected:
 
@@ -98,6 +101,9 @@ namespace CAP
   bool goodnessOfFit() const override { return true; }
   //! @brief The chi square (error mode, coordinate uncertainties). @return chi square
   ChiSquare & chiSquare() { return _chiSquare; }
+  //! @brief Extent of the coordinates of the points used. @param low lower ends @param high upper ends
+  //! @return false if no point is used
+  bool range(std::vector<double> & low, std::vector<double> & high) const override;
 
   protected:
 
@@ -138,6 +144,9 @@ namespace CAP
   bool residuals(std::vector<double> & r) const override;
   //! @brief Yes. @return true
   bool goodnessOfFit() const override { return true; }
+  //! @brief Extent of the coordinates of the points used. @param low lower ends @param high upper ends
+  //! @return false if no point is used
+  bool range(std::vector<double> & low, std::vector<double> & high) const override;
 
   protected:
 
@@ -180,6 +189,8 @@ namespace CAP
   //! @brief Make the likelihood extended (the integral of the function is the expected number of events), or not.
   //! @param v extended
   void setExtended(bool v) { _extended = v; }
+  //! @brief The range of the events. @param low lower ends @param high upper ends @return true
+  bool range(std::vector<double> & low, std::vector<double> & high) const override { low = _low; high = _high; return true; }
 
   protected:
 

@@ -56,6 +56,11 @@ namespace CAP
   return _parameters[index];
   }
 
+  ParameterizedFunction * ParameterizedFunction::clone() const
+  {
+  throw MathException(String("clone() is not implemented by the class ") + className(), __FUNCTION__);
+  }
+
   void ParameterizedFunction::setParameterValue(unsigned int index, double value)
   {
   if (index >= _parameters.size()) throw MathException("Parameter index out of range",__FUNCTION__);

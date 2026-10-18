@@ -13,6 +13,9 @@
 //! @brief Implementation of Fitter.
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <cxxabi.h>
+#include <typeinfo>
 #include <functional>
 #include <limits>
 #include "Fitter.hpp"
@@ -28,6 +31,17 @@ namespace CAP
   namespace
   {
   const double kInfinity = std::numeric_limits<double>::infinity();
+
+  //! Name of the class of an object, without its namespaces (e.g. "Normal").
+  std::string typeName(const ParameterizedFunction & f)
+  {
+  int status = 0;
+  char * demangled = abi::__cxa_demangle(typeid(f).name(), nullptr, nullptr, &status);
+  std::string name = (status == 0 && demangled) ? demangled : typeid(f).name();
+  std::free(demangled);
+  std::size_t colon = name.rfind("::");
+  return colon == std::string::npos ? name : name.substr(colon + 2);
+  }
 
   //! The chi square as a function of the free parameters, for the search engines.
   class FitProblem : public SearchProblem
@@ -455,7 +469,33 @@ namespace CAP
     }
   finish(result);
   _result = result;
+  _fitted = true;
   return result;
+  }
+
+  FitRecord Fitter::record(const String & label) const
+  {
+  if (!_fitted) throw MathException("No fit was made yet", __FUNCTION__);
+  FitRecord record;
+  record.function.reset(_function.clone());
+  record.result = _result;
+  record.label = label.isNull() ? String(typeName(_function) + " fit") : label;
+  _likelihood->range(record.low, record.high);
+  return record;
+  }
+
+  DataPointsVector Fitter::samples(const Function & function, double low, double high, unsigned int n, double error)
+  {
+  if (function.rank() != 1) throw MathException("Only functions of rank 1 can be sampled (for now)", __FUNCTION__);
+  if (n < 2) throw MathException("At least two samples are needed", __FUNCTION__);
+  if (!(error > 0)) throw MathException("The uncertainty of the samples must be positive", __FUNCTION__);
+  DataPointsVector points;
+  for (unsigned int k=0; k<n; k++)
+    {
+    double x = low + (high - low)*k/(n - 1);
+    points.addPoint(DataPoint2D(x, function.evaluateAt(x), error));
+    }
+  return points;
   }
 
   } // namespace MATH

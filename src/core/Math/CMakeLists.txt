@@ -63,6 +63,7 @@ DataPointsVector.cpp
 Exponential.cpp
 FolderTypes.cpp
 BayesianFitter.cpp
+FitRecord.cpp
 Fitter.cpp
 Likelihood.cpp
 MetropolisHastings.cpp
@@ -128,6 +129,9 @@ add_test(NAME Likelihood COMMAND TestLikelihood)
 add_executable(TestBayesian tests/TestBayesian.cpp)
 target_link_libraries(TestBayesian Math Base ${ROOT_LIBRARIES})
 add_test(NAME Bayesian COMMAND TestBayesian)
+add_executable(TestFits tests/TestFits.cpp)
+target_link_libraries(TestFits Math Base ${ROOT_LIBRARIES})
+add_test(NAME Fits COMMAND TestFits)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
