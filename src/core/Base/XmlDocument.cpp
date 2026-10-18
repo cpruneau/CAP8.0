@@ -12,6 +12,7 @@
 #include "XmlDocument.hpp"
 #include "XmlReader.hpp"
 #include "XmlWriter.hpp"
+#include "FileSystem.hpp"
 #include <fstream>
 #include <sstream>
 
@@ -79,15 +80,7 @@ namespace CAP
 
   String XmlDocument::fileName(const String & path, const String & name)
   {
-  String f;
-  if (!path.isNull() && !name.beginsWith("/"))
-    {
-    f = path;
-    if (!f.endsWith("/")) f += "/";
-    }
-  f += name;
-  if (!f.endsWith(".xml")) f += ".xml";
-  return f;
+  return FileSystem::join(path,name,".xml");
   }
 
 } // namespace CAP

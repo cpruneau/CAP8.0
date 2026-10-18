@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file MenuBar.hpp
+//! @brief MenuBar: menu bar of the CapGui window, with keyboard shortcuts.
 #ifndef CAP__GUI__MenuBar
 #define CAP__GUI__MenuBar
 #include <memory>
@@ -19,6 +32,7 @@ namespace CAP
   {
   public:
 
+  //! @brief Constructor: an empty menu bar.
   MenuBar();
 
   //! @brief Add a menu at the end. @return the new menu (owned by the bar)
@@ -44,8 +58,8 @@ namespace CAP
 
   protected:
 
-  std::vector<std::unique_ptr<Menu>> _menus;
-  std::vector<ActionListener*> _listeners;
+  std::vector<std::unique_ptr<Menu>> _menus;   //!< menus, from left to right
+  std::vector<ActionListener*> _listeners;   //!< listeners of all the items (not owned)
   };
 
   } // namespace GUI

@@ -10,8 +10,8 @@
  *
  * *********************************************************************/
 #include "File.hpp"
+#include "FileSystem.hpp"
 #include "PrintHelpers.hpp"
-#include <sys/stat.h>
 
 ClassImp(CAP::File);
 
@@ -20,11 +20,11 @@ namespace CAP
 
   File::File(const String & path, Format format, Access access, const String & className)
   :
-  Object(path,path,className),
-  _path(path),
+  FileSystemEntry(path,className),
   _format(format),
   _access(access),
   _mode(kRead),
+  _loaded(false),
   _stream()
   { }
 
@@ -36,7 +36,18 @@ namespace CAP
   void File::setPath(const String & path)
   {
   if (isOpen()) throw FileException(_path,"Cannot change the path of an open file","File::setPath()");
-  _path = path;
+  FileSystemEntry::setPath(path);
+  _loaded = false;   // the structure no longer comes from this file
+  }
+
+  void File::load(Loading /*loading*/)
+  {
+  throw FileException(_path,String("No content structure in class ")+className()+": use open() and stream()","File::load()");
+  }
+
+  void File::save()
+  {
+  throw FileException(_path,String("No content structure in class ")+className()+": use open() and stream()","File::save()");
   }
 
   bool File::allows(Mode mode) const
@@ -53,16 +64,7 @@ namespace CAP
 
   bool File::exists(const String & path)
   {
-  struct stat info;
-  return path.length()>0 && ::stat(path.data(),&info)==0 && S_ISREG(info.st_mode);
-  }
-
-  std::uintmax_t File::fileSize() const
-  {
-  struct stat info;
-  if (_path.length()==0 || ::stat(_path.data(),&info)!=0 || !S_ISREG(info.st_mode))
-    throw FileException(_path,"File does not exist","File::fileSize()");
-  return std::uintmax_t(info.st_size);
+  return FileSystem::isFile(path);
   }
 
   void File::open(Mode mode)
@@ -125,11 +127,11 @@ namespace CAP
 
   void File::print() const
   {
-  Object::print();
-  printValue("Path",_path);
+  FileSystemEntry::print();
   printValue("Format",String(_format==kText ? "text" : "binary"));
   printValue("Access",String(_access==kReadOnly ? "read only" : (_access==kWriteOnly ? "write only" : "read/write")));
   printValue("Open",String(isOpen() ? "yes" : "no"));
+  printValue("Loaded",String(_loaded ? "yes" : "no"));
   }
 
 } // namespace CAP

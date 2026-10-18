@@ -1067,15 +1067,15 @@ namespace CAP
 
   double Histogram::sysErrorAt(unsigned int index) const
   {
-  return statErrorAt(index);
+  statErrorAt(index);   // same index check
+  return 0.0;           // a histogram has no systematic uncertainty
   }
 
   DataPoint2D Histogram::point(unsigned int index) const
   {
   if (rank()!=1) throw MathException("Data points are only defined for a histogram of rank 1",__FUNCTION__);
-  double error = binUncertaintyAt(index);
-  // a histogram has no systematic uncertainty: the statistical one is returned in its place
-  return DataPoint2D(binCenter(index), binValueAt(index), error, error);
+  // the uncertainty of the bin is statistical; a histogram has no systematic uncertainty
+  return DataPoint2D(binCenter(index), binValueAt(index), binUncertaintyAt(index), 0.0);
   }
 
   void Histogram::addPoint(const DataPoint2D & /*dataPoint*/)

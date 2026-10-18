@@ -8,13 +8,19 @@
   <!-- main window: theme light, dark or classic; viewports: windows can be dragged out of the main window -->
   <Window title="CAP" width="1400" height="900" theme="light" fontSize="15" viewports="true"/>
   <!-- canvas panes in the window: columns x rows; toolbars: buttons above each canvas -->
-  <Canvases columns="2" rows="1" toolbars="true"/>
+  <Canvases columns="1" rows="1" toolbars="true"/>
   <!-- graphs in each new canvas (columns x rows) and their defaults; mode: add or replace -->
   <Graphs columns="1" rows="1" legend="true" logX="false" logY="false" mode="add"/>
-  <!-- folder where the file dialogs start (empty: the current folder) and the file types they list -->
-  <Files directory="" extensions=".cap .root .xml"/>
+  <!-- folder where the file dialogs start (empty: the current folder) and the file types they list (only the types
+       CapGui can open are used: .cap) -->
+  <Files directory="" extensions=".cap"/>
   <!-- file browser: visible at startup; docked in the main window, or in a window of its own (docked="false") -->
   <Browser visible="true" docked="true"/>
-  <!-- demonstration objects shown at startup -->
-  <Demo enabled="true"/>
+  <!-- demonstration objects shown at startup (otherwise the canvases start empty) -->
+  <Demo enabled="false"/>
+  <!-- texts with $ or \ typeset by the LaTeX installation (latex and dvisvgm), e.g. "$p_{\mathrm{T}}$ (GeV/$c$)";
+       bin: directory of latex and dvisvgm (empty: looked for in the PATH and the usual TeX installations);
+       preamble: packages and macros of the documents; rootSyntax: texts in ROOT syntax (#Delta, p_{T}) translated
+       to LaTeX. Without LaTeX, texts are drawn with the fonts. -->
+  <Latex enabled="true" bin="" preamble="\usepackage{amsmath,amssymb}" rootSyntax="true"/>
 </CapGui>

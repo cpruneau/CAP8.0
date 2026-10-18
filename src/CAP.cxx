@@ -19,6 +19,7 @@
 #include "Task.hpp"
 #include "XmlDocument.hpp"
 #include "Exceptions.hpp"
+#include "FileSystem.hpp"
 #include "MathExceptions.hpp"
 //#include "Histogram.hpp"
 #include "Timer.hpp"
@@ -86,30 +87,10 @@ void parse(int argc,
       break;
     }
 
-  if (cPath.beginsWith("/"))
-    {
-    configurationPath = cPath;
-    }
-  else
-    {
-    CAP::String base = getenv("CAP_PROJECTS_PATH");
-    configurationPath = base;
-    configurationPath += "/";
-    configurationPath += cPath;
-    configurationPath += "/";
-    }
-
-  if (hPath.beginsWith("/"))
-    {
-    histogramPath = hPath;
-    }
-  else
-    {
-    histogramPath = getenv("CAP_HISTOS_IMPORT_PATH");
-    histogramPath += "/";
-    histogramPath += hPath;
-    histogramPath += "/";
-    }
+  // absolute, "./..." or relative to $CAP_PROJECTS_PATH, $CAP_HISTOS_IMPORT_PATH
+  configurationPath = CAP::FileSystem::configuredPath(cPath,"CAP_PROJECTS_PATH");
+  histogramPath     = CAP::FileSystem::configuredPath(hPath,"CAP_HISTOS_IMPORT_PATH");
+  if (!histogramPath.endsWith("/")) histogramPath += "/";
   setenv("CAP_HISTOS_IMPORT_PATH",histogramPath,1);
   setenv("CAP_HISTOS_EXPORT_PATH",histogramPath,1);
   CAP::printValue("Configuration path",configurationPath);

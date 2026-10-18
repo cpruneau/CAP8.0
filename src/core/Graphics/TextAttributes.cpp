@@ -77,5 +77,42 @@ namespace CAP
 
 
 
+
+  TextAttributes::FontFamily TextAttributes::fontFamily(int font)
+  {
+  switch (fontIndex(font))
+    {
+    case 1: case 2: case 3: case 13: return kSerif;
+    case 8: case 9: case 10: case 11: return kMono;
+    case 12: case 14: case 15: return kSymbol;
+    default: return kSans;
+    }
+  }
+
+  bool TextAttributes::isBold(int font)
+  {
+  int index = fontIndex(font);
+  return index == 2 || index == 3 || index == 6 || index == 7 || index == 10 || index == 11;
+  }
+
+  bool TextAttributes::isItalic(int font)
+  {
+  int index = fontIndex(font);
+  return index == 1 || index == 3 || index == 5 || index == 7 || index == 9 || index == 11 || index == 15;
+  }
+
+  int TextAttributes::fontCode(FontFamily family, bool bold, bool italic)
+  {
+  int index;
+  switch (family)
+    {
+    case kSerif:  index = bold ? (italic ? 3 : 2) : (italic ? 1 : 13); break;
+    case kMono:   index = 8 + (italic ? 1 : 0) + (bold ? 2 : 0); break;
+    case kSymbol: index = italic ? 15 : 12; break;
+    default:      index = 4 + (italic ? 1 : 0) + (bold ? 2 : 0); break;
+    }
+  return 10*index + 2;
+  }
+
   } // namespace GRAPHICS
 } // namespace CAP

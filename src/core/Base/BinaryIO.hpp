@@ -1,9 +1,23 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file BinaryIO.hpp
+//! @brief Binary encoding of CAP objects: BinaryWriter, BinaryReader, CRC-32 and the CAP record format.
 #ifndef CAP__BinaryIO
 #define CAP__BinaryIO
 #include <array>
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <utility>
 #include <vector>
 #include <istream>
 #include <ostream>
@@ -50,7 +64,7 @@ public:
   void writeString(const String & s) { writeVarUInt(std::size_t(s.length())); writeBytes(s.data(),std::size_t(s.length())); }
 
 private:
-  std::string _buffer;
+  std::string _buffer;   //!< bytes written so far
 };
 
 //!
@@ -96,16 +110,22 @@ public:
     _position += std::size_t(n);
     return String(s.c_str());
   }
+  //! @brief Take the next n bytes without copying them. @param n number of bytes @return pointer to them, valid as long
+  //! as the data of the reader
+  const char * readSpan(std::size_t n) { need(n); const char * p = _data+_position; _position += n; return p; }
 
 private:
+  //! @brief Throw unless n more bytes can be read. @param n number of bytes @throws Exception at the end of the data
   void need(uint64_t n) const
   {
     if (n > remaining()) throw Exception("Unexpected end of binary data","BinaryReader");
   }
-  const char * _data;
-  std::size_t  _size;
-  std::size_t  _position;
+  const char * _data;   //!< data read (not owned)
+  std::size_t  _size;   //!< number of bytes of the data
+  std::size_t  _position;   //!< position of the next byte read
 };
+
+inline uint32_t crc32Update(uint32_t state, const char * data, std::size_t n);
 
 //!
 //! @brief Standard CRC-32 (polynomial 0xEDB88320, as used by zip, gzip and png) of n bytes.
@@ -113,21 +133,43 @@ private:
 //!
 inline uint32_t crc32(const char * data, std::size_t n)
 {
-  // table built once, on first use (thread-safe initialization of a function-local static)
-  static const std::array<uint32_t,256> table = []
+  return crc32Update(0xFFFFFFFFu,data,n) ^ 0xFFFFFFFFu;
+}
+
+//!
+//! @brief Incremental CRC-32: crc32(data,n) is crc32Update(0xFFFFFFFF, data, n) ^ 0xFFFFFFFF, and the data can be
+//! given in pieces, each call continuing from the state returned by the previous one.
+//! @param state 0xFFFFFFFF to start, then the value returned by the previous call @param data bytes @param n number of
+//! bytes @return new state
+//!
+inline uint32_t crc32Update(uint32_t state, const char * data, std::size_t n)
+{
+  // "slicing by 8": 8 tables, built once on first use (thread-safe initialization of a function-local static), let
+  // the loop take 8 bytes at a time; t[0] is the usual byte table
+  static const std::array<std::array<uint32_t,256>,8> t = []
     {
-    std::array<uint32_t,256> t{};
+    std::array<std::array<uint32_t,256>,8> tables{};
     for (uint32_t i=0; i<256; i++)
       {
       uint32_t c = i;
       for (int k=0; k<8; k++) c = (c & 1) ? 0xEDB88320u ^ (c>>1) : (c>>1);
-      t[i] = c;
+      tables[0][i] = c;
       }
-    return t;
+    for (uint32_t i=0; i<256; i++)
+      for (int k=1; k<8; k++) tables[k][i] = (tables[k-1][i]>>8) ^ tables[0][tables[k-1][i] & 0xFF];
+    return tables;
     }();
-  uint32_t crc = 0xFFFFFFFFu;
-  for (std::size_t i=0; i<n; i++) crc = table[(crc ^ uint8_t(data[i])) & 0xFF] ^ (crc>>8);
-  return crc ^ 0xFFFFFFFFu;
+  const uint8_t * p = reinterpret_cast<const uint8_t *>(data);
+  uint32_t crc = state;
+  for (; n>=8; n-=8, p+=8)
+    {
+    uint32_t low  = crc ^ (uint32_t(p[0]) | uint32_t(p[1])<<8 | uint32_t(p[2])<<16 | uint32_t(p[3])<<24);
+    uint32_t high =        uint32_t(p[4]) | uint32_t(p[5])<<8 | uint32_t(p[6])<<16 | uint32_t(p[7])<<24;
+    crc = t[7][low & 0xFF] ^ t[6][(low>>8) & 0xFF] ^ t[5][(low>>16) & 0xFF] ^ t[4][low>>24]
+        ^ t[3][high & 0xFF] ^ t[2][(high>>8) & 0xFF] ^ t[1][(high>>16) & 0xFF] ^ t[0][high>>24];
+    }
+  for (; n>0; n--, p++) crc = t[0][(crc ^ *p) & 0xFF] ^ (crc>>8);
+  return crc;
 }
 
 //! @name Arrays of doubles
@@ -263,6 +305,39 @@ inline bool readBinaryRecord(std::istream & in, std::string & tag, unsigned int 
   return true;
 }
 
+//!
+//! @brief Read one record held in memory, without copying its payload.
+//! @param r reader positioned at the start of the record @param tag output: 4-character tag @param version output:
+//! format version @param payload output: start of the payload (inside the reader's data) @param length output: payload
+//! length @param where file or object name, for error messages
+//! @throws FileException if the data is not a CAP record, or is truncated or corrupted
+//!
+inline void readBinaryRecord(BinaryReader & r, std::string & tag, unsigned int & version, const char * & payload,
+                             std::size_t & length, const String & where)
+{
+  try
+    {
+    const char * t = r.readSpan(4);
+    if (t[0]!='C' || t[1]!='A' || t[2]!='P') throw FileException(where,"Not a CAP binary record (bad tag)","readBinaryRecord()");
+    tag.assign(t,4);
+    version = r.readUInt8();
+    uint64_t n = r.readVarUInt();
+    if (n > r.remaining()) throw FileException(where,"Truncated binary record","readBinaryRecord()");
+    length  = std::size_t(n);
+    payload = r.readSpan(length);
+    if (r.readUInt32()!=crc32(payload,length))
+      throw FileException(where,"Corrupted binary record (checksum mismatch)","readBinaryRecord()");
+    }
+  catch (FileException &)
+    {
+    throw;
+    }
+  catch (Exception &)
+    {
+    throw FileException(where,"Truncated or malformed binary record","readBinaryRecord()");
+    }
+}
+
 //! @brief Name stored at the start of a payload. @param payload payload @return name
 inline String binaryPayloadName(const std::string & payload)
 {
@@ -283,7 +358,7 @@ void decodeBinaryPayload(const std::string & payload, unsigned int version, T & 
     T decoded;
     decoded.decodeBinary(r,name,version);
     if (r.remaining()!=0) throw Exception("Unexpected data at the end of the record","decodeBinaryPayload()");
-    object = decoded;
+    object = std::move(decoded);   // a copy for classes without move assignment
     }
   catch (FileException &)
     {

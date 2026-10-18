@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstdlib>
 #include "EposEventReader.hpp"
+#include "FileSystem.hpp"
 #include "Exceptions.hpp"
 
 ClassImp(CAP::EposEventReader);
@@ -55,9 +56,7 @@ void EposEventReader::initialize()
     throw ConfigurationException(createKey(taskName,"TreeName"),"Name of the tree of EPOS events not set",__FUNCTION__);
   if (files.isNull())
     throw ConfigurationException(createKey(taskName,"DataImportFile"),"EPOS event file(s) not set",__FUNCTION__);
-  _inputFiles = path;
-  if (!_inputFiles.isNull() && _inputFiles.str().back()!='/') _inputFiles += "/";
-  _inputFiles += files;
+  _inputFiles = FileSystem::join(path,files);   // an absolute DataImportFile is used as it is
   initializeImportTree(treeName);
   if (chain()->Add(_inputFiles.data())==0)
     throw FileException(_inputFiles,"No EPOS event file found",__FUNCTION__);

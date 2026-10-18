@@ -42,7 +42,9 @@ namespace CAP
 
   XmlFile::XmlFile(const String & path, Access access)
   :
-  TxtFile(path,access)
+  TxtFile(path,access),
+  _document(),
+  _documentValid(false)
   {
   setClassName("XmlFile");
   }
@@ -92,14 +94,31 @@ namespace CAP
   return true;
   }
 
-  XmlDocument XmlFile::document() const
+  const XmlDocument & XmlFile::document() const
   {
-  return XmlDocument::parse(text());
+  if (!_documentValid)
+    {
+    _document = XmlDocument::parse(text());
+    _documentValid = true;
+    }
+  return _document;
   }
 
   void XmlFile::setDocument(const XmlDocument & document, unsigned int indent)
   {
   setText(document.toString(indent));
+  }
+
+  void XmlFile::load(Loading loading)
+  {
+  TxtFile::load(loading);
+  document();
+  }
+
+  void XmlFile::unload()
+  {
+  TxtFile::unload();
+  _document = XmlDocument();
   }
 
   String XmlFile::escape(const String & text)

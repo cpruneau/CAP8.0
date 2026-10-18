@@ -126,8 +126,8 @@ namespace CAP
   //! <b>Data points.</b> A histogram is also a set of data points (DataPoints), one per bin, e.g. for use
   //! with ChiSquare: the point of global bin k has the bin centers as coordinates, the bin value as value,
   //! the uncertainty of the bin value as statistical uncertainty, and no coordinate uncertainty.
-  //! A histogram has no systematic uncertainty: the statistical uncertainty is returned when the systematic
-  //! one is requested. For rank 1, point(k) also returns these as a DataPoint2D (x = bin center, y = bin value).
+  //! A histogram has no systematic uncertainty: it is 0. For rank 1, point(k) also returns these as a DataPoint2D
+  //! (x = bin center, y = bin value).
   //!
   class Histogram
   :
@@ -1243,12 +1243,13 @@ namespace CAP
   //! @brief Uncertainty of the value of a bin. @param index global bin index @return uncertainty of the bin value
   //! @throws IndexOutOfBoundException if index>=size()
   double statErrorAt(unsigned int index) const override;
-  //! @brief Same as statErrorAt(): a histogram has no systematic uncertainty. @param index global bin index @return uncertainty of the bin value
+  //! @brief Systematic uncertainty of a bin: 0, a histogram has none. @param index global bin index @return 0
   //! @throws IndexOutOfBoundException if index>=size()
   double sysErrorAt(unsigned int index) const override;
 
   //!
-  //! @brief Data point of a bin: x = bin center, y = bin value, statistical and systematic uncertainty = uncertainty of the bin value, no x uncertainty.
+  //! @brief Data point of a bin: x = bin center, y = bin value, statistical uncertainty = uncertainty of the bin value,
+  //! no systematic uncertainty, no x uncertainty.
   //! @param index bin index (0 to size()-1)
   //! @return data point of the bin
   //! @throws MathException if the rank is not 1; IndexOutOfBoundException if index>=size()

@@ -1,12 +1,24 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file FileDialog.cpp
+//! @brief Implementation of FileDialog.
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <filesystem>
 #include "imgui.h"
 #include "FileDialog.hpp"
+#include "FileSystem.hpp"
 
-namespace fs = std::filesystem;
 
 namespace CAP
 {
@@ -29,8 +41,7 @@ namespace CAP
   {
   _fileName[0] = 0;
   _pathField[0] = 0;
-  std::error_code ec;
-  _directory = fs::current_path(ec).string();
+  _directory = FileSystem::current().str();
   }
 
   void FileDialog::open(Mode mode, const String & title, const String & directory, const std::vector<String> & extensions,
@@ -43,27 +54,16 @@ namespace CAP
   std::snprintf(_fileName, sizeof(_fileName), "%s", fileName.data());
   _callback = callback;
   _requested = true;
-  std::error_code ec;
   std::string start = directory.str();
-  if (start.empty() || !fs::is_directory(start, ec)) start = _directory;
-  if (start.empty() || !fs::is_directory(start, ec)) start = fs::current_path(ec).string();
+  if (!FileSystem::isDirectory(String(start))) start = _directory;
+  if (!FileSystem::isDirectory(String(start))) start = FileSystem::current().str();
   enter(start);
-  }
-
-  bool FileDialog::accepts(const std::string & name) const
-  {
-  if (_extensions.empty()) return true;
-  for (const auto & e : _extensions)
-    if (name.size() >= e.size() && name.compare(name.size()-e.size(), e.size(), e) == 0) return true;
-  return false;
   }
 
   void FileDialog::enter(const std::string & directory)
   {
-  std::error_code ec;
-  fs::path p = fs::weakly_canonical(fs::path(directory), ec);
-  if (ec || !fs::is_directory(p, ec)) { _error = "Not a folder: " + directory; return; }
-  _directory = p.string();
+  if (!FileSystem::isDirectory(String(directory))) { _error = "Not a folder: " + directory; return; }
+  _directory = FileSystem::normalize(String(directory)).str();
   std::snprintf(_pathField, sizeof(_pathField), "%s", _directory.c_str());
   _selected = -1;
   _error.clear();
@@ -73,23 +73,16 @@ namespace CAP
   void FileDialog::list()
   {
   _entries.clear();
-  std::error_code ec;
-  for (fs::directory_iterator it(_directory, fs::directory_options::skip_permission_denied, ec), end; !ec && it != end; it.increment(ec))
+  FileSystem::ListOptions options;
+  options.hidden = _showHidden;
+  options.files  = (_mode != kOpenFolder);
+  for (const auto & e : _extensions) options.extensions.push_back(String(e));
+  try
     {
-    std::string name = it->path().filename().string();
-    if (!_showHidden && !name.empty() && name[0] == '.') continue;
-    std::error_code ec2;
-    bool folder = it->is_directory(ec2);
-    if (!folder && (_mode == kOpenFolder || !accepts(name))) continue;
-    std::uintmax_t size = folder ? 0 : it->file_size(ec2);
-    _entries.push_back({name, folder, ec2 ? 0 : size});
+    for (const auto & entry : FileSystem::list(String(_directory), options))
+      _entries.push_back({entry.name.str(), entry.isDirectory(), entry.size});
     }
-  std::sort(_entries.begin(), _entries.end(), [](const Entry & a, const Entry & b)
-    {
-    if (a.folder != b.folder) return a.folder;
-    return a.name < b.name;
-    });
-  if (ec) _error = "Cannot list " + _directory;
+  catch (const FileException &) { _error = "Cannot list " + _directory; }
   }
 
   void FileDialog::confirm(const std::string & path)
@@ -119,20 +112,18 @@ namespace CAP
     }
 
   // folder path: buttons to go up, editable path
-  if (ImGui::Button("Up")) enter(fs::path(_directory).parent_path().string());
+  if (ImGui::Button("Up")) enter(FileSystem::parent(String(_directory)).str());
   ImGui::SameLine();
   if (ImGui::Button("Home"))
     {
-    const char * home = std::getenv("HOME");
-    if (home) enter(home);
+    if (!FileSystem::home().isNull()) enter(FileSystem::home().str());
     }
   ImGui::SameLine();
   ImGui::SetNextItemWidth(-130);
   if (ImGui::InputText("##path", _pathField, sizeof(_pathField), ImGuiInputTextFlags_EnterReturnsTrue))
     {
-    std::error_code ec;
-    if (fs::is_directory(_pathField, ec)) enter(_pathField);
-    else if (_mode == kOpenFile && fs::is_regular_file(_pathField, ec)) { confirm(_pathField); ImGui::EndPopup(); return; }
+      if (FileSystem::isDirectory(String(_pathField))) enter(_pathField);
+    else if (_mode == kOpenFile && FileSystem::isFile(String(_pathField))) { confirm(_pathField); ImGui::EndPopup(); return; }
     else _error = std::string("No such folder: ") + _pathField;
     }
   ImGui::SameLine();
@@ -160,8 +151,8 @@ namespace CAP
         if (!e.folder && _mode == kSaveFile) std::snprintf(_fileName, sizeof(_fileName), "%s", e.name.c_str());
         if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
           {
-          if (e.folder) enterFolder = (fs::path(_directory)/e.name).string();
-          else          chosen      = (fs::path(_directory)/e.name).string();
+          if (e.folder) enterFolder = FileSystem::join(String(_directory), String(e.name)).str();
+          else          chosen      = FileSystem::join(String(_directory), String(e.name)).str();
           }
         }
       ImGui::TableNextColumn();
@@ -174,7 +165,7 @@ namespace CAP
     ImGui::EndTable();
     if (!enterFolder.empty()) enter(enterFolder);
     if (!chosen.empty() && _mode != kSaveFile) { confirm(chosen); ImGui::EndPopup(); return; }
-    if (!chosen.empty() && _mode == kSaveFile) std::snprintf(_fileName, sizeof(_fileName), "%s", fs::path(chosen).filename().string().c_str());
+    if (!chosen.empty() && _mode == kSaveFile) std::snprintf(_fileName, sizeof(_fileName), "%s", FileSystem::name(String(chosen)).data());
     }
   if (!_error.empty()) ImGui::TextColored(ImVec4(0.85f, 0.2f, 0.2f, 1.0f), "%s", _error.c_str());
 
@@ -195,7 +186,7 @@ namespace CAP
       {
       std::string chosen = _directory;
       if (_selected >= 0 && _selected < int(_entries.size()) && _entries[_selected].folder)
-        chosen = (fs::path(_directory)/_entries[_selected].name).string();
+        chosen = FileSystem::join(String(_directory), String(_entries[_selected].name)).str();
       confirm(chosen);
       }
     else if (_mode == kOpenFile)
@@ -203,15 +194,15 @@ namespace CAP
       if (_selected >= 0 && _selected < int(_entries.size()))
         {
         const Entry & e = _entries[_selected];
-        if (e.folder) enter((fs::path(_directory)/e.name).string());
-        else confirm((fs::path(_directory)/e.name).string());
+        if (e.folder) enter(FileSystem::join(String(_directory), String(e.name)).str());
+        else confirm(FileSystem::join(String(_directory), String(e.name)).str());
         }
       else _error = "Select a file";
       }
     else
       {
       if (std::strlen(_fileName) == 0) _error = "Enter a file name";
-      else confirm((fs::path(_directory)/_fileName).string());
+      else confirm(FileSystem::join(String(_directory), String(_fileName)).str());
       }
     }
   if (!keepOpen) _open = false;

@@ -54,6 +54,7 @@ namespace CAP
   {
   if (index>=_lines.size()) throw FileException(_path,"Line index out of range (index>=nLines())","TxtFile::setLine()");
   _lines[index] = line;
+  changed();
   }
 
   String TxtFile::text() const
@@ -69,8 +70,9 @@ namespace CAP
 
   void TxtFile::setText(const String & text)
   {
-  if (text.length()==0) { _lines.clear(); return; }
-  _lines = splitLines(std::string(text.data(),std::size_t(text.length())));
+  if (text.length()==0) _lines.clear();
+  else _lines = splitLines(std::string(text.data(),std::size_t(text.length())));
+  changed();
   }
 
   void TxtFile::read()
@@ -87,6 +89,20 @@ namespace CAP
   close();
   if (failed) throw FileException(_path,"Error while reading the file","TxtFile::read()");
   _lines.swap(lines);
+  _loaded = true;
+  changed();
+  }
+
+  void TxtFile::load(Loading /*loading*/)
+  {
+  read();
+  }
+
+  void TxtFile::unload()
+  {
+  std::vector<String>().swap(_lines);   // frees the memory
+  _loaded = false;
+  changed();
   }
 
   void TxtFile::writeLines(const char * source)
@@ -102,6 +118,7 @@ namespace CAP
   {
   open(kWrite);
   writeLines("TxtFile::write()");
+  _loaded = true;
   }
 
   void TxtFile::append()

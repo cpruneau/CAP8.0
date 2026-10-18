@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file FileBrowser.hpp
+//! @brief FileBrowser: browser of the CAP files and folders of the CapGui window.
 #ifndef CAP__GUI__FileBrowser
 #define CAP__GUI__FileBrowser
 #include <functional>
@@ -65,6 +78,7 @@ namespace CAP
   //! @param reference set to the object dragged @return false if the payload is not an object reference
   static bool decodePayload(const void * data, int size, ObjectReference & reference);
 
+  //! @brief Constructor: no files and no folders.
   FileBrowser();
 
   //! @brief The files to show (owned by the application; the vector must outlive the browser). @param files files
@@ -73,7 +87,7 @@ namespace CAP
   void addFolder(const String & folder);
   //! @brief Remove a folder from the Folders section. @param folder path
   void removeFolder(const String & folder);
-  const std::vector<String> & folders() const { return _folders; }
+  const std::vector<String> & folders() const { return _folders; }   //!< Folders of the file system shown (Folders section)
   //! @brief Expand (and scroll to) a file at the next render. @param path path of the file
   void reveal(const String & path);
   //! @brief Forget the cached listings of the folders (they are read again when shown).
@@ -83,6 +97,7 @@ namespace CAP
   //! @{
   std::function<int(const String & path)>                      onOpenFile;    //!< open a CAP file: id, or -1
   std::function<void(const ObjectReference & object)>          onShowObject;  //!< show an object
+  std::function<void(const ObjectReference & object)>          onShowData;    //!< show the values of an object as a table
   std::function<void(int file, const String & folderPath)>     onShowFolder;  //!< show all the objects of a folder
   std::function<void(int file)>                                onCloseFile;   //!< close a file
   std::function<void(int file)>                                onReloadFile;  //!< read a file again
@@ -99,33 +114,46 @@ namespace CAP
 
   protected:
 
+  //! Contents of a folder of the file system, as shown: sub-folders and CAP files, or an error
   struct Listing
   {
-  std::vector<std::string> directories;
-  std::vector<std::string> files;
-  std::string error;
+  std::vector<std::string> directories;   //!< names of the sub-folders
+  std::vector<std::string> files;   //!< names of the CAP files
+  std::string error;   //!< why the folder cannot be listed, or empty
   };
 
-  const std::vector<BrowserFile> * _files;
-  std::vector<String> _folders;
-  std::map<std::string, Listing> _listings;
+  const std::vector<BrowserFile> * _files;   //!< open files (owned by the application)
+  std::vector<String> _folders;   //!< folders of the file system shown
+  std::map<std::string, Listing> _listings;   //!< listings of the folders, read once (see refresh())
   std::set<std::string> _openFailed;     //!< files whose opening failed (not retried until refresh)
-  std::string _reveal;
-  std::string _filter;
-  ObjectReference _selected;
+  std::string _reveal;   //!< file to expand and scroll to at the next render
+  std::string _filter;   //!< text typed in the filter field (case-insensitive part of the object names)
+  ObjectReference _selected;   //!< object selected (highlighted)
 
+  //! @brief Open file of a path. @param path path @return file, or null if not open
   const BrowserFile * fileByPath(const std::string & path) const;
+  //! @brief Open file of an identifier. @param id identifier @return file, or null
   const BrowserFile * fileById(int id) const;
+  //! @brief Whether a path is below one of the folders shown. @param path path @return true if so
   bool insideFolders(const std::string & path) const;
+  //! @brief Contents of a folder (read once, see refresh()). @param directory folder @return listing
   const Listing & listing(const std::string & directory);
 
+  //! @brief Draw the toolbar: filter, Open, Folder, Refresh.
   void renderToolbar();
+  //! @brief Draw an open file and, if expanded, its tree. @param file file @param label text shown
   void renderFile(const BrowserFile & file, const String & label);
+  //! @brief Draw a folder of the file system and, if expanded, its contents. @param directory path @param label text shown @param isRoot whether it is one of the folders added
   void renderDirectory(const std::string & directory, const std::string & label, bool isRoot);
+  //! @brief Draw a CAP file of a folder: opened when first expanded. @param path path @param label text shown
   void renderCapFileInTree(const std::string & path, const std::string & label);
+  //! @brief Draw the entries of a folder of objects. @param fileId file @param folder folder @param prefix path of the folder in the file
   void renderFolder(int fileId, const Folder & folder, const std::string & prefix);
+  //! @brief Draw one object: click to show, drag onto a graph, right-click for its menu. @param fileId file @param folder folder holding it @param name name @param path path in the file
   void renderObject(int fileId, const Folder & folder, const String & name, const std::string & path);
+  //! @brief Whether a name passes the filter. @param name name @return true if so
   bool matches(const String & name) const;
+  //! @brief Whether a folder holds an object passing the filter (at any depth). @param folder folder @return true if so
   bool folderMatches(const Folder & folder) const;
   };
 

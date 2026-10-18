@@ -61,17 +61,27 @@ namespace CAP
       }
     return result;
     }
+  // linear: majors at the multiples of a 1, 2, 5 x 10^k step giving about nMajorTicks() intervals (for a range
+  // already rounded to that step, as the automatic ranges of Graph are, the ticks start and end at the edges)
   int nMajor = axis.nMajorTicks() < 1 ? 1 : axis.nMajorTicks();
+  double span = double(max) - double(min);
+  if (!(span > 0)) return result;
+  double raw = span/nMajor;
+  double decade = std::pow(10.0, std::floor(std::log10(raw)));
+  double mantissa = raw/decade;
+  double step = decade*(mantissa < 1.5 ? 1.0 : (mantissa < 3.5 ? 2.0 : (mantissa < 7.5 ? 5.0 : 10.0)));
   int nMinor = axis.nMinorTicks() < 1 ? 1 : axis.nMinorTicks();
-  float w = (max - min)/nMajor;
-  for (int iMajor=0; iMajor<=nMajor; iMajor++)
+  if (nMinor == 5 && std::fabs(step/decade - 2.0) < 1E-6) nMinor = 4;   // 0.5 steps between majors 2 apart
+  double minorStep = step/nMinor;
+  double tolerance = 1E-6*span;
+  long first = long(std::ceil((min - tolerance)/minorStep));
+  long last  = long(std::floor((max + tolerance)/minorStep));
+  for (long k=first; k<=last; k++)
     {
-    float v = min + iMajor*w;
-    if (std::fabs(v) < 1E-6*std::fabs(w)) v = 0.0; // avoid labels like -1.4e-08
-    result.push_back({v, true});
-    if (iMajor == nMajor) break;
-    for (int iMinor=1; iMinor<nMinor; iMinor++)
-      result.push_back({min + (iMajor + float(iMinor)/nMinor)*w, false});
+    double v = k*minorStep;
+    bool major = (k % nMinor) == 0;
+    if (major && std::fabs(v) < 1E-9*step) v = 0.0;   // avoid labels like -1.4e-08
+    result.push_back({float(v), major});
     }
   return result;
   }
@@ -106,10 +116,12 @@ namespace CAP
   // axis line
   std::vector<Point2D> segment{a, b};
   painter.drawLine(segment, axis->lineAttributes());
+  Rect2D body(a.x(), a.y(), b.x(), b.y());
 
   // ticks and labels
   TextAttributes labelAttributes = axis->textAttributes();
-  if (std::fabs(nx) > std::fabs(ny))   // labels to the side (vertical-ish axis)
+  const bool sideLabels = std::fabs(nx) > std::fabs(ny);   // labels to the side (vertical-ish axis)
+  if (sideLabels)
     labelAttributes.setJustification(nx > 0 ? TextAttributes::kRight : TextAttributes::kLeft);
   else
     labelAttributes.setJustification(TextAttributes::kCenter);
@@ -121,33 +133,50 @@ namespace CAP
     if (tick.major ? !axis->showMajorTicks() : !axis->showMinorTicks()) continue;
     Point2D base = axis->toCanvas(tick.value);
     float size   = tick.major ? axis->majorTickSize() : axis->minorTickSize();
-    std::vector<Point2D> tickLine{base, offset(base, size)};
+    Point2D tip  = offset(base, size);
+    std::vector<Point2D> tickLine{base, tip};
     painter.drawLine(tickLine, axis->lineAttributes());
+    body.include(tip);
     if (tick.major && axis->showLabels())
       {
       char text[32];
       std::snprintf(text, sizeof(text), "%.6g", tick.value);
       String label(text);
-      painter.drawText(offset(base, -axis->labelOffset()), label, labelAttributes, axis->labelAngle());
+      Point2D anchor = offset(base, -axis->labelOffset());
+      painter.drawText(anchor, label, labelAttributes, axis->labelAngle());
       float w = painter.textWidth(label, labelAttributes);
       // labels centered on the anchor extend by half their size along the normal; side-justified ones by their full width
-      float extent = (std::fabs(nx) > std::fabs(ny)) ? w : 0.5*textHeight;
+      float extent = sideLabels ? w : 0.5*textHeight;
       if (extent > labelExtent) labelExtent = extent;
+      float xLeft = anchor.x()*W;
+      if      (labelAttributes.justification() == TextAttributes::kCenter) xLeft -= 0.5f*w;
+      else if (labelAttributes.justification() == TextAttributes::kRight)  xLeft -= w;
+      body.include(Rect2D(xLeft/W, anchor.y() - 0.5f*textHeight/H, (xLeft + w)/W, anchor.y() + 0.5f*textHeight/H));
       }
     }
 
-  // title, centered beyond the labels and parallel to the axis
+  // title, centered beyond the labels and parallel to the axis, then moved by the title offset
+  Rect2D titleRect;
   if (!axis->title().isNull())
     {
     Point2D middle((a.x()+b.x())/2, (a.y()+b.y())/2);
     // beyond the labels, plus a gap and half the title height (in fractions of H)
-    float labelSpan = axis->showLabels() ? labelExtent : 0.0;
-    float distance  = axis->labelOffset() + (labelSpan + 0.8*textHeight)/H;
-    TextAttributes titleAttributes = axis->textAttributes();
+    float labelSpan   = axis->showLabels() ? labelExtent : 0.0;
+    float titleHeight = axis->titleAttributes().size()*H;
+    float distance    = axis->labelOffset() + (labelSpan + 0.3*textHeight + 0.5*titleHeight)/H;
+    TextAttributes titleAttributes = axis->titleAttributes();
     titleAttributes.setJustification(TextAttributes::kCenter);
     float angle = std::atan2(dy, dx)*180.0/3.14159265358979323846;
-    painter.drawText(offset(middle, -distance), axis->title(), titleAttributes, angle);
+    Point2D position = offset(middle, -distance);
+    position = Point2D(position.x() + axis->titleOffsetX(), position.y() + axis->titleOffsetY());
+    painter.drawText(position, axis->title(), titleAttributes, angle);
+    // box of the rotated text (device units), then in canvas units
+    float w = painter.textWidth(axis->title(), titleAttributes);
+    float c = std::fabs(ux), s = std::fabs(uy);
+    float boxW = w*c + titleHeight*s, boxH = w*s + titleHeight*c;
+    titleRect = Rect2D::centered(position, boxW/W, boxH/H);
     }
+  axis->setDrawnRects(titleRect, body);
   }
 
   } // namespace GRAPHICS

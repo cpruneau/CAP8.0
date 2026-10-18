@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file CapApp.cpp
+//! @brief Implementation of CapApp.
 #include <cctype>
 #include <cmath>
 #include <cstdio>
@@ -5,6 +18,8 @@
 #include <filesystem>
 #include <sstream>
 #include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
+#include "FileSystem.hpp"
 #include "CapApp.hpp"
 #include "XmlDocument.hpp"
 #include "Exceptions.hpp"
@@ -13,8 +28,11 @@
 #include "DataPointsVector.hpp"
 #include "Histogram.hpp"
 #include "CapFile.hpp"
+#include "LatexRenderer.hpp"
+#include "GraphEditor.hpp"
 
 #ifndef CAP_SOURCE_ROOT
+//! Top directory of the CAP sources (set by the build; empty if not).
 #define CAP_SOURCE_ROOT ""
 #endif
 
@@ -83,6 +101,13 @@ namespace CAP
       gui.browserDocked  = e->attributeBool("docked", gui.browserDocked);
       }
     if (const XmlElement * e = root.child("Demo")) demo = e->attributeBool("enabled", demo);
+    if (const XmlElement * e = root.child("Latex"))
+      {
+      latex         = e->attributeBool("enabled", latex);
+      latexBin      = e->attribute("bin", latexBin);
+      latexPreamble = e->attribute("preamble", latexPreamble);
+      rootSyntax    = e->attributeBool("rootSyntax", rootSyntax);
+      }
     }
   catch (const std::exception & exception)
     {
@@ -127,6 +152,11 @@ namespace CAP
     browser.setAttribute("visible", gui.browserVisible);
     browser.setAttribute("docked", gui.browserDocked);
     root.addChild("Demo").setAttribute("enabled", demo);
+    XmlElement & latexElement = root.addChild("Latex");
+    latexElement.setAttribute("enabled", latex);
+    latexElement.setAttribute("bin", latexBin);
+    latexElement.setAttribute("preamble", latexPreamble);
+    latexElement.setAttribute("rootSyntax", rootSyntax);
     document.write(fileName);
     }
   catch (const std::exception &)
@@ -169,8 +199,8 @@ namespace CAP
     }
   // Opened from the Finder or the Dock (CapGui.app), the current folder is "/": start in the home folder instead.
   std::error_code ec;
-  const char * home = std::getenv("HOME");
-  if (home && fs::current_path(ec) == fs::path("/")) fs::current_path(home, ec);
+  String home = FileSystem::home();
+  if (!home.isNull() && FileSystem::current().equalTo("/")) fs::current_path(home.str(), ec);
   }
 
   CapApp::~CapApp()
@@ -178,15 +208,11 @@ namespace CAP
 
   String CapApp::findConfigurationFile() const
   {
-  std::error_code ec;
-  const char * home = std::getenv("HOME");
-  std::vector<std::string> candidates;
-  if (home) candidates.push_back(std::string(home) + "/.CapGui.xml");
-  const char * root = std::getenv("CAP_ROOT_PATH");
-  if (root) candidates.push_back(std::string(root) + "/config/CapGui.xml");
-  candidates.push_back(std::string(CAP_SOURCE_ROOT) + "/config/CapGui.xml");
-  for (const auto & c : candidates) if (fs::is_regular_file(c, ec)) return String(c);
-  return String();
+  // $CAP_ROOT_PATH left as written when not defined: that candidate then does not exist
+  String home = FileSystem::home();
+  return FileSystem::firstExisting({ home.isNull() ? String() : FileSystem::join(home, ".CapGui.xml"),
+                                     FileSystem::expand("$CAP_ROOT_PATH/config/CapGui.xml"),
+                                     FileSystem::join(CAP_SOURCE_ROOT, "config/CapGui.xml") });
   }
 
   int CapApp::run()
@@ -195,15 +221,14 @@ namespace CAP
   if (_configurationFile.isNull()) _configurationFile = findConfigurationFile();
   String configurationError;
   bool configured = !_configurationFile.isNull() && _configuration.read(_configurationFile, configurationError);
-  const char * home = std::getenv("HOME");
-  if (home) _configuration.gui.iniFile = String(home) + "/.CapGui.ini";
+  if (!FileSystem::home().isNull()) _configuration.gui.iniFile = FileSystem::join(FileSystem::home(), ".CapGui.ini");
   if (_configuration.directory.isNull())
     {
-    std::error_code ec;
-    _configuration.directory = String(fs::current_path(ec).string());
+    _configuration.directory = FileSystem::current();
     }
 
   _gui.onNewPane = [this](CanvasPane & pane) { setupPane(pane); };
+  _gui.beforePanesChange = [this]() { recordUndo(); };
   if (!_gui.initialize(_configuration.gui))
     {
     std::fprintf(stderr, "CapGui: cannot open the window (is a display available?)\n");
@@ -217,6 +242,7 @@ namespace CAP
   browser.setFiles(&_files);
   browser.onOpenFile   = [this](const String & path) { return openFile(path); };
   browser.onShowObject = [this](const ObjectReference & object) { showObject(object); };
+  browser.onShowData   = [this](const ObjectReference & object) { showData(object); };
   browser.onShowFolder = [this](int file, const String & folder) { showFolder(file, folder); };
   browser.onCloseFile  = [this](int file) { closeFile(file); };
   browser.onReloadFile = [this](int file) { reloadFile(file); };
@@ -225,12 +251,13 @@ namespace CAP
   if (configured)                          _gui.setStatus(String("Configuration: ") + _configurationFile);
   else if (!configurationError.isNull())   _gui.showMessage("Configuration not read", _configurationFile + String(":\n") + configurationError);
   else                                     _gui.setStatus("No configuration file found: default settings");
+  String latexProblem = applyLatex();
+  if (!latexProblem.isNull()) _gui.setStatus(latexProblem);
 
   if (_configuration.demo) createDemo();
   for (const auto & argument : _arguments)
     {
-    std::error_code ec;
-    if (fs::is_directory(argument.str(), ec)) openFolder(argument); else openFile(argument);
+    if (FileSystem::isDirectory(argument)) openFolder(argument); else openFile(argument);
     }
   _gui.run();
   return 0;
@@ -249,6 +276,7 @@ namespace CAP
   pane.setMode(_configuration.mode == "replace" ? CanvasPane::kReplace : CanvasPane::kAdd);
   pane.beforeChange = [this]() { recordUndo(); };
   pane.onDrop = [this, &pane](int graph, const ObjectReference & object) { showObject(pane, graph, object); };
+  pane.onShowData = [this](const MATH::DataPoints * data, const String & label) { showDataTable(data, label); };
   }
 
   // ------------------------------------------------------------------------------------------------ menus
@@ -329,6 +357,9 @@ namespace CAP
   graphs.addSeparator();
   graphs.addItem("Custom...", "window.graphs.custom", "", "Choose the number of columns and rows of graphs");
   window.addSeparator();
+  window.addItem("New Canvas",      "window.new",      "Ctrl+T", "Add a canvas pane beside the current one");
+  window.addItem("Close Canvas",    "window.close",    "Ctrl+W", "Close the current canvas pane");
+  window.addSeparator();
   window.addItem("Next Canvas",     "window.next",     "Ctrl+]", "Make the next canvas current");
   window.addItem("Previous Canvas", "window.previous", "Ctrl+[", "Make the previous canvas current");
 
@@ -370,7 +401,11 @@ namespace CAP
   int columns = 0, rows = 0;
   if (c == "file.open")
     {
-    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a CAP file", _configuration.directory, _configuration.extensions, "",
+    // the configured types that can be opened (CAP files only, for now)
+    std::vector<String> types;
+    for (const auto & e : _configuration.extensions) if (FileSystem::hasExtension(String("x") + e, ".cap")) types.push_back(e);
+    if (types.empty()) types.push_back(".cap");
+    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a CAP file", _configuration.directory, types, "",
                            [this](const String & path) { openFile(path); });
     }
   else if (c == "file.openFolder")
@@ -381,7 +416,7 @@ namespace CAP
   else if (c == "file.save" && !_saveFile.isNull()) save(_saveFile);
   else if (c == "file.save" || c == "file.saveAs")
     {
-    String name = _saveFile.isNull() ? String("canvases.svg") : String(fs::path(_saveFile.str()).filename().string());
+    String name = _saveFile.isNull() ? String("canvases.svg") : FileSystem::name(_saveFile);
     _gui.fileDialog().open(FileDialog::kSaveFile, "Save the canvases", _configuration.directory, {".svg"}, name,
                            [this](const String & path) { save(path); });
     }
@@ -449,6 +484,8 @@ namespace CAP
     }
   else if (std::sscanf(c.data(), "window.layout.%dx%d", &columns, &rows) == 2) setLayout(columns, rows);
   else if (std::sscanf(c.data(), "window.graphs.%dx%d", &columns, &rows) == 2) setGraphs(columns, rows);
+  else if (c == "window.new")      { recordUndo(); _gui.addPane(); }
+  else if (c == "window.close")    { if (_gui.nPanes() > 1) { recordUndo(); _gui.closePane(_gui.currentPaneIndex()); } }
   else if (c == "window.next")     _gui.setCurrentPane((_gui.currentPaneIndex() + 1) % _gui.nPanes());
   else if (c == "window.previous") _gui.setCurrentPane((_gui.currentPaneIndex() + _gui.nPanes() - 1) % _gui.nPanes());
   else if (c == "help.about")      _showAbout = true;
@@ -491,11 +528,7 @@ namespace CAP
   //! Absolute, normalized path (so that the same file is recognized whichever way it is named).
   String normalizedPath(const String & path)
   {
-  std::error_code ec;
-  fs::path p = fs::weakly_canonical(fs::absolute(path.str(), ec), ec);
-  std::string s = (ec ? fs::path(path.str()) : p).string();
-  while (s.size() > 1 && s.back() == '/') s.pop_back();
-  return String(s);
+  return FileSystem::normalize(path);
   }
 
   //! Read a CAP file. @param error set to the problem @return the file, or nullptr
@@ -504,7 +537,7 @@ namespace CAP
   try
     {
     auto file = std::make_shared<CapFile>(path, File::kReadOnly);
-    file->read();
+    file->load(File::Loading::kLazy);   // the tree at once; objects read when first shown
     return file;
     }
   catch (const std::exception & e) { error = e.what(); }
@@ -524,8 +557,7 @@ namespace CAP
   String path = normalizedPath(fileName);
   for (const auto & f : _files)
     if (f.path == path) { _gui.setBrowserVisible(true); _gui.browser().reveal(path); return f.id; }
-  std::error_code ec;
-  if (!fs::is_regular_file(path.str(), ec)) { _gui.showMessage("Open", String("No such file: ") + path); return -1; }
+  if (!FileSystem::isFile(path)) { _gui.showMessage("Open", String("No such file: ") + path); return -1; }
   String error;
   std::shared_ptr<CapFile> capFile = readCapFile(path, error);
   if (!capFile) { _gui.showMessage("Open", String("Cannot read ") + path + String(":\n") + error); return -1; }
@@ -534,7 +566,7 @@ namespace CAP
   entry.path = path;
   entry.file = capFile;
   _files.push_back(entry);
-  _configuration.directory = String(fs::path(path.str()).parent_path().string());
+  _configuration.directory = FileSystem::parent(path);
   _gui.setBrowserVisible(true);
   _gui.browser().reveal(path);
   _gui.setStatus(String("Opened ") + path);
@@ -544,8 +576,7 @@ namespace CAP
   void CapApp::openFolder(const String & folder)
   {
   String path = normalizedPath(folder);
-  std::error_code ec;
-  if (!fs::is_directory(path.str(), ec)) { _gui.showMessage("Open Folder", String("No such folder: ") + path); return; }
+  if (!FileSystem::isDirectory(path)) { _gui.showMessage("Open Folder", String("No such folder: ") + path); return; }
   _gui.browser().addFolder(path);
   _gui.setBrowserVisible(true);
   _configuration.directory = path;
@@ -581,18 +612,53 @@ namespace CAP
         {
         if (item.kind() != GraphItem::kData) continue;
         for (const auto & path : paths)
-          if (old->get<MATH::DataPoints>(path) == item.data())
-            {
-            if (const MATH::DataPoints * d = fresh->get<MATH::DataPoints>(path)) { item.setData(d); updated++; }
-            break;
-            }
+          {
+          if (!old->isLoaded(path)) continue;   // never read: no graph shows it (and the file has changed)
+          if (old->get<MATH::DataPoints>(path) != item.data()) continue;
+          try { if (const MATH::DataPoints * d = fresh->get<MATH::DataPoints>(path)) { item.setData(d); updated++; } }
+          catch (const std::exception &) { }   // no longer readable in the new version: the graph keeps the old one
+          break;
+          }
         }
+  // the data panes showing objects of the old version show those of the new one
+  for (int k=0; k<_gui.nDataPanes(); k++)
+    {
+    DataPane & pane = _gui.dataPane(k);
+    for (const auto & path : paths)
+      {
+      if (!old->isLoaded(path) || old->get<MATH::DataPoints>(path) != pane.data()) continue;
+      try { if (const MATH::DataPoints * d = fresh->get<MATH::DataPoints>(path)) pane.setData(d, pane.label()); }
+      catch (const std::exception &) { }
+      break;
+      }
+    }
   BrowserFile retired = *entry;
   _closedFiles.push_back(retired);
   entry->file = fresh;
   char text[64];
   std::snprintf(text, sizeof(text), " (%d graph item(s) updated)", updated);
   _gui.setStatus(String("Reloaded ") + entry->path + String(text));
+  }
+
+  bool CapApp::showData(const ObjectReference & object)
+  {
+  BrowserFile * entry = file(object.file);
+  if (!entry || !entry->file) { _gui.setStatus("That file is no longer open"); return false; }
+  const MATH::DataPoints * data = nullptr;
+  try { data = entry->file->get<MATH::DataPoints>(object.path); }   // read now if the file was opened lazily
+  catch (const std::exception & e) { _gui.setStatus(object.path + String(": cannot be read: ") + String(e.what())); return false; }
+  if (!data) { _gui.setStatus(object.path + String(": has no values to show as a table")); return false; }
+  showDataTable(data, data->name().isNull() ? object.path : data->name());
+  return true;
+  }
+
+  void CapApp::showDataTable(const MATH::DataPoints * data, const String & label)
+  {
+  if (!data) return;
+  _gui.addDataPane().setData(data, label);
+  char text[64];
+  std::snprintf(text, sizeof(text), ": %u rows", data->size());
+  _gui.setStatus(String("Data table of ") + label + String(text));
   }
 
   bool CapApp::showObject(const ObjectReference & object)
@@ -605,7 +671,9 @@ namespace CAP
   {
   BrowserFile * entry = file(object.file);
   if (!entry || !entry->file) { _gui.setStatus("That file is no longer open"); return false; }
-  const MATH::DataPoints * data = entry->file->get<MATH::DataPoints>(object.path);
+  const MATH::DataPoints * data = nullptr;
+  try { data = entry->file->get<MATH::DataPoints>(object.path); }   // read now if the file was opened lazily
+  catch (const std::exception & e) { _gui.setStatus(object.path + String(": cannot be read: ") + String(e.what())); return false; }
   if (!data) { _gui.setStatus(object.path + String(": cannot be shown in a graph")); return false; }
   const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram *>(data);
   if ((histogram && histogram->rank() != 1) || data->rank() != 1)
@@ -640,7 +708,7 @@ namespace CAP
   {
   BrowserFile * entry = file(fileId);
   if (!entry || !entry->file) return;
-  const Folder * folder = folderPath.isNull() ? entry->file.get() : entry->file->folder(folderPath);
+  const Folder * folder = folderPath.isNull() ? &entry->file->folder() : entry->file->folder(folderPath);
   if (!folder) return;
   // objects of the folder that can be shown (not those of its sub-folders)
   std::vector<ObjectReference> objects;
@@ -648,7 +716,8 @@ namespace CAP
     {
     if (folder->folder(name)) continue;
     String kind, details;
-    if (!FileBrowser::describe(*folder, name, kind, details)) continue;
+    try { if (!FileBrowser::describe(*folder, name, kind, details)) continue; }
+    catch (const std::exception & e) { _gui.setStatus(name + String(": cannot be read: ") + String(e.what())); continue; }
     ObjectReference reference;
     reference.file = fileId;
     reference.path = folderPath.isNull() ? name : folderPath + String("/") + name;
@@ -690,7 +759,7 @@ namespace CAP
   if (_gui.savePageSvg(name))
     {
     _saveFile = name;
-    _configuration.directory = String(fs::path(name.str()).parent_path().string());
+    _configuration.directory = FileSystem::parent(name);
     _gui.setStatus(String("Saved ") + name);
     }
   else _gui.showMessage("Save", String("Cannot write ") + name);
@@ -715,7 +784,7 @@ namespace CAP
 
   void CapApp::restore(const Snapshot & s)
   {
-  _gui.setLayout(s.columns, s.rows);
+  if (_gui.nPanes() != int(s.canvases.size())) _gui.setPaneCount(int(s.canvases.size()));
   for (int k=0; k<_gui.nPanes() && k<int(s.canvases.size()); k++)
     {
     _gui.pane(k).canvas() = s.canvases[k];
@@ -751,7 +820,7 @@ namespace CAP
 
   void CapApp::createDemo()
   {
-  // a Gaussian and pseudo-data scattered around it
+  // a Gaussian and pseudo-data scattered around it, with statistical (bars) and systematic (boxes) uncertainties
   MATH::Normal * gaussian = new MATH::Normal(1.0, 0.0, 1.0);
   gaussian->setName("Gaussian(0,1)");
   std::vector<double> x, ex, y, ey, sy;
@@ -760,7 +829,7 @@ namespace CAP
     double v = -3.0 + 0.25*k, t = std::exp(-0.5*v*v);
     x.push_back(v); ex.push_back(0.0);
     y.push_back(t*(1.0 + 0.08*std::sin(7.0*v)));
-    ey.push_back(0.03 + 0.05*t); sy.push_back(0.0);
+    ey.push_back(0.03 + 0.05*t); sy.push_back(0.02 + 0.06*t);
     }
   MATH::DataPointsVector * data = new MATH::DataPointsVector(x, ex, y, ey, sy);
   data->setName("pseudo-data");
@@ -800,6 +869,26 @@ namespace CAP
   renderShortcuts();
   renderCustomLayout();
   if (_showImGuiDemo) ImGui::ShowDemoWindow(&_showImGuiDemo);
+  }
+
+  String CapApp::applyLatex()
+  {
+  GRAPHICS::LatexRenderer & latex = GRAPHICS::LatexRenderer::instance();
+  latex.setEnabled(_configuration.latex);
+  latex.setRootSyntax(_configuration.rootSyntax);
+  latex.setPreamble(_configuration.latexPreamble);
+  String problem;
+  if (!_configuration.latexBin.isNull())
+    {
+    String directory = FileSystem::expand(_configuration.latexBin);
+    if (!latex.setBinDirectory(directory))
+      problem = String("LaTeX: latex and dvisvgm not found in ") + directory
+              + (latex.available() ? String(", using those of ") + latex.binDirectory() : String(""));
+    }
+  else if (!latex.available()) latex.findTools();
+  if (_configuration.latex && !latex.available() && problem.isNull())
+    problem = "LaTeX: latex and dvisvgm not found, texts drawn with the fonts (see Edit > Preferences)";
+  return problem;
   }
 
   void CapApp::renderPreferences()
@@ -848,10 +937,36 @@ namespace CAP
   ImGui::SeparatorText("Startup");
   ImGui::Checkbox("Show the demonstration objects", &c.demo);
 
+  ImGui::SeparatorText("LaTeX");
+  GRAPHICS::LatexRenderer & latex = GRAPHICS::LatexRenderer::instance();
+  if (latex.available()) ImGui::TextDisabled("latex and dvisvgm: %s", latex.binDirectory().data());
+  else ImGui::TextColored(ImVec4(0.85f, 0.25f, 0.1f, 1.0f), "latex and dvisvgm not found: texts drawn with the fonts");
+  if (ImGui::Checkbox("Typeset the texts with $ or \\ by LaTeX", &c.latex)) latex.setEnabled(c.latex);
+  if (ImGui::Checkbox("Translate the ROOT syntax (#Delta, p_{T}, ...)", &c.rootSyntax)) latex.setRootSyntax(c.rootSyntax);
+  std::string bin = c.latexBin.str();
+  ImGui::SetNextItemWidth(300);
+  if (ImGui::InputTextWithHint("TeX directory", "looked for", &bin)) c.latexBin = String(bin);
+  ImGui::SetItemTooltip("Directory of latex and dvisvgm, e.g. /Library/TeX/texbin (empty: looked for in the PATH and the usual TeX installations); applied when you leave the field");
+  if (ImGui::IsItemDeactivatedAfterEdit())
+    {
+    if (c.latexBin.isNull()) latex.findTools();
+    String problem = applyLatex();
+    _gui.setStatus(problem.isNull() ? String("LaTeX: ") + latex.binDirectory() : problem);
+    }
+  std::string preamble = c.latexPreamble.str();
+  ImGui::SetNextItemWidth(300);
+  if (ImGui::InputText("Preamble", &preamble)) c.latexPreamble = String(preamble);
+  ImGui::SetItemTooltip("Packages and macros of the LaTeX documents, e.g. \\usepackage{amsmath,amssymb,siunitx}; applied when you leave the field (the texts are typeset again)");
+  if (ImGui::IsItemDeactivatedAfterEdit()) latex.setPreamble(c.latexPreamble);
+  static std::string sample = "$\\sqrt{s_{NN}} = 5.02$ TeV";
+  ImGui::SetNextItemWidth(300);
+  ImGui::InputText("Try a text", &sample);
+  GraphEditor::latexPreview(String(sample));
+  if (!latex.cacheDirectory().isNull()) ImGui::TextDisabled("Cache: %s", latex.cacheDirectory().data());
+
   ImGui::Separator();
   String target = _configurationFile;
-  const char * home = std::getenv("HOME");
-  if (target.isNull() && home) target = String(home) + "/.CapGui.xml";
+  if (target.isNull() && !FileSystem::home().isNull()) target = FileSystem::join(FileSystem::home(), ".CapGui.xml");
   if (ImGui::Button("Save configuration"))
     {
     c.gui.columns = _gui.nColumns(); c.gui.rows = _gui.nRows();
@@ -898,6 +1013,27 @@ namespace CAP
           ImGui::TableNextColumn(); ImGui::TextUnformatted(MenuBar::displayShortcut(item->shortcut()).data());
           ImGui::TableNextColumn(); ImGui::Text("%s > %s", menuName, item->name().data());
           }
+        }
+      ImGui::EndTable();
+      }
+    ImGui::SeparatorText("Mouse on a graph");
+    if (ImGui::BeginTable("mouse", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV))
+      {
+      const char * rows[][2] = {
+        { "Drag in the frame",           "Zoom on the rectangle" },
+        { "Drag along an axis",          "Zoom on that axis" },
+        { "Double-click in the frame",   "Automatic ranges" },
+        { "Drag a title or the legend",  "Move it" },
+        { "Shift + drag an axis",        "Move its labels closer or farther" },
+        { "Right-click a part",          "Edit it: title, axis, axis title, legend, data points" },
+        { "Right-click elsewhere",       "Menu of the graph" },
+        { "Escape",                      "Cancel the drag" },
+        { "Drag a border between panes", "Resize the panes (x of a tab: close the pane; +: new pane)" } };
+      for (const auto & row : rows)
+        {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn(); ImGui::TextUnformatted(row[0]);
+        ImGui::TableNextColumn(); ImGui::TextUnformatted(row[1]);
         }
       ImGui::EndTable();
       }

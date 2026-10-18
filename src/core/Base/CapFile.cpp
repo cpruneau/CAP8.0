@@ -17,74 +17,134 @@
 #include <memory>
 #include <string>
 #include <sstream>
+#include <utility>
 
 ClassImp(CAP::CapFile);
 
 namespace CAP
 {
 
-  CapFile::CapFile(const String & path, File::Access access)
+  CapFile::CapFile(const String & path, Access access)
   :
-  Folder(""),
-  _file(path,access)
+  BinaryFile(path,access),
+  _folder(""),
+  _source()
   {
   setClassName("CapFile");
   }
 
   CapFile & CapFile::operator=(const Folder & folder)
   {
-  if (this!=&folder) adopt(folder);
+  if (&_folder!=&folder) _folder = folder;
   return *this;
   }
 
-  void CapFile::adopt(const Folder & folder)
+  bool CapFile::readFolder(const String * folderName, Folder & folder)
   {
-  Folder::operator=(folder);   // copies the Object part too: restore the class name
-  setClassName("CapFile");
+  open(kRead);
+  try
+    {
+    std::string tag, payload;
+    unsigned int version;
+    while (readBinaryRecord(_stream,tag,version,payload,_path))
+      {
+      if (tag!=Folder::binaryTag()) continue;
+      if (folderName && !binaryPayloadName(payload).equalTo(*folderName)) continue;
+      decodeBinaryPayload(payload,version,folder,_path);
+      close();
+      return true;
+      }
+    }
+  catch (...)
+    {
+    close();
+    throw;
+    }
+  close();
+  return false;
   }
 
   void CapFile::read()
   {
-  // Read the file into memory first, so that the folder is unchanged if anything fails.
-  std::istringstream in(_file.readAll());
+  // decoded into a separate folder first, so that the folder held is unchanged if anything fails
   Folder loaded;
-  if (!loaded.readBinary(in)) throw FileException(_file.path(),"No folder in the file","CapFile::read()");
-  adopt(loaded);
+  if (!readFolder(nullptr,loaded)) throw FileException(_path,"No folder in the file","CapFile::read()");
+  _folder = std::move(loaded);
+  _source.reset();
+  _lazy = false;
+  _loaded = true;
   }
 
   void CapFile::read(const String & folderName)
   {
-  std::istringstream in(_file.readAll());
-  std::string tag, payload;
-  unsigned int version;
-  while (readBinaryRecord(in,tag,version,payload,_file.path()))
-    {
-    if (tag!=Folder::binaryTag() || !binaryPayloadName(payload).equalTo(folderName)) continue;
-    Folder loaded;
-    decodeBinaryPayload(payload,version,loaded,_file.path());
-    adopt(loaded);
-    return;
-    }
-  throw FileException(_file.path(),String("No folder named ")+folderName+" in the file","CapFile::read()");
+  Folder loaded;
+  if (!readFolder(&folderName,loaded))
+    throw FileException(_path,String("No folder named ")+folderName+" in the file","CapFile::read()");
+  _folder = std::move(loaded);
+  _source.reset();
+  _lazy = false;
+  _loaded = true;
   }
 
-  void CapFile::writeFolder(File::Mode mode, bool skipUnsavable)
+  void CapFile::load(Loading loading)
+  {
+  if (loading==Loading::kEager) { read(); return; }
+  if (!FileSystem::isFile(_path)) throw FileException(_path,"File does not exist","CapFile::load()");
+  auto source = std::make_shared<LazySource>();
+  source->path     = FileSystem::normalize(_path);
+  source->size     = FileSystem::size(_path);
+  source->modified = FileSystem::modified(_path);
+  Folder loaded;
+  open(kRead);
+  bool found;
+  try { found = loaded.scanBinary(_stream,source); }
+  catch (...) { close(); throw; }
+  close();
+  if (!found) throw FileException(_path,"No folder in the file","CapFile::load()");
+  _folder = std::move(loaded);
+  _source = source;
+  _lazy = true;
+  _loaded = true;
+  }
+
+  void CapFile::unload()
+  {
+  _folder = Folder();
+  _source.reset();
+  _lazy = false;
+  _loaded = false;
+  }
+
+  void CapFile::loadAllBeforeWriting()
+  {
+  if (_source && _source->path.equalTo(FileSystem::normalize(_path)) && _folder.nNotLoaded()>0) _folder.loadAll();
+  }
+
+  void CapFile::writeFolder(Mode mode, bool skipUnsavable)
   {
   // Encode the whole folder first: the file is not touched if an object cannot be saved.
+  loadAllBeforeWriting();
   std::ostringstream out;
-  writeBinary(out,skipUnsavable);
-  if (mode==File::kWrite) _file.writeAll(out.str());
-  else                    _file.appendAll(out.str());
+  _folder.writeBinary(out,skipUnsavable);
+  if (mode==kWrite) writeAll(out.str());
+  else              appendAll(out.str());
   }
 
   void CapFile::write(bool skipUnsavable)
   {
-  writeFolder(File::kWrite,skipUnsavable);
+  writeFolder(kWrite,skipUnsavable);
+  _loaded = true;
   }
 
   void CapFile::append(bool skipUnsavable)
   {
-  writeFolder(File::kAppend,skipUnsavable);
+  writeFolder(kAppend,skipUnsavable);
+  }
+
+  void CapFile::print() const
+  {
+  BinaryFile::print();
+  _folder.print();
   }
 
   // ---------------------------------------------------------------- opening files
@@ -116,17 +176,7 @@ namespace CAP
 
   String CapFile::makeFileName(const String & path, const String & name)
   {
-  String fileName;
-  if (name.beginsWith("/") || path.length()==0)
-    fileName = name;
-  else
-    {
-    fileName = path;
-    if (!fileName.endsWith("/")) fileName += "/";
-    fileName += name;
-    }
-  if (!fileName.endsWith(".cap")) fileName += ".cap";
-  return fileName;
+  return FileSystem::join(path,name,".cap");
   }
 
   CapFile * CapFile::openCapFile(const String & path, const String & name, const String & ioOption, bool verbose)

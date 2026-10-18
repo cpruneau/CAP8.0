@@ -4,6 +4,7 @@
 #include "Drawable2D.hpp"
 #include "LineAttributes.hpp"
 #include "TextAttributes.hpp"
+#include "Rect2D.hpp"
 
 namespace CAP
 {
@@ -18,6 +19,16 @@ namespace CAP
   //! direction (up for a left-to-right x axis), -1 is the right (use -1 for a bottom-to-top
   //! y axis so its ticks point into the frame). Labels and the title go on the other side.
   //! Tick sizes and label offset are fractions of the canvas height.
+  //!
+  //! The labels use textAttributes(), the title titleAttributes() (color, font and size). The title can be moved
+  //! from its automatic position (centered beyond the labels) with setTitleOffset(), in canvas units.
+  //!
+  //! When the axis belongs to a Graph, the graph sets the sizes, the ticks and the label offset from the size of its
+  //! cell; the axis then only provides the style: labelPointSize() and titlePointSize() (in device units, e.g.
+  //! points; 0 for the automatic size), labelGap() (distance of the labels from the axis, relative to the automatic
+  //! distance) and the title offset, in fractions of the cell of the graph.
+  //!
+  //! After each drawing, titleRect() and bodyRect() (axis line, ticks and labels) tell where the axis was drawn.
   //!
   class Axis : public Drawable2D
   {
@@ -52,6 +63,15 @@ namespace CAP
   void setRange(float minimum, float maximum);
   void setLineAttributes(const LineAttributes & attributes) { _lineAttributes = attributes; }
   void setTextAttributes(const TextAttributes & attributes) { _textAttributes = attributes; }
+  void setTitleAttributes(const TextAttributes & attributes) { _titleAttributes = attributes; }
+  //! @brief Displacement of the title from its automatic position (canvas units; fractions of the cell for the axis
+  //! of a Graph).
+  void setTitleOffset(float dx, float dy) { _titleOffsetX = dx; _titleOffsetY = dy; }
+  //! @brief Size of the labels and of the title in device units (0: automatic; used by Graph).
+  void setLabelPointSize(float size) { _labelPointSize = size < 0 ? 0 : size; }
+  void setTitlePointSize(float size) { _titlePointSize = size < 0 ? 0 : size; }
+  //! @brief Distance of the labels from the axis, relative to the automatic distance (1; used by Graph).
+  void setLabelGap(float gap) { _labelGap = gap < 0 ? 0 : gap; }
 
   bool  isLog() const          { return _log; }
   bool  isReversed() const     { return _reversed; }
@@ -82,6 +102,19 @@ namespace CAP
   TextAttributes & textAttributes() { return _textAttributes; }
   const LineAttributes & lineAttributes() const { return _lineAttributes; }
   const TextAttributes & textAttributes() const { return _textAttributes; }
+  TextAttributes & titleAttributes() { return _titleAttributes; }
+  const TextAttributes & titleAttributes() const { return _titleAttributes; }
+  float titleOffsetX()   const { return _titleOffsetX; }
+  float titleOffsetY()   const { return _titleOffsetY; }
+  float labelPointSize() const { return _labelPointSize; }
+  float titlePointSize() const { return _titlePointSize; }
+  float labelGap()       const { return _labelGap; }
+
+  //! @brief Where the title and the body (line, ticks, labels) were drawn last (canvas units; empty if not drawn).
+  const Rect2D & titleRect() const { return _titleRect; }
+  const Rect2D & bodyRect()  const { return _bodyRect; }
+  //! Set by the renderer.
+  void setDrawnRects(const Rect2D & title, const Rect2D & body) const { _titleRect = title; _bodyRect = body; }
 
   //! True if the axis is drawn with a log scale (isLog() and current minimum > 0).
   bool  usesLogScale() const;
@@ -111,6 +144,14 @@ namespace CAP
   AxisRange _currentRange;
   LineAttributes _lineAttributes;
   TextAttributes _textAttributes;
+  TextAttributes _titleAttributes;
+  float _titleOffsetX;
+  float _titleOffsetY;
+  float _labelPointSize;
+  float _titlePointSize;
+  float _labelGap;
+  mutable Rect2D _titleRect; //! not streamed (set when drawn)
+  mutable Rect2D _bodyRect;  //! not streamed (set when drawn)
 
   ClassDef(Axis,0)
   };

@@ -1,3 +1,16 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file Point3D.hpp
+//! @brief Point3D: point or vector of space.
 #ifndef CAP_GRAPHICS_Point3D
 #define CAP_GRAPHICS_Point3D
 #include "Point2D.hpp"
@@ -41,14 +54,14 @@ namespace CAP
   //! @brief Projection on the (x,y) plane. @return (x,y)
   Point2D xy() const { return Point2D(_x,_y); }
 
-  Point3D operator+(const Point3D & p) const { return Point3D(_x+p._x, _y+p._y, _z+p._z); }
-  Point3D operator-(const Point3D & p) const { return Point3D(_x-p._x, _y-p._y, _z-p._z); }
-  Point3D operator*(float a) const { return Point3D(a*_x, a*_y, a*_z); }
-  Point3D & operator+=(const Point3D & p) { _x += p._x; _y += p._y; _z += p._z; return *this; }
-  Point3D & operator-=(const Point3D & p) { _x -= p._x; _y -= p._y; _z -= p._z; return *this; }
-  Point3D & operator*=(float a) { _x *= a; _y *= a; _z *= a; return *this; }
-  bool operator==(const Point3D & p) const { return _x==p._x && _y==p._y && _z==p._z; }
-  bool operator!=(const Point3D & p) const { return !(*this==p); }
+  Point3D operator+(const Point3D & p) const { return Point3D(_x+p._x, _y+p._y, _z+p._z); }   //!< Sum
+  Point3D operator-(const Point3D & p) const { return Point3D(_x-p._x, _y-p._y, _z-p._z); }   //!< Difference
+  Point3D operator*(float a) const { return Point3D(a*_x, a*_y, a*_z); }   //!< Product by a number
+  Point3D & operator+=(const Point3D & p) { _x += p._x; _y += p._y; _z += p._z; return *this; }   //!< Add a point
+  Point3D & operator-=(const Point3D & p) { _x -= p._x; _y -= p._y; _z -= p._z; return *this; }   //!< Subtract a point
+  Point3D & operator*=(float a) { _x *= a; _y *= a; _z *= a; return *this; }   //!< Multiply by a number
+  bool operator==(const Point3D & p) const { return _x==p._x && _y==p._y && _z==p._z; }   //!< Equality of the three coordinates
+  bool operator!=(const Point3D & p) const { return !(*this==p); }   //!< Whether a coordinate differs
 
   protected:
 
@@ -57,6 +70,7 @@ namespace CAP
   float _z; //!< third coordinate
   };
 
+  //! @brief Product of a number and a point. @param a number @param p point @return a*p
   inline Point3D operator*(float a, const Point3D & p) { return p*a; }
 
   } // namespace GRAPHICS

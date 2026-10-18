@@ -1,18 +1,30 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * All rights reserved.
+ *
+ * Based on the ROOT package and environment
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau
+ *
+ * *********************************************************************/
+//! @file FileBrowser.cpp
+//! @brief Implementation of FileBrowser.
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
-#include <filesystem>
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "FileBrowser.hpp"
+#include "FileSystem.hpp"
 #include "CapFile.hpp"
 #include "Folder.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
 #include "DataPoints.hpp"
 
-namespace fs = std::filesystem;
 
 namespace CAP
 {
@@ -21,15 +33,6 @@ namespace CAP
 
   namespace
   {
-  //! Last component of a path ("/a/b/c.cap" -> "c.cap").
-  std::string baseName(const std::string & path)
-  {
-  std::string p = path;
-  while (p.size() > 1 && p.back() == '/') p.pop_back();
-  size_t slash = p.find_last_of('/');
-  return slash == std::string::npos ? p : p.substr(slash+1);
-  }
-
   //! Whether path is directory or below it.
   bool isBelow(const std::string & path, const std::string & directory)
   {
@@ -39,17 +42,24 @@ namespace CAP
   return path.compare(0, d.size(), d) == 0;
   }
 
-  bool lessIgnoreCase(const std::string & a, const std::string & b)
-  {
-  return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(),
-           [](char x, char y) { return std::tolower((unsigned char)x) < std::tolower((unsigned char)y); });
-  }
 
   //! "CAP::MATH::Matrix" -> "Matrix".
   String shortTypeName(const std::string & typeName)
   {
   size_t colon = typeName.rfind("::");
   return String(colon == std::string::npos ? typeName : typeName.substr(colon+2));
+  }
+
+  //! Whether an object not read yet (lazily opened file) can probably be shown in a graph, from its type: histograms,
+  //! profiles and data points (whether it is 1D is known once it is read).
+  bool showableType(const std::string & typeName)
+  {
+  for (const char * type : {"Histogram", "Profile", "DataPointsVector", "DataPointColumns"})
+    {
+    std::string t(type);
+    if (typeName.size() >= t.size() && typeName.compare(typeName.size()-t.size(), t.size(), t) == 0) return true;
+    }
+  return false;
   }
 
   //! Path of the object currently pressed in the tree (to tell a click from the start of a drag).
@@ -130,20 +140,15 @@ namespace CAP
   auto found = _listings.find(directory);
   if (found != _listings.end()) return found->second;
   Listing & l = _listings[directory];
-  std::error_code ec;
-  fs::directory_iterator it(directory, fs::directory_options::skip_permission_denied, ec), end;
-  if (ec) { l.error = ec.message(); return l; }
-  for (; it != end; it.increment(ec))
+  // sub-directories and CAP files, directories first, by name (case-insensitive); hidden entries left out
+  FileSystem::ListOptions options;
+  options.extensions = { ".cap" };
+  try
     {
-    if (ec) break;
-    std::string name = it->path().filename().string();
-    if (name.empty() || name[0] == '.') continue;
-    std::error_code e2;
-    if (it->is_directory(e2)) l.directories.push_back(name);
-    else if (it->path().extension() == ".cap") l.files.push_back(name);
+    for (const auto & entry : FileSystem::list(String(directory), options))
+      (entry.isDirectory() ? l.directories : l.files).push_back(entry.name.str());
     }
-  std::sort(l.directories.begin(), l.directories.end(), lessIgnoreCase);
-  std::sort(l.files.begin(), l.files.end(), lessIgnoreCase);
+  catch (const FileException & e) { l.error = e.what(); }
   return l;
   }
 
@@ -237,7 +242,7 @@ namespace CAP
     {
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::CollapsingHeader("Files"))
-      for (const BrowserFile & f : loose) renderFile(f, String(baseName(f.path.str())));
+      for (const BrowserFile & f : loose) renderFile(f, FileSystem::name(f.path));
     }
   if (!_folders.empty())
     {
@@ -306,8 +311,8 @@ namespace CAP
     if (!l.error.empty()) ImGui::TextDisabled("%s", l.error.c_str());
     else if (l.directories.empty() && l.files.empty()) ImGui::TextDisabled("(no CAP files)");
     Listing copy = l;                                   // the cache may change while rendering the children
-    for (const auto & d : copy.directories) renderDirectory(directory + "/" + d, d, false);
-    for (const auto & f : copy.files)       renderCapFileInTree(directory + "/" + f, f);
+    for (const auto & d : copy.directories) renderDirectory(FileSystem::join(String(directory), String(d)).str(), d, false);
+    for (const auto & f : copy.files)       renderCapFileInTree(FileSystem::join(String(directory), String(f)).str(), f);
     ImGui::TreePop();
     }
   ImGui::PopID();
@@ -390,8 +395,18 @@ namespace CAP
 
   void FileBrowser::renderObject(int fileId, const Folder & folder, const String & name, const std::string & path)
   {
+  // an object of a lazily opened file is read when it is hovered (tooltip) or shown, not when it is listed
   String kind, details;
-  bool showable = describe(folder, name, kind, details);
+  bool loaded = folder.isLoaded(name);
+  bool showable;
+  if (loaded) showable = describe(folder, name, kind, details);
+  else
+    {
+    std::string type = folder.typeName(name);
+    kind     = shortTypeName(type);
+    details  = String(type) + String("\n(not read yet)");
+    showable = showableType(type);
+    }
   ImGui::PushID(name.data());
   bool selected = (_selected.file == fileId && _selected.path.str() == path);
   ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -420,7 +435,15 @@ namespace CAP
     ImGui::TextDisabled("%s", kind.data());
     ImGui::EndDragDropSource();
     }
-  else if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) ImGui::SetTooltip("%s", details.data());
+  else if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    {
+    if (!loaded)
+      {
+      try { describe(folder, name, kind, details); }
+      catch (const std::exception & e) { details = String("Cannot read it: ") + String(e.what()); }
+      }
+    ImGui::SetTooltip("%s", details.data());
+    }
 
   if (ImGui::BeginPopupContextItem("##objectMenu"))
     {
@@ -429,6 +452,13 @@ namespace CAP
       _selected.file = fileId;
       _selected.path = String(path);
       onShowObject(_selected);
+      }
+    if (ImGui::MenuItem("Show Data Table", nullptr, false, showable) && onShowData)
+      {
+      ObjectReference reference;
+      reference.file = fileId;
+      reference.path = String(path);
+      onShowData(reference);
       }
     ImGui::EndPopup();
     }

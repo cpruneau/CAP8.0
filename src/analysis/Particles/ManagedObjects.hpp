@@ -12,6 +12,7 @@
 #ifndef CAP__ManagedObjects
 #define CAP__ManagedObjects
 #include "Aliases.hpp"
+#include "FileSystem.hpp"
 #include "Exceptions.hpp"
 #include "Configuration.hpp"
 #include "PrintHelpers.hpp"
@@ -412,52 +413,14 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   _forceRewrite   = configuration.valueBool(  createKey(_taskName,_typeName,"EXPORT:FORCE_REWRITE"));
   nObjects        = configuration.valueInt(   createKey(_taskName,_typeName,"N") );
   
-  EnvironmentVariables * envVariables = EnvironmentVariables::environmentVariables();
-  String basePath;
-  
+  // "DEFAULT", absolute, "./..." or relative to the directory of the environment variable
   if (_typeName.beginsWith("HISTOGRAM"))
     {
-    if (importPath.equalTo("DEFAULT"))
-      {
-      _importPath = envVariables->variable("CAP_HISTOS_IMPORT_PATH");
-      }
-    else if (importPath.beginsWith("/"))
-      {
-      _importPath = importPath;
-      }
-    else
-      {
-      _importPath = envVariables->variable("CAP_HISTOS_IMPORT_PATH");
-      _importPath += "/";
-      _importPath += importPath;
-      }
-    if (exportPath.equalTo("DEFAULT"))
-      {
-      _exportPath = envVariables->variable("CAP_HISTOS_EXPORT_PATH");
-      }
-    else if (exportPath.beginsWith("/"))
-      {
-      _exportPath = exportPath;
-      }
-    else
-      {
-      _exportPath = envVariables->variable("CAP_HISTOS_EXPORT_PATH");   // was CAP_HISTOS_IMPORT_PATH
-      _exportPath += "/";
-      _exportPath += exportPath;
-      }
+    _importPath = FileSystem::configuredPath(importPath,"CAP_HISTOS_IMPORT_PATH");
+    _exportPath = FileSystem::configuredPath(exportPath,"CAP_HISTOS_EXPORT_PATH");
     }
   if (_typeName.beginsWith("PARTICLE_DB"))
-    {
-    if (importPath.beginsWith("/"))
-      _importPath = importPath;
-    else
-      {
-      EnvironmentVariables * envVariables = EnvironmentVariables::environmentVariables();
-      _importPath= envVariables->variable("CAP_DATABASE_PATH");
-      _importPath += "/";
-      _importPath += importPath;
-      }
-    }
+    _importPath = FileSystem::configuredPath(importPath,"CAP_DATABASE_PATH");
   bool verbose = true;
   if (reportInfo(__FUNCTION__))
     {
@@ -547,9 +510,7 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     {
     if (_typeName.equalTo("PARTICLE_DB"))
       {
-      String fileName = importPath;
-      fileName += "/";
-      fileName += importFileName;
+      String fileName = FileSystem::join(importPath,importFileName);
       if (fileName.endsWith(".xml",true))
         {
         // particles and decays in one XML file (see ParticleDbXml)
@@ -629,9 +590,7 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     }
   else
     {
-    String fileName = _exportPath;
-    fileName += "/";
-    fileName += _exportFileName;
+    String fileName = FileSystem::join(_exportPath,_exportFileName);
     std::ofstream & outputFile = openOutputAsciiFile(fileName);
     for (auto & object : _objects) object->saveToAscii(outputFile);
     outputFile.close();

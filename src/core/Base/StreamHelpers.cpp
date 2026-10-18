@@ -12,6 +12,7 @@
 #include "StreamHelpers.hpp"
 #include "PrintHelpers.hpp"
 #include "Exceptions.hpp"
+#include "FileSystem.hpp"
 #include "TSystem.h"
 #include <algorithm>
 #include <memory>
@@ -45,14 +46,12 @@ namespace
   }
 
   //!
-  //! Build path/name.extension, inserting a '/' only when the path is non-empty and does not already end with one.
+  //! Build path/name.extension (see FileSystem::join(): an absolute name is used as it is); the extension is appended
+  //! unless the name already ends with it.
   //!
   String buildFileName(const String & path, const String & name, const String & extension)
   {
-  String fileName = path;
-  int len = fileName.length();
-  if (len>0  &&  fileName.last('/')!=len-1) fileName += "/";
-  fileName += name;
+  String fileName = FileSystem::join(path,name);
   if (!fileName.endsWith(extension)) fileName += extension;
   return fileName;
   }

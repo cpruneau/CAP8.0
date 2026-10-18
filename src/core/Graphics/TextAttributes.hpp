@@ -13,6 +13,20 @@ namespace CAP
 
   enum Justification { kLeft, kCenter, kRight };
 
+  //! @name Fonts
+  //! Fonts are ROOT font codes: 10 x index + precision, the index giving the family and the style
+  //! (1-3, 13: Times; 4-7: Helvetica; 8-11: Courier; 12, 15: Symbol). Painters map them to the fonts they have.
+  //! @{
+  enum FontFamily { kSans, kSerif, kMono, kSymbol };
+  //! @brief ROOT font index (1 to 15) of a font code. @param font font code (e.g. 42) @return index (e.g. 4)
+  static int  fontIndex(int font) { int index = font >= 10 ? font/10 : font; return (index < 1 || index > 15) ? 4 : index; }
+  static FontFamily fontFamily(int font);
+  static bool isBold(int font);
+  static bool isItalic(int font);
+  //! @brief ROOT font code (precision 2) of a family and style. @return code (e.g. 42, 62, 132, 82)
+  static int  fontCode(FontFamily family, bool bold, bool italic);
+  //! @}
+
   TextAttributes();
   TextAttributes(const TextAttributes & src);
   TextAttributes  & operator=(const TextAttributes & rhs);

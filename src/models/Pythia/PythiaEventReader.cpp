@@ -11,6 +11,7 @@
  * *********************************************************************/
 #include <cstdlib>
 #include "PythiaEventReader.hpp"
+#include "FileSystem.hpp"
 #include "Exceptions.hpp"
 
 ClassImp(CAP::PythiaEventReader);
@@ -96,9 +97,7 @@ void PythiaEventReader::initialize()
     throw ConfigurationException(createKey(taskName,"TreeName"),"Name of the tree of PYTHIA events not set",__FUNCTION__);
   if (files.isNull())
     throw ConfigurationException(createKey(taskName,"DataImportFile"),"PYTHIA event file(s) not set",__FUNCTION__);
-  _inputFiles = path;
-  if (!_inputFiles.isNull() && !_inputFiles.str().empty() && _inputFiles.str().back()!='/') _inputFiles += "/";
-  _inputFiles += files;
+  _inputFiles = FileSystem::join(path,files);   // an absolute DataImportFile is used as it is
   initializeImportTree(treeName);
   if (chain()->Add(_inputFiles.data())==0)
     throw FileException(_inputFiles,"No PYTHIA event file found",__FUNCTION__);
