@@ -37,9 +37,18 @@ namespace CAP
   //!  - fromPoints(): rank-2 data points whose coordinates form a regular grid (every combination of the distinct x
   //!    and y values once): the edges are halfway between the nodes. Scattered points form no grid.
   //!
+  //! contour() traces the lines where the values cross a level (marching squares on the centers of the cells).
+  //!
   class Grid2D
   {
   public:
+
+  //! @brief A point of a contour line (data coordinates).
+  struct Point
+  {
+    double x;   //!< x
+    double y;   //!< y
+  };
 
   //! @brief Empty grid (no cells).
   Grid2D() { }
@@ -71,6 +80,15 @@ namespace CAP
   //! @brief The cell holding (x,y). @param x x @param y y @param i index along x @param j index along y
   //! @return false if (x,y) is outside the grid
   bool cell(double x, double y, int & i, int & j) const;
+
+  //!
+  //! @brief Lines where the values cross a level: marching squares on the centers of the cells, the crossings
+  //! interpolated linearly between neighboring centers (in log10 of the values if logValues); squares with a corner
+  //! without value are skipped, and ambiguous squares (saddles) are resolved by the mean of their corners.
+  //! @param level level @param logValues interpolate log10 of the values (values <= 0 have none)
+  //! @return polylines; a closed line ends with its first point
+  //!
+  std::vector<std::vector<Point>> contour(double level, bool logValues=false) const;
 
   //! @brief The bins of a rank-2 histogram. @param histogram histogram @return grid (empty if the rank is not 2)
   static Grid2D fromHistogram(const MATH::Histogram & histogram);

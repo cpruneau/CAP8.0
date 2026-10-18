@@ -44,6 +44,18 @@ namespace CAP
   _showColorMap(true),
   _grid(),
   _gridKey(),
+  _showContours(false),
+  _contourIntervals(10),
+  _contourLevels(),
+  _contourLine(*LineAttributes::defaultLineAttributes()),
+  _contourUsesPalette(false),
+  _showValues(false),
+  _valueFormat("%.3g"),
+  _valuePointSize(0.0f),
+  _valueColor(-1),
+  _showMapPoints(false),
+  _pointSizeByValue(false),
+  _pointOutline(true),
   _line(*LineAttributes::defaultLineAttributes()),
   _marker(*MarkerAttributes::defaultMarkerAttributes()),
   _showLine(true),
@@ -75,6 +87,18 @@ namespace CAP
   _showColorMap(true),
   _grid(),
   _gridKey(),
+  _showContours(false),
+  _contourIntervals(10),
+  _contourLevels(),
+  _contourLine(*LineAttributes::defaultLineAttributes()),
+  _contourUsesPalette(false),
+  _showValues(false),
+  _valueFormat("%.3g"),
+  _valuePointSize(0.0f),
+  _valueColor(-1),
+  _showMapPoints(false),
+  _pointSizeByValue(false),
+  _pointOutline(true),
   _line(*LineAttributes::defaultLineAttributes()),
   _marker(*MarkerAttributes::defaultMarkerAttributes()),
   _showLine(false),
@@ -254,6 +278,22 @@ namespace CAP
   float Graph::colorScaleWidth() const
   {
   return (_showColorScale && hasMaps()) ? 0.15f : 0.0f;
+  }
+
+  std::vector<double> Graph::contourLevels(const View & view, const GraphItem & item) const
+  {
+  std::vector<double> levels = item.contourLevels();
+  if (!levels.empty())
+    {
+    std::sort(levels.begin(), levels.end());
+    return levels;
+    }
+  int n = item.contourIntervals();
+  bool log = view.logZ && view.zMinimum > 0;
+  for (int k=1; k<n; k++)
+    levels.push_back(log ? std::pow(10.0, std::log10(view.zMinimum) + (std::log10(view.zMaximum) - std::log10(view.zMinimum))*k/n)
+                         : view.zMinimum + (view.zMaximum - view.zMinimum)*k/n);
+  return levels;
   }
 
   Color Graph::colorOf(const View & view, double z) const

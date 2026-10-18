@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <unordered_map>
 #include "Grid2D.hpp"
 #include "Function.hpp"
 #include "Histogram.hpp"
@@ -103,6 +104,93 @@ namespace CAP
   i = std::min(std::max(i, 0), nX() - 1);
   j = std::min(std::max(j, 0), nY() - 1);
   return true;
+  }
+
+  std::vector<std::vector<Grid2D::Point>> Grid2D::contour(double level, bool logValues) const
+  {
+  std::vector<std::vector<Point>> lines;
+  const int nx = nX(), ny = nY();
+  if (nx < 2 || ny < 2 || !std::isfinite(level) || (logValues && level <= 0)) return lines;
+  const double target = logValues ? std::log10(level) : level;
+  std::vector<double> cx(nx), cy(ny);
+  for (int i=0; i<nx; i++) cx[i] = 0.5*(_xEdges[i] + _xEdges[i+1]);
+  for (int j=0; j<ny; j++) cy[j] = 0.5*(_yEdges[j] + _yEdges[j+1]);
+  auto at = [&](int i, int j)
+    {
+    double v = value(i, j);
+    if (logValues) v = v > 0 ? std::log10(v) : kNaN;
+    return v;
+    };
+  // crossings on the edges between neighboring centers: horizontal edge (i,j)-(i+1,j) has id 2(i + nx j),
+  // vertical edge (i,j)-(i,j+1) has id 2(i + nx j) + 1
+  std::unordered_map<long,Point> crossing;
+  auto edgePoint = [&](long id, double va, double vb, double xa, double ya, double xb, double yb)
+    {
+    if (crossing.count(id)) return;
+    double t = (vb != va) ? (target - va)/(vb - va) : 0.5;
+    crossing[id] = Point{ xa + t*(xb - xa), ya + t*(yb - ya) };
+    };
+  std::vector<std::pair<long,long>> segments;
+  for (int j=0; j+1<ny; j++)
+    for (int i=0; i+1<nx; i++)
+      {
+      double v00 = at(i, j), v10 = at(i+1, j), v11 = at(i+1, j+1), v01 = at(i, j+1);
+      if (!std::isfinite(v00) || !std::isfinite(v10) || !std::isfinite(v11) || !std::isfinite(v01)) continue;
+      int index = (v00 >= target) | ((v10 >= target) << 1) | ((v11 >= target) << 2) | ((v01 >= target) << 3);
+      if (index == 0 || index == 15) continue;
+      long bottom = 2L*(i + long(nx)*j), top = 2L*(i + long(nx)*(j+1)), left = 2L*(i + long(nx)*j) + 1, right = 2L*(i + 1 + long(nx)*j) + 1;
+      edgePoint(bottom, v00, v10, cx[i], cy[j], cx[i+1], cy[j]);
+      edgePoint(top,    v01, v11, cx[i], cy[j+1], cx[i+1], cy[j+1]);
+      edgePoint(left,   v00, v01, cx[i], cy[j], cx[i], cy[j+1]);
+      edgePoint(right,  v10, v11, cx[i+1], cy[j], cx[i+1], cy[j+1]);
+      bool centerHigh = 0.25*(v00 + v10 + v11 + v01) >= target;
+      switch (index)
+        {
+        case 1: case 14: segments.push_back({left, bottom}); break;
+        case 2: case 13: segments.push_back({bottom, right}); break;
+        case 3: case 12: segments.push_back({left, right}); break;
+        case 4: case 11: segments.push_back({right, top}); break;
+        case 6: case 9:  segments.push_back({bottom, top}); break;
+        case 7: case 8:  segments.push_back({left, top}); break;
+        case 5:          // corners 00 and 11 above the level
+          if (centerHigh) { segments.push_back({bottom, right}); segments.push_back({top, left}); }
+          else            { segments.push_back({left, bottom}); segments.push_back({right, top}); }
+          break;
+        case 10:         // corners 10 and 01 above the level
+          if (centerHigh) { segments.push_back({left, bottom}); segments.push_back({right, top}); }
+          else            { segments.push_back({bottom, right}); segments.push_back({top, left}); }
+          break;
+        }
+      }
+  // join the segments that share an edge into polylines
+  std::unordered_map<long,std::vector<int>> byEdge;
+  for (int s=0; s<int(segments.size()); s++) { byEdge[segments[s].first].push_back(s); byEdge[segments[s].second].push_back(s); }
+  std::vector<bool> used(segments.size(), false);
+  auto next = [&](long edge)
+    {
+    for (int s : byEdge[edge]) if (!used[s]) return s;
+    return -1;
+    };
+  for (int s0=0; s0<int(segments.size()); s0++)
+    {
+    if (used[s0]) continue;
+    used[s0] = true;
+    std::vector<long> chain{ segments[s0].first, segments[s0].second };
+    for (int s; (s = next(chain.back())) >= 0; )
+      {
+      used[s] = true;
+      chain.push_back(segments[s].first == chain.back() ? segments[s].second : segments[s].first);
+      }
+    for (int s; chain.front() != chain.back() && (s = next(chain.front())) >= 0; )
+      {
+      used[s] = true;
+      chain.insert(chain.begin(), segments[s].first == chain.front() ? segments[s].second : segments[s].first);
+      }
+    std::vector<Point> line;
+    for (long edge : chain) line.push_back(crossing[edge]);
+    lines.push_back(line);
+    }
+  return lines;
   }
 
   Grid2D Grid2D::fromHistogram(const MATH::Histogram & histogram)

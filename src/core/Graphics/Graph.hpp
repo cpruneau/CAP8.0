@@ -47,6 +47,11 @@ namespace CAP
   //! Scattered points of rank 2 form no grid: they are drawn as markers colored by their value. The colors come
   //! from the palette and the z range of the graph (see Graph).
   //!
+  //! On a map can also be drawn: contour lines (showContours(): at contourIntervals() equal intervals of the z range,
+  //! or at given contourLevels(); filled contours are a palette in as many bands, see Palette), the values written
+  //! in the cells (showValues(), where they fit), and the points themselves as colored disks (showMapPoints(), always
+  //! for scattered points), optionally sized by their values and outlined.
+  //!
   //! The objects are not owned: they must outlive the graphs that show them (in CapApp they are owned by the
   //! application or by the files it opened).
   //!
@@ -121,6 +126,59 @@ namespace CAP
   //! @return grid, or nullptr for an item of rank 1, scattered points, or a function outside the rectangle
   //!
   std::shared_ptr<const Grid2D> grid(double xLow, double xHigh, double yLow, double yHigh, bool logX, bool logY) const;
+
+  //! @brief Whether contour lines are drawn. @return true if so
+  bool showContours() const { return _showContours; }
+  //! @brief Draw contour lines or not. @param v draw them
+  void setShowContours(bool v) { _showContours = v; }
+  //! @brief Number of equal intervals of the z range bounded by the automatic contour levels (n-1 levels).
+  //! @return number of intervals
+  int  contourIntervals() const { return _contourIntervals; }
+  //! @brief Set the number of intervals of the automatic contour levels. @param n number (2 to 100)
+  void setContourIntervals(int n) { _contourIntervals = n < 2 ? 2 : (n > 100 ? 100 : n); }
+  //! @brief Contour levels given explicitly (empty: automatic, see contourIntervals()). @return levels
+  const std::vector<double> & contourLevels() const { return _contourLevels; }
+  //! @brief Set the contour levels (empty: automatic). @param levels levels
+  void setContourLevels(const std::vector<double> & levels) { _contourLevels = levels; }
+  //! @brief Line of the contours. @return line attributes
+  LineAttributes & contourLineAttributes() { return _contourLine; }
+  const LineAttributes & contourLineAttributes() const { return _contourLine; }   //!< Line of the contours
+  //! @brief Whether each contour line takes the color of its level in the palette. @return true if so
+  bool contourUsesPalette() const { return _contourUsesPalette; }
+  //! @brief Color the contour lines with the palette, or with their line color. @param v use the palette
+  void setContourUsesPalette(bool v) { _contourUsesPalette = v; }
+
+  //! @brief Whether the values are written in the cells (where they fit). @return true if so
+  bool showValues() const { return _showValues; }
+  //! @brief Write the values in the cells or not. @param v write them
+  void setShowValues(bool v) { _showValues = v; }
+  //! @brief printf format of the values written in the cells. @return format, e.g. "%.3g"
+  const String & valueFormat() const { return _valueFormat; }
+  //! @brief Set the printf format of the values written in the cells. @param format format with one %g, %f or %e
+  void setValueFormat(const String & format) { _valueFormat = format; }
+  //! @brief Size of the values written in the cells, in points (0: automatic). @return size
+  float valuePointSize() const { return _valuePointSize; }
+  //! @brief Set the size of the values written in the cells. @param size size in points (0: automatic)
+  void setValuePointSize(float size) { _valuePointSize = size < 0 ? 0 : size; }
+  //! @brief ROOT color of the values written in the cells (-1: black or white, whichever stands out on the cell).
+  //! @return color
+  int  valueColor() const { return _valueColor; }
+  //! @brief Set the color of the values written in the cells. @param color ROOT color index (-1: automatic)
+  void setValueColor(int color) { _valueColor = color; }
+
+  //! @brief Whether the points (nodes of a grid, bins of a histogram) are also drawn as colored disks; scattered
+  //! points are always. @return true if so
+  bool showMapPoints() const { return _showMapPoints; }
+  //! @brief Draw the points of a map as colored disks or not. @param v draw them
+  void setShowMapPoints(bool v) { _showMapPoints = v; }
+  //! @brief Whether the area of the disks is proportional to the magnitude of the values. @return true if so
+  bool pointSizeByValue() const { return _pointSizeByValue; }
+  //! @brief Size the disks by the values or not. @param v size by value
+  void setPointSizeByValue(bool v) { _pointSizeByValue = v; }
+  //! @brief Whether the disks have a thin dark outline. @return true if so
+  bool pointOutline() const { return _pointOutline; }
+  //! @brief Outline the disks or not. @param v outline them
+  void setPointOutline(bool v) { _pointOutline = v; }
   //! @}
 
   LineAttributes   & lineAttributes()   { return _line; }   //!< Line of the curve, or through the data points
@@ -171,6 +229,18 @@ namespace CAP
   bool   _showColorMap;   //!< the color map of an item of rank 2 is drawn
   mutable std::shared_ptr<const Grid2D> _grid;   //!< grid of the last drawing (kept while it is valid)
   mutable std::vector<double> _gridKey;   //!< what the grid was made for (object, range, scales, samples)
+  bool   _showContours;   //!< contour lines are drawn
+  int    _contourIntervals;   //!< intervals of the automatic contour levels
+  std::vector<double> _contourLevels;   //!< explicit contour levels (empty: automatic)
+  LineAttributes _contourLine;   //!< line of the contours
+  bool   _contourUsesPalette;   //!< contour lines colored by the palette
+  bool   _showValues;   //!< values written in the cells
+  String _valueFormat;   //!< printf format of the values
+  float  _valuePointSize;   //!< size of the values in points (0: automatic)
+  int    _valueColor;   //!< color of the values (-1: automatic)
+  bool   _showMapPoints;   //!< points of a map drawn as colored disks
+  bool   _pointSizeByValue;   //!< disk area proportional to the values
+  bool   _pointOutline;   //!< disks outlined
   LineAttributes   _line;   //!< line of the curve or through the points
   MarkerAttributes _marker;   //!< markers of the data points
   bool   _showLine;   //!< the line is drawn
@@ -372,6 +442,10 @@ namespace CAP
   //! @brief Color of a value for the given view (palette, z range and scale). @param view view @param z value
   //! @return color (values outside the range take the color of the nearest end)
   Color colorOf(const View & view, double z) const;
+  //! @brief Contour levels of an item for the given view: its explicit levels, or the bounds of its
+  //! contourIntervals() equal intervals of the z range (in log10 on a logarithmic z scale), ends excluded.
+  //! @param view view @param item item @return levels, increasing
+  std::vector<double> contourLevels(const View & view, const GraphItem & item) const;
   //! @}
 
   //! @name Appearance

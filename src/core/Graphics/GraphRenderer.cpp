@@ -1,10 +1,14 @@
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 #include "GraphRenderer.hpp"
 #include "Graph.hpp"
 #include "Painter.hpp"
 #include "Function.hpp"
 #include "DataPoints.hpp"
+#include "Histogram.hpp"
+#include "TColor.h"
 
 ClassImp(CAP::GRAPHICS::GraphRenderer);
 
@@ -216,20 +220,55 @@ namespace CAP
       }
   }
 
-  //! Scattered points of rank 2: disks colored by their values (the size of the markers of the item).
-  void drawColoredPoints(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item,
-                         int iItem, std::vector<Graph::PointPosition> & positions)
+  //! A point of a map: position, value, and index in its data (-1 if it has none, e.g. a node of a regular grid).
+  struct MapPoint { double x, y, value; int index; };
+
+  //! The points of a map item: the centers of the cells with a value of its grid, or its data points.
+  std::vector<MapPoint> mapPoints(const GraphItem & item, const Grid2D * grid)
   {
+  std::vector<MapPoint> points;
+  if (grid)
+    {
+    // the cells of a histogram are its bins, in the same order (axis 0 fastest)
+    bool bins = item.kind() == GraphItem::kData && dynamic_cast<const MATH::Histogram*>(item.data());
+    for (int j=0; j<grid->nY(); j++)
+      for (int i=0; i<grid->nX(); i++)
+        {
+        double v = grid->value(i, j);
+        if (!std::isfinite(v)) continue;
+        points.push_back({ 0.5*(grid->xEdges()[i] + grid->xEdges()[i+1]), 0.5*(grid->yEdges()[j] + grid->yEdges()[j+1]), v,
+                           bins ? i + grid->nX()*j : -1 });
+        }
+    return points;
+    }
   const MATH::DataPoints & d = *item.data();
-  const float radius = 4.0f*std::max(0.3f, float(item.markerAttributes().size()));   // device units (size 1: 8 across)
-  const float rx = radius/painter.width(), ry = radius/painter.height();
   for (unsigned int n=0; n<d.size(); n++)
     {
     std::vector<double> c = d.coordinatesAt(n);
-    double v = d.valueAt(n);
-    if (c.size() != 2 || !std::isfinite(v) || (view.logZ && v <= 0) || (view.logX && c[0] <= 0) || (view.logY && c[1] <= 0)) continue;
-    Point2D p = graph.toCanvas(view, c[0], c[1]);
+    if (c.size() == 2) points.push_back({ c[0], c[1], d.valueAt(n), int(n) });
+    }
+  return points;
+  }
+
+  //! Points of a map as disks colored by their values: of the size of the markers of the item, or with an area
+  //! proportional to the magnitude of the values; with a thin outline if asked.
+  void drawColoredPoints(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item,
+                         const std::vector<MapPoint> & points, int iItem, std::vector<Graph::PointPosition> & positions)
+  {
+  const float radius = 4.0f*std::max(0.3f, float(item.markerAttributes().size()));   // device units (size 1: 8 across)
+  double largest = 0;
+  for (const auto & point : points) if (std::isfinite(point.value)) largest = std::max(largest, std::fabs(point.value));
+  LineAttributes outline;
+  outline.set(1, 0.7, 1, 0.5);
+  for (const auto & point : points)
+    {
+    double v = point.value;
+    if (!std::isfinite(v) || (view.logZ && v <= 0) || (view.logX && point.x <= 0) || (view.logY && point.y <= 0)) continue;
+    Point2D p = graph.toCanvas(view, point.x, point.y);
     if (!inside(box, p)) continue;
+    float r = radius;
+    if (item.pointSizeByValue() && largest > 0) r *= float(std::max(0.15, std::sqrt(std::fabs(v)/largest)));
+    const float rx = r/painter.width(), ry = r/painter.height();
     std::vector<Point2D> disk;
     for (int k=0; k<16; k++)
       {
@@ -237,8 +276,100 @@ namespace CAP
       disk.push_back(Point2D(p.x() + rx*std::cos(a), p.y() + ry*std::sin(a)));
       }
     painter.fillPolygon(disk, graph.colorOf(view, v));
-    positions.push_back({ iItem, int(n), p });
+    if (item.pointOutline()) { disk.push_back(disk.front()); painter.drawLine(disk, outline); }
+    if (point.index >= 0) positions.push_back({ iItem, point.index, p });
     }
+  }
+
+  //! Contour lines of a grid at the levels of the item, clipped to the frame.
+  void drawContours(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item,
+                    const Grid2D & grid)
+  {
+  for (double level : graph.contourLevels(view, item))
+    {
+    LineAttributes line = item.contourLineAttributes();
+    if (item.contourUsesPalette())
+      {
+      Color c = graph.colorOf(view, level);
+      line.setColor(TColor::GetColor(c.red, c.green, c.blue), line.alpha());
+      }
+    for (const auto & polyline : grid.contour(level, view.logZ))
+      {
+      std::vector<Point2D> points;
+      std::vector<bool> valid;
+      for (const auto & q : polyline)
+        {
+        bool ok = (!view.logX || q.x > 0) && (!view.logY || q.y > 0);
+        points.push_back(graph.toCanvas(view, ok ? q.x : 1.0, ok ? q.y : 1.0));
+        valid.push_back(ok);
+        }
+      drawClipped(painter, box, points, valid, line);
+      }
+    }
+  }
+
+  //! Whether a printf format writes one floating point number (and nothing else that needs an argument).
+  bool numberFormat(const String & format)
+  {
+  int conversions = 0;
+  const char * f = format.data();
+  for (int k=0; f[k]; k++)
+    {
+    if (f[k] != '%') continue;
+    if (f[k+1] == '%') { k++; continue; }
+    int m = k + 1;
+    while (f[m] && std::strchr("+- #0123456789.", f[m])) m++;
+    if (!f[m] || !std::strchr("eEfFgG", f[m])) return false;
+    conversions++;
+    k = m;
+    }
+  return conversions == 1;
+  }
+
+  //! The values of the cells of a grid written at their centers, where they fit.
+  void drawValues(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item,
+                  const Grid2D & grid, float automaticSize)
+  {
+  const float W = painter.width(), H = painter.height();
+  const String format = numberFormat(item.valueFormat()) ? item.valueFormat() : String("%.3g");
+  const std::vector<double> & xEdges = grid.xEdges(), & yEdges = grid.yEdges();
+  std::vector<float> cx(xEdges.size()), cy(yEdges.size());
+  for (size_t i=0; i<xEdges.size(); i++) cx[i] = graph.toCanvas(view, view.logX && xEdges[i] <= 0 ? view.xMinimum : xEdges[i], view.yMaximum).x();
+  for (size_t j=0; j<yEdges.size(); j++) cy[j] = graph.toCanvas(view, view.xMaximum, view.logY && yEdges[j] <= 0 ? view.yMinimum : yEdges[j]).y();
+  int inView = 0;
+  for (int j=0; j<grid.nY(); j++)
+    for (int i=0; i<grid.nX(); i++)
+      if (inside(box, Point2D(0.5f*(cx[i] + cx[i+1]), 0.5f*(cy[j] + cy[j+1])))) inView++;
+  if (inView > 4000) return;                 // far too many to read
+  TextAttributes text = *TextAttributes::defaultTextAttributes();
+  text.setJustification(TextAttributes::kCenter);
+  for (int j=0; j<grid.nY(); j++)
+    for (int i=0; i<grid.nX(); i++)
+      {
+      double v = grid.value(i, j);
+      if (!std::isfinite(v)) continue;
+      Point2D center(0.5f*(cx[i] + cx[i+1]), 0.5f*(cy[j] + cy[j+1]));
+      if (!inside(box, center)) continue;
+      float cellWidth = std::fabs(cx[i+1] - cx[i])*W, cellHeight = std::fabs(cy[j+1] - cy[j])*H;   // device units
+      float size = item.valuePointSize() > 0 ? item.valuePointSize()/H : std::min(automaticSize, 0.55f*cellHeight/H);
+      if (size*H < 5.0f || size*H > cellHeight) continue;
+      text.setSize(size);
+      char label[64];
+      std::snprintf(label, sizeof(label), format.data(), v);
+      if (painter.textWidth(label, text) > 0.92f*cellWidth) continue;
+      int color = item.valueColor();
+      if (color < 0)
+        {
+        color = 1;                            // black, or white on a dark cell
+        if (item.showColorMap() && (!view.logZ || v > 0))
+          {
+          Color c = graph.colorOf(view, v);
+          if (0.2126f*c.red + 0.7152f*c.green + 0.0722f*c.blue < 0.5f) color = 0;
+          }
+        }
+      text.setColor(color);
+      painter.drawText(center, label, text);
+      }
   }
   } // namespace
 
@@ -284,8 +415,11 @@ namespace CAP
       {
       if ((item.kind() == GraphItem::kData && !item.data()) || (item.kind() == GraphItem::kFunction && !item.function())) continue;
       std::shared_ptr<const Grid2D> grid = item.grid(view.xMinimum, view.xMaximum, view.yMinimum, view.yMaximum, view.logX, view.logY);
-      if (grid) { if (item.showColorMap()) drawColorMap(painter, box, *graph, view, *grid); }
-      else if (item.kind() == GraphItem::kData) drawColoredPoints(painter, box, *graph, view, item, int(iItem), pointPositions);
+      if (grid && item.showColorMap()) drawColorMap(painter, box, *graph, view, *grid);
+      if (grid && item.showContours()) drawContours(painter, box, *graph, view, item, *grid);
+      if (item.kind() == GraphItem::kData && (!grid || item.showMapPoints()))       // scattered points always
+        drawColoredPoints(painter, box, *graph, view, item, mapPoints(item, grid.get()), int(iItem), pointPositions);
+      if (grid && item.showValues()) drawValues(painter, box, *graph, view, item, *grid, 0.8f*textSize);
       }
     else if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
       {
@@ -490,7 +624,10 @@ namespace CAP
                                      Point2D(middle.x()+hw, y+hh), Point2D(middle.x()-hw, y+hh) };
         painter.drawPolygon(swatch, fill, item.sysStyle() == GraphItem::kSysBand ? noLine : line);
         }
-      if (item.isMap())          // a sample of the palette
+      bool contoursOnly = item.isMap() && !item.showColorMap() && item.showContours()
+                          && (item.kind() == GraphItem::kFunction || item.grid(0, 0, 0, 0, false, false));
+      if (contoursOnly) painter.drawLine({l, r}, item.contourLineAttributes());   // contours only: their line
+      else if (item.isMap())          // a sample of the palette
         {
         const Palette palette = graph->palette();
         float hh = 0.35f*lineHeight;

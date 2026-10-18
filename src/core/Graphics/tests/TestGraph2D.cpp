@@ -264,6 +264,97 @@ int main(int argc, char ** argv)
     CHECK(graph.legendRect().empty == false);
   }
 
+  // ---- contours
+  {
+    Grid2D grid = Grid2D::fromFunction(paraboloid, -2, 2, 40, -2, 2, 40);
+    std::vector<std::vector<Grid2D::Point>> lines = grid.contour(1.0);
+    CHECK(lines.size() == 1);                                               // one closed line: the unit circle
+    if (lines.size() == 1)
+      {
+      const auto & line = lines[0];
+      CHECK(line.size() > 20 && line.front().x == line.back().x && line.front().y == line.back().y);
+      double worst = 0;
+      for (const auto & q : line) worst = std::max(worst, std::fabs(std::sqrt(q.x*q.x + q.y*q.y) - 1.0));
+      CHECK(worst < 0.02);
+      }
+    CHECK(grid.contour(100.0).empty() && grid.contour(-1.0).empty());       // outside the values
+    CHECK(grid.contour(4.0).size() == 4);                                   // radius 2: beyond the centers but in the 4 corners
+    Saddle saddle;
+    Grid2D s = Grid2D::fromFunction(saddle, -1, 1, 21, -1, 1, 21);
+    std::vector<std::vector<Grid2D::Point>> zero = s.contour(0.25);
+    CHECK(zero.size() == 2);                                                // the two branches of x y = 0.25
+    for (const auto & line : zero) for (const auto & q : line) check(std::fabs(q.x*q.y - 0.25) < 0.02, "x y = 0.25 on the contour", __LINE__);
+    Grid2D holes = Grid2D::fromFunction(paraboloid, -2, 2, 20, -2, 2, 20);
+    for (int j=8; j<12; j++) for (int i=0; i<20; i++) holes.setValue(i, j, std::nan(""));   // a band without values
+    CHECK(holes.contour(2.5).size() == 2);                                  // the circle cut in two open arcs
+    Grid2D logGrid = Grid2D::fromFunction(paraboloid, 1, 10, 20, 0, 0.001, 2);
+    std::vector<std::vector<Grid2D::Point>> ten = logGrid.contour(10.0, true);
+    CHECK(ten.size() == 1 && !ten[0].empty() && std::fabs(ten[0][0].x - std::sqrt(10.0)) < 0.1);   // interpolated in log10
+  }
+  {
+    Graph graph;
+    graph.add(GraphItem(&paraboloid, -2, 2, -2, 2));
+    GraphItem & item = graph.items()[0];
+    graph.setZRange(0, 8);
+    item.setContourIntervals(4);
+    std::vector<double> levels = graph.contourLevels(graph.view(), item);
+    CHECK(levels.size() == 3 && levels[0] == 2 && levels[1] == 4 && levels[2] == 6);
+    item.setContourLevels({5.0, 1.0});
+    levels = graph.contourLevels(graph.view(), item);
+    CHECK(levels.size() == 2 && levels[0] == 1 && levels[1] == 5);         // sorted
+    item.setContourLevels({});
+    graph.setLogZ(true);
+    graph.setZRange(1, 100);
+    item.setContourIntervals(2);
+    levels = graph.contourLevels(graph.view(), item);
+    CHECK(levels.size() == 1 && near(levels[0], 10.0, 1E-9));
+    graph.setLogZ(false);
+    graph.setAutoZ();
+    item.setContourIntervals(4);
+    item.setShowContours(true);
+    item.setShowColorMap(false);
+    std::string svg = svgOf(graph);
+    CHECK(count(svg, "shape-rendering=\"crispEdges\"") == 128);           // no cells, only the color scale
+    CHECK(count(svg, "<polyline") >= 3);                                    // the three circles
+    item.setContourUsesPalette(true);
+    svg = svgOf(graph);
+    Color c = graph.colorOf(graph.view(), graph.contourLevels(graph.view(), item)[0]);
+    char hex[16];
+    std::snprintf(hex, sizeof(hex), "#%02x%02x%02x", int(255*c.red + 0.5f), int(255*c.green + 0.5f), int(255*c.blue + 0.5f));
+    CHECK(svg.find(std::string("stroke=\"") + hex) != std::string::npos);   // the first circle in the color of its level
+  }
+
+  // ---- values in the cells, points of a map
+  {
+    Graph graph;
+    graph.add(GraphItem(&histogram));
+    GraphItem & item = graph.items()[0];
+    item.setShowValues(true);
+    std::string svg = svgOf(graph);
+    CHECK(svg.find(">3</text>") != std::string::npos && svg.find(">2</text>") != std::string::npos);
+    CHECK(svg.find("fill=\"#ffffff\"") != std::string::npos);           // white on the darkest cell (the 2)
+    item.setValueFormat("%.1f");
+    svg = svgOf(graph);
+    CHECK(svg.find(">3.0</text>") != std::string::npos);
+    item.setValueFormat("%s");                                              // not a number format: the default
+    svg = svgOf(graph);
+    CHECK(svg.find(">3</text>") != std::string::npos);
+    item.setShowValues(false);
+    item.setShowMapPoints(true);
+    item.setPointOutline(false);
+    svg = svgOf(graph);
+    CHECK(count(svg, "<polygon") == 1 + 2);                                 // the frame, then a disk per bin with a value
+    CHECK(graph.pointPositions().size() == 2);
+    Graph::Pick pick = graph.pick(graph.pointPositions()[0].position, 0.01f, 0.01f);
+    CHECK(pick.part == Graph::kDataPoint && histogram.valueAt(pick.index) > 0);   // the index of the bin
+    item.setPointOutline(true);
+    svg = svgOf(graph);
+    CHECK(count(svg, "<polyline") >= 2);                                    // outlines
+    item.setPointSizeByValue(true);
+    svg = svgOf(graph);
+    CHECK(count(svg, "<polygon") == 1 + 2);
+  }
+
   // ---- an example page
   if (argc > 1)
     {
@@ -280,27 +371,35 @@ int main(int argc, char ** argv)
       gauss.fill(x, y, 1.0);
       }
     a.add(GraphItem(&gauss));
-    a.setTitle("Histogram of rank 2");
+    a.items()[0].setShowContours(true);
+    a.items()[0].setContourIntervals(6);
+    a.items()[0].contourLineAttributes().set(0, 0.8, 1, 1.0);   // white lines
+    a.setTitle("Histogram of rank 2, contours");
     a.xAxis().setTitle("x"); a.yAxis().setTitle("y"); a.zAxis().setTitle("counts");
     Graph & b = canvas.graph(1);
     b.add(GraphItem(&paraboloid, -2, 2, -2, 2));
-    b.setTitle("x^{2} + y^{2}");
-    b.setPalette(Palette(Palette::kBird, 10));
+    b.items()[0].setShowContours(true);
+    b.items()[0].setContourIntervals(8);
+    b.setPalette(Palette(Palette::kBird, 8));
+    b.setTitle("x^{2} + y^{2}, filled contours");
     b.xAxis().setTitle("x"); b.yAxis().setTitle("y");
     Graph & c = canvas.graph(2);
-    Saddle saddle;
-    c.add(GraphItem(&saddle, -1, 1, -1, 1));
-    c.setPalette(Palette(Palette::kDiverging));
-    c.setSymmetricZ(true);
-    c.setTitle("x y, diverging");
-    c.xAxis().setTitle("x"); c.yAxis().setTitle("y"); c.zAxis().setTitle("z");
+    MATH::Histogram small("small", "small", 6, 0.0, 6.0, 5, 0.0, 5.0);
+    for (int jy=0; jy<5; jy++) for (int ix=0; ix<6; ix++) if ((ix + jy) % 4 != 3) small.fill(ix + 0.5, jy + 0.5, 0.1*(ix + 1)*(jy + 2));
+    c.add(GraphItem(&small));
+    c.items()[0].setShowValues(true);
+    c.items()[0].setValueFormat("%.1f");
+    c.setTitle("Values in the cells");
+    c.xAxis().setTitle("column"); c.yAxis().setTitle("row");
     Graph & d = canvas.graph(3);
     MATH::DataPointsVector points;
     for (int k=0; k<60; k++) { double x = 4*uniform(), y = 4*uniform(); points.addPoint(MATH::DataPoint3D(x, y, x*y)); }
     MATH::DataPointsVector curve({0.0, 1.0, 2.0, 3.0, 4.0}, {0.5, 1.5, 2.0, 2.5, 3.5});
     d.add(GraphItem(&points, "scattered x y"));
+    d.items()[0].setPointSizeByValue(true);
+    d.items()[0].markerAttributes().setSize(2.0);
     d.add(GraphItem(&curve, "a curve"));
-    d.setTitle("Scattered points and a curve");
+    d.setTitle("Scattered points, area by value");
     d.xAxis().setTitle("x"); d.yAxis().setTitle("y");
     SvgPainter svg(1000, 1000);
     canvas.draw(svg);
