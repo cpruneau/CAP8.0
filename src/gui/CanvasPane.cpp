@@ -91,8 +91,12 @@ namespace CAP
   ImGui::SameLine();
   if (ImGui::Checkbox("Log Y", &logY)) { changing(); graph.setLogY(logY); }
   ImGui::SetItemTooltip("Logarithmic y axis for the selected graph");
-  if (graph.hasMaps())            // a graph of a function or data of two variables: its 3D view
+  if (graph.hasMaps())            // a graph of a function or data of two variables: its z scale, its 3D view
     {
+    ImGui::SameLine();
+    bool logZ = graph.isLogZ();
+    if (ImGui::Checkbox("Log Z", &logZ)) { changing(); graph.setLogZ(logZ); }
+    ImGui::SetItemTooltip("Logarithmic z scale for the selected graph (colors, and heights in 3D)");
     ImGui::SameLine();
     bool view3D = graph.dimension() == Graph::k3D;
     if (ImGui::Checkbox("3D", &view3D)) { changing(); graph.setDimension(view3D ? Graph::k3D : Graph::k2D); }
@@ -201,6 +205,11 @@ namespace CAP
   bool logX = graph.isLogX(), logY = graph.isLogY(), legend = graph.showLegend();
   if (ImGui::MenuItem("Log X", nullptr, logX)) { changing(); graph.setLogX(!logX); }
   if (ImGui::MenuItem("Log Y", nullptr, logY)) { changing(); graph.setLogY(!logY); }
+  if (graph.hasMaps())
+    {
+    bool logZ = graph.isLogZ();
+    if (ImGui::MenuItem("Log Z", nullptr, logZ)) { changing(); graph.setLogZ(!logZ); }
+    }
   if (ImGui::MenuItem("Legend", nullptr, legend)) { changing(); graph.setShowLegend(!legend); }
   if (ImGui::MenuItem("Automatic ranges", nullptr, graph.isAutoX() && graph.isAutoY())) { changing(); graph.setAutoRange(); }
   if (ImGui::BeginMenu("Remove", !graph.items().empty()))
