@@ -18,6 +18,7 @@
 #include "CanvasPane.hpp"
 #include "ImGuiPainter.hpp"
 #include "GraphEditor.hpp"
+#include "DataPoints.hpp"
 
 namespace CAP
 {
@@ -418,11 +419,39 @@ namespace CAP
   if (k >= 0 && !_canvas.graph(k).items().empty() && _canvas.graph(k).frameContains(p))
     {
     const Graph & g = _canvas.graph(k);
+    const Graph::View view = g.view();
     double x, y;
-    g.fromCanvas(g.view(), p, x, y);
-    char text[96];
+    g.fromCanvas(view, p, x, y);
+    char text[160];
     std::snprintf(text, sizeof(text), "x = %.5g   y = %.5g", x, y);
     _hoverText = text;
+    if (view.hasZ)
+      {
+      // the value of the map under the mouse (the last drawn, on top), or of the colored point under it
+      int nMaps = 0;
+      for (const auto & item : g.items()) if (item.isMap()) nMaps++;
+      String z;
+      if (pick.part == Graph::kDataPoint && pick.item >= 0 && pick.item < int(g.items().size()) && g.items()[pick.item].isMap())
+        {
+        const GraphItem & item = g.items()[pick.item];
+        std::vector<double> c = item.data()->coordinatesAt(pick.index);
+        std::snprintf(text, sizeof(text), "point (%.5g, %.5g)   z = %.5g", c[0], c[1], item.data()->valueAt(pick.index));
+        z = text;
+        if (nMaps > 1) z += String("   (") + item.label() + String(")");
+        }
+      for (int n=int(g.items().size())-1; n>=0 && z.isNull(); n--)
+        {
+        const GraphItem & item = g.items()[n];
+        if (!item.isMap()) continue;
+        std::shared_ptr<const Grid2D> grid = item.grid(view.xMinimum, view.xMaximum, view.yMinimum, view.yMaximum, view.logX, view.logY);
+        int i, j;
+        if (!grid || !grid->cell(x, y, i, j) || !std::isfinite(grid->value(i, j))) continue;
+        std::snprintf(text, sizeof(text), "z = %.5g", grid->value(i, j));
+        z = text;
+        if (nMaps > 1) z += String("   (") + item.label() + String(")");
+        }
+      if (!z.isNull()) _hoverText = String(_hoverText.str() + "   " + z.str());
+      }
     }
   if (k < 0) return false;
   Graph & g = _canvas.graph(k);

@@ -517,6 +517,12 @@ namespace CAP
   return _gui.currentPane().show(GraphItem(function, xMinimum, xMaximum));
   }
 
+  GraphItem & CapApp::show(MATH::Function * function, float xMinimum, float xMaximum, float yMinimum, float yMaximum)
+  {
+  _functions.emplace_back(function);
+  return _gui.currentPane().show(GraphItem(function, xMinimum, xMaximum, yMinimum, yMaximum));
+  }
+
   GraphItem & CapApp::show(MATH::DataPoints * data)
   {
   _data.emplace_back(data);
@@ -676,9 +682,10 @@ namespace CAP
   catch (const std::exception & e) { _gui.setStatus(object.path + String(": cannot be read: ") + String(e.what())); return false; }
   if (!data) { _gui.setStatus(object.path + String(": cannot be shown in a graph")); return false; }
   const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram *>(data);
-  if ((histogram && histogram->rank() != 1) || data->rank() != 1)
+  unsigned int rank = histogram ? histogram->rank() : data->rank();
+  if (rank > 2)
     {
-    _gui.setStatus(object.path + String(": 2D and 3D histograms will be shown by the 3D graphs (stage 5)"));
+    _gui.setStatus(object.path + String(": objects of rank 3 and more will be shown by the 3D views (to come)"));
     return false;
     }
   if (graphIndex < 0 || graphIndex >= pane.canvas().nGraphs()) graphIndex = pane.selectedGraph();
@@ -697,7 +704,8 @@ namespace CAP
     {
     graph.setTitle(data->title().isNull() ? name : data->title());
     graph.xAxis().setTitle(histogram ? histogram->dimensionTitle(0) : String(""));
-    graph.yAxis().setTitle("");
+    graph.yAxis().setTitle(histogram && rank == 2 ? histogram->dimensionTitle(1) : String(""));
+    graph.zAxis().setTitle("");
     graph.setAutoRange();
     }
   _gui.setStatus(String("Showing ") + object.path + String("  (") + entry->path + String(")"));

@@ -186,15 +186,17 @@ namespace CAP
       }
     std::snprintf(text, sizeof(text), "\nentries: %.10g", h->totalEntries());
     details += text;
-    if (rank != 1) details += "\n(2D and 3D graphs: stage 5)";
-    return rank == 1;
+    if (rank == 2) details += "\n(shown as a color map)";
+    if (rank > 2)  details += "\n(histograms of rank 3 and more: 3D views to come)";
+    return rank <= 2;
     }
   if (const MATH::DataPoints * d = folder.get<MATH::DataPoints>(name))
     {
     kind = "Points";
-    std::snprintf(text, sizeof(text), "%s\n%u points", d->title().isNull() ? name.data() : d->title().data(), d->size());
+    std::snprintf(text, sizeof(text), "%s\n%u points of rank %u%s", d->title().isNull() ? name.data() : d->title().data(), d->size(),
+                  d->rank(), d->rank() == 2 ? " (shown as a color map)" : "");
     details = text;
-    return d->rank() == 1;
+    return d->rank() <= 2;
     }
   kind = shortTypeName(folder.typeName(name));
   details = String(folder.typeName(name));

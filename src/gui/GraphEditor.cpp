@@ -21,6 +21,7 @@
 #include "LatexRenderer.hpp"
 #include "LatexTextures.hpp"
 #include "DataPoints.hpp"
+#include "Histogram.hpp"
 
 namespace CAP
 {
@@ -85,6 +86,59 @@ namespace CAP
   }
 
   const char * axisName(int axis) { return axis == 0 ? "x" : (axis == 1 ? "y" : "z"); }
+
+  //! A strip of the colors of a palette, on the current line. @param palette palette @param width width @param height height
+  void paletteStrip(const Palette & palette, float width, float height)
+  {
+  ImVec2 p = ImGui::GetCursorScreenPos();
+  ImGui::Dummy(ImVec2(width, height));
+  ImDrawList * drawList = ImGui::GetWindowDrawList();
+  const int n = 48;
+  for (int s=0; s<n; s++)
+    {
+    Color c = palette.color((s + 0.5)/n);
+    drawList->AddRectFilled(ImVec2(p.x + width*s/n, p.y), ImVec2(p.x + width*(s + 1)/n + 0.5f, p.y + height),
+                            ImGui::GetColorU32(ImVec4(c.red, c.green, c.blue, 1.0f)));
+    }
+  drawList->AddRect(p, ImVec2(p.x + width, p.y + height), ImGui::GetColorU32(ImGuiCol_Border));
+  }
+
+  //! Colors of the maps of a graph: palette, bands, symmetric z range, color scale. @return true if changed
+  bool colorsEdit(Graph & graph)
+  {
+  bool changed = false;
+  Palette palette = graph.palette();
+  const char * names[Palette::kNTypes];
+  for (int k=0; k<Palette::kNTypes; k++) names[k] = Palette::name(Palette::Type(k));
+  int type = int(palette.type());
+  ImGui::SetNextItemWidth(130);
+  if (ImGui::Combo("palette", &type, names, Palette::kNTypes))
+    {
+    palette = Palette(Palette::Type(type), palette.nSteps());
+    graph.setPalette(palette);
+    if (palette.type() == Palette::kDiverging) graph.setSymmetricZ(true);   // centered on zero, white in the middle
+    changed = true;
+    }
+  ImGui::SetItemTooltip("viridis: perceptually uniform, readable in grays; bird: ROOT's default; grayscale: for printing;\n"
+                        "diverging: blue, white, red, for values of both signs (with a range symmetric about zero)");
+  ImGui::SameLine(0, 12);
+  paletteStrip(palette, 140, ImGui::GetFrameHeight());
+  int steps = palette.nSteps();
+  bool bands = steps > 1;
+  if (ImGui::Checkbox("bands", &bands)) { graph.setPalette(Palette(palette.type(), bands ? 10 : 0)); changed = true; }
+  ImGui::SetItemTooltip("A few colors instead of continuous ones: the map looks like filled contours");
+  if (bands)
+    {
+    ImGui::SameLine(0, 12);
+    ImGui::SetNextItemWidth(120);
+    if (ImGui::SliderInt("number", &steps, 2, 32)) { graph.setPalette(Palette(palette.type(), steps)); changed = true; }
+    }
+  bool symmetric = graph.isSymmetricZ();
+  if (ImGui::Checkbox("automatic range symmetric about zero", &symmetric)) { graph.setSymmetricZ(symmetric); changed = true; }
+  bool scale = graph.showColorScale();
+  if (ImGui::Checkbox("show the color scale", &scale)) { graph.setShowColorScale(scale); changed = true; }
+  return changed;
+  }
   } // namespace
 
   // ------------------------------------------------------------------------------------------------ widgets
@@ -316,7 +370,14 @@ namespace CAP
   if (pending && !valid)
     ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1.0f), "%s", log ? "The minimum must be positive (logarithmic scale) and below the maximum"
                                                               : "The minimum must be below the maximum");
-  ImGui::TextDisabled("Or drag along the axis with the mouse; double-click the frame for automatic ranges");
+  if (k < 2) ImGui::TextDisabled("Or drag along the axis with the mouse; double-click the frame for automatic ranges");
+  else ImGui::TextDisabled("Double-click the frame for automatic ranges");
+
+  if (k == 2)
+    {
+    section("Colors");
+    changed |= colorsEdit(graph);
+    }
 
   section("Line and ticks");
   int lineColor = axis.lineAttributes().color();
@@ -433,8 +494,20 @@ namespace CAP
   if (k < 0 || k >= int(graph.items().size())) return false;
   GraphItem & item = graph.items()[k];
   bool changed = false;
-  ImGui::TextUnformatted(item.kind() == GraphItem::kData ? "Data points" : "Function");
-  if (item.kind() == GraphItem::kData && item.data() && point >= 0 && point < int(item.data()->size()))
+  const bool map = item.isMap();
+  if (map)
+    {
+    bool histogram = item.kind() == GraphItem::kData && dynamic_cast<const MATH::Histogram*>(item.data()) != nullptr;
+    ImGui::TextUnformatted(item.kind() == GraphItem::kFunction ? "Function of two variables (color map)"
+                           : (histogram ? "Histogram of rank 2 (color map)" : "Data points of rank 2"));
+    }
+  else ImGui::TextUnformatted(item.kind() == GraphItem::kData ? "Data points" : "Function");
+  if (map && item.kind() == GraphItem::kData && item.data() && point >= 0 && point < int(item.data()->size()))
+    {
+    std::vector<double> c = item.data()->coordinatesAt(point);
+    ImGui::TextDisabled("point %d:  x = %.5g  y = %.5g  z = %.5g", point, c[0], c[1], item.data()->valueAt(point));
+    }
+  else if (item.kind() == GraphItem::kData && item.data() && point >= 0 && point < int(item.data()->size()))
     {
     MATH::DataPoint2D p = item.data()->point(point);
     ImGui::TextDisabled("point %d:  x = %.5g  y = %.5g  \xC2\xB1 %.3g (stat.)  \xC2\xB1 %.3g (syst.)",
@@ -446,7 +519,42 @@ namespace CAP
   if (textEdit("legend label", label)) { item.setLabel(label); changed = true; }
   latexPreview(label);
 
-  if (item.kind() == GraphItem::kData)
+  if (map)
+    {
+    section("Map");
+    std::shared_ptr<const Grid2D> grid = item.kind() == GraphItem::kFunction ? nullptr : item.grid(0, 0, 0, 0, false, false);
+    if (item.kind() == GraphItem::kFunction || grid)
+      {
+      bool show = item.showColorMap();
+      if (ImGui::Checkbox("show the color map", &show)) { item.setShowColorMap(show); changed = true; }
+      }
+    if (grid) ImGui::TextDisabled("%d x %d cells", grid->nX(), grid->nY());
+    if (item.kind() == GraphItem::kFunction)
+      {
+      int samples = item.mapSamples();
+      ImGui::SetNextItemWidth(160);
+      if (ImGui::SliderInt("cells along each axis", &samples, 10, 400)) { item.setMapSamples(samples); changed = true; }
+      ImGui::SetItemTooltip("The function is evaluated at the centers of the cells, over the visible part of its range");
+      float xRange[2] = { item.xMinimum(), item.xMaximum() }, yRange[2] = { item.yMinimum(), item.yMaximum() };
+      ImGui::SetNextItemWidth(240);
+      if (ImGui::InputFloat2("x range", xRange, "%.5g", ImGuiInputTextFlags_EnterReturnsTrue) && xRange[1] > xRange[0])
+        { item.setXRange(xRange[0], xRange[1]); changed = true; }
+      ImGui::SetNextItemWidth(240);
+      if (ImGui::InputFloat2("y range", yRange, "%.5g", ImGuiInputTextFlags_EnterReturnsTrue) && yRange[1] > yRange[0])
+        { item.setYRange(yRange[0], yRange[1]); changed = true; }
+      }
+    else if (!grid)
+      {
+      ImGui::TextDisabled("Scattered points: drawn as disks colored by their values");
+      MarkerAttributes & marker = item.markerAttributes();
+      float size = marker.size();
+      ImGui::SetNextItemWidth(160);
+      if (ImGui::SliderFloat("size", &size, 0.2f, 4.0f, "%.2f")) { marker.setSize(size); changed = true; }
+      }
+    section("Colors (of the graph)");
+    changed |= colorsEdit(graph);
+    }
+  else if (item.kind() == GraphItem::kData)
     {
     section("Markers");
     bool markers = item.showMarkers();
@@ -501,6 +609,8 @@ namespace CAP
       }
     }
 
+  if (!map)
+  {
   section(item.kind() == GraphItem::kData ? "Line through the points" : "Curve");
   bool line = item.showLine();
   if (ImGui::Checkbox("show line", &line)) { item.setShowLine(line); changed = true; }
@@ -520,6 +630,7 @@ namespace CAP
     if (ImGui::InputFloat2("x range of the curve", range, "%.5g", ImGuiInputTextFlags_EnterReturnsTrue) && range[1] > range[0])
       { item.setXRange(range[0], range[1]); changed = true; }
     }
+  }
 
   ImGui::Spacing();
   ImGui::Separator();
