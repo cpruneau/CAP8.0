@@ -51,7 +51,7 @@ int MakeTestHistograms(const char * fileName="TestHistograms.cap", long nEntries
 
   // ---------------------------------------------------------------- 2. fill them (replace by your own code)
   // fill(x) or fill(x, weight) for 1D, fill(x, y, weight) for 2D, fill(x, value) for profiles.
-  TRandom3 random(12345);
+  TRandom3 random(124325);
   for (long k=0; k<nEntries; k++)
     {
     double x = random.Gaus(0.0, 1.0);
