@@ -62,7 +62,10 @@ DataPoints.cpp
 DataPointsVector.cpp
 Exponential.cpp
 FolderTypes.cpp
+BayesianFitter.cpp
 Fitter.cpp
+Likelihood.cpp
+MetropolisHastings.cpp
 Function.cpp
 Histogram.cpp
 Profile.cpp
@@ -100,6 +103,7 @@ LogNormal.cpp
 Normal.cpp
 Parabolic.cpp
 Parameter.cpp
+Prior.cpp
 Polynomial.cpp
 Table2D.cpp
 Quartic.cpp
@@ -118,6 +122,12 @@ add_test(NAME ExtremumSearch COMMAND TestExtremumSearch)
 add_executable(TestFitter tests/TestFitter.cpp)
 target_link_libraries(TestFitter Math Base ${ROOT_LIBRARIES})
 add_test(NAME Fitter COMMAND TestFitter)
+add_executable(TestLikelihood tests/TestLikelihood.cpp)
+target_link_libraries(TestLikelihood Math Base ${ROOT_LIBRARIES})
+add_test(NAME Likelihood COMMAND TestLikelihood)
+add_executable(TestBayesian tests/TestBayesian.cpp)
+target_link_libraries(TestBayesian Math Base ${ROOT_LIBRARIES})
+add_test(NAME Bayesian COMMAND TestBayesian)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

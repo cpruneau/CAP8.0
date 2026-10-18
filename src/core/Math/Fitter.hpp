@@ -10,12 +10,14 @@
  *
  * *********************************************************************/
 //! @file Fitter.hpp
-//! @brief Fitter: least-squares fit of a ParameterizedFunction to DataPoints (chi square), and FitResult.
+//! @brief Fitter: fit of a ParameterizedFunction to data by least squares or maximum likelihood, and FitResult.
 #ifndef CAP__MATH__Fitter
 #define CAP__MATH__Fitter
+#include <memory>
 #include <vector>
 #include "Aliases.hpp"
 #include "ChiSquare.hpp"
+#include "Likelihood.hpp"
 #include "ExtremumSearch.hpp"
 #include "Matrix.hpp"
 
@@ -39,11 +41,13 @@ namespace CAP
     bool   validErrors = false;   //!< the covariance could be computed (the curvature matrix is not singular)
     String status;   //!< how the fit ended
     String method;   //!< method used (e.g. "Levenberg-Marquardt", "differential evolution + Levenberg-Marquardt")
-    double chiSquare = 0;   //!< chi square at the best parameters
-    int    nPoints = 0;   //!< points used (those with a nonzero uncertainty)
+    String statistic;   //!< statistic minimized (see Likelihood::name())
+    double chiSquare = 0;   //!< value of the statistic at the best parameters: the chi square, or -2 ln L
+    int    nPoints = 0;   //!< points (bins, events) used
     int    nDegreesOfFreedom = 0;   //!< points used minus free parameters
     double chiSquarePerDegreeOfFreedom = 0;   //!< chi square / degrees of freedom (0 if none)
-    double pValue = 0;   //!< probability of a larger chi square (see ChiSquare::probability()), 0 if no degree of freedom
+    double pValue = 0;   //!< probability of a larger chi square (see ChiSquare::probability()); 0 if no degree of
+                         //!< freedom, or for a statistic that is not chi square distributed (unbinned likelihood)
     std::vector<double> values;   //!< best values of all the parameters
     std::vector<double> errors;   //!< uncertainties of all the parameters (0 for fixed ones)
     std::vector<bool>   atLimit;   //!< parameters that ended at one of their bounds (their errors are then unreliable)
@@ -55,8 +59,12 @@ namespace CAP
   };
 
   //!
-  //! @brief Least-squares fit of a ParameterizedFunction to DataPoints of the same rank: the parameters that minimize
-  //! the chi square (see ChiSquare: statistical or total uncertainties, optional uncertainties on the coordinates).
+  //! @brief Fit of a ParameterizedFunction to data: the parameters that minimize a statistic, -2 ln L (see Likelihood):
+  //!  - the chi square of DataPoints of the same rank (the default; see ChiSquare: statistical or total
+  //!    uncertainties, optional uncertainties on the coordinates): least squares;
+  //!  - the Poisson likelihood of counts (kPoisson; see PoissonLikelihood): binned maximum likelihood, for histograms
+  //!    with few entries per bin;
+  //!  - any Likelihood, e.g. an UnbinnedLikelihood of individual events: unbinned maximum likelihood.
   //!
   //! Methods:
   //!  - kLevenbergMarquardt (the default): Gauss-Newton steps with an adaptive damping, the standard for least
@@ -66,12 +74,17 @@ namespace CAP
   //!    values are poor or the chi square has several minima. Global engines need bounds on the free parameters (see
   //!    ParameterizedFunction::setParameterLimits()). The result is then refined by Levenberg-Marquardt (setPolish()).
   //!
+  //! Levenberg-Marquardt works on the residuals of a statistic made of residuals (chi square, Poisson likelihood); for
+  //! the others (unbinned likelihood) it becomes a damped Newton method on the numerical gradient and curvature of the
+  //! statistic. The search engines work on the free parameters scaled by their typical sizes (their ranges, or their
+  //! starting values).
+  //!
   //! Fixed parameters keep their values; bounded parameters (Low, High, LowHigh) stay within their bounds. Points
   //! with a zero uncertainty (e.g. the empty bins of a histogram) are left out. The uncertainties of the parameters
-  //! come from the covariance C = (J^T J)^-1, J being the derivatives of the normalized residuals (y - f)/sigma with
-  //! respect to the free parameters at the minimum (twice the inverse of the curvature of the chi square); they can be
-  //! scaled by chi square / degrees of freedom (setScaleErrors()) when the uncertainties of the data are not known
-  //! absolutely.
+  //! come from the covariance C = (J^T J)^-1, J being the derivatives of the residuals with respect to the free
+  //! parameters at the minimum; without residuals, from C = 2 H^-1, H being the curvature (second derivatives) of
+  //! -2 ln L. They can be scaled by chi square / degrees of freedom (setScaleErrors()) when the uncertainties of the
+  //! data are not known absolutely.
   //!
   //! The fit leaves the function at the best parameters.
   //!
@@ -88,13 +101,22 @@ namespace CAP
 
   //! @brief Methods of fit.
   enum Method { kLevenbergMarquardt, kSearch };
+  //! @brief Statistics of DataPoints.
+  enum Statistic { kChiSquare, kPoisson };
 
   //! @brief Fitter. @param function function fitted (not owned; its parameters are changed by the fit)
-  //! @param data data points (not owned) @throws MathException if the ranks differ
-  Fitter(ParameterizedFunction & function, const DataPoints & data);
+  //! @param data data points (not owned) @param statistic chi square or Poisson likelihood
+  //! @throws MathException if the ranks differ
+  Fitter(ParameterizedFunction & function, const DataPoints & data, Statistic statistic=kChiSquare);
+  //! @brief Fitter of any likelihood (e.g. an UnbinnedLikelihood). @param likelihood likelihood (not owned; its
+  //! function's parameters are changed by the fit)
+  explicit Fitter(Likelihood & likelihood);
 
-  //! @brief The chi square (to set its error mode and the use of coordinate uncertainties). @return chi square
-  ChiSquare & chiSquare() { return _chiSquare; }
+  //! @brief The statistic minimized. @return likelihood
+  Likelihood & likelihood() { return *_likelihood; }
+  //! @brief The chi square (to set its error mode and the use of coordinate uncertainties), for a chi square fit.
+  //! @return chi square @throws MathException if the statistic is not the chi square
+  ChiSquare & chiSquare();
   //! @brief Method. @return method
   Method method() const { return _method; }
   //! @brief Set the method. @param method method
@@ -116,8 +138,13 @@ namespace CAP
   void setScaleErrors(bool v) { _scaleErrors = v; }
 
   //! @brief Fit: the function is left at the best parameters. @return result
-  //! @throws MathException if there is no free parameter or no point with a nonzero uncertainty
+  //! @throws MathException if there is no free parameter or no point can be used
   FitResult fit();
+  //!
+  //! @brief Covariance of the free parameters at their current values: (J^T J)^-1 for a statistic made of residuals,
+  //! otherwise 2 H^-1. @param covariance set to the covariance @return false if it cannot be computed (singular)
+  //!
+  bool covarianceAt(Matrix & covariance);
   //! @brief Result of the last fit. @return result
   const FitResult & result() const { return _result; }
 
@@ -125,22 +152,33 @@ namespace CAP
 
   //! @brief Set the free parameters (clamped to their bounds). @param p values of the free parameters
   void setFree(const std::vector<double> & p);
-  //! @brief Normalized residuals of the points used. @param r residuals @return false if one cannot be computed
+  //! @brief Residuals of the points used. @param r residuals @return false if they cannot be computed
   bool residuals(std::vector<double> & r);
-  //! @brief Chi square at free parameters p (the parameters are left at p). @param p values @return chi square, or
+  //! @brief Statistic at free parameters p (the parameters are left at p). @param p values @return statistic, or
   //! +infinity if it cannot be computed
   double chiSquareAt(const std::vector<double> & p);
+  //! @brief Second derivatives of the statistic with respect to the free parameters. @param p values
+  //! @param hessian m x m matrix @return false if they cannot be computed
+  bool hessian(const std::vector<double> & p, Matrix & hessian);
+  //! @brief Prepare a fit: free parameters, points used, scales. @throws MathException as fit()
+  void prepare();
   //! @brief Derivatives of the residuals with respect to the free parameters (central differences, one-sided at a
   //! bound). @param p values of the free parameters @param jacobian n x m matrix @return false if they cannot be computed
   bool jacobian(const std::vector<double> & p, Matrix & jacobian);
   //! @brief Levenberg-Marquardt from the current values. @param result result (updated) @return true if converged
   bool levenbergMarquardt(FitResult & result);
+  //! @brief Damped Newton method (Levenberg-Marquardt on the gradient and curvature of the statistic), for a statistic
+  //! without residuals. @param result result (updated) @return true if converged
+  bool newton(FitResult & result);
+  //! @brief Numerical gradient of the statistic. @param p values of the free parameters @param gradient gradient
+  //! @return false if it cannot be computed
+  bool gradient(const std::vector<double> & p, std::vector<double> & gradient);
   //! @brief Fill the covariance, errors and quality of the result at the current values. @param result result
   void finish(FitResult & result);
 
   ParameterizedFunction & _function;   //!< function fitted
-  const DataPoints & _data;   //!< data fitted
-  ChiSquare _chiSquare;   //!< chi square of the data and the function
+  std::unique_ptr<Likelihood> _owned;   //!< statistic made by the fitter (DataPoints constructor)
+  Likelihood * _likelihood;   //!< statistic minimized
   Method _method;   //!< method
   ExtremumSearch _search;   //!< engine of kSearch
   bool   _polish;   //!< kSearch refined by Levenberg-Marquardt
@@ -149,7 +187,6 @@ namespace CAP
   double _parameterTolerance;   //!< relative change of the parameters at convergence
   bool   _scaleErrors;   //!< errors scaled by sqrt(chi2/ndf)
   std::vector<unsigned int> _free;   //!< indices of the free parameters
-  std::vector<unsigned int> _used;   //!< indices of the points used
   std::vector<double> _scale;   //!< typical size of each free parameter (for the derivatives)
   long   _nEvaluations;   //!< evaluations of all the residuals
   FitResult _result;   //!< result of the last fit
