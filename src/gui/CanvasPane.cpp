@@ -91,6 +91,13 @@ namespace CAP
   ImGui::SameLine();
   if (ImGui::Checkbox("Log Y", &logY)) { changing(); graph.setLogY(logY); }
   ImGui::SetItemTooltip("Logarithmic y axis for the selected graph");
+  if (graph.hasMaps())            // a graph of a function or data of two variables: its 3D view
+    {
+    ImGui::SameLine();
+    bool view3D = graph.dimension() == Graph::k3D;
+    if (ImGui::Checkbox("3D", &view3D)) { changing(); graph.setDimension(view3D ? Graph::k3D : Graph::k2D); }
+    ImGui::SetItemTooltip("3D view of the selected graph (surface, mesh or lego boxes); drag in it to turn it");
+    }
 
   ImGui::SameLine(0, 18);
   if (ImGui::Button("Graphs...")) { _gridColumns = _canvas.nColumns(); _gridRows = _canvas.nRows(); ImGui::OpenPopup("graphs"); }
