@@ -73,6 +73,10 @@ MathBasicSearch.cpp
 MathBasicSortingFunctions.cpp
 MathBasicStatistics.cpp
 MathConstants.cpp
+AnnealingSearch.cpp
+DivideAndConquerSearch.cpp
+EvolutionarySearch.cpp
+ExploreExploitSearch.cpp
 ExtremumSearch.cpp
 GradientSearch.cpp
 GreedySearch.cpp

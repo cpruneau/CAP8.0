@@ -266,6 +266,105 @@ int main()
     CHECK_RESULT(std::fabs(r.value - best) < 1E-6, r);                      // from near the peak: the peak
   }
 
+  // ---- multimodal functions: the global methods (each refined by the gradient method)
+  const std::vector<ExtremumSearch::Method> globals = { ExtremumSearch::kAnnealing, ExtremumSearch::kGenetic,
+    ExtremumSearch::kDifferentialEvolution, ExtremumSearch::kDivideAndConquer, ExtremumSearch::kExploreExploit };
+  {
+    // shifted Rastrigin: a lattice of local minima, the global one (0) at (1.3, -0.7)
+    Lambda rastrigin(2, [](const std::vector<double> & x)
+      {
+      double z0 = x[0] - 1.3, z1 = x[1] + 0.7;
+      return 20 + z0*z0 - 10*std::cos(2*M_PI*z0) + z1*z1 - 10*std::cos(2*M_PI*z1);
+      });
+    SearchDomain domain({-5.12, -5.12}, {5.12, 5.12});
+    for (ExtremumSearch::Method method : globals)
+      {
+      ExtremumSearch search;
+      search.setMethod(method);
+      search.setPolish(ExtremumSearch::kGradient);
+      SearchResult r = search.minimum(rastrigin, domain);
+      CHECK_RESULT(r.found && r.value < 1E-6 && distance(r.point, {1.3, -0.7}) < 1E-4, r);
+      }
+    ExtremumSearch search;                                                  // automatic: differential evolution + gradient
+    SearchResult r = search.minimum(rastrigin, domain);
+    CHECK_RESULT(r.engine == "differential evolution + gradient" && r.value < 1E-6, r);
+    search.setMethod(ExtremumSearch::kGradient);                            // a single descent: a local minimum
+    domain.setStart({-3.9, 4.1});
+    SearchResult single = search.minimum(rastrigin, domain);
+    search.setMultiStart(40);                                               // many descents: a better one (about 100 basins)
+    r = search.minimum(rastrigin, domain);
+    CHECK_RESULT(single.value > 1 && r.value < single.value && r.value < 1.0 && r.engine == "gradient (40 starts)"
+                 && r.nEvaluations <= search.options().maxEvaluations, r);
+    search.setMultiStart(1);
+  }
+  {
+    // Himmelblau with two of its minima excluded: the global methods stay out of the exclusions
+    Lambda himmelblau(2, [](const std::vector<double> & x)
+      { double a = x[0]*x[0] + x[1] - 11, b = x[0] + x[1]*x[1] - 7; return a*a + b*b; });
+    SearchDomain domain({-5.0, -5.0}, {5.0, 5.0});
+    domain.exclude(0, 2.0, 5.0);
+    for (ExtremumSearch::Method method : globals)
+      {
+      ExtremumSearch search;
+      search.setMethod(method);
+      search.setPolish(ExtremumSearch::kGradient);
+      SearchResult r = search.minimum(himmelblau, domain);
+      CHECK_RESULT(r.value < 1E-6 && domain.allowed(r.point) && r.point[0] < 0, r);
+      }
+  }
+  {
+    // a histogram with two peaks: the higher one (100) at (7, 7), the lower one (60) at (2, 2)
+    Histogram peaks("peaks", "peaks", 20, 0.0, 10.0, 20, 0.0, 10.0);
+    double highest = 0;
+    for (unsigned int j=0; j<20; j++)
+      for (unsigned int i=0; i<20; i++)
+        {
+        double x = peaks.binCenter(i, 0), y = peaks.binCenter(j, 1);
+        double v = 100*std::exp(-((x - 7)*(x - 7) + (y - 7)*(y - 7))/2) + 60*std::exp(-((x - 2)*(x - 2) + (y - 2)*(y - 2))/2) + 1;
+        peaks.fill(x, y, v);
+        highest = std::max(highest, peaks.valueAt(i + 20*j));
+        }
+    SearchDomain nearLower({0.0, 0.0}, {10.0, 10.0});
+    nearLower.setStart({2.0, 2.5});
+    ExtremumSearch search;
+    search.setMethod(ExtremumSearch::kGreedy);
+    SearchResult r = search.maximum(peaks, nearLower);
+    CHECK_RESULT(r.value < 70, r);                                          // greedy: the lower peak
+    for (ExtremumSearch::Method method : globals)
+      {
+      search.setMethod(method);
+      r = search.maximum(peaks, nearLower);
+      CHECK_RESULT(std::fabs(r.value - highest) < 1E-9 && distance(r.point, {7.0, 7.0}) < 0.5, r);
+      }
+  }
+  {
+    // budgets, seeds and names of the global methods
+    Lambda bowl(3, [](const std::vector<double> & x) { return x[0]*x[0] + 2*x[1]*x[1] + 3*x[2]*x[2] + std::sin(5*x[0]); });
+    SearchDomain domain({-3.0, -3.0, -3.0}, {3.0, 3.0, 3.0});
+    for (ExtremumSearch::Method method : globals)
+      {
+      ExtremumSearch search;
+      search.setMethod(method);
+      search.options().maxEvaluations = 500;
+      SearchResult a = search.minimum(bowl, domain), b = search.minimum(bowl, domain);
+      CHECK_RESULT(a.found && a.nEvaluations <= 500 + 10, a);
+      CHECK_RESULT(a.point == b.point && a.nEvaluations == b.nEvaluations, a);   // the same seed, the same search
+      }
+    ExtremumSearch search;
+    CHECK(search.setMethod("Simulated Annealing") && search.method() == ExtremumSearch::kAnnealing);
+    CHECK(search.setMethod("annealing") && search.setMethod("differential-evolution") && search.method() == ExtremumSearch::kDifferentialEvolution);
+    CHECK(search.setMethod("DE") && search.setMethod("Genetic") && search.method() == ExtremumSearch::kGenetic);
+    CHECK(search.setMethod("divide and conquer") && search.method() == ExtremumSearch::kDivideAndConquer);
+    CHECK(search.setMethod("explore exploit") && search.method() == ExtremumSearch::kExploreExploit);
+    SearchDomain open(3);
+    for (ExtremumSearch::Method method : { ExtremumSearch::kGenetic, ExtremumSearch::kDifferentialEvolution, ExtremumSearch::kDivideAndConquer, ExtremumSearch::kExploreExploit })
+      {
+      search.setMethod(method);
+      SearchResult r = search.minimum(bowl, open);
+      CHECK_RESULT(!r.found && r.stopReason.contains("bounded"), r);        // global methods need bounds
+      }
+  }
+
   // ---- seeds, budgets, names, errors
   {
     Lambda wavy(2, [](const std::vector<double> & x) { return std::sin(3*x[0])*std::cos(2*x[1]) + 0.05*(x[0]*x[0] + x[1]*x[1]); });

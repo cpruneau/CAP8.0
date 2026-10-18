@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdio>
+#include <random>
 #include "ExtremumSearch.hpp"
 #include "MathExceptions.hpp"
 
@@ -26,12 +28,18 @@ namespace CAP
   :
   _method(kAutomatic),
   _polish(kNone),
+  _multiStart(1),
   _refineData(true),
   _options(),
   _scan(),
   _gradient(),
   _hillClimbing(),
-  _greedy()
+  _greedy(),
+  _annealing(),
+  _genetic(EvolutionarySearch::kGenetic),
+  _differential(EvolutionarySearch::kDifferentialEvolution),
+  _divide(),
+  _explore()
   { }
 
   const char * ExtremumSearch::name(Method method)
@@ -43,6 +51,11 @@ namespace CAP
     case kGradient:     return "gradient";
     case kHillClimbing: return "hill climbing";
     case kGreedy:       return "greedy";
+    case kAnnealing:    return "simulated annealing";
+    case kGenetic:      return "genetic";
+    case kDifferentialEvolution: return "differential evolution";
+    case kDivideAndConquer:      return "divide and conquer";
+    case kExploreExploit:        return "explore-exploit";
     default:            return "none";
     }
   }
@@ -52,8 +65,12 @@ namespace CAP
   // compared without case and blanks: "Hill Climbing", "hillclimbing", "hill_climbing"
   auto squeeze = [](const char * s) { std::string r; for (; *s; s++) if (std::isalnum((unsigned char)*s)) r += char(std::tolower((unsigned char)*s)); return r; };
   std::string wanted = squeeze(name.data());
-  for (Method m : { kAutomatic, kScan, kGradient, kHillClimbing, kGreedy, kNone })
+  for (Method m : { kAutomatic, kScan, kGradient, kHillClimbing, kGreedy, kAnnealing, kGenetic, kDifferentialEvolution,
+                    kDivideAndConquer, kExploreExploit, kNone })
     if (squeeze(ExtremumSearch::name(m)) == wanted) return m;
+  if (wanted == "annealing") return kAnnealing;
+  if (wanted == "evolutionary" || wanted == "de") return kDifferentialEvolution;
+  if (wanted == "ga") return kGenetic;
   return kNone;
   }
 
@@ -72,6 +89,11 @@ namespace CAP
     case kScan:         return _scan;
     case kHillClimbing: return _hillClimbing;
     case kGreedy:       return _greedy;
+    case kAnnealing:    return _annealing;
+    case kGenetic:      return _genetic;
+    case kDifferentialEvolution: return _differential;
+    case kDivideAndConquer:      return _divide;
+    case kExploreExploit:        return _explore;
     default:            return _gradient;
     }
   }
@@ -79,7 +101,7 @@ namespace CAP
   ExtremumSearch::Method ExtremumSearch::automaticMethod(const SearchProblem & problem, const SearchDomain & domain)
   {
   if (problem.isDiscrete()) return kScan;
-  return domain.isBounded() ? kScan : kGradient;
+  return domain.isBounded() ? kDifferentialEvolution : kGradient;
   }
 
   SearchResult ExtremumSearch::search(const SearchProblem & problem, const SearchDomain & domain)
@@ -92,12 +114,11 @@ namespace CAP
   SearchOptions options = _options;
   if (_method == kAutomatic && !problem.isDiscrete() && domain.isBounded())
     {
-    // automatic: a coarse scan finds the region of the extremum, the gradient method refines it
+    // automatic: differential evolution finds the region of the global extremum, the gradient method refines it
     second = kGradient;
-    options.maxEvaluations = std::min<long>(_options.maxEvaluations/4, 20000);
+    options.maxEvaluations = std::max<long>(_options.maxEvaluations/2, 1);
     }
-  SearchResult result = engine(first).search(problem, domain, options);
-  result.engine = name(first);
+  SearchResult result = run(first, problem, domain, options);
   if (second != kNone && second != first && result.found && !problem.isDiscrete())
     {
     SearchDomain from = domain;
@@ -120,6 +141,58 @@ namespace CAP
   if (_refineData && problem.isDiscrete() && result.candidate >= 0)
     result.refined = problem.refine((unsigned int)(result.candidate), result.refinedPoint, result.refinedValue);
   return result;
+  }
+
+  SearchResult ExtremumSearch::run(Method method, const SearchProblem & problem, const SearchDomain & domain, const SearchOptions & options)
+  {
+  SearchEngine & searcher = engine(method);
+  if (_multiStart <= 1)
+    {
+    SearchResult result = searcher.search(problem, domain, options);
+    result.engine = name(method);
+    return result;
+    }
+  // several runs: from the start point of the domain (or its center), then from random allowed points (around the
+  // start point in an unbounded domain); the budget is shared, the best result kept
+  std::mt19937_64 random(options.seed);
+  SearchResult best;
+  long evaluations = 0, iterations = 0;
+  for (int run=0; run<_multiStart && evaluations < options.maxEvaluations; run++)
+    {
+    SearchDomain from = domain;
+    if (run > 0)
+      {
+      std::vector<double> x(problem.dimension());
+      bool placed = false;
+      for (int attempt=0; attempt<1000 && !placed; attempt++)
+        {
+        for (unsigned int k=0; k<problem.dimension(); k++)
+          {
+          if (domain.isBounded(k)) x[k] = std::uniform_real_distribution<double>(domain.lower(k), domain.upper(k))(random);
+          else x[k] = (domain.hasStart() ? domain.start()[k] : 0.0) + std::normal_distribution<double>(0.0, 1.0)(random);
+          }
+        placed = domain.allowed(x);
+        }
+      if (!placed) break;
+      from.setStart(x);
+      }
+    SearchOptions share = options;
+    share.maxEvaluations = std::max<long>((options.maxEvaluations - evaluations)/(_multiStart - run), 1);
+    share.seed = options.seed + run;
+    SearchResult result = searcher.search(problem, from, share);
+    evaluations += result.nEvaluations;
+    iterations += result.nIterations;
+    bool better = result.found && (!best.found || (problem.goal() == SearchProblem::kMaximum ? result.value > best.value : result.value < best.value));
+    if (better) { std::vector<double> history = best.history; best = result; best.history.insert(best.history.begin(), history.begin(), history.end()); }
+    else best.history.insert(best.history.end(), result.history.begin(), result.history.end());
+    }
+  best.nEvaluations = evaluations;
+  best.nIterations = iterations;
+  char label[96];
+  std::snprintf(label, sizeof(label), "%s (%d starts)", name(method), _multiStart);
+  best.engine = label;
+  if (!best.found) best.stopReason = "no allowed point could be evaluated";
+  return best;
   }
 
   SearchResult ExtremumSearch::minimum(const Function & function, const SearchDomain & domain)
