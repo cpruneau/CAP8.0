@@ -18,6 +18,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "GraphEditor.hpp"
+#include "FitRecord.hpp"
 #include "ImGuiPainter.hpp"
 #include "LatexRenderer.hpp"
 #include "LatexTextures.hpp"
@@ -760,6 +761,33 @@ namespace CAP
     ImGui::SetNextItemWidth(240);
     if (ImGui::InputFloat2("x range of the curve", range, "%.5g", ImGuiInputTextFlags_EnterReturnsTrue) && range[1] > range[0])
       { item.setXRange(range[0], range[1]); changed = true; }
+    }
+  }
+
+  if (!map && item.nFits() > 0)
+  {
+  section("Fits");
+  bool fits = item.showFits();
+  if (ImGui::Checkbox("show the fits", &fits)) { item.setShowFits(fits); changed = true; }
+  ImGui::SameLine(0, 20);
+  bool extend = item.extendFits();
+  if (ImGui::Checkbox("over the whole x range", &extend)) { item.setExtendFits(extend); changed = true; }
+  for (unsigned int f=0; f<item.nFits(); f++)
+    {
+    const MATH::FitRecord * fit = item.fit(f);
+    ImGui::PushID(int(f) + 1000);
+    bool shown = item.isFitShown(f);
+    String fitLabel = (fit && !fit->label.isNull()) ? fit->label : String("fit");
+    if (ImGui::Checkbox(fitLabel.data(), &shown)) { item.setFitShown(f, shown); changed = true; }
+    ImGui::SameLine(0, 20);
+    LineAttributes fitLine = item.fitLineAttributes(f);
+    int fitColor = fitLine.color();
+    if (colorEdit("color", fitColor)) { fitLine.setColor(fitColor, fitLine.alpha()); item.setFitLineAttributes(f, fitLine); changed = true; }
+    ImGui::SameLine(0, 20);
+    int fitStyle = fitLine.style();
+    if (lineStyleEdit("style", fitStyle, false)) { fitLine.setStyle(fitStyle); item.setFitLineAttributes(f, fitLine); changed = true; }
+    if (fit) { ImGui::SameLine(0, 20); ImGui::TextDisabled("%s", GraphItem::fitSummary(*fit).data()); }
+    ImGui::PopID();
     }
   }
 

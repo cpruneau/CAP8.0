@@ -12,12 +12,15 @@
 //! @file DataPane.cpp
 //! @brief Implementation of DataPane.
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <vector>
 #include "imgui.h"
 #include "DataPane.hpp"
 #include "DataPoints.hpp"
+#include "FitRecord.hpp"
+#include "Graph.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
@@ -71,6 +74,40 @@ namespace CAP
   char text[32];
   std::snprintf(text, sizeof(text), "%.6g", v);
   return text;
+  }
+
+  //! Names of the columns of the fits: f(x) of each fit, and its pull.
+  std::vector<std::string> fitColumnNames(const MATH::DataPoints & data, bool pulls)
+  {
+  std::vector<std::string> names;
+  for (unsigned int f=0; f<data.nFits(); f++)
+    {
+    std::string label = data.fit(f).label.isNull() ? "fit " + std::to_string(f + 1) : data.fit(f).label.data();
+    names.push_back("f(x) " + label);
+    if (pulls) names.push_back("pull " + label);
+    }
+  return names;
+  }
+
+  //! Cells of the fits of row k (f(x) and pulls); dimmed set for the points outside the range of each fit.
+  std::vector<std::string> fitValues(const MATH::DataPoints & data, unsigned int k, bool pulls, std::vector<bool> * dimmed=nullptr)
+  {
+  std::vector<std::string> cells;
+  std::vector<double> x = data.coordinatesAt(k);
+  for (unsigned int f=0; f<data.nFits(); f++)
+    {
+    const MATH::FitRecord & fit = data.fit(f);
+    double value = fit.valueAt(x);
+    bool inRange = fit.low.size() == x.size();
+    for (std::size_t i=0; i<x.size() && inRange; i++) inRange = x[i] >= fit.low[i] && x[i] <= fit.high[i];
+    cells.push_back(std::isfinite(value) ? number(value) : std::string());
+    if (dimmed) dimmed->push_back(!inRange);
+    if (!pulls) continue;
+    double error = data.statErrorAt(k);
+    cells.push_back(std::isfinite(value) && error > 0 ? number((data.valueAt(k) - value)/error) : std::string());
+    if (dimmed) dimmed->push_back(!inRange);
+    }
+  return cells;
   }
 
   //! The cells of row k, after the index.
@@ -133,12 +170,14 @@ namespace CAP
   std::vector<std::string> names = columnNames(*_data);
   bool first = true;
   for (std::size_t c=0; c<names.size(); c++) if (_shown[c]) { text += (first ? "" : "\t") + names[c]; first = false; }
+  for (const auto & name : fitColumnNames(*_data, _showPulls)) text += "\t" + name;
   text += "\n";
   for (unsigned int k=0; k<_data->size(); k++)
     {
     text += std::to_string(k);
     std::vector<std::string> cells = rowValues(*_data, k);
     for (std::size_t c=0; c<cells.size(); c++) if (_shown[c+1]) text += "\t" + cells[c];
+    for (const auto & cell : fitValues(*_data, k, _showPulls)) text += "\t" + cell;
     text += "\n";
     }
   return String(text);
@@ -164,13 +203,30 @@ namespace CAP
   if (available > buttonWidth) ImGui::SetCursorPosX(ImGui::GetCursorPosX() + available - buttonWidth);
   if (ImGui::Button("Copy")) ImGui::SetClipboardText(text().data());
   ImGui::SetItemTooltip("Copy the table (tab-separated, with its header row) to the clipboard");
+  if (data.nFits() > 0)
+    {
+    // the fits: label and quality of each, and whether the pulls are shown
+    for (unsigned int f=0; f<data.nFits(); f++)
+      {
+      const MATH::FitRecord & fit = data.fit(f);
+      if (f > 0) { ImGui::SameLine(); ImGui::TextDisabled("|"); ImGui::SameLine(); }
+      ImGui::TextDisabled("%s: %s, p = %.3g", fit.label.isNull() ? "fit" : fit.label.data(),
+                          GRAPHICS::GraphItem::fitSummary(fit).data(), fit.result.pValue);
+      }
+    ImGui::SameLine(0, 18);
+    ImGui::Checkbox("pulls", &_showPulls);
+    ImGui::SetItemTooltip("Show the pull of each fit: (value - f(x)) / statistical uncertainty");
+    }
 
   // table: header row and index column frozen; only the visible rows are drawn
   std::vector<std::string> all = columnNames(data), names;
   for (std::size_t c=0; c<all.size(); c++) if (_shown[c]) names.push_back(all[c]);
+  for (const auto & name : fitColumnNames(data, _showPulls)) names.push_back(name);
   ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter
                         | ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingFixedFit;
-  if (!ImGui::BeginTable("##data", int(names.size()), flags, ImVec2(0.0f, 0.0f))) return;
+  // the number of columns is in the identifier: a table whose columns change (fits, pulls) starts afresh
+  std::string id = "##data" + std::to_string(names.size());
+  if (!ImGui::BeginTable(id.c_str(), int(names.size()), flags, ImVec2(0.0f, 0.0f))) return;
   ImGui::TableSetupScrollFreeze(1, 1);
   float digits = ImGui::CalcTextSize("-1.23457e+06").x;
   for (std::size_t c=0; c<names.size(); c++)
@@ -193,6 +249,14 @@ namespace CAP
         if (!_shown[c+1]) continue;
         ImGui::TableNextColumn();
         ImGui::TextUnformatted(cells[c].c_str());
+        }
+      std::vector<bool> dimmed;
+      std::vector<std::string> fitCells = fitValues(data, unsigned(k), _showPulls, &dimmed);
+      for (std::size_t c=0; c<fitCells.size(); c++)
+        {
+        ImGui::TableNextColumn();
+        if (dimmed[c]) ImGui::TextDisabled("%s", fitCells[c].c_str());
+        else ImGui::TextUnformatted(fitCells[c].c_str());
         }
       }
   ImGui::EndTable();

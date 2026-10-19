@@ -26,6 +26,7 @@
 #include "Normal.hpp"
 #include "Exponential.hpp"
 #include "DataPointsVector.hpp"
+#include "Fitter.hpp"
 #include "Histogram.hpp"
 #include "CapFile.hpp"
 #include "LatexRenderer.hpp"
@@ -317,6 +318,8 @@ namespace CAP
                                           "File browser in its own window instead of docked in the main window");
   browserWindow.setCheckable(true);
   browserWindow.setChecked(!_configuration.gui.browserDocked);
+  MenuItem & fits = view.addItem("Fit Results", "view.fits", "", "Show the results of the fits of the selected graph, below the canvases");
+  fits.setCheckable(true);
   view.addSeparator();
   MenuItem & toolbars = view.addItem("Canvas Toolbars", "view.toolbars", "", "Show the buttons above each canvas");
   toolbars.setCheckable(true);
@@ -389,6 +392,7 @@ namespace CAP
     if (MenuItem * item = bar.findItem(String("view.theme.") + t)) item->setChecked(_gui.settings().theme == t);
   if (MenuItem * item = bar.findItem("help.imguiDemo")) item->setChecked(_showImGuiDemo);
   if (MenuItem * item = bar.findItem("view.browser"))       item->setChecked(_gui.browserVisible());
+  if (MenuItem * item = bar.findItem("view.fits"))          item->setChecked(_gui.fitPaneVisible());
   if (MenuItem * item = bar.findItem("view.browserWindow")) item->setChecked(!_gui.browserDocked());
   if (MenuItem * item = bar.findItem("file.closeAll"))      item->setEnabled(!_files.empty());
   _configuration.gui.browserVisible = _gui.browserVisible();
@@ -428,6 +432,7 @@ namespace CAP
     }
   else if (c == "file.exit") _gui.requestExit();
   else if (c == "view.browser") _gui.setBrowserVisible(!_gui.browserVisible());
+  else if (c == "view.fits") _gui.setFitPaneVisible(!_gui.fitPaneVisible());
   else if (c == "view.browserWindow") _gui.setBrowserDocked(!_gui.browserDocked());
   else if (c == "edit.undo") undo();
   else if (c == "edit.redo") redo();
@@ -841,6 +846,14 @@ namespace CAP
     }
   MATH::DataPointsVector * data = new MATH::DataPointsVector(x, ex, y, ey, sy);
   data->setName("pseudo-data");
+  try
+    {
+    MATH::Normal model(1.0, 0.0, 1.0);                      // a fit, attached to the data (see the Fits pane)
+    MATH::Fitter fitter(model, *data);
+    fitter.fit();
+    data->addFit(fitter.record("Gaussian fit"));
+    }
+  catch (const Exception &) { }
   CanvasPane & first = _gui.pane(0);
   first.currentGraph().setTitle("Demonstration");
   first.currentGraph().xAxis().setTitle("x");

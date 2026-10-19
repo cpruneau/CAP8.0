@@ -103,6 +103,16 @@ namespace CAP
     ImGui::SetItemTooltip("3D view of the selected graph (surface, mesh or lego boxes); drag in it to turn it");
     }
 
+  bool fitted = false;              // a graph of objects with fits: show them or not
+  for (const auto & item : graph.items()) if (!item.isMap() && item.nFits() > 0) fitted = true;
+  if (fitted)
+    {
+    ImGui::SameLine();
+    bool fits = graph.showFits();
+    if (ImGui::Checkbox("Fits", &fits)) { changing(); graph.setShowFits(fits); }
+    ImGui::SetItemTooltip("Draw the fits of the objects of the selected graph (View > Fit Results for their results)");
+    }
+
   ImGui::SameLine(0, 18);
   if (ImGui::Button("Graphs...")) { _gridColumns = _canvas.nColumns(); _gridRows = _canvas.nRows(); ImGui::OpenPopup("graphs"); }
   ImGui::SetItemTooltip("Divide this canvas into n' x m' graphs");
@@ -211,6 +221,14 @@ namespace CAP
     if (ImGui::MenuItem("Log Z", nullptr, logZ)) { changing(); graph.setLogZ(!logZ); }
     }
   if (ImGui::MenuItem("Legend", nullptr, legend)) { changing(); graph.setShowLegend(!legend); }
+  bool fitted = false;
+  for (const auto & item : graph.items()) if (!item.isMap() && item.nFits() > 0) fitted = true;
+  if (fitted)
+    {
+    bool fits = graph.showFits(), statistics = graph.showFitStatistics();
+    if (ImGui::MenuItem("Fits", nullptr, fits)) { changing(); graph.setShowFits(!fits); }
+    if (ImGui::MenuItem("Fit Quality in the Legend", nullptr, statistics)) { changing(); graph.setShowFitStatistics(!statistics); }
+    }
   if (ImGui::MenuItem("Automatic ranges", nullptr, graph.isAutoX() && graph.isAutoY())) { changing(); graph.setAutoRange(); }
   if (ImGui::BeginMenu("Remove", !graph.items().empty()))
     {

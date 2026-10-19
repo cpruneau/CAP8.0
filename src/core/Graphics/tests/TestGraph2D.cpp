@@ -23,6 +23,9 @@
 #include "Canvas.hpp"
 #include "DataPoint3D.hpp"
 #include "DataPointsVector.hpp"
+#include "Fitter.hpp"
+#include "Linear.hpp"
+#include "Parabolic.hpp"
 #include "Function.hpp"
 #include "Graph.hpp"
 #include "Grid2D.hpp"
@@ -405,6 +408,53 @@ int main(int argc, char ** argv)
     canvas.draw(svg);
     svg.write(argv[1]);
     }
+
+  // ---- fits attached to data points: curves over their ranges, and legend entries with their quality
+  {
+    MATH::DataPointsVector data;
+    data.addPoints({0.0, 1.0, 2.0, 3.0, 4.0, 5.0}, {1.1, 2.9, 5.2, 6.8, 9.1, 11.3}, {0.1, 0.2, 0.1, 0.3, 0.2, 0.4});
+    data.setName("data");
+    MATH::Linear line(0.0, 1.0);
+    MATH::Fitter fitter(line, data);
+    fitter.fit();
+    data.addFit(fitter.record("straight"));
+    MATH::Parabolic parabola(0.0, 1.0, 0.0);
+    MATH::Fitter second(parabola, data);
+    second.fit();
+    data.addFit(second.record("curved"));
+    Graph graph;
+    graph.add(GraphItem(&data));
+    GraphItem & item = graph.items()[0];
+    CHECK(item.nFits() == 2 && item.fit(1) && item.fit(1)->label == "curved" && item.fit(2) == nullptr);
+    CHECK(graph.hasFits() && item.isFitShown(0) && item.isFitShown(7));
+    CHECK(item.fitLineAttributes(0).color() == 2 && item.fitLineAttributes(1).color() == 4 && item.fitLineAttributes(8).color() == 2);
+    std::string chi2 = "\xCF\x87\xC2\xB2/ndf";
+    CHECK(GraphItem::fitSummary(*item.fit(0)).contains("/4") && std::string(GraphItem::fitSummary(*item.fit(0)).data()).find(chi2) == 0);
+    std::string svg = svgOf(graph);
+    int lines = count(svg, "<polyline");
+    CHECK(count(svg, ">straight<") == 1 && count(svg, ">curved<") == 1 && count(svg, chi2) == 2);
+    item.setFitShown(1, false);                                             // one fit hidden: its curve and entry go
+    svg = svgOf(graph);
+    CHECK(count(svg, ">curved<") == 0 && count(svg, chi2) == 1 && count(svg, "<polyline") < lines);
+    item.setFitShown(1, true);
+    graph.setShowFitStatistics(false);                                      // labels only
+    svg = svgOf(graph);
+    CHECK(count(svg, ">curved<") == 1 && count(svg, chi2) == 0);
+    graph.setShowFits(false);                                               // no fit at all
+    svg = svgOf(graph);
+    CHECK(count(svg, ">straight<") == 0 && count(svg, "<polyline") < lines && !graph.hasFits());
+    graph.setShowFits(true);
+    graph.setShowFitStatistics(true);
+    GRAPHICS::LineAttributes custom;
+    custom.set(8, 1.0, 2, 3.0);
+    item.setFitLineAttributes(1, custom);
+    item.setExtendFits(true);
+    Graph copy(graph);                                                      // styles and toggles are copied
+    CHECK(copy.items()[0].fitLineAttributes(1).color() == 8 && copy.items()[0].fitLineAttributes(1).width() == 3.0f
+          && copy.items()[0].fitLineAttributes(0).color() == 2 && copy.items()[0].extendFits() && copy.showFitStatistics());
+    item.setShowFits(false);
+    CHECK(!graph.hasFits() && count(svgOf(graph), chi2) == 0);
+  }
 
   std::printf("TestGraph2D: %d checks, %d failed\n", nChecks, nFailures);
   return nFailures;

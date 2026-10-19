@@ -14,11 +14,13 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <limits>
 #include "Graph.hpp"
 #include "GraphRenderer.hpp"
 #include "Function.hpp"
 #include "DataPoints.hpp"
+#include "FitRecord.hpp"
 #include "Histogram.hpp"
 
 ClassImp(CAP::GRAPHICS::Graph);
@@ -164,6 +166,55 @@ namespace CAP
   return _grid;
   }
 
+  unsigned int GraphItem::nFits() const
+  {
+  if (_kind == kFunction) return _function ? _function->nFits() : 0;
+  return _data ? _data->nFits() : 0;
+  }
+
+  const MATH::FitRecord * GraphItem::fit(unsigned int k) const
+  {
+  if (k >= nFits()) return nullptr;
+  return _kind == kFunction ? &_function->fit(k) : &_data->fit(k);
+  }
+
+  void GraphItem::setFitShown(unsigned int k, bool v)
+  {
+  if (k >= _fitHidden.size()) { if (v) return; _fitHidden.resize(k + 1, false); }
+  _fitHidden[k] = !v;
+  }
+
+  LineAttributes GraphItem::fitLineAttributes(unsigned int k) const
+  {
+  return (k < _fitLineSet.size() && _fitLineSet[k]) ? _fitLines[k] : defaultFitLine(k);
+  }
+
+  void GraphItem::setFitLineAttributes(unsigned int k, const LineAttributes & line)
+  {
+  if (k >= _fitLines.size()) { _fitLines.resize(k + 1); _fitLineSet.resize(k + 1, false); }
+  _fitLines[k] = line;
+  _fitLineSet[k] = true;
+  }
+
+  LineAttributes GraphItem::defaultFitLine(unsigned int k)
+  {
+  static const int colors[] = { 2, 4, 8, 6, 9, 46, 28, 7 };   // red, blue, green, magenta, ...
+  LineAttributes line;
+  line.set(colors[k % 8], 1.0, 1, 2.0);
+  return line;
+  }
+
+  String GraphItem::fitSummary(const MATH::FitRecord & fit)
+  {
+  char text[96];
+  const MATH::FitResult & r = fit.result;
+  if (r.statistic == "unbinned likelihood")
+    std::snprintf(text, sizeof(text), "-2 ln L = %.4g", r.chiSquare);
+  else
+    std::snprintf(text, sizeof(text), "\xCF\x87\xC2\xB2/ndf = %.4g/%d", r.chiSquare, r.nDegreesOfFreedom);
+  return String(text);
+  }
+
   // ------------------------------------------------------------------------------------------------ Graph
 
   Graph::Graph()
@@ -229,6 +280,8 @@ namespace CAP
   _frameLine(src._frameLine),
   _titleAttributes(src._titleAttributes),
   _showLegend(src._showLegend),
+  _showFits(src._showFits),
+  _showFitStatistics(src._showFitStatistics),
   _titleOffsetX(src._titleOffsetX), _titleOffsetY(src._titleOffsetY),
   _titlePointSize(src._titlePointSize),
   _autoLegend(src._autoLegend),
@@ -261,6 +314,8 @@ namespace CAP
     _frameLine = rhs._frameLine;
     _titleAttributes = rhs._titleAttributes;
     _showLegend = rhs._showLegend;
+    _showFits = rhs._showFits;
+    _showFitStatistics = rhs._showFitStatistics;
     _titleOffsetX = rhs._titleOffsetX; _titleOffsetY = rhs._titleOffsetY;
     _titlePointSize = rhs._titlePointSize;
     _autoLegend = rhs._autoLegend;
@@ -382,6 +437,14 @@ namespace CAP
   {
   for (auto it = _items.begin(); it != _items.end(); ++it)
     if (it->object() == object) { _items.erase(it); return true; }
+  return false;
+  }
+
+  bool Graph::hasFits() const
+  {
+  if (!_showFits) return false;
+  for (const auto & item : _items)
+    if (!item.isMap() && item.showFits() && item.nFits() > 0) return true;
   return false;
   }
 

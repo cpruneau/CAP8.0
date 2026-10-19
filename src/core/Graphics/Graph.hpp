@@ -32,6 +32,7 @@ namespace CAP
   {
   class Function;
   class DataPoints;
+  struct FitRecord;
   }
 
   namespace GRAPHICS
@@ -235,6 +236,44 @@ namespace CAP
   void  setSysWidth(float width) { _sysWidth = width < 0 ? 0 : width; }   //!< Set the half width of the boxes (fraction of the frame width, at least 0)
   //! @}
 
+  //! @name Fits
+  //!
+  //! The fits attached to the object shown (MATH::DataPoints::addFit(), MATH::Function::addFit()) are drawn as curves
+  //! over the range of each fit (or over the whole x range, see extendFits()), each with its own line, and listed in
+  //! the legend under the item. Fits are indexed as in the object; only fits of rank 1 are drawn, on items of rank 1.
+  //! @{
+
+  //! @brief Number of fits attached to the object shown. @return number
+  unsigned int nFits() const;
+  //! @brief Fit k of the object shown. @param k index @return fit, or nullptr if there is none
+  const MATH::FitRecord * fit(unsigned int k) const;
+  //! @brief Whether the fits of the item are drawn (see also Graph::showFits()). @return true if so
+  bool showFits() const { return _showFits; }
+  //! @brief Draw the fits of the item or not. @param v draw them
+  void setShowFits(bool v) { _showFits = v; }
+  //! @brief Whether fit k is drawn (when the fits are). @param k index @return true if so (the default)
+  bool isFitShown(unsigned int k) const { return k >= _fitHidden.size() || !_fitHidden[k]; }
+  //! @brief Draw fit k or not. @param k index @param v draw it
+  void setFitShown(unsigned int k, bool v);
+  //! @brief Line of the curve of fit k: the one set, or defaultFitLine(k). @param k index @return line
+  LineAttributes fitLineAttributes(unsigned int k) const;
+  //! @brief Set the line of the curve of fit k. @param k index @param line line
+  void setFitLineAttributes(unsigned int k, const LineAttributes & line);
+  //! @brief Default line of fit k: solid, 2 points wide, in a color of a cycle of 8 (red, blue, green, magenta, ...).
+  //! @param k index @return line
+  static LineAttributes defaultFitLine(unsigned int k);
+  //! @brief Whether the curves of the fits extend over the whole x range of the graph, rather than the range of
+  //! each fit. @return true if so
+  bool extendFits() const { return _extendFits; }
+  //! @brief Draw the curves of the fits over the whole x range of the graph, or over the range of each fit. @param v extend them
+  void setExtendFits(bool v) { _extendFits = v; }
+  //!
+  //! @brief Quality of a fit as a short text: "χ²/ndf = 12.3/10" for a chi square or a binned (Poisson)
+  //! likelihood, "-2 ln L = 45.6" for an unbinned likelihood. @param fit fit @return text (UTF-8)
+  //!
+  static String fitSummary(const MATH::FitRecord & fit);
+  //! @}
+
   protected:
 
   Kind _kind;   //!< function or data points
@@ -276,6 +315,11 @@ namespace CAP
   LineAttributes _sysLine;   //!< outline of the boxes or band
   bool   _sysUsesMarkerColor;   //!< the boxes or band take the color of the markers
   float  _sysWidth;   //!< half width of the boxes of points without x uncertainty (fraction of the frame width)
+  bool   _showFits = true;   //!< the fits of the object are drawn
+  bool   _extendFits = false;   //!< the curves of the fits cover the whole x range
+  std::vector<bool> _fitHidden;   //!< fits not drawn (by index)
+  std::vector<LineAttributes> _fitLines;   //!< lines of the fits (by index)
+  std::vector<bool> _fitLineSet;   //!< lines set (the others are defaultFitLine())
   };
 
   //!
@@ -510,6 +554,14 @@ namespace CAP
   const TextAttributes & titleAttributes() const { return _titleAttributes; }   //!< Color and font of the title
   bool showLegend() const { return _showLegend; }   //!< Whether the legend is shown
   void setShowLegend(bool v) { _showLegend = v; }   //!< Show or hide the legend
+  //! @brief Whether the fits of the items are drawn (each item can also hide its own, GraphItem::showFits()).
+  bool showFits() const { return _showFits; }
+  void setShowFits(bool v) { _showFits = v; }   //!< Draw the fits of the items or not
+  //! @brief Whether the legend gives the quality of each fit (GraphItem::fitSummary()) after its label.
+  bool showFitStatistics() const { return _showFitStatistics; }
+  void setShowFitStatistics(bool v) { _showFitStatistics = v; }   //!< Give the quality of the fits in the legend or not
+  //! @brief Whether the graph shows items with fits drawn (rank 1). @return true if so
+  bool hasFits() const;
   //! @}
 
   //! @name Positions and sizes of the texts
@@ -590,6 +642,8 @@ namespace CAP
   LineAttributes _frameLine;   //!< outline of the frame
   TextAttributes _titleAttributes;   //!< color and font of the title
   bool _showLegend;   //!< the legend is shown
+  bool _showFits = true;   //!< the fits of the items are drawn
+  bool _showFitStatistics = true;   //!< the legend gives the quality of the fits
   float _titleOffsetX;   //!< displacement of the title (fractions of the cell)
   float _titleOffsetY;   //!< displacement of the title (fractions of the cell)
   float _titlePointSize;   //!< size of the title in points (0: automatic)

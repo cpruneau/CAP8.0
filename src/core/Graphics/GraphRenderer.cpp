@@ -2,11 +2,14 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <functional>
 #include "GraphRenderer.hpp"
 #include "Graph.hpp"
 #include "Painter.hpp"
 #include "Function.hpp"
 #include "DataPoints.hpp"
+#include "FitRecord.hpp"
+#include "ParameterizedFunction.hpp"
 #include "Histogram.hpp"
 #include "TColor.h"
 
@@ -87,6 +90,53 @@ namespace CAP
   bool inside(const Box & box, const Point2D & p)
   {
   return p.x()>=box.x0 && p.x()<=box.x1 && p.y()>=box.y0 && p.y()<=box.y1;
+  }
+
+  //! Curve of y = f(x) over [a,b] (logarithmic steps on a log x axis), clipped to the frame.
+  void drawCurve(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view,
+                 const std::function<double(double)> & f, double a, double b, int n, const LineAttributes & line)
+  {
+  a = std::max<double>(a, view.xMinimum);
+  b = std::min<double>(b, view.xMaximum);
+  if (!(b > a) || n < 2) return;
+  std::vector<Point2D> points;
+  std::vector<bool> valid;
+  for (int k=0; k<n; k++)
+    {
+    double x;
+    if (view.logX && a > 0) x = std::pow(10.0, std::log10(a) + (std::log10(b)-std::log10(a))*k/(n-1));
+    else                    x = a + (b-a)*k/(n-1);
+    double y = 0.0;
+    bool ok = true;
+    try { y = f(x); } catch (...) { ok = false; }
+    ok = ok && std::isfinite(y) && (!view.logY || y > 0);
+    points.push_back(graph.toCanvas(view, x, ok ? y : 1.0));
+    valid.push_back(ok);
+    }
+  drawClipped(painter, box, points, valid, line);
+  }
+
+  //! Whether fit k of an item is drawn: fits shown in the graph and the item, of rank 1, on an item of rank 1.
+  const MATH::FitRecord * drawnFit(const Graph & graph, const GraphItem & item, unsigned int k)
+  {
+  if (!graph.showFits() || !item.showFits() || item.isMap() || !item.isFitShown(k)) return nullptr;
+  const MATH::FitRecord * fit = item.fit(k);
+  if (!fit || !fit->function || fit->function->rank() != 1) return nullptr;
+  return fit;
+  }
+
+  //! Curves of the fits of an item, over their ranges (or the whole x range).
+  void drawFits(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item)
+  {
+  for (unsigned int k=0; k<item.nFits(); k++)
+    {
+    const MATH::FitRecord * fit = drawnFit(graph, item, k);
+    if (!fit) continue;
+    double a = view.xMinimum, b = view.xMaximum;
+    if (!item.extendFits() && !fit->low.empty()) { a = fit->low[0]; b = fit->high[0]; }
+    drawCurve(painter, box, graph, view, [fit](double x) { return fit->function->evaluateAt(x); },
+              a, b, std::max(item.nSamples(), 200), item.fitLineAttributes(k));
+    }
   }
   } // namespace
 
@@ -427,25 +477,11 @@ namespace CAP
       }
     else if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
       {
-      double a = std::max<double>(item.xMinimum(), view.xMinimum);
-      double b = std::min<double>(item.xMaximum(), view.xMaximum);
-      if (!(b > a)) continue;
-      int n = item.nSamples();
-      std::vector<Point2D> points;
-      std::vector<bool> valid;
-      for (int k=0; k<n; k++)
-        {
-        double x;
-        if (view.logX && a > 0) x = std::pow(10.0, std::log10(a) + (std::log10(b)-std::log10(a))*k/(n-1));
-        else                    x = a + (b-a)*k/(n-1);
-        double y = 0.0;
-        bool ok = true;
-        try { y = item.function()->evaluateAt(x); } catch (...) { ok = false; }
-        ok = ok && std::isfinite(y) && (!view.logY || y > 0);
-        points.push_back(graph->toCanvas(view, x, ok ? y : 1.0));
-        valid.push_back(ok);
-        }
-      if (item.showLine()) drawClipped(painter, box, points, valid, item.lineAttributes());
+      const MATH::Function * function = item.function();
+      if (item.showLine())
+        drawCurve(painter, box, *graph, view, [function](double x) { return function->evaluateAt(x); },
+                  item.xMinimum(), item.xMaximum(), item.nSamples(), item.lineAttributes());
+      drawFits(painter, box, *graph, view, item);
       }
     else if (item.kind() == GraphItem::kData && item.data())
       {
@@ -487,6 +523,7 @@ namespace CAP
       if (item.showMarkers())
         for (size_t k=0; k<points.size(); k++)
           if (valid[k] && inside(box, points[k])) painter.drawMarker(points[k], item.markerAttributes());
+      drawFits(painter, box, *graph, view, item);
       }
     }
 
@@ -592,10 +629,27 @@ namespace CAP
     const float gap        = 0.6f*legendText.size()*H/W;
     const float padX       = 0.5f*legendText.size()*H/W;
     const float padY       = 0.25f*lineHeight;
+    // entries: each item, then the fits drawn of it (label, and its quality if asked)
+    struct Entry { const GraphItem * item; int fit; String label; String statistics; };
+    std::vector<Entry> entries;
+    for (const auto & item : graph->items())
+      {
+      entries.push_back({ &item, -1, item.label(), String() });
+      for (unsigned int k=0; k<item.nFits(); k++)
+        if (const MATH::FitRecord * fit = drawnFit(*graph, item, k))
+          entries.push_back({ &item, int(k), fit->label,
+                              graph->showFitStatistics() ? GraphItem::fitSummary(*fit) : String() });
+      }
+    const float space = 0.5f*legendText.size()*H/W;                  // between a label and the quality of a fit
     float maxLabel = 0.0;
-    for (const auto & item : graph->items()) maxLabel = std::max(maxLabel, painter.textWidth(item.label(), legendText)/W);
+    for (const auto & entry : entries)
+      {
+      float width = painter.textWidth(entry.label, legendText)/W;
+      if (!entry.statistics.isNull()) width += space + painter.textWidth(entry.statistics, legendText)/W;
+      maxLabel = std::max(maxLabel, width);
+      }
     const float legendWidth  = padX + sample + gap + maxLabel + padX;
-    const float legendHeight = graph->items().size()*lineHeight + 2*padY;
+    const float legendHeight = entries.size()*lineHeight + 2*padY;
     float left, top;
     if (graph->isAutoLegendPosition())
       {
@@ -614,9 +668,20 @@ namespace CAP
       painter.drawPolygon(frame, graph->legendFill(), graph->legendLine());
     float x0 = left + padX;
     float y  = top - padY - 0.5f*lineHeight;
-    for (const auto & item : graph->items())
+    for (const auto & entry : entries)
       {
+      const GraphItem & item = *entry.item;
       Point2D l(x0, y), r(x0 + sample, y), middle(x0 + 0.5f*sample, y);
+      if (entry.fit >= 0)
+        {
+        painter.drawLine({l, r}, item.fitLineAttributes(unsigned(entry.fit)));
+        painter.drawText(Point2D(x0 + sample + gap, y), entry.label, legendText);
+        if (!entry.statistics.isNull())
+          painter.drawText(Point2D(x0 + sample + gap + painter.textWidth(entry.label, legendText)/W + space, y),
+                           entry.statistics, legendText);
+        y -= lineHeight;
+        continue;
+        }
       if (hasSysErrors(item))
         {
         FillAttributes fill = item.sysFillAttributes();
