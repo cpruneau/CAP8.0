@@ -294,13 +294,14 @@ namespace CAP
 
   //! @name Binary files (independent of ROOT)
   //! Saved as "CAPF" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
-  //! exactly. Records of other classes in the same file are skipped.
+  //! exactly, with the fits attached since format version 2 (see FitList::encodeBinary()). Records of other classes in
+  //! the same file are skipped.
   //! @{
 
   //! @brief Tag of ScalarField records in binary files. @return "CAPF"
   static const char * binaryTag() { return "CAPF"; }
   //! @brief Format version written (and highest version read). @return version
-  static unsigned int binaryVersion() { return 1; }
+  static unsigned int binaryVersion() { return 2; }
   //! @brief Name stored in binary records. @return name()
   String binaryName() const { return name(); }
   //! @brief Write the binary payload after the name (used by writeBinary()). @param w writer

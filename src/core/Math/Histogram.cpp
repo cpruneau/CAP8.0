@@ -103,7 +103,7 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    Object::operator=(rhs);
+    DataPoints::operator=(rhs);   // name, title and fits
     Partition::operator=(rhs);
     _entries       = rhs._entries;
     _avgValues        = rhs._avgValues;
@@ -1247,6 +1247,7 @@ namespace CAP
     w.writeVarUInt(_binLabels[d].size());
     for (const auto & label : _binLabels[d]) { w.writeVarUInt(label.first); w.writeString(label.second); }
     }
+  _fits.encodeBinary(w);   // format version 4: fits attached
   }
 
   void Histogram::decodeBinary(BinaryReader & r, const String & histogramName, unsigned int version)
@@ -1305,6 +1306,7 @@ namespace CAP
         }
       }
     }
+  if (version>=4) _fits.decodeBinary(r);
   }
 
   void Histogram::writeBinary(std::ostream & out) const                                      { writeBinaryObject(out,*this); }

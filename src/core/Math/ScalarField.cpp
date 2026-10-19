@@ -451,9 +451,10 @@ namespace CAP
     w.writeVarUInt(_nPoints[k]);
     }
   if (!isConstant()) writeDoubles(w,_values);
+  _fits.encodeBinary(w);   // format version 2: fits attached
   }
 
-  void ScalarField::decodeBinary(BinaryReader & r, const String & fieldName, unsigned int /*version*/)
+  void ScalarField::decodeBinary(BinaryReader & r, const String & fieldName, unsigned int version)
   {
   setName(fieldName);
   setTitle(r.readString());
@@ -465,6 +466,7 @@ namespace CAP
     {
     setValue(constValue);
     setRank((unsigned int)rank);
+    if (version>=2) _fits.decodeBinary(r);
     return;
     }
   if (meshRank!=rank) throw Exception("Mesh rank differs from the rank","ScalarField::decodeBinary()");
@@ -483,6 +485,7 @@ namespace CAP
   if (values.size()!=_values.size()) throw Exception("Number of values differs from the number of nodes","ScalarField::decodeBinary()");
   _values = values;
   _constValue = constValue;
+  if (version>=2) _fits.decodeBinary(r);
   }
 
   void ScalarField::writeBinary(std::ostream & out) const                     { writeBinaryObject(out,*this); }

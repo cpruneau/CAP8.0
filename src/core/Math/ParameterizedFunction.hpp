@@ -113,6 +113,9 @@ namespace CAP
   //! bound @throws MathException if index is out of range or minimum > maximum
   //!
   void setParameterLimits(unsigned int index, double minimum, double maximum);
+  //! @brief Replace a parameter (name, value, type and bounds; e.g. when a function is read from a file).
+  //! @param index index of the parameter @param parameter new parameter @throws MathException if index is out of range
+  void setParameter(unsigned int index, const Parameter & parameter);
   //! @}
 
   //!

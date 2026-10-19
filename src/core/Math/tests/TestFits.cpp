@@ -155,6 +155,12 @@ int main()
     CHECK(std::fabs(h.fit(0).low[0] - h.binCenter(0, 0)) < 1E-6 && std::fabs(h.fit(0).high[0] - h.binCenter(19, 0)) < 1E-6);
     Histogram copy(h);
     CHECK(copy.nFits() == 1 && copy.fit(0).label == "gaussian");
+    Histogram assigned;
+    assigned = h;                                                           // an assignment takes the fits too
+    CHECK(assigned.nFits() == 1 && assigned.fitPointer(0) == h.fitPointer(0));
+    DataPointsVector points;
+    points = data;
+    CHECK(points.nFits() == 0 && data.nFits() == 0);                        // (cleared above)
   }
 
   // ---- a function fitted by another one, through samples of it

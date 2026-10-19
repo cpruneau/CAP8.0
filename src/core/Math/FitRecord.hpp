@@ -20,6 +20,9 @@
 
 namespace CAP
 {
+  class BinaryWriter;
+  class BinaryReader;
+
   namespace MATH
   {
 
@@ -71,6 +74,25 @@ namespace CAP
   void remove(unsigned int k);
   //! @brief Detach all the fits.
   void clear() { _records.clear(); }
+
+  //! @name Binary encoding (part of the payload of the objects the fits are attached to, in CAP files)
+  //!
+  //! The fits are written as a format version (1 byte), the number of fits, and each fit as a block preceded by its
+  //! length: the name of the class of its function (see FunctionRegistry), the number of parameters, the rank, the
+  //! name and title of the function, its parameters (names, values, types and bounds), the label, the FitResult and
+  //! the range. A fit whose class is not registered (or cannot be made with that number of parameters and rank) is
+  //! skipped when read; the other fits are still read.
+  //! @{
+
+  //! @brief Write the fits. @param w writer
+  void encodeBinary(BinaryWriter & w) const;
+  //!
+  //! @brief Replace the fits by those read. @param r reader @return number of fits skipped (class not registered)
+  //! @throws Exception if the data is invalid (the fits are then unchanged)
+  //!
+  unsigned int decodeBinary(BinaryReader & r);
+
+  //! @}
 
   protected:
 

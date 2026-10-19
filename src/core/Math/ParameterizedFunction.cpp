@@ -110,6 +110,12 @@ namespace CAP
   if (fixed) p.setType(Parameter::Fixed);
   }
 
+  void ParameterizedFunction::setParameter(unsigned int index, const Parameter & parameter)
+  {
+  if (index >= _parameters.size()) throw MathException("Parameter index out of range",__FUNCTION__);
+  _parameters[index] = parameter;
+  }
+
   namespace
   {
   // Function currently being evaluated by the vector version of evaluateAt() (per thread). The vector version

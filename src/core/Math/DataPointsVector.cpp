@@ -107,6 +107,7 @@ namespace CAP
     {
     PointList copies = clonePoints(rhs._dataPoints);   // may throw: this container is then unchanged
     adopt(_dataPoints,copies);
+    _fits = rhs._fits;
     }
   return *this;
   }
@@ -117,6 +118,7 @@ namespace CAP
     {
     deletePoints();
     _dataPoints.swap(rhs._dataPoints);
+    _fits = std::move(rhs._fits);
     }
   return *this;
   }
@@ -356,9 +358,8 @@ namespace CAP
   void DataPointsVector::encodeBinary(BinaryWriter & w) const
   {
   w.writeVarUInt(_dataPoints.size());
-  if (_dataPoints.empty()) return;
-  unsigned int n = rank();
-  w.writeVarUInt(n);
+  unsigned int n = _dataPoints.empty() ? 0 : rank();
+  if (n>0) w.writeVarUInt(n);
   for (const DataPoint * p : _dataPoints)
     {
     if (n==1)
@@ -380,6 +381,7 @@ namespace CAP
       q->encodeBinary(w);
       }
     }
+  _fits.encodeBinary(w);   // format version 3: fits attached
   }
 
   void DataPointsVector::decodeBinary(BinaryReader & r, const String & /*name*/, unsigned int version)
@@ -425,6 +427,7 @@ namespace CAP
         }
       }
     }
+  if (version>=3) _fits.decodeBinary(r);
   adopt(_dataPoints,points);
   }
 

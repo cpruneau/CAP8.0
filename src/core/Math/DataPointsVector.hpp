@@ -121,10 +121,10 @@ namespace CAP
   //! @brief Destructor: deletes the points.
   virtual ~DataPointsVector();
 
-  //! @brief Assignment operator (deep copy). @param rhs container to copy @return reference to this container
+  //! @brief Assignment operator (deep copy of the points; the fits are shared). @param rhs container to copy @return reference to this container
   DataPointsVector & operator=(const DataPointsVector & rhs);
 
-  //! @brief Move assignment. @param rhs container whose points are taken over (left empty) @return reference to this container
+  //! @brief Move assignment. @param rhs container whose points and fits are taken over (left empty) @return reference to this container
   DataPointsVector & operator=(DataPointsVector && rhs) noexcept;
 
   //! @}
@@ -331,13 +331,14 @@ namespace CAP
   //! Saved as "CAPD" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! Format version 2: number of points, rank (if any point), then each point in the binary encoding of its class
-  //! (DataPoint2D for rank 1, DataPoint3D for rank 2, DataPointND for rank 3 and more). Version 1 (rank 1 only) is still read.
+  //! (DataPoint2D for rank 1, DataPoint3D for rank 2, DataPointND for rank 3 and more). Version 3 adds the fits
+  //! attached (see FitList::encodeBinary()). Versions 1 (rank 1 only) and 2 are still read.
   //! @{
 
   //! @brief Tag of DataPointsVector records in binary files. @return "CAPD"
   static const char * binaryTag() { return "CAPD"; }
   //! @brief Format version written (and highest version read). @return version
-  static unsigned int binaryVersion() { return 2; }
+  static unsigned int binaryVersion() { return 3; }
   //! @brief Name stored in binary records. @return ""
   String binaryName() const { return ""; }
   //! @brief Write the binary payload after the name (used by writeBinary()). @param w writer

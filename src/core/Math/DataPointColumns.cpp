@@ -376,9 +376,10 @@ namespace CAP
   writeColumn(_value);
   writeColumn(_stat);
   writeColumn(_syst);
+  _fits.encodeBinary(w);   // format version 2: fits attached
   }
 
-  void DataPointColumns::decodeBinary(BinaryReader & r, const String & /*name*/, unsigned int /*version*/)
+  void DataPointColumns::decodeBinary(BinaryReader & r, const String & /*name*/, unsigned int version)
   {
   uint64_t rank = r.readVarUInt();
   uint64_t n    = r.readVarUInt();
@@ -390,6 +391,7 @@ namespace CAP
   std::vector<float> value = readColumn();
   std::vector<float> stat  = readColumn();
   std::vector<float> syst  = readColumn();
+  if (version>=2) _fits.decodeBinary(r);
   _rank = rank;
   _x.swap(x);
   _xError.swap(xError);

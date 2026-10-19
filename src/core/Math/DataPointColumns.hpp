@@ -259,13 +259,14 @@ namespace CAP
 
   //! @name Binary files (independent of ROOT)
   //! Saved as "CAPK" records in the CAP binary format (see BinaryIO.hpp): rank, size, then each column (float32):
-  //! x[0], xError[0], ..., x[rank-1], xError[rank-1], value, stat, syst. Restored exactly.
+  //! x[0], xError[0], ..., x[rank-1], xError[rank-1], value, stat, syst; then the fits attached (format version 2,
+  //! see FitList::encodeBinary()). Restored exactly.
   //! @{
 
   //! @brief Tag of DataPointColumns records in binary files. @return "CAPK"
   static const char * binaryTag() { return "CAPK"; }
   //! @brief Format version written (and highest version read). @return version
-  static unsigned int binaryVersion() { return 1; }
+  static unsigned int binaryVersion() { return 2; }
   //! @brief Name stored in binary records. @return ""
   String binaryName() const { return ""; }
   //! @brief Write the binary payload after the name. @param w writer

@@ -65,6 +65,7 @@ FolderTypes.cpp
 BayesianFitter.cpp
 FitRecord.cpp
 Fitter.cpp
+FunctionRegistry.cpp
 Likelihood.cpp
 MetropolisHastings.cpp
 Function.cpp
@@ -132,6 +133,9 @@ add_test(NAME Bayesian COMMAND TestBayesian)
 add_executable(TestFits tests/TestFits.cpp)
 target_link_libraries(TestFits Math Base ${ROOT_LIBRARIES})
 add_test(NAME Fits COMMAND TestFits)
+add_executable(TestFitStorage tests/TestFitStorage.cpp)
+target_link_libraries(TestFitStorage Math Base ${ROOT_LIBRARIES})
+add_test(NAME FitStorage COMMAND TestFitStorage)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

@@ -1271,7 +1271,8 @@ namespace CAP
   //!  - "CAPH" (4 bytes), format version (1 byte), payload length (varint), payload, CRC-32 of the payload (4 bytes)
   //!  - payload: name, title, partition type, rank, then for each axis: number of bins, minimum and maximum (float32),
   //!    title; then the number of non-empty bins and, for each, the gap in global bin index since the previous
-  //!    non-empty bin (varint), the entries (zigzag varint), the average value and its uncertainty (float32)
+  //!    non-empty bin (varint), the entries (zigzag varint), the average value and its uncertainty (float32); then
+  //!    the bin labels of each axis and the fits attached (format version 4, see FitList::encodeBinary())
   //! Integers use variable-length encoding (1 byte below 128), multi-byte values are little-endian, and bins with
   //! zero entries, value and uncertainty are not written: a typical filled bin takes about 10 bytes, an empty bin 0.
   //! The content is restored exactly. Corrupted or truncated data is detected (FileException).
@@ -1281,7 +1282,7 @@ namespace CAP
   //! @brief Tag of histogram records in binary files. @return "CAPH"
   static const char * binaryTag() { return "CAPH"; }
   //! @brief Format version written (and highest version read). @return version
-  static unsigned int binaryVersion() { return 3; }
+  static unsigned int binaryVersion() { return 4; }
   //! @brief Name stored in binary records. @return name()
   String binaryName() const { return name(); }
   //! @brief Write the binary payload after the name (used by writeBinary()). @param w writer

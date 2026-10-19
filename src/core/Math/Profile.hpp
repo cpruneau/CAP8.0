@@ -124,11 +124,12 @@ public:
   void print() const override;
 
   //! @name Binary files (independent of ROOT)
+  //! The payload is that of Histogram (with the fits attached since format version 2), then the sums of the bins.
   //! @{
   //! @brief Tag of the records of this class. @return "CAPQ"
   static const char * binaryTag() { return "CAPQ"; }
   //! @brief Version of the record format. @return version
-  static unsigned int binaryVersion() { return 1; }
+  static unsigned int binaryVersion() { return 2; }
   //! @brief Encode the profile. @param w writer
   void encodeBinary(BinaryWriter & w) const;
   //! @brief Decode a profile. @param r reader @param name name of the record @param version version of the record
