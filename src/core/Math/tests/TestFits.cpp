@@ -23,6 +23,7 @@
 #include <vector>
 #include "Constant.hpp"
 #include "Cubic.hpp"
+#include "DataPoint2D.hpp"
 #include "DataPointsVector.hpp"
 #include "Exponential.hpp"
 #include "Fitter.hpp"
@@ -193,6 +194,69 @@ int main()
     fitter.fit();
     FitRecord record = fitter.record("decay");
     CHECK(record.low[0] == 0.0 && record.high[0] == 4.0 && record.result.statistic == "unbinned likelihood");
+  }
+
+  // ---- a range of the fit: the points outside are left out
+  {
+    DataPointsVector points;
+    for (int k=0; k<10; k++) points.addPoint(DataPoint2D(k, k < 9 ? 2.0*k + 1.0 : 100.0, 0.1));
+    Linear line(0.0, 1.0);
+    Fitter fitter(line, points);
+    fitter.setRange(0.0, 8.0);
+    FitResult r = fitter.fit();
+    CHECK(r.nPoints == 9 && std::fabs(r.values[1] - 2.0) < 1E-6 && std::fabs(r.values[0] - 1.0) < 1E-6);
+    FitRecord record = fitter.record();
+    CHECK(record.low[0] == 0.0 && record.high[0] == 8.0);
+    fitter.clearRange();
+    CHECK(fitter.fit().nPoints == 10);
+    bool thrown = false;
+    try { fitter.setRange(3.0, 1.0); } catch (const MathException &) { thrown = true; }
+    CHECK(thrown);
+    thrown = false;
+    fitter.setRange(20.0, 30.0);                                            // no point in the range
+    try { fitter.fit(); } catch (const MathException &) { thrown = true; }
+    CHECK(thrown);
+  }
+
+  // ---- starting values estimated from the data
+  {
+    Histogram h("g", "g", 40, -4.0, 4.0);
+    unsigned long long seed = 5;
+    for (int k=0; k<4000; k++)
+      {
+      seed = seed*6364136223846793005ULL + 1442695040888963407ULL;
+      double u1 = ((seed >> 11) + 0.5)/9007199254740992.0;
+      seed = seed*6364136223846793005ULL + 1442695040888963407ULL;
+      double u2 = ((seed >> 11) + 0.5)/9007199254740992.0;
+      h.fill(0.3 + 0.9*std::sqrt(-2*std::log(u1))*std::cos(2*M_PI*u2));
+      }
+    Normal normal(1.0, 0.0, 1.0);
+    CHECK(Fitter::estimate(normal, h, -4.0, 4.0));
+    CHECK(std::fabs(normal.parameterValues()[1] - 0.3) < 0.1 && std::fabs(normal.parameterValues()[2] - 0.9) < 0.15
+          && normal.parameterValues()[0] > 300);
+    Fitter poisson(normal, h, Fitter::kPoisson);
+    poisson.setRange(-1.0, 1.5);                                            // a Poisson fit over part of the bins
+    FitResult r = poisson.fit();
+    CHECK(r.converged && r.nPoints == 12 && std::fabs(r.values[1] - 0.3) < 0.1);
+    DataPointsVector parabola, decay;
+    for (int k=0; k<8; k++)
+      {
+      double x = 0.5*k;
+      parabola.addPoint(DataPoint2D(x, 3.0 - 2.0*x + 0.5*x*x, 0.1));   // (stored as floats)
+      decay.addPoint(DataPoint2D(x, 7.0*std::exp(-0.8*x), 0.1));
+      }
+    Parabolic p(0.0, 0.0, 0.0);
+    CHECK(Fitter::estimate(p, parabola, 0.0, 10.0));
+    CHECK(std::fabs(p.parameterValues()[0] - 3.0) < 1E-5 && std::fabs(p.parameterValues()[1] + 2.0) < 1E-5 && std::fabs(p.parameterValues()[2] - 0.5) < 1E-5);
+    Polynomial cubic(3);
+    cubic.setParameterValue(3, 0.25);
+    cubic.fixParameter(3);                                                  // a fixed parameter keeps its value
+    CHECK(Fitter::estimate(cubic, parabola, 0.0, 10.0) && cubic.parameterValues()[3] == 0.25);
+    Exponential e(1.0, 0.0);
+    CHECK(Fitter::estimate(e, decay, 0.0, 10.0) && std::fabs(e.parameterValues()[0] - 7.0) < 1E-5 && std::fabs(e.parameterValues()[1] + 0.8) < 1E-5);
+    Unclonable unknown;
+    CHECK(!Fitter::estimate(unknown, parabola, 0.0, 10.0));
+    CHECK(!Fitter::estimate(p, parabola, 20.0, 30.0));                     // no point in the range
   }
 
   std::printf("TestFits: %d checks, %d failed\n", nChecks, nFailures);

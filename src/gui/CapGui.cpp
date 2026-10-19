@@ -74,7 +74,9 @@ namespace CAP
   _addRequested(false),
   _focusedPane(-1),
   _focusRequested(false)
-  { }
+  {
+  _fitPane.onNewFit = [this]() { openFitDialog(); };
+  }
 
   CapGui::~CapGui()
   {
@@ -586,6 +588,7 @@ namespace CAP
     else _dataPanes.erase(_dataPanes.begin() + k);
     }
   renderFitPane();
+  if (_fitDialog.render(_panes.empty() ? nullptr : &currentPane().currentGraph())) setFitPaneVisible(true);
   if (areaX1 > areaX0) { _areaX = areaX0; _areaY = areaY0; _areaWidth = areaX1 - areaX0; _areaHeight = areaY1 - areaY0; }
 
   // panes added (+ button) or closed (x of their tab) by the user

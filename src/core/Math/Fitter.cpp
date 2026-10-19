@@ -22,6 +22,10 @@
 #include "DataPoints.hpp"
 #include "MathExceptions.hpp"
 #include "ParameterizedFunction.hpp"
+#include "Polynomial.hpp"
+#include "Normal.hpp"
+#include "LogNormal.hpp"
+#include "Exponential.hpp"
 
 namespace CAP
 {
@@ -496,6 +500,126 @@ namespace CAP
     points.addPoint(DataPoint2D(x, function.evaluateAt(x), error));
     }
   return points;
+  }
+
+
+  namespace
+  {
+  //! Set the values of the parameters that are not fixed, within their bounds.
+  void setEstimates(ParameterizedFunction & f, const std::vector<double> & values)
+  {
+  for (unsigned int k=0; k<values.size() && k<f.nParameters(); k++)
+    {
+    const Parameter & p = f.parameter(k);
+    if (p.type() == Parameter::Fixed || !std::isfinite(values[k])) continue;
+    double v = values[k];
+    if (p.type() == Parameter::Low || p.type() == Parameter::LowHigh) v = std::max(v, p.minimum());
+    if (p.type() == Parameter::High || p.type() == Parameter::LowHigh) v = std::min(v, p.maximum());
+    try { f.setParameterValue(k, v); } catch (...) { }
+    }
+  }
+
+  //! Least-squares polynomial of a degree through points (x, y) with weights. @return coefficients, or empty
+  std::vector<double> polynomialFit(const std::vector<double> & x, const std::vector<double> & y,
+                                    const std::vector<double> & w, unsigned int degree)
+  {
+  unsigned int m = degree + 1;
+  if (x.size() < m) return {};
+  // centered and scaled abscissa for a well conditioned system, converted back at the end
+  double center = 0, scale = 0, sumW = 0;
+  for (std::size_t i=0; i<x.size(); i++) { center += w[i]*x[i]; sumW += w[i]; }
+  if (!(sumW > 0)) return {};
+  center /= sumW;
+  for (double v : x) scale = std::max(scale, std::fabs(v - center));
+  if (!(scale > 0)) scale = 1;
+  Matrix a(m, m, 0.0);
+  std::vector<double> b(m, 0.0);
+  for (std::size_t i=0; i<x.size(); i++)
+    {
+    std::vector<double> powers(2*m, 1.0);
+    double u = (x[i] - center)/scale;
+    for (unsigned int k=1; k<2*m; k++) powers[k] = powers[k-1]*u;
+    for (unsigned int r=0; r<m; r++)
+      {
+      b[r] += w[i]*y[i]*powers[r];
+      for (unsigned int c=0; c<m; c++) a(r, c) += w[i]*powers[r + c];
+      }
+    }
+  std::vector<double> c;
+  try { c = a.solve(b); } catch (...) { return {}; }
+  // sum_k c_k ((x - center)/scale)^k as sum_j d_j x^j (binomial expansion)
+  std::vector<double> d(m, 0.0);
+  for (unsigned int k=0; k<m; k++)
+    {
+    double factor = c[k]/std::pow(scale, double(k));
+    double binomial = 1;
+    for (unsigned int j=0; j<=k; j++)
+      {
+      d[j] += factor*binomial*std::pow(-center, double(k - j));
+      binomial = binomial*double(k - j)/double(j + 1);
+      }
+    }
+  return d;
+  }
+  } // namespace
+
+  bool Fitter::estimate(ParameterizedFunction & function, const DataPoints & data, double low, double high)
+  {
+  if (function.rank() != 1 || data.rank() != 1) return false;
+  std::vector<double> x, y, w;
+  for (unsigned int k=0; k<data.size(); k++)
+    {
+    DataPoint2D p = data.point(k);
+    if (!std::isfinite(p.x()) || !std::isfinite(p.y()) || p.x() < low || p.x() > high) continue;
+    x.push_back(p.x());
+    y.push_back(p.y());
+    double e = p.yStatError();
+    w.push_back(e > 0 ? 1.0/(e*e) : 1.0);
+    }
+  if (x.empty()) return false;
+
+  if (Polynomial * polynomial = dynamic_cast<Polynomial*>(&function))
+    {
+    unsigned int degree = polynomial->nParameters() - 1;
+    std::vector<double> c = polynomialFit(x, y, w, std::min<unsigned int>(degree, (unsigned int)(x.size()) - 1));
+    if (c.empty()) return false;
+    c.resize(degree + 1, 0.0);
+    setEstimates(function, c);
+    return true;
+    }
+  bool normal = dynamic_cast<Normal*>(&function) != nullptr, logNormal = dynamic_cast<LogNormal*>(&function) != nullptr;
+  if (normal || logNormal)
+    {
+    // moments of x (of ln x) weighted by the positive values
+    double sum = 0, sumX = 0, sumX2 = 0, largest = 0, xMin = 1E300, xMax = -1E300;
+    for (std::size_t i=0; i<x.size(); i++)
+      {
+      if (logNormal && x[i] <= 0) continue;
+      double u = logNormal ? std::log(x[i]) : x[i], v = std::max(y[i], 0.0);
+      sum += v; sumX += v*u; sumX2 += v*u*u;
+      largest = std::max(largest, y[i]);
+      xMin = std::min(xMin, x[i]); xMax = std::max(xMax, x[i]);
+      }
+    if (!(sum > 0)) return false;
+    double mean = sumX/sum, width = std::sqrt(std::max(sumX2/sum - mean*mean, 0.0));
+    if (!(width > 0)) width = logNormal ? 0.5 : (xMax > xMin ? 0.25*(xMax - xMin) : 1.0);
+    double amplitude = largest;
+    if (logNormal)   // the amplitude is the area: the sum of the values times the spacing of the points
+      amplitude = x.size() > 1 ? sum*(xMax - xMin)/double(x.size() - 1) : largest;
+    setEstimates(function, { amplitude, mean, width });
+    return true;
+    }
+  if (dynamic_cast<Exponential*>(&function))
+    {
+    std::vector<double> u, v, weight;
+    for (std::size_t i=0; i<x.size(); i++)
+      if (y[i] > 0) { u.push_back(x[i]); v.push_back(std::log(y[i])); weight.push_back(y[i]*y[i]*w[i]); }
+    std::vector<double> c = polynomialFit(u, v, weight, 1);
+    if (c.empty()) return false;
+    setEstimates(function, { std::exp(c[0]), c[1] });
+    return true;
+    }
+  return false;
   }
 
   } // namespace MATH

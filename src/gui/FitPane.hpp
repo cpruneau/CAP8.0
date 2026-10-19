@@ -56,6 +56,9 @@ namespace CAP
   //!
   void render(GRAPHICS::Graph * graph, const std::function<void()> & beforeChange);
 
+  //! Called by the "Fit..." button of the pane (to open the Fit window).
+  std::function<void()> onNewFit;
+
   //! @brief A fit as tab-separated text: its function and object, quality, parameters, correlations.
   //! @param item item the fit is attached to @param fit fit @return text
   static String text(const GRAPHICS::GraphItem & item, const MATH::FitRecord & fit);

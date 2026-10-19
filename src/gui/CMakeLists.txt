@@ -57,6 +57,7 @@ add_executable(CapGui
   CapGui.cpp
   CanvasPane.cpp
   DataPane.cpp
+  FitDialog.cpp
   FitPane.cpp
   FileBrowser.cpp
   FileDialog.cpp

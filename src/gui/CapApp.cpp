@@ -278,6 +278,7 @@ namespace CAP
   pane.beforeChange = [this]() { recordUndo(); };
   pane.onDrop = [this, &pane](int graph, const ObjectReference & object) { showObject(pane, graph, object); };
   pane.onShowData = [this](const MATH::DataPoints * data, const String & label) { showDataTable(data, label); };
+  pane.onFit = [this](int item) { _gui.openFitDialog(item); };
   }
 
   // ------------------------------------------------------------------------------------------------ menus
@@ -307,6 +308,8 @@ namespace CAP
   edit.addSeparator();
   edit.addItem("Clear Canvas",       "edit.clearCanvas", "", "Clear all the graphs of the current canvas");
   edit.addItem("Clear All Canvases", "edit.clearAll",    "", "Clear all the graphs of all the canvases");
+  edit.addSeparator();
+  edit.addItem("Fit...", "edit.fit", "", "Fit a function to data points, a histogram or a function of the selected graph");
   edit.addSeparator();
   edit.addItem("Preferences...", "edit.preferences", "Ctrl+,", "Window, canvas and graph settings; save them as configuration");
 
@@ -466,6 +469,7 @@ namespace CAP
       for (int k=0; k<_gui.pane(p).canvas().nGraphs(); k++) _gui.pane(p).canvas().graph(k).clearItems();
     }
   else if (c == "edit.preferences") _showPreferences = true;
+  else if (c == "edit.fit") _gui.openFitDialog();
   else if (c == "view.toolbars") _gui.setShowToolbars(event.source ? event.source->isChecked() : !_gui.showToolbars());
   else if (c == "view.legends")
     {

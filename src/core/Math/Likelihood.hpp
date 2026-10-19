@@ -68,10 +68,27 @@ namespace CAP
   //! @brief Range covered by the points used (after prepare()). @param low lower ends @param high upper ends
   //! @return false if there is none
   virtual bool range(std::vector<double> & low, std::vector<double> & high) const = 0;
+  //!
+  //! @brief Use only the points (bins, events) inside a box: low[k] <= x[k] <= high[k] for each variable k (empty
+  //! vectors: all the points). The range of an unbinned likelihood is replaced.
+  //! @param low lower ends @param high upper ends
+  //! @throws MathException if the sizes differ from each other or from the rank, or a lower end is above an upper end
+  //!
+  virtual void setRange(const std::vector<double> & low, const std::vector<double> & high);
+  //! @brief Lower ends of the range set by setRange() (empty: none). @return lower ends
+  const std::vector<double> & rangeLow() const { return _rangeLow; }
+  //! @brief Upper ends of the range set by setRange() (empty: none). @return upper ends
+  const std::vector<double> & rangeHigh() const { return _rangeHigh; }
 
   protected:
 
+  //! @brief Whether point i of the data is inside the range set by setRange() (always, if none). @param data data
+  //! @param i index @return true if so
+  bool inRange(const DataPoints & data, unsigned int i) const;
+
   ParameterizedFunction & _function;   //!< function fitted
+  std::vector<double> _rangeLow;   //!< lower ends of the points used (empty: no limit)
+  std::vector<double> _rangeHigh;   //!< upper ends of the points used (empty: no limit)
   };
 
   //!
@@ -191,6 +208,9 @@ namespace CAP
   void setExtended(bool v) { _extended = v; }
   //! @brief The range of the events. @param low lower ends @param high upper ends @return true
   bool range(std::vector<double> & low, std::vector<double> & high) const override { low = _low; high = _high; return true; }
+  //! @brief Replace the range of the events (empty vectors: unchanged). @param low lower ends @param high upper ends
+  //! @throws MathException as Likelihood::setRange()
+  void setRange(const std::vector<double> & low, const std::vector<double> & high) override;
 
   protected:
 

@@ -68,7 +68,7 @@ namespace CAP
       add<Cubic>("Cubic");
       add<Quartic>("Quartic");
       add("Polynomial", typeid(Polynomial), [](unsigned int n) -> ParameterizedFunction *
-          { return n == 0 ? nullptr : new Polynomial(n-1); });
+          { return new Polynomial(n == 0 ? 2 : n-1); });
       add<Normal>("Normal");
       add<LogNormal>("LogNormal");
       add<Exponential>("Exponential");
@@ -136,6 +136,20 @@ namespace CAP
   catch (...) { return nullptr; }
   if (!function || function->nParameters() != nParameters) return nullptr;
   return function.release();
+  }
+
+  ParameterizedFunction * FunctionRegistry::create(const String & name)
+  {
+  Factory factory;
+  {
+  Registry & r = registry();
+  std::lock_guard<std::mutex> lock(r.mutex);
+  auto found = r.factories.find(key(name));
+  if (found == r.factories.end()) return nullptr;
+  factory = found->second;
+  }
+  try { return factory(0); }
+  catch (...) { return nullptr; }
   }
 
   std::vector<String> FunctionRegistry::names()

@@ -208,7 +208,7 @@ namespace CAP
   {
   char text[96];
   const MATH::FitResult & r = fit.result;
-  if (r.statistic == "unbinned likelihood")
+  if (r.statistic.contains("unbinned"))
     std::snprintf(text, sizeof(text), "-2 ln L = %.4g", r.chiSquare);
   else
     std::snprintf(text, sizeof(text), "\xCF\x87\xC2\xB2/ndf = %.4g/%d", r.chiSquare, r.nDegreesOfFreedom);

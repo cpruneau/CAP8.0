@@ -42,7 +42,7 @@ namespace CAP
   }
 
   //! Whether the statistic is a chi square, or behaves as one (binned Poisson likelihood).
-  bool chiSquareLike(const MATH::FitResult & r) { return !(r.statistic == "unbinned likelihood"); }
+  bool chiSquareLike(const MATH::FitResult & r) { return !r.statistic.contains("unbinned"); }
 
   //! The quality of a fit, as (name, value) rows.
   std::vector<std::pair<std::string,std::string>> quality(const MATH::FitRecord & fit)
@@ -157,7 +157,8 @@ namespace CAP
     }
   if (fits.empty())
     {
-    ImGui::TextDisabled("No fit in the selected graph (fits are attached to data points and functions by MATH::Fitter::record())");
+    ImGui::TextDisabled("No fit in the selected graph.");
+    if (onNewFit) { ImGui::SameLine(); if (ImGui::Button("Fit...")) onNewFit(); }
     return;
     }
 
@@ -168,6 +169,12 @@ namespace CAP
   bool statistics = graph->showFitStatistics();
   if (ImGui::Checkbox("quality in the legend", &statistics)) { changing(); graph->setShowFitStatistics(statistics); }
   ImGui::SetItemTooltip("Give the chi square per degree of freedom of each fit after its label in the legend");
+  if (onNewFit)
+    {
+    ImGui::SameLine(0, 18);
+    if (ImGui::Button("Fit...")) onNewFit();
+    ImGui::SetItemTooltip("Fit a function to an object of the selected graph");
+    }
 
   if (!ImGui::BeginTabBar("##fits", ImGuiTabBarFlags_FittingPolicyScroll)) return;
   for (const auto & entry : fits)

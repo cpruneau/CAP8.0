@@ -113,6 +113,21 @@ namespace CAP
   //! @brief Scale the errors by sqrt(chi square / degrees of freedom), or not. @param v scale
   void setScaleErrors(bool v) { _scaleErrors = v; }
 
+  //! @brief Fit only the points (bins, events) with low <= x <= high (see Likelihood::setRange()), for a function of
+  //! rank 1. @param low lower end @param high upper end @throws MathException if low > high or the rank is not 1
+  void setRange(double low, double high) { _likelihood->setRange({ low }, { high }); }
+  //! @brief Fit all the points (no range; an unbinned likelihood keeps its own range).
+  void clearRange() { _likelihood->setRange({}, {}); }
+  //!
+  //! @brief Starting values of the parameters of a function of CAP from data of rank 1 (the points with
+  //! low <= x <= high): for Normal, the largest value, and the mean and standard deviation of x weighted by the
+  //! values; for LogNormal, the same in ln x (and the area); for Exponential, a straight line fitted to ln y; for the
+  //! polynomials (Constant to Quartic, Polynomial), a least-squares polynomial. Fixed parameters keep their values.
+  //! @param function function @param data data @param low lower end @param high upper end
+  //! @return false if the class is not known or the data do not allow it (the function is then unchanged)
+  //!
+  static bool estimate(ParameterizedFunction & function, const DataPoints & data, double low, double high);
+
   //! @brief Fit: the function is left at the best parameters. @return result
   //! @throws MathException if there is no free parameter or no point can be used
   FitResult fit();

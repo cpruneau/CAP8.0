@@ -21,6 +21,7 @@
 #include "MenuBar.hpp"
 #include "CanvasPane.hpp"
 #include "DataPane.hpp"
+#include "FitDialog.hpp"
 #include "FitPane.hpp"
 #include "FileDialog.hpp"
 #include "FileBrowser.hpp"
@@ -136,6 +137,8 @@ namespace CAP
   void setFitPaneVisible(bool visible);
   bool fitPaneVisible() const { return _fitsVisible; }   //!< Whether the fit pane is shown
   FitPane & fitPane() { return _fitPane; }   //!< The fit pane
+  //! @brief Open the Fit window for the selected graph of the current canvas. @param item index of the item to fit (-1: any)
+  void openFitDialog(int item=-1) { _fitDialog.open(item); }
   //! Called for each new pane (to set its graphs and undo hook).
   std::function<void(CanvasPane &)> onNewPane;
   //! Called before a pane is added or closed by the user (undo).
@@ -204,6 +207,7 @@ namespace CAP
   int    _focusedPane;       //!< pane whose window had the focus at the last frame
   bool   _focusRequested;    //!< give the focus to the current pane (changed by the program)
   FitPane _fitPane;          //!< results of the fits of the selected graph
+  FitDialog _fitDialog;      //!< the Fit window
   bool   _fitsVisible = false;   //!< the fit pane is shown
   bool   _fitsDockRequested = false;   //!< dock the fit pane below the canvases at the next frame
   bool   _fitsShownOnce = false;   //!< the fit pane was shown (it opens by itself only once)

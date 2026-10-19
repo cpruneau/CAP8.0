@@ -42,7 +42,8 @@ namespace CAP
   {
   public:
 
-  //! @brief Factory: a new function (owned by the caller) with nParameters parameters, or null if it cannot have that many.
+  //! @brief Factory: a new function (owned by the caller) with nParameters parameters (0: its default number), or null
+  //! if it cannot have that many.
   using Factory = std::function<ParameterizedFunction*(unsigned int nParameters)>;
 
   //!
@@ -77,6 +78,9 @@ namespace CAP
   //! nParameters parameters
   //!
   static ParameterizedFunction * create(const String & name, unsigned int nParameters);
+  //! @brief A new function of a registered class, with its default parameters (a Polynomial: of degree 2).
+  //! @param name registered name @return function (owned by the caller), or null if the name is not registered
+  static ParameterizedFunction * create(const String & name);
 
   //! @brief Registered names, in alphabetical order. @return names
   static std::vector<String> names();

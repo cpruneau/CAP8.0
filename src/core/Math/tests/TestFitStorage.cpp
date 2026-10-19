@@ -180,6 +180,9 @@ int main()
     CHECK(FunctionRegistry::create("Normal", 2) == nullptr);                // wrong number of parameters
     CHECK(FunctionRegistry::create("Polynomial", 0) == nullptr);
     CHECK(FunctionRegistry::create("NoSuchFunction", 1) == nullptr);
+    std::unique_ptr<ParameterizedFunction> d(FunctionRegistry::create("Polynomial"));
+    std::unique_ptr<ParameterizedFunction> e(FunctionRegistry::create("Exponential"));
+    CHECK(d && d->nParameters() == 3 && e && e->nParameters() == 2 && FunctionRegistry::create("NoSuchFunction") == nullptr);
     CHECK(FunctionRegistry::typeName(Normal()) == "Normal" && FunctionRegistry::typeName(Linear()) == "Linear");
     UserLine user;
     CHECK(!FunctionRegistry::isRegistered(user) && FunctionRegistry::typeName(user).contains("UserLine"));

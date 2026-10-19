@@ -69,6 +69,33 @@ namespace CAP
   bool ChiSquareLikelihood::range(std::vector<double> & low, std::vector<double> & high) const { return extent(_data, _used, low, high); }
   bool PoissonLikelihood::range(std::vector<double> & low, std::vector<double> & high) const { return extent(_data, _used, low, high); }
 
+  void Likelihood::setRange(const std::vector<double> & low, const std::vector<double> & high)
+  {
+  if (low.size() != high.size()) throw MathException("The ends of the range differ in size", __FUNCTION__);
+  if (!low.empty() && low.size() != _function.rank()) throw MathException("The range must have the rank of the function", __FUNCTION__);
+  for (std::size_t k=0; k<low.size(); k++)
+    if (!(low[k] <= high[k])) throw MathException("A lower end of the range is above its upper end", __FUNCTION__);
+  _rangeLow = low;
+  _rangeHigh = high;
+  }
+
+  bool Likelihood::inRange(const DataPoints & data, unsigned int i) const
+  {
+  if (_rangeLow.empty()) return true;
+  std::vector<double> c = data.rank() == 1 ? std::vector<double>{ double(data.point(i).x()) } : data.coordinatesAt(i);
+  if (c.size() != _rangeLow.size()) return false;
+  for (std::size_t k=0; k<c.size(); k++) if (c[k] < _rangeLow[k] || c[k] > _rangeHigh[k]) return false;
+  return true;
+  }
+
+  void UnbinnedLikelihood::setRange(const std::vector<double> & low, const std::vector<double> & high)
+  {
+  Likelihood::setRange(low, high);
+  if (low.empty()) return;
+  _low = low;
+  _high = high;
+  }
+
   // ------------------------------------------------------------------------------------------------ chi square
 
   ChiSquareLikelihood::ChiSquareLikelihood(ParameterizedFunction & function, const DataPoints & data)
@@ -84,10 +111,11 @@ namespace CAP
   _used.clear();
   for (unsigned int i=0; i<_data.size(); i++)
     {
+    if (!inRange(_data, i)) continue;
     try { if (std::isfinite(_chiSquare.pullAt(i))) _used.push_back(i); }
     catch (...) { }
     }
-  if (_used.empty()) throw MathException("No data point has a nonzero uncertainty", __FUNCTION__);
+  if (_used.empty()) throw MathException("No data point in the range has a nonzero uncertainty", __FUNCTION__);
   }
 
   bool ChiSquareLikelihood::residuals(std::vector<double> & r) const
@@ -128,9 +156,9 @@ namespace CAP
   for (unsigned int i=0; i<_data.size(); i++)
     {
     double n = countAt(_data, i);
-    if (std::isfinite(n) && n >= 0) _used.push_back(i);
+    if (std::isfinite(n) && n >= 0 && inRange(_data, i)) _used.push_back(i);
     }
-  if (_used.empty()) throw MathException("No point has a count to fit", __FUNCTION__);
+  if (_used.empty()) throw MathException("No point in the range has a count to fit", __FUNCTION__);
   }
 
   double PoissonLikelihood::statistic() const

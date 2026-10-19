@@ -186,6 +186,19 @@ namespace CAP
       }
     ImGui::EndMenu();
     }
+  bool fittable = false;
+  for (const auto & item : graph.items()) if (!item.isMap()) fittable = true;
+  if (onFit && ImGui::BeginMenu("Fit", fittable))
+    {
+    for (size_t k=0; k<graph.items().size(); k++)
+      {
+      if (graph.items()[k].isMap()) continue;
+      String label = graph.items()[k].label().isNull() ? String("(unnamed)") : graph.items()[k].label();
+      String entry = label + String("...##fit") + String(std::to_string(k));
+      if (ImGui::MenuItem(entry.data())) { setSelectedGraph(_contextGraph); onFit(int(k)); }
+      }
+    ImGui::EndMenu();
+    }
   bool hasData = false;
   for (const auto & item : graph.items()) if (item.kind() == GraphItem::kData && item.data()) hasData = true;
   if (ImGui::BeginMenu("Show Data", hasData && onShowData))
