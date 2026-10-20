@@ -423,6 +423,77 @@ namespace CAP
   }
   } // namespace
 
+  namespace
+  {
+  //! Panel of the residuals of the fits below the frame: background, zero line, then for each fit drawn its residuals
+  //! (markers and error bars of data, or the curve f - fit of a function), in the color of the fit.
+  void drawResiduals(Painter & painter, const Graph & graph, const Graph::View & view, double low, double high)
+  {
+  const Box box { graph.frameXLow(), graph.residualYLow(), graph.frameXHigh(), graph.residualYHigh() };
+  LineAttributes noLine;
+  noLine.setStyle(0);
+  std::vector<Point2D> corners{ Point2D(box.x0,box.y0), Point2D(box.x1,box.y0), Point2D(box.x1,box.y1), Point2D(box.x0,box.y1) };
+  painter.drawPolygon(corners, graph.frameFill(), noLine);
+  // zero line
+  LineAttributes zero;
+  zero.set(14, 1.0, 2, 1.0);                      // gray, dashed
+  Point2D z0 = graph.toResidualCanvas(view, low, high, view.xMinimum, 0.0), z1 = graph.toResidualCanvas(view, low, high, view.xMaximum, 0.0);
+  drawSegment(painter, box, Point2D(box.x0, z0.y()), Point2D(box.x1, z1.y()), zero);
+  for (const auto & item : graph.items())
+    {
+    for (unsigned int k=0; k<item.nFits(); k++)
+      {
+      const MATH::FitRecord * fit = drawnFit(graph, item, k);
+      if (!fit) continue;
+      LineAttributes line = item.fitLineAttributes(k);
+      if (item.kind() == GraphItem::kData && item.data())
+        {
+        MarkerAttributes marker = item.markerAttributes();
+        marker.setColor(line.color(), line.alpha());
+        LineAttributes errorLine;
+        errorLine.set(line.color(), line.alpha(), 1, 1.0);
+        for (unsigned int i=0; i<item.data()->size(); i++)
+          {
+          double x, r, e;
+          if (!Graph::residualAt(item, *fit, i, graph.residualMode(), x, r, e)) continue;
+          if (x < view.xMinimum || x > view.xMaximum || (view.logX && x <= 0)) continue;
+          Point2D c = graph.toResidualCanvas(view, low, high, x, r);
+          if (item.showErrors() && e > 0)
+            drawSegment(painter, box, graph.toResidualCanvas(view, low, high, x, r - e), graph.toResidualCanvas(view, low, high, x, r + e), errorLine);
+          if (inside(box, c)) painter.drawMarker(c, marker);
+          }
+        }
+      else if (item.kind() == GraphItem::kFunction && item.function())
+        {
+        const MATH::Function * function = item.function();
+        double a = view.xMinimum, b = view.xMaximum;
+        if (!item.extendFits() && !fit->low.empty()) { a = std::max(a, fit->low[0]); b = std::min(b, fit->high[0]); }
+        int n = std::max(item.nSamples(), 200);
+        std::vector<Point2D> points;
+        std::vector<bool> valid;
+        for (int s=0; s<n && b > a; s++)
+          {
+          double x = (view.logX && a > 0) ? std::pow(10.0, std::log10(a) + (std::log10(b) - std::log10(a))*s/(n-1)) : a + (b - a)*s/(n-1);
+          double r = 0;
+          bool ok = true;
+          try { r = function->evaluateAt(x) - fit->valueAt(x); } catch (...) { ok = false; }
+          ok = ok && std::isfinite(r);
+          points.push_back(graph.toResidualCanvas(view, low, high, x, ok ? r : 0.0));
+          valid.push_back(ok);
+          }
+        drawClipped(painter, box, points, valid, line);
+        }
+      }
+    }
+  if (graph.frameLine().style() != 0)
+    {
+    std::vector<Point2D> outline = corners;
+    outline.push_back(corners[0]);
+    painter.drawLine(outline, graph.frameLine());
+    }
+  }
+  } // namespace
+
   void GraphRenderer::draw(const Drawable2D & drawable, Painter & painter) const
   {
   const Graph * graph = dynamic_cast<const Graph*>(&drawable);
@@ -527,6 +598,15 @@ namespace CAP
       }
     }
 
+  // panel of the residuals of the fits, below the frame
+  const bool residuals = graph->hasResidualPanel();
+  double residualLow = -1, residualHigh = 1;
+  if (residuals)
+    {
+    graph->residualRange(view, residualLow, residualHigh);
+    drawResiduals(painter, *graph, view, residualLow, residualHigh);
+    }
+
   // frame outline
   if (graph->frameLine().style() != 0)
     {
@@ -560,9 +640,39 @@ namespace CAP
   xAxis.setLabelOffset((0.6*textSize + 0.3*xAxis.textAttributes().size())*xAxis.labelGap());
   if (!view.logX) xAxis.setNMajorTicks(Graph::niceTickCount(view.xMinimum, view.xMaximum));
   if (!view.logY) yAxis.setNMajorTicks(Graph::niceTickCount(view.yMinimum, view.yMaximum));
-  xAxis.draw(painter);
-  yAxis.draw(painter);
-  graph->xAxis().setDrawnRects(xAxis.titleRect(), xAxis.bodyRect());
+  if (residuals)
+    {
+    // the x axis of the panel carries the labels and the title; the frame keeps its ticks only
+    Axis residualX = xAxis;
+    residualX.setEndPoints(Point2D(box.x0, graph->residualYLow()), Point2D(box.x1, graph->residualYLow()));
+    xAxis.setShowLabels(false);
+    xAxis.setTitle("");
+    Axis residualY = graph->residualAxis();
+    if (residualY.title().isNull())
+      residualY.setTitle(graph->residualMode() == Graph::kPull ? "pull" : "data \xE2\x88\x92 fit");
+    residualY.setEndPoints(Point2D(box.x0, graph->residualYLow()), Point2D(box.x0, graph->residualYHigh()));
+    residualY.setRange(float(residualLow), float(residualHigh));
+    float labelSize = sized(residualY.labelPointSize(), textSize);
+    residualY.textAttributes().setSize(labelSize);
+    residualY.titleAttributes().setSize(sized(residualY.titlePointSize(), textSize));
+    residualY.setMajorTickSize(0.6*textSize);
+    residualY.setMinorTickSize(0.3*textSize);
+    residualY.setLabelOffset(0.35*labelSize*residualY.labelGap());
+    residualY.setNMinorTicks(5);
+    residualY.setTitleOffset(residualY.titleOffsetX()*cellWidth, residualY.titleOffsetY()*cellHeight);
+    residualY.setNMajorTicks(Graph::niceTickCount(residualLow, residualHigh));
+    residualX.draw(painter);
+    residualY.draw(painter);
+    xAxis.draw(painter);
+    yAxis.draw(painter);
+    graph->xAxis().setDrawnRects(residualX.titleRect(), residualX.bodyRect());   // (the labels are there)
+    }
+  else
+    {
+    xAxis.draw(painter);
+    yAxis.draw(painter);
+    graph->xAxis().setDrawnRects(xAxis.titleRect(), xAxis.bodyRect());
+    }
   graph->yAxis().setDrawnRects(yAxis.titleRect(), yAxis.bodyRect());
 
   }

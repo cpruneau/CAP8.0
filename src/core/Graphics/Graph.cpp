@@ -257,6 +257,8 @@ namespace CAP
   _yAxis.setTitle("");
   _zAxis.setTitle("");
   _zAxis.setTickSide(1);            // along the right edge of the color scale: ticks into it, labels to the right
+  _residualAxis.setTitle("");       // automatic: "data - fit" or "pull"
+  _residualAxis.setTickSide(-1);
   setRenderer(GraphRenderer::defaultRenderer());
   }
 
@@ -282,6 +284,13 @@ namespace CAP
   _showLegend(src._showLegend),
   _showFits(src._showFits),
   _showFitStatistics(src._showFitStatistics),
+  _showResiduals(src._showResiduals),
+  _residualMode(src._residualMode),
+  _residualFraction(src._residualFraction),
+  _autoResidual(src._autoResidual),
+  _residualMinimum(src._residualMinimum),
+  _residualMaximum(src._residualMaximum),
+  _residualAxis(src._residualAxis),
   _titleOffsetX(src._titleOffsetX), _titleOffsetY(src._titleOffsetY),
   _titlePointSize(src._titlePointSize),
   _autoLegend(src._autoLegend),
@@ -316,6 +325,13 @@ namespace CAP
     _showLegend = rhs._showLegend;
     _showFits = rhs._showFits;
     _showFitStatistics = rhs._showFitStatistics;
+    _showResiduals = rhs._showResiduals;
+    _residualMode = rhs._residualMode;
+    _residualFraction = rhs._residualFraction;
+    _autoResidual = rhs._autoResidual;
+    _residualMinimum = rhs._residualMinimum;
+    _residualMaximum = rhs._residualMaximum;
+    _residualAxis = rhs._residualAxis;
     _titleOffsetX = rhs._titleOffsetX; _titleOffsetY = rhs._titleOffsetY;
     _titlePointSize = rhs._titlePointSize;
     _autoLegend = rhs._autoLegend;
@@ -380,7 +396,98 @@ namespace CAP
     t = view.zMaximum > view.zMinimum ? (z - view.zMinimum)/(view.zMaximum - view.zMinimum) : 0.5;
   return palette().color(t);
   }
-  float Graph::frameYLow()  const { return _cellYLow  + _margins.bottom()*(_cellYHigh-_cellYLow); }
+  float Graph::frameYLow()  const { return hasResidualPanel() ? residualYHigh() + residualGap() : residualYLow(); }
+
+  float Graph::residualGap() const { return 0.05f*(_cellYHigh - _cellYLow); }
+
+  float Graph::residualYLow() const { return _cellYLow + _margins.bottom()*(_cellYHigh-_cellYLow); }
+
+  float Graph::residualYHigh() const
+  {
+  float low = residualYLow();
+  return low + _residualFraction*(frameYHigh() - residualGap() - low);
+  }
+
+  bool Graph::hasResidualPanel() const
+  {
+  return _showResiduals && _dimension == k2D && hasFits();
+  }
+
+  bool Graph::residualContains(const Point2D & p) const
+  {
+  return hasResidualPanel() && p.x() >= frameXLow() && p.x() <= frameXHigh() && p.y() >= residualYLow() && p.y() < residualYHigh();
+  }
+
+  bool Graph::residualAt(const GraphItem & item, const MATH::FitRecord & fit, unsigned int index, ResidualMode mode,
+                         double & x, double & r, double & error)
+  {
+  if (item.kind() != GraphItem::kData || !item.data() || index >= item.data()->size()) return false;
+  MATH::DataPoint2D p = item.data()->point(index);
+  x = p.x();
+  if (!std::isfinite(x) || !std::isfinite(p.y())) return false;
+  if (!item.extendFits() && !fit.low.empty() && !fit.inRange(x)) return false;
+  double f = fit.valueAt(x);
+  if (!std::isfinite(f)) return false;
+  double sigma = p.yStatError();
+  if (mode == kPull)
+    {
+    if (!(sigma > 0)) return false;
+    r = (p.y() - f)/sigma;
+    error = 0;
+    }
+  else
+    {
+    r = p.y() - f;
+    error = sigma > 0 ? sigma : 0;
+    }
+  return std::isfinite(r);
+  }
+
+  void Graph::residualRange(const View & view, double & low, double & high) const
+  {
+  if (!_autoResidual && _residualMaximum > _residualMinimum) { low = _residualMinimum; high = _residualMaximum; return; }
+  double largest = 0;
+  for (const auto & item : _items)
+    {
+    if (item.isMap() || !item.showFits() || !_showFits) continue;
+    for (unsigned int k=0; k<item.nFits(); k++)
+      {
+      const MATH::FitRecord * fit = item.fit(k);
+      if (!fit || !fit->function || !item.isFitShown(k)) continue;
+      if (item.kind() == GraphItem::kData)
+        {
+        for (unsigned int i=0; i<item.data()->size(); i++)
+          {
+          double x, r, e;
+          if (!residualAt(item, *fit, i, _residualMode, x, r, e) || x < view.xMinimum || x > view.xMaximum) continue;
+          largest = std::max(largest, std::fabs(r) + e);
+          }
+        }
+      else if (item.function())
+        {
+        double a = std::max<double>(view.xMinimum, item.extendFits() || fit->low.empty() ? view.xMinimum : fit->low[0]);
+        double b = std::min<double>(view.xMaximum, item.extendFits() || fit->high.empty() ? view.xMaximum : fit->high[0]);
+        for (int i=0; i<=100 && b > a; i++)
+          {
+          double x = a + (b - a)*i/100.0, r;
+          try { r = item.function()->evaluateAt(x) - fit->valueAt(x); } catch (...) { continue; }
+          if (std::isfinite(r)) largest = std::max(largest, std::fabs(r));
+          }
+        }
+      }
+    }
+  if (!(largest > 0)) largest = 1;
+  double step;
+  low = -1.05*largest; high = 1.05*largest;
+  niceLinear(low, high, step);
+  }
+
+  Point2D Graph::toResidualCanvas(const View & view, double low, double high, double x, double r) const
+  {
+  Point2D p = toCanvas(view, x, view.yMinimum);
+  double f = high > low ? (r - low)/(high - low) : 0.5;
+  return Point2D(p.x(), residualYLow() + f*(residualYHigh() - residualYLow()));
+  }
   float Graph::frameYHigh() const { return _cellYHigh - _margins.top()   *(_cellYHigh-_cellYLow); }
 
   bool Graph::cellContains(const Point2D & p) const
@@ -414,6 +521,7 @@ namespace CAP
   for (int k=0; k<nAxes(); k++)
     if (axis(k).bodyRect().expanded(0.5f*toleranceX, 0.5f*toleranceY).contains(p)) { result.part = kAxis; result.axis = k; return result; }
   if (frameContains(p)) { result.part = kFrame; return result; }
+  if (residualContains(p)) { result.part = kResiduals; return result; }
   if (cellContains(p)) result.part = kCell;
   return result;
   }

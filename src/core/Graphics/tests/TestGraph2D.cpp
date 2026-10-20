@@ -456,6 +456,52 @@ int main(int argc, char ** argv)
     CHECK(!graph.hasFits() && count(svgOf(graph), chi2) == 0);
   }
 
+  // ---- the panel of the residuals of the fits, below the frame
+  {
+    MATH::DataPointsVector data;
+    data.addPoints({0.0, 1.0, 2.0, 3.0, 4.0, 5.0}, {1.1, 2.9, 5.2, 6.8, 9.1, 11.3}, {0.1, 0.2, 0.1, 0.3, 0.2, 0.4});
+    MATH::Linear line(0.0, 1.0);
+    MATH::Fitter fitter(line, data);
+    fitter.setRange(0.0, 4.0);                                              // the last point is outside the fit
+    fitter.fit();
+    data.addFit(fitter.record("line"));
+    Graph graph;
+    graph.add(GraphItem(&data));
+    float frameBottom = graph.frameYLow();
+    std::string before = svgOf(graph);
+    CHECK(!graph.hasResidualPanel() && graph.residualContains(Point2D(0.5f, frameBottom + 0.01f)) == false);
+    graph.setShowResiduals(true);
+    CHECK(graph.hasResidualPanel() && near(graph.residualYLow(), frameBottom) && graph.frameYLow() > frameBottom
+          && near(graph.frameYLow(), graph.residualYHigh() + graph.residualGap()));
+    const GraphItem & item = graph.items()[0];
+    double x, r, e;
+    CHECK(Graph::residualAt(item, *item.fit(0), 2, Graph::kDifference, x, r, e) && x == 2.0
+          && near(r, 5.2 - item.fit(0)->valueAt(2.0), 1E-5) && near(e, 0.1, 1E-6));
+    CHECK(!Graph::residualAt(item, *item.fit(0), 5, Graph::kDifference, x, r, e));   // outside the range of the fit
+    CHECK(Graph::residualAt(item, *item.fit(0), 1, Graph::kPull, x, r, e) && near(r, (2.9 - item.fit(0)->valueAt(1.0))/0.2, 1E-4) && e == 0);
+    const Graph::View view = graph.view();
+    double low, high;
+    graph.residualRange(view, low, high);
+    CHECK(low < 0 && high > 0 && near(low, -high));
+    for (unsigned int i=0; i<5; i++)
+      if (Graph::residualAt(item, *item.fit(0), i, Graph::kDifference, x, r, e)) CHECK(std::fabs(r) + e <= high);
+    std::string svg = svgOf(graph);
+    std::string minus = "data \xE2\x88\x92 fit";
+    CHECK(count(svg, minus) == 1 && count(before, minus) == 0);
+    CHECK(count(svg, "<circle") >= count(before, "<circle") + 5 || count(svg, "<path") > count(before, "<path"));
+    Point2D inPanel(0.5f*(graph.frameXLow() + graph.frameXHigh()), 0.5f*(graph.residualYLow() + graph.residualYHigh()));
+    CHECK(graph.pick(inPanel, 0.001f, 0.001f).part == Graph::kResiduals);
+    graph.setResidualMode(Graph::kPull);
+    CHECK(count(svgOf(graph), ">pull<") == 1);
+    graph.setResidualRange(-3.0f, 3.0f);
+    graph.residualRange(view, low, high);
+    CHECK(low == -3.0 && high == 3.0);
+    Graph copy(graph);
+    CHECK(copy.showResiduals() && copy.residualMode() == Graph::kPull && !copy.isAutoResidualRange());
+    graph.setShowFits(false);                                               // no fit drawn: no panel
+    CHECK(!graph.hasResidualPanel() && near(graph.frameYLow(), frameBottom));
+  }
+
   std::printf("TestGraph2D: %d checks, %d failed\n", nChecks, nFailures);
   return nFailures;
 }

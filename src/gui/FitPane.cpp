@@ -169,6 +169,18 @@ namespace CAP
   bool statistics = graph->showFitStatistics();
   if (ImGui::Checkbox("quality in the legend", &statistics)) { changing(); graph->setShowFitStatistics(statistics); }
   ImGui::SetItemTooltip("Give the chi square per degree of freedom of each fit after its label in the legend");
+  ImGui::SameLine();
+  bool residuals = graph->showResiduals();
+  if (ImGui::Checkbox("residuals panel", &residuals)) { changing(); graph->setShowResiduals(residuals); }
+  ImGui::SetItemTooltip("Panel below the graph with the residuals of the fits, in their colors");
+  if (residuals)
+    {
+    ImGui::SameLine();
+    int mode = int(graph->residualMode());
+    ImGui::SetNextItemWidth(130);
+    if (ImGui::Combo("##residualMode", &mode, "data \xE2\x88\x92 fit\0pulls\0")) { changing(); graph->setResidualMode(Graph::ResidualMode(mode)); }
+    ImGui::SetItemTooltip("data - fit with the statistical error bars, or the pulls (data - fit)/uncertainty");
+    }
   if (onNewFit)
     {
     ImGui::SameLine(0, 18);

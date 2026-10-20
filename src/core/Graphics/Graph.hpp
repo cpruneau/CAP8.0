@@ -13,6 +13,7 @@
 //! @brief Graph: a plot of functions and data points in a cell of a canvas; GraphItem: one object shown.
 #ifndef CAP__Graph
 #define CAP__Graph
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include "Drawable2D.hpp"
@@ -379,8 +380,10 @@ namespace CAP
   bool  log(int k) const { return k == 0 ? logX : (k == 1 ? logY : logZ); }
   };
 
-  //! @brief Parts of a graph, as found by pick().
-  enum Part { kNothing, kCell, kFrame, kTitle, kLegend, kAxis, kAxisTitle, kDataPoint };
+  //! @brief Parts of a graph, as found by pick() (kResiduals: the panel of the residuals of the fits).
+  enum Part { kNothing, kCell, kFrame, kTitle, kLegend, kAxis, kAxisTitle, kDataPoint, kResiduals };
+  //! @brief What the panel of the residuals shows: data - fit, or the pulls (data - fit)/(statistical uncertainty).
+  enum ResidualMode { kDifference, kPull };
 
   //! @brief What is at a canvas position: the part, and for an axis its index (0 x, 1 y; 2 z for the 3D graphs),
   //! for a data point the index of the item and of the point.
@@ -605,6 +608,67 @@ namespace CAP
   Pick pick(const Point2D & p, float toleranceX, float toleranceY) const;
   //! @}
 
+  //! @name Residuals of the fits
+  //!
+  //! Optionally, a panel below the frame shows the residuals of the fits drawn in the graph (see GraphItem::fit()),
+  //! each in the color of its fit: for data points, data - fit (with the statistical error bars) or the pulls
+  //! (data - fit)/(statistical uncertainty), at the points inside the range of the fit; for a function, the curve
+  //! f(x) - fit(x). The panel shares the x axis of the frame (whose labels and title then go below the panel); its
+  //! y range is automatic (symmetric about zero) unless set. It is drawn when showResiduals() is set and the graph
+  //! draws fits (hasFits()), in a plane view; the frame then takes the upper part of the area it had.
+  //! @{
+
+  //! @brief Whether the panel of the residuals is asked for. @return true if so
+  bool showResiduals() const { return _showResiduals; }
+  //! @brief Ask for the panel of the residuals, or not. @param v show it
+  void setShowResiduals(bool v) { _showResiduals = v; }
+  //! @brief Whether the panel of the residuals is drawn (asked for, fits drawn, plane view). @return true if so
+  bool hasResidualPanel() const;
+  //! @brief What the panel shows. @return data - fit, or pulls
+  ResidualMode residualMode() const { return _residualMode; }
+  //! @brief Set what the panel shows. @param mode data - fit, or pulls
+  void setResidualMode(ResidualMode mode) { _residualMode = mode; }
+  //! @brief Height of the panel, as a fraction of the area of the frame and the panel. @return fraction
+  float residualFraction() const { return _residualFraction; }
+  //! @brief Set the height of the panel. @param fraction fraction of the area of the frame and the panel (0.1 to 0.6)
+  void setResidualFraction(float fraction) { _residualFraction = std::min(0.6f, std::max(0.1f, fraction)); }
+  //! @brief Bottom of the panel (normalized canvas coordinates). @return bottom
+  float residualYLow() const;
+  //! @brief Top of the panel (below the frame, by residualGap()). @return top
+  float residualYHigh() const;
+  //! @brief Space between the panel and the frame (5% of the cell height), which keeps the labels of their y axes
+  //! apart. @return space (normalized canvas coordinates)
+  float residualGap() const;
+  //! @brief Whether a canvas point is inside the panel (when it is drawn). @param p point @return true if so
+  bool residualContains(const Point2D & p) const;
+  //! @brief Fixed y range of the panel. @param minimum lower end @param maximum upper end
+  void setResidualRange(float minimum, float maximum) { _residualMinimum = minimum; _residualMaximum = maximum; _autoResidual = false; }
+  //! @brief Back to an automatic y range of the panel.
+  void setAutoResidualRange() { _autoResidual = true; }
+  //! @brief Whether the y range of the panel is automatic. @return true if so
+  bool isAutoResidualRange() const { return _autoResidual; }
+  //!
+  //! @brief Y range of the panel: the fixed one, or the residuals (with their error bars) in the x range of the view,
+  //! rounded to nice values, symmetric about zero. @param view view @param low lower end @param high upper end
+  //!
+  void residualRange(const View & view, double & low, double & high) const;
+  //! @brief Canvas position of a residual. @param view view @param low lower end of the y range of the panel
+  //! @param high upper end @param x abscissa @param r residual @return position
+  Point2D toResidualCanvas(const View & view, double low, double high, double x, double r) const;
+  //! @brief Template of the y axis of the panel (title: "data - fit" or "pull" when empty). @return axis
+  Axis & residualAxis() { return _residualAxis; }
+  const Axis & residualAxis() const { return _residualAxis; }   //!< Template of the y axis of the panel
+  //!
+  //! @brief Residual of a data point to a fit, as drawn in the panel.
+  //! @param item item of data points @param fit fit of the item @param index index of the point @param mode mode
+  //! @param x set to the abscissa @param r set to the residual @param error set to its error bar (0 for a pull)
+  //! @return false if there is none (point outside the range of the fit, unless GraphItem::extendFits(); no
+  //! uncertainty for a pull; value not finite)
+  //!
+  static bool residualAt(const GraphItem & item, const MATH::FitRecord & fit, unsigned int index, ResidualMode mode,
+                         double & x, double & r, double & error);
+  //! @}
+
   //! @brief Back to an empty graph with default settings.
   virtual void reset();
 
@@ -644,6 +708,13 @@ namespace CAP
   bool _showLegend;   //!< the legend is shown
   bool _showFits = true;   //!< the fits of the items are drawn
   bool _showFitStatistics = true;   //!< the legend gives the quality of the fits
+  bool _showResiduals = false;   //!< the panel of the residuals is asked for
+  ResidualMode _residualMode = kDifference;   //!< data - fit, or pulls
+  float _residualFraction = 0.3f;   //!< height of the panel (fraction of the area of the frame and the panel)
+  bool  _autoResidual = true;   //!< automatic y range of the panel
+  float _residualMinimum = -1.0f;   //!< fixed y range of the panel
+  float _residualMaximum = 1.0f;   //!< fixed y range of the panel
+  Axis  _residualAxis;   //!< template of the y axis of the panel
   float _titleOffsetX;   //!< displacement of the title (fractions of the cell)
   float _titleOffsetY;   //!< displacement of the title (fractions of the cell)
   float _titlePointSize;   //!< size of the title in points (0: automatic)

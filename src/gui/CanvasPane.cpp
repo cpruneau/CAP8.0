@@ -111,6 +111,10 @@ namespace CAP
     bool fits = graph.showFits();
     if (ImGui::Checkbox("Fits", &fits)) { changing(); graph.setShowFits(fits); }
     ImGui::SetItemTooltip("Draw the fits of the objects of the selected graph (View > Fit Results for their results)");
+    ImGui::SameLine();
+    bool residuals = graph.showResiduals();
+    if (ImGui::Checkbox("Residuals", &residuals)) { changing(); graph.setShowResiduals(residuals); }
+    ImGui::SetItemTooltip("Panel below the graph with the residuals of the fits (data - fit, or pulls: right-click), in their colors");
     }
 
   ImGui::SameLine(0, 18);
@@ -241,6 +245,23 @@ namespace CAP
     bool fits = graph.showFits(), statistics = graph.showFitStatistics();
     if (ImGui::MenuItem("Fits", nullptr, fits)) { changing(); graph.setShowFits(!fits); }
     if (ImGui::MenuItem("Fit Quality in the Legend", nullptr, statistics)) { changing(); graph.setShowFitStatistics(!statistics); }
+    bool residuals = graph.showResiduals();
+    if (ImGui::MenuItem("Residuals Panel", nullptr, residuals)) { changing(); graph.setShowResiduals(!residuals); }
+    if (residuals && ImGui::BeginMenu("Residuals"))
+      {
+      bool pulls = graph.residualMode() == Graph::kPull;
+      if (ImGui::MenuItem("Data \xE2\x88\x92 Fit", nullptr, !pulls)) { changing(); graph.setResidualMode(Graph::kDifference); }
+      if (ImGui::MenuItem("Pulls (Data \xE2\x88\x92 Fit) / Uncertainty", nullptr, pulls)) { changing(); graph.setResidualMode(Graph::kPull); }
+      ImGui::Separator();
+      for (float fraction : { 0.2f, 0.3f, 0.4f })
+        {
+        char label[32];
+        std::snprintf(label, sizeof(label), "Height %.0f%%", 100.0f*fraction);
+        if (ImGui::MenuItem(label, nullptr, std::fabs(graph.residualFraction() - fraction) < 0.01f)) { changing(); graph.setResidualFraction(fraction); }
+        }
+      if (ImGui::MenuItem("Automatic Range", nullptr, graph.isAutoResidualRange())) { changing(); graph.setAutoResidualRange(); }
+      ImGui::EndMenu();
+      }
     }
   if (ImGui::MenuItem("Automatic ranges", nullptr, graph.isAutoX() && graph.isAutoY())) { changing(); graph.setAutoRange(); }
   if (ImGui::BeginMenu("Remove", !graph.items().empty()))
@@ -473,7 +494,20 @@ namespace CAP
 
   // ---- coordinates under the mouse
   _hoverText = "";
-  if (k >= 0 && !_canvas.graph(k).items().empty() && _canvas.graph(k).frameContains(p))
+  if (k >= 0 && _canvas.graph(k).residualContains(p))
+    {
+    // the residuals panel: x and the residual under the mouse
+    const Graph & g = _canvas.graph(k);
+    const Graph::View view = g.view();
+    double x, y, low, high;
+    g.fromCanvas(view, p, x, y);
+    g.residualRange(view, low, high);
+    double r = low + (p.y() - g.residualYLow())/(g.residualYHigh() - g.residualYLow())*(high - low);
+    char text[160];
+    std::snprintf(text, sizeof(text), "x = %.5g   %s = %.5g", x, g.residualMode() == Graph::kPull ? "pull" : "data \xE2\x88\x92 fit", r);
+    _hoverText = text;
+    }
+  else if (k >= 0 && !_canvas.graph(k).items().empty() && _canvas.graph(k).frameContains(p))
     {
     const Graph & g = _canvas.graph(k);
     const Graph::View view = g.view();
@@ -537,6 +571,13 @@ namespace CAP
     }
 
   // ---- double-click in the frame: automatic ranges
+  if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && pick.part == Graph::kResiduals)
+    {
+    changing();
+    g.setAutoX();
+    g.setAutoResidualRange();
+    return true;
+    }
   if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && (pick.part == Graph::kFrame || pick.part == Graph::kDataPoint))
     {
     if (g.is3D()) { changing(); g.resetViewAngles(); g.setAutoRange(); return true; }   // 3D: back to the default view
@@ -574,6 +615,7 @@ namespace CAP
         if (shift) { drag.kind = kMoveLabels; drag.initialX = g.axis(pick.axis).labelGap(); }
         else if (pick.axis < 2 && !g.is3D()) drag.kind = (pick.axis == 0) ? kZoomX : kZoomY;   // the z axis, 3D views: not by dragging
         break;
+      case Graph::kResiduals: drag.kind = kZoomX; break;   // zooms in x, as the x axis
       case Graph::kFrame: case Graph::kDataPoint:
         if (g.is3D()) { drag.kind = kRotate; drag.initialX = g.azimuth(); drag.initialY = g.elevation(); }
         else drag.kind = kZoom;
