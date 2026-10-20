@@ -14,14 +14,16 @@ Usage (from anywhere; the script locates CAP from its own position):
     python3 RunCAP.py --check FILE            # load FILE, check its values against the templates and exit (no GUI)
 
 The window has four parts, from top to bottom:
-  * a toolbar: Run, Save workflow, Load workflow, Filters, Save log, Clear log, Kill and Exit. Filters opens the
-    Filters panel (RunCAPFiltersGui.py): one tab per kind (event and particle filters, efficiencies, smearers), the
-    number of objects of that kind, and for each its name and title and its conditions or binning parameters;
+  * a toolbar: Run, Save workflow, Load workflow, Save log, Clear log, Kill and Exit;
   * the workflow editor: the tasks available in the current build (left), the workflow (right), and between them two
     arrow buttons. The right arrow appends the tasks selected on the left to the workflow (a task can be added several
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
     under the workflow reorder the tasks and nest them: a nested task is a subtask of the task above it (e.g. the
     event generator and the analyzers inside an EventIterator, which executes them for every event);
+  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, defined once and used
+    by the tasks by name. One tab per kind (event and particle filters, event and particle efficiencies and
+    smearers), the number of objects of that kind, and for each its name and title and its conditions (a range, two
+    ranges, a value or a flag of one quantity) or binning parameters;
   * the tasks: one line per task of the workflow, in run order, with the filters it uses, the number of its
     histogram folders and its first problem. Double-clicking a task (here or in the workflow), or Configure task,
     opens its window (RunCAPTaskDialog.py): General (name, report level, parameters), Filters (for each kind the task
@@ -567,7 +569,7 @@ def run_gui(initial_file=None, hook=None):
             self.items = {}             # workflow tree item -> TaskConfig
             self.dialogs = {}           # workflow tree item -> window of the task (RunCAPTaskDialog)
             self.library = filters.FilterLibrary()   # filters, efficiencies and smearers of the workflow
-            self.filters_window = None
+            self.filters_panel = None       # Filters pane (RunCAPFiltersGui.FiltersPanel)
             self.saved_path = ""        # file of the last save or load
             self.dirty = False
             self.process = None
@@ -591,11 +593,14 @@ def run_gui(initial_file=None, hook=None):
             panes = ttk.PanedWindow(root, orient=tk.VERTICAL)
             panes.pack(fill=tk.BOTH, expand=True, padx=6, pady=(0, 6))
             self.panes = panes
-            selection, parameters, output = ttk.Frame(panes), ttk.Frame(panes), ttk.Frame(panes)
+            selection, filter_pane = ttk.Frame(panes), ttk.Frame(panes)
+            parameters, output = ttk.Frame(panes), ttk.Frame(panes)
             panes.add(selection, weight=2)
-            panes.add(parameters, weight=3)
+            panes.add(filter_pane, weight=3)
+            panes.add(parameters, weight=2)
             panes.add(output, weight=2)
             self._make_selection(selection)
+            self._make_filters(filter_pane)
             self._make_parameters(parameters)
             self._make_output(output)
             self._update_arrows()
@@ -607,12 +612,13 @@ def run_gui(initial_file=None, hook=None):
             root.after(200, self._place_sashes)
 
         def _place_sashes(self):
-            # initial heights: tasks 30%, parameters 45%, output 25%
+            # initial heights: workflow 24%, filters 36%, tasks 20%, output 20%
             self.root.update_idletasks()
             h = self.panes.winfo_height()
             if h > 100:
-                self.panes.sashpos(0, int(h * 0.30))
-                self.panes.sashpos(1, int(h * 0.75))
+                self.panes.sashpos(0, int(h * 0.24))
+                self.panes.sashpos(1, int(h * 0.60))
+                self.panes.sashpos(2, int(h * 0.80))
 
         def _dialog(self, kind, **options):
             """File dialog of filedialog.<kind>. On macOS the file types are left out: Tk's native panel can abort
@@ -645,8 +651,6 @@ def run_gui(initial_file=None, hook=None):
             self.run_button.pack(side=tk.LEFT)
             buttons = [("Save workflow\u2026", self.save_workflow, "Save the workflow and its parameters to an XML file"),
                        ("Load workflow\u2026", self.load_workflow, "Load a workflow XML file saved earlier"),
-                       ("Filters\u2026", self.show_filters, "Event and particle filters, efficiencies and smearers of "
-                                                            "the workflow, used by the tasks by name"),
                        ("Save log\u2026", self.save_log, "Save the output below to a log file"),
                        ("Clear log", self.clear_log, "Clear the output below")]
             for text, command, tip in buttons:
@@ -1051,6 +1055,12 @@ def run_gui(initial_file=None, hook=None):
             self._update_title()
             self._update_summary()
             self.count_label.configure(text="%d task(s)" % len(self._workflow_items()))
+            usage = [(t.name, sorted((k, tuple(v)) for k, v in filters.choices(t).items()))
+                     for t in all_tasks(self.workflow())]
+            if usage != getattr(self, "_usage", None):        # tasks chose other objects: "used by" of the pane
+                self._usage = usage
+                if self.filters_panel is not None:
+                    self.filters_panel.refresh()
             self._update_arrows()
             if message:
                 self.status.set(message)
@@ -1114,9 +1124,8 @@ def run_gui(initial_file=None, hook=None):
                 return
             self.library = library
             self.set_workflow(tasks)
-            if self.filters_window is not None:
-                self.filters_window.panel.library = library
-                self.filters_window.panel.refresh()
+            self.filters_panel.library = library
+            self.filters_panel.refresh()
             self.saved_path = filename
             self.settings["last_workflow"] = filename
             self.settings["workflow_dir"] = os.path.dirname(filename)
@@ -1130,16 +1139,27 @@ def run_gui(initial_file=None, hook=None):
                 messagebox.showwarning("Load workflow", "%d warning(s), see the output." % len(warnings))
 
         # ---------------------------------------------------------------------------------------------- filters
+        def _make_filters(self, parent):
+            """The Filters pane: the filters, efficiencies and smearers of the workflow, used by the tasks by name."""
+            import RunCAPFiltersGui
+            head = ttk.Frame(parent)
+            head.pack(fill=tk.X, pady=(6, 0))
+            ttk.Label(head, text="Filters", style="Section.TLabel").pack(side=tk.LEFT)
+            ttk.Label(head, text="Define the filters, efficiencies and smearers of the workflow here; each task "
+                                 "uses them by name (double-click the task below).",
+                      foreground="gray40").pack(side=tk.LEFT, padx=10)
+            self.filters_panel = RunCAPFiltersGui.FiltersPanel(
+                parent, self.library, on_change=self._library_changed, on_rename=self._rename_object,
+                on_remove=self._remove_objects, users=self._object_users)
+            self.filters_panel.configure(padding=(0, 4, 0, 0))
+            self.filters_panel.pack(fill=tk.BOTH, expand=True)
+
         def show_filters(self, kind=None):
-            """Show the Filters panel (made the first time), at the tab of a kind."""
-            if self.filters_window is None:
-                import RunCAPFiltersGui
-                self.filters_window = RunCAPFiltersGui.FiltersWindow(
-                    self.root, self.library, on_change=self._library_changed, on_rename=self._rename_object,
-                    on_remove=self._remove_objects, users=self._object_users)
-            self.filters_window.show(self.library)
+            """Bring the main window forward with the Filters pane at the tab of a kind."""
             if kind:
-                self.filters_window.panel.select(kind)
+                self.filters_panel.select(kind)
+            self.root.deiconify()
+            self.root.lift()
 
         def _library_changed(self):
             self._changed()

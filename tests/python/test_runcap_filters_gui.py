@@ -4,7 +4,7 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of the Filters panel of RunCAP.py (RunCAPFiltersGui), skipped without tkinter or a display."""
+"""Tests of the Filters pane of RunCAP.py (RunCAPFiltersGui), skipped without tkinter or a display."""
 
 import os
 import sys

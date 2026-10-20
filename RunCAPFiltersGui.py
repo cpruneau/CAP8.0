@@ -5,7 +5,7 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPFiltersGui -- the Filters panel of RunCAP.py: the library of filters, efficiencies and smearers of a workflow.
+RunCAPFiltersGui -- the Filters pane of the main window of RunCAP.py: the library of filters, efficiencies and smearers of a workflow.
 
 One tab per kind (event filters, particle filters, event and particle efficiencies, event and particle smearers). In
 each tab, a menu sets how many objects of that kind the library holds, and each object has a frame with its name and
@@ -88,7 +88,7 @@ class ScrollFrame(ttk.Frame):
 
 
 class FiltersPanel(ttk.Frame):
-    """The Filters panel: a notebook with one tab per kind of the library.
+    """The Filters pane: a notebook with one tab per kind of the library.
     @param library RunCAPFilters.FilterLibrary edited in place
     @param on_change called after any change of the library
     @param on_rename called with (kind, old name, new name) when an object is renamed
@@ -349,27 +349,3 @@ class FiltersPanel(ttk.Frame):
         errors = F.check_library(self.library)
         more = "\n(and %d more)" % (len(errors) - 6) if len(errors) > 6 else ""
         self.problems.set("\n".join(errors[:6]) + more)
-
-
-class FiltersWindow(tk.Toplevel):
-    """Window holding the Filters panel."""
-
-    def __init__(self, master, library, **callbacks):
-        tk.Toplevel.__init__(self, master)
-        self.title("CAP Workflow — Filters")
-        self.geometry("1080x640")
-        self.minsize(720, 420)
-        self.panel = FiltersPanel(self, library, **callbacks)
-        self.panel.pack(fill=tk.BOTH, expand=True)
-        bottom = ttk.Frame(self, padding=(6, 0, 6, 6))
-        bottom.pack(fill=tk.X)
-        ttk.Button(bottom, text="Close", command=self.withdraw).pack(side=tk.RIGHT)
-        self.protocol("WM_DELETE_WINDOW", self.withdraw)
-
-    def show(self, library=None):
-        """Show the window (with another library, e.g. after loading a workflow)."""
-        if library is not None and library is not self.panel.library:
-            self.panel.library = library
-        self.panel.refresh()
-        self.deiconify()
-        self.lift()

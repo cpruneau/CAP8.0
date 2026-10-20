@@ -11,7 +11,7 @@ Tabs:
   * General: name, report level, class, and the parameters of the task (the keys of its filters and histogram folders
     are written from the choices below, see RunCAPFilters);
   * Filters (tasks that use filters, efficiencies or smearers): for each kind the task supports, how many objects it
-    uses and which ones, by name, among those of the library of the workflow (Filters panel);
+    uses and which ones, by name, among those of the library of the workflow (Filters pane);
   * Histograms (analyzers): the prefix of the names of the folders, one folder per combination of the filters chosen
     (<prefix>_<event filter>_<particle filter>[_<particle filter 2>], derived folders ending with _D), and their
     binning: the same for all (the HISTOGRAM group of the task), or folder by folder, the parameters not set for a
@@ -53,7 +53,7 @@ class TaskDialog(tk.Toplevel):
     @param templates task templates; @param library RunCAPFilters.FilterLibrary of the workflow
     @param helpers {"valid_value", "partial_value", "severities"} of RunCAP.py
     @param rename called with (task, new name): None if renamed, else the reason it is not
-    @param changed called after any change; @param show_filters called with a kind to show the Filters panel"""
+    @param changed called after any change; @param show_filters called with a kind to show the Filters pane"""
 
     def __init__(self, master, task, templates, library, helpers, rename, changed, show_filters):
         tk.Toplevel.__init__(self, master)
@@ -220,7 +220,7 @@ class TaskDialog(tk.Toplevel):
         for child in self.filters_tab.winfo_children():
             child.destroy()
         ttk.Label(self.filters_tab, text="Objects of the library used by this task, by name (define them in the "
-                                         "Filters panel).", foreground="gray40").pack(anchor="w", pady=(0, 6))
+                                         "Filters pane).", foreground="gray40").pack(anchor="w", pady=(0, 6))
         scroll = ScrollFrame(self.filters_tab)
         scroll.pack(fill=tk.BOTH, expand=True)
         scroll.inner.columnconfigure(0, weight=1)
@@ -244,7 +244,7 @@ class TaskDialog(tk.Toplevel):
             button = ttk.Button(head, text="Filters…", command=lambda k=kind: self.show_filters(k))
             button.pack(side=tk.RIGHT)
             if not names:
-                ttk.Label(head, text="None in the library: add some in the Filters panel.",
+                ttk.Label(head, text="None in the library: add some in the Filters pane.",
                           foreground="gray40").pack(side=tk.LEFT, padx=10)
             elif kind == "PARTICLE_FILTER" and self.layout:
                 ttk.Label(head, text="at most %d" % F.MAX_PARTICLE_FILTERS, foreground="gray40").pack(side=tk.LEFT)

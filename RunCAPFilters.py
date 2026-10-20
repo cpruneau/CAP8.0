@@ -40,7 +40,7 @@ import copy
 import re
 import xml.etree.ElementTree as ET
 
-#: Kinds of objects of the library, in the order of the tabs of the Filters panel.
+#: Kinds of objects of the library, in the order of the tabs of the Filters pane.
 KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER"]
 KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle filters",
                "EVENT_EFFICIENCY": "Event efficiencies", "PARTICLE_EFFICIENCY": "Particle efficiencies",
