@@ -11,7 +11,9 @@
  * *********************************************************************/
 //! @file FitRecord.cpp
 //! @brief Implementation of FitRecord.
+#include <cstdio>
 #include <limits>
+#include <string>
 #include <memory>
 #include "BinaryIO.hpp"
 #include "FitRecord.hpp"
@@ -36,6 +38,96 @@ namespace CAP
   if (!function) return std::numeric_limits<double>::quiet_NaN();
   try { return function->evaluateAt(x); }
   catch (...) { return std::numeric_limits<double>::quiet_NaN(); }
+  }
+
+  namespace
+  {
+  std::string number(double v, const char * format="%.6g")
+  {
+  char text[48];
+  std::snprintf(text, sizeof(text), format, v);
+  return text;
+  }
+  } // namespace
+
+  bool FitRecord::inRange(const std::vector<double> & x) const
+  {
+  if (low.empty() || low.size() != x.size()) return false;
+  for (std::size_t k=0; k<x.size(); k++) if (x[k] < low[k] || x[k] > high[k]) return false;
+  return true;
+  }
+
+  bool FitRecord::chiSquareLike() const { return !result.statistic.contains("unbinned"); }
+
+  String FitRecord::parameterName(unsigned int k) const
+  {
+  if (function && k < function->nParameters() && !function->parameter(k).name().isNull()) return function->parameter(k).name();
+  return String(("p" + std::to_string(k)).c_str());
+  }
+
+  void FitRecord::parameterAt(unsigned int k, double & value, double & error) const
+  {
+  value = k < result.values.size() ? result.values[k] : (function && k < function->nParameters() ? function->parameter(k).value() : 0.0);
+  error = k < result.errors.size() ? result.errors[k] : 0.0;
+  }
+
+  std::vector<std::pair<String,String>> FitRecord::quality() const
+  {
+  const FitResult & r = result;
+  std::vector<std::pair<String,String>> rows;
+  auto add = [&rows](const std::string & name, const std::string & value) { rows.push_back({ String(name.c_str()), String(value.c_str()) }); };
+  bool chi2 = chiSquareLike();
+  add(chi2 ? "\xCF\x87\xC2\xB2" : "-2 ln L", number(r.chiSquare));
+  add("degrees of freedom", std::to_string(r.nDegreesOfFreedom));
+  if (chi2)
+    {
+    add("\xCF\x87\xC2\xB2/ndf", r.nDegreesOfFreedom > 0 ? number(r.chiSquarePerDegreeOfFreedom, "%.4g") : "-");
+    add("p-value", r.nDegreesOfFreedom > 0 ? number(r.pValue, "%.4g") : "-");
+    }
+  add("points", std::to_string(r.nPoints));
+  add("converged", r.converged ? "yes" : "no");
+  add("uncertainties", r.validErrors ? "valid" : "not available");
+  if (!r.status.isNull()) add("status", r.status.data());
+  add("statistic", r.statistic.isNull() ? "-" : r.statistic.data());
+  add("method", r.method.isNull() ? "-" : r.method.data());
+  add("evaluations", std::to_string(r.nEvaluations));
+  add("iterations", std::to_string(r.nIterations));
+  if (!low.empty())
+    {
+    std::string range;
+    for (std::size_t i=0; i<low.size(); i++) range += (i ? " x " : "") + std::string("[") + number(low[i]) + ", " + number(high[i]) + "]";
+    add("range", range);
+    }
+  return rows;
+  }
+
+  String FitRecord::text() const
+  {
+  std::string text = std::string(label.data()) + "\t" + (function ? FunctionRegistry::typeName(*function).data() : "(no function)") + "\n";
+  for (const auto & row : quality()) text += std::string(row.first.data()) + "\t" + row.second.data() + "\n";
+  if (!function) return String(text.c_str());
+  text += "parameter\tvalue\tuncertainty\tbounds\n";
+  for (unsigned int k=0; k<function->nParameters(); k++)
+    {
+    double value, error;
+    parameterAt(k, value, error);
+    text += std::string(parameterName(k).data()) + "\t" + number(value) + "\t" + number(error) + "\t" + function->parameter(k).boundsText().data() + "\n";
+    }
+  const Matrix & c = result.correlation;
+  const std::vector<unsigned int> & free = result.freeParameters;
+  if (!free.empty() && c.nRows() == free.size() && c.nColumns() == free.size())
+    {
+    text += "correlations";
+    for (unsigned int j : free) text += std::string("\t") + parameterName(j).data();
+    text += "\n";
+    for (std::size_t i=0; i<free.size(); i++)
+      {
+      text += parameterName(free[i]).data();
+      for (std::size_t j=0; j<free.size(); j++) text += "\t" + number(c.values()[i*free.size() + j], "%.4f");
+      text += "\n";
+      }
+    }
+  return String(text.c_str());
   }
 
   const FitRecord & FitList::at(unsigned int k) const

@@ -206,6 +206,40 @@ namespace CAP
   //! @brief Print all points to std::cout, one per line.
   virtual void print() const override;
 
+  //! @name Table of the values (as the data pane of CapGui shows them)
+  //! @{
+
+  //! @brief Kind and size, e.g. "Histogram (1D), 100 bins" or "Data points (2D), 25 points". @return text
+  String description() const;
+  //! @brief Names of the columns: "#", each coordinate and "± " its name (the dimension titles of a histogram, or
+  //! x, y, z, x3, ...), the value (the title of a histogram, or y, or value), "± stat.", "± syst.". @return names
+  std::vector<String> columnNames() const;
+  //! @brief Which columns of columnNames() hold something: uncertainty columns that are zero for every point are
+  //! not. @return one flag per column
+  std::vector<bool> columnsShown() const;
+  //! @brief Cells of point k after its index ("%.6g"): coordinates and their uncertainties, value, statistical and
+  //! systematic uncertainties. @param k index @return cells
+  std::vector<String> rowValues(unsigned int k) const;
+  //! @brief Names of the columns of the fits: "f(x) <label>" and, if asked, "pull <label>" for each fit.
+  //! @param pulls with the pulls @return names
+  std::vector<String> fitColumnNames(bool pulls=true) const;
+  //!
+  //! @brief Cells of the fits for point k: f(x) of each fit, and its pull (pullAt()) if asked; empty where they cannot
+  //! be computed. @param k index @param pulls with the pulls @param outside if given, set for each cell to whether the
+  //! point is outside the range of the fit @return cells
+  //!
+  std::vector<String> fitValues(unsigned int k, bool pulls=true, std::vector<bool> * outside=nullptr) const;
+  //! @brief Pull of point k to a fit: (value - f(x))/(statistical uncertainty). @param k index @param fit fit
+  //! @return pull, or NaN if the point has no statistical uncertainty or f(x) cannot be computed
+  double pullAt(unsigned int k, const FitRecord & fit) const;
+  //!
+  //! @brief The table as tab-separated text, header row first (what Copy of the data pane gives): the columns shown
+  //! (columnsShown()), then those of the fits. @param fits with the columns of the fits @param pulls with the pulls
+  //! @return text
+  //!
+  String table(bool fits=true, bool pulls=true) const;
+  //! @}
+
   //! @name Fits attached (see FitRecord, Fitter::record())
   //! @{
 

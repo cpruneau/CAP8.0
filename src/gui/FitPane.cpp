@@ -41,68 +41,6 @@ namespace CAP
   return text;
   }
 
-  //! Whether the statistic is a chi square, or behaves as one (binned Poisson likelihood).
-  bool chiSquareLike(const MATH::FitResult & r) { return !r.statistic.contains("unbinned"); }
-
-  //! The quality of a fit, as (name, value) rows.
-  std::vector<std::pair<std::string,std::string>> quality(const MATH::FitRecord & fit)
-  {
-  const MATH::FitResult & r = fit.result;
-  std::vector<std::pair<std::string,std::string>> rows;
-  bool chi2 = chiSquareLike(r);
-  rows.push_back({ chi2 ? "\xCF\x87\xC2\xB2" : "-2 ln L", number(r.chiSquare) });
-  rows.push_back({ "degrees of freedom", std::to_string(r.nDegreesOfFreedom) });
-  if (chi2)
-    {
-    rows.push_back({ "\xCF\x87\xC2\xB2/ndf", r.nDegreesOfFreedom > 0 ? number(r.chiSquarePerDegreeOfFreedom, "%.4g") : "-" });
-    rows.push_back({ "p-value", r.nDegreesOfFreedom > 0 ? number(r.pValue, "%.4g") : "-" });
-    }
-  rows.push_back({ "points", std::to_string(r.nPoints) });
-  rows.push_back({ "converged", r.converged ? "yes" : "no" });
-  rows.push_back({ "uncertainties", r.validErrors ? "valid" : "not available" });
-  if (!r.status.isNull()) rows.push_back({ "status", r.status.data() });
-  rows.push_back({ "statistic", r.statistic.isNull() ? "-" : r.statistic.data() });
-  rows.push_back({ "method", r.method.isNull() ? "-" : r.method.data() });
-  rows.push_back({ "evaluations", std::to_string(r.nEvaluations) });
-  rows.push_back({ "iterations", std::to_string(r.nIterations) });
-  if (!fit.low.empty())
-    {
-    std::string range;
-    for (std::size_t i=0; i<fit.low.size(); i++)
-      range += (i ? " x " : "") + std::string("[") + number(fit.low[i]) + ", " + number(fit.high[i]) + "]";
-    rows.push_back({ "range", range });
-    }
-  return rows;
-  }
-
-  //! Bounds of a parameter, as a text.
-  std::string bounds(const MATH::Parameter & p)
-  {
-  switch (p.type())
-    {
-    case MATH::Parameter::Fixed:   return "fixed";
-    case MATH::Parameter::Low:     return ">= " + number(p.minimum());
-    case MATH::Parameter::High:    return "<= " + number(p.maximum());
-    case MATH::Parameter::LowHigh: return "[" + number(p.minimum()) + ", " + number(p.maximum()) + "]";
-    default:                       return "free";
-    }
-  }
-
-  //! Name of parameter k (its index if it has none).
-  std::string parameterName(const MATH::ParameterizedFunction & f, unsigned int k)
-  {
-  const String & name = f.parameter(k).name();
-  return name.isNull() ? "p" + std::to_string(k) : std::string(name.data());
-  }
-
-  //! Value and uncertainty of parameter k: those of the result, or the values of the function.
-  void parameterValue(const MATH::FitRecord & fit, unsigned int k, double & value, double & error)
-  {
-  const MATH::FitResult & r = fit.result;
-  value = k < r.values.size() ? r.values[k] : fit.function->parameter(k).value();
-  error = k < r.errors.size() ? r.errors[k] : 0.0;
-  }
-
   //! Name of the class of the function of a fit (see MATH::FunctionRegistry).
   std::string functionType(const MATH::FitRecord & fit)
   {
@@ -112,34 +50,7 @@ namespace CAP
 
   String FitPane::text(const GraphItem & item, const MATH::FitRecord & fit)
   {
-  std::string text = std::string(fit.label.data()) + "\t" + functionType(fit) + "\tfitted to\t" + item.label().data() + "\n";
-  for (const auto & row : quality(fit)) text += row.first + "\t" + row.second + "\n";
-  if (fit.function)
-    {
-    const MATH::ParameterizedFunction & f = *fit.function;
-    text += "parameter\tvalue\tuncertainty\tbounds\n";
-    for (unsigned int k=0; k<f.nParameters(); k++)
-      {
-      double value, error;
-      parameterValue(fit, k, value, error);
-      text += parameterName(f, k) + "\t" + number(value) + "\t" + number(error) + "\t" + bounds(f.parameter(k)) + "\n";
-      }
-    const MATH::Matrix & c = fit.result.correlation;
-    const std::vector<unsigned int> & free = fit.result.freeParameters;
-    if (c.nRows() == free.size() && c.nColumns() == free.size() && !free.empty())
-      {
-      text += "correlations";
-      for (unsigned int j : free) text += "\t" + parameterName(f, j);
-      text += "\n";
-      for (std::size_t i=0; i<free.size(); i++)
-        {
-        text += parameterName(f, free[i]);
-        for (std::size_t j=0; j<free.size(); j++) text += "\t" + number(c.values()[i*free.size() + j], "%.4f");
-        text += "\n";
-        }
-      }
-    }
-  return String(text.c_str());
+  return String("fitted to\t") + (item.label().isNull() ? String("(unnamed)") : item.label()) + String("\n") + fit.text();
   }
 
   void FitPane::render(Graph * graph, const std::function<void()> & beforeChange)
@@ -249,13 +160,13 @@ namespace CAP
   bool sideBySide = ImGui::GetContentRegionAvail().x > 2.2f*qualityWidth;
   if (ImGui::BeginTable("##quality", 2, flags, ImVec2(sideBySide ? qualityWidth : 0.0f, 0.0f)))
     {
-    for (const auto & row : quality(fit))
+    for (const auto & row : fit.quality())
       {
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
-      ImGui::TextDisabled("%s", row.first.c_str());
+      ImGui::TextDisabled("%s", row.first.data());
       ImGui::TableNextColumn();
-      ImGui::TextUnformatted(row.second.c_str());
+      ImGui::TextUnformatted(row.second.data());
       }
     ImGui::EndTable();
     }
@@ -271,17 +182,17 @@ namespace CAP
     for (unsigned int p=0; p<f.nParameters(); p++)
       {
       double value, error;
-      parameterValue(fit, p, value, error);
+      fit.parameterAt(p, value, error);
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
-      ImGui::TextUnformatted(parameterName(f, p).c_str());
+      ImGui::TextUnformatted(fit.parameterName(p).data());
       ImGui::TableNextColumn();
       ImGui::TextUnformatted(number(value).c_str());
       ImGui::TableNextColumn();
       if (f.parameter(p).type() == MATH::Parameter::Fixed) ImGui::TextDisabled("-");
       else ImGui::Text("\xC2\xB1 %s", number(error, "%.4g").c_str());
       ImGui::TableNextColumn();
-      ImGui::TextDisabled("%s", bounds(f.parameter(p)).c_str());
+      ImGui::TextDisabled("%s", f.parameter(p).boundsText().data());
       ImGui::TableNextColumn();
       if (p < fit.result.atLimit.size() && fit.result.atLimit[p])
         {
@@ -298,17 +209,16 @@ namespace CAP
   if (fit.function && free.size() > 1 && c.nRows() == free.size() && c.nColumns() == free.size()
       && ImGui::TreeNodeEx("Correlations", ImGuiTreeNodeFlags_DefaultOpen))
     {
-    const MATH::ParameterizedFunction & f = *fit.function;
     if (ImGui::BeginTable("##correlations", int(free.size()) + 1, flags))
       {
       ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-      for (unsigned int j : free) ImGui::TableSetupColumn(parameterName(f, j).c_str(), ImGuiTableColumnFlags_WidthFixed);
+      for (unsigned int j : free) ImGui::TableSetupColumn(fit.parameterName(j).data(), ImGuiTableColumnFlags_WidthFixed);
       ImGui::TableHeadersRow();
       for (std::size_t i=0; i<free.size(); i++)
         {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::TextUnformatted(parameterName(f, free[i]).c_str());
+        ImGui::TextUnformatted(fit.parameterName(free[i]).data());
         for (std::size_t j=0; j<free.size(); j++)
           {
           ImGui::TableNextColumn();

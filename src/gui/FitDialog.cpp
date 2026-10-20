@@ -38,33 +38,12 @@ namespace CAP
 
   namespace
   {
-  //! Whether an item can be fitted: data points or a function, of rank 1.
-  bool fittable(const GraphItem & item)
-  {
-  if (item.isMap()) return false;
-  if (item.kind() == GraphItem::kData) return item.data() != nullptr && item.data()->size() > 0;
-  return item.function() != nullptr && item.function()->rank() == 1;
-  }
-
   String itemName(const GraphItem & item, int k)
   {
   String name = item.label().isNull() ? String("(unnamed)") : item.label();
   name += String(item.kind() == GraphItem::kData ? (dynamic_cast<const MATH::Histogram*>(item.data()) ? "  (histogram)" : "  (data points)")
                                                  : "  (function)");
   return name + String("##item") + String(std::to_string(k));
-  }
-
-  //! Extent in x of data points.
-  bool extent(const MATH::DataPoints & data, double & low, double & high)
-  {
-  low = 1E300; high = -1E300;
-  for (unsigned int k=0; k<data.size(); k++)
-    {
-    double x = data.point(k).x();
-    if (!std::isfinite(x)) continue;
-    low = std::min(low, x); high = std::max(high, x);
-    }
-  return high >= low;
   }
 
   //! Index of a name in the registry, or 0.
@@ -122,17 +101,18 @@ namespace CAP
   {
   _item = -1;
   _object = nullptr;
-  if (k < 0 || k >= int(graph.items().size()) || !fittable(graph.items()[std::size_t(k)]))
+  if (k < 0 || k >= int(graph.items().size()) || !graph.items()[std::size_t(k)].isFittable())
     {
-    for (std::size_t i=0; i<graph.items().size(); i++) if (fittable(graph.items()[i])) { k = int(i); break; }
-    if (k < 0 || k >= int(graph.items().size()) || !fittable(graph.items()[std::size_t(k)])) return;
+    for (std::size_t i=0; i<graph.items().size(); i++) if (graph.items()[i].isFittable()) { k = int(i); break; }
+    if (k < 0 || k >= int(graph.items().size()) || !graph.items()[std::size_t(k)].isFittable()) return;
     }
   const GraphItem & item = graph.items()[std::size_t(k)];
   _item = k;
   _object = item.object();
   if (item.kind() == GraphItem::kData)
     {
-    if (!extent(*item.data(), _low, _high)) { _low = 0; _high = 1; }
+    try { _low = item.data()->minimum(0); _high = item.data()->maximum(0); }   // the whole object
+    catch (...) { _low = 0; _high = 1; }
     if (!dynamic_cast<const MATH::Histogram*>(item.data())) _statistic = 0;   // the Poisson likelihood needs counts
     }
   else
@@ -164,34 +144,21 @@ namespace CAP
   GraphItem & item = graph.items()[std::size_t(_item)];
   try
     {
-    // a function is fitted through samples of it, over the range
-    MATH::DataPointsVector samples;
-    if (item.kind() == GraphItem::kFunction) samples = MATH::Fitter::samples(*item.function(), _low, _high, (unsigned int)_samples);
-    const MATH::DataPoints & data = item.kind() == GraphItem::kData ? *item.data() : samples;
-    MATH::Fitter fitter(*_function, data, _statistic == 1 ? MATH::Fitter::kPoisson : MATH::Fitter::kChiSquare);
-    fitter.setRange(_low, _high);
-    if (_search)
-      {
-      fitter.setMethod(MATH::Fitter::kSearch);
-      fitter.search().setMethod(MATH::ExtremumSearch::kDifferentialEvolution);
-      }
-    MATH::FitResult r = fitter.fit();
-    MATH::FitRecord record = fitter.record(_label);
-    // the objects shown belong to the application or its files: the fit is attached to them
-    unsigned int index;
-    if (item.kind() == GraphItem::kData)
-      {
-      MATH::DataPoints * target = const_cast<MATH::DataPoints*>(item.data());
-      target->addFit(record);
-      index = target->nFits() - 1;
-      }
-    else
-      {
-      MATH::Function * target = const_cast<MATH::Function*>(item.function());
-      target->addFit(record);
-      index = target->nFits() - 1;
-      }
-    item.setFitShown(index, true);
+    // the fit is made and attached by MATH::Fitter::fitAndAttach(), as a program would; the objects shown belong
+    // to the application or its files: the fit is attached to them
+    MATH::Fitter::FitOptions options;
+    options.statistic = _statistic == 1 ? MATH::Fitter::kPoisson : MATH::Fitter::kChiSquare;
+    options.search = _search;
+    options.hasRange = true;
+    options.low = _low;
+    options.high = _high;
+    options.samples = (unsigned int)_samples;
+    options.label = _label;
+    MATH::FitRecord record = item.kind() == GraphItem::kData
+      ? MATH::Fitter::fitAndAttach(*_function, *const_cast<MATH::DataPoints*>(item.data()), options)
+      : MATH::Fitter::fitAndAttach(*_function, *const_cast<MATH::Function*>(item.function()), _low, _high, options);
+    item.setFitShown(item.nFits() - 1, true);
+    const MATH::FitResult & r = record.result;
     char text[256];
     std::snprintf(text, sizeof(text), "%s attached: %s, %s%s", record.label.data(), GraphItem::fitSummary(record).data(),
                   r.converged ? "converged" : "not converged", r.validErrors ? "" : " (no uncertainties)");
@@ -315,7 +282,7 @@ namespace CAP
     for (std::size_t k=0; k<graph->items().size(); k++)
       {
       const GraphItem & candidate = graph->items()[k];
-      if (!fittable(candidate)) continue;
+      if (!candidate.isFittable()) continue;
       if (ImGui::Selectable(itemName(candidate, int(k)).data(), int(k) == _item)) selectItem(*graph, int(k));
       }
     ImGui::EndCombo();

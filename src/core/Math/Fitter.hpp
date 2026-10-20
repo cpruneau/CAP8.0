@@ -128,6 +128,36 @@ namespace CAP
   //!
   static bool estimate(ParameterizedFunction & function, const DataPoints & data, double low, double high);
 
+  //! @brief Options of fitAndAttach() (as chosen in the Fit window of CapGui).
+  struct FitOptions
+  {
+    Statistic statistic = kChiSquare;   //!< chi square, or Poisson likelihood (counts)
+    bool   search = false;   //!< a global search (differential evolution) first, refined by Levenberg-Marquardt
+    bool   hasRange = false;   //!< fit only the points in [low, high]
+    double low = 0;   //!< lower end of the range (hasRange)
+    double high = 0;   //!< upper end of the range (hasRange)
+    unsigned int samples = 100;   //!< samples of a function fitted (see samples())
+    String label;   //!< label of the fit (empty: the class of the function and "fit")
+  };
+  //!
+  //! @brief Fit a function to data points and attach the fit to them (DataPoints::addFit()), in one call.
+  //! @param function function, with its starting values, fixed parameters and bounds (left at the best parameters)
+  //! @param data data points @param options statistic, range, method, label @return the record attached
+  //! @throws MathException if the fit cannot be made (nothing is attached then)
+  //!
+  static FitRecord fitAndAttach(ParameterizedFunction & function, DataPoints & data, const FitOptions & options);
+  //! @brief fitAndAttach() with the default options. @param function function @param data data @return record
+  static FitRecord fitAndAttach(ParameterizedFunction & function, DataPoints & data);
+  //!
+  //! @brief Fit a function to another one over [low, high], through options.samples samples of it, and attach the
+  //! fit to it (Function::addFit()). @param function function fitted @param target function of rank 1 fitted to
+  //! @param low lower end @param high upper end @param options method, number of samples, label (the statistic is
+  //! the chi square; the range is [low, high]) @return the record attached @throws MathException if the fit fails
+  //!
+  static FitRecord fitAndAttach(ParameterizedFunction & function, Function & target, double low, double high, const FitOptions & options);
+  //! @brief fitAndAttach() of a function with the default options. @return record
+  static FitRecord fitAndAttach(ParameterizedFunction & function, Function & target, double low, double high);
+
   //! @brief Fit: the function is left at the best parameters. @return result
   //! @throws MathException if there is no free parameter or no point can be used
   FitResult fit();

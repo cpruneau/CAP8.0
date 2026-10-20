@@ -259,6 +259,63 @@ int main()
     CHECK(!Fitter::estimate(p, parabola, 20.0, 30.0));                     // no point in the range
   }
 
+  // ---- what the GUI does, in one call: fit and attach, reports, tables
+  {
+    DataPointsVector points;
+    for (int k=0; k<10; k++) points.addPoint(DataPoint2D(k, k < 9 ? 2.0*k + 1.0 : 100.0, 0.1));
+    Linear line(0.0, 1.0);
+    Fitter::FitOptions options;
+    options.hasRange = true;
+    options.low = 0.0;
+    options.high = 8.0;
+    options.label = "straight";
+    FitRecord record = Fitter::fitAndAttach(line, points, options);
+    CHECK(points.nFits() == 1 && points.fit(0).label == "straight" && record.result.nPoints == 9
+          && std::fabs(record.result.values[1] - 2.0) < 1E-6);
+    Normal target(1.0, 0.0, 1.0);
+    Parabolic parabola(1.0, 0.0, -0.5);
+    Fitter::FitOptions few;
+    few.samples = 21;
+    FitRecord ofFunction = Fitter::fitAndAttach(parabola, target, -1.0, 1.0, few);
+    CHECK(target.nFits() == 1 && ofFunction.result.nPoints == 21 && ofFunction.low[0] == -1.0 && ofFunction.high[0] == 1.0);
+    bool thrown = false;
+    Linear other(0.0, 1.0);
+    options.low = 50.0; options.high = 60.0;                                // nothing in the range: nothing attached
+    try { Fitter::fitAndAttach(other, points, options); } catch (const MathException &) { thrown = true; }
+    CHECK(thrown && points.nFits() == 1);
+
+    // report of a fit
+    const FitRecord & fit = points.fit(0);
+    CHECK(fit.chiSquareLike() && fit.parameterName(1) == "c1" || fit.parameterName(1).length() > 0);
+    double value, error;
+    fit.parameterAt(1, value, error);
+    CHECK(value == fit.result.values[1] && error == fit.result.errors[1]);
+    std::vector<std::pair<String,String>> rows = fit.quality();
+    CHECK(rows.size() >= 10 && rows[1].first == "degrees of freedom" && rows[1].second == "7");
+    String text = fit.text();
+    CHECK(text.contains("straight\tLinear") && text.contains("parameter\tvalue\tuncertainty\tbounds") && text.contains("correlations"));
+    CHECK(fit.inRange(std::vector<double>{4.0}) && !fit.inRange(std::vector<double>{9.0}) && !fit.inRange(std::vector<double>{1.0, 2.0}));
+    Parameter bounded("b", 1.0, Parameter::LowHigh, 0.0, 2.0);
+    CHECK(Parameter("a", 1.0).boundsText() == "free" && bounded.boundsText() == "[0, 2]"
+          && Parameter("f", 1.0, Parameter::Fixed).boundsText() == "fixed" && Parameter("l", 1.0, Parameter::Low, 0.5).boundsText() == ">= 0.5");
+
+    // the table of the data, with the columns of the fit
+    CHECK(points.description() == "Data points (1D), 10 points");
+    std::vector<String> names = points.columnNames();
+    std::vector<bool> shown = points.columnsShown();
+    CHECK(names.size() == 6 && names[0] == "#" && names[1] == "x" && names[3] == "y" && shown.size() == 6
+          && shown[0] && !shown[2] && shown[4] && !shown[5]);
+    CHECK(points.rowValues(2).size() == 5 && points.rowValues(2)[0] == "2" && points.rowValues(2)[2] == "5");
+    CHECK(points.fitColumnNames() == std::vector<String>({ "f(x) straight", "pull straight" }) && points.fitColumnNames(false).size() == 1);
+    std::vector<bool> outside;
+    std::vector<String> cells = points.fitValues(9, true, &outside);
+    CHECK(cells.size() == 2 && outside.size() == 2 && outside[0] && !points.fitValues(3, true)[1].isNull());
+    CHECK(std::fabs(points.pullAt(3, fit) - (7.0 - fit.valueAt(3.0))/0.1) < 1E-3);
+    String table = points.table();
+    CHECK(table.contains("#\tx\ty\t\xC2\xB1 stat.\tf(x) straight\tpull straight\n") && table.contains("\n9\t9\t100\t0.1\t"));
+    CHECK(!points.table(false).contains("f(x)"));
+  }
+
   std::printf("TestFits: %d checks, %d failed\n", nChecks, nFailures);
   return nFailures;
 }

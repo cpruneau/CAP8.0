@@ -1,5 +1,11 @@
 #include "DataPoints.hpp"
 #include "MathExceptions.hpp"
+#include "Histogram.hpp"
+#include "Profile.hpp"
+#include <cmath>
+#include <cstdio>
+#include <limits>
+#include <string>
 #include <iostream>
 
 ClassImp(CAP::MATH::DataPoints);
@@ -139,6 +145,143 @@ namespace CAP
   double DataPoints::valueAt(unsigned int index) const     { return point(index).y(); }
   double DataPoints::statErrorAt(unsigned int index) const { return point(index).yStatError(); }
   double DataPoints::sysErrorAt(unsigned int index) const  { return point(index).ySysError(); }
+
+
+  namespace
+  {
+  String numberText(double v)
+  {
+  char text[32];
+  std::snprintf(text, sizeof(text), "%.6g", v);
+  return String(text);
+  }
+  } // namespace
+
+  String DataPoints::description() const
+  {
+  char text[128];
+  const Histogram * histogram = dynamic_cast<const Histogram *>(this);
+  if (histogram)
+    std::snprintf(text, sizeof(text), "%s (%uD), %u bins", dynamic_cast<const Profile *>(this) ? "Profile" : "Histogram", rank(), size());
+  else
+    std::snprintf(text, sizeof(text), "Data points (%uD), %u points", rank(), size());
+  return String(text);
+  }
+
+  std::vector<String> DataPoints::columnNames() const
+  {
+  static const char * axes[] = { "x", "y", "z" };
+  const Histogram * histogram = dynamic_cast<const Histogram *>(this);
+  unsigned int n = rank();
+  std::vector<String> names{ "#" };
+  for (unsigned int k=0; k<n; k++)
+    {
+    std::string name;
+    if (histogram && !histogram->dimensionTitle(k).isNull()) name = histogram->dimensionTitle(k).data();
+    else if (n <= 3) name = axes[k];
+    else name = "x" + std::to_string(k);
+    names.push_back(String(name.c_str()));
+    names.push_back(String(("\xC2\xB1 " + name).c_str()));
+    }
+  if (histogram && !histogram->title().isNull()) names.push_back(histogram->title());
+  else names.push_back(n == 1 ? "y" : "value");
+  names.push_back("\xC2\xB1 stat.");
+  names.push_back("\xC2\xB1 syst.");
+  return names;
+  }
+
+  std::vector<bool> DataPoints::columnsShown() const
+  {
+  unsigned int n = rank();
+  std::vector<bool> nonZero(n + 2, false);
+  for (unsigned int k=0; k<size(); k++)
+    {
+    std::vector<double> ex = coordinateErrorsAt(k);
+    for (unsigned int i=0; i<n && i<ex.size(); i++) if (ex[i] != 0.0) nonZero[i] = true;
+    if (statErrorAt(k) != 0.0) nonZero[n]   = true;
+    if (sysErrorAt(k)  != 0.0) nonZero[n+1] = true;
+    }
+  std::vector<bool> shown{ true };                                  // index
+  for (unsigned int i=0; i<n; i++) { shown.push_back(true); shown.push_back(nonZero[i]); }
+  shown.push_back(true);                                            // value
+  shown.push_back(nonZero[n]);
+  shown.push_back(nonZero[n+1]);
+  return shown;
+  }
+
+  std::vector<String> DataPoints::rowValues(unsigned int k) const
+  {
+  std::vector<String> cells;
+  std::vector<double> x = coordinatesAt(k), ex = coordinateErrorsAt(k);
+  for (std::size_t i=0; i<x.size(); i++)
+    {
+    cells.push_back(numberText(x[i]));
+    cells.push_back(numberText(i < ex.size() ? ex[i] : 0.0));
+    }
+  cells.push_back(numberText(valueAt(k)));
+  cells.push_back(numberText(statErrorAt(k)));
+  cells.push_back(numberText(sysErrorAt(k)));
+  return cells;
+  }
+
+  std::vector<String> DataPoints::fitColumnNames(bool pulls) const
+  {
+  std::vector<String> names;
+  for (unsigned int f=0; f<nFits(); f++)
+    {
+    std::string label = fit(f).label.isNull() ? "fit " + std::to_string(f + 1) : fit(f).label.data();
+    names.push_back(String(("f(x) " + label).c_str()));
+    if (pulls) names.push_back(String(("pull " + label).c_str()));
+    }
+  return names;
+  }
+
+  double DataPoints::pullAt(unsigned int k, const FitRecord & fit) const
+  {
+  double value = fit.valueAt(coordinatesAt(k)), error = statErrorAt(k);
+  if (!std::isfinite(value) || !(error > 0)) return std::numeric_limits<double>::quiet_NaN();
+  return (valueAt(k) - value)/error;
+  }
+
+  std::vector<String> DataPoints::fitValues(unsigned int k, bool pulls, std::vector<bool> * outside) const
+  {
+  std::vector<String> cells;
+  std::vector<double> x = coordinatesAt(k);
+  for (unsigned int f=0; f<nFits(); f++)
+    {
+    const FitRecord & record = fit(f);
+    double value = record.valueAt(x);
+    bool out = !record.inRange(x);
+    cells.push_back(std::isfinite(value) ? numberText(value) : String());
+    if (outside) outside->push_back(out);
+    if (!pulls) continue;
+    double pull = pullAt(k, record);
+    cells.push_back(std::isfinite(pull) ? numberText(pull) : String());
+    if (outside) outside->push_back(out);
+    }
+  return cells;
+  }
+
+  String DataPoints::table(bool fits, bool pulls) const
+  {
+  std::string text;
+  std::vector<String> names = columnNames();
+  std::vector<bool> shown = columnsShown();
+  bool first = true;
+  for (std::size_t c=0; c<names.size(); c++)
+    if (shown[c]) { text += std::string(first ? "" : "\t") + names[c].data(); first = false; }
+  if (fits) for (const auto & name : fitColumnNames(pulls)) text += std::string("\t") + name.data();
+  text += "\n";
+  for (unsigned int k=0; k<size(); k++)
+    {
+    text += std::to_string(k);
+    std::vector<String> cells = rowValues(k);
+    for (std::size_t c=0; c<cells.size(); c++) if (shown[c+1]) text += std::string("\t") + cells[c].data();
+    if (fits) for (const auto & cell : fitValues(k, pulls)) text += std::string("\t") + cell.data();
+    text += "\n";
+    }
+  return String(text.c_str());
+  }
 
   } // namespace MATH
 } // namespace CAP

@@ -166,6 +166,23 @@ namespace CAP
   return _grid;
   }
 
+  bool GraphItem::isFittable() const
+  {
+  if (isMap()) return false;
+  if (_kind == kData) return _data != nullptr && _data->size() > 0;
+  return _function != nullptr && _function->rank() == 1;
+  }
+
+  void GraphItem::applyDefaultStyle(int k)
+  {
+  static const int colors[]  = {1, 2, 4, 8, 6, 9, 28, 46};
+  static const int markers[] = {20, 21, 22, 23, 33, 29, 34, 47};
+  int n = (k < 0 ? 0 : k) % 8;
+  _line.setColor(colors[n]);
+  _marker.setColor(colors[n]);
+  _marker.setStyle(markers[n]);
+  }
+
   unsigned int GraphItem::nFits() const
   {
   if (_kind == kFunction) return _function ? _function->nFits() : 0;
@@ -526,6 +543,86 @@ namespace CAP
   return result;
   }
 
+
+  GraphItem & Graph::show(const GraphItem & item, bool replace)
+  {
+  bool fresh = _items.empty() || replace;
+  if (replace) _items.clear();
+  for (auto & existing : _items) if (existing.object() == item.object()) return existing;
+  _items.push_back(item);
+  GraphItem & added = _items.back();
+  added.applyDefaultStyle(int(_items.size()) - 1);
+  if (fresh)
+    {
+    setTitlesFrom(added);
+    setAutoRange();
+    }
+  return added;
+  }
+
+  void Graph::setTitlesFrom(const GraphItem & item)
+  {
+  const MATH::Histogram * histogram = item.kind() == GraphItem::kData ? dynamic_cast<const MATH::Histogram*>(item.data()) : nullptr;
+  String title;
+  if (item.kind() == GraphItem::kData && item.data()) title = item.data()->title();
+  else if (item.function()) title = item.function()->title();
+  setTitle(title.isNull() ? item.label() : title);
+  _xAxis.setTitle(histogram ? histogram->dimensionTitle(0) : String(""));
+  _yAxis.setTitle(histogram && histogram->rank() == 2 ? histogram->dimensionTitle(1) : String(""));
+  _zAxis.setTitle("");
+  }
+
+  bool Graph::hasMovedTexts() const
+  {
+  if (!_autoLegend || _titleOffsetX != 0 || _titleOffsetY != 0) return true;
+  for (const Axis * axis : { &_xAxis, &_yAxis, &_zAxis, &_residualAxis })
+    if (axis->titleOffsetX() != 0 || axis->titleOffsetY() != 0) return true;
+  return false;
+  }
+
+  void Graph::resetTextPositions()
+  {
+  _autoLegend = true;
+  _titleOffsetX = _titleOffsetY = 0;
+  for (Axis * axis : { &_xAxis, &_yAxis, &_zAxis, &_residualAxis }) axis->setTitleOffset(0, 0);
+  }
+
+  bool Graph::zoom(const Point2D & a, const Point2D & b, bool x, bool y)
+  {
+  const View v = view();
+  double xa, ya, xb, yb;
+  fromCanvas(v, Point2D(std::min(a.x(), b.x()), std::min(a.y(), b.y())), xa, ya);
+  fromCanvas(v, Point2D(std::max(a.x(), b.x()), std::max(a.y(), b.y())), xb, yb);
+  if ((x && !(xb > xa)) || (y && !(yb > ya))) return false;
+  if (x) setXRange(xa, xb);
+  if (y) setYRange(ya, yb);
+  return true;
+  }
+
+  bool Graph::valueAt(const View & v, double x, double y, double & z, int & index) const
+  {
+  for (int n=int(_items.size())-1; n>=0; n--)
+    {
+    const GraphItem & item = _items[std::size_t(n)];
+    if (!item.isMap()) continue;
+    std::shared_ptr<const Grid2D> grid = item.grid(v.xMinimum, v.xMaximum, v.yMinimum, v.yMaximum, v.logX, v.logY);
+    int i, j;
+    if (!grid || !grid->cell(x, y, i, j) || !std::isfinite(grid->value(i, j))) continue;
+    z = grid->value(i, j);
+    index = n;
+    return true;
+    }
+  return false;
+  }
+
+  void Graph::fromResidualCanvas(const View & v, const Point2D & p, double & x, double & r) const
+  {
+  double y, low, high;
+  fromCanvas(v, p, x, y);
+  residualRange(v, low, high);
+  double height = residualYHigh() - residualYLow();
+  r = low + (height > 0 ? (p.y() - residualYLow())/height : 0.5)*(high - low);
+  }
 
   GraphItem & Graph::add(const GraphItem & item)
   {

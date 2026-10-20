@@ -622,5 +622,46 @@ namespace CAP
   return false;
   }
 
+
+  FitRecord Fitter::fitAndAttach(ParameterizedFunction & function, DataPoints & data, const FitOptions & options)
+  {
+  Fitter fitter(function, data, options.statistic);
+  if (options.hasRange) fitter.setRange(options.low, options.high);
+  if (options.search)
+    {
+    fitter.setMethod(kSearch);
+    fitter.search().setMethod(ExtremumSearch::kDifferentialEvolution);
+    }
+  fitter.fit();
+  FitRecord record = fitter.record(options.label);
+  data.addFit(record);
+  return record;
+  }
+
+  FitRecord Fitter::fitAndAttach(ParameterizedFunction & function, DataPoints & data)
+  {
+  return fitAndAttach(function, data, FitOptions());
+  }
+
+  FitRecord Fitter::fitAndAttach(ParameterizedFunction & function, Function & target, double low, double high, const FitOptions & options)
+  {
+  DataPointsVector points = samples(target, low, high, options.samples);
+  Fitter fitter(function, points, kChiSquare);
+  if (options.search)
+    {
+    fitter.setMethod(kSearch);
+    fitter.search().setMethod(ExtremumSearch::kDifferentialEvolution);
+    }
+  fitter.fit();
+  FitRecord record = fitter.record(options.label);
+  target.addFit(record);
+  return record;
+  }
+
+  FitRecord Fitter::fitAndAttach(ParameterizedFunction & function, Function & target, double low, double high)
+  {
+  return fitAndAttach(function, target, low, high, FitOptions());
+  }
+
   } // namespace MATH
 } // namespace CAP

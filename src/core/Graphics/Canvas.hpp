@@ -55,6 +55,33 @@ namespace CAP
   Graph & graph(int column, int row) { return *_graphs.at(row*_nColumns + column); }
   //! @brief Index of the graph whose cell contains the canvas point p, or -1.
   int graphAt(const Point2D & p) const;
+  //! @brief Divide the canvas into the most square grid holding n graphs: ceil(sqrt(n)) columns, and as many rows as
+  //! needed. @param n number of graphs (at least 1)
+  void divideFor(int n);
+  //!
+  //! @brief Show the items one per graph (as CapGui shows the objects of a folder): the canvas is divided for their
+  //! number (divideFor()), all its graphs are cleared, and item k is shown in graph k (Graph::show(), replacing).
+  //! @param items items (functions, data points)
+  //!
+  void showOnePerGraph(const std::vector<GraphItem> & items);
+  //! @}
+
+  //! @name SVG files
+  //! @{
+
+  //!
+  //! @brief Write the canvas to an SVG file, its texts typeset by LaTeX where they ask for it (see LatexRenderer).
+  //! @param fileName file @param width width in points (0: width()) @param height height in points (0: height())
+  //! @return false if the file cannot be written
+  //!
+  bool writeSvg(const String & fileName, int width=0, int height=0) const;
+  //!
+  //! @brief Write several canvases to one SVG page, in a grid of the given number of columns (row by row from the
+  //! top left), each width x height points. @param fileName file @param canvases canvases @param columns columns of
+  //! the page (at least 1) @param width width of each canvas @param height height of each canvas
+  //! @return false if there is no canvas or the file cannot be written
+  //!
+  static bool writeSvg(const String & fileName, const std::vector<const Canvas*> & canvases, int columns, int width, int height);
   //! @}
 
   //! Paint the background, then draw the graphs and the other children.

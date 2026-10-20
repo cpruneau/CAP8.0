@@ -1,3 +1,4 @@
+#include <cstdio>
 #include "Parameter.hpp"
 #include "MathExceptions.hpp"
 
@@ -108,6 +109,19 @@ namespace CAP
   bool Parameter::notEqual(const Parameter & other) const
   {
   return !equal(other);
+  }
+
+  String Parameter::boundsText() const
+  {
+  char text[96];
+  switch (_type)
+    {
+    case Fixed:   return "fixed";
+    case Low:     std::snprintf(text, sizeof(text), ">= %.6g", _minimum); return String(text);
+    case High:    std::snprintf(text, sizeof(text), "<= %.6g", _maximum); return String(text);
+    case LowHigh: std::snprintf(text, sizeof(text), "[%.6g, %.6g]", _minimum, _maximum); return String(text);
+    default:      return "free";
+    }
   }
 
   void Parameter::encodeBinary(BinaryWriter & w) const

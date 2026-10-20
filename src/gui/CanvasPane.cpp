@@ -60,8 +60,7 @@ namespace CAP
   GraphItem & CanvasPane::show(const GraphItem & item)
   {
   changing();
-  Graph & graph = currentGraph();
-  return _mode == kAdd ? graph.add(item) : graph.replace(item);
+  return currentGraph().show(item, _mode == kReplace);   // default style; titles from a first object
   }
 
   void CanvasPane::divide(int nColumns, int nRows)
@@ -217,17 +216,7 @@ namespace CAP
       }
     ImGui::EndMenu();
     }
-  if (!graph.isAutoLegendPosition() || graph.titleOffsetX() != 0 || graph.titleOffsetY() != 0
-      || graph.xAxis().titleOffsetX() != 0 || graph.xAxis().titleOffsetY() != 0
-      || graph.yAxis().titleOffsetX() != 0 || graph.yAxis().titleOffsetY() != 0)
-    if (ImGui::MenuItem("Reset Text Positions"))
-      {
-      changing();
-      graph.setAutoLegendPosition();
-      graph.setTitleOffset(0, 0);
-      graph.xAxis().setTitleOffset(0, 0);
-      graph.yAxis().setTitleOffset(0, 0);
-      }
+  if (graph.hasMovedTexts() && ImGui::MenuItem("Reset Text Positions")) { changing(); graph.resetTextPositions(); }
   ImGui::Separator();
   bool logX = graph.isLogX(), logY = graph.isLogY(), legend = graph.showLegend();
   if (ImGui::MenuItem("Log X", nullptr, logX)) { changing(); graph.setLogX(!logX); }
@@ -477,13 +466,8 @@ namespace CAP
       {
       if (!isMove && _drag.moved && std::fabs(x1 - x0) > 4 && std::fabs(y1 - y0) > 4)
         {
-        const Graph::View view = g.view();
-        double xa, ya, xb, yb;
-        g.fromCanvas(view, painter.toCanvas(std::min(x0,x1), std::max(y0,y1)), xa, ya);   // lower left
-        g.fromCanvas(view, painter.toCanvas(std::max(x0,x1), std::min(y0,y1)), xb, yb);   // upper right
         changing();
-        if (_drag.kind != kZoomY && xb > xa) g.setXRange(xa, xb);
-        if (_drag.kind != kZoomX && yb > ya) g.setYRange(ya, yb);
+        g.zoom(painter.toCanvas(x0, y0), painter.toCanvas(x1, y1), _drag.kind != kZoomY, _drag.kind != kZoomX);
         }
       _drag = Drag();
       }
@@ -498,11 +482,8 @@ namespace CAP
     {
     // the residuals panel: x and the residual under the mouse
     const Graph & g = _canvas.graph(k);
-    const Graph::View view = g.view();
-    double x, y, low, high;
-    g.fromCanvas(view, p, x, y);
-    g.residualRange(view, low, high);
-    double r = low + (p.y() - g.residualYLow())/(g.residualYHigh() - g.residualYLow())*(high - low);
+    double x, r;
+    g.fromResidualCanvas(g.view(), p, x, r);
     char text[160];
     std::snprintf(text, sizeof(text), "x = %.5g   %s = %.5g", x, g.residualMode() == Graph::kPull ? "pull" : "data \xE2\x88\x92 fit", r);
     _hoverText = text;
@@ -539,16 +520,13 @@ namespace CAP
         z = text;
         if (nMaps > 1) z += String("   (") + item.label() + String(")");
         }
-      for (int n=int(g.items().size())-1; n>=0 && z.isNull(); n--)
+      double value;
+      int index;
+      if (z.isNull() && g.valueAt(view, x, y, value, index))
         {
-        const GraphItem & item = g.items()[n];
-        if (!item.isMap()) continue;
-        std::shared_ptr<const Grid2D> grid = item.grid(view.xMinimum, view.xMaximum, view.yMinimum, view.yMaximum, view.logX, view.logY);
-        int i, j;
-        if (!grid || !grid->cell(x, y, i, j) || !std::isfinite(grid->value(i, j))) continue;
-        std::snprintf(text, sizeof(text), "z = %.5g", grid->value(i, j));
+        std::snprintf(text, sizeof(text), "z = %.5g", value);
         z = text;
-        if (nMaps > 1) z += String("   (") + item.label() + String(")");
+        if (nMaps > 1) z += String("   (") + g.items()[std::size_t(index)].label() + String(")");
         }
       if (!z.isNull()) _hoverText = String(_hoverText.str() + "   " + z.str());
       }

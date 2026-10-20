@@ -14,6 +14,7 @@
 #ifndef CAP__MATH__FitRecord
 #define CAP__MATH__FitRecord
 #include <memory>
+#include <utility>
 #include <vector>
 #include "Aliases.hpp"
 #include "FitResult.hpp"
@@ -50,6 +51,27 @@ namespace CAP
     double valueAt(const std::vector<double> & x) const;
     //! @brief Whether a point of rank 1 is within the range of the fit. @param x x @return true if so
     bool inRange(double x) const { return !low.empty() && x >= low[0] && x <= high[0]; }
+    //! @brief Whether a point of any rank is within the range of the fit. @param x coordinates @return true if so
+    bool inRange(const std::vector<double> & x) const;
+    //! @brief Whether the statistic is a chi square, or behaves as one (binned likelihood): not an unbinned
+    //! likelihood. @return true if so
+    bool chiSquareLike() const;
+    //! @brief Name of parameter k of the function ("p<k>" if it has none). @param k index @return name
+    String parameterName(unsigned int k) const;
+    //! @brief Value and uncertainty of parameter k: those of the result, or else the value of the function and 0.
+    //! @param k index @param value set to the value @param error set to the uncertainty
+    void parameterAt(unsigned int k, double & value, double & error) const;
+    //!
+    //! @brief Quality of the fit as (name, value) rows, as in the fit pane of CapGui: chi square (or -2 ln L), degrees
+    //! of freedom, chi square per degree of freedom and p-value (for a chi square), points, convergence, uncertainties,
+    //! status, statistic, method, evaluations, iterations, range. @return rows
+    //!
+    std::vector<std::pair<String,String>> quality() const;
+    //!
+    //! @brief The fit as tab-separated text: label and class of the function, the quality rows, the parameters
+    //! (value, uncertainty, bounds) and the correlations of the free parameters. @return text
+    //!
+    String text() const;
   };
 
   //!

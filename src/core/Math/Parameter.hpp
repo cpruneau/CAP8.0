@@ -105,6 +105,8 @@ namespace CAP
 
   //! @brief Name of the parameter. @return name
   const String & name() const { return _name; }
+  //! @brief Bounds as a short text: "free", "fixed", ">= min", "<= max" or "[min, max]". @return text
+  String boundsText() const;
   //! @brief Value of the parameter. @return value
   double value() const        { return _value; }
   //! @brief Type of the parameter. @return type

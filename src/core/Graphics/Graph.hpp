@@ -85,6 +85,15 @@ namespace CAP
   unsigned int rank() const;
   //! @brief Whether the item is drawn as a map (rank 2). @return true if so
   bool isMap() const { return rank() == 2; }
+  //! @brief Whether a fit can be made to the item (see MATH::Fitter): data points with at least one point, or a
+  //! function, of rank 1. @return true if so
+  bool isFittable() const;
+  //!
+  //! @brief Default style of the k-th item of a graph (what CapGui gives the objects it shows): line and marker
+  //! colors cycling through black, red, blue, green, magenta, dark blue, brown and dark red, and markers through
+  //! filled circle, square, triangles, diamond, star, cross and a few others. @param k index of the item in its graph
+  //!
+  void applyDefaultStyle(int k);
 
   Kind kind() const { return _kind; }   //!< Function or data points
   const MATH::Function   * function() const { return _function; }   //!< The function shown (kFunction), or null
@@ -445,6 +454,19 @@ namespace CAP
   GraphItem & replace(const GraphItem & item);
   //! @brief Remove the item showing object. @return true if it was found
   bool remove(const void * object);
+  //!
+  //! @brief Show an item as CapGui does: added (or replacing the items), with the default style of its place
+  //! (GraphItem::applyDefaultStyle()); in a graph that was empty (or when replacing), the titles are taken from the
+  //! object (setTitlesFrom()) and the ranges become automatic. An object already shown is not added again.
+  //! @param item item @param replace remove the items shown first @return the item in the graph
+  //!
+  GraphItem & show(const GraphItem & item, bool replace=false);
+  //!
+  //! @brief Titles from the object of an item: the title of the graph is the title of the object (or its label);
+  //! the axis titles are the dimension titles of a histogram (the y title for rank 2 only), empty otherwise; the
+  //! z title is cleared. @param item item
+  //!
+  void setTitlesFrom(const GraphItem & item);
   //! @brief Remove all the items.
   void clearItems() { _items.clear(); }
   std::vector<GraphItem> & items() { return _items; }   //!< Items shown, in drawing order
@@ -488,6 +510,18 @@ namespace CAP
   Point2D toCanvas(const View & view, double x, double y) const;
   //! @brief Data coordinates of a canvas point for the given view (inverse of toCanvas()).
   void fromCanvas(const View & view, const Point2D & p, double & x, double & y) const;
+  //!
+  //! @brief Zoom on the rectangle between two canvas points (as dragging in CapGui): the x range, the y range, or
+  //! both, are set to the data coordinates of the rectangle in the current view. @param a corner @param b opposite
+  //! corner @param x set the x range @param y set the y range @return false if the rectangle is empty along an axis set
+  //!
+  bool zoom(const Point2D & a, const Point2D & b, bool x=true, bool y=true);
+  //!
+  //! @brief Value of the maps at a point (what CapGui shows under the mouse): of the last map drawn that has a value
+  //! there. @param view view @param x abscissa @param y ordinate @param z set to the value @param item set to the
+  //! index of the item @return false if no map has a value there
+  //!
+  bool valueAt(const View & view, double x, double y, double & z, int & item) const;
   //! @}
 
   //! @name Maps: values (z), palette and color scale
@@ -585,6 +619,10 @@ namespace CAP
   bool  isAutoLegendPosition() const { return _autoLegend; }   //!< Whether the legend is at its automatic position
   float legendX() const { return _legendX; }   //!< Left edge of the legend (fraction of the frame)
   float legendY() const { return _legendY; }   //!< Top edge of the legend (fraction of the frame)
+  //! @brief Whether a text was moved from its automatic position (title, axis titles, legend). @return true if so
+  bool hasMovedTexts() const;
+  //! @brief Back to the automatic positions of the title, the axis titles (x, y, z) and the legend.
+  void resetTextPositions();
   //! @brief Size of the legend text in device units (points); 0: automatic.
   void  setLegendPointSize(float size) { _legendPointSize = size < 0 ? 0 : size; }
   float legendPointSize() const { return _legendPointSize; }   //!< Size of the legend text in points (0: automatic)
@@ -655,6 +693,9 @@ namespace CAP
   //! @brief Canvas position of a residual. @param view view @param low lower end of the y range of the panel
   //! @param high upper end @param x abscissa @param r residual @return position
   Point2D toResidualCanvas(const View & view, double low, double high, double x, double r) const;
+  //! @brief Abscissa and residual of a canvas point of the panel (inverse of toResidualCanvas(), with the range of
+  //! residualRange()). @param view view @param p canvas point @param x set to the abscissa @param r set to the residual
+  void fromResidualCanvas(const View & view, const Point2D & p, double & x, double & r) const;
   //! @brief Template of the y axis of the panel (title: "data - fit" or "pull" when empty). @return axis
   Axis & residualAxis() { return _residualAxis; }
   const Axis & residualAxis() const { return _residualAxis; }   //!< Template of the y axis of the panel

@@ -221,8 +221,6 @@ namespace CAP
   void renderCustomLayout();
   //! @brief Open file of an identifier. @param id identifier @return file, or null
   BrowserFile * file(int id);
-  //! Style of the k-th item of a graph (colors and markers cycle).
-  static void styleItem(GRAPHICS::GraphItem & item, int k);
   };
 
   } // namespace GUI

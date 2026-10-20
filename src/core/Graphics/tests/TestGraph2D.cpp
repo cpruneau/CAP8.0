@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include "Canvas.hpp"
+#include <cstdio>
 #include "DataPoint3D.hpp"
 #include "DataPointsVector.hpp"
 #include "Fitter.hpp"
@@ -500,6 +501,91 @@ int main(int argc, char ** argv)
     CHECK(copy.showResiduals() && copy.residualMode() == Graph::kPull && !copy.isAutoResidualRange());
     graph.setShowFits(false);                                               // no fit drawn: no panel
     CHECK(!graph.hasResidualPanel() && near(graph.frameYLow(), frameBottom));
+  }
+
+  // ---- what the GUI does, in one call: show, styles, titles, text positions, zoom, readouts, SVG files
+  {
+    MATH::Histogram h("h", "a histogram", 10, 0.0, 10.0);
+    h.setDimensionTitle(0, "p_T");
+    for (int k=0; k<10; k++) h.fill(k + 0.5, double(k));
+    MATH::DataPointsVector more;
+    more.addPoints({1.0, 2.0}, {3.0, 4.0}, {0.1, 0.1});
+    more.setTitle("");                                                      // no title: the label is used
+    Graph graph;
+    GraphItem & first = graph.show(GraphItem(&h, "h"));
+    CHECK(graph.title() == "a histogram" && graph.xAxis().title() == "p_T" && graph.isAutoX());
+    CHECK(first.lineAttributes().color() == 1 && first.markerAttributes().style() == 20);
+    graph.setTitle("kept");
+    GraphItem & second = graph.show(GraphItem(&more, "more"));
+    CHECK(graph.items().size() == 2 && graph.title() == "kept" && second.markerAttributes().color() == 2 && second.markerAttributes().style() == 21);
+    CHECK(&graph.show(GraphItem(&more, "again")) == &graph.items()[1]);     // shown once
+    graph.show(GraphItem(&more, "more"), true);                             // replacing: titles from the object
+    CHECK(graph.items().size() == 1 && graph.title() == "more" && graph.xAxis().title().isNull());
+    CHECK(graph.items()[0].isFittable());
+    GraphItem item(&more);
+    item.applyDefaultStyle(10);
+    CHECK(item.lineAttributes().color() == 4 && item.markerAttributes().style() == 22);
+
+    CHECK(!graph.hasMovedTexts());
+    graph.setTitleOffset(0.1f, 0.0f);
+    graph.zAxis().setTitleOffset(0.0f, 0.05f);
+    graph.setLegendPosition(0.2f, 0.8f);
+    CHECK(graph.hasMovedTexts());
+    graph.resetTextPositions();
+    CHECK(!graph.hasMovedTexts() && graph.isAutoLegendPosition() && graph.titleOffsetX() == 0 && graph.zAxis().titleOffsetY() == 0);
+
+    graph.setXRange(0.0f, 10.0f);
+    graph.setYRange(0.0f, 100.0f);
+    Graph::View v = graph.view();
+    Point2D a = graph.toCanvas(v, 2.0, 10.0), b = graph.toCanvas(v, 6.0, 50.0);
+    CHECK(graph.zoom(b, a, true, false) && near(graph.view().xMinimum, 2.0, 1E-4) && near(graph.view().xMaximum, 6.0, 1E-4)
+          && near(graph.view().yMaximum, 100.0, 1E-4));
+    CHECK(!graph.zoom(a, Point2D(a.x(), b.y()), true, true));              // empty in x
+
+    Graph maps;
+    Paraboloid bowl;
+    maps.add(GraphItem(&bowl, -2.0f, 2.0f, -2.0f, 2.0f));
+    double z;
+    int index = -1;
+    CHECK(maps.valueAt(maps.view(), 1.0, 1.0, z, index) && index == 0 && near(z, 2.0, 0.2));
+    CHECK(!maps.valueAt(maps.view(), 5.0, 5.0, z, index));
+
+    MATH::DataPointsVector data;
+    data.addPoints({0.0, 1.0, 2.0, 3.0, 4.0}, {1.1, 2.9, 5.2, 6.8, 9.1}, {0.1, 0.2, 0.1, 0.3, 0.2});
+    data.setTitle("data points");
+    MATH::Linear line(0.0, 1.0);
+    MATH::Fitter::fitAndAttach(line, data);
+    Graph fitted;
+    fitted.show(GraphItem(&data, "data"));
+    fitted.setShowResiduals(true);
+    Graph::View fv = fitted.view();
+    double low, high, x, r;
+    fitted.residualRange(fv, low, high);
+    fitted.fromResidualCanvas(fv, fitted.toResidualCanvas(fv, low, high, 2.5, 0.75*high), x, r);
+    CHECK(near(x, 2.5, 1E-4) && near(r, 0.75*high, 1E-4*high));
+
+    Canvas canvas("c", "c", 600, 400);
+    canvas.divideFor(5);
+    CHECK(canvas.nColumns() == 3 && canvas.nRows() == 2);
+    canvas.showOnePerGraph({ GraphItem(&h, "h"), GraphItem(&data, "data"), GraphItem(&more, "more") });
+    CHECK(canvas.nGraphs() == 4 && canvas.graph(0).items().size() == 1 && canvas.graph(1).title() == "data points"
+          && canvas.graph(3).items().empty());
+    const char * file = "TestGraph2D-canvas.svg";
+    CHECK(canvas.writeSvg(file));
+    std::FILE * f = std::fopen(file, "rb");
+    std::string content;
+    if (f) { char buffer[4096]; std::size_t n; while ((n = std::fread(buffer, 1, sizeof(buffer), f)) > 0) content.append(buffer, n); std::fclose(f); }
+    CHECK(content.find("<svg") != std::string::npos && content.find("width=\"600pt\"") != std::string::npos && content.find(">more<") != std::string::npos);
+    Canvas second2("d", "d", 300, 200);
+    second2.divide(1, 1);
+    second2.graph(0).show(GraphItem(&more, "page"));
+    CHECK(Canvas::writeSvg(file, { &canvas, &second2 }, 2, 300, 200));
+    f = std::fopen(file, "rb");
+    content.clear();
+    if (f) { char buffer[4096]; std::size_t n; while ((n = std::fread(buffer, 1, sizeof(buffer), f)) > 0) content.append(buffer, n); std::fclose(f); }
+    CHECK(content.find("width=\"600pt\"") != std::string::npos && content.find(">page<") != std::string::npos);
+    CHECK(!Canvas::writeSvg(file, {}, 1, 300, 200));
+    std::remove(file);
   }
 
   std::printf("TestGraph2D: %d checks, %d failed\n", nChecks, nFailures);

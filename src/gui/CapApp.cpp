@@ -702,21 +702,11 @@ namespace CAP
   for (int k=0; k<_gui.nPanes(); k++) if (&_gui.pane(k) == &pane) _gui.setCurrentPane(k);
 
   Graph & graph = pane.currentGraph();
-  bool fresh = graph.items().empty() || pane.mode() == CanvasPane::kReplace;
   // label: the name, or the path when the graph already shows an object of the same name
   String name = data->name().isNull() ? object.path : data->name();
   String label = name;
   for (const auto & item : graph.items()) if (item.label() == name && item.object() != data) label = object.path;
-  GraphItem & item = pane.show(GraphItem(data, label));
-  styleItem(item, int(graph.items().size()) - 1);
-  if (fresh)
-    {
-    graph.setTitle(data->title().isNull() ? name : data->title());
-    graph.xAxis().setTitle(histogram ? histogram->dimensionTitle(0) : String(""));
-    graph.yAxis().setTitle(histogram && rank == 2 ? histogram->dimensionTitle(1) : String(""));
-    graph.zAxis().setTitle("");
-    graph.setAutoRange();
-    }
+  pane.show(GraphItem(data, label));   // default style; on a fresh graph, titles from the object (Graph::show())
   _gui.setStatus(String("Showing ") + object.path + String("  (") + entry->path + String(")"));
   return true;
   }
@@ -743,11 +733,10 @@ namespace CAP
   if (objects.empty()) { _gui.setStatus(String("Nothing to show in ") + (folderPath.isNull() ? entry->path : folderPath)); return; }
   if (objects.size() > 36) objects.resize(36);
   int n = int(objects.size());
-  int columns = int(std::ceil(std::sqrt(double(n))));
-  int rows = (n + columns - 1)/columns;
   recordUndo();
   CanvasPane & pane = _gui.currentPane();
-  pane.divide(columns, rows);
+  pane.canvas().divideFor(n);                          // the grid of Canvas::showOnePerGraph()
+  pane.divide(pane.canvas().nColumns(), pane.canvas().nRows());
   for (int k=0; k<pane.canvas().nGraphs(); k++) pane.canvas().graph(k).clearItems();
   std::function<void()> hook = pane.beforeChange;
   pane.beforeChange = nullptr;                          // one undo step for the whole folder
@@ -757,16 +746,6 @@ namespace CAP
   pane.setMode(mode);
   pane.beforeChange = hook;
   pane.setSelectedGraph(0);
-  }
-
-  void CapApp::styleItem(GraphItem & item, int k)
-  {
-  static const int colors[]  = {1, 2, 4, 8, 6, 9, 28, 46};
-  static const int markers[] = {20, 21, 22, 23, 33, 29, 34, 47};
-  int color = colors[(k < 0 ? 0 : k) % 8];
-  item.lineAttributes().setColor(color);
-  item.markerAttributes().setColor(color);
-  item.markerAttributes().setStyle(markers[(k < 0 ? 0 : k) % 8]);
   }
 
   void CapApp::save(const String & fileName)
