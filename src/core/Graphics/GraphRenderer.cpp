@@ -1,10 +1,17 @@
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <functional>
 #include "GraphRenderer.hpp"
 #include "Graph.hpp"
 #include "Painter.hpp"
 #include "Function.hpp"
 #include "DataPoints.hpp"
+#include "FitRecord.hpp"
+#include "ParameterizedFunction.hpp"
+#include "Histogram.hpp"
+#include "TColor.h"
 
 ClassImp(CAP::GRAPHICS::GraphRenderer);
 
@@ -83,6 +90,53 @@ namespace CAP
   bool inside(const Box & box, const Point2D & p)
   {
   return p.x()>=box.x0 && p.x()<=box.x1 && p.y()>=box.y0 && p.y()<=box.y1;
+  }
+
+  //! Curve of y = f(x) over [a,b] (logarithmic steps on a log x axis), clipped to the frame.
+  void drawCurve(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view,
+                 const std::function<double(double)> & f, double a, double b, int n, const LineAttributes & line)
+  {
+  a = std::max<double>(a, view.xMinimum);
+  b = std::min<double>(b, view.xMaximum);
+  if (!(b > a) || n < 2) return;
+  std::vector<Point2D> points;
+  std::vector<bool> valid;
+  for (int k=0; k<n; k++)
+    {
+    double x;
+    if (view.logX && a > 0) x = std::pow(10.0, std::log10(a) + (std::log10(b)-std::log10(a))*k/(n-1));
+    else                    x = a + (b-a)*k/(n-1);
+    double y = 0.0;
+    bool ok = true;
+    try { y = f(x); } catch (...) { ok = false; }
+    ok = ok && std::isfinite(y) && (!view.logY || y > 0);
+    points.push_back(graph.toCanvas(view, x, ok ? y : 1.0));
+    valid.push_back(ok);
+    }
+  drawClipped(painter, box, points, valid, line);
+  }
+
+  //! Whether fit k of an item is drawn: fits shown in the graph and the item, of rank 1, on an item of rank 1.
+  const MATH::FitRecord * drawnFit(const Graph & graph, const GraphItem & item, unsigned int k)
+  {
+  if (!graph.showFits() || !item.showFits() || item.isMap() || !item.isFitShown(k)) return nullptr;
+  const MATH::FitRecord * fit = item.fit(k);
+  if (!fit || !fit->function || fit->function->rank() != 1) return nullptr;
+  return fit;
+  }
+
+  //! Curves of the fits of an item, over their ranges (or the whole x range).
+  void drawFits(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item)
+  {
+  for (unsigned int k=0; k<item.nFits(); k++)
+    {
+    const MATH::FitRecord * fit = drawnFit(graph, item, k);
+    if (!fit) continue;
+    double a = view.xMinimum, b = view.xMaximum;
+    if (!item.extendFits() && !fit->low.empty()) { a = fit->low[0]; b = fit->high[0]; }
+    drawCurve(painter, box, graph, view, [fit](double x) { return fit->function->evaluateAt(x); },
+              a, b, std::max(item.nSamples(), 200), item.fitLineAttributes(k));
+    }
   }
   } // namespace
 
@@ -190,9 +244,253 @@ namespace CAP
 
   bool hasSysErrors(const GraphItem & item)
   {
-  if (item.kind() != GraphItem::kData || !item.data() || !item.showSysErrors()) return false;
+  if (item.kind() != GraphItem::kData || !item.data() || !item.showSysErrors() || item.isMap()) return false;
   for (unsigned int k=0; k<item.data()->size(); k++) if (item.data()->point(k).ySysError() > 0) return true;
   return false;
+  }
+
+  //! Color map of a grid: the cells with a value (> 0 on a logarithmic z scale), clipped to the frame.
+  void drawColorMap(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const Grid2D & grid)
+  {
+  const std::vector<double> & xEdges = grid.xEdges(), & yEdges = grid.yEdges();
+  // canvas positions of the edges; an edge <= 0 on a logarithmic axis goes to the lower end of the axis
+  std::vector<float> cx(xEdges.size()), cy(yEdges.size());
+  for (size_t i=0; i<xEdges.size(); i++)
+    cx[i] = graph.toCanvas(view, view.logX && xEdges[i] <= 0 ? view.xMinimum : xEdges[i], view.yMaximum).x();
+  for (size_t j=0; j<yEdges.size(); j++)
+    cy[j] = graph.toCanvas(view, view.xMaximum, view.logY && yEdges[j] <= 0 ? view.yMinimum : yEdges[j]).y();
+  for (int j=0; j<grid.nY(); j++)
+    for (int i=0; i<grid.nX(); i++)
+      {
+      double v = grid.value(i, j);
+      if (!std::isfinite(v) || (view.logZ && v <= 0)) continue;
+      float x0 = cx[i], x1 = cx[i+1], y0 = cy[j], y1 = cy[j+1];
+      if (!clipRect(box, x0, y0, x1, y1)) continue;
+      painter.fillRectangle(x0, y0, x1, y1, graph.colorOf(view, v));
+      }
+  }
+
+  //! A point of a map: position, value, and index in its data (-1 if it has none, e.g. a node of a regular grid).
+  struct MapPoint { double x, y, value; int index; };
+
+  //! The points of a map item: the centers of the cells with a value of its grid, or its data points.
+  std::vector<MapPoint> mapPoints(const GraphItem & item, const Grid2D * grid)
+  {
+  std::vector<MapPoint> points;
+  if (grid)
+    {
+    // the cells of a histogram are its bins, in the same order (axis 0 fastest)
+    bool bins = item.kind() == GraphItem::kData && dynamic_cast<const MATH::Histogram*>(item.data());
+    for (int j=0; j<grid->nY(); j++)
+      for (int i=0; i<grid->nX(); i++)
+        {
+        double v = grid->value(i, j);
+        if (!std::isfinite(v)) continue;
+        points.push_back({ 0.5*(grid->xEdges()[i] + grid->xEdges()[i+1]), 0.5*(grid->yEdges()[j] + grid->yEdges()[j+1]), v,
+                           bins ? i + grid->nX()*j : -1 });
+        }
+    return points;
+    }
+  const MATH::DataPoints & d = *item.data();
+  for (unsigned int n=0; n<d.size(); n++)
+    {
+    std::vector<double> c = d.coordinatesAt(n);
+    if (c.size() == 2) points.push_back({ c[0], c[1], d.valueAt(n), int(n) });
+    }
+  return points;
+  }
+
+  //! Points of a map as disks colored by their values: of the size of the markers of the item, or with an area
+  //! proportional to the magnitude of the values; with a thin outline if asked.
+  void drawColoredPoints(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item,
+                         const std::vector<MapPoint> & points, int iItem, std::vector<Graph::PointPosition> & positions)
+  {
+  const float radius = 4.0f*std::max(0.3f, float(item.markerAttributes().size()));   // device units (size 1: 8 across)
+  double largest = 0;
+  for (const auto & point : points) if (std::isfinite(point.value)) largest = std::max(largest, std::fabs(point.value));
+  LineAttributes outline;
+  outline.set(1, 0.7, 1, 0.5);
+  for (const auto & point : points)
+    {
+    double v = point.value;
+    if (!std::isfinite(v) || (view.logZ && v <= 0) || (view.logX && point.x <= 0) || (view.logY && point.y <= 0)) continue;
+    Point2D p = graph.toCanvas(view, point.x, point.y);
+    if (!inside(box, p)) continue;
+    float r = radius;
+    if (item.pointSizeByValue() && largest > 0) r *= float(std::max(0.15, std::sqrt(std::fabs(v)/largest)));
+    const float rx = r/painter.width(), ry = r/painter.height();
+    std::vector<Point2D> disk;
+    for (int k=0; k<16; k++)
+      {
+      double a = 2.0*3.14159265358979323846*k/16;
+      disk.push_back(Point2D(p.x() + rx*std::cos(a), p.y() + ry*std::sin(a)));
+      }
+    painter.fillPolygon(disk, graph.colorOf(view, v));
+    if (item.pointOutline()) { disk.push_back(disk.front()); painter.drawLine(disk, outline); }
+    if (point.index >= 0) positions.push_back({ iItem, point.index, p });
+    }
+  }
+
+  //! Contour lines of a grid at the levels of the item, clipped to the frame.
+  void drawContours(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item,
+                    const Grid2D & grid)
+  {
+  for (double level : graph.contourLevels(view, item))
+    {
+    LineAttributes line = item.contourLineAttributes();
+    if (item.contourUsesPalette())
+      {
+      Color c = graph.colorOf(view, level);
+      line.setColor(TColor::GetColor(c.red, c.green, c.blue), line.alpha());
+      }
+    for (const auto & polyline : grid.contour(level, view.logZ))
+      {
+      std::vector<Point2D> points;
+      std::vector<bool> valid;
+      for (const auto & q : polyline)
+        {
+        bool ok = (!view.logX || q.x > 0) && (!view.logY || q.y > 0);
+        points.push_back(graph.toCanvas(view, ok ? q.x : 1.0, ok ? q.y : 1.0));
+        valid.push_back(ok);
+        }
+      drawClipped(painter, box, points, valid, line);
+      }
+    }
+  }
+
+  //! Whether a printf format writes one floating point number (and nothing else that needs an argument).
+  bool numberFormat(const String & format)
+  {
+  int conversions = 0;
+  const char * f = format.data();
+  for (int k=0; f[k]; k++)
+    {
+    if (f[k] != '%') continue;
+    if (f[k+1] == '%') { k++; continue; }
+    int m = k + 1;
+    while (f[m] && std::strchr("+- #0123456789.", f[m])) m++;
+    if (!f[m] || !std::strchr("eEfFgG", f[m])) return false;
+    conversions++;
+    k = m;
+    }
+  return conversions == 1;
+  }
+
+  //! The values of the cells of a grid written at their centers, where they fit.
+  void drawValues(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item,
+                  const Grid2D & grid, float automaticSize)
+  {
+  const float W = painter.width(), H = painter.height();
+  const String format = numberFormat(item.valueFormat()) ? item.valueFormat() : String("%.3g");
+  const std::vector<double> & xEdges = grid.xEdges(), & yEdges = grid.yEdges();
+  std::vector<float> cx(xEdges.size()), cy(yEdges.size());
+  for (size_t i=0; i<xEdges.size(); i++) cx[i] = graph.toCanvas(view, view.logX && xEdges[i] <= 0 ? view.xMinimum : xEdges[i], view.yMaximum).x();
+  for (size_t j=0; j<yEdges.size(); j++) cy[j] = graph.toCanvas(view, view.xMaximum, view.logY && yEdges[j] <= 0 ? view.yMinimum : yEdges[j]).y();
+  int inView = 0;
+  for (int j=0; j<grid.nY(); j++)
+    for (int i=0; i<grid.nX(); i++)
+      if (inside(box, Point2D(0.5f*(cx[i] + cx[i+1]), 0.5f*(cy[j] + cy[j+1])))) inView++;
+  if (inView > 4000) return;                 // far too many to read
+  TextAttributes text = *TextAttributes::defaultTextAttributes();
+  text.setJustification(TextAttributes::kCenter);
+  for (int j=0; j<grid.nY(); j++)
+    for (int i=0; i<grid.nX(); i++)
+      {
+      double v = grid.value(i, j);
+      if (!std::isfinite(v)) continue;
+      Point2D center(0.5f*(cx[i] + cx[i+1]), 0.5f*(cy[j] + cy[j+1]));
+      if (!inside(box, center)) continue;
+      float cellWidth = std::fabs(cx[i+1] - cx[i])*W, cellHeight = std::fabs(cy[j+1] - cy[j])*H;   // device units
+      float size = item.valuePointSize() > 0 ? item.valuePointSize()/H : std::min(automaticSize, 0.55f*cellHeight/H);
+      if (size*H < 5.0f || size*H > cellHeight) continue;
+      text.setSize(size);
+      char label[64];
+      std::snprintf(label, sizeof(label), format.data(), v);
+      if (painter.textWidth(label, text) > 0.92f*cellWidth) continue;
+      int color = item.valueColor();
+      if (color < 0)
+        {
+        color = 1;                            // black, or white on a dark cell
+        if (item.showColorMap() && (!view.logZ || v > 0))
+          {
+          Color c = graph.colorOf(view, v);
+          if (0.2126f*c.red + 0.7152f*c.green + 0.0722f*c.blue < 0.5f) color = 0;
+          }
+        }
+      text.setColor(color);
+      painter.drawText(center, label, text);
+      }
+  }
+  } // namespace
+
+  namespace
+  {
+  //! Panel of the residuals of the fits below the frame: background, zero line, then for each fit drawn its residuals
+  //! (markers and error bars of data, or the curve f - fit of a function), in the color of the fit.
+  void drawResiduals(Painter & painter, const Graph & graph, const Graph::View & view, double low, double high)
+  {
+  const Box box { graph.frameXLow(), graph.residualYLow(), graph.frameXHigh(), graph.residualYHigh() };
+  LineAttributes noLine;
+  noLine.setStyle(0);
+  std::vector<Point2D> corners{ Point2D(box.x0,box.y0), Point2D(box.x1,box.y0), Point2D(box.x1,box.y1), Point2D(box.x0,box.y1) };
+  painter.drawPolygon(corners, graph.frameFill(), noLine);
+  // zero line
+  LineAttributes zero;
+  zero.set(14, 1.0, 2, 1.0);                      // gray, dashed
+  Point2D z0 = graph.toResidualCanvas(view, low, high, view.xMinimum, 0.0), z1 = graph.toResidualCanvas(view, low, high, view.xMaximum, 0.0);
+  drawSegment(painter, box, Point2D(box.x0, z0.y()), Point2D(box.x1, z1.y()), zero);
+  for (const auto & item : graph.items())
+    {
+    for (unsigned int k=0; k<item.nFits(); k++)
+      {
+      const MATH::FitRecord * fit = drawnFit(graph, item, k);
+      if (!fit) continue;
+      LineAttributes line = item.fitLineAttributes(k);
+      if (item.kind() == GraphItem::kData && item.data())
+        {
+        MarkerAttributes marker = item.markerAttributes();
+        marker.setColor(line.color(), line.alpha());
+        LineAttributes errorLine;
+        errorLine.set(line.color(), line.alpha(), 1, 1.0);
+        for (unsigned int i=0; i<item.data()->size(); i++)
+          {
+          double x, r, e;
+          if (!Graph::residualAt(item, *fit, i, graph.residualMode(), x, r, e)) continue;
+          if (x < view.xMinimum || x > view.xMaximum || (view.logX && x <= 0)) continue;
+          Point2D c = graph.toResidualCanvas(view, low, high, x, r);
+          if (item.showErrors() && e > 0)
+            drawSegment(painter, box, graph.toResidualCanvas(view, low, high, x, r - e), graph.toResidualCanvas(view, low, high, x, r + e), errorLine);
+          if (inside(box, c)) painter.drawMarker(c, marker);
+          }
+        }
+      else if (item.kind() == GraphItem::kFunction && item.function())
+        {
+        const MATH::Function * function = item.function();
+        double a = view.xMinimum, b = view.xMaximum;
+        if (!item.extendFits() && !fit->low.empty()) { a = std::max(a, fit->low[0]); b = std::min(b, fit->high[0]); }
+        int n = std::max(item.nSamples(), 200);
+        std::vector<Point2D> points;
+        std::vector<bool> valid;
+        for (int s=0; s<n && b > a; s++)
+          {
+          double x = (view.logX && a > 0) ? std::pow(10.0, std::log10(a) + (std::log10(b) - std::log10(a))*s/(n-1)) : a + (b - a)*s/(n-1);
+          double r = 0;
+          bool ok = true;
+          try { r = function->evaluateAt(x) - fit->valueAt(x); } catch (...) { ok = false; }
+          ok = ok && std::isfinite(r);
+          points.push_back(graph.toResidualCanvas(view, low, high, x, ok ? r : 0.0));
+          valid.push_back(ok);
+          }
+        drawClipped(painter, box, points, valid, line);
+        }
+      }
+    }
+  if (graph.frameLine().style() != 0)
+    {
+    std::vector<Point2D> outline = corners;
+    outline.push_back(corners[0]);
+    painter.drawLine(outline, graph.frameLine());
+    }
   }
   } // namespace
 
@@ -206,6 +504,7 @@ namespace CAP
     {
     graph->xAxis().setDrawnRects(Rect2D(), Rect2D());
     graph->yAxis().setDrawnRects(Rect2D(), Rect2D());
+    graph->zAxis().setDrawnRects(Rect2D(), Rect2D());
     graph->setDrawnLayout(Rect2D(), Rect2D(), std::vector<Graph::PointPosition>());
     return;
     }
@@ -227,33 +526,33 @@ namespace CAP
   std::vector<Point2D> corners{ Point2D(box.x0,box.y0), Point2D(box.x1,box.y0), Point2D(box.x1,box.y1), Point2D(box.x0,box.y1) };
   LineAttributes noLine;
   noLine.setStyle(0);
+  if (graph->is3D())
+    draw3D(*graph, painter, view, textSize, cellWidth, cellHeight);
+  else
+  {
   painter.drawPolygon(corners, graph->frameFill(), noLine);
 
   // items
   for (size_t iItem=0; iItem<graph->items().size(); iItem++)
     {
     const GraphItem & item = graph->items()[iItem];
-    if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
+    if (item.isMap())
       {
-      double a = std::max<double>(item.xMinimum(), view.xMinimum);
-      double b = std::min<double>(item.xMaximum(), view.xMaximum);
-      if (!(b > a)) continue;
-      int n = item.nSamples();
-      std::vector<Point2D> points;
-      std::vector<bool> valid;
-      for (int k=0; k<n; k++)
-        {
-        double x;
-        if (view.logX && a > 0) x = std::pow(10.0, std::log10(a) + (std::log10(b)-std::log10(a))*k/(n-1));
-        else                    x = a + (b-a)*k/(n-1);
-        double y = 0.0;
-        bool ok = true;
-        try { y = item.function()->evaluateAt(x); } catch (...) { ok = false; }
-        ok = ok && std::isfinite(y) && (!view.logY || y > 0);
-        points.push_back(graph->toCanvas(view, x, ok ? y : 1.0));
-        valid.push_back(ok);
-        }
-      if (item.showLine()) drawClipped(painter, box, points, valid, item.lineAttributes());
+      if ((item.kind() == GraphItem::kData && !item.data()) || (item.kind() == GraphItem::kFunction && !item.function())) continue;
+      std::shared_ptr<const Grid2D> grid = item.grid(view.xMinimum, view.xMaximum, view.yMinimum, view.yMaximum, view.logX, view.logY);
+      if (grid && item.showColorMap()) drawColorMap(painter, box, *graph, view, *grid);
+      if (grid && item.showContours()) drawContours(painter, box, *graph, view, item, *grid);
+      if (item.kind() == GraphItem::kData && (!grid || item.showMapPoints()))       // scattered points always
+        drawColoredPoints(painter, box, *graph, view, item, mapPoints(item, grid.get()), int(iItem), pointPositions);
+      if (grid && item.showValues()) drawValues(painter, box, *graph, view, item, *grid, 0.8f*textSize);
+      }
+    else if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
+      {
+      const MATH::Function * function = item.function();
+      if (item.showLine())
+        drawCurve(painter, box, *graph, view, [function](double x) { return function->evaluateAt(x); },
+                  item.xMinimum(), item.xMaximum(), item.nSamples(), item.lineAttributes());
+      drawFits(painter, box, *graph, view, item);
       }
     else if (item.kind() == GraphItem::kData && item.data())
       {
@@ -295,7 +594,17 @@ namespace CAP
       if (item.showMarkers())
         for (size_t k=0; k<points.size(); k++)
           if (valid[k] && inside(box, points[k])) painter.drawMarker(points[k], item.markerAttributes());
+      drawFits(painter, box, *graph, view, item);
       }
+    }
+
+  // panel of the residuals of the fits, below the frame
+  const bool residuals = graph->hasResidualPanel();
+  double residualLow = -1, residualHigh = 1;
+  if (residuals)
+    {
+    graph->residualRange(view, residualLow, residualHigh);
+    drawResiduals(painter, *graph, view, residualLow, residualHigh);
     }
 
   // frame outline
@@ -331,10 +640,77 @@ namespace CAP
   xAxis.setLabelOffset((0.6*textSize + 0.3*xAxis.textAttributes().size())*xAxis.labelGap());
   if (!view.logX) xAxis.setNMajorTicks(Graph::niceTickCount(view.xMinimum, view.xMaximum));
   if (!view.logY) yAxis.setNMajorTicks(Graph::niceTickCount(view.yMinimum, view.yMaximum));
-  xAxis.draw(painter);
-  yAxis.draw(painter);
-  graph->xAxis().setDrawnRects(xAxis.titleRect(), xAxis.bodyRect());
+  if (residuals)
+    {
+    // the x axis of the panel carries the labels and the title; the frame keeps its ticks only
+    Axis residualX = xAxis;
+    residualX.setEndPoints(Point2D(box.x0, graph->residualYLow()), Point2D(box.x1, graph->residualYLow()));
+    xAxis.setShowLabels(false);
+    xAxis.setTitle("");
+    Axis residualY = graph->residualAxis();
+    if (residualY.title().isNull())
+      residualY.setTitle(graph->residualMode() == Graph::kPull ? "pull" : "data \xE2\x88\x92 fit");
+    residualY.setEndPoints(Point2D(box.x0, graph->residualYLow()), Point2D(box.x0, graph->residualYHigh()));
+    residualY.setRange(float(residualLow), float(residualHigh));
+    float labelSize = sized(residualY.labelPointSize(), textSize);
+    residualY.textAttributes().setSize(labelSize);
+    residualY.titleAttributes().setSize(sized(residualY.titlePointSize(), textSize));
+    residualY.setMajorTickSize(0.6*textSize);
+    residualY.setMinorTickSize(0.3*textSize);
+    residualY.setLabelOffset(0.35*labelSize*residualY.labelGap());
+    residualY.setNMinorTicks(5);
+    residualY.setTitleOffset(residualY.titleOffsetX()*cellWidth, residualY.titleOffsetY()*cellHeight);
+    residualY.setNMajorTicks(Graph::niceTickCount(residualLow, residualHigh));
+    residualX.draw(painter);
+    residualY.draw(painter);
+    xAxis.draw(painter);
+    yAxis.draw(painter);
+    graph->xAxis().setDrawnRects(residualX.titleRect(), residualX.bodyRect());   // (the labels are there)
+    }
+  else
+    {
+    xAxis.draw(painter);
+    yAxis.draw(painter);
+    graph->xAxis().setDrawnRects(xAxis.titleRect(), xAxis.bodyRect());
+    }
   graph->yAxis().setDrawnRects(yAxis.titleRect(), yAxis.bodyRect());
+
+  }
+
+  // color scale of the maps, right of the frame: the palette over the z range, and the z axis along its right edge
+  if (view.hasZ && graph->showColorScale())
+    {
+    const Palette palette = graph->palette();
+    const float x0 = box.x1 + 0.025f*cellWidth, x1 = x0 + 0.035f*cellWidth;
+    const int nSlices = palette.nSteps() > 1 ? palette.nSteps() : 128;
+    for (int s=0; s<nSlices; s++)
+      painter.fillRectangle(x0, box.y0 + (box.y1 - box.y0)*s/nSlices, x1, box.y0 + (box.y1 - box.y0)*(s + 1)/nSlices,
+                            palette.color((s + 0.5)/nSlices));
+    LineAttributes outline = graph->frameLine();
+    if (outline.style() == 0) outline.set(1, 1.0, 1, 1.0);
+    painter.drawLine({ Point2D(x0, box.y0), Point2D(x1, box.y0), Point2D(x1, box.y1), Point2D(x0, box.y1), Point2D(x0, box.y0) }, outline);
+    Axis zAxis = graph->zAxis();
+    if (graph->is3D()) zAxis.setTitle("");                           // shown along the vertical axis of the box
+    zAxis.setEndPoints(Point2D(x1, box.y0), Point2D(x1, box.y1));
+    zAxis.setTickSide(1);
+    zAxis.setLog(view.logZ);
+    zAxis.setRange(view.zMinimum, view.zMaximum);
+    float labelSize = sized(zAxis.labelPointSize(), textSize);
+    zAxis.textAttributes().setSize(labelSize);
+    zAxis.titleAttributes().setSize(sized(zAxis.titlePointSize(), textSize));
+    zAxis.setMajorTickSize(0.4*textSize);
+    zAxis.setMinorTickSize(0.2*textSize);
+    zAxis.setLabelOffset(0.35*labelSize*zAxis.labelGap());
+    zAxis.setNMinorTicks(5);
+    zAxis.setTitleOffset(zAxis.titleOffsetX()*cellWidth, zAxis.titleOffsetY()*cellHeight);
+    if (!view.logZ) zAxis.setNMajorTicks(Graph::niceTickCount(view.zMinimum, view.zMaximum));
+    zAxis.draw(painter);
+    Rect2D body = zAxis.bodyRect();
+    body.include(Rect2D(x0, box.y0, x1, box.y1));                    // the bar belongs to the axis (to pick it)
+    graph->zAxis().setDrawnRects(zAxis.titleRect(), body);
+    }
+  else
+    graph->zAxis().setDrawnRects(Rect2D(), Rect2D());
 
   // title above the frame, moved by the title offset (fractions of the cell)
   Rect2D titleRect;
@@ -351,7 +727,9 @@ namespace CAP
 
   // legend: upper right corner inside the frame, or where it was put (upper left corner, fractions of the frame)
   Rect2D legendRect;
-  if (graph->showLegend() && !graph->items().empty())
+  // (a map alone has no legend: its colors are explained by the color scale, its name by the title)
+  bool loneMap = graph->items().size() == 1 && graph->items()[0].isMap();
+  if (graph->showLegend() && !graph->items().empty() && !loneMap)
     {
     TextAttributes legendText = *TextAttributes::defaultTextAttributes();
     legendText.setSize(sized(graph->legendPointSize(), 0.9*textSize));
@@ -361,10 +739,27 @@ namespace CAP
     const float gap        = 0.6f*legendText.size()*H/W;
     const float padX       = 0.5f*legendText.size()*H/W;
     const float padY       = 0.25f*lineHeight;
+    // entries: each item, then the fits drawn of it (label, and its quality if asked)
+    struct Entry { const GraphItem * item; int fit; String label; String statistics; };
+    std::vector<Entry> entries;
+    for (const auto & item : graph->items())
+      {
+      entries.push_back({ &item, -1, item.label(), String() });
+      for (unsigned int k=0; k<item.nFits(); k++)
+        if (const MATH::FitRecord * fit = drawnFit(*graph, item, k))
+          entries.push_back({ &item, int(k), fit->label,
+                              graph->showFitStatistics() ? GraphItem::fitSummary(*fit) : String() });
+      }
+    const float space = 0.5f*legendText.size()*H/W;                  // between a label and the quality of a fit
     float maxLabel = 0.0;
-    for (const auto & item : graph->items()) maxLabel = std::max(maxLabel, painter.textWidth(item.label(), legendText)/W);
+    for (const auto & entry : entries)
+      {
+      float width = painter.textWidth(entry.label, legendText)/W;
+      if (!entry.statistics.isNull()) width += space + painter.textWidth(entry.statistics, legendText)/W;
+      maxLabel = std::max(maxLabel, width);
+      }
     const float legendWidth  = padX + sample + gap + maxLabel + padX;
-    const float legendHeight = graph->items().size()*lineHeight + 2*padY;
+    const float legendHeight = entries.size()*lineHeight + 2*padY;
     float left, top;
     if (graph->isAutoLegendPosition())
       {
@@ -383,9 +778,20 @@ namespace CAP
       painter.drawPolygon(frame, graph->legendFill(), graph->legendLine());
     float x0 = left + padX;
     float y  = top - padY - 0.5f*lineHeight;
-    for (const auto & item : graph->items())
+    for (const auto & entry : entries)
       {
+      const GraphItem & item = *entry.item;
       Point2D l(x0, y), r(x0 + sample, y), middle(x0 + 0.5f*sample, y);
+      if (entry.fit >= 0)
+        {
+        painter.drawLine({l, r}, item.fitLineAttributes(unsigned(entry.fit)));
+        painter.drawText(Point2D(x0 + sample + gap, y), entry.label, legendText);
+        if (!entry.statistics.isNull())
+          painter.drawText(Point2D(x0 + sample + gap + painter.textWidth(entry.label, legendText)/W + space, y),
+                           entry.statistics, legendText);
+        y -= lineHeight;
+        continue;
+        }
       if (hasSysErrors(item))
         {
         FillAttributes fill = item.sysFillAttributes();
@@ -400,8 +806,21 @@ namespace CAP
                                      Point2D(middle.x()+hw, y+hh), Point2D(middle.x()-hw, y+hh) };
         painter.drawPolygon(swatch, fill, item.sysStyle() == GraphItem::kSysBand ? noLine : line);
         }
-      if (item.showLine())    painter.drawLine({l, r}, item.lineAttributes());
-      if (item.showMarkers()) painter.drawMarker(middle, item.markerAttributes());
+      bool contoursOnly = item.isMap() && !item.showColorMap() && item.showContours()
+                          && (item.kind() == GraphItem::kFunction || item.grid(0, 0, 0, 0, false, false));
+      if (contoursOnly) painter.drawLine({l, r}, item.contourLineAttributes());   // contours only: their line
+      else if (item.isMap())          // a sample of the palette
+        {
+        const Palette palette = graph->palette();
+        float hh = 0.35f*lineHeight;
+        for (int s=0; s<3; s++)
+          painter.fillRectangle(x0 + sample*s/3.0f, y - hh, x0 + sample*(s + 1)/3.0f, y + hh, palette.color(0.15 + 0.35*s));
+        }
+      else
+        {
+        if (item.showLine())    painter.drawLine({l, r}, item.lineAttributes());
+        if (item.showMarkers()) painter.drawMarker(middle, item.markerAttributes());
+        }
       painter.drawText(Point2D(x0 + sample + gap, y), item.label(), legendText);
       y -= lineHeight;
       }

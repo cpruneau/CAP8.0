@@ -40,6 +40,8 @@ namespace CAP
   virtual float height() const { return _height; }
   virtual void drawLine(const std::vector<Point2D> & points, const LineAttributes & line);
   virtual void drawPolygon(const std::vector<Point2D> & points, const FillAttributes & fill, const LineAttributes & line);
+  virtual void fillPolygon(const std::vector<Point2D> & points, const Color & color);   //!< Polygon of any color (see Painter::fillPolygon())
+  virtual void fillRectangle(float x0, float y0, float x1, float y1, const Color & color);   //!< Rectangle of any color (see Painter::fillRectangle())
   virtual void drawMarker(const Point2D & position, const MarkerAttributes & marker);
   virtual void drawText(const Point2D & position, const String & text, const TextAttributes & attributes, float angle=0.0);
   virtual float textWidth(const String & text, const TextAttributes & attributes) const;

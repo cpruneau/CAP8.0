@@ -26,6 +26,8 @@
 #include "Normal.hpp"
 #include "Exponential.hpp"
 #include "DataPointsVector.hpp"
+#include "Fitter.hpp"
+#include "FunctionRegistry.hpp"
 #include "Histogram.hpp"
 #include "CapFile.hpp"
 #include "LatexRenderer.hpp"
@@ -254,6 +256,15 @@ namespace CAP
   String latexProblem = applyLatex();
   if (!latexProblem.isNull()) _gui.setStatus(latexProblem);
 
+  // composites saved by programs or earlier sessions (see MATH::FunctionRegistry::writeComposites())
+  String composites = MATH::FunctionRegistry::defaultCompositesFile();
+  if (FileSystem::isFile(composites))
+    {
+    String problems;
+    int n = MATH::FunctionRegistry::readComposites(composites, &problems);
+    if (n < 0) _gui.setStatus(String("Cannot read the composites of ") + composites);
+    else if (!problems.isNull()) _gui.setStatus(String("Composites not read: ") + problems);
+    }
   if (_configuration.demo) createDemo();
   for (const auto & argument : _arguments)
     {
@@ -277,6 +288,7 @@ namespace CAP
   pane.beforeChange = [this]() { recordUndo(); };
   pane.onDrop = [this, &pane](int graph, const ObjectReference & object) { showObject(pane, graph, object); };
   pane.onShowData = [this](const MATH::DataPoints * data, const String & label) { showDataTable(data, label); };
+  pane.onFit = [this](int item) { _gui.openFitDialog(item); };
   }
 
   // ------------------------------------------------------------------------------------------------ menus
@@ -307,6 +319,8 @@ namespace CAP
   edit.addItem("Clear Canvas",       "edit.clearCanvas", "", "Clear all the graphs of the current canvas");
   edit.addItem("Clear All Canvases", "edit.clearAll",    "", "Clear all the graphs of all the canvases");
   edit.addSeparator();
+  edit.addItem("Fit...", "edit.fit", "", "Fit a function to data points, a histogram or a function of the selected graph");
+  edit.addSeparator();
   edit.addItem("Preferences...", "edit.preferences", "Ctrl+,", "Window, canvas and graph settings; save them as configuration");
 
   Menu & view = bar.addMenu("View");
@@ -317,6 +331,8 @@ namespace CAP
                                           "File browser in its own window instead of docked in the main window");
   browserWindow.setCheckable(true);
   browserWindow.setChecked(!_configuration.gui.browserDocked);
+  MenuItem & fits = view.addItem("Fit Results", "view.fits", "", "Show the results of the fits of the selected graph, below the canvases");
+  fits.setCheckable(true);
   view.addSeparator();
   MenuItem & toolbars = view.addItem("Canvas Toolbars", "view.toolbars", "", "Show the buttons above each canvas");
   toolbars.setCheckable(true);
@@ -389,6 +405,7 @@ namespace CAP
     if (MenuItem * item = bar.findItem(String("view.theme.") + t)) item->setChecked(_gui.settings().theme == t);
   if (MenuItem * item = bar.findItem("help.imguiDemo")) item->setChecked(_showImGuiDemo);
   if (MenuItem * item = bar.findItem("view.browser"))       item->setChecked(_gui.browserVisible());
+  if (MenuItem * item = bar.findItem("view.fits"))          item->setChecked(_gui.fitPaneVisible());
   if (MenuItem * item = bar.findItem("view.browserWindow")) item->setChecked(!_gui.browserDocked());
   if (MenuItem * item = bar.findItem("file.closeAll"))      item->setEnabled(!_files.empty());
   _configuration.gui.browserVisible = _gui.browserVisible();
@@ -428,6 +445,7 @@ namespace CAP
     }
   else if (c == "file.exit") _gui.requestExit();
   else if (c == "view.browser") _gui.setBrowserVisible(!_gui.browserVisible());
+  else if (c == "view.fits") _gui.setFitPaneVisible(!_gui.fitPaneVisible());
   else if (c == "view.browserWindow") _gui.setBrowserDocked(!_gui.browserDocked());
   else if (c == "edit.undo") undo();
   else if (c == "edit.redo") redo();
@@ -461,6 +479,7 @@ namespace CAP
       for (int k=0; k<_gui.pane(p).canvas().nGraphs(); k++) _gui.pane(p).canvas().graph(k).clearItems();
     }
   else if (c == "edit.preferences") _showPreferences = true;
+  else if (c == "edit.fit") _gui.openFitDialog();
   else if (c == "view.toolbars") _gui.setShowToolbars(event.source ? event.source->isChecked() : !_gui.showToolbars());
   else if (c == "view.legends")
     {
@@ -515,6 +534,12 @@ namespace CAP
   {
   _functions.emplace_back(function);
   return _gui.currentPane().show(GraphItem(function, xMinimum, xMaximum));
+  }
+
+  GraphItem & CapApp::show(MATH::Function * function, float xMinimum, float xMaximum, float yMinimum, float yMaximum)
+  {
+  _functions.emplace_back(function);
+  return _gui.currentPane().show(GraphItem(function, xMinimum, xMaximum, yMinimum, yMaximum));
   }
 
   GraphItem & CapApp::show(MATH::DataPoints * data)
@@ -676,9 +701,10 @@ namespace CAP
   catch (const std::exception & e) { _gui.setStatus(object.path + String(": cannot be read: ") + String(e.what())); return false; }
   if (!data) { _gui.setStatus(object.path + String(": cannot be shown in a graph")); return false; }
   const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram *>(data);
-  if ((histogram && histogram->rank() != 1) || data->rank() != 1)
+  unsigned int rank = histogram ? histogram->rank() : data->rank();
+  if (rank > 2)
     {
-    _gui.setStatus(object.path + String(": 2D and 3D histograms will be shown by the 3D graphs (stage 5)"));
+    _gui.setStatus(object.path + String(": objects of rank 3 and more will be shown by the 3D views (to come)"));
     return false;
     }
   if (graphIndex < 0 || graphIndex >= pane.canvas().nGraphs()) graphIndex = pane.selectedGraph();
@@ -686,20 +712,11 @@ namespace CAP
   for (int k=0; k<_gui.nPanes(); k++) if (&_gui.pane(k) == &pane) _gui.setCurrentPane(k);
 
   Graph & graph = pane.currentGraph();
-  bool fresh = graph.items().empty() || pane.mode() == CanvasPane::kReplace;
   // label: the name, or the path when the graph already shows an object of the same name
   String name = data->name().isNull() ? object.path : data->name();
   String label = name;
   for (const auto & item : graph.items()) if (item.label() == name && item.object() != data) label = object.path;
-  GraphItem & item = pane.show(GraphItem(data, label));
-  styleItem(item, int(graph.items().size()) - 1);
-  if (fresh)
-    {
-    graph.setTitle(data->title().isNull() ? name : data->title());
-    graph.xAxis().setTitle(histogram ? histogram->dimensionTitle(0) : String(""));
-    graph.yAxis().setTitle("");
-    graph.setAutoRange();
-    }
+  pane.show(GraphItem(data, label));   // default style; on a fresh graph, titles from the object (Graph::show())
   _gui.setStatus(String("Showing ") + object.path + String("  (") + entry->path + String(")"));
   return true;
   }
@@ -726,11 +743,10 @@ namespace CAP
   if (objects.empty()) { _gui.setStatus(String("Nothing to show in ") + (folderPath.isNull() ? entry->path : folderPath)); return; }
   if (objects.size() > 36) objects.resize(36);
   int n = int(objects.size());
-  int columns = int(std::ceil(std::sqrt(double(n))));
-  int rows = (n + columns - 1)/columns;
   recordUndo();
   CanvasPane & pane = _gui.currentPane();
-  pane.divide(columns, rows);
+  pane.canvas().divideFor(n);                          // the grid of Canvas::showOnePerGraph()
+  pane.divide(pane.canvas().nColumns(), pane.canvas().nRows());
   for (int k=0; k<pane.canvas().nGraphs(); k++) pane.canvas().graph(k).clearItems();
   std::function<void()> hook = pane.beforeChange;
   pane.beforeChange = nullptr;                          // one undo step for the whole folder
@@ -740,16 +756,6 @@ namespace CAP
   pane.setMode(mode);
   pane.beforeChange = hook;
   pane.setSelectedGraph(0);
-  }
-
-  void CapApp::styleItem(GraphItem & item, int k)
-  {
-  static const int colors[]  = {1, 2, 4, 8, 6, 9, 28, 46};
-  static const int markers[] = {20, 21, 22, 23, 33, 29, 34, 47};
-  int color = colors[(k < 0 ? 0 : k) % 8];
-  item.lineAttributes().setColor(color);
-  item.markerAttributes().setColor(color);
-  item.markerAttributes().setStyle(markers[(k < 0 ? 0 : k) % 8]);
   }
 
   void CapApp::save(const String & fileName)
@@ -833,6 +839,14 @@ namespace CAP
     }
   MATH::DataPointsVector * data = new MATH::DataPointsVector(x, ex, y, ey, sy);
   data->setName("pseudo-data");
+  try
+    {
+    MATH::Normal model(1.0, 0.0, 1.0);                      // a fit, attached to the data (see the Fits pane)
+    MATH::Fitter fitter(model, *data);
+    fitter.fit();
+    data->addFit(fitter.record("Gaussian fit"));
+    }
+  catch (const Exception &) { }
   CanvasPane & first = _gui.pane(0);
   first.currentGraph().setTitle("Demonstration");
   first.currentGraph().xAxis().setTitle("x");

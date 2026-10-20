@@ -56,6 +56,11 @@ namespace CAP
   virtual void drawLine(const std::vector<Point2D> & points, const LineAttributes & line);
   //! @brief Closed polygon, as an SVG polygon (see Painter::drawPolygon()).
   virtual void drawPolygon(const std::vector<Point2D> & points, const FillAttributes & fill, const LineAttributes & line);
+  //! @brief Polygon of any color, as an SVG polygon (see Painter::fillPolygon()).
+  virtual void fillPolygon(const std::vector<Point2D> & points, const Color & color);
+  //! @brief Rectangle of any color, as an SVG rect with crisp edges, so that adjacent cells show no seam (see
+  //! Painter::fillRectangle()).
+  virtual void fillRectangle(float x0, float y0, float x1, float y1, const Color & color);
   //! @brief One marker, as SVG shapes (see Painter::drawMarker()).
   virtual void drawMarker(const Point2D & position, const MarkerAttributes & marker);
   //! @brief Text (see Painter::drawText()): the paths typeset by LaTeX for a LaTeX or ROOT-syntax text (see LatexRenderer),
@@ -81,6 +86,8 @@ namespace CAP
   float py(const Point2D & p) const { return _regionY + (1.0f - p.y())*_regionHeight; }   //!< Page y of a canvas point (y down)
   //! @brief SVG color of a ROOT color index. @param color index @return "#rrggbb"
   static String color(int color);
+  //! @brief SVG color of a Color. @param color color @return "#rrggbb"
+  static String color(const Color & color);
   //! @brief SVG dash pattern of a ROOT line style. @param style line style @param width line width @return dash array, or "" for solid lines
   static String dashArray(int style, float width);
   //! @brief Text with the XML special characters escaped. @param text text @return escaped text

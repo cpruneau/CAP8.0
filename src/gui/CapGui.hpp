@@ -21,6 +21,8 @@
 #include "MenuBar.hpp"
 #include "CanvasPane.hpp"
 #include "DataPane.hpp"
+#include "FitDialog.hpp"
+#include "FitPane.hpp"
 #include "FileDialog.hpp"
 #include "FileBrowser.hpp"
 
@@ -56,7 +58,9 @@ namespace CAP
   //! @brief Main window of the CAP graphical interface: menu bar, canvas panes, file browser, status bar.
   //!
   //! Data panes (addDataPane()) show data points as tables; they are docked beside the canvases and closed the same
-  //! way, but are not part of the canvas layout.
+  //! way, but are not part of the canvas layout. The fit pane (FitPane) shows the fits of the selected graph of the
+  //! current canvas; it is docked below the canvases, and opens by itself the first time a graph with fits is
+  //! selected (setFitPaneVisible()).
   //!
   //! The canvas panes are docked windows, first arranged in a grid of n x m (setLayout()): the borders between them
   //! can be dragged to resize them, a pane can be dragged elsewhere (by its tab), added (addPane(), or the + button of
@@ -129,6 +133,12 @@ namespace CAP
   DataPane & addDataPane();
   int  nDataPanes() const { return (int)_dataPanes.size(); }   //!< Number of data panes
   DataPane & dataPane(int k) { return *_dataPanes.at(k); }   //!< Data pane k
+  //! @brief Show or hide the fit pane (docked below the canvases the first time it is shown). @param visible choice
+  void setFitPaneVisible(bool visible);
+  bool fitPaneVisible() const { return _fitsVisible; }   //!< Whether the fit pane is shown
+  FitPane & fitPane() { return _fitPane; }   //!< The fit pane
+  //! @brief Open the Fit window for the selected graph of the current canvas. @param item index of the item to fit (-1: any)
+  void openFitDialog(int item=-1) { _fitDialog.open(item); }
   //! Called for each new pane (to set its graphs and undo hook).
   std::function<void(CanvasPane &)> onNewPane;
   //! Called before a pane is added or closed by the user (undo).
@@ -196,6 +206,11 @@ namespace CAP
   bool   _addRequested;      //!< the + button of a toolbar was clicked
   int    _focusedPane;       //!< pane whose window had the focus at the last frame
   bool   _focusRequested;    //!< give the focus to the current pane (changed by the program)
+  FitPane _fitPane;          //!< results of the fits of the selected graph
+  FitDialog _fitDialog;      //!< the Fit window
+  bool   _fitsVisible = false;   //!< the fit pane is shown
+  bool   _fitsDockRequested = false;   //!< dock the fit pane below the canvases at the next frame
+  bool   _fitsShownOnce = false;   //!< the fit pane was shown (it opens by itself only once)
 
   //! @brief Draw one frame: menu bar, dock space, panes, browser, dialogs, status bar.
   void renderFrame();
@@ -211,6 +226,10 @@ namespace CAP
   void buildDockLayout(unsigned int dockId);
   //! @brief Dock the canvas panes in a grid of the given dock node (_gridColumns columns). @param nodeId dock node
   void buildPaneGrid(unsigned int nodeId);
+  //! @brief Draw the fit pane, if shown (opened by itself the first time the selected graph has fits).
+  void renderFitPane();
+  //! @brief Dock the fit pane below the canvases.
+  void dockFitPane();
   //! @brief Create a canvas pane (not yet docked). @return the pane
   CanvasPane & newPane();
   //! @brief Load the interface font and the fonts of the plots (see ImGuiPainter::setFont()).

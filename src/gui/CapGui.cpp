@@ -74,7 +74,9 @@ namespace CAP
   _addRequested(false),
   _focusedPane(-1),
   _focusRequested(false)
-  { }
+  {
+  _fitPane.onNewFit = [this]() { openFitDialog(); };
+  }
 
   CapGui::~CapGui()
   {
@@ -286,6 +288,60 @@ namespace CAP
   _panes.erase(_panes.begin() + k);
   if (_currentPane > k || _currentPane >= nPanes()) _currentPane = std::max(0, _currentPane - 1);
   _focusedPane = -1;
+  }
+
+  void CapGui::setFitPaneVisible(bool visible)
+  {
+  if (visible && !_fitsVisible)
+    {
+    // docked below the canvases the first time; afterwards where the user left it
+    ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(FitPane::windowName()) : nullptr;
+    if (!window) _fitsDockRequested = true;
+    _fitsShownOnce = true;
+    }
+  _fitsVisible = visible;
+  }
+
+  void CapGui::dockFitPane()
+  {
+  // the node of the canvases: the largest one holding the first canvas pane but not the docked file browser
+  ImGuiID dockspace = ImHashStr("CapDockSpace");
+  ImGuiWindow * first = _panes.empty() ? nullptr : ImGui::FindWindowByName(_panes[0]->name().data());
+  ImGuiWindow * browser = ImGui::FindWindowByName(FileBrowser::windowName());
+  ImGuiDockNode * browserNode = browser ? browser->DockNode : nullptr;
+  auto holdsBrowser = [browserNode](ImGuiDockNode * node)
+    {
+    for (ImGuiDockNode * n = browserNode; n; n = n->ParentNode) if (n == node) return true;
+    return false;
+    };
+  ImGuiDockNode * node = first ? first->DockNode : nullptr;
+  if (!node) node = ImGui::DockBuilderGetCentralNode(dockspace);
+  if (!node) return;
+  while (node->ParentNode && !holdsBrowser(node->ParentNode)) node = node->ParentNode;
+  ImGuiID below = 0, above = 0;
+  ImGui::DockBuilderSplitNode(node->ID, ImGuiDir_Down, 0.3f, &below, &above);
+  ImGui::DockBuilderDockWindow(FitPane::windowName(), below);
+  ImGui::DockBuilderFinish(dockspace);
+  }
+
+  void CapGui::renderFitPane()
+  {
+  if (!_fitsShownOnce && !_panes.empty())
+    for (const auto & item : currentPane().currentGraph().items())
+      if (!item.isMap() && item.nFits() > 0) { setFitPaneVisible(true); break; }
+  if (!_fitsVisible) return;
+  if (_fitsDockRequested) { dockFitPane(); _fitsDockRequested = false; }
+  bool open = true;
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6, 6));
+  bool visible = ImGui::Begin(FitPane::windowName(), &open, ImGuiWindowFlags_NoCollapse);
+  ImGui::PopStyleVar();
+  if (visible && !_panes.empty())
+    {
+    CanvasPane & pane = currentPane();
+    _fitPane.render(&pane.currentGraph(), pane.beforeChange);
+    }
+  ImGui::End();
+  _fitsVisible = open;
   }
 
   void CapGui::setShowToolbars(bool v)
@@ -531,6 +587,8 @@ namespace CAP
     if (open) k++;
     else _dataPanes.erase(_dataPanes.begin() + k);
     }
+  renderFitPane();
+  if (_fitDialog.render(_panes.empty() ? nullptr : &currentPane().currentGraph())) setFitPaneVisible(true);
   if (areaX1 > areaX0) { _areaX = areaX0; _areaY = areaY0; _areaWidth = areaX1 - areaX0; _areaHeight = areaY1 - areaY0; }
 
   // panes added (+ button) or closed (x of their tab) by the user

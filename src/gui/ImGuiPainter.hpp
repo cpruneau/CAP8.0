@@ -47,6 +47,11 @@ namespace CAP
   //! @brief Closed polygon, filled and outlined (see Painter::drawPolygon()).
   virtual void drawPolygon(const std::vector<GRAPHICS::Point2D> & points, const GRAPHICS::FillAttributes & fill,
                            const GRAPHICS::LineAttributes & line);
+  //! @brief Polygon of any color (see Painter::fillPolygon()); concave polygons are drawn as fans from their first
+  //! point, which is exact for the convex and star-shaped polygons of color maps.
+  virtual void fillPolygon(const std::vector<GRAPHICS::Point2D> & points, const GRAPHICS::Color & color);
+  //! @brief Rectangle of any color, on whole pixels so that adjacent cells show no seam (see Painter::fillRectangle()).
+  virtual void fillRectangle(float x0, float y0, float x1, float y1, const GRAPHICS::Color & color);
   //! @brief One marker (see Painter::drawMarker()).
   virtual void drawMarker(const GRAPHICS::Point2D & position, const GRAPHICS::MarkerAttributes & marker);
   //! @brief Text (see Painter::drawText()): the texture of its LaTeX image for a LaTeX or ROOT-syntax text once LaTeX

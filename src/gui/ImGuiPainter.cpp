@@ -11,6 +11,7 @@
  * *********************************************************************/
 //! @file ImGuiPainter.cpp
 //! @brief Implementation of ImGuiPainter.
+#include <algorithm>
 #include <cmath>
 #include <cfloat>
 #include "imgui.h"
@@ -237,6 +238,28 @@ namespace CAP
                           corner(left, top), corner(left + w, top), corner(left + w, top + h), corner(left, top + h),
                           ImVec2(0, 0), ImVec2(1, 0), ImVec2(1, 1), ImVec2(0, 1), color(attributes.color(), attributes.alpha()));
   return true;
+  }
+
+  void ImGuiPainter::fillPolygon(const std::vector<Point2D> & points, const Color & c)
+  {
+  if (points.size() < 3) return;
+  ImU32 col = ImGui::GetColorU32(ImVec4(c.red, c.green, c.blue, c.alpha));
+  std::vector<ImVec2> screen;
+  for (const auto & p : points) { float x, y; toScreen(p, x, y); screen.push_back(ImVec2(x, y)); }
+  for (size_t k=1; k+1<screen.size(); k++) _drawList->AddTriangleFilled(screen[0], screen[k], screen[k+1], col);
+  }
+
+  void ImGuiPainter::fillRectangle(float x0, float y0, float x1, float y1, const Color & c)
+  {
+  float ax, ay, bx, by;
+  toScreen(Point2D(x0, y0), ax, ay);
+  toScreen(Point2D(x1, y1), bx, by);
+  // edges rounded to pixels: neighbors share them exactly (AddRectFilled is not anti-aliased)
+  float scale = ImGui::GetIO().DisplayFramebufferScale.x > 0 ? ImGui::GetIO().DisplayFramebufferScale.x : 1.0f;
+  auto pixel = [scale](float v) { return std::round(v*scale)/scale; };
+  ImVec2 p0(pixel(std::min(ax, bx)), pixel(std::min(ay, by))), p1(pixel(std::max(ax, bx)), pixel(std::max(ay, by)));
+  if (p1.x <= p0.x || p1.y <= p0.y) return;
+  _drawList->AddRectFilled(p0, p1, ImGui::GetColorU32(ImVec4(c.red, c.green, c.blue, c.alpha)));
   }
 
   float ImGuiPainter::textWidth(const String & text, const TextAttributes & attributes) const

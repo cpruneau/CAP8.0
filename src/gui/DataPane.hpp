@@ -36,6 +36,10 @@ namespace CAP
   //! as fast as small ones. Columns of uncertainties that are zero for every point are left out. Copy puts the whole
   //! table (the columns shown) on the clipboard, as tab-separated text.
   //!
+  //! If fits are attached to the data (MATH::DataPoints::addFit()), the heading gives the quality of each, and the
+  //! table has, after the uncertainties, the value f(x) of each fitted function at the point (dimmed outside the
+  //! range of the fit) and, unless turned off (setShowPulls()), the pull (value - f(x))/(statistical uncertainty).
+  //!
   //! The data points are not owned: they must outlive the pane (in CapApp they belong to open, or retired, files).
   //!
   class DataPane
@@ -58,6 +62,10 @@ namespace CAP
   void render();
   //! @brief The table as tab-separated text, header row first. @return text
   String text() const;
+  //! @brief Whether the pulls of the fits are shown (when there are fits). @return true if so
+  bool showPulls() const { return _showPulls; }
+  //! @brief Show the pulls of the fits or not. @param v show them
+  void setShowPulls(bool v) { _showPulls = v; }
 
   protected:
 
@@ -65,6 +73,7 @@ namespace CAP
   const MATH::DataPoints * _data;   //!< data points shown (not owned)
   String _label;   //!< name shown in the tab and the heading
   std::vector<bool> _shown;   //!< columns shown (uncertainties zero for every point are not), set by setData()
+  bool _showPulls = true;   //!< the pulls of the fits are shown
   };
 
   } // namespace GUI

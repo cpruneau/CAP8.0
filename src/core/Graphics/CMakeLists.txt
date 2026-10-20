@@ -6,19 +6,21 @@
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 #add_definitions(${ROOT_CXX_FLAGS})
 
-# Graph2D and MarkerErrors are left out of the build until they are rewritten
-# (Graph2D.hpp/.cpp and MarkerErrors.hpp/.cpp do not compile yet).
+# MarkerErrors is left out of the build until it is rewritten (MarkerErrors.hpp/.cpp do not compile yet).
+# Graphs of functions and data of rank 2 (color maps) are drawn by Graph, with Grid2D and Palette.
 set(GRAPHICS_HEADERS
 Attributes.hpp
 Axis.hpp
 AxisRange.hpp
 AxisRenderer.hpp
 Canvas.hpp
+Color.hpp
 Drawable2D.hpp
 FillAttributes.hpp
 Geom2D.hpp
 Graph.hpp
 GraphRenderer.hpp
+Grid2D.hpp
 Line.hpp
 LineAttributes.hpp
 LineRenderer.hpp
@@ -28,10 +30,12 @@ MarkerAttributes.hpp
 MarkerRenderer.hpp
 MarkerVector.hpp
 Painter.hpp
+Palette.hpp
 Point2D.hpp
 Point3D.hpp
 Rect2D.hpp
 Polygon.hpp
+Projection3D.hpp
 PolygonRenderer.hpp
 Renderer.hpp
 SvgPainter.hpp
@@ -49,6 +53,8 @@ FillAttributes.cpp
 Geom2D.cpp
 Graph.cpp
 GraphRenderer.cpp
+GraphRenderer3D.cpp
+Grid2D.cpp
 LatexRenderer.cpp
 Line.cpp
 LineAttributes.cpp
@@ -59,7 +65,9 @@ MarkerAttributes.cpp
 MarkerRenderer.cpp
 MarkerVector.cpp
 Painter.cpp
+Palette.cpp
 Polygon.cpp
+Projection3D.cpp
 PolygonRenderer.cpp
 Renderer.cpp
 SvgPainter.cpp
@@ -96,6 +104,12 @@ target_include_directories(Graphics PUBLIC Base Math Graphics ${EXTRA_INCLUDES} 
 add_executable(TestLatexRenderer tests/TestLatexRenderer.cpp)
 target_link_libraries(TestLatexRenderer Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME LatexRenderer COMMAND TestLatexRenderer)
+add_executable(TestGraph2D tests/TestGraph2D.cpp)
+target_link_libraries(TestGraph2D Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME Graph2D COMMAND TestGraph2D)
+add_executable(TestGraph3D tests/TestGraph3D.cpp)
+target_link_libraries(TestGraph3D Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME Graph3D COMMAND TestGraph3D)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libGraphics.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libGraphics_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Graphics  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

@@ -22,6 +22,20 @@ namespace CAP
   return 0.55*attributes.size()*height()*n;
   }
 
+  void Painter::fillPolygon(const std::vector<Point2D> & points, const Color & color)
+  {
+  FillAttributes fill;
+  fill.set(TColor::GetColor(color.red, color.green, color.blue), color.alpha, 1001);
+  LineAttributes noLine;
+  noLine.setStyle(0);
+  drawPolygon(points, fill, noLine);
+  }
+
+  void Painter::fillRectangle(float x0, float y0, float x1, float y1, const Color & color)
+  {
+  fillPolygon({ Point2D(x0, y0), Point2D(x1, y0), Point2D(x1, y1), Point2D(x0, y1) }, color);
+  }
+
   const LatexImage * Painter::latexImage(const String & text)
   {
   return LatexRenderer::instance().image(text);

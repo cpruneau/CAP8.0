@@ -1,5 +1,8 @@
 #include "Canvas.hpp"
 #include "Painter.hpp"
+#include <cmath>
+#include "LatexRenderer.hpp"
+#include "SvgPainter.hpp"
 
 ClassImp(CAP::GRAPHICS::Canvas);
 
@@ -126,6 +129,47 @@ namespace CAP
   {
   for (size_t k=0; k<_graphs.size(); k++) if (_graphs[k]->cellContains(p)) return int(k);
   return -1;
+  }
+
+
+  void Canvas::divideFor(int n)
+  {
+  if (n < 1) n = 1;
+  int columns = int(std::ceil(std::sqrt(double(n))));
+  divide(columns, (n + columns - 1)/columns);
+  }
+
+  void Canvas::showOnePerGraph(const std::vector<GraphItem> & items)
+  {
+  divideFor(int(items.size()));
+  for (int k=0; k<nGraphs(); k++) graph(k).clearItems();
+  for (std::size_t k=0; k<items.size(); k++) graph(int(k)).show(items[k], true);
+  }
+
+  bool Canvas::writeSvg(const String & fileName, int width, int height) const
+  {
+  if (width <= 0) width = _width;
+  if (height <= 0) height = _height;
+  return writeSvg(fileName, { this }, 1, width, height);
+  }
+
+  bool Canvas::writeSvg(const String & fileName, const std::vector<const Canvas*> & canvases, int columns, int width, int height)
+  {
+  if (canvases.empty() || width <= 0 || height <= 0) return false;
+  if (columns < 1) columns = 1;
+  columns = std::min(columns, int(canvases.size()));
+  int rows = (int(canvases.size()) + columns - 1)/columns;
+  SvgPainter svg(float(columns*width), float(rows*height));
+  for (const Canvas * canvas : canvases)          // the LaTeX texts of all the canvases typeset in one run
+    if (canvas) LatexRenderer::instance().prepare(*canvas, float(width), float(height));
+  for (std::size_t k=0; k<canvases.size(); k++)
+    {
+    if (!canvases[k]) continue;
+    svg.beginRegion(float((k % columns)*width), float((k/columns)*height), float(width), float(height));
+    canvases[k]->draw(svg);
+    }
+  svg.endRegion();
+  return svg.write(fileName);
   }
 
   } // namespace GRAPHICS

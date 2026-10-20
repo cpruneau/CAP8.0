@@ -18,6 +18,7 @@
 #include "CanvasPane.hpp"
 #include "ImGuiPainter.hpp"
 #include "GraphEditor.hpp"
+#include "DataPoints.hpp"
 
 namespace CAP
 {
@@ -59,8 +60,7 @@ namespace CAP
   GraphItem & CanvasPane::show(const GraphItem & item)
   {
   changing();
-  Graph & graph = currentGraph();
-  return _mode == kAdd ? graph.add(item) : graph.replace(item);
+  return currentGraph().show(item, _mode == kReplace);   // default style; titles from a first object
   }
 
   void CanvasPane::divide(int nColumns, int nRows)
@@ -90,6 +90,31 @@ namespace CAP
   ImGui::SameLine();
   if (ImGui::Checkbox("Log Y", &logY)) { changing(); graph.setLogY(logY); }
   ImGui::SetItemTooltip("Logarithmic y axis for the selected graph");
+  if (graph.hasMaps())            // a graph of a function or data of two variables: its z scale, its 3D view
+    {
+    ImGui::SameLine();
+    bool logZ = graph.isLogZ();
+    if (ImGui::Checkbox("Log Z", &logZ)) { changing(); graph.setLogZ(logZ); }
+    ImGui::SetItemTooltip("Logarithmic z scale for the selected graph (colors, and heights in 3D)");
+    ImGui::SameLine();
+    bool view3D = graph.dimension() == Graph::k3D;
+    if (ImGui::Checkbox("3D", &view3D)) { changing(); graph.setDimension(view3D ? Graph::k3D : Graph::k2D); }
+    ImGui::SetItemTooltip("3D view of the selected graph (surface, mesh or lego boxes); drag in it to turn it");
+    }
+
+  bool fitted = false;              // a graph of objects with fits: show them or not
+  for (const auto & item : graph.items()) if (!item.isMap() && item.nFits() > 0) fitted = true;
+  if (fitted)
+    {
+    ImGui::SameLine();
+    bool fits = graph.showFits();
+    if (ImGui::Checkbox("Fits", &fits)) { changing(); graph.setShowFits(fits); }
+    ImGui::SetItemTooltip("Draw the fits of the objects of the selected graph (View > Fit Results for their results)");
+    ImGui::SameLine();
+    bool residuals = graph.showResiduals();
+    if (ImGui::Checkbox("Residuals", &residuals)) { changing(); graph.setShowResiduals(residuals); }
+    ImGui::SetItemTooltip("Panel below the graph with the residuals of the fits (data - fit, or pulls: right-click), in their colors");
+    }
 
   ImGui::SameLine(0, 18);
   if (ImGui::Button("Graphs...")) { _gridColumns = _canvas.nColumns(); _gridRows = _canvas.nRows(); ImGui::OpenPopup("graphs"); }
@@ -146,6 +171,13 @@ namespace CAP
     if (ImGui::MenuItem(label)) { pick.part = Graph::kAxisTitle; pick.axis = k; edit(_contextGraph, pick); }
     }
   if (ImGui::MenuItem("Edit Legend...")) { pick.part = Graph::kLegend; edit(_contextGraph, pick); }
+  if (graph.hasMaps())
+    {
+    ImGui::Separator();
+    bool view3D = graph.dimension() == Graph::k3D;
+    if (ImGui::MenuItem("3D View", nullptr, view3D)) { changing(); graph.setDimension(view3D ? Graph::k2D : Graph::k3D); }
+    if (view3D && ImGui::MenuItem("Reset View Angles")) { changing(); graph.resetViewAngles(); }
+    }
   if (ImGui::BeginMenu("Edit Item", !graph.items().empty()))
     {
     for (size_t k=0; k<graph.items().size(); k++)
@@ -154,6 +186,19 @@ namespace CAP
       if (label.isNull()) label = "(unnamed)";
       label += "...##"; label += int(k);
       if (ImGui::MenuItem(label.data())) { pick.part = Graph::kDataPoint; pick.item = int(k); pick.index = -1; edit(_contextGraph, pick); }
+      }
+    ImGui::EndMenu();
+    }
+  bool fittable = false;
+  for (const auto & item : graph.items()) if (!item.isMap()) fittable = true;
+  if (onFit && ImGui::BeginMenu("Fit", fittable))
+    {
+    for (size_t k=0; k<graph.items().size(); k++)
+      {
+      if (graph.items()[k].isMap()) continue;
+      String label = graph.items()[k].label().isNull() ? String("(unnamed)") : graph.items()[k].label();
+      String entry = label + String("...##fit") + String(std::to_string(k));
+      if (ImGui::MenuItem(entry.data())) { setSelectedGraph(_contextGraph); onFit(int(k)); }
       }
     ImGui::EndMenu();
     }
@@ -171,22 +216,42 @@ namespace CAP
       }
     ImGui::EndMenu();
     }
-  if (!graph.isAutoLegendPosition() || graph.titleOffsetX() != 0 || graph.titleOffsetY() != 0
-      || graph.xAxis().titleOffsetX() != 0 || graph.xAxis().titleOffsetY() != 0
-      || graph.yAxis().titleOffsetX() != 0 || graph.yAxis().titleOffsetY() != 0)
-    if (ImGui::MenuItem("Reset Text Positions"))
-      {
-      changing();
-      graph.setAutoLegendPosition();
-      graph.setTitleOffset(0, 0);
-      graph.xAxis().setTitleOffset(0, 0);
-      graph.yAxis().setTitleOffset(0, 0);
-      }
+  if (graph.hasMovedTexts() && ImGui::MenuItem("Reset Text Positions")) { changing(); graph.resetTextPositions(); }
   ImGui::Separator();
   bool logX = graph.isLogX(), logY = graph.isLogY(), legend = graph.showLegend();
   if (ImGui::MenuItem("Log X", nullptr, logX)) { changing(); graph.setLogX(!logX); }
   if (ImGui::MenuItem("Log Y", nullptr, logY)) { changing(); graph.setLogY(!logY); }
+  if (graph.hasMaps())
+    {
+    bool logZ = graph.isLogZ();
+    if (ImGui::MenuItem("Log Z", nullptr, logZ)) { changing(); graph.setLogZ(!logZ); }
+    }
   if (ImGui::MenuItem("Legend", nullptr, legend)) { changing(); graph.setShowLegend(!legend); }
+  bool fitted = false;
+  for (const auto & item : graph.items()) if (!item.isMap() && item.nFits() > 0) fitted = true;
+  if (fitted)
+    {
+    bool fits = graph.showFits(), statistics = graph.showFitStatistics();
+    if (ImGui::MenuItem("Fits", nullptr, fits)) { changing(); graph.setShowFits(!fits); }
+    if (ImGui::MenuItem("Fit Quality in the Legend", nullptr, statistics)) { changing(); graph.setShowFitStatistics(!statistics); }
+    bool residuals = graph.showResiduals();
+    if (ImGui::MenuItem("Residuals Panel", nullptr, residuals)) { changing(); graph.setShowResiduals(!residuals); }
+    if (residuals && ImGui::BeginMenu("Residuals"))
+      {
+      bool pulls = graph.residualMode() == Graph::kPull;
+      if (ImGui::MenuItem("Data \xE2\x88\x92 Fit", nullptr, !pulls)) { changing(); graph.setResidualMode(Graph::kDifference); }
+      if (ImGui::MenuItem("Pulls (Data \xE2\x88\x92 Fit) / Uncertainty", nullptr, pulls)) { changing(); graph.setResidualMode(Graph::kPull); }
+      ImGui::Separator();
+      for (float fraction : { 0.2f, 0.3f, 0.4f })
+        {
+        char label[32];
+        std::snprintf(label, sizeof(label), "Height %.0f%%", 100.0f*fraction);
+        if (ImGui::MenuItem(label, nullptr, std::fabs(graph.residualFraction() - fraction) < 0.01f)) { changing(); graph.setResidualFraction(fraction); }
+        }
+      if (ImGui::MenuItem("Automatic Range", nullptr, graph.isAutoResidualRange())) { changing(); graph.setAutoResidualRange(); }
+      ImGui::EndMenu();
+      }
+    }
   if (ImGui::MenuItem("Automatic ranges", nullptr, graph.isAutoX() && graph.isAutoY())) { changing(); graph.setAutoRange(); }
   if (ImGui::BeginMenu("Remove", !graph.items().empty()))
     {
@@ -339,6 +404,9 @@ namespace CAP
       g.axis(_drag.axis).setLabelGap(std::min(std::max(_drag.initialX + away/20.0f, 0.0f), 5.0f));
       break;
       }
+    case kRotate:          // half a degree per pixel: right turns the box, up raises the eye
+      g.setViewAngles(_drag.initialX - 0.5f*dx, _drag.initialY + 0.5f*dy);
+      break;
     default: break;
     }
   }
@@ -398,13 +466,8 @@ namespace CAP
       {
       if (!isMove && _drag.moved && std::fabs(x1 - x0) > 4 && std::fabs(y1 - y0) > 4)
         {
-        const Graph::View view = g.view();
-        double xa, ya, xb, yb;
-        g.fromCanvas(view, painter.toCanvas(std::min(x0,x1), std::max(y0,y1)), xa, ya);   // lower left
-        g.fromCanvas(view, painter.toCanvas(std::max(x0,x1), std::min(y0,y1)), xb, yb);   // upper right
         changing();
-        if (_drag.kind != kZoomY && xb > xa) g.setXRange(xa, xb);
-        if (_drag.kind != kZoomX && yb > ya) g.setYRange(ya, yb);
+        g.zoom(painter.toCanvas(x0, y0), painter.toCanvas(x1, y1), _drag.kind != kZoomY, _drag.kind != kZoomX);
         }
       _drag = Drag();
       }
@@ -415,14 +478,59 @@ namespace CAP
 
   // ---- coordinates under the mouse
   _hoverText = "";
-  if (k >= 0 && !_canvas.graph(k).items().empty() && _canvas.graph(k).frameContains(p))
+  if (k >= 0 && _canvas.graph(k).residualContains(p))
+    {
+    // the residuals panel: x and the residual under the mouse
+    const Graph & g = _canvas.graph(k);
+    double x, r;
+    g.fromResidualCanvas(g.view(), p, x, r);
+    char text[160];
+    std::snprintf(text, sizeof(text), "x = %.5g   %s = %.5g", x, g.residualMode() == Graph::kPull ? "pull" : "data \xE2\x88\x92 fit", r);
+    _hoverText = text;
+    }
+  else if (k >= 0 && !_canvas.graph(k).items().empty() && _canvas.graph(k).frameContains(p))
     {
     const Graph & g = _canvas.graph(k);
+    const Graph::View view = g.view();
+    if (g.is3D())
+      {
+      char view3D[128];
+      std::snprintf(view3D, sizeof(view3D), "azimuth %.0f, elevation %.0f (drag to turn the view, double-click for the default)",
+                    g.azimuth(), g.elevation());
+      _hoverText = view3D;
+      }
+    else
+    {
     double x, y;
-    g.fromCanvas(g.view(), p, x, y);
-    char text[96];
+    g.fromCanvas(view, p, x, y);
+    char text[160];
     std::snprintf(text, sizeof(text), "x = %.5g   y = %.5g", x, y);
     _hoverText = text;
+    if (view.hasZ)
+      {
+      // the value of the map under the mouse (the last drawn, on top), or of the colored point under it
+      int nMaps = 0;
+      for (const auto & item : g.items()) if (item.isMap()) nMaps++;
+      String z;
+      if (pick.part == Graph::kDataPoint && pick.item >= 0 && pick.item < int(g.items().size()) && g.items()[pick.item].isMap())
+        {
+        const GraphItem & item = g.items()[pick.item];
+        std::vector<double> c = item.data()->coordinatesAt(pick.index);
+        std::snprintf(text, sizeof(text), "point (%.5g, %.5g)   z = %.5g", c[0], c[1], item.data()->valueAt(pick.index));
+        z = text;
+        if (nMaps > 1) z += String("   (") + item.label() + String(")");
+        }
+      double value;
+      int index;
+      if (z.isNull() && g.valueAt(view, x, y, value, index))
+        {
+        std::snprintf(text, sizeof(text), "z = %.5g", value);
+        z = text;
+        if (nMaps > 1) z += String("   (") + g.items()[std::size_t(index)].label() + String(")");
+        }
+      if (!z.isNull()) _hoverText = String(_hoverText.str() + "   " + z.str());
+      }
+    }
     }
   if (k < 0) return false;
   Graph & g = _canvas.graph(k);
@@ -436,12 +544,21 @@ namespace CAP
       ImGui::SetMouseCursor((pick.axis == 0) != shift ? ImGuiMouseCursor_ResizeEW : ImGuiMouseCursor_ResizeNS);
       break;
     case Graph::kDataPoint: ImGui::SetMouseCursor(ImGuiMouseCursor_Hand); break;
+    case Graph::kFrame: if (g.is3D()) ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll); break;
     default: break;
     }
 
   // ---- double-click in the frame: automatic ranges
+  if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && pick.part == Graph::kResiduals)
+    {
+    changing();
+    g.setAutoX();
+    g.setAutoResidualRange();
+    return true;
+    }
   if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && (pick.part == Graph::kFrame || pick.part == Graph::kDataPoint))
     {
+    if (g.is3D()) { changing(); g.resetViewAngles(); g.setAutoRange(); return true; }   // 3D: back to the default view
     if (!g.isAutoX() || !g.isAutoY()) { changing(); g.setAutoRange(); }
     return true;
     }
@@ -474,10 +591,13 @@ namespace CAP
         }
       case Graph::kAxis:
         if (shift) { drag.kind = kMoveLabels; drag.initialX = g.axis(pick.axis).labelGap(); }
-        else drag.kind = (pick.axis == 0) ? kZoomX : kZoomY;
+        else if (pick.axis < 2 && !g.is3D()) drag.kind = (pick.axis == 0) ? kZoomX : kZoomY;   // the z axis, 3D views: not by dragging
         break;
+      case Graph::kResiduals: drag.kind = kZoomX; break;   // zooms in x, as the x axis
       case Graph::kFrame: case Graph::kDataPoint:
-        drag.kind = kZoom; break;
+        if (g.is3D()) { drag.kind = kRotate; drag.initialX = g.azimuth(); drag.initialY = g.elevation(); }
+        else drag.kind = kZoom;
+        break;
       default: break;
       }
     _drag = drag;

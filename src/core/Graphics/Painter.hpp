@@ -7,6 +7,7 @@
 #include "LineAttributes.hpp"
 #include "MarkerAttributes.hpp"
 #include "TextAttributes.hpp"
+#include "Color.hpp"
 
 namespace CAP
 {
@@ -46,6 +47,14 @@ namespace CAP
 
   //! Closed polygon: filled with fill, outlined with line.
   virtual void drawPolygon(const std::vector<Point2D> & points, const FillAttributes & fill, const LineAttributes & line) = 0;
+
+  //! Polygon filled with any color, without outline (e.g. a cell of a color map). The default uses the ROOT
+  //! color nearest to color, through drawPolygon(); the painters override it.
+  virtual void fillPolygon(const std::vector<Point2D> & points, const Color & color);
+
+  //! Rectangle [x0,x1] x [y0,y1] filled with any color, without outline; adjacent rectangles leave no gap between
+  //! them. The default calls fillPolygon().
+  virtual void fillRectangle(float x0, float y0, float x1, float y1, const Color & color);
 
   //! One marker centered on position.
   virtual void drawMarker(const Point2D & position, const MarkerAttributes & marker) = 0;

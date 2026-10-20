@@ -103,6 +103,10 @@ namespace CAP
   //! @brief Take ownership of a function and show it in the current graph. @param function function of rank 1
   //! @param xMinimum lower end of the curve @param xMaximum upper end @return the item shown
   GRAPHICS::GraphItem & show(MATH::Function * function, float xMinimum, float xMaximum);
+  //! @brief Take ownership of a function of rank 2 and show it as a color map in the current graph.
+  //! @param function function of rank 2 @param xMinimum left @param xMaximum right @param yMinimum bottom
+  //! @param yMaximum top @return the item shown
+  GRAPHICS::GraphItem & show(MATH::Function * function, float xMinimum, float xMaximum, float yMinimum, float yMaximum);
   //! @brief Take ownership of data points and show them in the current graph. @return the item shown
   GRAPHICS::GraphItem & show(MATH::DataPoints * data);
   //! @}
@@ -217,8 +221,6 @@ namespace CAP
   void renderCustomLayout();
   //! @brief Open file of an identifier. @param id identifier @return file, or null
   BrowserFile * file(int id);
-  //! Style of the k-th item of a graph (colors and markers cycle).
-  static void styleItem(GRAPHICS::GraphItem & item, int k);
   };
 
   } // namespace GUI

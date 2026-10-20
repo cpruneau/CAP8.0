@@ -10,7 +10,6 @@
 #pragma link C++ class CAP::GRAPHICS::Drawable2D+;
 #pragma link C++ class CAP::GRAPHICS::FillAttributes+;
 #pragma link C++ class CAP::GRAPHICS::Geom2D+;
-// #pragma link C++ class CAP::GRAPHICS::Graph2D+;      // not in the build yet
 #pragma link C++ class CAP::GRAPHICS::Graph+;
 #pragma link C++ class CAP::GRAPHICS::GraphRenderer+;
 #pragma link C++ class CAP::GRAPHICS::Line+;

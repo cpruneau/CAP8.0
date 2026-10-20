@@ -94,6 +94,8 @@ namespace CAP
   std::function<void()> onAddPane;
   //! Called to show the values of data points shown in a graph as a table (graph menu, Show Data).
   std::function<void(const MATH::DataPoints * data, const String & label)> onShowData;
+  //! Called by "Fit..." in the context menu of a graph (made the selected graph), with the index of the item to fit (-1: any).
+  std::function<void(int item)> onFit;
 
   protected:
 
@@ -112,7 +114,7 @@ namespace CAP
   float _rectH;   //!< screen rectangle of the canvas at the last render (pixels)
 
   //! What a drag of the left mouse button does.
-  enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels };
+  enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels, kRotate };
   //! State of a drag of the left mouse button
   struct Drag
   {
