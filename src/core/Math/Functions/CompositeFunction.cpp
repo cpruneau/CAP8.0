@@ -55,21 +55,45 @@ namespace CAP
   CompositeFunction::CompositeFunction(unsigned int rank)
   :
   Function(rank),
-  _functions()
+  _functions(),
+  _operation(kSum)
+  {}
+
+  CompositeFunction::CompositeFunction(Operation operation)
+  :
+  Function(1),
+  _functions(),
+  _operation(operation)
   {}
 
   CompositeFunction::CompositeFunction(const std::vector<Function*> & functions)
   :
   Function(1),
-  _functions()
+  _functions(),
+  _operation(kSum)
   {
   setFunctions(functions);
+  }
+
+  CompositeFunction::CompositeFunction(const std::vector<Function*> & functions, Operation operation)
+  :
+  Function(1),
+  _functions(),
+  _operation(operation)
+  {
+  setFunctions(functions);
+  }
+
+  CompositeFunction CompositeFunction::product(Function * f, Function * g)
+  {
+  return CompositeFunction(std::vector<Function*>{ f, g }, kProduct);
   }
 
   CompositeFunction::CompositeFunction(const CompositeFunction & source)
   :
   Function(source),
-  _functions(source._functions)
+  _functions(source._functions),
+  _operation(source._operation)
   {}
 
   CompositeFunction & CompositeFunction::operator=(const CompositeFunction & rhs)
@@ -78,8 +102,25 @@ namespace CAP
     {
     Function::operator=(rhs);
     _functions = rhs._functions;
+    _operation = rhs._operation;
     }
   return *this;
+  }
+
+  void CompositeFunction::updateProductRank()
+  {
+  unsigned int rank = 0;
+  for (auto f : _functions) rank += f->rank();
+  Function::setRank(rank > 0 ? rank : 1);
+  }
+
+  void CompositeFunction::setOperation(Operation operation)
+  {
+  if (operation != kProduct)
+    for (auto f : _functions) checkFunction(f, _functions[0]->rank(), __FUNCTION__);
+  _operation = operation;
+  if (_operation == kProduct) updateProductRank();
+  else if (!_functions.empty()) Function::setRank(_functions[0]->rank());
   }
 
   void CompositeFunction::checkFunction(const Function * function, unsigned int rank, const char * source)
@@ -105,6 +146,12 @@ namespace CAP
   void CompositeFunction::addFunction(Function * function)
   {
   if (!function) throw MathException("Null pointer given in lieu of a function",__FUNCTION__);
+  if (_operation == kProduct)                             // a function of its own variables
+    {
+    _functions.push_back(function);
+    updateProductRank();
+    return;
+    }
   if (_functions.empty()) Function::setRank(function->rank());
   checkFunction(function,_rank,__FUNCTION__);
   _functions.push_back(function);
@@ -113,9 +160,15 @@ namespace CAP
   void CompositeFunction::setFunctions(const std::vector<Function*> & functions)
   {
   // validate everything before changing anything
+  for (auto f : functions) if (!f) throw MathException("Null pointer given in lieu of a function",__FUNCTION__);
+  if (_operation == kProduct)
+    {
+    _functions = functions;
+    updateProductRank();
+    return;
+    }
   if (!functions.empty())
     {
-    if (!functions[0]) throw MathException("Null pointer given in lieu of a function",__FUNCTION__);
     for (auto f : functions) checkFunction(f,functions[0]->rank(),__FUNCTION__);
     Function::setRank(functions[0]->rank());
     }
@@ -125,7 +178,7 @@ namespace CAP
   void CompositeFunction::setFunction(unsigned int index, Function * function)
   {
   if (index >= _functions.size()) throw MathException("Function index out of range",__FUNCTION__);
-  checkFunction(function,_rank,__FUNCTION__);
+  checkFunction(function,_operation == kProduct ? _functions[index]->rank() : _rank,__FUNCTION__);
   _functions[index] = function;
   }
 
@@ -141,43 +194,86 @@ namespace CAP
   return _functions[index];
   }
 
+  double CompositeFunction::componentValue(const Function & f, const double * x)
+  {
+  switch (f.rank())                                       // the version of its rank, which it implements
+    {
+    case 1:  return f.evaluateAt(x[0]);
+    case 2:  return f.evaluateAt(x[0],x[1]);
+    case 3:  return f.evaluateAt(x[0],x[1],x[2]);
+    default: return f.evaluateAt(std::vector<double>(x,x+f.rank()));
+    }
+  }
+
+  double CompositeFunction::combine(const double * x) const
+  {
+  switch (_operation)
+    {
+    case kProduct:
+      {
+      double product = 1.0;
+      unsigned int offset = 0;
+      for (auto f : _functions) { product *= componentValue(*f,x+offset); offset += f->rank(); }
+      return product;
+      }
+    case kPointwiseProduct:
+      {
+      double product = 1.0;
+      for (auto f : _functions) product *= componentValue(*f,x);
+      return product;
+      }
+    default:
+      {
+      double sum = 0.0;
+      for (auto f : _functions) sum += componentValue(*f,x);
+      return sum;
+      }
+    }
+  }
+
   double CompositeFunction::evaluateAt(double x) const
   {
   checkRank(1,__FUNCTION__);
-  double sum = 0.0;
-  for (auto f : _functions) sum += f->evaluateAt(x);
-  return sum;
+  return combine(&x);
   }
 
   double CompositeFunction::evaluateAt(double x1, double x2) const
   {
   checkRank(2,__FUNCTION__);
-  double sum = 0.0;
-  for (auto f : _functions) sum += f->evaluateAt(x1,x2);
-  return sum;
+  const double x[2] = { x1, x2 };
+  return combine(x);
   }
 
   double CompositeFunction::evaluateAt(double x1, double x2, double x3) const
   {
   checkRank(3,__FUNCTION__);
-  double sum = 0.0;
-  for (auto f : _functions) sum += f->evaluateAt(x1,x2,x3);
-  return sum;
+  const double x[3] = { x1, x2, x3 };
+  return combine(x);
   }
 
   double CompositeFunction::evaluateAt(const std::vector<double> & x) const
   {
   checkRank(x.size(),__FUNCTION__);
-  double sum = 0.0;
-  for (auto f : _functions) sum += f->evaluateAt(x);
-  return sum;
+  return combine(x.data());
   }
 
   double CompositeFunction::derivativeAt(double x) const
   {
   checkRank(1,__FUNCTION__);
+  if (_operation == kSum)
+    {
+    double sum = 0.0;
+    for (auto f : _functions) sum += componentDerivative(*f,x);
+    return sum;
+    }
+  // a product of rank 1 (a pointwise product, or a product of one function): the product rule
   double sum = 0.0;
-  for (auto f : _functions) sum += componentDerivative(*f,x);
+  for (std::size_t i=0; i<_functions.size(); i++)
+    {
+    double term = componentDerivative(*_functions[i],x);
+    for (std::size_t j=0; j<_functions.size(); j++) if (j != i) term *= _functions[j]->evaluateAt(x);
+    sum += term;
+    }
   return sum;
   }
 
@@ -203,6 +299,19 @@ namespace CAP
   {
   checkRank(low.size(),__FUNCTION__);
   checkRank(high.size(),__FUNCTION__);
+  if (_operation == kProduct)                             // product of the integrals over the variables of each
+    {
+    double product = 1.0;
+    unsigned int offset = 0;
+    for (auto f : _functions)
+      {
+      std::vector<double> l(low.begin()+offset, low.begin()+offset+f->rank()), h(high.begin()+offset, high.begin()+offset+f->rank());
+      product *= componentIntegral(*f,l,h);
+      offset += f->rank();
+      }
+    return product;
+    }
+  if (_operation == kPointwiseProduct) return componentIntegral(FunctionWrapper(*this),low,high);   // numerical
   double sum = 0.0;
   for (auto f : _functions) sum += componentIntegral(*f,low,high);
   return sum;

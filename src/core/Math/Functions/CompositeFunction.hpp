@@ -10,20 +10,29 @@ namespace CAP
   {
 
   //!
-  //! @brief Sum of functions: f(x) = f_0(x) + f_1(x) + ... + f_{n-1}(x).
+  //! @brief Sum or product of functions.
   //!
-  //! All component functions must have the same rank, which is the rank of the composite.
-  //! The first function added sets the rank of an empty composite; adding a function of a
-  //! different rank afterwards throws MathException.
+  //! The operation (operation(), chosen when the composite is made, or with setOperation()) is:
+  //!  - kSum (the default): f(x) = f_0(x) + f_1(x) + ... + f_{n-1}(x);
+  //!  - kProduct: a product in which each component is a function of its own variables, taken in the order the
+  //!    components were added: f(x, y) = f_0(x) f_1(y) for two functions of one variable, and in general the rank of
+  //!    the composite is the sum of those of its components (as ParameterizedComposite::kProduct). This makes
+  //!    functions of two (or more) variables of functions of one, e.g. a Gaussian in x times an exponential in y;
+  //!  - kPointwiseProduct: f(x) = f_0(x) f_1(x) ... f_{n-1}(x), all the components of the same variables.
+  //!
+  //! For a sum or a pointwise product, all component functions must have the same rank, which is the rank of the
+  //! composite: the first function added sets the rank of an empty composite, and adding a function of a different
+  //! rank afterwards throws MathException.
   //!
   //! Components are not owned: the caller keeps them alive as long as they are in the composite.
   //! Copying a composite copies the pointers, so both copies share the same components.
   //!
-  //! derivativeAt() and integralInRange() are the sums of the components' derivatives and integrals.
-  //! Components derived from ParameterizedFunction contribute their own derivativeAt() and
-  //! integralInRange() (analytical when they provide them); other components are differentiated and
-  //! integrated numerically with the ParameterizedFunction default methods.
-  //! An empty composite is the zero function.
+  //! derivativeAt() is the sum of the components' derivatives, or follows the product rule; integralInRange() over a
+  //! box is the sum of the components' integrals, the product of their integrals over their own variables (kProduct),
+  //! or numerical (kPointwiseProduct). Components derived from ParameterizedFunction contribute their own
+  //! derivativeAt() and integralInRange() (analytical when they provide them); other components are differentiated
+  //! and integrated numerically with the ParameterizedFunction default methods.
+  //! An empty sum is the zero function, an empty product the constant 1.
   //!
   //! Example:
   //! @code
@@ -35,11 +44,20 @@ namespace CAP
   //!   double y = f.evaluateAt(2.0);             // 8
   //!   double d = f.derivativeAt(2.0);           // 2
   //!   double s = f.integralInRange(0.0, 1.0);   // 5
+  //!
+  //!   CAP::MATH::Normal      gx(1.0, 0.0, 1.0);   // exp(-x^2/2)
+  //!   CAP::MATH::Exponential ey(2.0, -0.5);       // 2 exp(-y/2)
+  //!   CAP::MATH::CompositeFunction g = CAP::MATH::CompositeFunction::product(&gx, &ey);   // rank 2
+  //!   double v = g.evaluateAt(1.0, 2.0);           // exp(-1/2) 2 exp(-1)
+  //!   double w = g.integralInRange(-1.0, 1.0, 0.0, 4.0);   // integral of gx times integral of ey
   //! @endcode
   //!
   class CompositeFunction : public Function
   {
   public:
+
+  //! @brief How the functions are combined (see the class).
+  enum Operation { kSum, kProduct, kPointwiseProduct };
 
   //!
   //! @brief Empty composite (the zero function).
@@ -48,11 +66,28 @@ namespace CAP
   //!
   CompositeFunction(unsigned int rank=1);
   //!
+  //! @brief Empty composite of an operation (of rank 1 until a function is added).
+  //! @param operation sum, product (each component of its own variables) or pointwise product
+  //!
+  explicit CompositeFunction(Operation operation);
+  //!
   //! @brief Composite of the given functions.
   //! @param functions component functions (not owned), all of the same rank
   //! @throws MathException if a pointer is null or the ranks differ
   //!
   CompositeFunction(const std::vector<Function*> & functions);
+  //!
+  //! @brief Composite of the given functions, with an operation.
+  //! @param functions component functions (not owned) @param operation sum, product or pointwise product
+  //! @throws MathException if a pointer is null or the ranks differ (sum and pointwise product)
+  //!
+  CompositeFunction(const std::vector<Function*> & functions, Operation operation);
+  //!
+  //! @brief Product f(x) g(y) (kProduct) of two functions of their own variables (not owned).
+  //! @param f first function (of the first variables) @param g second function (of the next ones)
+  //! @return composite whose rank is the sum of theirs @throws MathException if a pointer is null
+  //!
+  static CompositeFunction product(Function * f, Function * g);
   //! @brief Copy constructor (the components are shared, not copied). @param source composite to copy
   CompositeFunction(const CompositeFunction & source);
   //! @brief Assignment operator (the components are shared, not copied). @param rhs composite to copy @return reference to this composite
@@ -68,9 +103,10 @@ namespace CAP
   void setRank(unsigned int rank) override;
 
   //!
-  //! @brief Append a function to the sum.
+  //! @brief Append a function to the sum or product (in a product, a function of the next variables).
   //! @param function function to add (not owned)
-  //! @throws MathException if function is null, or if its rank differs from the rank of a non-empty composite
+  //! @throws MathException if function is null, or if, for a sum or a pointwise product, its rank differs from the
+  //! rank of a non-empty composite
   //!
   void addFunction(Function * function);
   //!
@@ -82,11 +118,13 @@ namespace CAP
   //!
   //! @brief Replace the function at the given index.
   //! @param index index of the function to replace @param function new function (not owned)
-  //! @throws MathException if index is out of range, function is null, or its rank differs from the composite's
+  //! @throws MathException if index is out of range, function is null, or its rank differs from the composite's (from
+  //! that of the function replaced, in a product)
   //!
   void setFunction(unsigned int index, Function * function);
-  //! @brief Remove all functions (the composite becomes the zero function). The functions are not deleted.
-  void clearFunctions() { _functions.clear(); }
+  //! @brief Remove all functions (a sum becomes the zero function, a product the constant 1, of rank 1). The
+  //! functions are not deleted.
+  void clearFunctions() { _functions.clear(); if (_operation == kProduct) Function::setRank(1); }
 
   //!
   //! @brief Function at the given index.
@@ -101,6 +139,14 @@ namespace CAP
   const std::vector<Function*> & functions() const { return _functions; }
   //! @brief Number of component functions. @return size of the sum
   unsigned int nFunctions() const { return _functions.size(); }
+  //! @brief How the functions are combined. @return sum, product or pointwise product
+  Operation operation() const { return _operation; }
+  //!
+  //! @brief Change how the functions are combined (the rank of a product is then the sum of those of its components).
+  //! @param operation operation @throws MathException if the functions held do not allow it (different ranks for a
+  //! sum or a pointwise product); the composite is then unchanged
+  //!
+  void setOperation(Operation operation);
 
   //! @brief Value of a composite of rank 1. @param x variable @return sum of f_i(x) @throws MathException if the rank is not 1
   double evaluateAt(double x) const override;
@@ -153,10 +199,17 @@ namespace CAP
 
   //! @brief Throw unless function is non-null and has the given rank. @param function function to check @param rank expected rank @param source name of the calling function
   static void checkFunction(const Function * function, unsigned int rank, const char * source);
+  //! @brief Value of a component at its variables. @param f component @param x first of its variables @return value
+  static double componentValue(const Function & f, const double * x);
+  //! @brief Value at x (rank() values), by the operation. @param x variables @return value
+  double combine(const double * x) const;
+  //! @brief Recompute the rank of a product (sum of those of its components).
+  void updateProductRank();
 
   std::vector<Function*> _functions;  //!< component functions (not owned)
+  Operation _operation;  //!< how the functions are combined
 
-  ClassDef(CompositeFunction,1)
+  ClassDef(CompositeFunction,2)
   };
 
   } // namespace MATH
