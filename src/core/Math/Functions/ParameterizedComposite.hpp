@@ -32,6 +32,11 @@ namespace CAP
   //! each evaluation. derivativeAt() and integralInRange() are the sums of those of the components (analytical when
   //! they are); adaptToRange() is passed on to the components.
   //!
+  //! A composite is a sum (kSum, the default: all components have the rank of the composite) or a product (kProduct:
+  //! each component acts on its own variables, in the order the components were added, and the rank is the sum of
+  //! theirs; e.g. f(x) g(y), a function of two variables made of two of one). The integral of a product over a box is
+  //! the product of those of its components.
+  //!
   //! Unlike CompositeFunction (a sum of functions without parameters, which it does not own), a composite owns its
   //! components and can be fitted, copied, stored with a fit in a CAP file, and registered under a name with
   //! FunctionRegistry::registerComposite(), which makes it available in the Fit window of CapGui.
@@ -47,8 +52,15 @@ namespace CAP
   {
   public:
 
-  //! @brief Empty composite (the zero function, of rank 1 until a component is added).
-  ParameterizedComposite();
+  //! @brief How the components are combined.
+  enum Operation { kSum, kProduct };
+
+  //! @brief Empty composite (rank 1 until a component is added). @param operation sum or product
+  explicit ParameterizedComposite(Operation operation=kSum);
+  //! @brief Product f(x) g(y) of two functions of one variable each (copied). @param labelX label of f
+  //! @param f function of x @param labelY label of g @param g function of y @return composite of rank 2
+  static ParameterizedComposite product(const String & labelX, const ParameterizedFunction & f,
+                                        const String & labelY, const ParameterizedFunction & g);
   //! @brief Copy (the components are copied). @param source composite
   ParameterizedComposite(const ParameterizedComposite & source);
   //! @brief Assignment (the components are copied). @param rhs composite @return this composite
@@ -60,11 +72,13 @@ namespace CAP
 
   //!
   //! @brief Add a copy of a function to the sum, its parameters appended (named "label.name").
-  //! @param label label of the component (not empty, unique) @param function function (copied)
-  //! @throws MathException if the label is empty or already used, the rank differs from that of the other
-  //! components, or the function cannot be copied
+  //! @param label label of the component (not empty, unique) @param function function (copied; in a product, it
+  //! acts on the next variables) @throws MathException if the label is empty or already used, the rank differs from
+  //! that of the other components of a sum, or the function cannot be copied
   //!
   void add(const String & label, const ParameterizedFunction & function);
+  //! @brief How the components are combined. @return sum or product
+  Operation operation() const { return _operation; }
   //! @brief Number of components. @return number
   unsigned int nComponents() const { return (unsigned int)(_components.size()); }
   //! @brief Component k (with the parameters of the composite). @param k index @return component
@@ -84,10 +98,16 @@ namespace CAP
   double derivativeAt(double x) const override;
   //! @brief Integral (rank 1): sum of those of the components. @param low lower end @param high upper end @return integral
   double integralInRange(double low, double high) const override;
+  //! @brief Integral over a box: sum (or product, for a product) of those of the components.
+  //! @param low lower ends @param high upper ends @return integral
+  double integralInRange(const std::vector<double> & low, const std::vector<double> & high) const override;
   using ParameterizedFunction::integralInRange;
   //! @brief Pass the range on to the components (fixed parameters they change are changed in the composite).
   //! @param low lower end @param high upper end
   void adaptToRange(double low, double high) override;
+  //! @brief Pass a box on to the components (in a product, each its own variables).
+  //! @param low lower ends @param high upper ends
+  void adaptToRange(const std::vector<double> & low, const std::vector<double> & high) override;
 
   //! @brief Name under which the composite is registered (see FunctionRegistry::registerComposite()). @return name
   String registryName() const override { return _registryName; }
@@ -98,6 +118,13 @@ namespace CAP
 
   //! @brief Give the parameters of the composite to the components (when they changed).
   void synchronize() const;
+  //! @brief The variables of component k in a product. @param x all the variables @param k component @return its variables
+  std::vector<double> slice(const std::vector<double> & x, unsigned int k) const;
+  //! @brief Fixed parameters changed in the components (e.g. by adaptToRange()) are changed in the composite.
+  void pullFixedParameters();
+
+  Operation _operation;   //!< sum or product
+  std::vector<unsigned int> _offsets;   //!< in a product, index of the first variable of each component
 
   std::vector<std::unique_ptr<ParameterizedFunction>> _components;   //!< components (owned)
   std::vector<String> _labels;   //!< labels of the components

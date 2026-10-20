@@ -27,6 +27,9 @@
 #include "LogNormal.hpp"
 #include "Exponential.hpp"
 #include "OrthogonalSeries.hpp"
+#include "Normal2D.hpp"
+#include "Polynomial2D.hpp"
+#include "DataPoint3D.hpp"
 
 namespace CAP
 {
@@ -472,6 +475,7 @@ namespace CAP
     result.method = "Newton";
     result.converged = newton(result);
     }
+  if (_likelihood->binAveraging()) result.method = String(result.method.str() + ", averaged over the bins");
   finish(result);
   _result = result;
   _fitted = true;
@@ -636,7 +640,9 @@ namespace CAP
   FitRecord Fitter::fitAndAttach(ParameterizedFunction & function, DataPoints & data, const FitOptions & options)
   {
   Fitter fitter(function, data, options.statistic);
-  if (options.hasRange) fitter.setRange(options.low, options.high);
+  if (!options.rangeLow.empty()) fitter.setRange(options.rangeLow, options.rangeHigh);
+  else if (options.hasRange) fitter.setRange(options.low, options.high);
+  fitter.setBinAveraging(options.binAveraging);
   if (options.search)
     {
     fitter.setMethod(kSearch);
@@ -671,6 +677,89 @@ namespace CAP
   FitRecord Fitter::fitAndAttach(ParameterizedFunction & function, Function & target, double low, double high)
   {
   return fitAndAttach(function, target, low, high, FitOptions());
+  }
+
+
+  DataPointsVector Fitter::samples(const Function & function, double xLow, double xHigh, unsigned int nx,
+                                   double yLow, double yHigh, unsigned int ny, double error)
+  {
+  if (function.rank() != 2) throw MathException("A grid of samples needs a function of rank 2", __FUNCTION__);
+  if (nx < 2 || ny < 2) throw MathException("At least two samples are needed along each axis", __FUNCTION__);
+  if (!(error > 0)) throw MathException("The uncertainty of the samples must be positive", __FUNCTION__);
+  DataPointsVector points;
+  for (unsigned int j=0; j<ny; j++)
+    for (unsigned int i=0; i<nx; i++)
+      {
+      double x = xLow + (xHigh - xLow)*i/(nx - 1), y = yLow + (yHigh - yLow)*j/(ny - 1);
+      points.addPoint(DataPoint3D(x, y, function.evaluateAt(x, y), error));
+      }
+  return points;
+  }
+
+  bool Fitter::estimate(ParameterizedFunction & function, const DataPoints & data, const std::vector<double> & low, const std::vector<double> & high)
+  {
+  if (low.size() != function.rank() || high.size() != function.rank() || data.rank() != function.rank()) return false;
+  if (function.rank() == 1) return estimate(function, data, low[0], high[0]);
+  if (function.rank() != 2) return false;
+  std::vector<double> x, y, z, w;
+  for (unsigned int k=0; k<data.size(); k++)
+    {
+    std::vector<double> c = data.coordinatesAt(k);
+    double v = data.valueAt(k);
+    if (!std::isfinite(c[0]) || !std::isfinite(c[1]) || !std::isfinite(v)) continue;
+    if (c[0] < low[0] || c[0] > high[0] || c[1] < low[1] || c[1] > high[1]) continue;
+    x.push_back(c[0]); y.push_back(c[1]); z.push_back(v);
+    double e = data.statErrorAt(k);
+    w.push_back(e > 0 ? 1.0/(e*e) : 1.0);
+    }
+  if (x.empty()) return false;
+  if (Polynomial2D * polynomial = dynamic_cast<Polynomial2D*>(&function))
+    {
+    std::vector<Parameter> before = polynomial->parameters();
+    polynomial->adaptToRange(low, high);
+    if (polynomial->estimate(x, y, z, w)) return true;
+    for (unsigned int k=0; k<before.size(); k++) polynomial->setParameter(k, before[k]);   // unchanged if it fails
+    return false;
+    }
+  if (dynamic_cast<Normal2D*>(&function))
+    {
+    double sum = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, largest = 0;
+    for (std::size_t i=0; i<x.size(); i++)
+      {
+      double v = std::max(z[i], 0.0);
+      sum += v; sx += v*x[i]; sy += v*y[i]; sxx += v*x[i]*x[i]; syy += v*y[i]*y[i]; sxy += v*x[i]*y[i];
+      largest = std::max(largest, z[i]);
+      }
+    if (!(sum > 0)) return false;
+    double mx = sx/sum, my = sy/sum;
+    double vx = std::max(sxx/sum - mx*mx, 0.0), vy = std::max(syy/sum - my*my, 0.0);
+    double wx = vx > 0 ? std::sqrt(vx) : 0.25*(high[0] - low[0]), wy = vy > 0 ? std::sqrt(vy) : 0.25*(high[1] - low[1]);
+    double rho = (vx > 0 && vy > 0) ? (sxy/sum - mx*my)/std::sqrt(vx*vy) : 0.0;
+    rho = std::min(0.9, std::max(-0.9, rho));
+    setEstimates(function, { largest, mx, my, wx, wy, rho });
+    return true;
+    }
+  return false;
+  }
+
+  FitRecord Fitter::fitAndAttach(ParameterizedFunction & function, Function & target, const std::vector<double> & low,
+                                 const std::vector<double> & high, const FitOptions & options)
+  {
+  if (function.rank() != target.rank()) throw MathException("The functions have different ranks", __FUNCTION__);
+  if (low.size() != target.rank() || high.size() != target.rank()) throw MathException("The range must have the rank of the functions", __FUNCTION__);
+  if (target.rank() == 1) return fitAndAttach(function, target, low[0], high[0], options);
+  if (target.rank() != 2) throw MathException("Functions of rank above 2 cannot be fitted to each other (for now)", __FUNCTION__);
+  DataPointsVector points = samples(target, low[0], high[0], options.samples, low[1], high[1], options.samples);
+  Fitter fitter(function, points, kChiSquare);
+  if (options.search)
+    {
+    fitter.setMethod(kSearch);
+    fitter.search().setMethod(ExtremumSearch::kDifferentialEvolution);
+    }
+  fitter.fit();
+  FitRecord record = fitter.record(options.label);
+  target.addFit(record);
+  return record;
   }
 
   } // namespace MATH

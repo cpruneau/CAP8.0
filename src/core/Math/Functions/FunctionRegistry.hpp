@@ -34,14 +34,16 @@ namespace CAP
   //! The functions of CAP are registered under their class names, without namespaces: Constant, Linear, Parabolic,
   //! Cubic, Quartic, Polynomial, Normal, LogNormal, Exponential; the series of orthogonal polynomials LegendreSeries,
   //! ChebyshevSeries, HermiteSeries, LaguerreSeries (see OrthogonalSeries); and the Bessel functions BesselJ, BesselY,
-  //! BesselI, BesselK (see BesselFunction). A class of a user is registered once, before its fits are written or read:
+  //! BesselI, BesselK (see BesselFunction); and, of two variables, Normal2D and Polynomial2D. A class of a user is
+  //! registered once, before its fits are written or read:
   //! @code
   //!   CAP::MATH::FunctionRegistry::registerType<MyFunction>("MyFunction");
   //! @endcode
   //! The factory makes a function with a given number of parameters (whose values, bounds and names are then set from
   //! the file); the default one, for registerType<T>(name), uses the default constructor of T.
   //!
-  //! Composites (ParameterizedComposite: sums of registered functions, e.g. a signal over a background) are registered
+  //! Composites (ParameterizedComposite: sums of registered functions, e.g. a signal over a background, or products
+  //! such as f(x) g(y)) are registered
   //! by name with registerComposite(); their definitions can be written to a file and read back (writeComposites(),
   //! readComposites()). CapGui reads defaultCompositesFile() when it starts and writes the composites made in its Fit
   //! window there, so the composites a program saves to that file are offered by CapGui, and the other way around.
