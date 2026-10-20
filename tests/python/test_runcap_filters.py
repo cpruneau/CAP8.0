@@ -187,6 +187,17 @@ class TestReading(unittest.TestCase):
         self.assertEqual(pair.histograms, F.HistogramOptions("Pair"))
         self.assertFalse(any(F.MANAGED_KEY.match(p.key) for p in single.params))
 
+    def test_writing_keeps_parameters(self):
+        """Writing copies the tasks without copying their parameters (the GUI attaches widgets to them)."""
+        tasks = workflow()
+        single = tasks[0].children[1]
+        single.params[0].widget_var = object()
+        values_before = [(p.key, p.value) for p in single.params]
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param)
+        self.assertIs(copies[0].children[1].params[0], single.params[0])
+        self.assertEqual([(p.key, p.value) for p in single.params], values_before)
+        self.assertIn("HISTOGRAM_1_0:NAME", values(copies[0].children[1]))
+
     def test_old_format(self):
         """A workflow without RUNCAP element, with the keys written by hand."""
         it = task("EventIterator")

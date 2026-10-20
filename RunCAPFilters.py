@@ -718,6 +718,11 @@ def read_runcap_element(element, tasks):
 
 def prepared_for_writing(tasks, library, templates, Param):
     """Copies of the tasks with the keys of their objects and folders (apply_choices()); the tasks are unchanged."""
-    copies = copy.deepcopy(list(tasks))
+    def duplicate(task):        # the lists are copied, not the parameters (which may hold widgets of the GUI)
+        c = copy.copy(task)
+        c.params = list(task.params)
+        c.children = [duplicate(t) for t in task.children]
+        return c
+    copies = [duplicate(t) for t in tasks]
     apply_choices(copies, library, templates, Param)
     return copies

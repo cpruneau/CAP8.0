@@ -14,7 +14,9 @@ Usage (from anywhere; the script locates CAP from its own position):
     python3 RunCAP.py --check FILE            # load FILE, check its values against the templates and exit (no GUI)
 
 The window has four parts, from top to bottom:
-  * a toolbar: Run, Save workflow, Load workflow, Save log, Clear log, Kill and Exit;
+  * a toolbar: Run, Save workflow, Load workflow, Filters, Save log, Clear log, Kill and Exit. Filters opens the
+    Filters panel (RunCAPFiltersGui.py): one tab per kind (event and particle filters, efficiencies, smearers), the
+    number of objects of that kind, and for each its name and title and its conditions or binning parameters;
   * the workflow editor: the tasks available in the current build (left), the workflow (right), and between them two
     arrow buttons. The right arrow appends the tasks selected on the left to the workflow (a task can be added several
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
@@ -562,6 +564,8 @@ def run_gui(initial_file=None, hook=None):
             self.templates = {}
             self.items = {}             # workflow tree item -> TaskConfig
             self.tabs = {}              # workflow tree item -> tab frame
+            self.library = filters.FilterLibrary()   # filters, efficiencies and smearers of the workflow
+            self.filters_window = None
             self.saved_path = ""        # file of the last save or load
             self.dirty = False
             self.process = None
@@ -639,6 +643,8 @@ def run_gui(initial_file=None, hook=None):
             self.run_button.pack(side=tk.LEFT)
             buttons = [("Save workflow\u2026", self.save_workflow, "Save the workflow and its parameters to an XML file"),
                        ("Load workflow\u2026", self.load_workflow, "Load a workflow XML file saved earlier"),
+                       ("Filters\u2026", self.show_filters, "Event and particle filters, efficiencies and smearers of "
+                                                            "the workflow, used by the tasks by name"),
                        ("Save log\u2026", self.save_log, "Save the output below to a log file"),
                        ("Clear log", self.clear_log, "Clear the output below")]
             for text, command, tip in buttons:
@@ -946,21 +952,22 @@ def run_gui(initial_file=None, hook=None):
             reset = ttk.Button(head, text="Defaults", command=lambda: self._reset_task(item))
             reset.pack(side=tk.RIGHT)
             ToolTip(reset, "Set all the parameters of this task to their default values")
-            ttk.Label(head, text="%d parameters" % len(task.params), foreground="gray40").pack(side=tk.RIGHT, padx=8)
+            params = [p for p in task.params if not filters.MANAGED_KEY.match(p.key)]   # filters: Filters panel
+            ttk.Label(head, text="%d parameters" % len(params), foreground="gray40").pack(side=tk.RIGHT, padx=8)
 
             columns = ttk.Frame(tab)
             columns.pack(fill=tk.BOTH, expand=True)
             columns.columnconfigure(0, weight=1, uniform="col")
             columns.columnconfigure(1, weight=1, uniform="col")
             columns.rowconfigure(0, weight=1)
-            half = (len(task.params) + 1) // 2
-            for c, params in enumerate((task.params[:half], task.params[half:])):
+            half = (len(params) + 1) // 2
+            for c, column in enumerate((params[:half], params[half:])):
                 frame = ScrollFrame(columns)
                 frame.grid(row=0, column=c, sticky="nsew", padx=(0, 6) if c == 0 else (6, 0))
                 frame.inner.columnconfigure(1, weight=1)
-                for r, p in enumerate(params):
+                for r, p in enumerate(column):
                     self._make_param_row(frame.inner, r, task, p)
-            if not task.params:
+            if not params:
                 ttk.Label(columns, text="This task has no parameters.", foreground="gray40").grid(row=0, column=0)
             return tab
 
@@ -1116,10 +1123,16 @@ def run_gui(initial_file=None, hook=None):
             name = os.path.basename(self.saved_path) if self.saved_path else "untitled"
             self.root.title("CAP Workflow \u2014 %s%s" % (name, " *" if self.dirty else ""))
 
-        def _check(self, title):
+        def _check(self, title, run=False):
+            """Problems that prevent saving (the workflow, the library) or running (also the choices of the tasks)."""
             self.root.focus_set()           # commit a task name being edited
             self.root.update_idletasks()
-            errors = check_workflow(self.workflow())
+            tasks = self.workflow()
+            errors = check_workflow(tasks)
+            if run:
+                errors += filters.check_choices(tasks, self.library, self.templates)
+            else:
+                errors += filters.check_library(self.library)
             if errors:
                 more = "\n(and %d more)" % (len(errors) - 12) if len(errors) > 12 else ""
                 messagebox.showerror(title, "\n".join(errors[:12]) + more)
@@ -1136,7 +1149,7 @@ def run_gui(initial_file=None, hook=None):
             if not filename:
                 return False
             try:
-                write_workflow(filename, self.workflow())
+                write_workflow(filename, self.workflow(), self.library, self.templates)
             except OSError as e:
                 messagebox.showerror("Save workflow", "Cannot write %s:\n%s" % (filename, e))
                 return False
@@ -1159,11 +1172,15 @@ def run_gui(initial_file=None, hook=None):
             if not filename:
                 return
             try:
-                tasks, warnings = load_workflow(filename, self.templates)
+                tasks, library, warnings = load_workflow_with_filters(filename, self.templates)
             except (ValueError, OSError) as e:
                 messagebox.showerror("Load workflow", str(e))
                 return
             self.set_workflow(tasks)
+            self.library = library
+            if self.filters_window is not None:
+                self.filters_window.panel.library = library
+                self.filters_window.panel.refresh()
             self.saved_path = filename
             self.settings["last_workflow"] = filename
             self.settings["workflow_dir"] = os.path.dirname(filename)
@@ -1176,6 +1193,31 @@ def run_gui(initial_file=None, hook=None):
             if warnings:
                 messagebox.showwarning("Load workflow", "%d warning(s), see the output." % len(warnings))
 
+        # ---------------------------------------------------------------------------------------------- filters
+        def show_filters(self):
+            """Show the Filters panel (made the first time)."""
+            if self.filters_window is None:
+                import RunCAPFiltersGui
+                self.filters_window = RunCAPFiltersGui.FiltersWindow(
+                    self.root, self.library, on_change=self._changed, on_rename=self._rename_object,
+                    on_remove=self._remove_objects, users=self._object_users)
+            self.filters_window.show()
+
+        def _object_users(self, kind, name):
+            """Names of the tasks of the workflow that use an object of the library."""
+            return [t.name for t in all_tasks(self.workflow()) if name in filters.choices(t).get(kind, [])]
+
+        def _rename_object(self, kind, old, new):
+            for t in self.items.values():
+                names = filters.choices(t).get(kind)
+                if names:
+                    filters.choices(t)[kind] = [new if n == old else n for n in names]
+
+        def _remove_objects(self, kind, names):
+            for t in self.items.values():
+                if filters.choices(t).get(kind):
+                    filters.choices(t)[kind] = [n for n in filters.choices(t)[kind] if n not in names]
+
         # ---------------------------------------------------------------------------------------------- run
         def _busy(self):
             return self.worker is not None and self.worker.is_alive()
@@ -1186,7 +1228,7 @@ def run_gui(initial_file=None, hook=None):
             if not os.path.exists(CAP_EXE):
                 messagebox.showerror("Run", "%s does not exist: build and install CAP first (BuildCAP.py)." % CAP_EXE)
                 return
-            if not self._check("Cannot run the workflow"):
+            if not self._check("Cannot run the workflow", run=True):
                 return
             output_dir = self.output_dir.get().strip()
             if not output_dir:
@@ -1202,7 +1244,7 @@ def run_gui(initial_file=None, hook=None):
                     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     fd, path = tempfile.mkstemp(prefix="RunCAP_%s_" % stamp, suffix=".xml")
                     os.close(fd)
-                    name = write_workflow(path, tasks)
+                    name = write_workflow(path, tasks, self.library, self.templates)
             except OSError as e:
                 messagebox.showerror("Run", str(e))
                 return
