@@ -110,7 +110,7 @@ class FiltersPanel(ttk.Frame):
         self.tabs, self.counts, self.scrolls = {}, {}, {}
         for kind in F.KINDS:
             self._make_tab(kind)
-        self.problems = tk.StringVar()
+        self.problems = tk.StringVar(self)
         ttk.Label(self, textvariable=self.problems, foreground="firebrick", justify=tk.LEFT,
                   wraplength=760).pack(fill=tk.X, pady=(6, 0))
         self.refresh()
@@ -122,7 +122,7 @@ class FiltersPanel(ttk.Frame):
         head = ttk.Frame(tab)
         head.pack(fill=tk.X, pady=(0, 6))
         ttk.Label(head, text="Number of %s:" % F.KIND_LABELS[kind].lower()).pack(side=tk.LEFT)
-        count = tk.StringVar()
+        count = tk.StringVar(self)
         box = ttk.Combobox(head, textvariable=count, width=4, state="readonly")
         box.pack(side=tk.LEFT, padx=6)
         box.bind("<<ComboboxSelected>>", lambda e, k=kind: self.set_count(k, int(self.counts[k].get())))
@@ -188,13 +188,13 @@ class FiltersPanel(ttk.Frame):
         head = ttk.Frame(frame)
         head.pack(fill=tk.X)
         ttk.Label(head, text="Name:").pack(side=tk.LEFT)
-        name = tk.StringVar(value=definition.name)
+        name = tk.StringVar(self, value=definition.name)
         entry = ttk.Entry(head, textvariable=name, width=22)
         entry.pack(side=tk.LEFT, padx=(4, 14))
         entry.bind("<Return>", lambda e: self._rename(definition, name, entry))
         entry.bind("<FocusOut>", lambda e: self._rename(definition, name, entry))
         ttk.Label(head, text="Title:").pack(side=tk.LEFT)
-        title = tk.StringVar(value=definition.title)
+        title = tk.StringVar(self, value=definition.title)
         ttk.Entry(head, textvariable=title, width=36).pack(side=tk.LEFT, padx=(4, 0), fill=tk.X, expand=True)
         title.trace_add("write", lambda *a: self._set(definition, "title", title.get()))
         users = self.users(kind, definition.name)
@@ -240,13 +240,13 @@ class FiltersPanel(ttk.Frame):
             remove = ttk.Button(row, text="✕", width=2,
                                 command=lambda c=condition: self._remove_condition(definition, c))
             remove.pack(side=tk.RIGHT)          # first, so that it keeps its place
-            quantity = tk.StringVar(value=label_of.get(condition.subtype, condition.subtype))
+            quantity = tk.StringVar(self, value=label_of.get(condition.subtype, condition.subtype))
             q = ttk.Combobox(row, textvariable=quantity, values=list(labels), width=26, state="readonly")
             q.pack(side=tk.LEFT)
             q.bind("<<ComboboxSelected>>",
                    lambda e, c=condition, v=quantity: self._set_quantity(definition, c, labels[v.get()]))
             forms = forms_of(kind, condition.subtype)
-            form = tk.StringVar(value=condition.form)
+            form = tk.StringVar(self, value=condition.form)
             f = ttk.Combobox(row, textvariable=form, values=list(forms), width=9,
                              state="readonly" if len(forms) > 1 else "disabled")
             f.pack(side=tk.LEFT, padx=6)
@@ -262,7 +262,7 @@ class FiltersPanel(ttk.Frame):
 
     def _make_fields(self, row, condition):
         if condition.form == F.FLAG:
-            var = tk.StringVar(value="true" if condition.minimum else "false")
+            var = tk.StringVar(self, value="true" if condition.minimum else "false")
             box = ttk.Combobox(row, textvariable=var, values=("true", "false"), width=6, state="readonly")
             box.pack(side=tk.LEFT)
             var.trace_add("write", lambda *a: self._set(condition, "minimum", 1.0 if var.get() == "true" else 0.0))
@@ -272,7 +272,7 @@ class FiltersPanel(ttk.Frame):
         for name in names:
             ttk.Label(row, text="value" if integer else _FIELD_LABELS[name]).pack(side=tk.LEFT, padx=(4, 2))
             value = getattr(condition, name)
-            var = tk.StringVar(value=F.number_text(value))
+            var = tk.StringVar(self, value=F.number_text(value))
             entry = ttk.Entry(row, textvariable=var, width=8)
             check = (row.register(lambda text, i=integer: _partial_number(text, i)), "%P")
             entry.configure(validate="key", validatecommand=check)
@@ -326,7 +326,7 @@ class FiltersPanel(ttk.Frame):
         for i, (name, ptype, _) in enumerate(F.KIND_PARAMETERS[definition.kind]):
             r, c = divmod(i, per_row)
             ttk.Label(grid, text="%s (%s)" % (name, ptype)).grid(row=r, column=2 * c, sticky="w", padx=(0, 4), pady=1)
-            var = tk.StringVar(value=definition.parameters.get(name, ""))
+            var = tk.StringVar(self, value=definition.parameters.get(name, ""))
             if ptype == "bool":
                 widget = ttk.Combobox(grid, textvariable=var, values=("true", "false"), width=7, state="readonly")
             else:
