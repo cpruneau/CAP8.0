@@ -37,6 +37,12 @@ changed since (or never saved), a temporary file. The job is run as:
     <CAP>/bin/CAP <root task> <directory of the file>/ <file name> <output directory>/
 in the output directory, with the environment of SetupCAP.sh (taken from BuildCAP.py's settings).
 
+Filters (RunCAPFilters.py): the event and particle filters, efficiencies and smearers of a workflow form a library
+shared by its tasks; each task chooses its objects by name, and the analyzers get one histogram folder per combination
+of their filters. write_workflow() writes their keys in the tasks (the first task using an object defines it) and the
+library in a RUNCAP element next to the TASK element; load_workflow_with_filters() reads them back, also from files
+without RUNCAP element.
+
 The settings are saved in <CAP>/.RunCAP.json. Requires Python 3.7+ with tkinter (on macOS with Homebrew Python:
 brew install python-tk).
 """
@@ -55,6 +61,8 @@ import tempfile
 import threading
 import time
 import xml.etree.ElementTree as ET
+
+import RunCAPFilters as filters
 
 CAP_DIR = os.path.dirname(os.path.abspath(__file__))
 BIN_DIR = os.path.join(CAP_DIR, "bin")
@@ -225,7 +233,7 @@ def task_from_element(element, templates, warnings):
     for p in read_parameters(element):
         existing = t.param(p.key)
         if existing is None:
-            if t.known:
+            if t.known and not filters.MANAGED_KEY.match(p.key):
                 warnings.append("Task %s: parameter %s is not defined by class %s (kept)." % (name, p.key, cls))
             t.params.append(p)
         else:
@@ -303,11 +311,34 @@ def _indent(element, level=0):
         element.tail = pad
 
 
-def write_workflow(path, tasks):
-    """Write the workflow to path. Returns the name of the task to run."""
-    top = root_task(tasks)
+def load_workflow_with_filters(path, templates):
+    """Top-level tasks of a workflow file with their filters (RunCAPFilters): the library of filters, efficiencies and
+    smearers (from the RUNCAP element of the file, if any, and the objects defined by the tasks), the choices of the
+    tasks (task.filters) and their histogram options (task.histograms); the keys of these objects are removed from the
+    parameters of the tasks (write_workflow() writes them again). Returns tasks, library, warnings."""
+    tasks, warnings = load_workflow(path, templates)
+    library = None
+    element = ET.parse(path).getroot().find("RUNCAP")
+    if element is not None:
+        library, more = filters.read_runcap_element(element, tasks)
+        warnings += more
+    library, more = filters.extract_choices(tasks, templates, library)
+    return tasks, library, warnings + more
+
+
+def write_workflow(path, tasks, library=None, templates=None):
+    """Write the workflow to path. With a library (RunCAPFilters.FilterLibrary), the keys of the filters, efficiencies,
+    smearers and histogram folders chosen by the tasks are written in their parameters (the tasks are unchanged), and
+    the library in a RUNCAP element. Returns the name of the task to run."""
+    if library is not None:
+        written = filters.prepared_for_writing(tasks, library, templates or {}, Param)
+    else:
+        written = tasks
+    top = root_task(written)
     document = ET.Element("CAP", {"version": "1"})
     document.append(task_to_element(top))
+    if library is not None:
+        document.append(filters.runcap_element(library, written))
     _indent(document)
     with open(path, "wb") as f:
         f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -1353,7 +1384,7 @@ def main():
             return 2
         templates = load_templates()
         try:
-            tasks, warnings = load_workflow(args[1], templates)
+            tasks, library, warnings = load_workflow_with_filters(args[1], templates)
         except (ValueError, OSError) as e:
             print(e, file=sys.stderr)
             return 1
@@ -1362,7 +1393,7 @@ def main():
             return 0
         for w in warnings:
             print("warning: " + w)
-        errors = check_workflow(tasks)
+        errors = check_workflow(tasks) + filters.check_choices(tasks, library, templates)
         for e in errors:
             print("error: " + e)
         print("%d task(s), %d warning(s), %d error(s)" % (len(list(all_tasks(tasks))), len(warnings), len(errors)))

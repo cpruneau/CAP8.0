@@ -51,6 +51,13 @@ set(CMAKE_CXX_STANDARD 14)
 ####set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 enable_testing()   # ctest runs the test programs of the modules
+# Tests of the model of RunCAP.py (filters, histogram folders), with the templates of DB/Templates
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+  add_test(NAME RunCAPFilters
+           COMMAND ${Python3_EXECUTABLE} -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/../tests/python
+           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..)
+endif()
 set(CAP_ROOT_PATH "$ENV{CAP_ROOT_PATH}")
 
 ################################################################################################
