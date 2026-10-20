@@ -1,5 +1,13 @@
 ################################################################################################
 # Project CAP/Math
+#
+# One library (libMath) and one ROOT dictionary, the sources in sub-folders by subject:
+#   Basic          basic numerical functions, constants, exceptions, complex numbers
+#   LinearAlgebra  matrices and vectors (2D, 3D, n-D, Lorentz)
+#   Functions      Function, ParameterizedFunction and the functions of CAP, special functions, fields
+#   Data           data points, histograms, profiles, tables
+#   Search         extremum searches (SearchEngine and its engines, ExtremumSearch)
+#   Fitting        fits (Fitter, likelihoods, chi square, Bayesian fits, fit records)
 ################################################################################################
 ROOT_GENERATE_DICTIONARY(G__Math
 ParameterizedFunction.hpp
@@ -45,95 +53,103 @@ LINKDEF MathLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Math SHARED
-ParameterizedFunction.cpp
-Bessel.cpp
-BesselFunctions.cpp
-ChiSquare.cpp
-Complex.cpp
-CompositeFunction.cpp
-Constant.cpp
-Cubic.cpp
-DataPoint.cpp
-DataPointColumns.cpp
-DataPoint2D.cpp
-DataPoint3D.cpp
-DataPointND.cpp
-DataPoints.cpp
-DataPointsVector.cpp
-Exponential.cpp
 FolderTypes.cpp
-BayesianFitter.cpp
-FitRecord.cpp
-Fitter.cpp
-FunctionRegistry.cpp
-Likelihood.cpp
-MetropolisHastings.cpp
-Function.cpp
-Histogram.cpp
-Profile.cpp
-MathBasicFunctions.cpp
-MathBasicGeometry.cpp
-MathBasicInterpolation.cpp
-MathBasicIntegration.cpp
-MathBasicSearch.cpp
-MathBasicSortingFunctions.cpp
-MathBasicStatistics.cpp
-MathConstants.cpp
-AnnealingSearch.cpp
-DivideAndConquerSearch.cpp
-EvolutionarySearch.cpp
-ExploreExploitSearch.cpp
-ExtremumSearch.cpp
-GradientSearch.cpp
-GreedySearch.cpp
-HillClimbingSearch.cpp
-ScanSearch.cpp
-SearchDomain.cpp
-SearchEngine.cpp
-SearchProblem.cpp
-MathExceptions.cpp
-Partition.cpp
-Vector2D.cpp
-Vector3D.cpp
-VectorLorentz.cpp
-VectorND.cpp
-Laguerre.cpp
-Legendre.cpp
-Linear.cpp
-Matrix.cpp
-LogNormal.cpp
-Normal.cpp
-Parabolic.cpp
-Parameter.cpp
-Prior.cpp
-Polynomial.cpp
-Table2D.cpp
-Quartic.cpp
-ScalarField.cpp
-SphericalHarmonics.cpp
-XmlScalarField.cpp
+# Basic
+Basic/Complex.cpp
+Basic/MathBasicFunctions.cpp
+Basic/MathBasicGeometry.cpp
+Basic/MathBasicIntegration.cpp
+Basic/MathBasicInterpolation.cpp
+Basic/MathBasicSearch.cpp
+Basic/MathBasicSortingFunctions.cpp
+Basic/MathBasicStatistics.cpp
+Basic/MathConstants.cpp
+Basic/MathExceptions.cpp
+# LinearAlgebra
+LinearAlgebra/Matrix.cpp
+LinearAlgebra/Vector2D.cpp
+LinearAlgebra/Vector3D.cpp
+LinearAlgebra/VectorLorentz.cpp
+LinearAlgebra/VectorND.cpp
+# Functions
+Functions/Bessel.cpp
+Functions/BesselFunctions.cpp
+Functions/CompositeFunction.cpp
+Functions/Constant.cpp
+Functions/Cubic.cpp
+Functions/Exponential.cpp
+Functions/Function.cpp
+Functions/FunctionRegistry.cpp
+Functions/Laguerre.cpp
+Functions/Legendre.cpp
+Functions/Linear.cpp
+Functions/LogNormal.cpp
+Functions/Normal.cpp
+Functions/Parabolic.cpp
+Functions/Parameter.cpp
+Functions/ParameterizedFunction.cpp
+Functions/Polynomial.cpp
+Functions/Quartic.cpp
+Functions/ScalarField.cpp
+Functions/SphericalHarmonics.cpp
+Functions/XmlScalarField.cpp
+# Data
+Data/DataPoint.cpp
+Data/DataPoint2D.cpp
+Data/DataPoint3D.cpp
+Data/DataPointColumns.cpp
+Data/DataPointND.cpp
+Data/DataPoints.cpp
+Data/DataPointsVector.cpp
+Data/Histogram.cpp
+Data/Partition.cpp
+Data/Profile.cpp
+Data/Table2D.cpp
+# Search
+Search/AnnealingSearch.cpp
+Search/DivideAndConquerSearch.cpp
+Search/EvolutionarySearch.cpp
+Search/ExploreExploitSearch.cpp
+Search/ExtremumSearch.cpp
+Search/GradientSearch.cpp
+Search/GreedySearch.cpp
+Search/HillClimbingSearch.cpp
+Search/ScanSearch.cpp
+Search/SearchDomain.cpp
+Search/SearchEngine.cpp
+Search/SearchProblem.cpp
+# Fitting
+Fitting/BayesianFitter.cpp
+Fitting/ChiSquare.cpp
+Fitting/FitRecord.cpp
+Fitting/Fitter.cpp
+Fitting/Likelihood.cpp
+Fitting/MetropolisHastings.cpp
+Fitting/Prior.cpp
 G__Math.cxx)
 
 target_link_libraries(Math Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Math  PUBLIC Base ${EXTRA_INCLUDES} )
+# the headers are included by their names (e.g. #include "Histogram.hpp"): each sub-folder is on the include path,
+# here for the library and its dictionary, and in src/CMakeLists.txt for the other modules
 
 # Tests (run with ctest in the build directory; not installed)
-add_executable(TestExtremumSearch tests/TestExtremumSearch.cpp)
+add_executable(TestExtremumSearch Search/tests/TestExtremumSearch.cpp)
 target_link_libraries(TestExtremumSearch Math Base ${ROOT_LIBRARIES})
 add_test(NAME ExtremumSearch COMMAND TestExtremumSearch)
-add_executable(TestFitter tests/TestFitter.cpp)
+add_executable(TestFitter Fitting/tests/TestFitter.cpp)
 target_link_libraries(TestFitter Math Base ${ROOT_LIBRARIES})
 add_test(NAME Fitter COMMAND TestFitter)
-add_executable(TestLikelihood tests/TestLikelihood.cpp)
+add_executable(TestLikelihood Fitting/tests/TestLikelihood.cpp)
 target_link_libraries(TestLikelihood Math Base ${ROOT_LIBRARIES})
 add_test(NAME Likelihood COMMAND TestLikelihood)
-add_executable(TestBayesian tests/TestBayesian.cpp)
+add_executable(TestBayesian Fitting/tests/TestBayesian.cpp)
 target_link_libraries(TestBayesian Math Base ${ROOT_LIBRARIES})
 add_test(NAME Bayesian COMMAND TestBayesian)
-add_executable(TestFits tests/TestFits.cpp)
+add_executable(TestFits Fitting/tests/TestFits.cpp)
 target_link_libraries(TestFits Math Base ${ROOT_LIBRARIES})
 add_test(NAME Fits COMMAND TestFits)
-add_executable(TestFitStorage tests/TestFitStorage.cpp)
+add_executable(TestFitStorage Fitting/tests/TestFitStorage.cpp)
 target_link_libraries(TestFitStorage Math Base ${ROOT_LIBRARIES})
 add_test(NAME FitStorage COMMAND TestFitStorage)
 
