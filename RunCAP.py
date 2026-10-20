@@ -20,8 +20,9 @@ The window has four parts, from top to bottom:
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
     under the workflow reorder the tasks and nest them: a nested task is a subtask of the task above it (e.g. the
     event generator and the analyzers inside an EventIterator, which executes them for every event);
-  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, defined once and used
-    by the tasks by name. One tab per kind (event and particle filters, event and particle efficiencies and
+  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, defined once, created
+    by the task FilterCreator (written first in the workflow file, with one subtask per kind) and used by the tasks by
+    name. One tab per kind (event and particle filters, event and particle efficiencies and
     smearers), the number of objects of that kind, and for each its name and title and its conditions (a range, two
     ranges, a value or a flag of one quantity) or binning parameters;
   * the tasks: one line per task of the workflow, in run order, with the filters it uses, the number of its
@@ -329,6 +330,7 @@ def load_workflow_with_filters(path, templates):
         library, more = filters.read_runcap_element(element, tasks)
         warnings += more
     library, more = filters.extract_choices(tasks, templates, library)
+    tasks = filters.remove_creator(tasks, library)
     return tasks, library, warnings + more
 
 
@@ -337,7 +339,7 @@ def write_workflow(path, tasks, library=None, templates=None):
     smearers and histogram folders chosen by the tasks are written in their parameters (the tasks are unchanged), and
     the library in a RUNCAP element. Returns the name of the task to run."""
     if library is not None:
-        written = filters.prepared_for_writing(tasks, library, templates or {}, Param)
+        written = filters.prepared_for_writing(tasks, library, templates or {}, Param, TaskConfig)
     else:
         written = tasks
     top = root_task(written)
@@ -365,6 +367,9 @@ def check_workflow(tasks):
         errors.append("The name %s is reserved for the task holding a workflow of several tasks." % WRAPPER_NAME)
     for name in sorted(set(n for n in names if names.count(n) > 1)):
         errors.append("Several tasks are named %s: task names must be unique." % name)
+    reserved = {filters.CREATOR_NAME} | {name for name, _ in filters.CREATORS.values()}
+    for name in sorted(reserved & set(names)):
+        errors.append("The name %s is reserved for the task creating the filters (FilterCreator)." % name)
     for t in all_tasks(tasks):
         if not NAME_FULL.fullmatch(t.name):
             errors.append("Invalid task name '%s' (letters, digits, _ . -; no spaces or colons)." % t.name)
@@ -740,7 +745,10 @@ def run_gui(initial_file=None, hook=None):
             text = self.filter.get().strip().lower()
             self.available.delete(0, tk.END)
             self.available_classes = []
+            creators = {filters.CREATOR_CLASS} | {cls for _, cls in filters.CREATORS.values()}
             for cls in sorted(self.templates, key=lambda c: short_class_name(c).lower()):
+                if cls in creators:
+                    continue            # FilterCreator is written from the Filters pane
                 name = short_class_name(cls)
                 if text and text not in name.lower():
                     continue
@@ -908,6 +916,7 @@ def run_gui(initial_file=None, hook=None):
                 self.summary.heading(column, text=text, anchor="w")
                 self.summary.column(column, width=width, stretch=column in ("#0", "particles", "problems"))
             self.summary.tag_configure("problem", foreground="firebrick")
+            self.summary.tag_configure("creator", foreground="gray40")
             bar = ttk.Scrollbar(box, orient=tk.VERTICAL, command=self.summary.yview)
             self.summary.configure(yscrollcommand=bar.set)
             self.summary.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -924,6 +933,13 @@ def run_gui(initial_file=None, hook=None):
             """One line per task of the workflow, in run order: its choices, folders and problems."""
             selected = self.summary.selection()
             self.summary.delete(*self.summary.get_children(""))
+            counts = ["%d %s" % (len(self.library.objects[k]), filters.KIND_LABELS[k].lower())
+                      for k in filters.KINDS[2:] if self.library.objects[k]]
+            self.summary.insert("", tk.END, iid="__creator__", text=filters.CREATOR_NAME + " (run first)",
+                                tags=("creator",),
+                                values=("FilterCreator", ", ".join(self.library.names("EVENT_FILTER")),
+                                        ", ".join(self.library.names("PARTICLE_FILTER")), ", ".join(counts), "",
+                                        "creates the filters of the Filters pane"))
             for item in self._workflow_items():
                 task = self.items[item]
                 depth, p = 0, self.tree.parent(item)
@@ -945,13 +961,16 @@ def run_gui(initial_file=None, hook=None):
 
         def configure_selected(self):
             item = self._selected_one() or (self.summary.selection() or [None])[0]
-            if item is None:
+            if item is None or item == "__creator__":
                 messagebox.showinfo("Configure task", "Select a task of the workflow.")
                 return
             self.configure_task(item)
 
         def configure_task(self, item):
             """Open (or raise) the window of a task."""
+            if item == "__creator__":
+                self.show_filters()
+                return
             if not item or item not in self.items:
                 return
             dialog = self.dialogs.get(item)
@@ -1145,8 +1164,8 @@ def run_gui(initial_file=None, hook=None):
             head = ttk.Frame(parent)
             head.pack(fill=tk.X, pady=(6, 0))
             ttk.Label(head, text="Filters", style="Section.TLabel").pack(side=tk.LEFT)
-            ttk.Label(head, text="Define the filters, efficiencies and smearers of the workflow here; each task "
-                                 "uses them by name (double-click the task below).",
+            ttk.Label(head, text="Defined here once, created by the task FilterCreator (run first), and used by name "
+                                 "by the tasks (double-click a task below).",
                       foreground="gray40").pack(side=tk.LEFT, padx=10)
             self.filters_panel = RunCAPFiltersGui.FiltersPanel(
                 parent, self.library, on_change=self._library_changed, on_rename=self._rename_object,

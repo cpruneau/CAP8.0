@@ -20,6 +20,7 @@ FileIterator.hpp
 HistogramFolder.hpp
 RootHistogramGroup.hpp
 ManagedObject.hpp
+ObjectCreator.hpp
 Particle.hpp
 ParticleDecayMode.hpp
 ParticleDb.hpp
@@ -51,6 +52,7 @@ FileIterator.cpp
 HistogramFolder.cpp
 RootHistogramGroup.cpp
 ManagedObject.cpp
+ObjectCreator.cpp
 Particle.cpp
 ParticleDb.cpp
 ParticleDbParser.cpp

@@ -139,6 +139,18 @@ class TestPanel(unittest.TestCase):
         entries[3].delete(0, tk.END)
         self.assertIn("invalid int value", self.panel.problems.get())
 
+    def test_settings(self):
+        self.assertNotIn("PARTICLE_FILTER", self.panel.setting_vars)
+        variables = self.panel.setting_vars["PARTICLE_EFFICIENCY"]
+        variables["IMPORT"].set(True)
+        variables["IMPORT:FILE_NAME"].set("Eff.root")
+        self.assertEqual(self.library.settings["PARTICLE_EFFICIENCY"]["IMPORT"], "true")
+        self.assertEqual(self.library.settings["PARTICLE_EFFICIENCY"]["IMPORT:FILE_NAME"], "Eff.root")
+        self.assertTrue(self.changes)
+        self.library.settings["EVENT_SMEARER"]["CREATE"] = "true"
+        self.panel.refresh()
+        self.assertTrue(self.panel.setting_vars["EVENT_SMEARER"]["CREATE"].get())
+
 
 if __name__ == "__main__":
     unittest.main()

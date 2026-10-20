@@ -27,8 +27,11 @@ configure() functions of the filters, efficiencies, smearers and histogram folde
     <task>:HISTOGRAM_<l>:N, <task>:HISTOGRAM_<l>_<k>:NAME, TITLE, OWNER, BASE_NAME[, <binning parameter>]
 apply_choices() writes these keys from the library and the choices of the tasks; extract_choices() reads them back
 (library, choices and histogram options), so workflows written by hand or by earlier versions load too. The object of
-a name is defined (OWNER true, with its conditions or parameters) by the first task that uses it, in the order CAP
-configures the tasks (a task, then its subtasks); the other tasks take it by name from CAP's store.
+a name is defined (OWNER true, with its conditions or parameters) by the task FilterCreator, written first in the
+workflow file (so configured first by CAP), with one subtask per kind (EventFilterCreator, ParticleFilterCreator, ...)
+creating all the objects of the library; the other tasks take them by name from CAP's stores (OWNER false). Event
+filters on Glauber quantities (impact parameter, participants, ...) are objects of the Glauber tasks, which have a
+store of their own: the first Glauber task using one defines it.
 
 The library itself, including the objects no task uses, and the histogram options of the tasks are also written in a
 RUNCAP element of the workflow file, next to its TASK element (CAP reads only the TASK elements).
@@ -97,6 +100,18 @@ KIND_PARAMETERS = {
                          ("phi_nbins", "int", "36"), ("phi_min", "double", "0"), ("phi_max", "double", _TWO_PI)],
 }
 
+#: Task creating the objects of the library, run first (CAP::FilterCreator), and its subtasks, one per kind.
+CREATOR_NAME, CREATOR_CLASS = "FilterCreator", "CAP::FilterCreator"
+CREATORS = {"EVENT_FILTER": ("EventFilters", "CAP::EventFilterCreator"),
+            "PARTICLE_FILTER": ("ParticleFilters", "CAP::ParticleFilterCreator"),
+            "EVENT_EFFICIENCY": ("EventEfficiencies", "CAP::EventEfficiencyCreator"),
+            "PARTICLE_EFFICIENCY": ("ParticleEfficiencies", "CAP::ParticleEfficiencyCreator"),
+            "EVENT_SMEARER": ("EventSmearers", "CAP::EventSmearerCreator"),
+            "PARTICLE_SMEARER": ("ParticleSmearers", "CAP::ParticleSmearerCreator")}
+#: Settings of the list of objects of a kind in its creator (import or creation of their histograms, export).
+LIST_SETTINGS = [("CREATE", "bool", "false"), ("IMPORT", "bool", "false"), ("IMPORT:PATH", "string", "DEFAULT"),
+                 ("IMPORT:FILE_NAME", "string", "NONE"), ("EXPORT", "bool", "false"),
+                 ("EXPORT:PATH", "string", "DEFAULT"), ("EXPORT:FILE_NAME", "string", "NONE")]
 #: The C++ code handles at most this many particle filters per task (EventProcessor::acceptedParticles()).
 MAX_PARTICLE_FILTERS = 8
 #: Suffix of the names of the folders of derived histograms.
@@ -192,6 +207,7 @@ class FilterLibrary:
 
     def __init__(self):
         self.objects = {kind: [] for kind in KINDS}
+        self.settings = {kind: {name: value for name, _, value in LIST_SETTINGS} for kind in KINDS}
 
     def names(self, kind):
         return [o.name for o in self.objects[kind]]
@@ -225,7 +241,7 @@ class FilterLibrary:
             k += 1
 
     def __eq__(self, other):
-        return isinstance(other, FilterLibrary) and self.objects == other.objects
+        return isinstance(other, FilterLibrary) and self.objects == other.objects and self.settings == other.settings
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -382,11 +398,70 @@ def _preorder(tasks):
         yield from _preorder(t.children)
 
 
+def glauber_only(definition):
+    """Whether an event filter tests Glauber quantities: it is then an object of the Glauber tasks (GlauberEventFilter),
+    not created by FilterCreator."""
+    return definition.kind == "EVENT_FILTER" and any(c.subtype in GLAUBER_SUBTYPES for c in definition.conditions)
+
+
+def _write_object(task, kind, k, name, definition, owner, Param):
+    """Keys of object k of a list: NAME, TITLE, OWNER and, for an owner, its conditions or parameters."""
+    prefix = "%s_%d:" % (kind, k)
+    _set(task, prefix + "NAME", "string", name, Param)
+    _set(task, prefix + "TITLE", "string", definition.title if definition else "", Param)
+    _set(task, prefix + "OWNER", "bool", "true" if owner else "false", Param)
+    if not owner:
+        return
+    if kind in CONDITION_KINDS:
+        _set(task, prefix + "CONDITION:N", "int", str(len(definition.conditions)), Param)
+        for i, c in enumerate(definition.conditions):
+            cp = prefix + "CONDITION_%d:" % i
+            _set(task, cp + "TYPE", "string", c.type, Param)
+            _set(task, cp + "SUBTYPE", "string", c.subtype, Param)
+            _set(task, cp + "MINIMUM", "double", number_text(c.minimum), Param)
+            _set(task, cp + "MAXIMUM", "double", number_text(c.maximum), Param)
+            if c.form == DUAL_RANGE:
+                _set(task, cp + "MINIMUM2", "double", number_text(c.minimum2), Param)
+                _set(task, cp + "MAXIMUM2", "double", number_text(c.maximum2), Param)
+    else:
+        for pname, ptype, _ in KIND_PARAMETERS[kind]:
+            _set(task, prefix + pname, ptype, definition.parameters.get(pname, ""), Param)
+
+
+def creator_task(library, templates, TaskConfig, Param):
+    """The task FilterCreator: one subtask per kind, creating all the objects of the library of that kind (OWNER
+    true), but the event filters on Glauber quantities. @param TaskConfig, Param classes of RunCAP.py"""
+    def new(name, cls):
+        template = templates.get(cls)
+        t = template.clone() if template is not None else TaskConfig(name, cls)
+        t.name = name
+        return t
+    creator = new(CREATOR_NAME, CREATOR_CLASS)
+    for kind in KINDS:
+        sub = new(*CREATORS[kind])
+        strip_managed(sub)
+        objects = [o for o in library.objects[kind] if not glauber_only(o)]
+        _set(sub, kind + ":N", "int", str(len(objects)), Param)
+        _set(sub, kind + ":USE", "bool", "true" if objects else "false", Param)
+        for name, ptype, default in LIST_SETTINGS:
+            value = library.settings[kind].get(name, default)
+            p = sub.param(kind + ":" + name)
+            if p is not None:
+                p.value = value
+            else:
+                _set(sub, kind + ":" + name, ptype, value, Param)
+        for k, o in enumerate(objects):
+            _write_object(sub, kind, k, o.name, o, True, Param)
+        creator.children.append(sub)
+    return creator
+
+
 def apply_choices(tasks, library, templates, Param):
-    """Write in the parameters of the tasks the keys of their objects and histogram folders (the parameters managed by
-    this model are replaced). The tasks are changed in place: apply it to copies to keep the model.
-    @param Param class of the parameters (RunCAP.Param)"""
-    owned = set()                                       # (kind, name) defined by an earlier task
+    """Write in the parameters of the tasks the keys of their objects (by name, OWNER false: FilterCreator creates
+    them) and of their histogram folders (the parameters managed by this model are replaced). The event filters on
+    Glauber quantities are defined by the first Glauber task using them. The tasks are changed in place: apply it to
+    copies to keep the model. @param Param class of the parameters (RunCAP.Param)"""
+    glauber_owned = set()                               # Glauber event filters defined by an earlier Glauber task
     for task in _preorder(tasks):
         strip_managed(task)
         kinds = task_kinds(task, templates)
@@ -396,28 +471,11 @@ def apply_choices(tasks, library, templates, Param):
             _set(task, kind + ":USE", "bool", "true" if names else "false", Param)
             for k, name in enumerate(names):
                 definition = library.get(kind, name)
-                prefix = "%s_%d:" % (kind, k)
-                owner = (kind, name) not in owned and definition is not None
-                _set(task, prefix + "NAME", "string", name, Param)
-                _set(task, prefix + "TITLE", "string", definition.title if definition else "", Param)
-                _set(task, prefix + "OWNER", "bool", "true" if owner else "false", Param)
-                if not owner:
-                    continue
-                owned.add((kind, name))
-                if kind in CONDITION_KINDS:
-                    _set(task, prefix + "CONDITION:N", "int", str(len(definition.conditions)), Param)
-                    for i, c in enumerate(definition.conditions):
-                        cp = prefix + "CONDITION_%d:" % i
-                        _set(task, cp + "TYPE", "string", c.type, Param)
-                        _set(task, cp + "SUBTYPE", "string", c.subtype, Param)
-                        _set(task, cp + "MINIMUM", "double", number_text(c.minimum), Param)
-                        _set(task, cp + "MAXIMUM", "double", number_text(c.maximum), Param)
-                        if c.form == DUAL_RANGE:
-                            _set(task, cp + "MINIMUM2", "double", number_text(c.minimum2), Param)
-                            _set(task, cp + "MAXIMUM2", "double", number_text(c.maximum2), Param)
-                else:
-                    for pname, ptype, _ in KIND_PARAMETERS[kind]:
-                        _set(task, prefix + pname, ptype, definition.parameters.get(pname, ""), Param)
+                owner = (kind == "EVENT_FILTER" and is_glauber(task) and definition is not None
+                         and name not in glauber_owned)
+                if owner:
+                    glauber_owned.add(name)
+                _write_object(task, kind, k, name, definition, owner, Param)
         layout = histogram_layout(task, templates)
         if layout is None:
             continue
@@ -496,6 +554,25 @@ def extract_choices(tasks, templates, library=None):
                                     % (task.name, KIND_LABELS[kind].lower()[:-1], name))
                     library.add(FilterDef(kind, name))
     return library, warnings
+
+
+def remove_creator(tasks, library):
+    """Top-level tasks without FilterCreator (its objects being in the library, see extract_choices()), whose
+    settings of the lists of objects go to the library."""
+    kept = []
+    for task in tasks:
+        if task.cls != CREATOR_CLASS:
+            kept.append(task)
+            continue
+        for sub in task.children:
+            kind = next((k for k, (_, cls) in CREATORS.items() if cls == sub.cls), None)
+            if kind is None:
+                continue
+            for name, _, _ in LIST_SETTINGS:
+                p = sub.param(kind + ":" + name)
+                if p is not None:
+                    library.settings[kind][name] = p.value
+    return kept
 
 
 def _definition_from_keys(task, kind, k, name, values, warnings):
@@ -671,6 +748,12 @@ def runcap_element(library, tasks):
                 ET.SubElement(element, "CONDITION", attributes)
             for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
                 ET.SubElement(element, "PARAMETER", {"name": pname, "type": ptype}).text = o.parameters.get(pname, "")
+    for kind in KINDS:
+        changed = {n: v for n, v in library.settings[kind].items() if v != dict((a, c) for a, _, c in LIST_SETTINGS)[n]}
+        if changed:
+            element = ET.SubElement(root, "SETTINGS", {"kind": kind})
+            for name, value in sorted(changed.items()):
+                ET.SubElement(element, "PARAMETER", {"name": name}).text = value
     for task in _preorder(tasks):
         options = getattr(task, "histograms", None)
         if options is None:
@@ -702,6 +785,10 @@ def read_runcap_element(element, tasks):
                 warnings.append("RUNCAP: invalid condition of %s (ignored)." % o.get("name", "?"))
         parameters = {p.get("name", ""): (p.text or "").strip() for p in o.findall("PARAMETER")}
         library.add(FilterDef(kind, o.get("name", ""), o.get("title", ""), conditions, parameters))
+    for e in element.findall("SETTINGS"):
+        if e.get("kind") in KINDS:
+            for p in e.findall("PARAMETER"):
+                library.settings[e.get("kind")][p.get("name", "")] = (p.text or "").strip()
     by_name = {t.name: t for t in _preorder(tasks)}
     for h in element.findall("HISTOGRAMS"):
         task = by_name.get(h.get("task", ""))
@@ -716,13 +803,14 @@ def read_runcap_element(element, tasks):
     return library, warnings
 
 
-def prepared_for_writing(tasks, library, templates, Param):
-    """Copies of the tasks with the keys of their objects and folders (apply_choices()); the tasks are unchanged."""
+def prepared_for_writing(tasks, library, templates, Param, TaskConfig):
+    """The task FilterCreator (creator_task()), then copies of the tasks with the keys of their objects and folders
+    (apply_choices()); the tasks are unchanged."""
     def duplicate(task):        # the lists are copied, not the parameters (which may hold widgets of the GUI)
         c = copy.copy(task)
         c.params = list(task.params)
         c.children = [duplicate(t) for t in task.children]
         return c
-    copies = [duplicate(t) for t in tasks]
+    copies = [duplicate(t) for t in tasks if t.cls != CREATOR_CLASS]
     apply_choices(copies, library, templates, Param)
-    return copies
+    return [creator_task(library, templates, TaskConfig, Param)] + copies

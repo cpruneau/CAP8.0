@@ -85,25 +85,41 @@ class TestKeys(unittest.TestCase):
         F.apply_choices(self.tasks, library(), TEMPLATES, RunCAP.Param)
         self.gen, self.single, self.pair = self.tasks[0].children
 
-    def test_owners(self):
+    def creator(self):
+        creator = F.creator_task(library(), TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        return creator, {t.cls: values(t) for t in creator.children}
+
+    def test_creator(self):
+        creator, subs = self.creator()
+        self.assertEqual((creator.name, creator.cls), ("FilterCreator", "CAP::FilterCreator"))
+        self.assertEqual([t.cls for t in creator.children], [c for _, c in F.CREATORS.values()])
+        e = subs["CAP::EventFilterCreator"]
+        self.assertEqual(e["EVENT_FILTER:N"], "2")
+        self.assertEqual((e["EVENT_FILTER_0:NAME"], e["EVENT_FILTER_0:OWNER"]), ("MB", "true"))
+        self.assertEqual(e["EVENT_FILTER_0:TITLE"], "minimum bias")
+        self.assertEqual(e["EVENT_FILTER_1:CONDITION_0:MINIMUM"], "100")
+        p = subs["CAP::ParticleFilterCreator"]
+        self.assertEqual(p["PARTICLE_FILTER:N"], "3")                 # Unused too
+        self.assertEqual(p["PARTICLE_FILTER_2:NAME"], "Unused")
+        self.assertEqual(subs["CAP::EventSmearerCreator"]["EVENT_SMEARER:N"], "0")
+        self.assertEqual(subs["CAP::ParticleEfficiencyCreator"]["PARTICLE_EFFICIENCY:CREATE"], "false")
+
+    def test_tasks_by_name(self):
         g, s = values(self.gen), values(self.single)
         self.assertEqual(g["EVENT_FILTER:N"], "1")
         self.assertEqual(g["EVENT_FILTER:USE"], "true")
-        self.assertEqual(g["EVENT_FILTER_0:NAME"], "MB")
-        self.assertEqual(g["EVENT_FILTER_0:OWNER"], "true")
+        self.assertEqual((g["EVENT_FILTER_0:NAME"], g["EVENT_FILTER_0:OWNER"]), ("MB", "false"))
         self.assertEqual(g["EVENT_FILTER_0:TITLE"], "minimum bias")
-        self.assertEqual(g["PARTICLE_FILTER_1:OWNER"], "true")
-        # MB and the particle filters are defined by the generator, Central by the analyzer
-        self.assertEqual(s["EVENT_FILTER_0:OWNER"], "false")
-        self.assertNotIn("EVENT_FILTER_0:CONDITION:N", s)
-        self.assertEqual(s["EVENT_FILTER_1:OWNER"], "true")
-        self.assertEqual(s["EVENT_FILTER_1:CONDITION_0:MINIMUM"], "100")
-        self.assertEqual(s["PARTICLE_FILTER_0:OWNER"], "false")
+        self.assertNotIn("EVENT_FILTER_0:CONDITION:N", g)
+        self.assertEqual((s["EVENT_FILTER_1:NAME"], s["EVENT_FILTER_1:OWNER"]), ("Central", "false"))
+        self.assertEqual(s["PARTICLE_EFFICIENCY_0:OWNER"], "false")
+        self.assertNotIn("PARTICLE_EFFICIENCY_0:pt_nbins", s)
         self.assertEqual(s["EVENT_SMEARER:N"], "0")
         self.assertEqual(s["EVENT_SMEARER:USE"], "false")
 
     def test_conditions(self):
-        g = values(self.gen)
+        _, subs = self.creator()
+        g = subs["CAP::ParticleFilterCreator"]
         p = "PARTICLE_FILTER_0:CONDITION_"
         self.assertEqual(g["PARTICLE_FILTER_0:CONDITION:N"], "4")
         self.assertEqual((g[p + "0:TYPE"], g[p + "0:SUBTYPE"], g[p + "0:MINIMUM"]), ("INTEGER", "PDG", "211"))
@@ -111,13 +127,36 @@ class TestKeys(unittest.TestCase):
         self.assertEqual((g[p + "2:TYPE"], g[p + "2:MINIMUM2"], g[p + "2:MAXIMUM2"]), ("DOUBLE_DUAL_RANGE", "0.1", "0.8"))
         self.assertNotIn(p + "1:MINIMUM2", g)
         self.assertEqual(g[p + "3:TYPE"], "Bool")
-        self.assertEqual(values(self.gen)["EVENT_FILTER_0:CONDITION_0:MAXIMUM"], "1000000")
+        self.assertEqual(subs["CAP::EventFilterCreator"]["EVENT_FILTER_0:CONDITION_0:MAXIMUM"], "1000000")
 
     def test_parameters(self):
-        s = values(self.single)
-        self.assertEqual(s["PARTICLE_EFFICIENCY_0:OWNER"], "true")
-        self.assertEqual(s["PARTICLE_EFFICIENCY_0:pt_nbins"], "50")
-        self.assertEqual(s["PARTICLE_EFFICIENCY_0:eta_nbins"], "20")
+        _, subs = self.creator()
+        e = subs["CAP::ParticleEfficiencyCreator"]
+        self.assertEqual(e["PARTICLE_EFFICIENCY_0:OWNER"], "true")
+        self.assertEqual(e["PARTICLE_EFFICIENCY_0:pt_nbins"], "50")
+        self.assertEqual(e["PARTICLE_EFFICIENCY_0:eta_nbins"], "20")
+
+    def test_settings(self):
+        lib = library()
+        lib.settings["PARTICLE_EFFICIENCY"].update({"IMPORT": "true", "IMPORT:FILE_NAME": "Eff.root"})
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        e = values(creator.children[3])
+        self.assertEqual((e["PARTICLE_EFFICIENCY:IMPORT"], e["PARTICLE_EFFICIENCY:IMPORT:FILE_NAME"]),
+                         ("true", "Eff.root"))
+        self.assertEqual(len([k for k in e if k == "PARTICLE_EFFICIENCY:IMPORT"]), 1)
+
+    def test_glauber(self):
+        lib = library()
+        lib.add(F.FilterDef("EVENT_FILTER", "B", "", [F.Condition("IMPACT", F.RANGE, 0, 5)]))
+        gen, ana = task("GlauberGenerator"), task("GlauberAnalyzer")
+        gen.filters = {"EVENT_FILTER": ["B"]}
+        ana.filters = {"EVENT_FILTER": ["B"]}
+        F.apply_choices([gen, ana], lib, TEMPLATES, RunCAP.Param)
+        self.assertEqual(values(gen)["EVENT_FILTER_0:OWNER"], "true")       # store of the Glauber tasks
+        self.assertEqual(values(gen)["EVENT_FILTER_0:CONDITION_0:SUBTYPE"], "IMPACT")
+        self.assertEqual(values(ana)["EVENT_FILTER_0:OWNER"], "false")
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        self.assertEqual(values(creator.children[0])["EVENT_FILTER:N"], "2")  # MB, Central: not B
 
     def test_single_folders(self):
         s = values(self.single)
@@ -186,6 +225,26 @@ class TestReading(unittest.TestCase):
         self.assertEqual(single.histograms, tasks[0].children[1].histograms)
         self.assertEqual(pair.histograms, F.HistogramOptions("Pair"))
         self.assertFalse(any(F.MANAGED_KEY.match(p.key) for p in single.params))
+        self.assertEqual(len(read), 1)                                                # FilterCreator removed
+
+    def test_creator_first(self):
+        """The file runs FilterCreator first; without RUNCAP element, the library comes from FilterCreator."""
+        lib = library()
+        lib.settings["PARTICLE_EFFICIENCY"]["IMPORT"] = "true"
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "w.xml")
+            RunCAP.write_workflow(path, workflow(), lib, TEMPLATES)
+            tree = ET.parse(path)
+            top = tree.getroot().find("TASK")
+            self.assertEqual(top.get("class"), "CAP::Task")                         # Workflow wrapper
+            self.assertEqual([t.get("name") for t in top.findall("TASK")], ["FilterCreator", "EventIterator"])
+            self.assertEqual(len(top.find("TASK").findall("TASK")), 6)
+            tree.getroot().remove(tree.getroot().find("RUNCAP"))
+            tree.write(path)
+            read, lib2, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+        self.assertEqual(warnings, [])
+        self.assertEqual([t.name for t in read], ["EventIterator"])
+        self.assertEqual(lib2, lib)
 
     def test_writing_keeps_parameters(self):
         """Writing copies the tasks without copying their parameters (the GUI attaches widgets to them)."""
@@ -193,10 +252,11 @@ class TestReading(unittest.TestCase):
         single = tasks[0].children[1]
         single.params[0].widget_var = object()
         values_before = [(p.key, p.value) for p in single.params]
-        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param)
-        self.assertIs(copies[0].children[1].params[0], single.params[0])
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        self.assertEqual(copies[0].cls, F.CREATOR_CLASS)
+        self.assertIs(copies[1].children[1].params[0], single.params[0])
         self.assertEqual([(p.key, p.value) for p in single.params], values_before)
-        self.assertIn("HISTOGRAM_1_0:NAME", values(copies[0].children[1]))
+        self.assertIn("HISTOGRAM_1_0:NAME", values(copies[1].children[1]))
 
     def test_old_format(self):
         """A workflow without RUNCAP element, with the keys written by hand."""
@@ -239,12 +299,12 @@ class TestReading(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
 
     def test_conflicting_definitions(self):
-        tasks = workflow()
-        F.apply_choices(tasks, library(), TEMPLATES, RunCAP.Param)
-        single = tasks[0].children[1]
+        """A task defining an object of the creator differently: the definition of the creator is kept."""
+        written = F.prepared_for_writing(workflow(), library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        single = written[1].children[1]
         single.param("EVENT_FILTER_0:OWNER").value = "true"
         single.params += [RunCAP.Param("EVENT_FILTER_0:CONDITION:N", "int", "0")]
-        lib, warnings = F.extract_choices(tasks, TEMPLATES)
+        lib, warnings = F.extract_choices(written, TEMPLATES)
         self.assertEqual(len(lib.get("EVENT_FILTER", "MB").conditions), 1)
         self.assertTrue(any("MB" in w for w in warnings))
 

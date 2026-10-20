@@ -107,7 +107,8 @@ class FiltersPanel(ttk.Frame):
         style.configure("Object.TLabelframe.Label", font=("TkDefaultFont", 11, "bold"))
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=tk.BOTH, expand=True)
-        self.tabs, self.counts, self.scrolls = {}, {}, {}
+        self.tabs, self.counts, self.scrolls, self.setting_vars = {}, {}, {}, {}
+        self._loading = False
         for kind in F.KINDS:
             self._make_tab(kind)
         self.problems = tk.StringVar(self)
@@ -128,17 +129,53 @@ class FiltersPanel(ttk.Frame):
         box.bind("<<ComboboxSelected>>", lambda e, k=kind: self.set_count(k, int(self.counts[k].get())))
         hint = {"EVENT_FILTER": "Each filter selects events with all its conditions.",
                 "PARTICLE_FILTER": "Each filter selects particles with all its conditions (at most %d per task)."
-                                   % F.MAX_PARTICLE_FILTERS}.get(kind, "Binning of the corrections, and the base "
-                                                                       "name of their histograms.")
+                                   % F.MAX_PARTICLE_FILTERS}.get(kind, "Their histograms, created or imported by "
+                                                                       "FilterCreator:")
         ttk.Label(head, text=hint, foreground="gray40").pack(side=tk.LEFT, padx=12)
+        if kind not in F.CONDITION_KINDS:
+            self._make_settings(tab, kind)
         scroll = ScrollFrame(tab)
         scroll.pack(fill=tk.BOTH, expand=True)
         scroll.inner.columnconfigure(0, weight=1)
         self.tabs[kind], self.counts[kind], self.scrolls[kind] = tab, count, scroll
         count.box = box
 
+    def _make_settings(self, tab, kind):
+        """Settings of the list of objects of a kind in FilterCreator: creation or import of their histograms, export."""
+        line = ttk.Frame(tab)
+        line.pack(fill=tk.X, pady=(0, 6))
+        variables = {}
+        for name, ptype, _ in F.LIST_SETTINGS:
+            label = {"CREATE": "Create", "IMPORT": "Import", "IMPORT:PATH": "from", "IMPORT:FILE_NAME": "file",
+                     "EXPORT": "Export", "EXPORT:PATH": "to", "EXPORT:FILE_NAME": "file"}[name]
+            if ptype == "bool":
+                var = tk.BooleanVar(self)
+                ttk.Checkbutton(line, text=label, variable=var).pack(side=tk.LEFT, padx=(0 if name == "CREATE" else 12, 0))
+            else:
+                var = tk.StringVar(self)
+                ttk.Label(line, text=label).pack(side=tk.LEFT, padx=(6, 2))
+                ttk.Entry(line, textvariable=var, width=14 if name.endswith("FILE_NAME") else 10).pack(side=tk.LEFT)
+            var.trace_add("write", lambda *a, k=kind, n=name, v=var: self._set_setting(k, n, v))
+            variables[name] = var
+        self.setting_vars[kind] = variables
+
+    def _set_setting(self, kind, name, var):
+        if self._loading:
+            return
+        value = var.get()
+        value = ("true" if value else "false") if isinstance(value, bool) else value.strip()
+        if self.library.settings[kind].get(name) != value:
+            self.library.settings[kind][name] = value
+            self.on_change()
+
     def refresh(self, kinds=None):
         """Remake the content of the tabs from the library (all, or those of the given kinds)."""
+        self._loading = True
+        for kind, variables in self.setting_vars.items():
+            for name, var in variables.items():
+                value = self.library.settings[kind].get(name, "")
+                var.set(value == "true" if isinstance(var, tk.BooleanVar) else value)
+        self._loading = False
         for kind in kinds or F.KINDS:
             objects = self.library.objects[kind]
             limit = max(MAX_OBJECTS.get(kind, MAX_OTHERS), len(objects))
