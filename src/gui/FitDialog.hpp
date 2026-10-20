@@ -14,6 +14,7 @@
 #ifndef CAP__GUI__FitDialog
 #define CAP__GUI__FitDialog
 #include <memory>
+#include <vector>
 #include "String.hpp"
 
 namespace CAP
@@ -37,7 +38,13 @@ namespace CAP
   //!
   //! The window chooses:
   //!  - the object fitted: data points, a histogram, or a function (fitted through samples of it over the range);
-  //!  - the function, among the classes of MATH::FunctionRegistry (the degree of a Polynomial);
+  //!  - the function, among those of MATH::FunctionRegistry: the functions of CAP (polynomials, Normal, LogNormal,
+  //!    Exponential, series of Legendre, Chebyshev, Hermite or Laguerre polynomials, Bessel functions J, Y, I, K),
+  //!    classes registered by programs, and composites (sums of registered functions, MATH::ParameterizedComposite),
+  //!    with the degree of a Polynomial or of a series; a series is mapped onto the range of the fit;
+  //!  - new composites, made in the window ("Composite..."): they are registered and written to
+  //!    MATH::FunctionRegistry::defaultCompositesFile(), read again when CapGui starts (and where programs can put
+  //!    theirs); a composite can be removed, or its current parameters kept as its starting values;
   //!  - the starting value of each parameter, whether it is fixed, and its bounds; Estimate sets the starting values
   //!    from the data (MATH::Fitter::estimate());
   //!  - the statistic: chi square, or the Poisson likelihood for counts (histograms);
@@ -86,13 +93,25 @@ namespace CAP
   bool fit(GRAPHICS::Graph & graph);
   //! @brief Draw the table of the parameters (value, fixed, bounds).
   void renderParameters();
+  //! @brief Draw the window that makes a composite, if open.
+  void renderCompositeBuilder();
+  //! @brief Write the composites to the file shared with programs; report a failure.
+  void saveComposites();
+
+  //! A component of the composite being made.
+  struct ComponentDraft
+  {
+    String type = "Normal";   //!< registered name
+    int degree = 2;   //!< degree of a Polynomial or a series
+    String label;   //!< label
+  };
 
   bool _open;   //!< the window is open
   bool _openRequested;   //!< open() was called: select the item at the next frame
   int  _requestedItem;   //!< item asked by open()
   int  _item;   //!< index of the item fitted in the graph
   const void * _object;   //!< object of the item fitted (the selection is reset if it changes)
-  int  _functionIndex;   //!< class of the function (index in MATH::FunctionRegistry::names())
+  String _functionName;   //!< registered name of the function
   int  _degree;   //!< degree of a Polynomial
   std::unique_ptr<MATH::ParameterizedFunction> _function;   //!< function fitted, with the starting values
   int  _statistic;   //!< 0 chi square, 1 Poisson likelihood
@@ -103,6 +122,10 @@ namespace CAP
   String _label;   //!< label of the fit
   String _message;   //!< outcome of the last action
   bool _error;   //!< the message is an error
+  bool _builderRequested = false;   //!< open the composite builder at the next frame
+  String _compositeName;   //!< name of the composite being made
+  std::vector<ComponentDraft> _drafts;   //!< components of the composite being made
+  String _builderMessage;   //!< problem of the composite being made
   };
 
   } // namespace GUI

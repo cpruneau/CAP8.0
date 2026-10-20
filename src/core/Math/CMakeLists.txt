@@ -73,6 +73,7 @@ LinearAlgebra/VectorLorentz.cpp
 LinearAlgebra/VectorND.cpp
 # Functions
 Functions/Bessel.cpp
+Functions/BesselFunction.cpp
 Functions/BesselFunctions.cpp
 Functions/CompositeFunction.cpp
 Functions/Constant.cpp
@@ -85,6 +86,8 @@ Functions/Legendre.cpp
 Functions/Linear.cpp
 Functions/LogNormal.cpp
 Functions/Normal.cpp
+Functions/OrthogonalSeries.cpp
+Functions/ParameterizedComposite.cpp
 Functions/Parabolic.cpp
 Functions/Parameter.cpp
 Functions/ParameterizedFunction.cpp
@@ -152,6 +155,9 @@ add_test(NAME Fits COMMAND TestFits)
 add_executable(TestFitStorage Fitting/tests/TestFitStorage.cpp)
 target_link_libraries(TestFitStorage Math Base ${ROOT_LIBRARIES})
 add_test(NAME FitStorage COMMAND TestFitStorage)
+add_executable(TestFitFunctions Functions/tests/TestFitFunctions.cpp)
+target_link_libraries(TestFitFunctions Math Base ${ROOT_LIBRARIES})
+add_test(NAME FitFunctions COMMAND TestFitFunctions)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

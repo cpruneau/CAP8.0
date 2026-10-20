@@ -26,7 +26,11 @@
 #include "FunctionRegistry.hpp"
 #include "Graph.hpp"
 #include "Histogram.hpp"
+#include "MathExceptions.hpp"
+#include "OrthogonalSeries.hpp"
+#include "ParameterizedComposite.hpp"
 #include "ParameterizedFunction.hpp"
+#include "Polynomial.hpp"
 
 namespace CAP
 {
@@ -46,11 +50,46 @@ namespace CAP
   return name + String("##item") + String(std::to_string(k));
   }
 
-  //! Index of a name in the registry, or 0.
-  int indexOf(const std::vector<String> & names, const char * name)
+  //! A function of a registered name, with a degree for a Polynomial or a series. @return function, or null
+  MATH::ParameterizedFunction * makeNamed(const String & name, int degree)
   {
-  for (std::size_t k=0; k<names.size(); k++) if (names[k] == name) return int(k);
-  return 0;
+  if (name == "Polynomial") return MATH::FunctionRegistry::create(name, (unsigned int)(degree + 1));
+  MATH::ParameterizedFunction * f = MATH::FunctionRegistry::create(name);
+  if (MATH::OrthogonalSeries * series = dynamic_cast<MATH::OrthogonalSeries*>(f)) series->setDegree((unsigned int)degree);
+  return f;
+  }
+
+  //! Whether the functions of a name have a degree (a Polynomial, a series).
+  bool hasDegree(const String & name)
+  {
+  return name == "Polynomial" || name.endsWith("Series");
+  }
+
+  //! One line on the functions of a registered name.
+  String describe(const String & name)
+  {
+  static const std::vector<std::pair<const char *, const char *>> texts = {
+    { "Constant", "c0" }, { "Linear", "c0 + c1 x" }, { "Parabolic", "c0 + c1 x + c2 x^2" },
+    { "Cubic", "c0 + ... + c3 x^3" }, { "Quartic", "c0 + ... + c4 x^4" }, { "Polynomial", "c0 + c1 x + ... + cN x^N" },
+    { "Normal", "A exp(-(x - mean)^2 / (2 width^2))" }, { "LogNormal", "log-normal density of area A (mean and width of ln x)" },
+    { "Exponential", "A exp(b x)" },
+    { "LegendreSeries", "c0 P0(t) + ... + cN PN(t), Legendre; x in [low, high] mapped onto t in [-1, 1]" },
+    { "ChebyshevSeries", "c0 T0(t) + ... + cN TN(t), Chebyshev; x in [low, high] mapped onto t in [-1, 1]" },
+    { "HermiteSeries", "c0 H0(t) + ... + cN HN(t), Hermite; t = (x - x0)/scale" },
+    { "LaguerreSeries", "c0 L0(t) + ... + cN LN(t), Laguerre of parameter alpha; t = (x - x0)/scale" },
+    { "BesselJ", "A J_n(scale (x - shift)), Bessel of the first kind; order n fixed" },
+    { "BesselY", "A Y_n(scale (x - shift)), Bessel of the second kind; order n fixed" },
+    { "BesselI", "A I_n(scale (x - shift)), modified Bessel of the first kind; order n fixed" },
+    { "BesselK", "A K_n(scale (x - shift)), modified Bessel of the second kind; order n fixed" } };
+  for (const auto & text : texts) if (name == text.first) return String(text.second);
+  if (std::shared_ptr<const MATH::ParameterizedComposite> c = MATH::FunctionRegistry::composite(name))
+    {
+    String text = "composite: ";
+    for (unsigned int k=0; k<c->nComponents(); k++)
+      text += String(k ? " + " : "") + c->label(k) + String(" (") + MATH::FunctionRegistry::typeName(c->component(k)) + String(")");
+    return text;
+    }
+  return "function registered by a program";
   }
   } // namespace
 
@@ -61,7 +100,7 @@ namespace CAP
   _requestedItem(-1),
   _item(-1),
   _object(nullptr),
-  _functionIndex(indexOf(MATH::FunctionRegistry::names(), "Normal")),
+  _functionName("Normal"),
   _degree(2),
   _function(),
   _statistic(0),
@@ -89,12 +128,102 @@ namespace CAP
 
   void FitDialog::makeFunction()
   {
+  if (!MATH::FunctionRegistry::isRegistered(_functionName)) _functionName = "Normal";
+  try { _function.reset(makeNamed(_functionName, _degree)); }
+  catch (...) { _function.reset(); }
+  if (_function) _function->adaptToRange(_low, _high);   // e.g. the mapping of a series
+  }
+
+  void FitDialog::saveComposites()
+  {
+  String file = MATH::FunctionRegistry::defaultCompositesFile();
+  if (!MATH::FunctionRegistry::writeComposites(file)) { _message = String("Cannot write ") + file; _error = true; }
+  }
+
+  void FitDialog::renderCompositeBuilder()
+  {
+  if (_builderRequested) { ImGui::OpenPopup("Composite"); _builderRequested = false; }
+  ImGui::SetNextWindowSize(ImVec2(560, 0), ImGuiCond_Appearing);
+  if (!ImGui::BeginPopupModal("Composite", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+  ImGui::TextWrapped("A sum of registered functions, fitted with all their parameters (named label.parameter). It is "
+                     "saved in %s, read when CapGui starts.", MATH::FunctionRegistry::defaultCompositesFile().data());
+  ImGui::SetNextItemWidth(240);
+  ImGui::InputText("name", &_compositeName.str());
   std::vector<String> names = MATH::FunctionRegistry::names();
-  if (_functionIndex < 0 || _functionIndex >= int(names.size())) _functionIndex = 0;
-  if (names.empty()) { _function.reset(); return; }
-  const String & name = names[std::size_t(_functionIndex)];
-  if (name == "Polynomial") _function.reset(MATH::FunctionRegistry::create(name, (unsigned int)(_degree + 1)));
-  else _function.reset(MATH::FunctionRegistry::create(name));
+  int removed = -1;
+  if (ImGui::BeginTable("##components", 4, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerH))
+    {
+    ImGui::TableSetupColumn("function");
+    ImGui::TableSetupColumn("degree");
+    ImGui::TableSetupColumn("label");
+    ImGui::TableSetupColumn("");
+    ImGui::TableHeadersRow();
+    for (std::size_t k=0; k<_drafts.size(); k++)
+      {
+      ComponentDraft & draft = _drafts[k];
+      ImGui::PushID(int(k));
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::SetNextItemWidth(170);
+      if (ImGui::BeginCombo("##type", draft.type.data()))
+        {
+        for (const auto & name : names)
+          if (!(name == _compositeName) && ImGui::Selectable(name.data(), name == draft.type)) draft.type = name;
+        ImGui::EndCombo();
+        }
+      ImGui::SetItemTooltip("%s", describe(draft.type).data());
+      ImGui::TableNextColumn();
+      if (hasDegree(draft.type))
+        {
+        ImGui::SetNextItemWidth(80);
+        if (ImGui::InputInt("##degree", &draft.degree)) draft.degree = std::min(std::max(draft.degree, 0), 10);
+        }
+      else ImGui::TextDisabled("-");
+      ImGui::TableNextColumn();
+      ImGui::SetNextItemWidth(130);
+      ImGui::InputText("##label", &draft.label.str());
+      ImGui::TableNextColumn();
+      if (ImGui::SmallButton("x")) removed = int(k);
+      ImGui::PopID();
+      }
+    ImGui::EndTable();
+    }
+  if (removed >= 0) _drafts.erase(_drafts.begin() + removed);
+  if (ImGui::Button("Add component"))
+    {
+    ComponentDraft draft;
+    draft.type = _drafts.empty() ? "Normal" : "Linear";
+    draft.label = _drafts.empty() ? "signal" : (_drafts.size() == 1 ? "background" : String(("f" + std::to_string(_drafts.size() + 1)).c_str()));
+    _drafts.push_back(draft);
+    }
+  if (!_builderMessage.isNull()) ImGui::TextColored(ImVec4(0.85f, 0.2f, 0.1f, 1.0f), "%s", _builderMessage.data());
+  ImGui::Separator();
+  if (ImGui::Button("Create"))
+    {
+    try
+      {
+      if (_compositeName.isNull()) throw MATH::MathException("Give the composite a name", "FitDialog");
+      if (MATH::FunctionRegistry::isRegistered(_compositeName) && !MATH::FunctionRegistry::isComposite(_compositeName))
+        throw MATH::MathException(String("The name ") + _compositeName + String(" is that of a class of functions"), "FitDialog");
+      MATH::ParameterizedComposite composite;
+      for (const auto & draft : _drafts)
+        {
+        std::unique_ptr<MATH::ParameterizedFunction> f(makeNamed(draft.type, draft.degree));
+        if (!f) throw MATH::MathException(String("Cannot make ") + draft.type, "FitDialog");
+        composite.add(draft.label, *f);
+        }
+      MATH::FunctionRegistry::registerComposite(_compositeName, composite);
+      saveComposites();
+      _functionName = _compositeName;
+      makeFunction();
+      _builderMessage = "";
+      ImGui::CloseCurrentPopup();
+      }
+    catch (const std::exception & e) { _builderMessage = e.what(); }
+    }
+  ImGui::SameLine();
+  if (ImGui::Button("Cancel")) { _builderMessage = ""; ImGui::CloseCurrentPopup(); }
+  ImGui::EndPopup();
   }
 
   void FitDialog::selectItem(Graph & graph, int k)
@@ -120,6 +249,7 @@ namespace CAP
     _low = item.xMinimum(); _high = item.xMaximum();
     _statistic = 0;
     }
+  if (_function) _function->adaptToRange(_low, _high);
   }
 
   void FitDialog::estimate(Graph & graph)
@@ -289,34 +419,95 @@ namespace CAP
     }
   const bool histogram = item.kind() == GraphItem::kData && dynamic_cast<const MATH::Histogram*>(item.data());
 
-  // the function
-  std::vector<String> names = MATH::FunctionRegistry::names();
+  // the function: those of CAP and of programs, then the composites
+  std::vector<String> names = MATH::FunctionRegistry::names(), composites = MATH::FunctionRegistry::compositeNames();
+  if (!MATH::FunctionRegistry::isRegistered(_functionName)) { _functionName = "Normal"; makeFunction(); }
   ImGui::SetNextItemWidth(180);
-  if (ImGui::BeginCombo("function", _functionIndex < int(names.size()) ? names[std::size_t(_functionIndex)].data() : ""))
+  if (ImGui::BeginCombo("function", _functionName.data(), ImGuiComboFlags_HeightLarge))
     {
-    for (std::size_t k=0; k<names.size(); k++)
-      if (ImGui::Selectable(names[k].data(), int(k) == _functionIndex)) { _functionIndex = int(k); makeFunction(); }
+    ImGui::SeparatorText("Functions");
+    for (const auto & name : names)
+      {
+      if (MATH::FunctionRegistry::isComposite(name)) continue;
+      if (ImGui::Selectable(name.data(), name == _functionName)) { _functionName = name; makeFunction(); }
+      ImGui::SetItemTooltip("%s", describe(name).data());
+      }
+    if (!composites.empty())
+      {
+      ImGui::SeparatorText("Composites");
+      for (const auto & name : composites)
+        {
+        if (ImGui::Selectable(name.data(), name == _functionName)) { _functionName = name; makeFunction(); }
+        ImGui::SetItemTooltip("%s", describe(name).data());
+        }
+      }
     ImGui::EndCombo();
     }
-  if (_functionIndex < int(names.size()) && names[std::size_t(_functionIndex)] == "Polynomial")
+  if (hasDegree(_functionName))
     {
     ImGui::SameLine(0, 16);
     ImGui::SetNextItemWidth(90);
-    if (ImGui::InputInt("degree", &_degree)) { _degree = std::min(std::max(_degree, 0), 10); makeFunction(); }
+    if (ImGui::InputInt("degree", &_degree))
+      {
+      _degree = std::min(std::max(_degree, 0), 10);
+      if (MATH::OrthogonalSeries * series = dynamic_cast<MATH::OrthogonalSeries*>(_function.get())) series->setDegree((unsigned int)_degree);
+      else makeFunction();
+      }
     }
+  ImGui::SameLine(0, 16);
+  if (ImGui::Button("Composite..."))
+    {
+    _compositeName = "";
+    _drafts.clear();
+    _drafts.push_back(ComponentDraft());
+    _drafts.back().label = "signal";
+    _builderMessage = "";
+    _builderRequested = true;
+    }
+  ImGui::SetItemTooltip("Make a composite: a sum of registered functions (e.g. a signal over a background)");
+  bool composite = MATH::FunctionRegistry::isComposite(_functionName);
+  if (composite)
+    {
+    ImGui::SameLine();
+    if (ImGui::Button("Keep values") && _function)
+      {
+      if (const MATH::ParameterizedComposite * c = dynamic_cast<const MATH::ParameterizedComposite*>(_function.get()))
+        {
+        MATH::FunctionRegistry::registerComposite(_functionName, *c);
+        saveComposites();
+        _message = String("The parameters of ") + _functionName + String(" are now its starting values");
+        _error = false;
+        }
+      }
+    ImGui::SetItemTooltip("Keep the current parameters (values, fixed, bounds) as the starting values of this composite");
+    ImGui::SameLine();
+    if (ImGui::Button("Remove"))
+      {
+      MATH::FunctionRegistry::removeComposite(_functionName);
+      saveComposites();
+      _message = String("Composite ") + _functionName + String(" removed");
+      _error = false;
+      _functionName = "Normal";
+      makeFunction();
+      }
+    ImGui::SetItemTooltip("Remove this composite (its fits already made are kept)");
+    }
+  ImGui::TextDisabled("%s", describe(_functionName).data());
   if (!_function) ImGui::TextColored(ImVec4(0.85f, 0.2f, 0.1f, 1.0f), "This function cannot be made");
+  renderCompositeBuilder();
 
   // range, statistic, method
   ImGui::SeparatorText("Range and statistic");
   double range[2] = { _low, _high };
   ImGui::SetNextItemWidth(240);
   if (ImGui::InputScalarN("x range", ImGuiDataType_Double, range, 2, nullptr, nullptr, "%.6g") && range[0] <= range[1])
-    { _low = range[0]; _high = range[1]; }
+    { _low = range[0]; _high = range[1]; if (_function) _function->adaptToRange(_low, _high); }
   ImGui::SameLine();
   if (ImGui::Button("View"))
     {
     Graph::View view = graph->view();
     _low = view.xMinimum; _high = view.xMaximum;
+    if (_function) _function->adaptToRange(_low, _high);
     }
   ImGui::SetItemTooltip("Take the x range shown in the graph");
   ImGui::SameLine();

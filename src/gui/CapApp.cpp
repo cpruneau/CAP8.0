@@ -27,6 +27,7 @@
 #include "Exponential.hpp"
 #include "DataPointsVector.hpp"
 #include "Fitter.hpp"
+#include "FunctionRegistry.hpp"
 #include "Histogram.hpp"
 #include "CapFile.hpp"
 #include "LatexRenderer.hpp"
@@ -255,6 +256,15 @@ namespace CAP
   String latexProblem = applyLatex();
   if (!latexProblem.isNull()) _gui.setStatus(latexProblem);
 
+  // composites saved by programs or earlier sessions (see MATH::FunctionRegistry::writeComposites())
+  String composites = MATH::FunctionRegistry::defaultCompositesFile();
+  if (FileSystem::isFile(composites))
+    {
+    String problems;
+    int n = MATH::FunctionRegistry::readComposites(composites, &problems);
+    if (n < 0) _gui.setStatus(String("Cannot read the composites of ") + composites);
+    else if (!problems.isNull()) _gui.setStatus(String("Composites not read: ") + problems);
+    }
   if (_configuration.demo) createDemo();
   for (const auto & argument : _arguments)
     {

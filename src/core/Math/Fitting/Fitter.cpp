@@ -26,6 +26,7 @@
 #include "Normal.hpp"
 #include "LogNormal.hpp"
 #include "Exponential.hpp"
+#include "OrthogonalSeries.hpp"
 
 namespace CAP
 {
@@ -578,6 +579,15 @@ namespace CAP
     }
   if (x.empty()) return false;
 
+  if (OrthogonalSeries * series = dynamic_cast<OrthogonalSeries*>(&function))
+    {
+    // the mapping follows the range (if fixed), then the coefficients are a linear least squares
+    std::vector<Parameter> before = series->parameters();
+    series->adaptToRange(low, high);
+    if (series->estimate(x, y, w)) return true;
+    for (unsigned int k=0; k<before.size(); k++) series->setParameter(k, before[k]);   // unchanged if it fails
+    return false;
+    }
   if (Polynomial * polynomial = dynamic_cast<Polynomial*>(&function))
     {
     unsigned int degree = polynomial->nParameters() - 1;

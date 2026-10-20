@@ -118,6 +118,23 @@ namespace CAP
   void setParameter(unsigned int index, const Parameter & parameter);
   //! @}
 
+  //! @name Fits
+  //! @{
+
+  //!
+  //! @brief Adapt the function to the range of x of a fit, before it is fitted there (rank 1). By default nothing;
+  //! functions whose variable is mapped onto a standard interval (e.g. OrthogonalSeries) set their mapping
+  //! parameters, if those are fixed. Called by Fitter::estimate() and by the Fit window of CapGui.
+  //! @param low lower end of the range @param high upper end of the range
+  //!
+  virtual void adaptToRange(double low, double high) { (void)low; (void)high; }
+  //!
+  //! @brief Name under which the function itself was registered in FunctionRegistry (e.g. a composite registered by
+  //! FunctionRegistry::registerComposite()), or empty when its class is what identifies it. @return name
+  //!
+  virtual String registryName() const { return String(); }
+  //! @}
+
   //!
   //! @brief Value of a function of rank 1. Implemented by derived classes of rank 1; by default, forwards to the vector version.
   //! @param x value of the independent variable
