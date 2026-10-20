@@ -8,6 +8,7 @@
 #   Data           data points, histograms, profiles, tables
 #   Search         extremum searches (SearchEngine and its engines, ExtremumSearch)
 #   Fitting        fits (Fitter, likelihoods, chi square, Bayesian fits, fit records)
+#   StatisticalTests  statistical tests (binomial, Poisson, z, t, chi square, histograms, Kolmogorov-Smirnov)
 ################################################################################################
 ROOT_GENERATE_DICTIONARY(G__Math
 ParameterizedFunction.hpp
@@ -129,6 +130,9 @@ Fitting/Fitter.cpp
 Fitting/Likelihood.cpp
 Fitting/MetropolisHastings.cpp
 Fitting/Prior.cpp
+# StatisticalTests
+StatisticalTests/Distributions.cpp
+StatisticalTests/StatisticalTests.cpp
 G__Math.cxx)
 
 target_link_libraries(Math Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
@@ -158,6 +162,9 @@ add_test(NAME FitStorage COMMAND TestFitStorage)
 add_executable(TestFitFunctions Functions/tests/TestFitFunctions.cpp)
 target_link_libraries(TestFitFunctions Math Base ${ROOT_LIBRARIES})
 add_test(NAME FitFunctions COMMAND TestFitFunctions)
+add_executable(TestStatisticalTests StatisticalTests/tests/TestStatisticalTests.cpp)
+target_link_libraries(TestStatisticalTests Math Base ${ROOT_LIBRARIES})
+add_test(NAME StatisticalTests COMMAND TestStatisticalTests)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
