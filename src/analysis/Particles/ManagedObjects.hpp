@@ -49,7 +49,11 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   //!   <task>:<TYPE>:IMPORT:BASE_NAME, IMPORT:PATH, IMPORT:FILE_NAME
   //!   <task>:<TYPE>:EXPORT:BASE_NAME, EXPORT:PATH, EXPORT:FILE_NAME, EXPORT:FORCE_REWRITE
   //!   <task>:<TYPE>_<k>:NAME, TITLE, OWNER                            // object k
+  //!   <task>:<TYPE>_<k>:<param>                                       // histogram folder k: its own binning
   //! @endcode
+  //! The TITLE of an object, unless empty or NONE, is set after its configuration. A histogram folder whose keys include
+  //! binning parameters of its own uses them instead of those of the HISTOGRAM group of the task (see
+  //! objectConfiguration()).
   //! An object whose OWNER flag is true is created (and configured) by this list and added to a static store shared by
   //! all lists of this type; otherwise the object of that name is taken from the store (shared between tasks).
   //!
@@ -453,11 +457,56 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     if (owner)
       {
       object = instantiateObject(name);
-      object->configure(_taskName,_typeName,configuration,k);
+      Configuration scoped;
+      bool own = objectConfiguration(configuration,k,scoped);
+      object->configure(_taskName,_typeName,own ? scoped : configuration,k);
+      if (!title.isEmpty() && title!="NONE") object->setTitle(title);
       }
     else
       object = useObject(name);
     }
+  }
+
+  //!
+  //! @brief Configuration of histogram folder k, when it has its own binning: its keys \<task\>:\<TYPE\>_\<k\>:\<param\>
+  //! (other than NAME, TITLE, OWNER and BASE_NAME) replace the values of \<task\>:HISTOGRAM:\<param\> and
+  //! \<task\>:\<TYPE\>:\<param\>, the keys the folders read their binning from; the parameters a folder does not set are
+  //! those of the HISTOGRAM group of the task. Only for HISTOGRAM types.
+  //! @param configuration configuration of the task @param k index of the folder @param scoped configuration of the
+  //! folder (set when the folder has keys of its own) @return true if the folder has keys of its own
+  //!
+  bool objectConfiguration(const Configuration & configuration, unsigned int k, Configuration & scoped) const
+  {
+  if (!_typeName.beginsWith("HISTOGRAM")) return false;
+  String prefix = createKey(_taskName,_typeName,k,"");
+  std::vector<std::pair<String,const Property *>> overrides;
+  for (const Property & p : configuration.properties())
+    {
+    const String & key = p.name();
+    if (!key.beginsWith(prefix)) continue;
+    String parameter = key.subString(prefix.length());
+    if (parameter.isEmpty() || parameter.contains(":") || parameter=="NAME" || parameter=="TITLE" || parameter=="OWNER"
+        || parameter=="BASE_NAME") continue;
+    overrides.push_back({parameter,&p});
+    }
+  if (overrides.empty()) return false;
+  scoped = configuration;
+  for (auto & o : overrides)
+    {
+    for (const String & group : { String("HISTOGRAM"), _typeName })
+      {
+      Property p(*o.second);
+      p.setName(createKey(_taskName,group,o.first));
+      scoped.addProperty(p);
+      }
+    int group = -1;
+    String groupKey = createKey(_taskName,"HISTOGRAM",o.first);
+    for (unsigned int i=0; i<configuration.properties().size() && group<0; i++)
+      if (configuration.properties()[i].name()==groupKey) group = int(i);
+    bool differs = group<0 || configuration.properties()[group].string()!=o.second->string();
+    if (differs && reportInfo(__FUNCTION__)) printValue(o.second->name(),o.second->string());
+    }
+  return true;
   }
   
   //! @brief Import (IMPORT) and/or create (CREATE) the objects.

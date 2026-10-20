@@ -275,7 +275,8 @@ namespace CAP
   bool isXmlParameter(const String & relativeKey) const override;
   //! @brief Accept nested TASK elements (handled by readXmlElement()). @param child element @return true for TASK
   bool readXmlChild(const XmlElement & child) override;
-  //! @brief Warn that a parameter read is not defined by setDefaultConfiguration(). @param key key of the parameter
+  //! @brief Warn that a parameter read is not defined by setDefaultConfiguration(), unless it is a key of an object of
+  //! a managed list (\<task\>:\<TYPE\>_\<k\>:..., the task having \<task\>:\<TYPE\>:N). @param key key of the parameter
   void unknownXmlParameter(const String & key) override;
 
   //!
