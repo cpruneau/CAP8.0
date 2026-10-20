@@ -25,6 +25,8 @@
 #include "DataPoint3D.hpp"
 #include "DataPointsVector.hpp"
 #include "Fitter.hpp"
+#include "FitViews.hpp"
+#include "Normal2D.hpp"
 #include "Linear.hpp"
 #include "Parabolic.hpp"
 #include "Function.hpp"
@@ -33,6 +35,7 @@
 #include "Histogram.hpp"
 #include "Palette.hpp"
 #include "SvgPainter.hpp"
+#include "Painter.hpp"
 
 using namespace CAP;
 using namespace CAP::GRAPHICS;
@@ -89,6 +92,16 @@ std::string svgOf(const Graph & graph)
   graph.draw(svg);
   return svg.document().str();
 }
+//! The color of a ROOT color index as written in SVG files ("#rrggbb").
+std::string hexOf(int color)
+{
+  float r, g, b;
+  Painter::rgb(color, r, g, b);
+  char text[16];
+  std::snprintf(text, sizeof(text), "#%02x%02x%02x", int(255*r + 0.5), int(255*g + 0.5), int(255*b + 0.5));
+  return text;
+}
+
 } // namespace
 
 //! @brief Count a check, and report it if the condition is false.
@@ -586,6 +599,57 @@ int main(int argc, char ** argv)
     CHECK(content.find("width=\"600pt\"") != std::string::npos && content.find(">page<") != std::string::npos);
     CHECK(!Canvas::writeSvg(file, {}, 1, 300, 200));
     std::remove(file);
+  }
+
+  // ---- fits of rank 2 over maps: contour lines in the colors of the fits, legend entries, maps of pulls
+  {
+    MATH::Histogram h2("h2", "peak", 30, -3.0, 3.0, 30, -3.0, 3.0);
+    unsigned long long seed = 9;
+    auto uniform = [&seed]() { seed = seed*6364136223846793005ULL + 1442695040888963407ULL; return ((seed >> 11) + 0.5)/9007199254740992.0; };
+    for (int k=0; k<20000; k++)
+      {
+      double z1 = std::sqrt(-2*std::log(uniform()))*std::cos(2*M_PI*uniform()), z2 = std::sqrt(-2*std::log(uniform()))*std::cos(2*M_PI*uniform());
+      h2.fill(0.8*z1, 0.6*(0.4*z1 + std::sqrt(0.84)*z2), 1.0);
+      }
+    MATH::Normal2D model;
+    MATH::Fitter::estimate(model, h2, std::vector<double>{ -3.0, -3.0 }, std::vector<double>{ 3.0, 3.0 });
+    MATH::Fitter::FitOptions options;
+    options.statistic = MATH::Fitter::kPoisson;
+    options.label = "gauss2";
+    MATH::Fitter::fitAndAttach(model, h2, options);
+    MATH::Linear line(1.0, 0.0);                                            // a fit of rank 1 is not drawn on a map
+    MATH::FitRecord oneD;
+    oneD.label = "wrong rank";
+    oneD.function = std::shared_ptr<const MATH::ParameterizedFunction>(line.clone());
+    h2.addFit(oneD);
+    Graph graph;
+    graph.show(GraphItem(&h2, "data"));
+    const GraphItem & item = graph.items()[0];
+    CHECK(graph.drawnFit(item, 0) != nullptr && graph.drawnFit(item, 1) == nullptr && graph.hasFits() && graph.hasFits(2) && !graph.hasFits(1));
+    std::string red = hexOf(item.fitLineAttributes(0).color());
+    std::string svg = svgOf(graph);
+    int fitLines = count(svg, "<polyline fill=\"none\" stroke=\"" + red + "\"");
+    CHECK(fitLines >= 4 && count(svg, ">gauss2<") == 1 && count(svg, ">wrong rank<") == 0 && count(svg, "/ndf") == 1);   // the legend of a lone map lists its fits
+    graph.items()[0].setFitShown(0, false);
+    svg = svgOf(graph);
+    CHECK(count(svg, "<polyline fill=\"none\" stroke=\"" + red + "\"") < fitLines && count(svg, ">gauss2<") == 0 && !graph.hasFits());
+    graph.items()[0].setFitShown(0, true);
+    graph.setShowResiduals(true);                                           // no residuals panel for maps
+    CHECK(!graph.hasResidualPanel());
+    graph.items()[0].setShowContours(true);
+    graph.items()[0].setContourIntervals(4);
+    svg = svgOf(graph);
+    CHECK(count(svg, "<polyline fill=\"none\" stroke=\"" + red + "\"") >= 3);   // one contour per level at least
+
+    MATH::Histogram pulls = MATH::residualMap(h2, h2.fit(0));
+    Graph map;
+    map.show(GraphItem(&pulls, "pulls"));
+    map.setResidualMapStyle();
+    Graph::View view = map.view();
+    CHECK(map.palette().type() == Palette::kDiverging && map.isSymmetricZ() && near(view.zMinimum, -view.zMaximum, 1E-9)
+          && map.zAxis().title() == "pull");
+    Color above = map.colorOf(view, 0.8*view.zMaximum), below = map.colorOf(view, 0.8*view.zMinimum);
+    CHECK(above.red > above.blue && below.blue > below.red);
   }
 
   std::printf("TestGraph2D: %d checks, %d failed\n", nChecks, nFailures);

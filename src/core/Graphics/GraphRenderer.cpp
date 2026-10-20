@@ -116,13 +116,52 @@ namespace CAP
   drawClipped(painter, box, points, valid, line);
   }
 
-  //! Whether fit k of an item is drawn: fits shown in the graph and the item, of rank 1, on an item of rank 1.
+  //! Whether fit k of an item is drawn (see Graph::drawnFit()).
   const MATH::FitRecord * drawnFit(const Graph & graph, const GraphItem & item, unsigned int k)
   {
-  if (!graph.showFits() || !item.showFits() || item.isMap() || !item.isFitShown(k)) return nullptr;
-  const MATH::FitRecord * fit = item.fit(k);
-  if (!fit || !fit->function || fit->function->rank() != 1) return nullptr;
-  return fit;
+  return graph.drawnFit(item, k);
+  }
+
+  //! Range of a fit of a map within the view (or the whole view, if its fits extend over it). @return false if empty
+  bool mapFitRange(const Graph::View & view, const GraphItem & item, const MATH::FitRecord & fit,
+                   double & x0, double & x1, double & y0, double & y1)
+  {
+  x0 = view.xMinimum; x1 = view.xMaximum; y0 = view.yMinimum; y1 = view.yMaximum;
+  if (!item.extendFits() && fit.low.size() == 2)
+    {
+    x0 = std::max(x0, fit.low[0]); x1 = std::min(x1, fit.high[0]);
+    y0 = std::max(y0, fit.low[1]); y1 = std::min(y1, fit.high[1]);
+    }
+  return x1 > x0 && y1 > y0;
+  }
+
+  //! Contour lines of the fits of rank 2 of a map, at its contour levels, in the lines of the fits.
+  void drawMapFits(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item)
+  {
+  std::vector<double> levels;
+  for (unsigned int k=0; k<item.nFits(); k++)
+    {
+    const MATH::FitRecord * fit = drawnFit(graph, item, k);
+    if (!fit || fit->function->rank() != 2) continue;
+    double x0, x1, y0, y1;
+    if (!mapFitRange(view, item, *fit, x0, x1, y0, y1)) continue;
+    if (levels.empty()) levels = graph.contourLevels(view, item);
+    Grid2D grid = Grid2D::fromFunction(*fit->function, x0, x1, 120, y0, y1, 120, view.logX, view.logY);
+    LineAttributes line = item.fitLineAttributes(k);
+    for (double level : levels)
+      for (const auto & polyline : grid.contour(level, view.logZ))
+        {
+        std::vector<Point2D> points;
+        std::vector<bool> valid;
+        for (const auto & q : polyline)
+          {
+          bool ok = (!view.logX || q.x > 0) && (!view.logY || q.y > 0);
+          points.push_back(graph.toCanvas(view, ok ? q.x : 1.0, ok ? q.y : 1.0));
+          valid.push_back(ok);
+          }
+        drawClipped(painter, box, points, valid, line);
+        }
+    }
   }
 
   //! Curves of the fits of an item, over their ranges (or the whole x range).
@@ -441,6 +480,7 @@ namespace CAP
   drawSegment(painter, box, Point2D(box.x0, z0.y()), Point2D(box.x1, z1.y()), zero);
   for (const auto & item : graph.items())
     {
+    if (item.isMap()) continue;                             // the residuals of maps are maps (MATH::residualMap())
     for (unsigned int k=0; k<item.nFits(); k++)
       {
       const MATH::FitRecord * fit = drawnFit(graph, item, k);
@@ -545,6 +585,7 @@ namespace CAP
       if (item.kind() == GraphItem::kData && (!grid || item.showMapPoints()))       // scattered points always
         drawColoredPoints(painter, box, *graph, view, item, mapPoints(item, grid.get()), int(iItem), pointPositions);
       if (grid && item.showValues()) drawValues(painter, box, *graph, view, item, *grid, 0.8f*textSize);
+      drawMapFits(painter, box, *graph, view, item);
       }
     else if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
       {
@@ -728,7 +769,7 @@ namespace CAP
   // legend: upper right corner inside the frame, or where it was put (upper left corner, fractions of the frame)
   Rect2D legendRect;
   // (a map alone has no legend: its colors are explained by the color scale, its name by the title)
-  bool loneMap = graph->items().size() == 1 && graph->items()[0].isMap();
+  bool loneMap = graph->items().size() == 1 && graph->items()[0].isMap() && !graph->hasFits(2);   // its fits are listed
   if (graph->showLegend() && !graph->items().empty() && !loneMap)
     {
     TextAttributes legendText = *TextAttributes::defaultTextAttributes();

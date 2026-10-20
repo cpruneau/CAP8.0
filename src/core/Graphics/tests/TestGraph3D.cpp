@@ -26,8 +26,11 @@
 #include "Function.hpp"
 #include "Graph.hpp"
 #include "Histogram.hpp"
+#include "FitRecord.hpp"
+#include "Normal2D.hpp"
 #include "Projection3D.hpp"
 #include "SvgPainter.hpp"
+#include "Painter.hpp"
 
 using namespace CAP;
 using namespace CAP::GRAPHICS;
@@ -68,6 +71,16 @@ std::string svgOf(const Graph & graph)
   graph.draw(svg);
   return svg.document().str();
 }
+//! The color of a ROOT color index as written in SVG files ("#rrggbb").
+std::string hexOf(int color)
+{
+  float r, g, b;
+  Painter::rgb(color, r, g, b);
+  char text[16];
+  std::snprintf(text, sizeof(text), "#%02x%02x%02x", int(255*r + 0.5), int(255*g + 0.5), int(255*b + 0.5));
+  return text;
+}
+
 } // namespace
 
 //! @brief Count a check, and report it if the condition is false.
@@ -225,6 +238,34 @@ int main(int argc, char ** argv)
     canvas.draw(svg);
     svg.write(argv[1]);
     }
+
+  // ---- a fit of rank 2 as a wire mesh in a 3D view
+  {
+    MATH::Normal2D shape(50.0, 0.0, 0.0, 1.0, 1.5, 0.3);
+    MATH::Histogram h("h", "h", 20, -4.0, 4.0, 20, -4.0, 4.0);
+    for (unsigned int i=0; i<20; i++)
+      for (unsigned int j=0; j<20; j++) h.setBinAtGlobal(h.binIndex(i, j), 1, shape.evaluateAt(h.binCenter(i, 0), h.binCenter(j, 1)), 1.0);
+    MATH::FitRecord fit;
+    fit.label = "mesh";
+    fit.function = std::shared_ptr<const MATH::ParameterizedFunction>(shape.clone());
+    fit.low = { -3.0, -3.0 };
+    fit.high = { 3.0, 3.0 };
+    h.addFit(fit);
+    Graph graph;
+    graph.add(GraphItem(&h, "data"));
+    graph.setDimension(Graph::k3D);
+    std::string red = hexOf(graph.items()[0].fitLineAttributes(0).color());
+    std::string svg = svgOf(graph);
+    int lines = count(svg, "stroke=\"" + red + "\"");
+    CHECK(graph.is3D() && lines > 100);                                     // cells of the mesh (some hidden by the surface)
+    graph.items()[0].setShowFits(false);
+    CHECK(count(svgOf(graph), "stroke=\"" + red + "\"") == 0);
+    graph.items()[0].setShowFits(true);
+    CHECK(lines < 29*29);                                                    // cells on the floor (fit near 0) are left out
+    graph.items()[0].setExtendFits(true);                                   // over the whole view: another mesh
+    int extended = count(svgOf(graph), "stroke=\"" + red + "\"");
+    CHECK(extended > 50 && extended != lines);
+  }
 
   std::printf("TestGraph3D: %d checks, %d failed\n", nChecks, nFailures);
   return nFailures;

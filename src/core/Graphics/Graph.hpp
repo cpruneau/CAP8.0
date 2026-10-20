@@ -248,9 +248,11 @@ namespace CAP
 
   //! @name Fits
   //!
-  //! The fits attached to the object shown (MATH::DataPoints::addFit(), MATH::Function::addFit()) are drawn as curves
-  //! over the range of each fit (or over the whole x range, see extendFits()), each with its own line, and listed in
-  //! the legend under the item. Fits are indexed as in the object; only fits of rank 1 are drawn, on items of rank 1.
+  //! The fits attached to the object shown (MATH::DataPoints::addFit(), MATH::Function::addFit()) are drawn over the
+  //! range of each fit (or over the whole range of the graph, see extendFits()), each with its own line, and listed
+  //! in the legend under the item: fits of rank 1 of items of rank 1 as curves; fits of rank 2 of maps as contour
+  //! lines (at the contour levels of the map, see Graph::contourLevels()) in a plane view, and as wire meshes in a 3D
+  //! view. Fits are indexed as in the object; a fit is drawn only on an item of its rank (see Graph::drawnFit()).
   //! @{
 
   //! @brief Number of fits attached to the object shown. @return number
@@ -597,8 +599,20 @@ namespace CAP
   //! @brief Whether the legend gives the quality of each fit (GraphItem::fitSummary()) after its label.
   bool showFitStatistics() const { return _showFitStatistics; }
   void setShowFitStatistics(bool v) { _showFitStatistics = v; }   //!< Give the quality of the fits in the legend or not
-  //! @brief Whether the graph shows items with fits drawn (rank 1). @return true if so
-  bool hasFits() const;
+  //! @brief Whether the graph draws fits. @param rank only fits of this rank (1 or 2; 0: any) @return true if so
+  bool hasFits(unsigned int rank=0) const;
+  //!
+  //! @brief Fit k of an item, if it is drawn: the fits are shown by the graph and the item, fit k is shown
+  //! (GraphItem::isFitShown()), and its rank is that of the item (1 or 2). @param item item @param k index of the fit
+  //! @return fit, or nullptr if it is not drawn
+  //!
+  const MATH::FitRecord * drawnFit(const GraphItem & item, unsigned int k) const;
+  //!
+  //! @brief Show a map of residuals (MATH::residualMap()) as such: the diverging palette (blue below zero, red above),
+  //! continuous, with an automatic z range symmetric about zero, and the z axis titled "pull" or "data - fit".
+  //! @param pulls the map holds pulls (otherwise differences)
+  //!
+  void setResidualMapStyle(bool pulls=true);
   //! @}
 
   //! @name Positions and sizes of the texts

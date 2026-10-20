@@ -21,6 +21,7 @@
 #include "Function.hpp"
 #include "DataPoints.hpp"
 #include "FitRecord.hpp"
+#include "ParameterizedFunction.hpp"
 #include "Histogram.hpp"
 
 ClassImp(CAP::GRAPHICS::Graph);
@@ -427,7 +428,7 @@ namespace CAP
 
   bool Graph::hasResidualPanel() const
   {
-  return _showResiduals && _dimension == k2D && hasFits();
+  return _showResiduals && _dimension == k2D && hasFits(1);   // residuals of curves; those of maps are maps
   }
 
   bool Graph::residualContains(const Point2D & p) const
@@ -645,12 +646,31 @@ namespace CAP
   return false;
   }
 
-  bool Graph::hasFits() const
+  bool Graph::hasFits(unsigned int rank) const
   {
   if (!_showFits) return false;
   for (const auto & item : _items)
-    if (!item.isMap() && item.showFits() && item.nFits() > 0) return true;
+    {
+    if (rank != 0 && item.rank() != rank) continue;
+    for (unsigned int k=0; k<item.nFits(); k++) if (drawnFit(item, k)) return true;
+    }
   return false;
+  }
+
+  const MATH::FitRecord * Graph::drawnFit(const GraphItem & item, unsigned int k) const
+  {
+  if (!_showFits || !item.showFits() || !item.isFitShown(k)) return nullptr;
+  const MATH::FitRecord * fit = item.fit(k);
+  if (!fit || !fit->function || fit->function->rank() != item.rank() || item.rank() > 2) return nullptr;
+  return fit;
+  }
+
+  void Graph::setResidualMapStyle(bool pulls)
+  {
+  setPalette(Palette(Palette::kDiverging, 0));
+  setSymmetricZ(true);
+  setAutoZ();
+  _zAxis.setTitle(pulls ? "pull" : "data \xE2\x88\x92 fit");
   }
 
   void Graph::reset()
