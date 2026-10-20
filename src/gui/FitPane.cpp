@@ -20,6 +20,7 @@
 #include "FitRecord.hpp"
 #include "FunctionRegistry.hpp"
 #include "Graph.hpp"
+#include "Histogram.hpp"
 #include "GraphEditor.hpp"
 #include "ParameterizedFunction.hpp"
 
@@ -63,7 +64,6 @@ namespace CAP
   for (std::size_t i=0; i<graph->items().size(); i++)
     {
     const GraphItem & item = graph->items()[i];
-    if (item.isMap()) continue;
     for (unsigned int k=0; k<item.nFits(); k++) fits.push_back({ int(i), k });
     }
   if (fits.empty())
@@ -80,11 +80,16 @@ namespace CAP
   bool statistics = graph->showFitStatistics();
   if (ImGui::Checkbox("quality in the legend", &statistics)) { changing(); graph->setShowFitStatistics(statistics); }
   ImGui::SetItemTooltip("Give the chi square per degree of freedom of each fit after its label in the legend");
-  ImGui::SameLine();
+  bool curves = false;                                   // the residuals panel is for the fits of curves
+  for (const auto & item : graph->items()) if (!item.isMap() && item.nFits() > 0) curves = true;
   bool residuals = graph->showResiduals();
-  if (ImGui::Checkbox("residuals panel", &residuals)) { changing(); graph->setShowResiduals(residuals); }
-  ImGui::SetItemTooltip("Panel below the graph with the residuals of the fits, in their colors");
-  if (residuals)
+  if (curves)
+    {
+    ImGui::SameLine();
+    if (ImGui::Checkbox("residuals panel", &residuals)) { changing(); graph->setShowResiduals(residuals); }
+    ImGui::SetItemTooltip("Panel below the graph with the residuals of the fits of curves, in their colors (for maps: Residual map in a tab)");
+    }
+  if (curves && residuals)
     {
     ImGui::SameLine();
     int mode = int(graph->residualMode());
@@ -151,8 +156,20 @@ namespace CAP
   if (widthChanged) { line.setWidth(width); item.setFitLineAttributes(k, line); }
   ImGui::SameLine(0, 16);
   bool extend = item.extendFits();
-  if (ImGui::Checkbox("whole x range", &extend)) { changing(); item.setExtendFits(extend); }
-  ImGui::SetItemTooltip("Draw the fits of this object over the whole x range of the graph, not only the range of each fit");
+  if (ImGui::Checkbox("whole range", &extend)) { changing(); item.setExtendFits(extend); }
+  ImGui::SetItemTooltip("Draw the fits of this object over the whole range of the graph, not only the range of each fit");
+  if (fit.function && fit.function->rank() == 2 && item.kind() == GraphItem::kData && item.data())
+    {
+    ImGui::SameLine(0, 16);
+    if (onResidualMap && ImGui::Button("Residual map")) onResidualMap(item.data(), k);
+    ImGui::SetItemTooltip("Map of the pulls (data - fit)/uncertainty, in a new canvas");
+    if (onProjections && dynamic_cast<const MATH::Histogram*>(item.data()))
+      {
+      ImGui::SameLine();
+      if (ImGui::Button("Projections")) onProjections(item.data());
+      ImGui::SetItemTooltip("Projections of the histogram on x and y, with its fits projected, in a new canvas");
+      }
+    }
 
   // quality (left) and parameters (right), side by side when there is room
   ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_SizingFixedFit;

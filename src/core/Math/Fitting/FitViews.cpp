@@ -18,6 +18,7 @@
 #include "DataPoint3D.hpp"
 #include "Distributions.hpp"
 #include "FitRecord.hpp"
+#include "FunctionRegistry.hpp"
 #include "MathExceptions.hpp"
 #include "ModelValues.hpp"
 
@@ -141,6 +142,11 @@ namespace CAP
   _highEdges(source._highEdges),
   _synchronized()
   { }
+
+  String ProjectedFunction::registryName() const
+  {
+  return FunctionRegistry::typeName(*_function) + String(" (projection)");
+  }
 
   const ParameterizedFunction & ProjectedFunction::function() const
   {

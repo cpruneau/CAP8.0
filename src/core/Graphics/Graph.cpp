@@ -169,9 +169,8 @@ namespace CAP
 
   bool GraphItem::isFittable() const
   {
-  if (isMap()) return false;
-  if (_kind == kData) return _data != nullptr && _data->size() > 0;
-  return _function != nullptr && _function->rank() == 1;
+  if (_kind == kData) return _data != nullptr && _data->size() > 0 && _data->rank() <= 2;
+  return _function != nullptr && _function->rank() <= 2;
   }
 
   void GraphItem::applyDefaultStyle(int k)

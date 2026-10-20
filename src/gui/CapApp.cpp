@@ -27,6 +27,7 @@
 #include "Exponential.hpp"
 #include "DataPointsVector.hpp"
 #include "Fitter.hpp"
+#include "FitViews.hpp"
 #include "FunctionRegistry.hpp"
 #include "Histogram.hpp"
 #include "CapFile.hpp"
@@ -265,6 +266,8 @@ namespace CAP
     if (n < 0) _gui.setStatus(String("Cannot read the composites of ") + composites);
     else if (!problems.isNull()) _gui.setStatus(String("Composites not read: ") + problems);
     }
+  _gui.fitPane().onResidualMap = [this](const MATH::DataPoints * data, unsigned int fit) { showResidualMap(data, fit); };
+  _gui.fitPane().onProjections = [this](const MATH::DataPoints * data) { showProjections(data); };
   if (_configuration.demo) createDemo();
   for (const auto & argument : _arguments)
     {
@@ -289,6 +292,8 @@ namespace CAP
   pane.onDrop = [this, &pane](int graph, const ObjectReference & object) { showObject(pane, graph, object); };
   pane.onShowData = [this](const MATH::DataPoints * data, const String & label) { showDataTable(data, label); };
   pane.onFit = [this](int item) { _gui.openFitDialog(item); };
+  pane.onResidualMap = [this](const MATH::DataPoints * data, unsigned int fit) { showResidualMap(data, fit); };
+  pane.onProjections = [this](const MATH::DataPoints * data) { showProjections(data); };
   }
 
   // ------------------------------------------------------------------------------------------------ menus
@@ -684,6 +689,71 @@ namespace CAP
   char text[64];
   std::snprintf(text, sizeof(text), ": %u rows", data->size());
   _gui.setStatus(String("Data table of ") + label + String(text));
+  }
+
+  void CapApp::showResidualMap(const MATH::DataPoints * data, unsigned int k)
+  {
+  if (!data || k >= data->nFits() || data->rank() != 2) return;
+  const MATH::FitRecord & fit = data->fit(k);
+  String label = fit.label.isNull() ? String("fit") : fit.label;
+  MATH::DataPoints * map = nullptr;
+  try
+    {
+    if (const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram*>(data))
+      {
+      bool averaged = fit.result.method.contains("averaged over the bins");   // pulls as the fit compared them
+      map = new MATH::Histogram(MATH::residualMap(*histogram, fit, MATH::Residual::kPull, averaged));
+      }
+    else
+      {
+      MATH::DataPointsVector * points = new MATH::DataPointsVector(MATH::residuals(*data, fit));
+      points->setName(data->name() + String("_pulls"));
+      points->setTitle(String("pulls of ") + label);
+      map = points;
+      }
+    }
+  catch (const std::exception & e) { _gui.setStatus(String("No residual map: ") + String(e.what())); return; }
+  _data.emplace_back(map);
+  recordUndo();
+  CanvasPane & pane = _gui.addPane();
+  pane.divide(1, 1);
+  Graph & graph = pane.canvas().graph(0);
+  graph.show(GraphItem(map, String("pulls of ") + label));
+  if (const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram*>(data))
+    {
+    graph.xAxis().setTitle(histogram->dimensionTitle(0));
+    graph.yAxis().setTitle(histogram->dimensionTitle(1));
+    }
+  graph.setResidualMapStyle(true);
+  _gui.setStatus(String("Pulls of ") + data->name() + String(" to ") + label + String(" (data - fit)/uncertainty"));
+  }
+
+  void CapApp::showProjections(const MATH::DataPoints * data)
+  {
+  const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram*>(data);
+  if (!histogram || histogram->rank() != 2) { _gui.setStatus("Projections are made of histograms of rank 2"); return; }
+  MATH::Histogram * projections[2] = { nullptr, nullptr };
+  try
+    {
+    for (unsigned int axis=0; axis<2; axis++)
+      {
+      projections[axis] = new MATH::Histogram(MATH::projection(*histogram, axis));
+      projections[axis]->setName(histogram->name() + String(axis == 0 ? "_px" : "_py"));
+      projections[axis]->setTitle(histogram->title() + String(axis == 0 ? " (x projection)" : " (y projection)"));
+      _data.emplace_back(projections[axis]);
+      }
+    }
+  catch (const std::exception & e) { _gui.setStatus(String("No projections: ") + String(e.what())); return; }
+  recordUndo();
+  CanvasPane & pane = _gui.addPane();
+  pane.divide(2, 1);
+  for (unsigned int axis=0; axis<2; axis++)
+    {
+    Graph & graph = pane.canvas().graph(int(axis));
+    graph.show(GraphItem(projections[axis], histogram->name()));
+    graph.setShowResiduals(true);
+    }
+  _gui.setStatus(String("Projections of ") + histogram->name() + String(" with its fits projected"));
   }
 
   bool CapApp::showObject(const ObjectReference & object)

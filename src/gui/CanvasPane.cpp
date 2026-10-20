@@ -16,6 +16,9 @@
 #include <cstdio>
 #include "imgui.h"
 #include "CanvasPane.hpp"
+#include "ParameterizedFunction.hpp"
+#include "Histogram.hpp"
+#include "FitRecord.hpp"
 #include "ImGuiPainter.hpp"
 #include "GraphEditor.hpp"
 #include "DataPoints.hpp"
@@ -102,14 +105,17 @@ namespace CAP
     ImGui::SetItemTooltip("3D view of the selected graph (surface, mesh or lego boxes); drag in it to turn it");
     }
 
-  bool fitted = false;              // a graph of objects with fits: show them or not
-  for (const auto & item : graph.items()) if (!item.isMap() && item.nFits() > 0) fitted = true;
+  bool fitted = false, curves = false;   // a graph of objects with fits: show them or not; residuals of curves
+  for (const auto & item : graph.items()) if (item.nFits() > 0) { fitted = true; curves = curves || !item.isMap(); }
   if (fitted)
     {
     ImGui::SameLine();
     bool fits = graph.showFits();
     if (ImGui::Checkbox("Fits", &fits)) { changing(); graph.setShowFits(fits); }
     ImGui::SetItemTooltip("Draw the fits of the objects of the selected graph (View > Fit Results for their results)");
+    }
+  if (curves)
+    {
     ImGui::SameLine();
     bool residuals = graph.showResiduals();
     if (ImGui::Checkbox("Residuals", &residuals)) { changing(); graph.setShowResiduals(residuals); }
@@ -190,12 +196,12 @@ namespace CAP
     ImGui::EndMenu();
     }
   bool fittable = false;
-  for (const auto & item : graph.items()) if (!item.isMap()) fittable = true;
+  for (const auto & item : graph.items()) if (item.isFittable()) fittable = true;
   if (onFit && ImGui::BeginMenu("Fit", fittable))
     {
     for (size_t k=0; k<graph.items().size(); k++)
       {
-      if (graph.items()[k].isMap()) continue;
+      if (!graph.items()[k].isFittable()) continue;
       String label = graph.items()[k].label().isNull() ? String("(unnamed)") : graph.items()[k].label();
       String entry = label + String("...##fit") + String(std::to_string(k));
       if (ImGui::MenuItem(entry.data())) { setSelectedGraph(_contextGraph); onFit(int(k)); }
@@ -227,13 +233,45 @@ namespace CAP
     if (ImGui::MenuItem("Log Z", nullptr, logZ)) { changing(); graph.setLogZ(!logZ); }
     }
   if (ImGui::MenuItem("Legend", nullptr, legend)) { changing(); graph.setShowLegend(!legend); }
-  bool fitted = false;
-  for (const auto & item : graph.items()) if (!item.isMap() && item.nFits() > 0) fitted = true;
+  bool fitted = false, curves = false, maps = false;
+  for (const auto & item : graph.items())
+    if (item.nFits() > 0) { fitted = true; curves = curves || !item.isMap(); maps = maps || item.isMap(); }
   if (fitted)
     {
     bool fits = graph.showFits(), statistics = graph.showFitStatistics();
     if (ImGui::MenuItem("Fits", nullptr, fits)) { changing(); graph.setShowFits(!fits); }
     if (ImGui::MenuItem("Fit Quality in the Legend", nullptr, statistics)) { changing(); graph.setShowFitStatistics(!statistics); }
+    }
+  if (maps && onResidualMap && ImGui::BeginMenu("Residual Map"))
+    {
+    for (size_t i=0; i<graph.items().size(); i++)
+      {
+      const GraphItem & item = graph.items()[i];
+      if (!item.isMap() || item.kind() != GraphItem::kData || !item.data()) continue;
+      for (unsigned int k=0; k<item.nFits(); k++)
+        {
+        const MATH::FitRecord * fit = item.fit(k);
+        if (!fit || !fit->function || fit->function->rank() != 2) continue;
+        String entry = item.label() + String(": ") + (fit->label.isNull() ? String("fit") : fit->label)
+                       + String("##map") + String(std::to_string(i*100 + k));
+        if (ImGui::MenuItem(entry.data())) onResidualMap(item.data(), k);
+        }
+      }
+    ImGui::EndMenu();
+    }
+  if (maps && onProjections && ImGui::BeginMenu("Projections"))
+    {
+    for (size_t i=0; i<graph.items().size(); i++)
+      {
+      const GraphItem & item = graph.items()[i];
+      if (!item.isMap() || item.nFits() == 0 || !dynamic_cast<const MATH::Histogram*>(item.data())) continue;
+      String entry = item.label() + String(" on x and y##projection") + String(std::to_string(i));
+      if (ImGui::MenuItem(entry.data())) onProjections(item.data());
+      }
+    ImGui::EndMenu();
+    }
+  if (curves)
+    {
     bool residuals = graph.showResiduals();
     if (ImGui::MenuItem("Residuals Panel", nullptr, residuals)) { changing(); graph.setShowResiduals(!residuals); }
     if (residuals && ImGui::BeginMenu("Residuals"))

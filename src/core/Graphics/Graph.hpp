@@ -86,7 +86,7 @@ namespace CAP
   //! @brief Whether the item is drawn as a map (rank 2). @return true if so
   bool isMap() const { return rank() == 2; }
   //! @brief Whether a fit can be made to the item (see MATH::Fitter): data points with at least one point, or a
-  //! function, of rank 1. @return true if so
+  //! function, of rank 1 or 2. @return true if so
   bool isFittable() const;
   //!
   //! @brief Default style of the k-th item of a graph (what CapGui gives the objects it shows): line and marker

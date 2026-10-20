@@ -293,7 +293,14 @@ int main()
                                       fit.result.values[4], fit.result.values[5]), h, h.binIndex(17u, j));
     CHECK(near(fx.valueAt(x), expected, 2E-3) && fx.result.chiSquarePerDegreeOfFreedom < 2.0 && fx.result.pValue > 1E-4);
     std::unique_ptr<ParameterizedFunction> copy(fx.function->clone());
-    CHECK(copy->evaluateAt(x) == fx.function->evaluateAt(x));
+    CHECK(copy->evaluateAt(x) == fx.function->evaluateAt(x) && FunctionRegistry::typeName(*fx.function) == "Normal2D (projection)");
+    std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+    writeBinaryObject(stream, px);
+    stream.seekg(0);
+    Histogram readBack;
+    readBinaryObject(stream, readBack);
+    CHECK(readBack.nBinsTotal() == px.nBinsTotal() && readBack.nFits() == 0);       // projected fits are views
+    CHECK(h.fitColumnNames(false) == std::vector<String>({ "f(x,y) gaussian" }) && px.fitColumnNames(false)[0] == "f(x) gaussian (x projection)");
     bool thrown = false;
     try { projection(px, 0); } catch (const std::exception &) { thrown = true; }
     CHECK(thrown);

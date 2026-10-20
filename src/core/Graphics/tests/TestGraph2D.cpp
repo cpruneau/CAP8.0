@@ -626,6 +626,7 @@ int main(int argc, char ** argv)
     graph.show(GraphItem(&h2, "data"));
     const GraphItem & item = graph.items()[0];
     CHECK(graph.drawnFit(item, 0) != nullptr && graph.drawnFit(item, 1) == nullptr && graph.hasFits() && graph.hasFits(2) && !graph.hasFits(1));
+    CHECK(item.isFittable());                                               // maps can be fitted
     std::string red = hexOf(item.fitLineAttributes(0).color());
     std::string svg = svgOf(graph);
     int fitLines = count(svg, "<polyline fill=\"none\" stroke=\"" + red + "\"");

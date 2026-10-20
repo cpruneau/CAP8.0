@@ -230,7 +230,8 @@ namespace CAP
   for (unsigned int f=0; f<nFits(); f++)
     {
     std::string label = fit(f).label.isNull() ? "fit " + std::to_string(f + 1) : fit(f).label.data();
-    names.push_back(String(("f(x) " + label).c_str()));
+    std::string value = rank() == 1 ? "f(x) " : (rank() == 2 ? "f(x,y) " : "f ");
+    names.push_back(String((value + label).c_str()));
     if (pulls) names.push_back(String(("pull " + label).c_str()));
     }
   return names;

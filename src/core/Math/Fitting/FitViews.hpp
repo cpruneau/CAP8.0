@@ -92,6 +92,9 @@ namespace CAP
   const ParameterizedFunction & function() const;
   //! @brief Variable kept (0 or 1). @return axis
   unsigned int axis() const { return _axis; }
+  //! @brief Name shown for its class: that of the function projected followed by " (projection)" (not registered:
+  //! projected fits are not read back from files). @return name
+  String registryName() const override;
 
   protected:
 
