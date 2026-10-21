@@ -274,6 +274,49 @@ class TestKeys(unittest.TestCase):
                          ["Pair.cap", "PairDerived.cap", "PairSingle.cap", "PairSingleDerived.cap"])
         self.assertEqual(F.list_label(pair, TEMPLATES, 4), "Derived single histograms")
 
+    def test_histogram_modes(self):
+        a = task("ParticleSingleAnalyzer", "PSA")
+        F.set_histogram_mode(a, TEMPLATES, F.FILL)
+        self.assertEqual(F.histogram_mode(a, TEMPLATES), F.FILL)
+        F.set_histogram_mode(a, TEMPLATES, F.DERIVED)
+        v = values(a)
+        self.assertEqual(F.histogram_mode(a, TEMPLATES), F.DERIVED)
+        self.assertEqual((v["HISTOGRAM_1:USE"], v["HISTOGRAM_1:IMPORT"], v["HISTOGRAM_1:CREATE"], v["HISTOGRAM_1:EXPORT"]),
+                         ("true", "true", "false", "false"))
+        self.assertEqual(v["HISTOGRAM_1:IMPORT:FILE_NAME"], "PSA.cap")          # the file of the fill run
+        self.assertEqual((v["HISTOGRAM_2:USE"], v["HISTOGRAM_2:CREATE"], v["HISTOGRAM_2:EXPORT"]), ("true",) * 3)
+        self.assertEqual(v["HISTOGRAM_2:EXPORT:FILE_NAME"], "PSADerived.cap")
+        a.param("HISTOGRAM_2:CREATE").value = "false"
+        self.assertEqual(F.histogram_mode(a, TEMPLATES), F.CUSTOM)
+
+    def test_mode_checks(self):
+        lib = library()
+        tasks = workflow()
+        it, gen, single, pair = tasks[0], *tasks[0].children
+        F.set_histogram_mode(single, TEMPLATES, F.DERIVED)              # in an EventIterator
+        F.set_histogram_mode(pair, TEMPLATES, F.FILL)
+        pair.filters.pop("EVENT")
+        text = "\n".join(F.check_choices(tasks, lib, TEMPLATES))
+        self.assertIn("Task Single computes its derived histograms from a file: put it in a FileIterator", text)
+        self.assertIn("Task Pair uses no event", text)
+        single.filters.pop("EVENT")
+        self.assertNotIn("Task Single uses no event", "\n".join(F.check_choices(tasks, lib, TEMPLATES)))
+        pair.param("HISTOGRAM_1:USE").value = "false"
+        pair.param("HISTOGRAM_2:USE").value = "true"
+        self.assertIn("derived pair histograms are computed from its pair histograms: use them too",
+                      "\n".join(F.check_choices(tasks, lib, TEMPLATES)))
+
+    def test_derived_workflow(self):
+        tasks = workflow()
+        derived = F.derived_workflow(tasks, TEMPLATES, RunCAP.TaskConfig)
+        self.assertEqual([(t.name, t.cls) for t in derived], [("EventIterator", "CAP::FileIterator")])
+        self.assertEqual([t.name for t in derived[0].children], ["Single", "Pair"])      # no generator
+        single = derived[0].children[0]
+        self.assertEqual(F.histogram_mode(single, TEMPLATES), F.DERIVED)
+        self.assertEqual(single.filters, tasks[0].children[1].filters)
+        self.assertEqual(F.histogram_mode(tasks[0].children[1], TEMPLATES), F.CUSTOM)   # the workflow is unchanged
+        self.assertEqual(F.check_choices(derived, library(), TEMPLATES), [])
+
     def test_use_migrates(self):
         """A workflow whose folders were written without USE (CAP did not read it): the lists are used."""
         a = task("ParticleSingleAnalyzer", "PSA")

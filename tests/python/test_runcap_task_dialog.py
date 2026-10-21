@@ -152,6 +152,13 @@ class TestDialog(unittest.TestCase):
         self.assertEqual(len(self.dialog._list_entries), 1)             # derived folders follow their folders
         self.assertIn("derived histograms are used but neither created nor imported", self.dialog.problems.get())
 
+    def test_mode(self):
+        self.assertEqual(F.histogram_mode(self.task, TEMPLATES), F.FILL)
+        self.dialog._set_mode(F.DERIVED)
+        self.assertEqual(F.histogram_mode(self.task, TEMPLATES), F.DERIVED)
+        self.assertEqual(self.task.param("HISTOGRAM_1:IMPORT:FILE_NAME").value, "PSA.cap")
+        self.assertTrue(self.changes)
+
 
 if __name__ == "__main__":
     unittest.main()

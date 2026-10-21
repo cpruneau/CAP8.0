@@ -424,20 +424,103 @@ FOLDER_LIST_SETTINGS = ("USE", "CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_N
                         "EXPORT:FILE_NAME", "EXPORT:FORCE_REWRITE")
 
 
-def default_histogram_settings(task, templates):
-    """Settings of the folder lists of a new analyzer: its histograms (HISTOGRAM_1, and HISTOGRAM_3 of a pair
-    analyzer) are used, created and exported to <task>.cap (<task>Single.cap); its derived histograms are not used
-    (their files are named <task>Derived.cap, <task>SingleDerived.cap)."""
-    files = {1: "", 2: "Derived", 3: "Single", 4: "SingleDerived"}
+#: Runs of an analyzer: filling its histograms event by event (in an EventIterator), or computing its derived
+#: histograms from histograms filled by an earlier run (in a FileIterator: postProcess() calls calculateDerived()).
+FILL, DERIVED, CUSTOM = "fill", "derived", "custom"
+ITERATOR_OF_MODE = {FILL: "CAP::EventIterator", DERIVED: "CAP::FileIterator"}
+_LIST_FILES = {1: "", 2: "Derived", 3: "Single", 4: "SingleDerived"}
+
+
+def _set_list(task, list_index, name, value):
+    p = task.param("HISTOGRAM_%d:%s" % (list_index, name))
+    if p is not None:
+        p.value = value
+
+
+def _flag(task, list_index, name):
+    return _param_value(task, "HISTOGRAM_%d:%s" % (list_index, name), "false") == "true"
+
+
+def _file(task, list_index, action):
+    """File name of the import or export of a list, or <task><suffix>.cap if not named."""
+    name = _param_value(task, "HISTOGRAM_%d:%s:FILE_NAME" % (list_index, action), "NONE")
+    return name if name not in ("", "NONE") else "%s%s.cap" % (task.name, _LIST_FILES[list_index])
+
+
+def set_histogram_mode(task, templates, mode):
+    """Set the folder lists of an analyzer for a run: FILL (its histograms used, created and exported to
+    <task>.cap; derived histograms not used) or DERIVED (its histograms used and imported from the file the fill run
+    exported them to; derived histograms used, created and exported to <task>Derived.cap)."""
     for l in folder_lists(task, templates):
         base = l in (1, 3)
-        for name, value in (("USE", base), ("CREATE", base), ("EXPORT", base)):
-            p = task.param("HISTOGRAM_%d:%s" % (l, name))
-            if p is not None:
-                p.value = "true" if value else "false"
-        p = task.param("HISTOGRAM_%d:EXPORT:FILE_NAME" % l)
-        if p is not None and p.value in ("", "NONE"):
-            p.value = "%s%s.cap" % (task.name, files[l])
+        if mode == FILL:
+            settings = {"USE": base, "CREATE": base, "IMPORT": False, "EXPORT": base}
+        else:
+            settings = {"USE": True, "CREATE": not base, "IMPORT": base, "EXPORT": not base}
+        for name, value in settings.items():
+            _set_list(task, l, name, "true" if value else "false")
+        if base and mode == DERIVED:
+            _set_list(task, l, "IMPORT:FILE_NAME", _file(task, l, "EXPORT"))
+        _set_list(task, l, "EXPORT:FILE_NAME", _file(task, l, "EXPORT"))
+
+
+def histogram_mode(task, templates):
+    """Run the folder lists of an analyzer are set for: FILL, DERIVED, or CUSTOM (set by hand); None without lists."""
+    lists = folder_lists(task, templates)
+    if not lists:
+        return None
+    base = [l for l in lists if l in (1, 3)]
+    derived = [l for l in lists if l in (2, 4)]
+    if all(list_used(task, l) and _flag(task, l, "CREATE") and not _flag(task, l, "IMPORT") for l in base) \
+            and not any(list_used(task, l) for l in derived):
+        return FILL
+    if all(list_used(task, l) and _flag(task, l, "IMPORT") and not _flag(task, l, "CREATE") for l in base) \
+            and all(list_used(task, l) and _flag(task, l, "CREATE") for l in derived):
+        return DERIVED
+    return CUSTOM
+
+
+def _copy_task(task):
+    """Copy of a task without its subtasks: own parameters (without the widgets of the GUI), choices and options."""
+    c = copy.copy(task)
+    c.params = []
+    for p in task.params:
+        q = copy.copy(p)
+        q.__dict__.pop("widget_var", None)
+        c.params.append(q)
+    c.children = []
+    c.filters = {k: list(v) for k, v in choices(task).items()}
+    if getattr(task, "histograms", None) is not None:
+        c.histograms = copy.deepcopy(task.histograms)
+    return c
+
+
+def derived_workflow(tasks, templates, TaskConfig):
+    """Workflow computing the derived histograms of the analyzers of a workflow from the histograms it exports: each
+    task holding analyzers becomes a FileIterator of the same name holding them (set to DERIVED, same names and
+    filters, so their folders and files match), the other tasks (generators, ...) are left out.
+    @return top-level tasks (copies)"""
+    def convert(task):
+        analyzers = [_copy_task(c) for c in task.children if histogram_layout(c, templates) is not None]
+        if histogram_layout(task, templates) is not None:
+            analyzers = [_copy_task(task)]
+            set_histogram_mode(analyzers[0], templates, DERIVED)
+            return analyzers
+        if not analyzers:
+            return [t for c in task.children for t in convert(c)]
+        template = templates.get(ITERATOR_OF_MODE[DERIVED])
+        iterator = template.clone() if template is not None else TaskConfig(task.name, ITERATOR_OF_MODE[DERIVED])
+        iterator.name = task.name
+        for a in analyzers:
+            set_histogram_mode(a, templates, DERIVED)
+        iterator.children = analyzers
+        return [iterator]
+    return [t for task in tasks for t in convert(task)]
+
+
+def default_histogram_settings(task, templates):
+    """Settings of the folder lists of a new analyzer: a fill run (see set_histogram_mode())."""
+    set_histogram_mode(task, templates, FILL)
 
 
 def folders(task, templates):
@@ -814,11 +897,21 @@ def _valid(ptype, value):
     return True
 
 
+def short_class(cls):
+    return cls.replace("CAP::", "")
+
+
+def _parents(tasks, parent=None):
+    for t in tasks:
+        yield t, parent
+        yield from _parents(t.children, t)
+
+
 def check_choices(tasks, library, templates):
     """Problems of the choices of the tasks: objects not in the library, conditions a task cannot test, too many
     particle filters, analyzers without filters, duplicate folder names."""
     errors = check_library(library)
-    for task in _preorder(tasks):
+    for task, parent in _parents(tasks):
         kinds = task_kinds(task, templates)
         for kind, names in choices(task).items():
             label = KIND_LABELS[kind].lower()[:-1]
@@ -840,8 +933,21 @@ def check_choices(tasks, library, templates):
             if kind == "PARTICLE_FILTER" and len(names) > MAX_PARTICLE_FILTERS:
                 errors.append("Task %s uses %d particle filters: CAP handles at most %d." % (task.name, len(names),
                                                                                           MAX_PARTICLE_FILTERS))
-        if histogram_layout(task, templates) is not None and "EVENT" in kinds and not choices(task).get("EVENT"):
+        mode = histogram_mode(task, templates)
+        fills = any(list_used(task, l) and _flag(task, l, "CREATE") for l in folder_lists(task, templates) if l in (1, 3))
+        if fills and "EVENT" in kinds and not choices(task).get("EVENT"):
             errors.append("Task %s uses no event: choose one (Events)." % task.name)
+        if mode in (FILL, DERIVED) and parent is not None and parent.cls != ITERATOR_OF_MODE[mode] \
+                and parent.cls != "CAP::Task":
+            errors.append("Task %s %s: put it in a%s (it is in %s, a %s)." % (
+                task.name, "fills its histograms event by event" if mode == FILL
+                else "computes its derived histograms from a file",
+                "n EventIterator" if mode == FILL else " FileIterator", parent.name, short_class(parent.cls)))
+        for l in folder_lists(task, templates):
+            if l in (2, 4) and list_used(task, l) and not list_used(task, l - 1):
+                errors.append("Task %s: its %s are computed from its %s: use them too (HISTOGRAM_%d)."
+                              % (task.name, list_label(task, templates, l).lower(),
+                                 list_label(task, templates, l - 1).lower(), l - 1))
         used = [l for l in folder_lists(task, templates) if list_used(task, l)]
         if used:
             if not choices(task).get("EVENT_FILTER") or not choices(task).get("PARTICLE_FILTER"):

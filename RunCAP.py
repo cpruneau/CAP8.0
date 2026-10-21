@@ -900,6 +900,10 @@ def run_gui(initial_file=None, hook=None):
             configure.pack(side=tk.LEFT)
             ToolTip(configure, "Open the window of the selected task (or double-click a task): its parameters, "
                                "filters and histograms")
+            derived = ttk.Button(line, text="Derived run\u2026", command=self.derived_run)
+            derived.pack(side=tk.LEFT, padx=(6, 0))
+            ToolTip(derived, "Make the workflow computing the derived histograms from the histograms this workflow "
+                             "exports: its analyzers, in FileIterators, import them and export the derived ones")
             ttk.Label(line, text="Double-click a task to configure it.", foreground="gray40").pack(side=tk.LEFT,
                                                                                                 padx=10)
             ttk.Button(line, text="Browse\u2026", width=8, command=self._browse_output).pack(side=tk.RIGHT)
@@ -962,6 +966,23 @@ def run_gui(initial_file=None, hook=None):
             for item in selected:
                 if self.summary.exists(item):
                     self.summary.selection_set(item)
+
+        def derived_run(self):
+            """Replace the workflow by the one computing its derived histograms (filters and library unchanged)."""
+            tasks = self.workflow()
+            derived = filters.derived_workflow(tasks, self.templates, TaskConfig)
+            if not derived:
+                messagebox.showinfo("Derived run", "The workflow has no analyzer filling histograms.")
+                return
+            if self.dirty and self._workflow_items():
+                answer = messagebox.askyesnocancel("Derived run", "Save the current workflow (the fill run) first?")
+                if answer is None or (answer and not self.save_workflow()):
+                    return
+            analyzers = [t.name for t in all_tasks(derived) if filters.histogram_layout(t, self.templates)]
+            self.set_workflow(derived)          # (the tree takes the subtasks)
+            self.saved_path = ""
+            self._changed("Derived run of %s: save it, then run it after the fill run, with the same output directory."
+                          % ", ".join(analyzers))
 
         def configure_selected(self):
             item = self._selected_one() or (self.summary.selection() or [None])[0]

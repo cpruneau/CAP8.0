@@ -329,6 +329,17 @@ class TaskDialog(tk.Toplevel):
     def _make_lists(self, tab):
         """Use, creation, import and export of each list of folders; a used list has one folder per combination of
         the filters chosen."""
+        run = ttk.Frame(tab)
+        run.pack(fill=tk.X, pady=(0, 6))
+        ttk.Label(run, text="Run:", style="Section.TLabel").pack(side=tk.LEFT, padx=(0, 8))
+        mode = F.histogram_mode(self.task, self.templates)
+        var = tk.StringVar(self, value=mode)
+        for value, text in ((F.FILL, "Fill the histograms (event loop, in an EventIterator)"),
+                            (F.DERIVED, "Compute the derived histograms from those of a fill run (in a FileIterator)")):
+            ttk.Radiobutton(run, text=text, value=value, variable=var,
+                            command=lambda v=var: self._set_mode(v.get())).pack(side=tk.LEFT, padx=(0, 14))
+        if mode == F.CUSTOM:
+            ttk.Label(run, text="(set by hand below)", foreground="gray40").pack(side=tk.LEFT)
         box = ttk.LabelFrame(tab, text="  Folders of histograms: one per combination of the filters, for each list used  ",
                              padding=(8, 4))
         box.pack(fill=tk.X, pady=(0, 8))
@@ -356,6 +367,11 @@ class TaskDialog(tk.Toplevel):
                 self._list_entry(files, l, action + ":PATH", word, 8, used)
                 self._list_entry(files, l, action + ":FILE_NAME", "file", 13, used)
                 ttk.Frame(files, width=6).pack(side=tk.LEFT)
+
+    def _set_mode(self, mode):
+        F.set_histogram_mode(self.task, self.templates, mode)
+        self._make_histograms()
+        self._changed()
 
     def _list_flag(self, parent, list_index, name, label, enabled=True):
         p = self.task.param("HISTOGRAM_%d:%s" % (list_index, name))
