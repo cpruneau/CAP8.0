@@ -31,10 +31,11 @@ DEFAULT_ENTRY = "All folders (HISTOGRAM group)"
 
 
 def general_parameters(task, templates):
-    """Parameters of the General tab: all but the keys managed by RunCAPFilters and, for analyzers, the histogram
-    groups (Histograms and Histogram files tabs)."""
+    """Parameters of the General tab: all but the keys managed by RunCAPFilters, the settings of the lists of
+    filters, efficiencies and smearers (FilterCreator creates, imports and exports them) and, for analyzers, the
+    histogram groups (Histograms and Histogram files tabs)."""
     analyzer = F.histogram_layout(task, templates) is not None
-    return [p for p in task.params if not F.MANAGED_KEY.match(p.key)
+    return [p for p in task.params if not F.MANAGED_KEY.match(p.key) and not F.LIST_SETTING_KEY.match(p.key)
             and not (analyzer and (p.key.startswith("HISTOGRAM:") or _is_list_key(p.key)))]
 
 
@@ -71,10 +72,7 @@ class TaskDialog(tk.Toplevel):
         self.kinds = F.task_kinds(task, templates)
         self.general = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.general, text="General")
-        self.filters_tab = self.histograms_tab = self.files_tab = None
-        if self.kinds:
-            self.filters_tab = ttk.Frame(self.notebook, padding=6)
-            self.notebook.add(self.filters_tab, text="Filters")
+        self.filters_box = self.histograms_tab = self.files_tab = None
         if self.layout:
             self.histograms_tab = ttk.Frame(self.notebook, padding=6)
             self.notebook.add(self.histograms_tab, text="Histograms")
@@ -96,7 +94,7 @@ class TaskDialog(tk.Toplevel):
         """Remake the parts that depend on the library and the choices (Filters, Histograms) and the title."""
         self.title("CAP Workflow — task %s (%s)" % (self.task.name, self.task.cls))
         self._names = {k: self.library.names(k) for k in F.KINDS}
-        if self.filters_tab is not None:
+        if self.filters_box is not None:
             self._make_filters()
         if self.histograms_tab is not None:
             self._make_histograms()
@@ -186,6 +184,10 @@ class TaskDialog(tk.Toplevel):
         ttk.Button(head, text="Defaults", command=self.reset).pack(side=tk.RIGHT)
         params = general_parameters(task, self.templates)
         ttk.Label(head, text="%d parameters" % len(params), foreground="gray40").pack(side=tk.RIGHT, padx=8)
+        if self.kinds:
+            self.filters_box = ttk.LabelFrame(self.general, text="  Filters used (created by FilterCreator, defined in "
+                                                                 "the Filters pane)  ", padding=(8, 4))
+            self.filters_box.pack(fill=tk.X, pady=(0, 8))
         self._columns(self.general, params)
 
     def _rename(self, entry):
@@ -217,47 +219,39 @@ class TaskDialog(tk.Toplevel):
 
     # -------------------------------------------------------------------------------------------------- filters
     def _make_filters(self):
-        for child in self.filters_tab.winfo_children():
+        """One line per kind the task supports: how many it uses, then a menu of names for each."""
+        box = self.filters_box
+        for child in box.winfo_children():
             child.destroy()
-        ttk.Label(self.filters_tab, text="Objects of the library used by this task, by name (define them in the "
-                                         "Filters pane).", foreground="gray40").pack(anchor="w", pady=(0, 6))
-        scroll = ScrollFrame(self.filters_tab)
-        scroll.pack(fill=tk.BOTH, expand=True)
-        scroll.inner.columnconfigure(0, weight=1)
+        box.columnconfigure(2, weight=1)
         choices = F.choices(self.task)
         for r, kind in enumerate(self.kinds):
-            frame = ttk.LabelFrame(scroll.inner, text="  %s  " % F.KIND_LABELS[kind], padding=(8, 4))
-            frame.grid(row=r, column=0, sticky="ew", pady=(0, 8), padx=(0, 4))
             names = self.library.names(kind)
-            chosen = [n for n in choices.get(kind, [])]
-            head = ttk.Frame(frame)
-            head.pack(fill=tk.X)
-            ttk.Label(head, text="Number used:").pack(side=tk.LEFT)
+            chosen = list(choices.get(kind, []))
+            ttk.Label(box, text=F.KIND_LABELS[kind] + ":").grid(row=r, column=0, sticky="nw", padx=(0, 6), pady=3)
             limit = len(set(names) | set(chosen))
             if kind == "PARTICLE_FILTER":
                 limit = min(limit, F.MAX_PARTICLE_FILTERS)
             count = tk.StringVar(self, value=str(len(chosen)))
-            box = ttk.Combobox(head, textvariable=count, values=[str(n) for n in range(max(limit, len(chosen)) + 1)],
-                               width=4, state="readonly")
-            box.pack(side=tk.LEFT, padx=6)
-            box.bind("<<ComboboxSelected>>", lambda e, k=kind, v=count: self._set_count(k, int(v.get())))
-            button = ttk.Button(head, text="Filters…", command=lambda k=kind: self.show_filters(k))
-            button.pack(side=tk.RIGHT)
-            if not names:
-                ttk.Label(head, text="None in the library: add some in the Filters pane.",
-                          foreground="gray40").pack(side=tk.LEFT, padx=10)
-            elif kind == "PARTICLE_FILTER" and self.layout:
-                ttk.Label(head, text="at most %d" % F.MAX_PARTICLE_FILTERS, foreground="gray40").pack(side=tk.LEFT)
-            menus = ttk.Frame(frame)
-            menus.pack(fill=tk.X, pady=(4, 0))
+            menu = ttk.Combobox(box, textvariable=count, values=[str(n) for n in range(max(limit, len(chosen)) + 1)],
+                                width=3, state="readonly")
+            menu.grid(row=r, column=1, sticky="nw", pady=2)
+            menu.bind("<<ComboboxSelected>>", lambda e, k=kind, v=count: self._set_count(k, int(v.get())))
+            line = ttk.Frame(box)
+            line.grid(row=r, column=2, sticky="ew", padx=(10, 0))
+            if not names and not chosen:
+                ttk.Label(line, text="none defined", foreground="gray40").pack(side=tk.LEFT, pady=3)
+                ttk.Button(line, text="Filters pane…", command=lambda k=kind: self.show_filters(k)).pack(
+                    side=tk.LEFT, padx=8)
             for k, name in enumerate(chosen):
-                ttk.Label(menus, text="%d" % (k + 1)).grid(row=k // 4, column=2 * (k % 4), sticky="e", padx=(8, 4))
+                ttk.Label(line, text="%d" % (k + 1)).grid(row=k // 4, column=2 * (k % 4), sticky="e", padx=(8, 3))
                 var = tk.StringVar(self, value=name)
-                menu = ttk.Combobox(menus, textvariable=var, values=names, width=20, state="readonly")
-                menu.grid(row=k // 4, column=2 * (k % 4) + 1, sticky="w", pady=2)
+                name_menu = ttk.Combobox(line, textvariable=var, values=names, width=16, state="readonly")
+                name_menu.grid(row=k // 4, column=2 * (k % 4) + 1, sticky="w", pady=2)
                 if name not in names:
-                    menu.configure(style="Invalid.TCombobox")
-                menu.bind("<<ComboboxSelected>>", lambda e, kd=kind, i=k, v=var: self._set_choice(kd, i, v.get()))
+                    name_menu.configure(style="Invalid.TCombobox")
+                name_menu.bind("<<ComboboxSelected>>",
+                               lambda e, kd=kind, i=k, v=var: self._set_choice(kd, i, v.get()))
 
     def _set_count(self, kind, n):
         choices = F.choices(self.task)

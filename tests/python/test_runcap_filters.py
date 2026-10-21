@@ -145,6 +145,15 @@ class TestKeys(unittest.TestCase):
                          ("true", "Eff.root"))
         self.assertEqual(len([k for k in e if k == "PARTICLE_EFFICIENCY:IMPORT"]), 1)
 
+    def test_list_flags_off(self):
+        """FilterCreator imports, creates and exports the objects: never the tasks (their model is unchanged)."""
+        tasks = workflow()
+        single = tasks[0].children[1]
+        single.param("PARTICLE_EFFICIENCY:IMPORT").value = "true"
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        self.assertEqual(values(copies[1].children[1])["PARTICLE_EFFICIENCY:IMPORT"], "false")
+        self.assertEqual(single.param("PARTICLE_EFFICIENCY:IMPORT").value, "true")
+
     def test_glauber(self):
         lib = library()
         lib.add(F.FilterDef("EVENT_FILTER", "B", "", [F.Condition("IMPACT", F.RANGE, 0, 5)]))
@@ -347,6 +356,15 @@ class TestChecks(unittest.TestCase):
         self.assertEqual(len(errors), 7)
         pair.param("HISTOGRAM_3:CREATE").value = "false"
         self.assertIn("HISTOGRAM_3 are neither created nor imported", "\n".join(F.check_choices(tasks, lib, TEMPLATES)))
+
+    def test_list_flags_off(self):
+        """FilterCreator imports, creates and exports the objects: never the tasks (their model is unchanged)."""
+        tasks = workflow()
+        single = tasks[0].children[1]
+        single.param("PARTICLE_EFFICIENCY:IMPORT").value = "true"
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        self.assertEqual(values(copies[1].children[1])["PARTICLE_EFFICIENCY:IMPORT"], "false")
+        self.assertEqual(single.param("PARTICLE_EFFICIENCY:IMPORT").value, "true")
 
     def test_glauber(self):
         lib = F.FilterLibrary()

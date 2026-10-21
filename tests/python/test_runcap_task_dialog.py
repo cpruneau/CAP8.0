@@ -60,15 +60,29 @@ class TestDialog(unittest.TestCase):
 
     def test_tabs(self):
         tabs = [self.dialog.notebook.tab(t, "text") for t in self.dialog.notebook.tabs()]
-        self.assertEqual(tabs, ["General", "Filters", "Histograms", "Histogram files"])
+        self.assertEqual(tabs, ["General", "Histograms", "Histogram files"])
         general = D.general_parameters(self.task, TEMPLATES)
         self.assertFalse(any(F.MANAGED_KEY.match(p.key) or p.key.startswith("HISTOGRAM") for p in general))
+        self.assertFalse(any(p.key.startswith(("EVENT_FILTER:", "PARTICLE_EFFICIENCY:")) for p in general))
         self.assertTrue(any(p.key == "HISTOGRAM_1:CREATE" for p in D.file_parameters(self.task)))
         generator = TEMPLATES["CAP::BasicEventGen"].clone()
         dialog = D.TaskDialog(_root, generator, TEMPLATES, self.library, HELPERS, self.rename, lambda: None,
                               lambda k: None)
-        self.assertEqual([dialog.notebook.tab(t, "text") for t in dialog.notebook.tabs()], ["General", "Filters"])
+        self.assertEqual([dialog.notebook.tab(t, "text") for t in dialog.notebook.tabs()], ["General"])
+        self.assertIsNotNone(dialog.filters_box)
         dialog.destroy()
+
+    def test_filter_lines(self):
+        """One line per kind: a count menu, then one name menu per filter used."""
+        def menus():
+            return [w for w in self.dialog.filters_box.winfo_children() if isinstance(w, tk.ttk.Combobox)]
+        self.assertEqual(len(menus()), len(F.task_kinds(self.task, TEMPLATES)))          # the count menus
+        self.dialog._set_count("PARTICLE_FILTER", 3)
+        line = self.dialog.filters_box.grid_slaves(row=F.task_kinds(self.task, TEMPLATES).index("PARTICLE_FILTER"),
+                                                   column=2)[0]
+        names = [w.get() for w in line.winfo_children() if isinstance(w, tk.ttk.Combobox)]
+        self.assertEqual(names, ["PiP", "PiM", "KP"])
+        self.assertEqual(menus()[1].cget("values")[-1], "3")                 # at most the 3 particle filters defined
 
     def test_choices(self):
         self.dialog._set_count("EVENT_FILTER", 1)

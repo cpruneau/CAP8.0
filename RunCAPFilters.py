@@ -120,6 +120,9 @@ DERIVED_SUFFIX = "_D"
 NAME_FULL = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*")
 #: Keys of the parameters of a task managed by this model (rewritten by apply_choices()).
 MANAGED_KEY = re.compile(r"^(?:(?:%s)(?::N|:USE|_\d+:.*)|HISTOGRAM_[1-4](?::N|_\d+:.*))$" % "|".join(KINDS))
+#: Settings of the lists of objects of a task (<KIND>:USE, IMPORT, CREATE, EXPORT and their files): FilterCreator
+#: creates, imports and exports the objects, so the tasks only choose them (they are hidden in RunCAP.py's windows).
+LIST_SETTING_KEY = re.compile(r"^(?:%s):" % "|".join(KINDS))
 _OBJECT_KEY = re.compile(r"^(%s)_(\d+):(.+)$" % "|".join(KINDS))
 _CONDITION_KEY = re.compile(r"^CONDITION_(\d+):(.+)$")
 _FOLDER_KEY = re.compile(r"^HISTOGRAM_([1-4])_(\d+):(.+)$")
@@ -467,6 +470,12 @@ def apply_choices(tasks, library, templates, Param):
         kinds = task_kinds(task, templates)
         for kind in kinds:
             names = choices(task).get(kind, [])
+            for flag in ("IMPORT", "CREATE", "EXPORT"):         # FilterCreator does it
+                p = task.param(kind + ":" + flag)
+                if p is not None and p.value != "false":
+                    off = copy.copy(p)                          # the parameter of the model is kept
+                    off.value = "false"
+                    task.params[task.params.index(p)] = off
             _set(task, kind + ":N", "int", str(len(names)), Param)
             _set(task, kind + ":USE", "bool", "true" if names else "false", Param)
             for k, name in enumerate(names):
