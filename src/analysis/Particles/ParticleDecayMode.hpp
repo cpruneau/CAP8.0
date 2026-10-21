@@ -34,7 +34,7 @@ namespace CAP
   //! types.
   //!
   //! The database keeps the branching ratio as declared in its files and whether it is completed by a Clebsch-Gordan
-  //! coefficient (see ParticleDbParser::addDecayMode()); branchingRatio() is the ratio used to generate decays.
+  //! coefficient (see ParticleDbXml::addDecayMode()); branchingRatio() is the ratio used to generate decays.
   //!
   class ParticleDecayMode
   {

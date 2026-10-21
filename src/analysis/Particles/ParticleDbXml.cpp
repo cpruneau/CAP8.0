@@ -7,8 +7,9 @@
  *
  * *********************************************************************/
 #include "ParticleDbXml.hpp"
-#include "ParticleDbParser.hpp"
 #include "ParticleDecayMode.hpp"
+#include "MathBasicFunctions.hpp"
+#include <cmath>
 #include <map>
 #include <set>
 #include <sstream>
@@ -19,6 +20,8 @@ namespace CAP
 
 namespace
 {
+  const double factorials[7] = {1.0, 1.0, 2.0, 6.0, 24.0, 120.0, 720.0 };
+
   const char * const kParticleAttributes[] = { "name", "title", "pdg", "charge", "mass", "massUncertainty", "width",
                                                "widthUncertainty", "spin", "isospin", "isospin3", "quarks",
                                                "antiquarks", "leptons" };
@@ -147,11 +150,114 @@ void ParticleDbXml::readElement(ParticleDb & particleDb, const XmlElement & elem
         }
       if (products.size()<2 || products.size()>4)
         throw XmlException(context+": 2 to 4 products expected",__FUNCTION__);
-      ParticleDbParser::addDecayMode(parent,products,branchingRatio,clebschGordan);
+      addDecayMode(parent,products,branchingRatio,clebschGordan);
       }
     }
 
-  ParticleDbParser::finishDb(particleDb);
+  particleDb.mapAntiParticleIndices();
+  particleDb.setupDecayGenerator();
+}
+
+void ParticleDbXml::addDecayMode(ParticleType * parentType,
+                                 const std::vector<ParticleType*> & children,
+                                 double declaredBranchingRatio,
+                                 bool clebschGordanFlag)
+{
+  if (children.size()<2 || children.size()>4)
+    {
+    String message = "Decay mode of "; message += parentType->name(); message += " with "; message += int(children.size());
+    message += " products (2 to 4 expected)";
+    throw Exception(message,__FUNCTION__);
+    }
+  ParticleType * childType1 = children[0];
+  ParticleType * childType2 = children[1];
+  double ratio = declaredBranchingRatio;
+  if (clebschGordanFlag)
+    {
+    // complete branching ratio by Clebsch-Gordan coefficient
+    double J  = parentType->isospin();
+    double M  = parentType->isospin3();
+    double j1 = childType1->isospin();
+    double m1 = childType1->isospin3();
+    double j2 = childType2->isospin();
+    double m2 = childType2->isospin3();
+    double CB = clebschGordan(J, M, j1, m1, j2, m2);
+    ratio = CB*CB * declaredBranchingRatio;
+    // Multiply the Clebsh by two?
+    // The same spin, mass, strangeness (charm?)
+    // and different I3?
+    if (  (CAP::MATH::absolute(childType1->spin()  - childType2->spin()) < 0.01)
+        &&  (CAP::MATH::absolute(childType1->mass() - childType2->mass()) < 0.01)
+        &&  (CAP::MATH::absolute(childType1->isospin3()-childType2->isospin3())   > 0.01)
+        &&  (childType1->strangeness()-childType2->strangeness() == 0)
+        &&  (childType1->charm()- childType2->charm() == 0)        )
+      {
+      ratio *= 2.0;
+      }
+    }
+  ParticleDecayMode decayMode;
+  decayMode.setBranchingRatio(ratio);
+  decayMode.setDeclaredBranchingRatio(declaredBranchingRatio);
+  decayMode.setClebschGordan(clebschGordanFlag);
+  for (ParticleType * child : children) decayMode.addChild(child);  // was: the 4th product added the 3rd one again
+  parentType->addDecayMode(decayMode);
+}
+
+double ParticleDbXml::clebschGordan(double aJot,  double aEm,
+                                    double aJot1, double aEm1,
+                                    double aJot2, double aEm2)
+{
+  int mint, maxt;
+  double cgc = 0.0;
+  int tIter;
+  double coef;
+
+  maxt = lrint(aJot1 + aJot2 - aJot);
+  mint = 0;
+  if (lrint(aJot1 - aEm1)  < maxt) maxt = lrint(aJot1 - aEm1);
+  if (lrint(aJot2 + aEm2)  < maxt) maxt = lrint(aJot2 + aEm2);
+  if (lrint(-(aJot-aJot2+aEm1))  > mint) mint = lrint(-(aJot-aJot2+aEm1));
+  if (lrint(-(aJot-aJot1-aEm2))  > mint) mint = lrint(-(aJot-aJot1-aEm2));
+
+  //  // PRINT_DEBUG_3("\t\t\tmint " << mint << " j1 " <<  aJot1 << " m1 " << aEm1);
+  //  // PRINT_DEBUG_3("\t\t\tampxt " << maxt << " j2 " <<  aJot2 << " m2 " << aEm2);
+
+  for (tIter = mint; tIter<=maxt; tIter ++)
+    {
+    coef = CAP::MATH::power(-1, tIter);
+    // PRINT_DEBUG_3("\t\t\tcoef1 " << coef);
+    coef *= std::sqrt( (2*aJot+1)
+                 * factorials[lrint(aJot1+aEm1)]
+                 * factorials[lrint(aJot1-aEm1)]
+                 * factorials[lrint(aJot2+aEm2)]
+                 * factorials[lrint(aJot2-aEm2)]
+                 * factorials[lrint(aJot+aEm)]
+                 * factorials[lrint(aJot-aEm)]
+                 );
+    // PRINT_DEBUG_3("\t\t\tcoef2 " << coef);
+    coef /= factorials[tIter]
+    * factorials[lrint(aJot1+aJot2-aJot-tIter)]
+    * factorials[lrint(aJot1-aEm1-tIter)]
+    * factorials[lrint(aJot2+aEm2-tIter)]
+    * factorials[lrint(aJot-aJot2+aEm1+tIter)]
+    * factorials[lrint(aJot-aJot1-aEm2+tIter)];
+    // PRINT_DEBUG_3("\t\t\tcoef3 " << coef);
+    cgc += coef;
+    }
+  cgc *= deltaJ(aJot1, aJot2, aJot);
+
+  return cgc;
+}
+
+double ParticleDbXml::deltaJ(double aJot1, double aJot2, double aJot)
+{
+  double res = std::sqrt( 1.0
+                    * factorials[lrint( aJot1 + aJot2 - aJot)]
+                    * factorials[lrint( aJot1 - aJot2 + aJot)]
+                    * factorials[lrint(-aJot1 + aJot2 + aJot)]
+                    / factorials[lrint( aJot1 + aJot2 + aJot + 1)]
+                    );
+  return res;
 }
 
 XmlElement ParticleDbXml::createElement(const ParticleDb & particleDb)

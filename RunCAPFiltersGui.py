@@ -131,8 +131,7 @@ class FiltersPanel(ttk.Frame):
                 "PARTICLE_FILTER": "Each filter selects particles with all its conditions (at most %d per task)."
                                    % F.MAX_PARTICLE_FILTERS,
                 "EVENT": "Events, filled by the generators or readers and analyzed by the analyzers.",
-                "PARTICLE_DB": "Particle properties and decays, imported by FilterCreator (particles.data and the "
-                               "decays.data next to it, or an XML file):"}.get(kind, "Their histograms, created or imported by "
+                "PARTICLE_DB": "Particles and their decay modes, imported by FilterCreator from an XML file:"}.get(kind, "Their histograms, created or imported by "
                                                                        "FilterCreator:")
         ttk.Label(head, text=hint, foreground="gray40").pack(side=tk.LEFT, padx=12)
         if kind in F.SETTINGS_KINDS:
@@ -148,7 +147,10 @@ class FiltersPanel(ttk.Frame):
         line = ttk.Frame(tab)
         line.pack(fill=tk.X, pady=(0, 6))
         variables = {}
+        shown = F.KIND_SETTING_NAMES.get(kind)
         for name, ptype, _ in F.LIST_SETTINGS:
+            if shown is not None and name not in shown:
+                continue
             label = {"CREATE": "Create", "IMPORT": "Import", "IMPORT:PATH": "from", "IMPORT:FILE_NAME": "file",
                      "EXPORT": "Export", "EXPORT:PATH": "to", "EXPORT:FILE_NAME": "file"}[name]
             if ptype == "bool":
@@ -156,7 +158,9 @@ class FiltersPanel(ttk.Frame):
                 ttk.Checkbutton(line, text=label, variable=var).pack(side=tk.LEFT, padx=(0 if name == "CREATE" else 12, 0))
             else:
                 var = tk.StringVar(self)
-                ttk.Label(line, text=label).pack(side=tk.LEFT, padx=(6, 2))
+                ttk.Label(line, text=label if shown is None else {"IMPORT:PATH": "Import from",
+                                                                  "IMPORT:FILE_NAME": "file"}[name]).pack(side=tk.LEFT,
+                                                                                                          padx=(6, 2))
                 ttk.Entry(line, textvariable=var, width=14 if name.endswith("FILE_NAME") else 10).pack(side=tk.LEFT)
             var.trace_add("write", lambda *a, k=kind, n=name, v=var: self._set_setting(k, n, v))
             variables[name] = var

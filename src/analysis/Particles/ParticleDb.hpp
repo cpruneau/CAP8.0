@@ -24,8 +24,8 @@ namespace CAP
   //!
   //! @brief Database of particle types (ParticleType) and their decay modes.
   //!
-  //! The database is loaded from particles.data and decays.data (loadFromAscii2(), see ParticleDbParser) or from one
-  //! XML file (loadFromXml(), see ParticleDbXml), and can be written as XML (exportXml()). After loading, the particles
+  //! The database is loaded from an XML file holding the particles and their decay modes (loadFromXml(), see
+  //! ParticleDbXml; DB/ParticleData/ParticleDb.xml), and can be written as XML (exportXml()). After loading, the particles
   //! and decays are enabled as configured, the types are sorted by mass, and the antiparticle indices are mapped.
   //! The database owns its particle types.
   //!
@@ -39,7 +39,7 @@ namespace CAP
   public:
 
   // const String& _name, bool _ownership, Severity logLevel
-  //! @brief Default constructor: empty database, import of ParticleData/particles.data and decays.data.
+  //! @brief Default constructor: empty database.
   ParticleDb();
   //! @brief Copy constructor. @param analyzer database to copy
   ParticleDb(const ParticleDb & analyzer);
@@ -121,10 +121,6 @@ namespace CAP
                          unsigned int index);
 
 
-  //! @brief Load the database from particles.data and decays.data (see ParticleDbParser).
-  //! @param file1 particles file @param file2 decays file
-  virtual void loadFromAscii2(std::ifstream & file1,
-                              std::ifstream & file2);
   //! @brief Load the database from an XML file (particles and decays in one file, see ParticleDbXml).
   //! @param fileName file name
   virtual void loadFromXml(const String & fileName);
@@ -189,7 +185,7 @@ namespace CAP
   protected:
   //! @brief Copy the types of another database. @param db database to copy
   void cloneAll(const ParticleDb & db);
-  //! @brief Common end of loadFromAscii2() and loadFromXml(): enable the particles and decays as configured, sort by
+  //! @brief End of loadFromXml(): enable the particles and decays as configured, sort by
   //! mass and map the antiparticles.
   void finishLoad();
 
@@ -197,23 +193,6 @@ namespace CAP
   std::vector<ParticleType*> _particleTypes;
   //! Weakly decaying types (see findWeakDecays()).
   std::vector<ParticleType*> _weakDecays;
-
-  //! Whether the database is imported.
-  bool   _dbImport;
-  //! Import directory.
-  String _dbImportPath;
-  //! Import file (particles).
-  String _dbImportFile;
-  //! Import file (decays).
-  String _dbImportDecaysFile;
-  //! Whether the database is exported.
-  bool   _dbExport;
-  //! Export directory.
-  String _dbExportPath;
-  //! Export file (particles).
-  String _dbExportFile;
-  //! Export file (decays).
-  String _dbExportDecaysFile;
 
   //! Flags applied after loading (see configure()).
   bool _dbDisableNeutralParticles;
@@ -242,7 +221,7 @@ namespace CAP
   //! Lifetime threshold of the lifetime-based selections of decays.
   double _dbMaxLifeTime;
 
-  ClassDef(ParticleDb,0)
+  ClassDef(ParticleDb,1)
   };
 
 } //namespace CAP

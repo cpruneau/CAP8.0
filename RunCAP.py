@@ -331,6 +331,7 @@ def load_workflow_with_filters(path, templates):
         warnings += more
     library, more = filters.extract_choices(tasks, templates, library)
     tasks = filters.remove_creator(tasks, library)
+    more += filters.update_database_files(library)
     return tasks, library, warnings + more
 
 

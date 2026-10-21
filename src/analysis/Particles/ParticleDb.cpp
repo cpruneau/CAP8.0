@@ -13,7 +13,6 @@
 #include "NameHelpers.hpp"
 #include "ParticleDbExceptions.hpp"
 #include "ParticleDb.hpp"
-#include "ParticleDbParser.hpp"
 #include "ParticleDbXml.hpp"
 #include "PrintHelpers.hpp"
 #include "StreamHelpers.hpp"
@@ -28,14 +27,6 @@ namespace CAP
   :
   ManagedObject(),
   _particleTypes(),
-  _dbImport(true),
-  _dbImportPath("ParticleData/"),
-  _dbImportFile("particles.data"),
-  _dbImportDecaysFile("decays.data"),
-  _dbExport(false),
-  _dbExportPath("ParticleData/"),
-  _dbExportFile("newParticles.data"),
-  _dbExportDecaysFile("newDecays.data"),
   _dbDisableNeutralParticles(false),
   _dbDisableChargedParticles(false),
   _dbDisableSelected(false),
@@ -69,14 +60,6 @@ namespace CAP
   :
   ManagedObject(source),
   _particleTypes(source._particleTypes),
-  _dbImport(source._dbImport),
-  _dbImportPath(source._dbImportPath),
-  _dbImportFile(source._dbImportFile),
-  _dbImportDecaysFile(source._dbImportDecaysFile),
-  _dbExport(source._dbExport),
-  _dbExportPath(source._dbExportPath),
-  _dbExportFile(source._dbExportFile),
-  _dbExportDecaysFile(source._dbExportDecaysFile),
   _dbDisableNeutralParticles(source._dbDisableNeutralParticles),
   _dbDisableChargedParticles(source._dbDisableChargedParticles),
   _dbDisableSelected(source._dbDisableSelected),
@@ -108,14 +91,6 @@ namespace CAP
     {
     Object::operator=(rhs);
     cloneAll(rhs);
-    _dbImport = rhs._dbImport;
-    _dbImportPath = rhs._dbImportPath;
-    _dbImportFile = rhs._dbImportFile;
-    _dbImportDecaysFile = rhs._dbImportDecaysFile;
-    _dbExport = rhs._dbExport;
-    _dbExportPath = rhs._dbExportPath;
-    _dbExportFile = rhs._dbExportFile;
-    _dbExportDecaysFile = rhs._dbExportDecaysFile;
     _dbDisableNeutralParticles = rhs._dbDisableNeutralParticles;
     _dbDisableChargedParticles = rhs._dbDisableChargedParticles;
     _dbDisableSelected = rhs._dbDisableSelected;
@@ -476,15 +451,6 @@ namespace CAP
     printValue("taskName",  taskName);
     printValue("objectType",objectType);
     }
-  //  _dbImport            = configuration.valueBool(  createKey(taskName,objectType,index,"IMPORT"),true,_dbImport);
-  //  _dbImportPath        = configuration.valueString(createKey(taskName,objectType,index,"IMPORT:PATH"));
-  //  _dbImportFile        = configuration.valueString(createKey(taskName,objectType,index,"IMPORT:FILE_NAME"));
-  //  _dbImportDecaysFile  = configuration.valueString(createKey(taskName,objectType,index,"IMPORT:DECAYS_FILE"));
-  //  _dbExport            = configuration.valueBool(  createKey(taskName,objectType,index,"EXPORT"),true,_dbExport);
-  //  _dbExportPath        = configuration.valueString(createKey(taskName,objectType,index,"EXPORT:PATH"));
-  //  _dbExportFile        = configuration.valueString(createKey(taskName,objectType,index,"EXPORT:FILE"));
-  //  _dbExportDecaysFile  = configuration.valueString(createKey(taskName,objectType,index,"EXPORT:DECAYS_FILE"));
-
   // Keys absent from the configuration keep the values set by the constructor (they were read with the default
   // false/0, so that, e.g., a configuration without _dbEnableAllParticles disabled all the particles).
   _dbDisableNeutralParticles = configuration.valueBool(  createKey(taskName,objectType,index,"_dbDisableNeutralParticles"),true,_dbDisableNeutralParticles);
@@ -514,15 +480,6 @@ namespace CAP
   if (reportDebug(__FUNCTION__))
     {
     cout << endl;
-    printValue(createKey(taskName,objectType,index,"IMPORT")             ,_dbImport);
-    printValue(createKey(taskName,objectType,index,"IMPORT:PATH")        ,_dbImportPath);
-    printValue(createKey(taskName,objectType,index,"IMPORT:FILE")        ,_dbImportFile);
-    printValue(createKey(taskName,objectType,index,"IMPORT:DECAYS_FILE") ,_dbImportDecaysFile);
-    printValue(createKey(taskName,objectType,index,"EXPORT")             ,_dbExport);
-    printValue(createKey(taskName,objectType,index,"EXPORT:PATH")        ,_dbExportPath);
-    printValue(createKey(taskName,objectType,index,"EXPORT:FILE")        ,_dbExportFile);
-    printValue(createKey(taskName,objectType,index,"EXPORT:DECAYS_FILE") ,_dbExportDecaysFile);
-
     printValue(createKey(taskName,objectType,index,"EnableAllParticles")     ,_dbEnableAllParticles);
     printValue(createKey(taskName,objectType,index,"EnableNeutralParticles") ,_dbEnableNeutralParticles);
     printValue(createKey(taskName,objectType,index,"EnableChargedParticles") ,_dbEnableChargedParticles);
@@ -569,22 +526,6 @@ namespace CAP
     }
   }
 
-
-  void ParticleDb::loadFromAscii2(std::ifstream & inputFile1,
-                                  std::ifstream & inputFile2)
-  {
-  ParticleDbParser parser;
-  parser.readDb(*this,inputFile1,inputFile2);   // also maps the antiparticles and sets up the decay generators
-  //  inputFile.close();
-  //  inputFileDecays.close();
-  if (reportDebug(__FUNCTION__))
-    {
-    printCR();
-    printString("Successfully initiated ParticleDb");
-    printValue("ParticleDb.size()",_particleTypes.size());
-    }
-  finishLoad();
-  }
 
   void ParticleDb::loadFromXml(const String & fileName)
   {

@@ -47,7 +47,6 @@
   //#pragma link C++ class CAP::ManagedObjects<CAP::ParticleSmearer>+;
 #pragma link C++ class CAP::Particle+;
 #pragma link C++ class CAP::ParticleDb+;
-#pragma link C++ class CAP::ParticleDbParser+;
 #pragma link C++ class CAP::ParticleDecayer+;
 #pragma link C++ class CAP::ParticleDecayerTask+;
 #pragma link C++ class CAP::ParticleDecayMode+;

@@ -59,8 +59,8 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   //!
   //! Paths: for HISTOGRAM types, DEFAULT or relative paths are taken in $CAP_HISTOS_IMPORT_PATH (import) and
   //! $CAP_HISTOS_EXPORT_PATH (export); for PARTICLE_DB, relative import paths are taken in $CAP_DATABASE_PATH.
-  //! Files ending in .cap (or .root, read as .cap) are CAP files; a PARTICLE_DB is read from an XML file (.xml) or from
-  //! particles.data and decays.data.
+  //! Files ending in .cap (or .root, read as .cap) are CAP files; a PARTICLE_DB is read from an XML file (.xml) holding
+  //! the particles and their decay modes (see ParticleDbXml).
     //!
   //! @tparam MANAGED type of the managed objects (a ManagedObject)
   //!
@@ -539,8 +539,8 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   load(_importPath,_importFileName);
   }
   
-  //! @brief Import the objects from a file: a CAP file, or for PARTICLE_DB an XML file or particles.data and
-  //! decays.data. @param importPath directory @param importFileName file name @throws Exception for another type
+  //! @brief Import the objects from a file: a CAP file, or for PARTICLE_DB an XML file (particles and decay modes).
+  //! @param importPath directory @param importFileName file name @throws Exception for another file
   virtual void load(const String & importPath,
                             const String & importFileName)
   {
@@ -557,27 +557,15 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     }
   else
     {
-    if (_typeName.equalTo("PARTICLE_DB"))
+    if (_typeName.equalTo("PARTICLE_DB") && importFileName.endsWith(".xml",true))
       {
-      String fileName = FileSystem::join(importPath,importFileName);
-      if (fileName.endsWith(".xml",true))
-        {
-        // particles and decays in one XML file (see ParticleDbXml)
-        loadFromXml(fileName);
-        }
-      else
-        {
-        // particles.data and decays.data (see ParticleDbParser)
-        std::ifstream & inputFile1 = openInputAsciiFile(fileName);
-        fileName = importPath;
-        fileName += "/decays.data";
-        std::ifstream & inputFile2 = openInputAsciiFile(fileName);
-        loadFromAscii2(inputFile1,inputFile2);
-        }
+      // particles and their decay modes in one XML file (see ParticleDbXml)
+      loadFromXml(FileSystem::join(importPath,importFileName));
       }
     else
       {
-      throw Exception("BAD TYPE",__FUNCTION__);
+      throw Exception(String("Cannot import ")+_typeName+" objects from "+importFileName
+                      +": a CAP file (.cap, .root) or, for PARTICLE_DB, an XML file (.xml) is expected",__FUNCTION__);
       }
     
     }
@@ -597,13 +585,6 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   for (auto & object : _objects) object->loadFromAscii(file);
   }
   
-  //! @brief Load each object from two ASCII files. @param file1 first file @param file2 second file
-  virtual void loadFromAscii2(std::ifstream & file1,std::ifstream & file2)
-  {
-  if (reportDebug(__FUNCTION__)) { printCR(); }
-  for (auto & object : _objects) object->loadFromAscii2(file1,file2);
-  }
-
   //! @brief Load each object from an XML file. @param fileName file name
   //! @throws Exception for object types that cannot be read from XML (no loadFromXml(), see HasLoadFromXml)
   virtual void loadFromXml(const String & fileName)

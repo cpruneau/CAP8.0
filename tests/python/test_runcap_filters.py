@@ -163,7 +163,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual((db["PARTICLE_DB:N"], db["PARTICLE_DB_0:NAME"], db["PARTICLE_DB_0:OWNER"]),
                          ("1", "ParticleDb", "true"))
         self.assertEqual((db["PARTICLE_DB:IMPORT"], db["PARTICLE_DB:IMPORT:PATH"], db["PARTICLE_DB:IMPORT:FILE_NAME"]),
-                         ("true", "ParticleData", "particles.data"))
+                         ("true", "ParticleData", "ParticleDb.xml"))
         self.assertEqual(subs["CAP::EventCreator"]["EVENT_0:NAME"], "Event")
         g = values(self.gen)
         self.assertEqual((g["EVENT:N"], g["EVENT_0:NAME"], g["EVENT_0:OWNER"]), ("1", "Event", "false"))
@@ -184,6 +184,17 @@ class TestKeys(unittest.TestCase):
         empty = task("ParticleSingleAnalyzer")
         F.default_choices(empty, F.FilterLibrary(), TEMPLATES)
         self.assertEqual(F.choices(empty), {})
+
+    def test_database_file(self):
+        """Particle databases are read from XML files: the former text files are replaced, and reported."""
+        lib = library()
+        lib.settings["PARTICLE_DB"]["IMPORT:FILE_NAME"] = "particles.data"
+        self.assertIn("is not one", "\n".join(F.check_library(lib)))
+        warnings = F.update_database_files(lib)
+        self.assertEqual(lib.settings["PARTICLE_DB"]["IMPORT:FILE_NAME"], "ParticleDb.xml")
+        self.assertEqual(len(warnings), 1)
+        self.assertEqual(F.check_library(lib), [])
+        self.assertEqual(F.update_database_files(lib), [])
 
     def test_owner_settings_migrate(self):
         """A workflow written before FilterCreator: the import of the particle database moves to FilterCreator."""

@@ -145,7 +145,8 @@ class TestPanel(unittest.TestCase):
             self.panel.set_count(kind, 1)
             self.assertEqual(len(widgets(self.inner(kind), tk.ttk.Labelframe)), 1)
         self.assertEqual(sorted(self.panel.setting_vars), sorted(F.SETTINGS_KINDS))
-        self.assertEqual(self.library.settings["PARTICLE_DB"]["IMPORT:FILE_NAME"], "particles.data")
+        self.assertEqual(self.library.settings["PARTICLE_DB"]["IMPORT:FILE_NAME"], "ParticleDb.xml")
+        self.assertEqual(sorted(self.panel.setting_vars["PARTICLE_DB"]), ["IMPORT:FILE_NAME", "IMPORT:PATH"])
 
     def test_settings(self):
         self.assertNotIn("PARTICLE_FILTER", self.panel.setting_vars)

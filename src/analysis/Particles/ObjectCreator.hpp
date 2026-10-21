@@ -202,7 +202,7 @@ public:
 };
 
 //! @brief Task creating the particle databases of a job (PARTICLE_DB), imported at initialization (IMPORT, from an
-//! XML file or from particles.data and the decays.data next to it). See ObjectCreator.
+//! XML file holding the particles and their decay modes, e.g. ParticleData/ParticleDb.xml). See ObjectCreator.
 class ParticleDbCreator : public ObjectCreator<ParticleDb>
 {
 public:

@@ -124,8 +124,28 @@ LIST_SETTINGS = [("CREATE", "bool", "false"), ("IMPORT", "bool", "false"), ("IMP
                  ("IMPORT:FILE_NAME", "string", "NONE"), ("EXPORT", "bool", "false"),
                  ("EXPORT:PATH", "string", "DEFAULT"), ("EXPORT:FILE_NAME", "string", "NONE")]
 #: Settings of the lists of a kind that differ from LIST_SETTINGS: particle databases are imported from
-#: <CAP_DATABASE_PATH>/ParticleData/particles.data (and decays.data).
-KIND_SETTINGS = {"PARTICLE_DB": {"IMPORT": "true", "IMPORT:PATH": "ParticleData", "IMPORT:FILE_NAME": "particles.data"}}
+#: <CAP_DATABASE_PATH>/ParticleData/ParticleDb.xml (one XML file: the particles and their decay modes).
+DATABASE_FILE = "ParticleDb.xml"
+KIND_SETTINGS = {"PARTICLE_DB": {"IMPORT": "true", "IMPORT:PATH": "ParticleData", "IMPORT:FILE_NAME": DATABASE_FILE}}
+#: Settings shown for a kind in the Filters pane (all of LIST_SETTINGS by default): databases are only imported.
+KIND_SETTING_NAMES = {"PARTICLE_DB": ("IMPORT:PATH", "IMPORT:FILE_NAME")}
+
+
+def is_database_file(name):
+    """Whether a particle database can be imported from a file: XML (particles and decay modes in one file)."""
+    return name.lower().endswith(".xml")
+
+
+def update_database_files(library):
+    """Particle databases imported from the former text files (particles.data and decays.data) are imported from
+    DATABASE_FILE instead. @return warnings"""
+    settings = library.settings["PARTICLE_DB"]
+    name = settings.get("IMPORT:FILE_NAME", "")
+    if settings.get("IMPORT") == "true" and not is_database_file(name):
+        settings["IMPORT:FILE_NAME"] = DATABASE_FILE
+        return ["Particle databases are read from XML files (particles and decay modes in one file): %s replaced by %s."
+                % (name, DATABASE_FILE)]
+    return []
 
 
 def default_settings(kind):
@@ -698,8 +718,13 @@ def _histograms_from_keys(task, templates, values, warnings):
 # ------------------------------------------------------------------------------------------------------------------
 
 def check_library(library):
-    """Problems of the objects of the library (names, conditions, parameters)."""
+    """Problems of the objects of the library (names, conditions, parameters, file of the particle databases)."""
     errors = []
+    settings = library.settings["PARTICLE_DB"]
+    if library.objects["PARTICLE_DB"] and settings.get("IMPORT") == "true" \
+            and not is_database_file(settings.get("IMPORT:FILE_NAME", "")):
+        errors.append("Particle databases are imported from an XML file (particles and decay modes): %s is not one."
+                      % settings.get("IMPORT:FILE_NAME", ""))
     for kind in KINDS:
         names = library.names(kind)
         label = KIND_LABELS[kind].lower()[:-1]

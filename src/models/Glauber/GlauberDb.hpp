@@ -47,9 +47,6 @@ namespace CAP
   { }
 
 
-  //! @brief Load the database from ASCII files (not implemented).
-  virtual void loadFromAscii2(std::ifstream & file1 __attribute__((unused)),
-                              std::ifstream & file2 __attribute__((unused))) {} // fix me/
 
 
   ClassDef(GlauberDb,0)
