@@ -10,11 +10,14 @@
  *
  * *********************************************************************/
 //! @file ObjectCreator.hpp
-//! @brief Tasks creating the filters, efficiencies and smearers of a job, used by the other tasks by name.
+//! @brief Tasks creating the filters, efficiencies, smearers, events and particle databases of a job, used by the other
+//! tasks by name.
 #ifndef CAP__ObjectCreator
 #define CAP__ObjectCreator
 #include "Task.hpp"
 #include "ManagedObjects.hpp"
+#include "Event.hpp"
+#include "ParticleDb.hpp"
 #include "EventFilter.hpp"
 #include "EventEfficiency.hpp"
 #include "EventSmearer.hpp"
@@ -187,10 +190,34 @@ public:
   ClassDefOverride(ParticleSmearerCreator,0)
 };
 
+//! @brief Task creating the events of a job (EVENT), filled by the generators or readers. See ObjectCreator.
+class EventCreator : public ObjectCreator<Event>
+{
+public:
+  //! @brief Constructor.
+  EventCreator() : ObjectCreator<Event>("EVENT") { appendClassName("EventCreator"); setName("EventCreator"); }
+  //! @brief Polymorphic copy. @return copy (owned by the caller)
+  Task * clone() override { return new EventCreator(*this); }
+  ClassDefOverride(EventCreator,0)
+};
+
+//! @brief Task creating the particle databases of a job (PARTICLE_DB), imported at initialization (IMPORT, from an
+//! XML file or from particles.data and the decays.data next to it). See ObjectCreator.
+class ParticleDbCreator : public ObjectCreator<ParticleDb>
+{
+public:
+  //! @brief Constructor.
+  ParticleDbCreator() : ObjectCreator<ParticleDb>("PARTICLE_DB") { appendClassName("ParticleDbCreator"); setName("ParticleDbCreator"); }
+  //! @brief Polymorphic copy. @return copy (owned by the caller)
+  Task * clone() override { return new ParticleDbCreator(*this); }
+  ClassDefOverride(ParticleDbCreator,0)
+};
+
 //!
-//! @brief Task creating the filters, efficiencies and smearers of a job, run first: its subtasks, one per type
-//! (EventFilterCreator, ParticleFilterCreator, EventEfficiencyCreator, ParticleEfficiencyCreator, EventSmearerCreator,
-//! ParticleSmearerCreator), create all the objects of their type; the tasks of the job then use them by name.
+//! @brief Task creating the filters, efficiencies, smearers, events and particle databases of a job, run first: its
+//! subtasks, one per type (EventFilterCreator, ParticleFilterCreator, EventEfficiencyCreator,
+//! ParticleEfficiencyCreator, EventSmearerCreator, ParticleSmearerCreator, EventCreator, ParticleDbCreator), create all
+//! the objects of their type; the tasks of the job then use them by name.
 //!
 //! @code
 //!   <TASK name="Filters" class="CAP::FilterCreator">

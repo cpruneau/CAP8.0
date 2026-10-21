@@ -129,10 +129,13 @@ class FiltersPanel(ttk.Frame):
         box.bind("<<ComboboxSelected>>", lambda e, k=kind: self.set_count(k, int(self.counts[k].get())))
         hint = {"EVENT_FILTER": "Each filter selects events with all its conditions.",
                 "PARTICLE_FILTER": "Each filter selects particles with all its conditions (at most %d per task)."
-                                   % F.MAX_PARTICLE_FILTERS}.get(kind, "Their histograms, created or imported by "
+                                   % F.MAX_PARTICLE_FILTERS,
+                "EVENT": "Events, filled by the generators or readers and analyzed by the analyzers.",
+                "PARTICLE_DB": "Particle properties and decays, imported by FilterCreator (particles.data and the "
+                               "decays.data next to it, or an XML file):"}.get(kind, "Their histograms, created or imported by "
                                                                        "FilterCreator:")
         ttk.Label(head, text=hint, foreground="gray40").pack(side=tk.LEFT, padx=12)
-        if kind not in F.CONDITION_KINDS:
+        if kind in F.SETTINGS_KINDS:
             self._make_settings(tab, kind)
         scroll = ScrollFrame(tab)
         scroll.pack(fill=tk.BOTH, expand=True)
@@ -360,7 +363,7 @@ class FiltersPanel(ttk.Frame):
         grid = ttk.Frame(frame)
         grid.pack(fill=tk.X, pady=(6, 0))
         per_row = 3
-        for i, (name, ptype, _) in enumerate(F.KIND_PARAMETERS[definition.kind]):
+        for i, (name, ptype, _) in enumerate(F.KIND_PARAMETERS.get(definition.kind, [])):
             r, c = divmod(i, per_row)
             ttk.Label(grid, text="%s (%s)" % (name, ptype)).grid(row=r, column=2 * c, sticky="w", padx=(0, 4), pady=1)
             var = tk.StringVar(self, value=definition.parameters.get(name, ""))

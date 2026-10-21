@@ -148,6 +148,9 @@ class TaskDialog(tk.Toplevel):
         return widget
 
     def _columns(self, parent, params):
+        if not params:
+            ttk.Label(parent, text="No other parameters.", foreground="gray40").pack(anchor="w", pady=4)
+            return
         columns = ttk.Frame(parent)
         columns.pack(fill=tk.BOTH, expand=True)
         columns.columnconfigure(0, weight=1, uniform="col")
@@ -160,8 +163,6 @@ class TaskDialog(tk.Toplevel):
             frame.inner.columnconfigure(1, weight=1)
             for r, p in enumerate(column):
                 self._param_row(frame.inner, r, p)
-        if not params:
-            ttk.Label(columns, text="No parameters.", foreground="gray40").grid(row=0, column=0)
 
     # -------------------------------------------------------------------------------------------------- general
     def _make_general(self):
@@ -185,8 +186,8 @@ class TaskDialog(tk.Toplevel):
         params = general_parameters(task, self.templates)
         ttk.Label(head, text="%d parameters" % len(params), foreground="gray40").pack(side=tk.RIGHT, padx=8)
         if self.kinds:
-            self.filters_box = ttk.LabelFrame(self.general, text="  Filters used (created by FilterCreator, defined in "
-                                                                 "the Filters pane)  ", padding=(8, 4))
+            self.filters_box = ttk.LabelFrame(self.general, text="  Used by this task (created by FilterCreator, "
+                                                                 "defined in the Filters pane)  ", padding=(8, 4))
             self.filters_box.pack(fill=tk.X, pady=(0, 8))
         self._columns(self.general, params)
 

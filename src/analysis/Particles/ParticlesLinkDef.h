@@ -30,6 +30,10 @@
 #pragma link C++ class CAP::ParticleEfficiencyCreator+;
 #pragma link C++ class CAP::EventSmearerCreator+;
 #pragma link C++ class CAP::ParticleSmearerCreator+;
+#pragma link C++ class CAP::ObjectCreator<CAP::Event>+;
+#pragma link C++ class CAP::ObjectCreator<CAP::ParticleDb>+;
+#pragma link C++ class CAP::EventCreator+;
+#pragma link C++ class CAP::ParticleDbCreator+;
 #pragma link C++ class CAP::FilterCreator+;
 // #pragma link C++ class CAP::ManagedObjects<CAP::BaseHistos>+;
   //#pragma link C++ class CAP::ManagedObjects<CAP::BaseDerivedHistos>+;

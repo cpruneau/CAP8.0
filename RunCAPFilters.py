@@ -7,10 +7,11 @@
 """
 RunCAPFilters -- the filters of a CAP workflow and the histogram folders of its analyzers (model of RunCAP.py, no GUI).
 
-A workflow has a library of named objects, shared by its tasks, of six kinds:
+A workflow has a library of named objects, shared by its tasks, of eight kinds:
   * event filters and particle filters: each a list of conditions (a range, two ranges, a value or a flag of one
     quantity: multiplicity, transverse momentum, pseudorapidity, PDG code, ...);
-  * event and particle efficiencies, event and particle smearers: each its binning parameters.
+  * event and particle efficiencies, event and particle smearers: each its binning parameters;
+  * events (filled by the generators or readers, used by the analyzers) and particle databases (imported).
 Each task chooses, for each kind it supports, how many objects it uses and which ones (by name). Analyzers fill one
 folder of histograms per combination of their filters: (event filter, particle filter) for single-particle analyzers,
 (event filter, particle filter 1, particle filter 2) for pair analyzers (with their single-particle folders too). The
@@ -44,10 +45,18 @@ import re
 import xml.etree.ElementTree as ET
 
 #: Kinds of objects of the library, in the order of the tabs of the Filters pane.
-KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER"]
+KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
+         "EVENT", "PARTICLE_DB"]
+#: Kinds of corrections (efficiencies and smearers).
+CORRECTION_KINDS = ("EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER")
+#: Kinds whose lists have settings in FilterCreator (creation or import of the objects, export).
+SETTINGS_KINDS = CORRECTION_KINDS + ("PARTICLE_DB",)
+#: Kinds chosen by default by a new task (the first object of the library).
+DEFAULT_CHOICE_KINDS = ("EVENT", "PARTICLE_DB")
 KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle filters",
                "EVENT_EFFICIENCY": "Event efficiencies", "PARTICLE_EFFICIENCY": "Particle efficiencies",
-               "EVENT_SMEARER": "Event smearers", "PARTICLE_SMEARER": "Particle smearers"}
+               "EVENT_SMEARER": "Event smearers", "PARTICLE_SMEARER": "Particle smearers", "EVENT": "Events",
+               "PARTICLE_DB": "Particle databases"}
 #: Kinds defined by conditions (the others by parameters).
 CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER")
 
@@ -107,11 +116,23 @@ CREATORS = {"EVENT_FILTER": ("EventFilters", "CAP::EventFilterCreator"),
             "EVENT_EFFICIENCY": ("EventEfficiencies", "CAP::EventEfficiencyCreator"),
             "PARTICLE_EFFICIENCY": ("ParticleEfficiencies", "CAP::ParticleEfficiencyCreator"),
             "EVENT_SMEARER": ("EventSmearers", "CAP::EventSmearerCreator"),
-            "PARTICLE_SMEARER": ("ParticleSmearers", "CAP::ParticleSmearerCreator")}
+            "PARTICLE_SMEARER": ("ParticleSmearers", "CAP::ParticleSmearerCreator"),
+            "EVENT": ("Events", "CAP::EventCreator"),
+            "PARTICLE_DB": ("ParticleDbs", "CAP::ParticleDbCreator")}
 #: Settings of the list of objects of a kind in its creator (import or creation of their histograms, export).
 LIST_SETTINGS = [("CREATE", "bool", "false"), ("IMPORT", "bool", "false"), ("IMPORT:PATH", "string", "DEFAULT"),
                  ("IMPORT:FILE_NAME", "string", "NONE"), ("EXPORT", "bool", "false"),
                  ("EXPORT:PATH", "string", "DEFAULT"), ("EXPORT:FILE_NAME", "string", "NONE")]
+#: Settings of the lists of a kind that differ from LIST_SETTINGS: particle databases are imported from
+#: <CAP_DATABASE_PATH>/ParticleData/particles.data (and decays.data).
+KIND_SETTINGS = {"PARTICLE_DB": {"IMPORT": "true", "IMPORT:PATH": "ParticleData", "IMPORT:FILE_NAME": "particles.data"}}
+
+
+def default_settings(kind):
+    """Default settings of the list of a kind in FilterCreator."""
+    settings = {name: value for name, _, value in LIST_SETTINGS}
+    settings.update(KIND_SETTINGS.get(kind, {}))
+    return settings
 #: The C++ code handles at most this many particle filters per task (EventProcessor::acceptedParticles()).
 MAX_PARTICLE_FILTERS = 8
 #: Suffix of the names of the folders of derived histograms.
@@ -122,7 +143,7 @@ NAME_FULL = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*")
 MANAGED_KEY = re.compile(r"^(?:(?:%s)(?::N|:USE|_\d+:.*)|HISTOGRAM_[1-4](?::N|_\d+:.*))$" % "|".join(KINDS))
 #: Settings of the lists of objects of a task (<KIND>:USE, IMPORT, CREATE, EXPORT and their files): FilterCreator
 #: creates, imports and exports the objects, so the tasks only choose them (they are hidden in RunCAP.py's windows).
-LIST_SETTING_KEY = re.compile(r"^(?:%s):" % "|".join(KINDS))
+LIST_SETTING_KEY = re.compile(r"^(?:%s):(?:USE|IMPORT|CREATE|EXPORT)(?::.*)?$" % "|".join(KINDS))
 _OBJECT_KEY = re.compile(r"^(%s)_(\d+):(.+)$" % "|".join(KINDS))
 _CONDITION_KEY = re.compile(r"^CONDITION_(\d+):(.+)$")
 _FOLDER_KEY = re.compile(r"^HISTOGRAM_([1-4])_(\d+):(.+)$")
@@ -210,7 +231,15 @@ class FilterLibrary:
 
     def __init__(self):
         self.objects = {kind: [] for kind in KINDS}
-        self.settings = {kind: {name: value for name, _, value in LIST_SETTINGS} for kind in KINDS}
+        self.settings = {kind: default_settings(kind) for kind in KINDS}
+
+    @staticmethod
+    def with_defaults():
+        """Library of a new workflow: one event (Event) and one particle database (ParticleDb)."""
+        library = FilterLibrary()
+        library.add(FilterDef("EVENT", "Event"))
+        library.add(FilterDef("PARTICLE_DB", "ParticleDb"))
+        return library
 
     def names(self, kind):
         return [o.name for o in self.objects[kind]]
@@ -235,7 +264,7 @@ class FilterLibrary:
         del items[n:]
         base = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "EVENT_EFFICIENCY": "EventEfficiency",
                 "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
-                "PARTICLE_SMEARER": "ParticleSmearer"}[kind]
+                "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}[kind]
         k = 0
         while len(items) < n:
             name = "%s%d" % (base, k)
@@ -401,6 +430,18 @@ def _preorder(tasks):
         yield from _preorder(t.children)
 
 
+#: Kinds whose objects the Glauber tasks keep in stores of their own (GlauberEventFilter, GlauberEvent): the first
+#: Glauber task using one defines it.
+GLAUBER_KINDS = ("EVENT_FILTER", "EVENT")
+
+
+def default_choices(task, library, templates):
+    """Choose for a new task the first event and particle database of the library (if it uses them)."""
+    for kind in DEFAULT_CHOICE_KINDS:
+        if kind in task_kinds(task, templates) and library.objects[kind] and not choices(task).get(kind):
+            choices(task)[kind] = [library.objects[kind][0].name]
+
+
 def glauber_only(definition):
     """Whether an event filter tests Glauber quantities: it is then an object of the Glauber tasks (GlauberEventFilter),
     not created by FilterCreator."""
@@ -427,7 +468,7 @@ def _write_object(task, kind, k, name, definition, owner, Param):
                 _set(task, cp + "MINIMUM2", "double", number_text(c.minimum2), Param)
                 _set(task, cp + "MAXIMUM2", "double", number_text(c.maximum2), Param)
     else:
-        for pname, ptype, _ in KIND_PARAMETERS[kind]:
+        for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
             _set(task, prefix + pname, ptype, definition.parameters.get(pname, ""), Param)
 
 
@@ -446,8 +487,8 @@ def creator_task(library, templates, TaskConfig, Param):
         objects = [o for o in library.objects[kind] if not glauber_only(o)]
         _set(sub, kind + ":N", "int", str(len(objects)), Param)
         _set(sub, kind + ":USE", "bool", "true" if objects else "false", Param)
-        for name, ptype, default in LIST_SETTINGS:
-            value = library.settings[kind].get(name, default)
+        for name, ptype, _ in LIST_SETTINGS:
+            value = library.settings[kind].get(name, default_settings(kind)[name])
             p = sub.param(kind + ":" + name)
             if p is not None:
                 p.value = value
@@ -464,7 +505,7 @@ def apply_choices(tasks, library, templates, Param):
     them) and of their histogram folders (the parameters managed by this model are replaced). The event filters on
     Glauber quantities are defined by the first Glauber task using them. The tasks are changed in place: apply it to
     copies to keep the model. @param Param class of the parameters (RunCAP.Param)"""
-    glauber_owned = set()                               # Glauber event filters defined by an earlier Glauber task
+    glauber_owned = set()                               # (kind, name) defined by an earlier Glauber task
     for task in _preorder(tasks):
         strip_managed(task)
         kinds = task_kinds(task, templates)
@@ -480,10 +521,10 @@ def apply_choices(tasks, library, templates, Param):
             _set(task, kind + ":USE", "bool", "true" if names else "false", Param)
             for k, name in enumerate(names):
                 definition = library.get(kind, name)
-                owner = (kind == "EVENT_FILTER" and is_glauber(task) and definition is not None
-                         and name not in glauber_owned)
+                owner = (kind in GLAUBER_KINDS and is_glauber(task) and definition is not None
+                         and (kind, name) not in glauber_owned)
                 if owner:
-                    glauber_owned.add(name)
+                    glauber_owned.add((kind, name))
                 _write_object(task, kind, k, name, definition, owner, Param)
         layout = histogram_layout(task, templates)
         if layout is None:
@@ -544,6 +585,11 @@ def extract_choices(tasks, templates, library=None):
                 existing = library.get(kind, name)
                 if existing is None:
                     library.add(definition)
+                    if task.cls != CREATOR_CLASS and kind in SETTINGS_KINDS \
+                            and library.settings[kind] == default_settings(kind):
+                        for setting, _, _ in LIST_SETTINGS:       # settings of the owner (now FilterCreator's)
+                            if kind + ":" + setting in values:
+                                library.settings[kind][setting] = values[kind + ":" + setting]
                 elif existing != definition:
                     warnings.append("Task %s: %s %s is defined differently by an earlier task or the library (the first "
                                     "definition is kept)." % (task.name, KIND_LABELS[kind].lower()[:-1], name))
@@ -588,7 +634,8 @@ def _definition_from_keys(task, kind, k, name, values, warnings):
     prefix = "%s_%d:" % (kind, k)
     title = values.get(prefix + "TITLE", "")
     if kind not in CONDITION_KINDS:
-        parameters = {pname: values[prefix + pname] for pname, _, _ in KIND_PARAMETERS[kind] if prefix + pname in values}
+        parameters = {pname: values[prefix + pname] for pname, _, _ in KIND_PARAMETERS.get(kind, [])
+                      if prefix + pname in values}
         return FilterDef(kind, name, title, parameters=parameters)
     conditions = []
     try:
@@ -721,6 +768,8 @@ def check_choices(tasks, library, templates):
             if kind == "PARTICLE_FILTER" and len(names) > MAX_PARTICLE_FILTERS:
                 errors.append("Task %s uses %d particle filters: CAP handles at most %d." % (task.name, len(names),
                                                                                           MAX_PARTICLE_FILTERS))
+        if histogram_layout(task, templates) is not None and "EVENT" in kinds and not choices(task).get("EVENT"):
+            errors.append("Task %s uses no event: choose one (Events)." % task.name)
         if histogram_layout(task, templates) is not None:
             if not choices(task).get("EVENT_FILTER") or not choices(task).get("PARTICLE_FILTER"):
                 errors.append("Task %s fills histograms per event filter and particle filter: choose at least one of each."
@@ -758,7 +807,7 @@ def runcap_element(library, tasks):
             for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
                 ET.SubElement(element, "PARAMETER", {"name": pname, "type": ptype}).text = o.parameters.get(pname, "")
     for kind in KINDS:
-        changed = {n: v for n, v in library.settings[kind].items() if v != dict((a, c) for a, _, c in LIST_SETTINGS)[n]}
+        changed = {n: v for n, v in library.settings[kind].items() if v != default_settings(kind).get(n)}
         if changed:
             element = ET.SubElement(root, "SETTINGS", {"kind": kind})
             for name, value in sorted(changed.items()):

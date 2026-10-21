@@ -20,6 +20,8 @@ ClassImp(CAP::EventEfficiencyCreator);
 ClassImp(CAP::ParticleEfficiencyCreator);
 ClassImp(CAP::EventSmearerCreator);
 ClassImp(CAP::ParticleSmearerCreator);
+ClassImp(CAP::EventCreator);
+ClassImp(CAP::ParticleDbCreator);
 ClassImp(CAP::FilterCreator);
 
 namespace CAP

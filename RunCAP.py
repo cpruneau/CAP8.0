@@ -573,7 +573,7 @@ def run_gui(initial_file=None, hook=None):
             self.templates = {}
             self.items = {}             # workflow tree item -> TaskConfig
             self.dialogs = {}           # workflow tree item -> window of the task (RunCAPTaskDialog)
-            self.library = filters.FilterLibrary()   # filters, efficiencies and smearers of the workflow
+            self.library = filters.FilterLibrary.with_defaults()   # objects of the workflow (Filters pane)
             self.filters_panel = None       # Filters pane (RunCAPFiltersGui.FiltersPanel)
             self.saved_path = ""        # file of the last save or load
             self.dirty = False
@@ -802,7 +802,9 @@ def run_gui(initial_file=None, hook=None):
                 return
             new = []
             for cls in selected:
-                new.append(self._insert_task("", new_task(cls, self.templates, self._used_names())))
+                task = new_task(cls, self.templates, self._used_names())
+                filters.default_choices(task, self.library, self.templates)    # the first event and database
+                new.append(self._insert_task("", task))
             self.tree.see(new[-1])
             self._changed("Added %s; double-click a task to configure it."
                           % ", ".join(self.items[i].name for i in new))
@@ -934,7 +936,7 @@ def run_gui(initial_file=None, hook=None):
             selected = self.summary.selection()
             self.summary.delete(*self.summary.get_children(""))
             counts = ["%d %s" % (len(self.library.objects[k]), filters.KIND_LABELS[k].lower())
-                      for k in filters.KINDS[2:] if self.library.objects[k]]
+                      for k in filters.CORRECTION_KINDS if self.library.objects[k]]
             self.summary.insert("", tk.END, iid="__creator__", text=filters.CREATOR_NAME + " (run first)",
                                 tags=("creator",),
                                 values=("FilterCreator", ", ".join(self.library.names("EVENT_FILTER")),
@@ -946,7 +948,7 @@ def run_gui(initial_file=None, hook=None):
                 while p:
                     depth, p = depth + 1, self.tree.parent(p)
                 choices = filters.choices(task)
-                others = sum(len(choices.get(k, [])) for k in filters.KINDS[2:])
+                others = sum(len(choices.get(k, [])) for k in filters.CORRECTION_KINDS)
                 folders = filters.folders(task, self.templates)
                 errors = [e for e in filters.check_choices([task], self.library, self.templates)
                           if ("Task %s " % task.name) in e or ("Task %s:" % task.name) in e]
@@ -1164,8 +1166,9 @@ def run_gui(initial_file=None, hook=None):
             head = ttk.Frame(parent)
             head.pack(fill=tk.X, pady=(6, 0))
             ttk.Label(head, text="Filters", style="Section.TLabel").pack(side=tk.LEFT)
-            ttk.Label(head, text="Defined here once, created by the task FilterCreator (run first), and used by name "
-                                 "by the tasks (double-click a task below).",
+            ttk.Label(head, text="Filters, corrections, events and particle databases: defined here once, created by "
+                                 "the task FilterCreator (run first), used by name by the tasks (double-click a task "
+                                 "below).",
                       foreground="gray40").pack(side=tk.LEFT, padx=10)
             self.filters_panel = RunCAPFiltersGui.FiltersPanel(
                 parent, self.library, on_change=self._library_changed, on_rename=self._rename_object,

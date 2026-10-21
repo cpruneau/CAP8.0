@@ -36,7 +36,7 @@ def values(t):
 
 
 def library():
-    lib = F.FilterLibrary()
+    lib = F.FilterLibrary.with_defaults()
     lib.add(F.FilterDef("EVENT_FILTER", "MB", "minimum bias", [F.Condition("MULT_0", F.RANGE, 0, 1e6)]))
     lib.add(F.FilterDef("EVENT_FILTER", "Central", "", [F.Condition("MULT_0", F.RANGE, 100, 1e6)]))
     lib.add(F.FilterDef("PARTICLE_FILTER", "PiP", "pi+", [F.Condition("PDG", F.VALUE, 211),
@@ -59,10 +59,12 @@ def workflow():
     for t, lists in ((single, (1,)), (pair, (1, 3))):
         for l in lists:
             t.param("HISTOGRAM_%d:CREATE" % l).value = "true"
-    gen.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP", "PiM"]}
+    gen.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP", "PiM"], "EVENT": ["Event"],
+                   "PARTICLE_DB": ["ParticleDb"]}
     single.filters = {"EVENT_FILTER": ["MB", "Central"], "PARTICLE_FILTER": ["PiP", "PiM"],
-                      "PARTICLE_EFFICIENCY": ["Eff"]}
-    pair.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP", "PiM"]}
+                      "PARTICLE_EFFICIENCY": ["Eff"], "EVENT": ["Event"], "PARTICLE_DB": ["ParticleDb"]}
+    pair.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP", "PiM"], "EVENT": ["Event"],
+                    "PARTICLE_DB": ["ParticleDb"]}
     return [it]
 
 
@@ -70,7 +72,7 @@ class TestTemplates(unittest.TestCase):
 
     def test_kinds_and_layouts(self):
         self.assertIn("PARTICLE_FILTER", F.task_kinds(task("ParticleSingleAnalyzer"), TEMPLATES))
-        self.assertEqual(F.task_kinds(task("GlauberGenerator"), TEMPLATES), ["EVENT_FILTER"])
+        self.assertEqual(F.task_kinds(task("GlauberGenerator"), TEMPLATES), ["EVENT_FILTER", "EVENT"])
         self.assertEqual(F.histogram_layout(task("ParticleSingleAnalyzer"), TEMPLATES), "single")
         self.assertEqual(F.histogram_layout(task("ParticlePairAnalyzer"), TEMPLATES), "pair")
         self.assertIsNone(F.histogram_layout(task("BasicEventGen"), TEMPLATES))
@@ -154,14 +156,58 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(values(copies[1].children[1])["PARTICLE_EFFICIENCY:IMPORT"], "false")
         self.assertEqual(single.param("PARTICLE_EFFICIENCY:IMPORT").value, "true")
 
+    def test_events_and_databases(self):
+        creator, subs = self.creator()
+        self.assertEqual([t.name for t in creator.children][-2:], ["Events", "ParticleDbs"])
+        db = subs["CAP::ParticleDbCreator"]
+        self.assertEqual((db["PARTICLE_DB:N"], db["PARTICLE_DB_0:NAME"], db["PARTICLE_DB_0:OWNER"]),
+                         ("1", "ParticleDb", "true"))
+        self.assertEqual((db["PARTICLE_DB:IMPORT"], db["PARTICLE_DB:IMPORT:PATH"], db["PARTICLE_DB:IMPORT:FILE_NAME"]),
+                         ("true", "ParticleData", "particles.data"))
+        self.assertEqual(subs["CAP::EventCreator"]["EVENT_0:NAME"], "Event")
+        g = values(self.gen)
+        self.assertEqual((g["EVENT:N"], g["EVENT_0:NAME"], g["EVENT_0:OWNER"]), ("1", "Event", "false"))
+        self.assertEqual((g["PARTICLE_DB_0:NAME"], g["PARTICLE_DB_0:OWNER"]), ("ParticleDb", "false"))
+        self.assertEqual(g["PARTICLE_DB:IMPORT"], "false")
+        it = values(self.tasks[0])
+        self.assertIn("EVENT:REQUESTED:N", it)                      # not a setting of the list of events
+        self.assertFalse(F.LIST_SETTING_KEY.match("EVENT:REQUESTED:N"))
+        self.assertTrue(F.LIST_SETTING_KEY.match("PARTICLE_DB:IMPORT:DECAYS_FILE"))
+
+    def test_default_choices(self):
+        lib = library()
+        analyzer, glauber = task("ParticleSingleAnalyzer"), task("GlauberGenerator")
+        F.default_choices(analyzer, lib, TEMPLATES)
+        F.default_choices(glauber, lib, TEMPLATES)
+        self.assertEqual(analyzer.filters, {"EVENT": ["Event"], "PARTICLE_DB": ["ParticleDb"]})
+        self.assertEqual(glauber.filters, {"EVENT": ["Event"]})
+        empty = task("ParticleSingleAnalyzer")
+        F.default_choices(empty, F.FilterLibrary(), TEMPLATES)
+        self.assertEqual(F.choices(empty), {})
+
+    def test_owner_settings_migrate(self):
+        """A workflow written before FilterCreator: the import of the particle database moves to FilterCreator."""
+        gen = task("BasicEventGen")
+        P = RunCAP.Param
+        gen.params += [P("PARTICLE_DB_0:NAME", "string", "DefaultDb"), P("PARTICLE_DB_0:OWNER", "bool", "true")]
+        gen.param("PARTICLE_DB:N").value = "1"
+        gen.param("PARTICLE_DB:IMPORT:FILE_NAME").value = "pdg.xml"
+        lib, _ = F.extract_choices([gen], TEMPLATES)
+        self.assertEqual(lib.names("PARTICLE_DB"), ["DefaultDb"])
+        self.assertEqual(lib.settings["PARTICLE_DB"]["IMPORT:FILE_NAME"], "pdg.xml")
+
     def test_glauber(self):
         lib = library()
         lib.add(F.FilterDef("EVENT_FILTER", "B", "", [F.Condition("IMPACT", F.RANGE, 0, 5)]))
         gen, ana = task("GlauberGenerator"), task("GlauberAnalyzer")
         gen.filters = {"EVENT_FILTER": ["B"]}
         ana.filters = {"EVENT_FILTER": ["B"]}
+        gen.filters["EVENT"] = ["Event"]
+        ana.filters["EVENT"] = ["Event"]
         F.apply_choices([gen, ana], lib, TEMPLATES, RunCAP.Param)
         self.assertEqual(values(gen)["EVENT_FILTER_0:OWNER"], "true")       # store of the Glauber tasks
+        self.assertEqual(values(gen)["EVENT_0:OWNER"], "true")
+        self.assertEqual(values(ana)["EVENT_0:OWNER"], "false")
         self.assertEqual(values(gen)["EVENT_FILTER_0:CONDITION_0:SUBTYPE"], "IMPACT")
         self.assertEqual(values(ana)["EVENT_FILTER_0:OWNER"], "false")
         creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
@@ -247,7 +293,7 @@ class TestReading(unittest.TestCase):
             top = tree.getroot().find("TASK")
             self.assertEqual(top.get("class"), "CAP::Task")                         # Workflow wrapper
             self.assertEqual([t.get("name") for t in top.findall("TASK")], ["FilterCreator", "EventIterator"])
-            self.assertEqual(len(top.find("TASK").findall("TASK")), 6)
+            self.assertEqual(len(top.find("TASK").findall("TASK")), 8)
             tree.getroot().remove(tree.getroot().find("RUNCAP"))
             tree.write(path)
             read, lib2, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
@@ -259,11 +305,12 @@ class TestReading(unittest.TestCase):
         """Writing copies the tasks without copying their parameters (the GUI attaches widgets to them)."""
         tasks = workflow()
         single = tasks[0].children[1]
-        single.params[0].widget_var = object()
+        kept = single.param("HISTOGRAM:pt_nbins")
+        kept.widget_var = object()
         values_before = [(p.key, p.value) for p in single.params]
         copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
         self.assertEqual(copies[0].cls, F.CREATOR_CLASS)
-        self.assertIs(copies[1].children[1].params[0], single.params[0])
+        self.assertIs(copies[1].children[1].param("HISTOGRAM:pt_nbins"), kept)
         self.assertEqual([(p.key, p.value) for p in single.params], values_before)
         self.assertIn("HISTOGRAM_1_0:NAME", values(copies[1].children[1]))
 
@@ -343,7 +390,7 @@ class TestChecks(unittest.TestCase):
         gen, single, pair = tasks[0].children
         gen.filters["PARTICLE_FILTER"] = ["P%d" % k for k in range(9)]
         gen.filters["EVENT_FILTER"] = ["Glau", "Missing"]
-        pair.filters = {"EVENT_FILTER": ["MB"]}
+        pair.filters = {"EVENT_FILTER": ["MB"]}                 # no particle filter, no event
         errors = F.check_choices(tasks, lib, TEMPLATES)
         text = "\n".join(errors)
         self.assertIn("Invalid name 'Bad name'", text)
@@ -353,7 +400,8 @@ class TestChecks(unittest.TestCase):
         self.assertIn("only the Glauber tasks", text)
         self.assertIn("Missing is not in the library", text)
         self.assertIn("Task Pair fills histograms", text)
-        self.assertEqual(len(errors), 7)
+        self.assertIn("Task Pair uses no event", text)
+        self.assertEqual(len(errors), 8)
         pair.param("HISTOGRAM_3:CREATE").value = "false"
         self.assertIn("HISTOGRAM_3 are neither created nor imported", "\n".join(F.check_choices(tasks, lib, TEMPLATES)))
 
