@@ -27,10 +27,10 @@ The window has four parts, from top to bottom:
     ranges, a value or a flag of one quantity) or binning parameters;
   * the tasks: one line per task of the workflow, in run order, with the filters it uses, the number of its
     histogram folders and its first problem. Double-clicking a task (here or in the workflow), or Configure task,
-    opens its window (RunCAPTaskDialog.py): General (name, report level, parameters), Filters (for each kind the task
-    supports, how many objects of the library it uses and which ones), Histograms (prefix of the folder names, same
-    binning for all folders or binning folder by folder) and Histogram files (creation, import and export of the
-    folders). Booleans have a true/false menu, integers and reals fields that only accept numbers;
+    opens its window (RunCAPTaskDialog.py): General (name, report level, the filters, corrections, events and particle
+    databases it uses, parameters) and Histograms (for each list of folders: use, creation, import, export; a used
+    list has one folder per combination of the event and particle filters; prefix of the folder names, same binning
+    for all folders or binning folder by folder). Booleans have a true/false menu, integers and reals fields that only accept numbers;
   * the output of CAP, which can be saved to a log file.
 
 Available tasks: the XML templates written by "bin/CAP --xml-templates" (one file per task class, listing every
@@ -805,6 +805,7 @@ def run_gui(initial_file=None, hook=None):
             for cls in selected:
                 task = new_task(cls, self.templates, self._used_names())
                 filters.default_choices(task, self.library, self.templates)    # the first event and database
+                filters.default_histogram_settings(task, self.templates)       # histograms used, created, exported
                 new.append(self._insert_task("", task))
             self.tree.see(new[-1])
             self._changed("Added %s; double-click a task to configure it."
@@ -950,7 +951,7 @@ def run_gui(initial_file=None, hook=None):
                     depth, p = depth + 1, self.tree.parent(p)
                 choices = filters.choices(task)
                 others = sum(len(choices.get(k, [])) for k in filters.CORRECTION_KINDS)
-                folders = filters.folders(task, self.templates)
+                folders = [f for f in filters.folders(task, self.templates) if filters.list_used(task, f.list)]
                 errors = [e for e in filters.check_choices([task], self.library, self.templates)
                           if ("Task %s " % task.name) in e or ("Task %s:" % task.name) in e]
                 self.summary.insert("", tk.END, iid=item, text="  " * depth + task.name, tags=("problem",) if errors else (),

@@ -56,8 +56,10 @@ def workflow():
     single = task("ParticleSingleAnalyzer", "Single")
     pair = task("ParticlePairAnalyzer", "Pair")
     it.children = [gen, single, pair]
-    for t, lists in ((single, (1,)), (pair, (1, 3))):
-        for l in lists:
+    for t in (single, pair):
+        F.default_histogram_settings(t, TEMPLATES)                  # histograms used, created, exported
+        for l in (2, 4) if t is pair else (2,):
+            t.param("HISTOGRAM_%d:USE" % l).value = "true"           # derived histograms used too
             t.param("HISTOGRAM_%d:CREATE" % l).value = "true"
     gen.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP", "PiM"], "EVENT": ["Event"],
                    "PARTICLE_DB": ["ParticleDb"]}
@@ -252,6 +254,34 @@ class TestKeys(unittest.TestCase):
         keys = [p.key for p in self.single.params]
         self.assertEqual(len(keys), len(set(keys)))
 
+    def test_lists_used(self):
+        """Folders only for the lists used: one per combination of filters (n*m), none for the others."""
+        tasks = workflow()
+        single = tasks[0].children[1]
+        single.param("HISTOGRAM_2:USE").value = "false"
+        F.apply_choices(tasks, library(), TEMPLATES, RunCAP.Param)
+        s = values(single)
+        self.assertEqual((s["HISTOGRAM_1:N"], s["HISTOGRAM_2:N"]), ("4", "0"))       # 2 event x 2 particle filters
+        self.assertNotIn("HISTOGRAM_2_0:NAME", s)
+
+    def test_default_histogram_settings(self):
+        pair = task("ParticlePairAnalyzer", "Pair")
+        F.default_histogram_settings(pair, TEMPLATES)
+        v = values(pair)
+        self.assertEqual([v["HISTOGRAM_%d:USE" % l] for l in (1, 2, 3, 4)], ["true", "false", "true", "false"])
+        self.assertEqual((v["HISTOGRAM_1:CREATE"], v["HISTOGRAM_1:EXPORT"]), ("true", "true"))
+        self.assertEqual([v["HISTOGRAM_%d:EXPORT:FILE_NAME" % l] for l in (1, 2, 3, 4)],
+                         ["Pair.cap", "PairDerived.cap", "PairSingle.cap", "PairSingleDerived.cap"])
+        self.assertEqual(F.list_label(pair, TEMPLATES, 4), "Derived single histograms")
+
+    def test_use_migrates(self):
+        """A workflow whose folders were written without USE (CAP did not read it): the lists are used."""
+        a = task("ParticleSingleAnalyzer", "PSA")
+        a.params += [RunCAP.Param("HISTOGRAM_1:N", "int", "1"), RunCAP.Param("HISTOGRAM_1_0:NAME", "string", "X")]
+        F.extract_choices([a], TEMPLATES)
+        self.assertTrue(F.list_used(a, 1))
+        self.assertFalse(F.list_used(a, 2))
+
     def test_per_folder_binning(self):
         tasks = workflow()
         single = tasks[0].children[1]
@@ -414,7 +444,11 @@ class TestChecks(unittest.TestCase):
         self.assertIn("Task Pair uses no event", text)
         self.assertEqual(len(errors), 8)
         pair.param("HISTOGRAM_3:CREATE").value = "false"
-        self.assertIn("HISTOGRAM_3 are neither created nor imported", "\n".join(F.check_choices(tasks, lib, TEMPLATES)))
+        pair.param("HISTOGRAM_4:EXPORT").value = "true"
+        pair.param("HISTOGRAM_4:EXPORT:FILE_NAME").value = "NONE"
+        text = "\n".join(F.check_choices(tasks, lib, TEMPLATES))
+        self.assertIn("single histograms are used but neither created nor imported (HISTOGRAM_3)", text)
+        self.assertIn("derived single histograms are exported but the file is not named (HISTOGRAM_4)", text)
 
     def test_list_flags_off(self):
         """FilterCreator imports, creates and exports the objects: never the tasks (their model is unchanged)."""

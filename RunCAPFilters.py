@@ -398,6 +398,48 @@ def combinations(task, templates):
     return []
 
 
+def folder_lists(task, templates):
+    """Lists of folders of a task: [1, 2] (histograms, derived histograms) or, for a pair analyzer, [1, 2, 3, 4]
+    (pairs, derived pairs, singles, derived singles); [] if it has no histograms."""
+    layout = histogram_layout(task, templates)
+    return [1, 2, 3, 4] if layout == "pair" else [1, 2] if layout == "single" else []
+
+
+def list_label(task, templates, list_index):
+    """Name of a list of folders, e.g. "Derived histograms"."""
+    if histogram_layout(task, templates) == "pair":
+        return {1: "Pair histograms", 2: "Derived pair histograms", 3: "Single histograms",
+                4: "Derived single histograms"}[list_index]
+    return {1: "Histograms", 2: "Derived histograms"}[list_index]
+
+
+def list_used(task, list_index):
+    """Whether a task uses a list of folders (HISTOGRAM_<l>:USE): it then has one folder per combination of its
+    filters, none otherwise."""
+    return _param_value(task, "HISTOGRAM_%d:USE" % list_index, "false") == "true"
+
+
+#: Settings of a list of folders shown in the task windows, and those set for the lists of a new analyzer.
+FOLDER_LIST_SETTINGS = ("USE", "CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_NAME", "EXPORT", "EXPORT:PATH",
+                        "EXPORT:FILE_NAME", "EXPORT:FORCE_REWRITE")
+
+
+def default_histogram_settings(task, templates):
+    """Settings of the folder lists of a new analyzer: its histograms (HISTOGRAM_1, and HISTOGRAM_3 of a pair
+    analyzer) are used, created and exported to <task>.cap (<task>Single.cap); its derived histograms are not used
+    (their files are named <task>Derived.cap, <task>SingleDerived.cap)."""
+    files = {1: "", 2: "Derived", 3: "Single", 4: "SingleDerived"}
+    for l in folder_lists(task, templates):
+        base = l in (1, 3)
+        for name, value in (("USE", base), ("CREATE", base), ("EXPORT", base)):
+            p = task.param("HISTOGRAM_%d:%s" % (l, name))
+            if p is not None:
+                p.value = "true" if value else "false"
+        p = task.param("HISTOGRAM_%d:EXPORT:FILE_NAME" % l)
+        if p is not None and p.value in ("", "NONE"):
+            p.value = "%s%s.cap" % (task.name, files[l])
+
+
 def folders(task, templates):
     """Folders of histograms of a task, in the order of their lists and indices (as the C++ code indexes them:
     e*nP + p for single folders, e*nP*nP + p1*nP + p2 for pair folders)."""
@@ -556,7 +598,7 @@ def apply_choices(tasks, library, templates, Param):
         for p in (template.params if template else task.params):
             if p.key.startswith("HISTOGRAM:"):
                 types[p.key[len("HISTOGRAM:"):]] = p.type
-        all_folders = folders(task, templates)
+        all_folders = [f for f in folders(task, templates) if list_used(task, f.list)]      # none for unused lists
         counts = {}
         for f in all_folders:
             counts[f.list] = counts.get(f.list, 0) + 1
@@ -616,6 +658,11 @@ def extract_choices(tasks, templates, library=None):
             if names:
                 task.filters[kind] = names
         layout = histogram_layout(task, templates)
+        for l in folder_lists(task, templates):           # folders without USE (USE was not read by CAP): used
+            n = values.get("HISTOGRAM_%d:N" % l, "0") or "0"
+            p = task.param("HISTOGRAM_%d:USE" % l)
+            if n.isdigit() and int(n) > 0 and p is not None and p.value != "true":
+                p.value = "true"
         if layout is not None:
             previous = getattr(task, "histograms", None)
             task.histograms = previous if previous is not None else HistogramOptions(task.name)
@@ -681,13 +728,13 @@ def _definition_from_keys(task, kind, k, name, values, warnings):
 def _histograms_from_keys(task, templates, values, warnings):
     """Prefix and binning of the folders of a task from its keys (folders named <prefix>_<filters...>)."""
     options = task.histograms
-    found = folders(task, templates)
+    found = [f for f in folders(task, templates) if list_used(task, f.list)]
     first = values.get("HISTOGRAM_1_0:NAME")
     if first and found:
         suffix = "_" + "_".join(found[0].combination)
         if first.endswith(suffix) and len(first) > len(suffix):
             options.prefix = first[:-len(suffix)]
-        found = folders(task, templates)
+        found = [f for f in folders(task, templates) if list_used(task, f.list)]
     renamed = [(f, values.get("HISTOGRAM_%d_%d:NAME" % (f.list, f.index))) for f in found]
     renamed = [(f, old) for f, old in renamed if old and old != f.name]
     stated = 0
@@ -795,19 +842,26 @@ def check_choices(tasks, library, templates):
                                                                                           MAX_PARTICLE_FILTERS))
         if histogram_layout(task, templates) is not None and "EVENT" in kinds and not choices(task).get("EVENT"):
             errors.append("Task %s uses no event: choose one (Events)." % task.name)
-        if histogram_layout(task, templates) is not None:
+        used = [l for l in folder_lists(task, templates) if list_used(task, l)]
+        if used:
             if not choices(task).get("EVENT_FILTER") or not choices(task).get("PARTICLE_FILTER"):
                 errors.append("Task %s fills histograms per event filter and particle filter: choose at least one of each."
                               % task.name)
             prefix = histogram_options(task).prefix
             if prefix and not NAME_FULL.fullmatch(prefix):
                 errors.append("Task %s: invalid prefix '%s' of the histogram folders." % (task.name, prefix))
-            for list_index in ((1, 3) if histogram_layout(task, templates) == "pair" else (1,)):
-                if not any(_param_value(task, "HISTOGRAM_%d:%s" % (list_index, flag), "false") == "true"
-                           for flag in ("CREATE", "IMPORT")):
-                    errors.append("Task %s: the histograms of HISTOGRAM_%d are neither created nor imported (set "
-                                  "HISTOGRAM_%d:CREATE or IMPORT)." % (task.name, list_index, list_index))
-            names = [f.name for f in folders(task, templates)]
+            for l in used:
+                label = list_label(task, templates, l).lower()
+                flag = lambda name: _param_value(task, "HISTOGRAM_%d:%s" % (l, name), "false") == "true"
+                file_name = lambda name: _param_value(task, "HISTOGRAM_%d:%s:FILE_NAME" % (l, name), "NONE")
+                if not flag("CREATE") and not flag("IMPORT"):
+                    errors.append("Task %s: its %s are used but neither created nor imported (HISTOGRAM_%d)."
+                                  % (task.name, label, l))
+                for action in ("IMPORT", "EXPORT"):
+                    if flag(action) and file_name(action) in ("", "NONE"):
+                        errors.append("Task %s: its %s are %sed but the file is not named (HISTOGRAM_%d)."
+                                      % (task.name, label, action.lower(), l))
+            names = [f.name for f in folders(task, templates) if f.list in used]
             for name in sorted(set(n for n in names if names.count(n) > 1)):
                 errors.append("Task %s: several histogram folders are named %s (a filter chosen twice?)." % (task.name, name))
     return errors

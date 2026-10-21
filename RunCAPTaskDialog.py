@@ -12,11 +12,12 @@ Tabs:
     are written from the choices below, see RunCAPFilters);
   * Filters (tasks that use filters, efficiencies or smearers): for each kind the task supports, how many objects it
     uses and which ones, by name, among those of the library of the workflow (Filters pane);
-  * Histograms (analyzers): the prefix of the names of the folders, one folder per combination of the filters chosen
-    (<prefix>_<event filter>_<particle filter>[_<particle filter 2>], derived folders ending with _D), and their
-    binning: the same for all (the HISTOGRAM group of the task), or folder by folder, the parameters not set for a
-    folder being those of the HISTOGRAM group;
-  * Histogram files (analyzers): creation, import and export of the lists of folders (HISTOGRAM_1 to HISTOGRAM_4).
+  * Histograms (analyzers): for each list of folders (histograms, derived histograms; for pairs and singles of a pair
+    analyzer), whether it is used, created, imported (from a folder and file) and exported (to a folder and file); a
+    used list has one folder per combination of the filters chosen, named <prefix>_<event filter>_<particle filter>
+    [_<particle filter 2>] (derived folders ending with _D). Then the prefix and the binning of the folders: the
+    same for all (the HISTOGRAM group of the task), or folder by folder, the parameters not set for a folder being
+    those of the HISTOGRAM group.
 Changes apply to the task at once; the problems of the task (RunCAPFilters.check_choices()) are listed at the bottom.
 """
 
@@ -33,7 +34,7 @@ DEFAULT_ENTRY = "All folders (HISTOGRAM group)"
 def general_parameters(task, templates):
     """Parameters of the General tab: all but the keys managed by RunCAPFilters, the settings of the lists of
     filters, efficiencies and smearers (FilterCreator creates, imports and exports them) and, for analyzers, the
-    histogram groups (Histograms and Histogram files tabs)."""
+    histogram groups (Histograms tab)."""
     analyzer = F.histogram_layout(task, templates) is not None
     return [p for p in task.params if not F.MANAGED_KEY.match(p.key) and not F.LIST_SETTING_KEY.match(p.key)
             and not (analyzer and (p.key.startswith("HISTOGRAM:") or _is_list_key(p.key)))]
@@ -41,11 +42,6 @@ def general_parameters(task, templates):
 
 def _is_list_key(key):
     return any(key.startswith("HISTOGRAM_%d:" % l) for l in (1, 2, 3, 4)) and not F.MANAGED_KEY.match(key)
-
-
-def file_parameters(task):
-    """Parameters of the lists of folders (HISTOGRAM_1 to HISTOGRAM_4: USE, CREATE, IMPORT, EXPORT, files)."""
-    return [p for p in task.params if _is_list_key(p.key)]
 
 
 class TaskDialog(tk.Toplevel):
@@ -72,12 +68,10 @@ class TaskDialog(tk.Toplevel):
         self.kinds = F.task_kinds(task, templates)
         self.general = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.general, text="General")
-        self.filters_box = self.histograms_tab = self.files_tab = None
+        self.filters_box = self.histograms_tab = None
         if self.layout:
             self.histograms_tab = ttk.Frame(self.notebook, padding=6)
             self.notebook.add(self.histograms_tab, text="Histograms")
-            self.files_tab = ttk.Frame(self.notebook, padding=6)
-            self.notebook.add(self.files_tab, text="Histogram files")
         bottom = ttk.Frame(self, padding=(8, 4, 8, 8))
         bottom.pack(fill=tk.X)
         ttk.Button(bottom, text="Close", command=self.destroy).pack(side=tk.RIGHT)
@@ -86,7 +80,6 @@ class TaskDialog(tk.Toplevel):
                   wraplength=860).pack(side=tk.LEFT, fill=tk.X, expand=True)
         self._names = None
         self._make_general()
-        self._make_files()
         self.refresh()
 
     # -------------------------------------------------------------------------------------------------- common
@@ -285,7 +278,8 @@ class TaskDialog(tk.Toplevel):
         for child in tab.winfo_children():
             child.destroy()
         options = F.histogram_options(self.task)
-        all_folders = F.folders(self.task, self.templates)
+        self._make_lists(tab)
+        all_folders = [f for f in F.folders(self.task, self.templates) if F.list_used(self.task, f.list)]
         base = [f for f in all_folders if not f.derived]
         head = ttk.Frame(tab)
         head.pack(fill=tk.X, pady=(0, 6))
@@ -331,6 +325,63 @@ class TaskDialog(tk.Toplevel):
         self.folder_list.selection_set(index)
         self.folder_list.bind("<<ListboxSelect>>", lambda e: self._show_binning())
         self._show_binning()
+
+    def _make_lists(self, tab):
+        """Use, creation, import and export of each list of folders; a used list has one folder per combination of
+        the filters chosen."""
+        box = ttk.LabelFrame(tab, text="  Folders of histograms: one per combination of the filters, for each list used  ",
+                             padding=(8, 4))
+        box.pack(fill=tk.X, pady=(0, 8))
+        all_folders = F.folders(self.task, self.templates)
+        for r, l in enumerate(F.folder_lists(self.task, self.templates)):
+            n = len([f for f in all_folders if f.list == l])
+            used = F.list_used(self.task, l)
+            ttk.Label(box, text="%s (HISTOGRAM_%d)" % (F.list_label(self.task, self.templates, l), l),
+                      style="Overridden.TLabel" if used else "TLabel").grid(row=2 * r, column=0, sticky="w",
+                                                                           pady=(4, 0))
+            line = ttk.Frame(box)
+            line.grid(row=2 * r, column=1, sticky="w", pady=(4, 0))
+            self._list_flag(line, l, "USE", "Use")
+            nE = len(F.choices(self.task).get("EVENT_FILTER", []))
+            nP = len(F.choices(self.task).get("PARTICLE_FILTER", []))
+            product = "%d \u00d7 %d%s" % (nE, nP, " \u00d7 %d" % nP if n == nE * nP * nP and nP > 1 else "")
+            ttk.Label(line, text=("%s = %d folders" % (product, n)) if used else "no folder",
+                      foreground="gray40").pack(side=tk.LEFT, padx=(4, 16))
+            self._list_flag(line, l, "CREATE", "Create", used)
+            self._list_flag(line, l, "EXPORT:FORCE_REWRITE", "Overwrite the export file", used)
+            files = ttk.Frame(box)
+            files.grid(row=2 * r + 1, column=1, sticky="w", pady=(0, 2))
+            for action, word in (("IMPORT", "from"), ("EXPORT", "to")):
+                self._list_flag(files, l, action, action.capitalize(), used)
+                self._list_entry(files, l, action + ":PATH", word, 8, used)
+                self._list_entry(files, l, action + ":FILE_NAME", "file", 13, used)
+                ttk.Frame(files, width=6).pack(side=tk.LEFT)
+
+    def _list_flag(self, parent, list_index, name, label, enabled=True):
+        p = self.task.param("HISTOGRAM_%d:%s" % (list_index, name))
+        if p is None:
+            return
+        var = tk.BooleanVar(self, value=p.value == "true")
+        ttk.Checkbutton(parent, text=label, variable=var, state=tk.NORMAL if enabled else tk.DISABLED,
+                        command=lambda: self._set_list(p, "true" if var.get() else "false", name == "USE")).pack(
+            side=tk.LEFT, padx=(0, 6))
+
+    def _list_entry(self, parent, list_index, name, label, width, enabled=True):
+        p = self.task.param("HISTOGRAM_%d:%s" % (list_index, name))
+        if p is None:
+            return
+        ttk.Label(parent, text=label).pack(side=tk.LEFT, padx=(0, 2))
+        var = tk.StringVar(self, value=p.value)
+        ttk.Entry(parent, textvariable=var, width=width, state=tk.NORMAL if enabled else tk.DISABLED).pack(
+            side=tk.LEFT, padx=(0, 6))
+        var.trace_add("write", lambda *a: self._set_list(p, var.get().strip(), False))
+
+    def _set_list(self, p, value, remake):
+        if p.value != value:
+            p.value = value
+            if remake:                      # used or not: its folders appear or go
+                self._make_histograms()
+            self._changed()
 
     def _set_prefix(self, prefix, entry):
         options = F.histogram_options(self.task)
@@ -431,13 +482,3 @@ class TaskDialog(tk.Toplevel):
         self._mark_folder(combination)
         self._show_binning()
         self._changed()
-
-    # -------------------------------------------------------------------------------------------------- files
-    def _make_files(self):
-        if self.files_tab is None:
-            return
-        ttk.Label(self.files_tab, text="Lists of folders: HISTOGRAM_1 (histograms), HISTOGRAM_2 (derived histograms)%s."
-                  " Set CREATE (or IMPORT) for the histograms to be filled, EXPORT and a file name to save them."
-                  % (", HISTOGRAM_3 and HISTOGRAM_4 (the same for single particles)" if self.layout == "pair" else ""),
-                  foreground="gray40", wraplength=960, justify=tk.LEFT).pack(anchor="w", pady=(0, 6))
-        self._columns(self.files_tab, file_parameters(self.task))

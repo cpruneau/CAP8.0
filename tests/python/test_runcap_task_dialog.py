@@ -43,6 +43,7 @@ class TestDialog(unittest.TestCase):
     def setUp(self):
         self.task = TEMPLATES["CAP::ParticleSingleAnalyzer"].clone()
         self.task.name = "PSA"
+        F.default_histogram_settings(self.task, TEMPLATES)
         self.library = library()
         self.changes, self.filters_shown = [], []
         self.dialog = D.TaskDialog(_root, self.task, TEMPLATES, self.library, HELPERS, rename=self.rename,
@@ -60,11 +61,10 @@ class TestDialog(unittest.TestCase):
 
     def test_tabs(self):
         tabs = [self.dialog.notebook.tab(t, "text") for t in self.dialog.notebook.tabs()]
-        self.assertEqual(tabs, ["General", "Histograms", "Histogram files"])
+        self.assertEqual(tabs, ["General", "Histograms"])
         general = D.general_parameters(self.task, TEMPLATES)
         self.assertFalse(any(F.MANAGED_KEY.match(p.key) or p.key.startswith("HISTOGRAM") for p in general))
         self.assertFalse(any(p.key.startswith(("EVENT_FILTER:", "PARTICLE_EFFICIENCY:")) for p in general))
-        self.assertTrue(any(p.key == "HISTOGRAM_1:CREATE" for p in D.file_parameters(self.task)))
         generator = TEMPLATES["CAP::BasicEventGen"].clone()
         dialog = D.TaskDialog(_root, generator, TEMPLATES, self.library, HELPERS, self.rename, lambda: None,
                               lambda k: None)
@@ -138,6 +138,19 @@ class TestDialog(unittest.TestCase):
         self.library.add(F.FilterDef("PARTICLE_FILTER", "Pr"))
         self.dialog.library_changed()
         self.assertIn("Pr", self.dialog._names["PARTICLE_FILTER"])
+
+    def test_lists(self):
+        """The Use toggle of a list: its folders appear (n*m) or go."""
+        self.dialog._set_count("EVENT_FILTER", 2)
+        self.dialog._set_count("PARTICLE_FILTER", 3)
+        self.assertEqual(len(self.dialog._list_entries), 1)             # same binning: the defaults only
+        self.dialog._set_same(False)
+        self.assertEqual(len(self.dialog._list_entries), 1 + 6)         # 2 x 3 folders of histograms
+        self.dialog._set_list(self.task.param("HISTOGRAM_1:USE"), "false", True)
+        self.assertEqual(len(self.dialog._list_entries), 1)
+        self.dialog._set_list(self.task.param("HISTOGRAM_2:USE"), "true", True)
+        self.assertEqual(len(self.dialog._list_entries), 1)             # derived folders follow their folders
+        self.assertIn("derived histograms are used but neither created nor imported", self.dialog.problems.get())
 
 
 if __name__ == "__main__":
