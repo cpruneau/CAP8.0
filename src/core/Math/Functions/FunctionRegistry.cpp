@@ -32,6 +32,8 @@
 #include "Exponential.hpp"
 #include "OrthogonalSeries.hpp"
 #include "BesselFunction.hpp"
+#include "Normal2D.hpp"
+#include "Polynomial2D.hpp"
 #include "ParameterizedComposite.hpp"
 #include "FileSystem.hpp"
 #include "XmlDocument.hpp"
@@ -88,6 +90,13 @@ namespace CAP
       add<BesselYFunction>("BesselY");
       add<BesselIFunction>("BesselI");
       add<BesselKFunction>("BesselK");
+      add<Normal2D>("Normal2D");
+      add("Polynomial2D", typeid(Polynomial2D), [](unsigned int n) -> ParameterizedFunction *
+          {
+          if (n == 0) return new Polynomial2D(2);
+          for (unsigned int d=0; d<=9; d++) if (Polynomial2D::nCoefficients(d) + 4 == n) return new Polynomial2D(d);
+          return nullptr;
+          });
     }
 
     //! A series made with a number of parameters: N+1 coefficients and its mapping (0: degree 3).
@@ -257,6 +266,7 @@ namespace CAP
       if (!c) continue;
       XmlElement & element = root.addChild("Composite");
       element.setAttribute("name", name);
+      if (c->operation() == ParameterizedComposite::kProduct) element.setAttribute("operation", "product");
       for (unsigned int k=0; k<c->nComponents(); k++)
         {
         const ParameterizedFunction & f = c->component(k);
@@ -297,7 +307,8 @@ namespace CAP
     String name = element->attribute("name", "");
     try
       {
-      ParameterizedComposite model;
+      ParameterizedComposite model(element->attribute("operation", "sum") == "product" ? ParameterizedComposite::kProduct
+                                                                                          : ParameterizedComposite::kSum);
       for (const XmlElement * component : element->children("Component"))
         {
         String type = component->attribute("type", "");

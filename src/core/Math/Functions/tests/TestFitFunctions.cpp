@@ -27,6 +27,10 @@
 #include "BesselFunction.hpp"
 #include "BesselFunctions.hpp"
 #include "BinaryIO.hpp"
+#include "CompositeFunction.hpp"
+#include "Constant.hpp"
+#include "Exponential.hpp"
+#include "Normal2D.hpp"
 #include "DataPointsVector.hpp"
 #include "Fitter.hpp"
 #include "FunctionRegistry.hpp"
@@ -259,6 +263,67 @@ int main()
     CHECK(read.nFits() == 1 && dynamic_cast<const ParameterizedComposite*>(read.fit(0).function.get())
           && FunctionRegistry::typeName(*read.fit(0).function) == "Gauss+Line"
           && near(read.fit(0).valueAt(2.0), points.fit(0).valueAt(2.0), 1E-12));
+  }
+
+  // ---- CompositeFunction: sums, products f(x) g(y), pointwise products
+  {
+    Linear line(1.0, 2.0);
+    Constant offset(3.0);
+    CompositeFunction sum({ &line, &offset });
+    CHECK(sum.operation() == CompositeFunction::kSum && near(sum.evaluateAt(2.0), 8.0, 1E-14) && near(sum.derivativeAt(2.0), 2.0, 1E-8)
+          && near(sum.integralInRange(0.0, 1.0), 5.0, 1E-10));
+
+    Normal gx(1.0, 0.0, 1.0);
+    Exponential ey(2.0, -0.5);
+    CompositeFunction product = CompositeFunction::product(&gx, &ey);
+    CHECK(product.operation() == CompositeFunction::kProduct && product.rank() == 2 && product.nFunctions() == 2);
+    CHECK(near(product.evaluateAt(1.0, 2.0), std::exp(-0.5)*2.0*std::exp(-1.0), 1E-14)
+          && product.evaluateAt(std::vector<double>{ 1.0, 2.0 }) == product.evaluateAt(1.0, 2.0));
+    CHECK(near(product.integralInRange(-1.0, 1.0, 0.0, 4.0), gx.integralInRange(-1.0, 1.0)*ey.integralInRange(0.0, 4.0), 1E-12));
+    bool thrown = false;
+    try { product.evaluateAt(1.0); } catch (const MathException &) { thrown = true; }
+    CHECK(thrown);
+    Normal2D peak(1.0, 0.0, 0.0, 1.0, 2.0, 0.0);
+    CompositeFunction three(CompositeFunction::kProduct);                   // a function of x and y times one of z
+    three.addFunction(&peak);
+    three.addFunction(&ey);
+    CHECK(three.rank() == 3 && near(three.evaluateAt(0.5, 1.0, 2.0), peak.evaluateAt(0.5, 1.0)*ey.evaluateAt(2.0), 1E-14));
+    Legendre p2(2), p1(1);                                                   // components without parameters
+    CompositeFunction legendre = CompositeFunction::product(&p2, &p1);
+    CHECK(near(legendre.evaluateAt(0.5, 0.3), Legendre::value(2, 0.5)*0.3, 1E-14)
+          && std::fabs(legendre.integralInRange(-1.0, 1.0, 0.0, 1.0)) < 1E-8);  // the integral of P2 over [-1, 1] is 0
+    thrown = false;
+    try { product.setFunction(1, &peak); } catch (const MathException &) { thrown = true; }
+    CHECK(thrown);                                                           // a function of as many variables
+    product.setFunction(1, &offset);
+    CHECK(near(product.evaluateAt(0.0, 9.0), 3.0, 1E-14));
+    product.setFunction(1, &ey);
+    CompositeFunction copy(product);
+    CHECK(copy.operation() == CompositeFunction::kProduct && copy.rank() == 2);
+
+    Linear rising(1.0, 1.0);
+    Exponential decay(1.0, -1.0);
+    CompositeFunction pointwise({ &rising, &decay }, CompositeFunction::kPointwiseProduct);
+    double x = 0.7;
+    CHECK(pointwise.rank() == 1 && near(pointwise.evaluateAt(x), (1 + x)*std::exp(-x), 1E-14)
+          && near(pointwise.derivativeAt(x), -x*std::exp(-x), 1E-8)                       // product rule
+          && near(pointwise.integralInRange(0.0, 2.0), 2.0 - 4.0*std::exp(-2.0), 1E-8));   // numerical
+    thrown = false;
+    try { pointwise.addFunction(&peak); } catch (const MathException &) { thrown = true; }
+    CHECK(thrown && pointwise.nFunctions() == 2);
+
+    CompositeFunction changed({ &rising, &decay });                         // a sum becomes a product of x and y
+    changed.setOperation(CompositeFunction::kProduct);
+    CHECK(changed.rank() == 2 && near(changed.evaluateAt(1.0, 2.0), 2.0*std::exp(-2.0), 1E-14));
+    changed.setOperation(CompositeFunction::kSum);
+    CHECK(changed.rank() == 1 && near(changed.evaluateAt(1.0), 2.0 + std::exp(-1.0), 1E-14));
+    thrown = false;
+    try { three.setOperation(CompositeFunction::kSum); } catch (const MathException &) { thrown = true; }
+    CHECK(thrown && three.operation() == CompositeFunction::kProduct && three.rank() == 3);   // unchanged
+    CompositeFunction single = CompositeFunction(std::vector<Function*>{ &decay }, CompositeFunction::kProduct);
+    CHECK(near(single.derivativeAt(x), -std::exp(-x), 1E-8));
+    three.clearFunctions();
+    CHECK(three.rank() == 1 && three.evaluateAt(4.0) == 1.0);               // an empty product
   }
 
   std::printf("TestFitFunctions: %d checks, %d failed\n", nChecks, nFailures);

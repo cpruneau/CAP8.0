@@ -15,6 +15,8 @@
 #include <cmath>
 #include "GraphRenderer.hpp"
 #include "Graph.hpp"
+#include "FitRecord.hpp"
+#include "ParameterizedFunction.hpp"
 #include "Painter.hpp"
 #include "Projection3D.hpp"
 #include "DataPoints.hpp"
@@ -33,6 +35,8 @@ namespace CAP
     double depth;                  // distance from the eye
     Color  color;                  // fill
     bool   outline;                // with the lines of the cells
+    bool   filled = true;          // filled (otherwise only its outline, in line: a cell of the mesh of a fit)
+    LineAttributes line;           // outline of an unfilled face
   };
 
   Color shade(const Color & c, double f) { return Color(float(c.red*f), float(c.green*f), float(c.blue*f), c.alpha); }
@@ -176,11 +180,59 @@ namespace CAP
           }
       }
     }
+  // fits of rank 2 of the maps: wire meshes in the lines of the fits, sorted with the faces of the data (those in
+  // front hide them)
+  for (const auto & item : graph.items())
+    {
+    if (!item.isMap()) continue;
+    for (unsigned int k=0; k<item.nFits(); k++)
+      {
+      const MATH::FitRecord * fit = graph.drawnFit(item, k);
+      if (!fit) continue;
+      double x0 = view.xMinimum, x1 = view.xMaximum, y0 = view.yMinimum, y1 = view.yMaximum;
+      if (!item.extendFits() && fit->low.size() == 2)
+        {
+        x0 = std::max(x0, fit->low[0]); x1 = std::min(x1, fit->high[0]);
+        y0 = std::max(y0, fit->low[1]); y1 = std::min(y1, fit->high[1]);
+        }
+      if (!(x1 > x0) || !(y1 > y0)) continue;
+      const int n = 30;
+      Grid2D grid = Grid2D::fromFunction(*fit->function, x0, x1, n, y0, y1, n, view.logX, view.logY);
+      if (grid.isEmpty()) continue;
+      const std::vector<double> & xEdges = grid.xEdges(), & yEdges = grid.yEdges();
+      LineAttributes line = item.fitLineAttributes(k);
+      line.setWidth(std::max(0.75f, 0.6f*line.width()));
+      for (int j=0; j+1<grid.nY(); j++)
+        for (int i=0; i+1<grid.nX(); i++)
+          {
+          double v[4] = { grid.value(i, j), grid.value(i+1, j), grid.value(i+1, j+1), grid.value(i, j+1) };
+          if (!valid(v[0]) || !valid(v[1]) || !valid(v[2]) || !valid(v[3])) continue;
+          double cx0 = projection.fraction(0, 0.5*(xEdges[i] + xEdges[i+1])), cx1 = projection.fraction(0, 0.5*(xEdges[i+1] + xEdges[i+2]));
+          double cy0 = projection.fraction(1, 0.5*(yEdges[j] + yEdges[j+1])), cy1 = projection.fraction(1, 0.5*(yEdges[j+1] + yEdges[j+2]));
+          double px[4] = { cx0, cx1, cx1, cx0 }, py[4] = { cy0, cy0, cy1, cy1 }, pz[4];
+          double depth = 0;
+          double highest = 0;
+          for (int c=0; c<4; c++)
+            {
+            pz[c] = clamp01(projection.fraction(2, v[c]));
+            highest = std::max(highest, pz[c]);
+            depth += 0.25*projection.depth(px[c], py[c], pz[c]);
+            }
+          if (highest < 0.01) continue;                     // cells on the floor would only cover it
+          Face face{ { at(px[0], py[0], pz[0]), at(px[1], py[1], pz[1]), at(px[2], py[2], pz[2]), at(px[3], py[3], pz[3]) },
+                     depth, background, true };
+          face.filled = false;
+          face.line = line;
+          faces.push_back(face);
+          }
+      }
+    }
   std::stable_sort(faces.begin(), faces.end(), [](const Face & a, const Face & b) { return a.depth > b.depth; });
   LineAttributes cellLine;
   cellLine.set(1, 0.45, 1, 0.5);
   for (const auto & face : faces)
     {
+    if (!face.filled) { painter.drawLine(closed(face.points), face.line); continue; }
     painter.fillPolygon(face.points, face.color);
     if (face.outline) painter.drawLine(closed(face.points), cellLine);
     }

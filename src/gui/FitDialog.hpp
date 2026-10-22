@@ -33,23 +33,25 @@ namespace CAP
   {
 
   //!
-  //! @brief The Fit window of CapGui: fits a function to an object of rank 1 of the selected graph, and attaches the
+  //! @brief The Fit window of CapGui: fits a function to an object of one or two variables of the selected graph, and attaches the
   //! fit to it (see MATH::Fitter, MATH::FitRecord).
   //!
   //! The window chooses:
-  //!  - the object fitted: data points, a histogram, or a function (fitted through samples of it over the range);
+  //!  - the object fitted, of one or two variables: data points, a histogram (a map, for two), or a function (fitted
+  //!    through samples of it over the range, on a grid for two variables);
   //!  - the function, among those of MATH::FunctionRegistry: the functions of CAP (polynomials, Normal, LogNormal,
   //!    Exponential, series of Legendre, Chebyshev, Hermite or Laguerre polynomials, Bessel functions J, Y, I, K),
   //!    classes registered by programs, and composites (sums of registered functions, MATH::ParameterizedComposite),
-  //!    with the degree of a Polynomial or of a series; a series is mapped onto the range of the fit;
-  //!  - new composites, made in the window ("Composite..."): they are registered and written to
+  //!    with the degree of a Polynomial, a Polynomial2D or a series; only the functions of the rank of the object are
+  //!    offered; a series or a Polynomial2D is mapped onto the range of the fit;
+  //!  - new composites, sums or products f(x) g(y), made in the window ("Composite..."): they are registered and written to
   //!    MATH::FunctionRegistry::defaultCompositesFile(), read again when CapGui starts (and where programs can put
   //!    theirs); a composite can be removed, or its current parameters kept as its starting values;
   //!  - the starting value of each parameter, whether it is fixed, and its bounds; Estimate sets the starting values
   //!    from the data (MATH::Fitter::estimate());
   //!  - the statistic: chi square, or the Poisson likelihood for counts (histograms);
-  //!  - the range in x (by default that of the object; "View" takes the x range shown), and for a function the
-  //!    number of samples;
+  //!  - the range in x (and y), by default that of the object ("View" takes the range shown), and for a function the
+  //!    number of samples along each axis; for a histogram, whether the function is averaged over each bin;
   //!  - the method: Levenberg-Marquardt from the starting values, or a global search (differential evolution, needs
   //!    bounds on the free parameters) refined by Levenberg-Marquardt;
   //!  - the label of the fit.
@@ -102,7 +104,7 @@ namespace CAP
   struct ComponentDraft
   {
     String type = "Normal";   //!< registered name
-    int degree = 2;   //!< degree of a Polynomial or a series
+    int degree = 2;   //!< degree of a Polynomial, a Polynomial2D or a series
     String label;   //!< label
   };
 
@@ -116,8 +118,10 @@ namespace CAP
   std::unique_ptr<MATH::ParameterizedFunction> _function;   //!< function fitted, with the starting values
   int  _statistic;   //!< 0 chi square, 1 Poisson likelihood
   bool _search;   //!< global search before Levenberg-Marquardt
-  double _low;   //!< range of the fit
-  double _high;   //!< range of the fit
+  unsigned int _rank = 1;   //!< rank of the object fitted (1 or 2)
+  std::vector<double> _low;   //!< range of the fit, one lower end per variable
+  std::vector<double> _high;   //!< range of the fit, one upper end per variable
+  bool _binAveraging = false;   //!< average the function over the bins of a histogram
   int  _samples;   //!< samples of a function fitted
   String _label;   //!< label of the fit
   String _message;   //!< outcome of the last action
@@ -125,6 +129,7 @@ namespace CAP
   bool _builderRequested = false;   //!< open the composite builder at the next frame
   String _compositeName;   //!< name of the composite being made
   std::vector<ComponentDraft> _drafts;   //!< components of the composite being made
+  int _operation = 0;   //!< the composite being made is a sum (0) or a product (1)
   String _builderMessage;   //!< problem of the composite being made
   };
 

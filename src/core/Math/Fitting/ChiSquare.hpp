@@ -85,6 +85,11 @@ namespace CAP
   void setErrorMode(Chi2ErrorMode errorMode) { _errorMode = errorMode; }
   //! @brief Include (or not) the x uncertainties, with the effective variance method. @param useXErrors true to include them
   void setUseXErrors(bool useXErrors) { _useXErrors = useXErrors; }
+  //! @brief Compare the data of a histogram to the average of the function over each bin (see binAverage()) rather
+  //! than to its value at the center of the bin. @param v average
+  void setBinAveraging(bool v) { _binAveraging = v; }
+  //! @brief Whether the function is averaged over the bins of a histogram. @return true if so
+  bool binAveraging() const { return _binAveraging; }
 
   //! @brief Function compared to the data. @return pointer to the function (nullptr if not set)
   const ParameterizedFunction * function() const { return _function; }
@@ -166,8 +171,9 @@ namespace CAP
   const DataPoints * _data;            //!<! data points (not owned, not streamed)
   Chi2ErrorMode _errorMode;                   //!< y uncertainty used for each point
   bool _useXErrors;                       //!< whether the x uncertainties are included
+  bool _binAveraging;                     //!< the function is averaged over the bins of a histogram
 
-  ClassDef(ChiSquare,1)
+  ClassDef(ChiSquare,2)
   };
 
   } // namespace MATH

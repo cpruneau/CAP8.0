@@ -15,8 +15,8 @@ namespace CAP
 {
 
 //!
-//! @brief XML format of the particle database: the content of particles.data and decays.data (see ParticleDbParser)
-//! in one file, the decay modes of a particle nested in its PARTICLE element.
+//! @brief XML format of the particle database (DB/ParticleData/ParticleDb.xml): the particles and their decay modes in
+//! one file, the decay modes of a particle nested in its PARTICLE element.
 //!
 //! @code
 //!   <CAP version="1" type="particleDb">
@@ -31,13 +31,13 @@ namespace CAP
 //!   </CAP>
 //! @endcode
 //! - massUncertainty, width and widthUncertainty default to 0, clebschGordan to false; the other attributes are required.
-//! - branchingRatio is the declared ratio: with clebschGordan="true" it is completed by the Clebsch-Gordan coefficient
-//!   when read, exactly as for decays.data (ParticleDbParser::addDecayMode()).
+//! - branchingRatio is the declared ratio: with clebschGordan="true" the ratio used to generate decays is completed by
+//!   the isospin Clebsch-Gordan coefficient when read (see addDecayMode()).
 //! - products lists 2 to 4 particle names separated by spaces; a product may be defined anywhere in the file.
 //! - Unknown elements or attributes, duplicate particle names and unknown products are errors.
 //!
-//! Reading appends the particles to the database, then maps the antiparticles and sets up the decay generators
-//! (ParticleDbParser::finishDb()). Writing a database read from either format reproduces its content.
+//! Reading appends the particles to the database, then maps the antiparticles and sets up the decay generators.
+//! Writing a database reproduces the content of the file it was read from.
 //!
 class ParticleDbXml
 {
@@ -62,6 +62,24 @@ public:
 
   //! @brief Whether a file name designates an XML database (extension .xml). @param fileName file name @return true if so
   static bool isXmlFileName(const String & fileName);
+
+  //!
+  //! @brief Add a decay mode to a particle type. The declared branching ratio and the Clebsch-Gordan flag are kept in
+  //! the decay mode (so that the database is written back unchanged); the ratio used to generate decays is the
+  //! declared one or, if clebschGordan is true, the declared one multiplied by the square of the isospin
+  //! Clebsch-Gordan coefficient (and by 2 for two products of same spin and mass, different isospin3 and same
+  //! strangeness and charm). @param parent decaying particle type @param children products (2 to 4)
+  //! @param declaredBranchingRatio ratio as given in the database @param clebschGordan whether to complete the ratio
+  //! @throws Exception for fewer than 2 or more than 4 products
+  //!
+  static void addDecayMode(ParticleType * parent, const std::vector<ParticleType*> & children,
+                           double declaredBranchingRatio, bool clebschGordan);
+  //! @brief Clebsch-Gordan coefficient <j1 m1 j2 m2 | J M>.
+  static double clebschGordan(double aJot,  double aEm,
+                              double aJot1, double aEm1,
+                              double aJot2, double aEm2);
+  //! @brief Triangle coefficient used by clebschGordan().
+  static double deltaJ(double aJot1, double aJot2, double aJot);
 
 private:
   static XmlDocument createDocument(const ParticleDb & particleDb);

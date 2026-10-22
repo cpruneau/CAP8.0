@@ -220,7 +220,8 @@ namespace CAP
   //! @brief Cells of point k after its index ("%.6g"): coordinates and their uncertainties, value, statistical and
   //! systematic uncertainties. @param k index @return cells
   std::vector<String> rowValues(unsigned int k) const;
-  //! @brief Names of the columns of the fits: "f(x) <label>" and, if asked, "pull <label>" for each fit.
+  //! @brief Names of the columns of the fits: "f(x) <label>" ("f(x,y) <label>" for rank 2) and, if asked,
+  //! "pull <label>" for each fit.
   //! @param pulls with the pulls @return names
   std::vector<String> fitColumnNames(bool pulls=true) const;
   //!

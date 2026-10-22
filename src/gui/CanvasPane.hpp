@@ -96,6 +96,10 @@ namespace CAP
   std::function<void(const MATH::DataPoints * data, const String & label)> onShowData;
   //! Called by "Fit..." in the context menu of a graph (made the selected graph), with the index of the item to fit (-1: any).
   std::function<void(int item)> onFit;
+  //! Called by "Residual Map" in the context menu of a graph, for fit k of data points of rank 2.
+  std::function<void(const MATH::DataPoints * data, unsigned int fit)> onResidualMap;
+  //! Called by "Projections" in the context menu of a graph, for a histogram of rank 2 with fits.
+  std::function<void(const MATH::DataPoints * data)> onProjections;
 
   protected:
 

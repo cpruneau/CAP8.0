@@ -247,8 +247,6 @@ namespace CAP
 
   //! @brief Does nothing. @param file text file
   virtual void loadFromAscii(std::ifstream & file __attribute__((unused))) {}
-  //! @brief Does nothing. @param file1 text file @param file2 text file
-  virtual void loadFromAscii2(std::ifstream & file1 __attribute__((unused)), std::ifstream & file2 __attribute__((unused))) {}
   //! @brief Does nothing. @param file text file
   virtual void saveToAscii(std::ofstream & file __attribute__((unused))) {}
   //! @}

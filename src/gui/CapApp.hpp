@@ -134,6 +134,18 @@ namespace CAP
   bool showData(const ObjectReference & object);
   //! @brief Show the values of data points in a new data pane. @param data data points @param label name shown
   void showDataTable(const MATH::DataPoints * data, const String & label);
+  //!
+  //! @brief Show the map of the pulls of data points of rank 2 to one of their fits (MATH::residualMap() for a
+  //! histogram, MATH::residuals() otherwise) in a new canvas pane, with the diverging palette (undoable).
+  //! @param data data points of rank 2 @param fit index of a fit of rank 2
+  //!
+  void showResidualMap(const MATH::DataPoints * data, unsigned int fit);
+  //!
+  //! @brief Show the projections of a histogram of rank 2 on x and y, with its fits of rank 2 projected
+  //! (MATH::projection()), side by side in a new canvas pane, with the panel of the residuals (undoable).
+  //! @param data histogram of rank 2
+  //!
+  void showProjections(const MATH::DataPoints * data);
   //! @brief Show the objects of a folder, one per graph of the current canvas (divided as needed).
   //! @param file file id @param folderPath folder in the file ("" for the top)
   void showFolder(int file, const String & folderPath);

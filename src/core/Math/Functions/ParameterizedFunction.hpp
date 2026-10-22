@@ -129,6 +129,13 @@ namespace CAP
   //!
   virtual void adaptToRange(double low, double high) { (void)low; (void)high; }
   //!
+  //! @brief Adapt the function to a box of its variables (any rank): by default, for rank 1, adaptToRange(low[0],
+  //! high[0]); functions of several variables mapped onto a standard box (e.g. Polynomial2D) set their mapping.
+  //! @param low lower ends, one per variable @param high upper ends
+  //!
+  virtual void adaptToRange(const std::vector<double> & low, const std::vector<double> & high)
+  { if (low.size() == 1 && high.size() == 1) adaptToRange(low[0], high[0]); }
+  //!
   //! @brief Name under which the function itself was registered in FunctionRegistry (e.g. a composite registered by
   //! FunctionRegistry::registerComposite()), or empty when its class is what identifies it. @return name
   //!

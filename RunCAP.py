@@ -20,10 +20,17 @@ The window has four parts, from top to bottom:
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
     under the workflow reorder the tasks and nest them: a nested task is a subtask of the task above it (e.g. the
     event generator and the analyzers inside an EventIterator, which executes them for every event);
-  * the parameters: "Setup Tasks" makes one tab per task of the workflow, with the parameters of the task in two
-    scrollable columns (name and type, editable value). Booleans have a true/false menu, integers and reals fields
-    that only accept numbers, strings a free text field. Each tab also holds the name of the task (unique in the
-    workflow) and its report level;
+  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, defined once, created
+    by the task FilterCreator (written first in the workflow file, with one subtask per kind) and used by the tasks by
+    name. One tab per kind (event and particle filters, event and particle efficiencies and
+    smearers), the number of objects of that kind, and for each its name and title and its conditions (a range, two
+    ranges, a value or a flag of one quantity) or binning parameters;
+  * the tasks: one line per task of the workflow, in run order, with the filters it uses, the number of its
+    histogram folders and its first problem. Double-clicking a task (here or in the workflow), or Configure task,
+    opens its window (RunCAPTaskDialog.py): General (name, report level, the filters, corrections, events and particle
+    databases it uses, parameters) and Histograms (for each list of folders: use, creation, import, export; a used
+    list has one folder per combination of the event and particle filters; prefix of the folder names, same binning
+    for all folders or binning folder by folder). Booleans have a true/false menu, integers and reals fields that only accept numbers;
   * the output of CAP, which can be saved to a log file.
 
 Available tasks: the XML templates written by "bin/CAP --xml-templates" (one file per task class, listing every
@@ -36,6 +43,12 @@ Workflow files: a CAP configuration file (root element CAP, TASK elements, see T
 changed since (or never saved), a temporary file. The job is run as:
     <CAP>/bin/CAP <root task> <directory of the file>/ <file name> <output directory>/
 in the output directory, with the environment of SetupCAP.sh (taken from BuildCAP.py's settings).
+
+Filters (RunCAPFilters.py): the event and particle filters, efficiencies and smearers of a workflow form a library
+shared by its tasks; each task chooses its objects by name, and the analyzers get one histogram folder per combination
+of their filters. write_workflow() writes their keys in the tasks (the first task using an object defines it) and the
+library in a RUNCAP element next to the TASK element; load_workflow_with_filters() reads them back, also from files
+without RUNCAP element.
 
 The settings are saved in <CAP>/.RunCAP.json. Requires Python 3.7+ with tkinter (on macOS with Homebrew Python:
 brew install python-tk).
@@ -55,6 +68,8 @@ import tempfile
 import threading
 import time
 import xml.etree.ElementTree as ET
+
+import RunCAPFilters as filters
 
 CAP_DIR = os.path.dirname(os.path.abspath(__file__))
 BIN_DIR = os.path.join(CAP_DIR, "bin")
@@ -225,7 +240,7 @@ def task_from_element(element, templates, warnings):
     for p in read_parameters(element):
         existing = t.param(p.key)
         if existing is None:
-            if t.known:
+            if t.known and not filters.MANAGED_KEY.match(p.key):
                 warnings.append("Task %s: parameter %s is not defined by class %s (kept)." % (name, p.key, cls))
             t.params.append(p)
         else:
@@ -303,11 +318,36 @@ def _indent(element, level=0):
         element.tail = pad
 
 
-def write_workflow(path, tasks):
-    """Write the workflow to path. Returns the name of the task to run."""
-    top = root_task(tasks)
+def load_workflow_with_filters(path, templates):
+    """Top-level tasks of a workflow file with their filters (RunCAPFilters): the library of filters, efficiencies and
+    smearers (from the RUNCAP element of the file, if any, and the objects defined by the tasks), the choices of the
+    tasks (task.filters) and their histogram options (task.histograms); the keys of these objects are removed from the
+    parameters of the tasks (write_workflow() writes them again). Returns tasks, library, warnings."""
+    tasks, warnings = load_workflow(path, templates)
+    library = None
+    element = ET.parse(path).getroot().find("RUNCAP")
+    if element is not None:
+        library, more = filters.read_runcap_element(element, tasks)
+        warnings += more
+    library, more = filters.extract_choices(tasks, templates, library)
+    tasks = filters.remove_creator(tasks, library)
+    more += filters.update_database_files(library)
+    return tasks, library, warnings + more
+
+
+def write_workflow(path, tasks, library=None, templates=None):
+    """Write the workflow to path. With a library (RunCAPFilters.FilterLibrary), the keys of the filters, efficiencies,
+    smearers and histogram folders chosen by the tasks are written in their parameters (the tasks are unchanged), and
+    the library in a RUNCAP element. Returns the name of the task to run."""
+    if library is not None:
+        written = filters.prepared_for_writing(tasks, library, templates or {}, Param, TaskConfig)
+    else:
+        written = tasks
+    top = root_task(written)
     document = ET.Element("CAP", {"version": "1"})
     document.append(task_to_element(top))
+    if library is not None:
+        document.append(filters.runcap_element(library, written))
     _indent(document)
     with open(path, "wb") as f:
         f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -328,6 +368,9 @@ def check_workflow(tasks):
         errors.append("The name %s is reserved for the task holding a workflow of several tasks." % WRAPPER_NAME)
     for name in sorted(set(n for n in names if names.count(n) > 1)):
         errors.append("Several tasks are named %s: task names must be unique." % name)
+    reserved = {filters.CREATOR_NAME} | {name for name, _ in filters.CREATORS.values()}
+    for name in sorted(reserved & set(names)):
+        errors.append("The name %s is reserved for the task creating the filters (FilterCreator)." % name)
     for t in all_tasks(tasks):
         if not NAME_FULL.fullmatch(t.name):
             errors.append("Invalid task name '%s' (letters, digits, _ . -; no spaces or colons)." % t.name)
@@ -530,7 +573,9 @@ def run_gui(initial_file=None, hook=None):
             self.settings = load_settings()
             self.templates = {}
             self.items = {}             # workflow tree item -> TaskConfig
-            self.tabs = {}              # workflow tree item -> tab frame
+            self.dialogs = {}           # workflow tree item -> window of the task (RunCAPTaskDialog)
+            self.library = filters.FilterLibrary.with_defaults()   # objects of the workflow (Filters pane)
+            self.filters_panel = None       # Filters pane (RunCAPFiltersGui.FiltersPanel)
             self.saved_path = ""        # file of the last save or load
             self.dirty = False
             self.process = None
@@ -554,11 +599,14 @@ def run_gui(initial_file=None, hook=None):
             panes = ttk.PanedWindow(root, orient=tk.VERTICAL)
             panes.pack(fill=tk.BOTH, expand=True, padx=6, pady=(0, 6))
             self.panes = panes
-            selection, parameters, output = ttk.Frame(panes), ttk.Frame(panes), ttk.Frame(panes)
+            selection, filter_pane = ttk.Frame(panes), ttk.Frame(panes)
+            parameters, output = ttk.Frame(panes), ttk.Frame(panes)
             panes.add(selection, weight=2)
-            panes.add(parameters, weight=3)
+            panes.add(filter_pane, weight=3)
+            panes.add(parameters, weight=2)
             panes.add(output, weight=2)
             self._make_selection(selection)
+            self._make_filters(filter_pane)
             self._make_parameters(parameters)
             self._make_output(output)
             self._update_arrows()
@@ -570,12 +618,13 @@ def run_gui(initial_file=None, hook=None):
             root.after(200, self._place_sashes)
 
         def _place_sashes(self):
-            # initial heights: tasks 30%, parameters 45%, output 25%
+            # initial heights: workflow 24%, filters 36%, tasks 20%, output 20%
             self.root.update_idletasks()
             h = self.panes.winfo_height()
             if h > 100:
-                self.panes.sashpos(0, int(h * 0.30))
-                self.panes.sashpos(1, int(h * 0.75))
+                self.panes.sashpos(0, int(h * 0.24))
+                self.panes.sashpos(1, int(h * 0.60))
+                self.panes.sashpos(2, int(h * 0.80))
 
         def _dialog(self, kind, **options):
             """File dialog of filedialog.<kind>. On macOS the file types are left out: Tk's native panel can abort
@@ -697,7 +746,10 @@ def run_gui(initial_file=None, hook=None):
             text = self.filter.get().strip().lower()
             self.available.delete(0, tk.END)
             self.available_classes = []
+            creators = {filters.CREATOR_CLASS} | {cls for _, cls in filters.CREATORS.values()}
             for cls in sorted(self.templates, key=lambda c: short_class_name(c).lower()):
+                if cls in creators:
+                    continue            # FilterCreator is written from the Filters pane
                 name = short_class_name(cls)
                 if text and text not in name.lower():
                     continue
@@ -717,8 +769,9 @@ def run_gui(initial_file=None, hook=None):
 
         def _on_tree_double_click(self, event):
             item = self.tree.identify_row(event.y)
-            if item in self.tabs:
-                self.notebook.select(self.tabs[item])
+            if item:
+                self.configure_task(item)
+                return "break"          # no open/close of the subtasks
 
         def _update_arrows(self):
             self.right_arrow.set_enabled(bool(self.available.curselection()))
@@ -750,9 +803,13 @@ def run_gui(initial_file=None, hook=None):
                 return
             new = []
             for cls in selected:
-                new.append(self._insert_task("", new_task(cls, self.templates, self._used_names())))
+                task = new_task(cls, self.templates, self._used_names())
+                filters.default_choices(task, self.library, self.templates)    # the first event and database
+                filters.default_histogram_settings(task, self.templates)       # histograms used, created, exported
+                filters.default_event_settings(task, self.templates)           # events created (generators) or used
+                new.append(self._insert_task("", task))
             self.tree.see(new[-1])
-            self._changed("Added %s; click Setup Tasks to edit the parameters."
+            self._changed("Added %s; double-click a task to configure it."
                           % ", ".join(self.items[i].name for i in new))
 
         def remove_tasks(self):
@@ -765,9 +822,7 @@ def run_gui(initial_file=None, hook=None):
                     continue       # child of a task removed before
                 for sub in [item] + self._workflow_items(item):
                     names.append(self.items[sub].name)
-                    tab = self.tabs.pop(sub, None)
-                    if tab is not None:
-                        tab.destroy()
+                    self._close_dialogs([sub])
                     self.items.pop(sub, None)
                 self.tree.delete(item)
             self._changed("Removed %s." % ", ".join(names))
@@ -831,24 +886,27 @@ def run_gui(initial_file=None, hook=None):
             return [build(i) for i in self.tree.get_children("")]
 
         def set_workflow(self, tasks):
-            for tab in self.tabs.values():
-                tab.destroy()
-            self.tabs.clear()
+            self._close_dialogs()
             self.items.clear()
             self.tree.delete(*self.tree.get_children(""))
             for t in tasks:
                 self._insert_task("", t)
-            self.setup_tasks()
+            self._update_summary()
 
         # ---------------------------------------------------------------------------------------------- parameters
         def _make_parameters(self, parent):
             line = ttk.Frame(parent)
             line.pack(fill=tk.X, pady=(6, 4))
-            setup = ttk.Button(line, text="Setup Tasks", command=self.setup_tasks)
-            setup.pack(side=tk.LEFT)
-            ToolTip(setup, "Make one tab per task of the workflow, with its parameters")
-            self.sync_label = ttk.Label(line, text="", foreground="darkorange3")
-            self.sync_label.pack(side=tk.LEFT, padx=10)
+            configure = ttk.Button(line, text="Configure task\u2026", command=self.configure_selected)
+            configure.pack(side=tk.LEFT)
+            ToolTip(configure, "Open the window of the selected task (or double-click a task): its parameters, "
+                               "filters and histograms")
+            derived = ttk.Button(line, text="Derived run\u2026", command=self.derived_run)
+            derived.pack(side=tk.LEFT, padx=(6, 0))
+            ToolTip(derived, "Make the workflow computing the derived histograms from the histograms this workflow "
+                             "exports: its analyzers, in FileIterators, import them and export the derived ones")
+            ttk.Label(line, text="Double-click a task to configure it.", foreground="gray40").pack(side=tk.LEFT,
+                                                                                                padx=10)
             ttk.Button(line, text="Browse\u2026", width=8, command=self._browse_output).pack(side=tk.RIGHT)
             self.output_dir = tk.StringVar(value=self.settings["output_dir"])
             ttk.Entry(line, textvariable=self.output_dir, width=46).pack(side=tk.RIGHT, padx=4)
@@ -856,162 +914,126 @@ def run_gui(initial_file=None, hook=None):
             label.pack(side=tk.RIGHT)
             ToolTip(label, "Directory of the histograms written by the job (last argument of bin/CAP); "
                            "the job runs in this directory")
-            self.notebook = ttk.Notebook(parent)
-            self.notebook.pack(fill=tk.BOTH, expand=True)
-            self.placeholder = ttk.Label(self.notebook, text="Add tasks to the workflow, then click Setup Tasks.",
-                                         foreground="gray40", anchor="center")
-            self.notebook.add(self.placeholder, text="  ")
+            box = ttk.Frame(parent)
+            box.pack(fill=tk.BOTH, expand=True)
+            columns = ("class", "events", "particles", "others", "folders", "problems")
+            self.summary = ttk.Treeview(box, columns=columns, selectmode="browse")
+            for column, text, width in (("#0", "Task (run order)", 200), ("class", "Class", 170),
+                                        ("events", "Event filters", 150), ("particles", "Particle filters", 190),
+                                        ("others", "Efficiencies, smearers", 150), ("folders", "Histogram folders", 120),
+                                        ("problems", "Problems", 260)):
+                self.summary.heading(column, text=text, anchor="w")
+                self.summary.column(column, width=width, stretch=column in ("#0", "particles", "problems"))
+            self.summary.tag_configure("problem", foreground="firebrick")
+            self.summary.tag_configure("creator", foreground="gray40")
+            bar = ttk.Scrollbar(box, orient=tk.VERTICAL, command=self.summary.yview)
+            self.summary.configure(yscrollcommand=bar.set)
+            self.summary.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            bar.pack(side=tk.RIGHT, fill=tk.Y)
+            self.summary.bind("<Double-Button-1>", lambda e: self.configure_task(self.summary.identify_row(e.y)))
+            self.summary.bind("<Return>", lambda e: self.configure_task(self.summary.focus()))
 
         def _browse_output(self):
             path = self._dialog("askdirectory", initialdir=self.output_dir.get() or CAP_DIR)
             if path:
                 self.output_dir.set(path)
 
-        def setup_tasks(self):
-            """(Re)make the tabs: one per task of the workflow, in run order."""
-            current = self.notebook.select()
-            current_item = next((i for i, t in self.tabs.items() if str(t) == current), None)
-            for tab in self.tabs.values():
-                tab.destroy()
-            self.tabs.clear()
-            items = self._workflow_items()
-            if items:
-                self.notebook.hide(self.placeholder)
-            else:
-                self.notebook.add(self.placeholder, text="  ")
-                self.notebook.select(self.placeholder)
-            for item in items:
-                tab = self._make_tab(item)
-                self.tabs[item] = tab
-                depth = 0
-                p = self.tree.parent(item)
+        def _update_summary(self):
+            """One line per task of the workflow, in run order: its choices, folders and problems."""
+            selected = self.summary.selection()
+            self.summary.delete(*self.summary.get_children(""))
+            counts = ["%d %s" % (len(self.library.objects[k]), filters.KIND_LABELS[k].lower())
+                      for k in filters.CORRECTION_KINDS if self.library.objects[k]]
+            self.summary.insert("", tk.END, iid="__creator__", text=filters.CREATOR_NAME + " (run first)",
+                                tags=("creator",),
+                                values=("FilterCreator", ", ".join(self.library.names("EVENT_FILTER")),
+                                        ", ".join(self.library.names("PARTICLE_FILTER")), ", ".join(counts), "",
+                                        "creates the filters of the Filters pane"))
+            for item in self._workflow_items():
+                task = self.items[item]
+                depth, p = 0, self.tree.parent(item)
                 while p:
                     depth, p = depth + 1, self.tree.parent(p)
-                self.notebook.add(tab, text=("\u2022" * depth + " " if depth else "") + self.items[item].name)
-            if current_item in self.tabs:
-                self.notebook.select(self.tabs[current_item])
-            self._update_sync()
-            if items:
-                self.status.set("%d task tab(s) ready." % len(items))
+                choices = filters.choices(task)
+                others = sum(len(choices.get(k, [])) for k in filters.CORRECTION_KINDS)
+                folders = [f for f in filters.folders(task, self.templates) if filters.list_used(task, f.list)]
+                errors = [e for e in filters.check_choices([task], self.library, self.templates)
+                          if ("Task %s " % task.name) in e or ("Task %s:" % task.name) in e]
+                self.summary.insert("", tk.END, iid=item, text="  " * depth + task.name, tags=("problem",) if errors else (),
+                                    values=(short_class_name(task.cls), ", ".join(choices.get("EVENT_FILTER", [])),
+                                            ", ".join(choices.get("PARTICLE_FILTER", [])), others or "",
+                                            len(folders) if filters.histogram_layout(task, self.templates) else "",
+                                            errors[0] if errors else ""))
+            for item in selected:
+                if self.summary.exists(item):
+                    self.summary.selection_set(item)
 
-        def _make_tab(self, item):
-            task = self.items[item]
-            tab = ttk.Frame(self.notebook, padding=6)
-            head = ttk.Frame(tab)
-            head.pack(fill=tk.X, pady=(0, 6))
-            ttk.Label(head, text="Task name:").pack(side=tk.LEFT)
-            name = tk.StringVar(value=task.name)
-            entry = ttk.Entry(head, textvariable=name, width=24)
-            entry.pack(side=tk.LEFT, padx=(4, 12))
-            entry.bind("<Return>", lambda e: self._rename(item, name, entry))
-            entry.bind("<FocusOut>", lambda e: self._rename(item, name, entry))
-            ttk.Label(head, text="Report level:").pack(side=tk.LEFT)
-            severity = tk.StringVar(value=task.severity)
-            box = ttk.Combobox(head, textvariable=severity, values=SEVERITIES, width=9, state="readonly")
-            box.pack(side=tk.LEFT, padx=(4, 12))
-            box.bind("<<ComboboxSelected>>", lambda e: self._set_severity(task, severity.get()))
-            ttk.Label(head, text="Class: " + task.cls + ("" if task.known else "   (not in the current build)"),
-                      foreground="gray35" if task.known else "firebrick").pack(side=tk.LEFT)
-            reset = ttk.Button(head, text="Defaults", command=lambda: self._reset_task(item))
-            reset.pack(side=tk.RIGHT)
-            ToolTip(reset, "Set all the parameters of this task to their default values")
-            ttk.Label(head, text="%d parameters" % len(task.params), foreground="gray40").pack(side=tk.RIGHT, padx=8)
-
-            columns = ttk.Frame(tab)
-            columns.pack(fill=tk.BOTH, expand=True)
-            columns.columnconfigure(0, weight=1, uniform="col")
-            columns.columnconfigure(1, weight=1, uniform="col")
-            columns.rowconfigure(0, weight=1)
-            half = (len(task.params) + 1) // 2
-            for c, params in enumerate((task.params[:half], task.params[half:])):
-                frame = ScrollFrame(columns)
-                frame.grid(row=0, column=c, sticky="nsew", padx=(0, 6) if c == 0 else (6, 0))
-                frame.inner.columnconfigure(1, weight=1)
-                for r, p in enumerate(params):
-                    self._make_param_row(frame.inner, r, task, p)
-            if not task.params:
-                ttk.Label(columns, text="This task has no parameters.", foreground="gray40").grid(row=0, column=0)
-            return tab
-
-        def _make_param_row(self, parent, row, task, p):
-            label = ttk.Label(parent, text="%s  (%s)" % (p.key, p.type))
-            label.grid(row=row, column=0, sticky="w", padx=(0, 8), pady=1)
-            if p.description:
-                ToolTip(label, p.description)
-            var = tk.StringVar(value=p.value)
-            if p.type == "bool":
-                widget = ttk.Combobox(parent, textvariable=var, values=("true", "false"), state="readonly", width=8)
-                widget.grid(row=row, column=1, sticky="w", pady=1)
-            else:
-                widget = ttk.Entry(parent, textvariable=var)
-                if p.type in ("int", "long", "double"):
-                    check = (parent.register(lambda text, t=p.type: partial_value(t, text)), "%P")
-                    widget.configure(validate="key", validatecommand=check, width=18)
-                    widget.grid(row=row, column=1, sticky="w", pady=1)
-                else:
-                    widget.grid(row=row, column=1, sticky="ew", pady=1)
-            p.widget_var = var
-
-            def changed(*_args):
-                if p.value != var.get():
-                    p.value = var.get()
-                    self._changed()
-                if p.type != "bool":
-                    widget.configure(style="TEntry" if valid_value(p.type, p.value) else "Invalid.TEntry")
-            var.trace_add("write", changed)
-            if p.type != "bool" and not valid_value(p.type, p.value):
-                widget.configure(style="Invalid.TEntry")
-
-        def _rename(self, item, var, entry):
-            task = self.items.get(item)
-            if task is None:
+        def derived_run(self):
+            """Replace the workflow by the one computing its derived histograms (filters and library unchanged)."""
+            tasks = self.workflow()
+            derived = filters.derived_workflow(tasks, self.templates, TaskConfig)
+            if not derived:
+                messagebox.showinfo("Derived run", "The workflow has no analyzer filling histograms.")
                 return
-            new = var.get().strip()
-            if new == task.name:
+            if self.dirty and self._workflow_items():
+                answer = messagebox.askyesnocancel("Derived run", "Save the current workflow (the fill run) first?")
+                if answer is None or (answer and not self.save_workflow()):
+                    return
+            analyzers = [t.name for t in all_tasks(derived) if filters.histogram_layout(t, self.templates)]
+            self.set_workflow(derived)          # (the tree takes the subtasks)
+            self.saved_path = ""
+            self._changed("Derived run of %s: save it, then run it after the fill run, with the same output directory."
+                          % ", ".join(analyzers))
+
+        def configure_selected(self):
+            item = self._selected_one() or (self.summary.selection() or [None])[0]
+            if item is None or item == "__creator__":
+                messagebox.showinfo("Configure task", "Select a task of the workflow.")
                 return
+            self.configure_task(item)
+
+        def configure_task(self, item):
+            """Open (or raise) the window of a task."""
+            if item == "__creator__":
+                self.show_filters()
+                return
+            if not item or item not in self.items:
+                return
+            dialog = self.dialogs.get(item)
+            if dialog is not None and dialog.winfo_exists():
+                dialog.deiconify()
+                dialog.lift()
+                return
+            import RunCAPTaskDialog
+            dialog = RunCAPTaskDialog.TaskDialog(
+                self.root, self.items[item], self.templates, self.library,
+                {"valid_value": valid_value, "partial_value": partial_value, "severities": SEVERITIES},
+                rename=self._rename_task, changed=self._changed, show_filters=self.show_filters)
+            self.dialogs[item] = dialog
+            dialog.bind("<Destroy>", lambda e, i=item, d=dialog: self.dialogs.pop(i, None) if e.widget is d
+                        and self.dialogs.get(i) is d else None, add="+")
+
+        def _close_dialogs(self, items=None):
+            for item in list(items if items is not None else self.dialogs):
+                dialog = self.dialogs.pop(item, None)
+                if dialog is not None and dialog.winfo_exists():
+                    dialog.destroy()
+
+        def _rename_task(self, task, new):
+            """Rename a task (from its window). Returns None, or why the name is refused."""
             if not NAME_FULL.fullmatch(new):
-                messagebox.showerror("Task name", "Invalid task name '%s': use letters, digits, _ . - "
-                                                  "(no spaces or colons)." % new)
-                var.set(task.name)
-                return
+                return "Invalid task name '%s': use letters, digits, _ . - (no spaces or colons)." % new
             if new in self._used_names() - {task.name}:
-                messagebox.showerror("Task name", "Another task of the workflow is named %s." % new)
-                var.set(task.name)
-                return
+                return "Another task of the workflow is named %s." % new
+            options = getattr(task, "histograms", None)
+            if options is not None and options.prefix == task.name:
+                options.prefix = new                    # folders named after the task follow it
             task.name = new
-            self.tree.item(item, text=new)
-            tab = self.tabs.get(item)
-            if tab is not None:
-                text = self.notebook.tab(tab, "text")
-                prefix = text[:len(text) - len(text.lstrip("\u2022 "))]
-                self.notebook.tab(tab, text=prefix + new)
+            for item, t in self.items.items():
+                if t is task:
+                    self.tree.item(item, text=new)
             self._changed()
-
-        def _set_severity(self, task, value):
-            if task.severity != value:
-                task.severity = value
-                self._changed()
-
-        def _reset_task(self, item):
-            task = self.items[item]
-            for p in task.params:
-                if hasattr(p, "widget_var"):
-                    p.widget_var.set(p.default)
-                else:
-                    p.value = p.default
-
-        def _update_sync(self):
-            missing = [i for i in self._workflow_items() if i not in self.tabs]
-            order = [self.tabs[i] for i in self._workflow_items() if i in self.tabs]
-            shown = [t for t in self.notebook.tabs() if t != str(self.placeholder)]
-            out_of_order = [str(t) for t in order] != shown
-            if missing:
-                self.sync_label.configure(text="%d task(s) without a tab: click Setup Tasks" % len(missing))
-            elif out_of_order:
-                self.sync_label.configure(text="Workflow reordered: click Setup Tasks to reorder the tabs")
-            else:
-                self.sync_label.configure(text="")
-            self.count_label.configure(text="%d task(s)" % len(self._workflow_items()))
+            return None
 
         # ---------------------------------------------------------------------------------------------- output
         def _make_output(self, parent):
@@ -1076,7 +1098,14 @@ def run_gui(initial_file=None, hook=None):
         def _changed(self, message=None):
             self.dirty = True
             self._update_title()
-            self._update_sync()
+            self._update_summary()
+            self.count_label.configure(text="%d task(s)" % len(self._workflow_items()))
+            usage = [(t.name, sorted((k, tuple(v)) for k, v in filters.choices(t).items()))
+                     for t in all_tasks(self.workflow())]
+            if usage != getattr(self, "_usage", None):        # tasks chose other objects: "used by" of the pane
+                self._usage = usage
+                if self.filters_panel is not None:
+                    self.filters_panel.refresh()
             self._update_arrows()
             if message:
                 self.status.set(message)
@@ -1085,10 +1114,16 @@ def run_gui(initial_file=None, hook=None):
             name = os.path.basename(self.saved_path) if self.saved_path else "untitled"
             self.root.title("CAP Workflow \u2014 %s%s" % (name, " *" if self.dirty else ""))
 
-        def _check(self, title):
+        def _check(self, title, run=False):
+            """Problems that prevent saving (the workflow, the library) or running (also the choices of the tasks)."""
             self.root.focus_set()           # commit a task name being edited
             self.root.update_idletasks()
-            errors = check_workflow(self.workflow())
+            tasks = self.workflow()
+            errors = check_workflow(tasks)
+            if run:
+                errors += filters.check_choices(tasks, self.library, self.templates)
+            else:
+                errors += filters.check_library(self.library)
             if errors:
                 more = "\n(and %d more)" % (len(errors) - 12) if len(errors) > 12 else ""
                 messagebox.showerror(title, "\n".join(errors[:12]) + more)
@@ -1105,7 +1140,7 @@ def run_gui(initial_file=None, hook=None):
             if not filename:
                 return False
             try:
-                write_workflow(filename, self.workflow())
+                write_workflow(filename, self.workflow(), self.library, self.templates)
             except OSError as e:
                 messagebox.showerror("Save workflow", "Cannot write %s:\n%s" % (filename, e))
                 return False
@@ -1128,22 +1163,78 @@ def run_gui(initial_file=None, hook=None):
             if not filename:
                 return
             try:
-                tasks, warnings = load_workflow(filename, self.templates)
+                tasks, library, warnings = load_workflow_with_filters(filename, self.templates)
             except (ValueError, OSError) as e:
                 messagebox.showerror("Load workflow", str(e))
                 return
+            self.library = library
             self.set_workflow(tasks)
+            self.filters_panel.library = library
+            self.filters_panel.refresh()
             self.saved_path = filename
             self.settings["last_workflow"] = filename
             self.settings["workflow_dir"] = os.path.dirname(filename)
             self.dirty = False
             self._update_title()
-            self._update_sync()
+            self.count_label.configure(text="%d task(s)" % len(self._workflow_items()))
             self.status.set("Workflow loaded from %s" % filename)
             for w in warnings:
                 self.append("Warning: %s\n" % w, "warning")
             if warnings:
                 messagebox.showwarning("Load workflow", "%d warning(s), see the output." % len(warnings))
+
+        # ---------------------------------------------------------------------------------------------- filters
+        def _make_filters(self, parent):
+            """The Filters pane: the filters, efficiencies and smearers of the workflow, used by the tasks by name."""
+            import RunCAPFiltersGui
+            head = ttk.Frame(parent)
+            head.pack(fill=tk.X, pady=(6, 0))
+            ttk.Label(head, text="Filters", style="Section.TLabel").pack(side=tk.LEFT)
+            ttk.Label(head, text="Filters, corrections, events and particle databases: defined here once, created by "
+                                 "the task FilterCreator (run first), used by name by the tasks (double-click a task "
+                                 "below).",
+                      foreground="gray40").pack(side=tk.LEFT, padx=10)
+            self.filters_panel = RunCAPFiltersGui.FiltersPanel(
+                parent, self.library, on_change=self._library_changed, on_rename=self._rename_object,
+                on_remove=self._remove_objects, users=self._object_users)
+            self.filters_panel.configure(padding=(0, 4, 0, 0))
+            self.filters_panel.pack(fill=tk.BOTH, expand=True)
+
+        def show_filters(self, kind=None):
+            """Bring the main window forward with the Filters pane at the tab of a kind."""
+            if kind:
+                self.filters_panel.select(kind)
+            self.root.deiconify()
+            self.root.lift()
+
+        def _library_changed(self):
+            self._changed()
+            for dialog in list(self.dialogs.values()):
+                if dialog.winfo_exists():
+                    dialog.library_changed()
+
+        def _object_users(self, kind, name):
+            """Names of the tasks of the workflow that use an object of the library."""
+            return [t.name for t in all_tasks(self.workflow()) if name in filters.choices(t).get(kind, [])]
+
+        def _rename_object(self, kind, old, new):
+            for t in self.items.values():
+                names = filters.choices(t).get(kind)
+                if names:
+                    filters.choices(t)[kind] = [new if n == old else n for n in names]
+                options = getattr(t, "histograms", None)
+                if options is not None and kind in filters.CONDITION_KINDS:      # binning per combination of names
+                    options.binning = {tuple(new if n == old else n for n in combo): values
+                                       for combo, values in options.binning.items()}
+
+        def _remove_objects(self, kind, names):
+            for t in self.items.values():
+                if filters.choices(t).get(kind):
+                    filters.choices(t)[kind] = [n for n in filters.choices(t)[kind] if n not in names]
+                options = getattr(t, "histograms", None)
+                if options is not None and kind in filters.CONDITION_KINDS:
+                    options.binning = {combo: values for combo, values in options.binning.items()
+                                       if not set(combo) & set(names)}
 
         # ---------------------------------------------------------------------------------------------- run
         def _busy(self):
@@ -1155,7 +1246,7 @@ def run_gui(initial_file=None, hook=None):
             if not os.path.exists(CAP_EXE):
                 messagebox.showerror("Run", "%s does not exist: build and install CAP first (BuildCAP.py)." % CAP_EXE)
                 return
-            if not self._check("Cannot run the workflow"):
+            if not self._check("Cannot run the workflow", run=True):
                 return
             output_dir = self.output_dir.get().strip()
             if not output_dir:
@@ -1171,7 +1262,7 @@ def run_gui(initial_file=None, hook=None):
                     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     fd, path = tempfile.mkstemp(prefix="RunCAP_%s_" % stamp, suffix=".xml")
                     os.close(fd)
-                    name = write_workflow(path, tasks)
+                    name = write_workflow(path, tasks, self.library, self.templates)
             except OSError as e:
                 messagebox.showerror("Run", str(e))
                 return
@@ -1353,7 +1444,7 @@ def main():
             return 2
         templates = load_templates()
         try:
-            tasks, warnings = load_workflow(args[1], templates)
+            tasks, library, warnings = load_workflow_with_filters(args[1], templates)
         except (ValueError, OSError) as e:
             print(e, file=sys.stderr)
             return 1
@@ -1362,7 +1453,7 @@ def main():
             return 0
         for w in warnings:
             print("warning: " + w)
-        errors = check_workflow(tasks)
+        errors = check_workflow(tasks) + filters.check_choices(tasks, library, templates)
         for e in errors:
             print("error: " + e)
         print("%d task(s), %d warning(s), %d error(s)" % (len(list(all_tasks(tasks))), len(warnings), len(errors)))

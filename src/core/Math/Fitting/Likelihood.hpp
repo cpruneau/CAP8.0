@@ -75,6 +75,13 @@ namespace CAP
   //! @throws MathException if the sizes differ from each other or from the rank, or a lower end is above an upper end
   //!
   virtual void setRange(const std::vector<double> & low, const std::vector<double> & high);
+  //!
+  //! @brief Compare the data of a histogram to the average of the function over each bin rather than to its value at
+  //! the center of the bin (see binAverage()); no effect on other data. @param v average
+  //!
+  virtual void setBinAveraging(bool v) { _binAveraging = v; }
+  //! @brief Whether the function is averaged over the bins of a histogram. @return true if so
+  bool binAveraging() const { return _binAveraging; }
   //! @brief Lower ends of the range set by setRange() (empty: none). @return lower ends
   const std::vector<double> & rangeLow() const { return _rangeLow; }
   //! @brief Upper ends of the range set by setRange() (empty: none). @return upper ends
@@ -89,6 +96,7 @@ namespace CAP
   ParameterizedFunction & _function;   //!< function fitted
   std::vector<double> _rangeLow;   //!< lower ends of the points used (empty: no limit)
   std::vector<double> _rangeHigh;   //!< upper ends of the points used (empty: no limit)
+  bool _binAveraging = false;   //!< the function is averaged over the bins of a histogram
   };
 
   //!
@@ -118,6 +126,8 @@ namespace CAP
   bool goodnessOfFit() const override { return true; }
   //! @brief The chi square (error mode, coordinate uncertainties). @return chi square
   ChiSquare & chiSquare() { return _chiSquare; }
+  //! @brief Average the function over the bins of a histogram (see Likelihood::setBinAveraging()). @param v average
+  void setBinAveraging(bool v) override { Likelihood::setBinAveraging(v); _chiSquare.setBinAveraging(v); }
   //! @brief Extent of the coordinates of the points used. @param low lower ends @param high upper ends
   //! @return false if no point is used
   bool range(std::vector<double> & low, std::vector<double> & high) const override;

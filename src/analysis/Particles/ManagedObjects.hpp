@@ -49,14 +49,18 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   //!   <task>:<TYPE>:IMPORT:BASE_NAME, IMPORT:PATH, IMPORT:FILE_NAME
   //!   <task>:<TYPE>:EXPORT:BASE_NAME, EXPORT:PATH, EXPORT:FILE_NAME, EXPORT:FORCE_REWRITE
   //!   <task>:<TYPE>_<k>:NAME, TITLE, OWNER                            // object k
+  //!   <task>:<TYPE>_<k>:<param>                                       // histogram folder k: its own binning
   //! @endcode
+  //! The TITLE of an object, unless empty or NONE, is set after its configuration. A histogram folder whose keys include
+  //! binning parameters of its own uses them instead of those of the HISTOGRAM group of the task (see
+  //! objectConfiguration()).
   //! An object whose OWNER flag is true is created (and configured) by this list and added to a static store shared by
   //! all lists of this type; otherwise the object of that name is taken from the store (shared between tasks).
   //!
   //! Paths: for HISTOGRAM types, DEFAULT or relative paths are taken in $CAP_HISTOS_IMPORT_PATH (import) and
   //! $CAP_HISTOS_EXPORT_PATH (export); for PARTICLE_DB, relative import paths are taken in $CAP_DATABASE_PATH.
-  //! Files ending in .cap (or .root, read as .cap) are CAP files; a PARTICLE_DB is read from an XML file (.xml) or from
-  //! particles.data and decays.data.
+  //! Files ending in .cap (or .root, read as .cap) are CAP files; a PARTICLE_DB is read from an XML file (.xml) holding
+  //! the particles and their decay modes (see ParticleDbXml).
     //!
   //! @tparam MANAGED type of the managed objects (a ManagedObject)
   //!
@@ -453,11 +457,56 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     if (owner)
       {
       object = instantiateObject(name);
-      object->configure(_taskName,_typeName,configuration,k);
+      Configuration scoped;
+      bool own = objectConfiguration(configuration,k,scoped);
+      object->configure(_taskName,_typeName,own ? scoped : configuration,k);
+      if (!title.isEmpty() && title!="NONE") object->setTitle(title);
       }
     else
       object = useObject(name);
     }
+  }
+
+  //!
+  //! @brief Configuration of histogram folder k, when it has its own binning: its keys \<task\>:\<TYPE\>_\<k\>:\<param\>
+  //! (other than NAME, TITLE, OWNER and BASE_NAME) replace the values of \<task\>:HISTOGRAM:\<param\> and
+  //! \<task\>:\<TYPE\>:\<param\>, the keys the folders read their binning from; the parameters a folder does not set are
+  //! those of the HISTOGRAM group of the task. Only for HISTOGRAM types.
+  //! @param configuration configuration of the task @param k index of the folder @param scoped configuration of the
+  //! folder (set when the folder has keys of its own) @return true if the folder has keys of its own
+  //!
+  bool objectConfiguration(const Configuration & configuration, unsigned int k, Configuration & scoped) const
+  {
+  if (!_typeName.beginsWith("HISTOGRAM")) return false;
+  String prefix = createKey(_taskName,_typeName,k,"");
+  std::vector<std::pair<String,const Property *>> overrides;
+  for (const Property & p : configuration.properties())
+    {
+    const String & key = p.name();
+    if (!key.beginsWith(prefix)) continue;
+    String parameter = key.subString(prefix.length());
+    if (parameter.isEmpty() || parameter.contains(":") || parameter=="NAME" || parameter=="TITLE" || parameter=="OWNER"
+        || parameter=="BASE_NAME") continue;
+    overrides.push_back({parameter,&p});
+    }
+  if (overrides.empty()) return false;
+  scoped = configuration;
+  for (auto & o : overrides)
+    {
+    for (const String & group : { String("HISTOGRAM"), _typeName })
+      {
+      Property p(*o.second);
+      p.setName(createKey(_taskName,group,o.first));
+      scoped.addProperty(p);
+      }
+    int group = -1;
+    String groupKey = createKey(_taskName,"HISTOGRAM",o.first);
+    for (unsigned int i=0; i<configuration.properties().size() && group<0; i++)
+      if (configuration.properties()[i].name()==groupKey) group = int(i);
+    bool differs = group<0 || configuration.properties()[group].string()!=o.second->string();
+    if (differs && reportInfo(__FUNCTION__)) printValue(o.second->name(),o.second->string());
+    }
+  return true;
   }
   
   //! @brief Import (IMPORT) and/or create (CREATE) the objects.
@@ -490,8 +539,8 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   load(_importPath,_importFileName);
   }
   
-  //! @brief Import the objects from a file: a CAP file, or for PARTICLE_DB an XML file or particles.data and
-  //! decays.data. @param importPath directory @param importFileName file name @throws Exception for another type
+  //! @brief Import the objects from a file: a CAP file, or for PARTICLE_DB an XML file (particles and decay modes).
+  //! @param importPath directory @param importFileName file name @throws Exception for another file
   virtual void load(const String & importPath,
                             const String & importFileName)
   {
@@ -508,27 +557,15 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     }
   else
     {
-    if (_typeName.equalTo("PARTICLE_DB"))
+    if (_typeName.equalTo("PARTICLE_DB") && importFileName.endsWith(".xml",true))
       {
-      String fileName = FileSystem::join(importPath,importFileName);
-      if (fileName.endsWith(".xml",true))
-        {
-        // particles and decays in one XML file (see ParticleDbXml)
-        loadFromXml(fileName);
-        }
-      else
-        {
-        // particles.data and decays.data (see ParticleDbParser)
-        std::ifstream & inputFile1 = openInputAsciiFile(fileName);
-        fileName = importPath;
-        fileName += "/decays.data";
-        std::ifstream & inputFile2 = openInputAsciiFile(fileName);
-        loadFromAscii2(inputFile1,inputFile2);
-        }
+      // particles and their decay modes in one XML file (see ParticleDbXml)
+      loadFromXml(FileSystem::join(importPath,importFileName));
       }
     else
       {
-      throw Exception("BAD TYPE",__FUNCTION__);
+      throw Exception(String("Cannot import ")+_typeName+" objects from "+importFileName
+                      +": a CAP file (.cap, .root) or, for PARTICLE_DB, an XML file (.xml) is expected",__FUNCTION__);
       }
     
     }
@@ -548,13 +585,6 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   for (auto & object : _objects) object->loadFromAscii(file);
   }
   
-  //! @brief Load each object from two ASCII files. @param file1 first file @param file2 second file
-  virtual void loadFromAscii2(std::ifstream & file1,std::ifstream & file2)
-  {
-  if (reportDebug(__FUNCTION__)) { printCR(); }
-  for (auto & object : _objects) object->loadFromAscii2(file1,file2);
-  }
-
   //! @brief Load each object from an XML file. @param fileName file name
   //! @throws Exception for object types that cannot be read from XML (no loadFromXml(), see HasLoadFromXml)
   virtual void loadFromXml(const String & fileName)

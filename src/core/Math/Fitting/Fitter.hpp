@@ -116,8 +116,17 @@ namespace CAP
   //! @brief Fit only the points (bins, events) with low <= x <= high (see Likelihood::setRange()), for a function of
   //! rank 1. @param low lower end @param high upper end @throws MathException if low > high or the rank is not 1
   void setRange(double low, double high) { _likelihood->setRange({ low }, { high }); }
+  //! @brief Fit only the points inside a box: low[k] <= x[k] <= high[k] for each variable (any rank).
+  //! @param low lower ends @param high upper ends @throws MathException if the sizes differ from the rank
+  void setRange(const std::vector<double> & low, const std::vector<double> & high) { _likelihood->setRange(low, high); }
   //! @brief Fit all the points (no range; an unbinned likelihood keeps its own range).
   void clearRange() { _likelihood->setRange({}, {}); }
+  //!
+  //! @brief Compare the data of a histogram to the average of the function over each bin (3-point Gauss-Legendre
+  //! rule along each axis) rather than to its value at the center of the bin: this removes the bias of fits of narrow
+  //! peaks or steep slopes in wide bins, for 3^rank evaluations per bin. Off by default. @param v average
+  //!
+  void setBinAveraging(bool v) { _likelihood->setBinAveraging(v); }
   //!
   //! @brief Starting values of the parameters of a function of CAP from data of rank 1 (the points with
   //! low <= x <= high): for Normal, the largest value, and the mean and standard deviation of x weighted by the
@@ -129,6 +138,14 @@ namespace CAP
   //! @return false if the class is not known or the data do not allow it (the function is then unchanged)
   //!
   static bool estimate(ParameterizedFunction & function, const DataPoints & data, double low, double high);
+  //!
+  //! @brief Starting values from data of any rank (the points inside the box [low, high]): for rank 1, as
+  //! estimate(function, data, low[0], high[0]); for a Normal2D, the largest value, and the means, standard deviations
+  //! and correlation of x and y weighted by the values; for a Polynomial2D, its mapping set for the box and its
+  //! least-squares coefficients. Fixed parameters keep their values. @param function function @param data data
+  //! @param low lower ends @param high upper ends @return false if the class is not known or the data do not allow it
+  //!
+  static bool estimate(ParameterizedFunction & function, const DataPoints & data, const std::vector<double> & low, const std::vector<double> & high);
 
   //! @brief Options of fitAndAttach() (as chosen in the Fit window of CapGui).
   struct FitOptions
@@ -138,8 +155,11 @@ namespace CAP
     bool   hasRange = false;   //!< fit only the points in [low, high]
     double low = 0;   //!< lower end of the range (hasRange)
     double high = 0;   //!< upper end of the range (hasRange)
-    unsigned int samples = 100;   //!< samples of a function fitted (see samples())
+    unsigned int samples = 100;   //!< samples of a function fitted (see samples()), along each axis
     String label;   //!< label of the fit (empty: the class of the function and "fit")
+    std::vector<double> rangeLow;   //!< lower ends of a range of any rank (used instead of low and high if not empty)
+    std::vector<double> rangeHigh;   //!< upper ends of a range of any rank
+    bool binAveraging = false;   //!< average the function over the bins of a histogram (see setBinAveraging())
   };
   //!
   //! @brief Fit a function to data points and attach the fit to them (DataPoints::addFit()), in one call.
@@ -159,6 +179,14 @@ namespace CAP
   static FitRecord fitAndAttach(ParameterizedFunction & function, Function & target, double low, double high, const FitOptions & options);
   //! @brief fitAndAttach() of a function with the default options. @return record
   static FitRecord fitAndAttach(ParameterizedFunction & function, Function & target, double low, double high);
+  //!
+  //! @brief Fit a function to another one of any rank (1 or 2) over a box, through options.samples samples along each
+  //! axis (see samples()), and attach the fit to it. @param function function fitted @param target function fitted to
+  //! @param low lower ends @param high upper ends @param options method, samples, label @return record attached
+  //! @throws MathException if the ranks differ, are above 2, or the fit fails
+  //!
+  static FitRecord fitAndAttach(ParameterizedFunction & function, Function & target, const std::vector<double> & low,
+                                const std::vector<double> & high, const FitOptions & options);
 
   //! @brief Fit: the function is left at the best parameters. @return result
   //! @throws MathException if there is no free parameter or no point can be used
@@ -186,6 +214,15 @@ namespace CAP
   //! @throws MathException if the function is not of rank 1, n < 2 or error <= 0
   //!
   static DataPointsVector samples(const Function & function, double low, double high, unsigned int n, double error=1.0);
+  //!
+  //! @brief Samples of a function of rank 2 on a grid of nx x ny points over [xLow, xHigh] x [yLow, yHigh] (ends
+  //! included), each with the same uncertainty. @param function function sampled @param xLow left @param xHigh right
+  //! @param nx points along x (at least 2) @param yLow bottom @param yHigh top @param ny points along y (at least 2)
+  //! @param error uncertainty of each point @return points (x, y, f(x,y))
+  //! @throws MathException if the function is not of rank 2, nx or ny < 2, or error <= 0
+  //!
+  static DataPointsVector samples(const Function & function, double xLow, double xHigh, unsigned int nx,
+                                  double yLow, double yHigh, unsigned int ny, double error=1.0);
 
   protected:
 

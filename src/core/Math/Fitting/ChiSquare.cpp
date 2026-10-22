@@ -1,4 +1,5 @@
 #include "ChiSquare.hpp"
+#include "ModelValues.hpp"
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -16,7 +17,8 @@ namespace CAP
   _function(nullptr),
   _data(nullptr),
   _errorMode(Statistical),
-  _useXErrors(false)
+  _useXErrors(false),
+  _binAveraging(false)
   {}
 
   ChiSquare::ChiSquare(const ParameterizedFunction & function,
@@ -27,7 +29,8 @@ namespace CAP
   _function(&function),
   _data(&data),
   _errorMode(errorMode),
-  _useXErrors(useXErrors)
+  _useXErrors(useXErrors),
+  _binAveraging(false)
   {
   checkRanks(function,data,__FUNCTION__);
   }
@@ -37,7 +40,8 @@ namespace CAP
   _function(source._function),
   _data(source._data),
   _errorMode(source._errorMode),
-  _useXErrors(source._useXErrors)
+  _useXErrors(source._useXErrors),
+  _binAveraging(source._binAveraging)
   {}
 
   ChiSquare & ChiSquare::operator=(const ChiSquare & rhs)
@@ -48,6 +52,7 @@ namespace CAP
     _data       = rhs._data;
     _errorMode  = rhs._errorMode;
     _useXErrors = rhs._useXErrors;
+    _binAveraging = rhs._binAveraging;
     }
   return *this;
   }
@@ -141,12 +146,12 @@ namespace CAP
     DataPoint2D point = _data->point(index);
     double v = variance(point);
     if (!(v>0.0)) throw MathException("Uncertainty of a data point is zero or negative",__FUNCTION__);
-    return (point.y() - _function->evaluateAt(point.x()))/std::sqrt(v);
+    return (point.y() - modelValue(*_function, *_data, index, _binAveraging))/std::sqrt(v);
     }
   std::vector<double> x = _data->coordinatesAt(index);
   double v = variance(index,x);
   if (!(v>0.0)) throw MathException("Uncertainty of a data point is zero or negative",__FUNCTION__);
-  return (_data->valueAt(index) - _function->evaluateAt(x))/std::sqrt(v);
+  return (_data->valueAt(index) - modelValue(*_function, *_data, index, _binAveraging))/std::sqrt(v);
   }
 
   double ChiSquare::chiSquare() const

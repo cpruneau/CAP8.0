@@ -57,10 +57,6 @@ namespace CAP
   virtual void loadFrom(CapFile & file __attribute__((unused))) {}
   //! @brief Load the object from an ASCII file (nothing by default). @param file file
   virtual void loadFromAscii(std::ifstream & file __attribute__((unused))) {}
-  //! @brief Load the object from two ASCII files (nothing by default; ParticleDb reads particles and decays).
-  //! @param file1 first file @param file2 second file
-  virtual void loadFromAscii2(std::ifstream & file1 __attribute__((unused)),
-                                  std::ifstream & file2 __attribute__((unused))) {}
   //! @brief Load from an XML file (nothing here; ParticleDb overrides it). @param fileName file name
   virtual void loadFromXml(const String & fileName __attribute__((unused))) {}
   //! @brief Save the object in a CAP file (nothing by default). @param file file

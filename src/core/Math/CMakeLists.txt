@@ -87,12 +87,14 @@ Functions/Legendre.cpp
 Functions/Linear.cpp
 Functions/LogNormal.cpp
 Functions/Normal.cpp
+Functions/Normal2D.cpp
 Functions/OrthogonalSeries.cpp
 Functions/ParameterizedComposite.cpp
 Functions/Parabolic.cpp
 Functions/Parameter.cpp
 Functions/ParameterizedFunction.cpp
 Functions/Polynomial.cpp
+Functions/Polynomial2D.cpp
 Functions/Quartic.cpp
 Functions/ScalarField.cpp
 Functions/SphericalHarmonics.cpp
@@ -126,9 +128,11 @@ Search/SearchProblem.cpp
 Fitting/BayesianFitter.cpp
 Fitting/ChiSquare.cpp
 Fitting/FitRecord.cpp
+Fitting/FitViews.cpp
 Fitting/Fitter.cpp
 Fitting/Likelihood.cpp
 Fitting/MetropolisHastings.cpp
+Fitting/ModelValues.cpp
 Fitting/Prior.cpp
 # StatisticalTests
 StatisticalTests/Distributions.cpp
@@ -165,6 +169,9 @@ add_test(NAME FitFunctions COMMAND TestFitFunctions)
 add_executable(TestStatisticalTests StatisticalTests/tests/TestStatisticalTests.cpp)
 target_link_libraries(TestStatisticalTests Math Base ${ROOT_LIBRARIES})
 add_test(NAME StatisticalTests COMMAND TestStatisticalTests)
+add_executable(TestFits2D Fitting/tests/TestFits2D.cpp)
+target_link_libraries(TestFits2D Math Base ${ROOT_LIBRARIES})
+add_test(NAME Fits2D COMMAND TestFits2D)
 
 install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")

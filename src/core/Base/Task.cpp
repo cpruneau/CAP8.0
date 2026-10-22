@@ -492,6 +492,24 @@ namespace CAP
 
   void Task::unknownXmlParameter(const String & key)
   {
+  // Keys of the objects of managed lists (<task>:<TYPE>_<k>:..., the list having <task>:<TYPE>:N) are not in the
+  // default configuration, whose lists are empty: they are expected.
+  std::string text = key.data();
+  std::size_t start = 0;
+  while (start < text.size())
+    {
+    std::size_t end = text.find(':',start);
+    if (end == std::string::npos) break;
+    std::string part = text.substr(start,end-start);
+    std::size_t underscore = part.rfind('_');
+    if (underscore != std::string::npos && underscore+1 < part.size()
+        && part.find_first_not_of("0123456789",underscore+1) == std::string::npos)
+      {
+      String list = String(text.substr(0,start).c_str()) + String(part.substr(0,underscore).c_str()) + String(":N");
+      for (const Property & p : configuration().properties()) if (p.name() == list) return;
+      }
+    start = end + 1;
+    }
   if (reportWarning(__FUNCTION__))
     std::cout << "Parameter " << key << " is not defined by " << className() << "::setDefaultConfiguration()" << std::endl;
   }

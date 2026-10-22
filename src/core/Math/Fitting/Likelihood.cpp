@@ -15,6 +15,7 @@
 #include <cmath>
 #include <limits>
 #include "Likelihood.hpp"
+#include "ModelValues.hpp"
 #include "DataPoints.hpp"
 #include "MathExceptions.hpp"
 #include "ParameterizedFunction.hpp"
@@ -27,13 +28,6 @@ namespace CAP
   namespace
   {
   const double kInfinity = std::numeric_limits<double>::infinity();
-
-  //! Value of the function at the coordinates of a point; NaN if it cannot be computed.
-  double modelAt(const ParameterizedFunction & f, const DataPoints & data, unsigned int index)
-  {
-  try { return data.rank() == 1 ? f.evaluateAt(data.point(index).x()) : f.evaluateAt(data.coordinatesAt(index)); }
-  catch (...) { return std::numeric_limits<double>::quiet_NaN(); }
-  }
 
   //! Count of a point.
   double countAt(const DataPoints & data, unsigned int index)
@@ -164,7 +158,7 @@ namespace CAP
   double PoissonLikelihood::statistic() const
   {
   double sum = 0;
-  for (unsigned int i : _used) sum += deviance(countAt(_data, i), modelAt(_function, _data, i));
+  for (unsigned int i : _used) sum += deviance(countAt(_data, i), modelValue(_function, _data, i, _binAveraging));
   return sum;
   }
 
@@ -173,7 +167,7 @@ namespace CAP
   r.resize(_used.size());
   for (unsigned int k=0; k<_used.size(); k++)
     {
-    double n = countAt(_data, _used[k]), f = modelAt(_function, _data, _used[k]);
+    double n = countAt(_data, _used[k]), f = modelValue(_function, _data, _used[k], _binAveraging);
     double d = deviance(n, f);
     if (!std::isfinite(d)) return false;
     r[k] = (n >= f ? 1.0 : -1.0)*std::sqrt(d);

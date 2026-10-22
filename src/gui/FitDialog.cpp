@@ -31,6 +31,8 @@
 #include "ParameterizedComposite.hpp"
 #include "ParameterizedFunction.hpp"
 #include "Polynomial.hpp"
+#include "Polynomial2D.hpp"
+#include <map>
 
 namespace CAP
 {
@@ -56,14 +58,32 @@ namespace CAP
   if (name == "Polynomial") return MATH::FunctionRegistry::create(name, (unsigned int)(degree + 1));
   MATH::ParameterizedFunction * f = MATH::FunctionRegistry::create(name);
   if (MATH::OrthogonalSeries * series = dynamic_cast<MATH::OrthogonalSeries*>(f)) series->setDegree((unsigned int)degree);
+  if (MATH::Polynomial2D * polynomial = dynamic_cast<MATH::Polynomial2D*>(f)) polynomial->setDegree((unsigned int)std::min(degree, 9));
   return f;
   }
 
-  //! Whether the functions of a name have a degree (a Polynomial, a series).
+  //! Whether the functions of a name have a degree (a Polynomial, a Polynomial2D, a series).
   bool hasDegree(const String & name)
   {
-  return name == "Polynomial" || name.endsWith("Series");
+  return name == "Polynomial" || name == "Polynomial2D" || name.endsWith("Series");
   }
+
+  //! Number of variables of the functions of a registered name (0 if none can be made).
+  unsigned int rankOf(const String & name)
+  {
+  if (std::shared_ptr<const MATH::ParameterizedComposite> c = MATH::FunctionRegistry::composite(name)) return c->rank();
+  static std::map<std::string, unsigned int> ranks;                    // classes keep their rank
+  auto found = ranks.find(name.data());
+  if (found != ranks.end()) return found->second;
+  std::unique_ptr<MATH::ParameterizedFunction> f;
+  try { f.reset(MATH::FunctionRegistry::create(name)); } catch (...) { }
+  unsigned int rank = f ? f->rank() : 0;
+  ranks[name.data()] = rank;
+  return rank;
+  }
+
+  //! The function offered first for a rank.
+  String defaultFunction(unsigned int rank) { return rank == 2 ? "Normal2D" : "Normal"; }
 
   //! One line on the functions of a registered name.
   String describe(const String & name)
@@ -80,13 +100,16 @@ namespace CAP
     { "BesselJ", "A J_n(scale (x - shift)), Bessel of the first kind; order n fixed" },
     { "BesselY", "A Y_n(scale (x - shift)), Bessel of the second kind; order n fixed" },
     { "BesselI", "A I_n(scale (x - shift)), modified Bessel of the first kind; order n fixed" },
-    { "BesselK", "A K_n(scale (x - shift)), modified Bessel of the second kind; order n fixed" } };
+    { "BesselK", "A K_n(scale (x - shift)), modified Bessel of the second kind; order n fixed" },
+    { "Normal2D", "A exp(-(u^2 - 2 rho u v + v^2)/(2 (1 - rho^2))), u = (x - meanX)/widthX, v = (y - meanY)/widthY" },
+    { "Polynomial2D", "sum of cij t^i s^j, i + j <= N; t, s: x, y of the range mapped onto [-1, 1]" } };
   for (const auto & text : texts) if (name == text.first) return String(text.second);
   if (std::shared_ptr<const MATH::ParameterizedComposite> c = MATH::FunctionRegistry::composite(name))
     {
-    String text = "composite: ";
+    bool product = c->operation() == MATH::ParameterizedComposite::kProduct;
+    String text = product ? "product: " : "composite: ";
     for (unsigned int k=0; k<c->nComponents(); k++)
-      text += String(k ? " + " : "") + c->label(k) + String(" (") + MATH::FunctionRegistry::typeName(c->component(k)) + String(")");
+      text += String(k ? (product ? " x " : " + ") : "") + c->label(k) + String(" (") + MATH::FunctionRegistry::typeName(c->component(k)) + String(")");
     return text;
     }
   return "function registered by a program";
@@ -105,8 +128,8 @@ namespace CAP
   _function(),
   _statistic(0),
   _search(false),
-  _low(0.0),
-  _high(1.0),
+  _low{ 0.0 },
+  _high{ 1.0 },
   _samples(100),
   _label(),
   _message(),
@@ -128,7 +151,7 @@ namespace CAP
 
   void FitDialog::makeFunction()
   {
-  if (!MATH::FunctionRegistry::isRegistered(_functionName)) _functionName = "Normal";
+  if (!MATH::FunctionRegistry::isRegistered(_functionName) || rankOf(_functionName) != _rank) _functionName = defaultFunction(_rank);
   try { _function.reset(makeNamed(_functionName, _degree)); }
   catch (...) { _function.reset(); }
   if (_function) _function->adaptToRange(_low, _high);   // e.g. the mapping of a series
@@ -145,10 +168,15 @@ namespace CAP
   if (_builderRequested) { ImGui::OpenPopup("Composite"); _builderRequested = false; }
   ImGui::SetNextWindowSize(ImVec2(560, 0), ImGuiCond_Appearing);
   if (!ImGui::BeginPopupModal("Composite", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
-  ImGui::TextWrapped("A sum of registered functions, fitted with all their parameters (named label.parameter). It is "
-                     "saved in %s, read when CapGui starts.", MATH::FunctionRegistry::defaultCompositesFile().data());
+  ImGui::TextWrapped("A sum of registered functions of the same variables, or a product of functions of one variable "
+                     "each (f(x) g(y)), fitted with all their parameters (named label.parameter). It is saved in %s, "
+                     "read when CapGui starts.", MATH::FunctionRegistry::defaultCompositesFile().data());
   ImGui::SetNextItemWidth(240);
   ImGui::InputText("name", &_compositeName.str());
+  ImGui::RadioButton("sum", &_operation, 0);
+  ImGui::SameLine();
+  ImGui::RadioButton("product f(x) g(y)", &_operation, 1);
+  ImGui::SetItemTooltip("Each component a function of its own variable, in order: x for the first, y for the second");
   std::vector<String> names = MATH::FunctionRegistry::names();
   int removed = -1;
   if (ImGui::BeginTable("##components", 4, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerH))
@@ -168,7 +196,10 @@ namespace CAP
       if (ImGui::BeginCombo("##type", draft.type.data()))
         {
         for (const auto & name : names)
-          if (!(name == _compositeName) && ImGui::Selectable(name.data(), name == draft.type)) draft.type = name;
+          {
+          if (name == _compositeName || (_operation == 1 && rankOf(name) != 1)) continue;   // a product of functions of one variable
+          if (ImGui::Selectable(name.data(), name == draft.type)) draft.type = name;
+          }
         ImGui::EndCombo();
         }
       ImGui::SetItemTooltip("%s", describe(draft.type).data());
@@ -205,7 +236,7 @@ namespace CAP
       if (_compositeName.isNull()) throw MATH::MathException("Give the composite a name", "FitDialog");
       if (MATH::FunctionRegistry::isRegistered(_compositeName) && !MATH::FunctionRegistry::isComposite(_compositeName))
         throw MATH::MathException(String("The name ") + _compositeName + String(" is that of a class of functions"), "FitDialog");
-      MATH::ParameterizedComposite composite;
+      MATH::ParameterizedComposite composite(_operation == 1 ? MATH::ParameterizedComposite::kProduct : MATH::ParameterizedComposite::kSum);
       for (const auto & draft : _drafts)
         {
         std::unique_ptr<MATH::ParameterizedFunction> f(makeNamed(draft.type, draft.degree));
@@ -214,8 +245,13 @@ namespace CAP
         }
       MATH::FunctionRegistry::registerComposite(_compositeName, composite);
       saveComposites();
-      _functionName = _compositeName;
-      makeFunction();
+      if (composite.rank() == _rank) { _functionName = _compositeName; makeFunction(); }
+      else
+        {
+        _message = _compositeName + String(" registered: of ") + String(std::to_string(composite.rank()).c_str())
+                   + String(" variables, it is offered for objects of as many");
+        _error = false;
+        }
       _builderMessage = "";
       ImGui::CloseCurrentPopup();
       }
@@ -238,18 +274,27 @@ namespace CAP
   const GraphItem & item = graph.items()[std::size_t(k)];
   _item = k;
   _object = item.object();
+  _rank = item.rank();
+  _low.assign(_rank, 0.0);
+  _high.assign(_rank, 1.0);
   if (item.kind() == GraphItem::kData)
     {
-    try { _low = item.data()->minimum(0); _high = item.data()->maximum(0); }   // the whole object
-    catch (...) { _low = 0; _high = 1; }
-    if (!dynamic_cast<const MATH::Histogram*>(item.data())) _statistic = 0;   // the Poisson likelihood needs counts
+    for (unsigned int a=0; a<_rank; a++)                            // the whole object
+      {
+      try { _low[a] = item.data()->minimum(a); _high[a] = item.data()->maximum(a); }
+      catch (...) { _low[a] = 0; _high[a] = 1; }
+      }
+    if (!dynamic_cast<const MATH::Histogram*>(item.data())) { _statistic = 0; _binAveraging = false; }   // counts, bins
     }
   else
     {
-    _low = item.xMinimum(); _high = item.xMaximum();
+    _low[0] = item.xMinimum(); _high[0] = item.xMaximum();
+    if (_rank == 2) { _low[1] = item.yMinimum(); _high[1] = item.yMaximum(); }
     _statistic = 0;
+    _binAveraging = false;
     }
-  if (_function) _function->adaptToRange(_low, _high);
+  if (rankOf(_functionName) != _rank) makeFunction();                   // a function of the rank of the object
+  else if (_function) _function->adaptToRange(_low, _high);
   }
 
   void FitDialog::estimate(Graph & graph)
@@ -260,7 +305,12 @@ namespace CAP
   try
     {
     if (item.kind() == GraphItem::kData) done = MATH::Fitter::estimate(*_function, *item.data(), _low, _high);
-    else done = MATH::Fitter::estimate(*_function, MATH::Fitter::samples(*item.function(), _low, _high, (unsigned int)_samples), _low, _high);
+    else
+      {
+      MATH::DataPointsVector samples = _rank == 1 ? MATH::Fitter::samples(*item.function(), _low[0], _high[0], (unsigned int)_samples)
+        : MATH::Fitter::samples(*item.function(), _low[0], _high[0], (unsigned int)_samples, _low[1], _high[1], (unsigned int)_samples);
+      done = MATH::Fitter::estimate(*_function, samples, _low, _high);
+      }
     }
   catch (const Exception & e) { _message = e.what(); _error = true; return; }
   _message = done ? "Starting values estimated from the data in the range"
@@ -279,9 +329,9 @@ namespace CAP
     MATH::Fitter::FitOptions options;
     options.statistic = _statistic == 1 ? MATH::Fitter::kPoisson : MATH::Fitter::kChiSquare;
     options.search = _search;
-    options.hasRange = true;
-    options.low = _low;
-    options.high = _high;
+    options.rangeLow = _low;
+    options.rangeHigh = _high;
+    options.binAveraging = _binAveraging;
     options.samples = (unsigned int)_samples;
     options.label = _label;
     MATH::FitRecord record = item.kind() == GraphItem::kData
@@ -399,7 +449,7 @@ namespace CAP
   _openRequested = false;
   if (_item < 0)
     {
-    ImGui::TextDisabled("The selected graph shows no data points or function of one variable to fit.");
+    ImGui::TextDisabled("The selected graph shows no data points or function of one or two variables to fit.");
     ImGui::End();
     return false;
     }
@@ -421,14 +471,14 @@ namespace CAP
 
   // the function: those of CAP and of programs, then the composites
   std::vector<String> names = MATH::FunctionRegistry::names(), composites = MATH::FunctionRegistry::compositeNames();
-  if (!MATH::FunctionRegistry::isRegistered(_functionName)) { _functionName = "Normal"; makeFunction(); }
+  if (!MATH::FunctionRegistry::isRegistered(_functionName) || rankOf(_functionName) != _rank) makeFunction();
   ImGui::SetNextItemWidth(180);
   if (ImGui::BeginCombo("function", _functionName.data(), ImGuiComboFlags_HeightLarge))
     {
-    ImGui::SeparatorText("Functions");
+    ImGui::SeparatorText(_rank == 2 ? "Functions of x and y" : "Functions of x");
     for (const auto & name : names)
       {
-      if (MATH::FunctionRegistry::isComposite(name)) continue;
+      if (MATH::FunctionRegistry::isComposite(name) || rankOf(name) != _rank) continue;
       if (ImGui::Selectable(name.data(), name == _functionName)) { _functionName = name; makeFunction(); }
       ImGui::SetItemTooltip("%s", describe(name).data());
       }
@@ -437,6 +487,7 @@ namespace CAP
       ImGui::SeparatorText("Composites");
       for (const auto & name : composites)
         {
+        if (rankOf(name) != _rank) continue;
         if (ImGui::Selectable(name.data(), name == _functionName)) { _functionName = name; makeFunction(); }
         ImGui::SetItemTooltip("%s", describe(name).data());
         }
@@ -449,8 +500,9 @@ namespace CAP
     ImGui::SetNextItemWidth(90);
     if (ImGui::InputInt("degree", &_degree))
       {
-      _degree = std::min(std::max(_degree, 0), 10);
+      _degree = std::min(std::max(_degree, 0), _functionName == "Polynomial2D" ? 9 : 10);
       if (MATH::OrthogonalSeries * series = dynamic_cast<MATH::OrthogonalSeries*>(_function.get())) series->setDegree((unsigned int)_degree);
+      else if (MATH::Polynomial2D * polynomial = dynamic_cast<MATH::Polynomial2D*>(_function.get())) polynomial->setDegree((unsigned int)_degree);
       else makeFunction();
       }
     }
@@ -461,10 +513,11 @@ namespace CAP
     _drafts.clear();
     _drafts.push_back(ComponentDraft());
     _drafts.back().label = "signal";
+    _operation = 0;
     _builderMessage = "";
     _builderRequested = true;
     }
-  ImGui::SetItemTooltip("Make a composite: a sum of registered functions (e.g. a signal over a background)");
+  ImGui::SetItemTooltip("Make a composite: a sum of registered functions (e.g. a signal over a background), or a product f(x) g(y)");
   bool composite = MATH::FunctionRegistry::isComposite(_functionName);
   if (composite)
     {
@@ -487,7 +540,7 @@ namespace CAP
       saveComposites();
       _message = String("Composite ") + _functionName + String(" removed");
       _error = false;
-      _functionName = "Normal";
+      _functionName = defaultFunction(_rank);
       makeFunction();
       }
     ImGui::SetItemTooltip("Remove this composite (its fits already made are kept)");
@@ -498,26 +551,32 @@ namespace CAP
 
   // range, statistic, method
   ImGui::SeparatorText("Range and statistic");
-  double range[2] = { _low, _high };
-  ImGui::SetNextItemWidth(240);
-  if (ImGui::InputScalarN("x range", ImGuiDataType_Double, range, 2, nullptr, nullptr, "%.6g") && range[0] <= range[1])
-    { _low = range[0]; _high = range[1]; if (_function) _function->adaptToRange(_low, _high); }
-  ImGui::SameLine();
-  if (ImGui::Button("View"))
+  for (unsigned int a=0; a<_rank; a++)
     {
-    Graph::View view = graph->view();
-    _low = view.xMinimum; _high = view.xMaximum;
-    if (_function) _function->adaptToRange(_low, _high);
+    double range[2] = { _low[a], _high[a] };
+    ImGui::SetNextItemWidth(240);
+    if (ImGui::InputScalarN(a == 0 ? "x range" : "y range", ImGuiDataType_Double, range, 2, nullptr, nullptr, "%.6g") && range[0] <= range[1])
+      { _low[a] = range[0]; _high[a] = range[1]; if (_function) _function->adaptToRange(_low, _high); }
+    if (a + 1 < _rank) continue;
+    ImGui::SameLine();
+    if (ImGui::Button("View"))
+      {
+      Graph::View view = graph->view();
+      _low[0] = view.xMinimum; _high[0] = view.xMaximum;
+      if (_rank == 2) { _low[1] = view.yMinimum; _high[1] = view.yMaximum; }
+      if (_function) _function->adaptToRange(_low, _high);
+      }
+    ImGui::SetItemTooltip("Take the range shown in the graph");
+    ImGui::SameLine();
+    if (ImGui::Button("All")) selectItem(*graph, _item);
+    ImGui::SetItemTooltip("Take the whole range of the object");
     }
-  ImGui::SetItemTooltip("Take the x range shown in the graph");
-  ImGui::SameLine();
-  if (ImGui::Button("All")) selectItem(*graph, _item);
-  ImGui::SetItemTooltip("Take the whole x range of the object");
   if (item.kind() == GraphItem::kFunction)
     {
     ImGui::SetNextItemWidth(120);
-    if (ImGui::InputInt("samples", &_samples)) _samples = std::min(std::max(_samples, 2), 100000);
-    ImGui::SetItemTooltip("Points of the function fitted, equally spaced over the range (each with an uncertainty of 1)");
+    if (ImGui::InputInt("samples", &_samples)) _samples = std::min(std::max(_samples, 2), _rank == 2 ? 300 : 100000);
+    ImGui::SetItemTooltip(_rank == 2 ? "Points of the function fitted along each axis, on a grid over the range (each with an uncertainty of 1)"
+                                     : "Points of the function fitted, equally spaced over the range (each with an uncertainty of 1)");
     }
   ImGui::RadioButton("chi square", &_statistic, 0);
   ImGui::SetItemTooltip("Least squares weighted by the statistical uncertainties (points without one are left out)");
@@ -526,7 +585,12 @@ namespace CAP
   ImGui::RadioButton("Poisson likelihood", &_statistic, 1);
   ImGui::EndDisabled();
   ImGui::SetItemTooltip("For counts (histograms): unbiased where bins have few entries, empty bins included");
-  if (!histogram) _statistic = 0;
+  if (!histogram) { _statistic = 0; _binAveraging = false; }
+  ImGui::BeginDisabled(!histogram);
+  ImGui::Checkbox("average over the bins", &_binAveraging);
+  ImGui::EndDisabled();
+  ImGui::SetItemTooltip("Compare each bin to the average of the function over it, not to its value at the center: no bias "
+                        "for narrow peaks in wide bins (3 or 9 evaluations per bin)");
   ImGui::Checkbox("global search first (differential evolution)", &_search);
   ImGui::SetItemTooltip("When the starting values are poor or the statistic has several minima; needs bounds on the free parameters");
 
@@ -534,7 +598,7 @@ namespace CAP
   ImGui::SeparatorText("Parameters");
   renderParameters();
   if (ImGui::Button("Estimate")) estimate(*graph);
-  ImGui::SetItemTooltip("Starting values from the data in the range (Normal, LogNormal, Exponential, polynomials)");
+  ImGui::SetItemTooltip("Starting values from the data in the range (Normal, LogNormal, Exponential, polynomials, series, Normal2D, Polynomial2D)");
 
   // label and actions
   ImGui::SeparatorText("Result");

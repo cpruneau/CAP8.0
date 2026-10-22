@@ -78,6 +78,7 @@ namespace CAP
   //! @brief Set the fixed mapping parameters for a fit over [low, high] (see the class). @param low lower end
   //! @param high upper end
   void adaptToRange(double low, double high) override;
+  using ParameterizedFunction::adaptToRange;
   //!
   //! @brief Least-squares values of the free coefficients through points (the mapping and the fixed coefficients
   //! are kept). @param x abscissas @param y values @param w weights (1/sigma^2) @return false if the system is singular
