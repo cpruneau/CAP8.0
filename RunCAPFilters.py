@@ -160,7 +160,34 @@ DERIVED_SUFFIX = "_D"
 #: Names of objects: as task names, without spaces or colons (they become parts of keys and histogram names).
 NAME_FULL = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*")
 #: Keys of the parameters of a task managed by this model (rewritten by apply_choices()).
-MANAGED_KEY = re.compile(r"^(?:(?:%s)(?::N|:USE|_\d+:.*)|HISTOGRAM_[1-4](?::N|_\d+:.*))$" % "|".join(KINDS))
+#: Kinds whose list settings (USE, CREATE, IMPORT, EXPORT and files) belong to each task: what the task does with its
+#: events (a generator or reader creates them, an analyzer uses them). Those of the other kinds are FilterCreator's.
+TASK_SETTING_KINDS = ("EVENT",)
+MANAGED_KEY = re.compile(r"^(?:(?:%s)(?::N|_\d+:.*)|(?:%s):USE|HISTOGRAM_[1-4](?::N|_\d+:.*))$"
+                         % ("|".join(KINDS), "|".join(k for k in KINDS if k not in TASK_SETTING_KINDS)))
+#: Settings of the events of a task shown in its window.
+EVENT_SETTINGS = ("USE", "CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_NAME", "EXPORT", "EXPORT:PATH",
+                  "EXPORT:FILE_NAME")
+#: Tasks making events (generators, readers, models): they create them; the analyzers use them.
+EVENT_SOURCES = ("BasicEventGen", "PythiaEventGenerator", "PythiaEventReader", "EposEventReader", "PHSDEventReader",
+                 "Therminator3", "ThermalModel", "GlauberGenerator", "EventMerger")
+
+
+def makes_events(task):
+    """Whether a task makes events (a generator, a reader or a model)."""
+    name = task.cls.replace("CAP::", "")
+    return name in EVENT_SOURCES or name.endswith(("Gen", "Generator", "Reader"))
+
+
+def default_event_settings(task, templates):
+    """Events of a new task: created by a generator or reader, used by an analyzer, neither by the other tasks."""
+    if "EVENT" not in task_kinds(task, templates):
+        return
+    source = makes_events(task)
+    for name, value in (("CREATE", source), ("USE", not source and histogram_layout(task, templates) is not None)):
+        p = task.param("EVENT:" + name)
+        if p is not None:
+            p.value = "true" if value else "false"
 #: Settings of the lists of objects of a task (<KIND>:USE, IMPORT, CREATE, EXPORT and their files): FilterCreator
 #: creates, imports and exports the objects, so the tasks only choose them (they are hidden in RunCAP.py's windows).
 LIST_SETTING_KEY = re.compile(r"^(?:%s):(?:USE|IMPORT|CREATE|EXPORT)(?::.*)?$" % "|".join(KINDS))
@@ -631,7 +658,11 @@ def creator_task(library, templates, TaskConfig, Param):
         strip_managed(sub)
         objects = [o for o in library.objects[kind] if not glauber_only(o)]
         _set(sub, kind + ":N", "int", str(len(objects)), Param)
-        _set(sub, kind + ":USE", "bool", "true" if objects else "false", Param)
+        use = sub.param(kind + ":USE")
+        if use is not None:
+            use.value = "true" if objects else "false"
+        else:
+            _set(sub, kind + ":USE", "bool", "true" if objects else "false", Param)
         for name, ptype, _ in LIST_SETTINGS:
             value = library.settings[kind].get(name, default_settings(kind)[name])
             p = sub.param(kind + ":" + name)
@@ -656,14 +687,15 @@ def apply_choices(tasks, library, templates, Param):
         kinds = task_kinds(task, templates)
         for kind in kinds:
             names = choices(task).get(kind, [])
-            for flag in ("IMPORT", "CREATE", "EXPORT"):         # FilterCreator does it
+            for flag in ("IMPORT", "CREATE", "EXPORT") if kind not in TASK_SETTING_KINDS else ():   # FilterCreator's
                 p = task.param(kind + ":" + flag)
                 if p is not None and p.value != "false":
                     off = copy.copy(p)                          # the parameter of the model is kept
                     off.value = "false"
                     task.params[task.params.index(p)] = off
             _set(task, kind + ":N", "int", str(len(names)), Param)
-            _set(task, kind + ":USE", "bool", "true" if names else "false", Param)
+            if kind not in TASK_SETTING_KINDS:
+                _set(task, kind + ":USE", "bool", "true" if names else "false", Param)
             for k, name in enumerate(names):
                 definition = library.get(kind, name)
                 owner = (kind in GLAUBER_KINDS and is_glauber(task) and definition is not None
@@ -933,6 +965,12 @@ def check_choices(tasks, library, templates):
             if kind == "PARTICLE_FILTER" and len(names) > MAX_PARTICLE_FILTERS:
                 errors.append("Task %s uses %d particle filters: CAP handles at most %d." % (task.name, len(names),
                                                                                           MAX_PARTICLE_FILTERS))
+        if "EVENT" in kinds and _param_value(task, "EVENT:IMPORT", "false") == "true" \
+                and _param_value(task, "EVENT:IMPORT:FILE_NAME", "NONE") in ("", "NONE"):
+            errors.append("Task %s imports events but the file is not named." % task.name)
+        if "EVENT" in kinds and _param_value(task, "EVENT:EXPORT", "false") == "true" \
+                and _param_value(task, "EVENT:EXPORT:FILE_NAME", "NONE") in ("", "NONE"):
+            errors.append("Task %s exports events but the file is not named." % task.name)
         mode = histogram_mode(task, templates)
         fills = any(list_used(task, l) and _flag(task, l, "CREATE") for l in folder_lists(task, templates) if l in (1, 3))
         if fills and "EVENT" in kinds and not choices(task).get("EVENT"):
@@ -970,6 +1008,16 @@ def check_choices(tasks, library, templates):
             names = [f.name for f in folders(task, templates) if f.list in used]
             for name in sorted(set(n for n in names if names.count(n) > 1)):
                 errors.append("Task %s: several histogram folders are named %s (a filter chosen twice?)." % (task.name, name))
+    made = set()                                        # events created or imported by a task
+    for task in _preorder(tasks):
+        if any(_param_value(task, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
+            made.update(choices(task).get("EVENT", []))
+    for task in _preorder(tasks):
+        if _param_value(task, "EVENT:USE", "false") == "true":
+            for name in choices(task).get("EVENT", []):
+                if name not in made:
+                    errors.append("Task %s uses the events %s, which no task creates or imports (a generator or a "
+                                  "reader creates them)." % (task.name, name))
     return errors
 
 

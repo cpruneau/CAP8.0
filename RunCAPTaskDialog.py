@@ -219,7 +219,9 @@ class TaskDialog(tk.Toplevel):
             child.destroy()
         box.columnconfigure(2, weight=1)
         choices = F.choices(self.task)
-        for r, kind in enumerate(self.kinds):
+        r = -1
+        for kind in self.kinds:
+            r += 1
             names = self.library.names(kind)
             chosen = list(choices.get(kind, []))
             ttk.Label(box, text=F.KIND_LABELS[kind] + ":").grid(row=r, column=0, sticky="nw", padx=(0, 6), pady=3)
@@ -246,6 +248,42 @@ class TaskDialog(tk.Toplevel):
                     name_menu.configure(style="Invalid.TCombobox")
                 name_menu.bind("<<ComboboxSelected>>",
                                lambda e, kd=kind, i=k, v=var: self._set_choice(kd, i, v.get()))
+            if kind in F.TASK_SETTING_KINDS:
+                r += 1
+                self._make_event_settings(box, r)
+
+    def _make_event_settings(self, box, row):
+        """What the task does with its events: uses them (analyzer), creates them (generator, reader), imports
+        or exports them (CAP files)."""
+        line = ttk.Frame(box)
+        line.grid(row=row, column=2, sticky="w", padx=(10, 0), pady=(0, 4))
+        for name, label in (("USE", "Use (analyze)"), ("CREATE", "Create (generate, read)")):
+            self._event_flag(line, name, label)
+        ttk.Frame(line, width=8).pack(side=tk.LEFT)
+        for action, word in (("IMPORT", "from"), ("EXPORT", "to")):
+            self._event_flag(line, action, action.capitalize())
+            for name, label, width in ((action + ":PATH", word, 8), (action + ":FILE_NAME", "file", 12)):
+                p = self.task.param("EVENT:" + name)
+                if p is None:
+                    continue
+                ttk.Label(line, text=label).pack(side=tk.LEFT, padx=(0, 2))
+                var = tk.StringVar(self, value=p.value)
+                ttk.Entry(line, textvariable=var, width=width).pack(side=tk.LEFT, padx=(0, 6))
+                var.trace_add("write", lambda *a, q=p, v=var: self._set_event(q, v.get().strip()))
+
+    def _event_flag(self, parent, name, label):
+        p = self.task.param("EVENT:" + name)
+        if p is None:
+            return
+        var = tk.BooleanVar(self, value=p.value == "true")
+        ttk.Checkbutton(parent, text=label, variable=var,
+                        command=lambda: self._set_event(p, "true" if var.get() else "false")).pack(side=tk.LEFT,
+                                                                                                  padx=(0, 6))
+
+    def _set_event(self, p, value):
+        if p.value != value:
+            p.value = value
+            self._changed()
 
     def _set_count(self, kind, n):
         choices = F.choices(self.task)

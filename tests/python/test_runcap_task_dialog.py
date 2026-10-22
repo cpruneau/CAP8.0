@@ -159,6 +159,16 @@ class TestDialog(unittest.TestCase):
         self.assertEqual(self.task.param("HISTOGRAM_1:IMPORT:FILE_NAME").value, "PSA.cap")
         self.assertTrue(self.changes)
 
+    def test_event_settings(self):
+        F.default_event_settings(self.task, TEMPLATES)
+        self.dialog.refresh()
+        checks = [w for w in self.dialog.filters_box.winfo_children()
+                  if isinstance(w, tk.ttk.Frame) for w in w.winfo_children() if isinstance(w, tk.ttk.Checkbutton)]
+        self.assertEqual([c.cget("text") for c in checks], ["Use (analyze)", "Create (generate, read)", "Import", "Export"])
+        self.dialog._set_event(self.task.param("EVENT:CREATE"), "true")
+        self.assertEqual(self.task.param("EVENT:CREATE").value, "true")
+        self.assertTrue(self.changes)
+
 
 if __name__ == "__main__":
     unittest.main()

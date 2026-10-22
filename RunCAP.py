@@ -806,6 +806,7 @@ def run_gui(initial_file=None, hook=None):
                 task = new_task(cls, self.templates, self._used_names())
                 filters.default_choices(task, self.library, self.templates)    # the first event and database
                 filters.default_histogram_settings(task, self.templates)       # histograms used, created, exported
+                filters.default_event_settings(task, self.templates)           # events created (generators) or used
                 new.append(self._insert_task("", task))
             self.tree.see(new[-1])
             self._changed("Added %s; double-click a task to configure it."

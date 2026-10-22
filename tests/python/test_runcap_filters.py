@@ -317,6 +317,36 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(F.histogram_mode(tasks[0].children[1], TEMPLATES), F.CUSTOM)   # the workflow is unchanged
         self.assertEqual(F.check_choices(derived, library(), TEMPLATES), [])
 
+    def test_event_settings(self):
+        """A generator creates its events, an analyzer uses them; the settings are written as set."""
+        gen, ana, it = task("BasicEventGen"), task("ParticleSingleAnalyzer", "PSA"), task("EventIterator")
+        for t in (gen, ana, it):
+            F.default_event_settings(t, TEMPLATES)
+        self.assertEqual((values(gen)["EVENT:CREATE"], values(gen)["EVENT:USE"]), ("true", "false"))
+        self.assertEqual((values(ana)["EVENT:CREATE"], values(ana)["EVENT:USE"]), ("false", "true"))
+        self.assertEqual((values(it)["EVENT:CREATE"], values(it)["EVENT:USE"]), ("false", "false"))
+        self.assertTrue(F.makes_events(task("Therminator3")))
+        tasks = workflow()
+        gen, single = tasks[0].children[0], tasks[0].children[1]
+        F.default_event_settings(gen, TEMPLATES)
+        F.default_event_settings(single, TEMPLATES)
+        gen.param("EVENT:EXPORT").value = "true"
+        gen.param("EVENT:EXPORT:FILE_NAME").value = "events.cap"
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        g, s = values(copies[1].children[0]), values(copies[1].children[1])
+        self.assertEqual((g["EVENT:CREATE"], g["EVENT:USE"], g["EVENT:EXPORT"]), ("true", "false", "true"))
+        self.assertEqual((s["EVENT:CREATE"], s["EVENT:USE"]), ("false", "true"))
+        self.assertEqual(len([k for k in g if k == "EVENT:USE"]), 1)
+        events = values(copies[0].children[F.KINDS.index("EVENT")])
+        self.assertEqual(events["EVENT:USE"], "true")                    # FilterCreator's list of events
+        self.assertEqual(F.check_choices(tasks, library(), TEMPLATES), [])
+        gen.param("EVENT:CREATE").value = "false"
+        text = "\n".join(F.check_choices(tasks, library(), TEMPLATES))
+        self.assertIn("Task Single uses the events Event, which no task creates or imports", text)
+        gen.param("EVENT:IMPORT").value = "true"
+        self.assertIn("Task BasicEventGen imports events but the file is not named",
+                      "\n".join(F.check_choices(tasks, library(), TEMPLATES)))
+
     def test_use_migrates(self):
         """A workflow whose folders were written without USE (CAP did not read it): the lists are used."""
         a = task("ParticleSingleAnalyzer", "PSA")
