@@ -123,7 +123,8 @@ namespace CAP
   void setPaneCount(int n);
   //! @brief Add a pane, docked beside the current one, and make it current. @return the new pane
   CanvasPane & addPane();
-  //! @brief Close pane k (not the last one). @param k index of the pane
+  //! @brief Close pane k: not the last one, unless it was moved out of the main window (an empty pane then takes its
+  //! place in the main window). @param k index of the pane
   void closePane(int k);
   int  nColumns() const { return _columns; }   //!< Columns of the last grid layout of the canvases
   int  nRows()    const { return _rows; }   //!< Rows of the last grid layout of the canvases

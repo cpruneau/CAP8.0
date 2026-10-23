@@ -280,7 +280,16 @@ namespace CAP
 
   void CapGui::closePane(int k)
   {
-  if (k < 0 || k >= nPanes() || nPanes() <= 1) return;
+  if (k < 0 || k >= nPanes()) return;
+  if (nPanes() == 1)
+    {
+    // the last canvas (moved out of the main window): an empty one takes its place in the main window
+    ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->name().data()) : nullptr;
+    if (!window || !window->Viewport || window->Viewport == ImGui::GetMainViewport()) return;
+    newPane();
+    _gridColumns = 1;
+    _layoutRequested = true;
+    }
   // a dock space keeps its central node even when empty: lay the panes out again rather than leave a hole
   ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->name().data()) : nullptr;
   if (window && window->DockNode && window->DockNode->IsCentralNode())
@@ -590,8 +599,12 @@ namespace CAP
     CanvasPane & pane = *_panes[k];
     bool open = true;
     if (_focusRequested && k == _currentPane) ImGui::SetNextWindowFocus();
+    // a close button when there are other canvases, or when the canvas was moved out of the main window (closing the
+    // last canvas then puts an empty one in the main window, see closePane())
+    ImGuiWindow * window = ImGui::FindWindowByName(pane.name().data());
+    bool outside = window && window->Viewport && window->Viewport != ImGui::GetMainViewport();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
-    bool visible = ImGui::Begin(pane.name().data(), nPanes() > 1 ? &open : nullptr,
+    bool visible = ImGui::Begin(pane.name().data(), (nPanes() > 1 || outside) ? &open : nullptr,
                                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
     ImGui::PopStyleVar();
     if (visible)
