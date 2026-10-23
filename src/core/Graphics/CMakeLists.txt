@@ -39,6 +39,7 @@ Projection3D.hpp
 PolygonRenderer.hpp
 Renderer.hpp
 SvgPainter.hpp
+PdfPainter.hpp
 TextAttributes.hpp
 TextRenderer.hpp)
 
@@ -71,6 +72,7 @@ Projection3D.cpp
 PolygonRenderer.cpp
 Renderer.cpp
 SvgPainter.cpp
+PdfPainter.cpp
 TextAttributes.cpp
 TextRenderer.cpp)
 
@@ -107,6 +109,9 @@ add_test(NAME LatexRenderer COMMAND TestLatexRenderer)
 add_executable(TestGraph2D tests/TestGraph2D.cpp)
 target_link_libraries(TestGraph2D Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Graph2D COMMAND TestGraph2D)
+add_executable(TestPdfPainter tests/TestPdfPainter.cpp)
+target_link_libraries(TestPdfPainter Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME PdfPainter COMMAND TestPdfPainter)
 add_executable(TestGraph3D tests/TestGraph3D.cpp)
 target_link_libraries(TestGraph3D Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Graph3D COMMAND TestGraph3D)

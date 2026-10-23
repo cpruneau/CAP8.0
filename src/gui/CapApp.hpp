@@ -183,8 +183,15 @@ namespace CAP
   //! @brief Show the objects of a folder, one per graph of the current canvas (divided as needed).
   //! @param file file id @param folderPath folder in the file ("" for the top)
   void showFolder(int file, const String & folderPath);
-  //! @brief Write the canvases, laid out as on screen, to an SVG file. @param fileName file name
-  void save(const String & fileName);
+  //! @brief Write the canvases laid out as on screen, one canvas or one graph to an SVG or PDF file (by the extension of
+  //! the name; the format used last if it has none). @param fileName file name @param pane canvas pane (-1: the window)
+  //! @param graph graph of the pane (-1: the whole canvas)
+  void save(const String & fileName, int pane=-1, int graph=-1);
+  //! @brief Ask for a file, then save the window, a canvas or a graph (see save()). @param pane canvas pane (-1: the
+  //! window) @param graph graph of the pane (-1: the whole canvas)
+  void saveAs(int pane=-1, int graph=-1);
+  //! @brief Index of a canvas pane. @param pane pane @return index, -1 if not shown
+  int paneIndex(const CanvasPane & pane);
   //! @}
 
   //! @name Undo
@@ -224,7 +231,11 @@ namespace CAP
   int _nextFileId;   //!< identifier of the next file opened
   int _treeCounter;   //!< number of the last tree made (New Tree)
   std::vector<std::unique_ptr<FolderItem>> _removed;   //!< entries removed from trees: kept for the graphs showing them
-  String _saveFile;   //!< SVG file of the last Save As
+  String _saveFile;   //!< file of the last Save Window As
+  String _saveFormat;   //!< extension of the file saved last (".svg" or ".pdf")
+  int  _renamePane;   //!< canvas pane renamed in the Rename Canvas dialog (-1: none)
+  std::string _renameText;   //!< title edited in the Rename Canvas dialog
+  bool _renameRequested;   //!< Rename Canvas dialog to open
   std::deque<Snapshot> _undo;   //!< states before the last changes (at most 50)
   std::deque<Snapshot> _redo;   //!< states undone
   std::vector<GRAPHICS::GraphItem> _clipboard;   //!< items copied (Edit > Copy)
@@ -284,6 +295,8 @@ namespace CAP
   void renderShortcuts();
   //! @brief Draw the Custom layout dialog, if open.
   void renderCustomLayout();
+  //! @brief Rename Canvas dialog.
+  void renderRenameCanvas();
   //! @brief Open file of an identifier. @param id identifier @return file, or null
   BrowserFile * file(int id);
   };

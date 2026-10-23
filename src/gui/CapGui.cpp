@@ -29,6 +29,8 @@
 #include "LatexRenderer.hpp"
 #include "LatexTextures.hpp"
 #include "SvgPainter.hpp"
+#include "PdfPainter.hpp"
+#include <functional>
 
 #ifndef CAP_SOURCE_ROOT
 //! Top directory of the CAP sources (set by the build; empty if not).
@@ -260,9 +262,9 @@ namespace CAP
 
   CanvasPane & CapGui::addPane()
   {
-  std::string beside = _panes.empty() ? std::string() : currentPane().name().str();
+  std::string beside = _panes.empty() ? std::string() : std::string(currentPane().windowId());
   CanvasPane & pane = newPane();
-  _dockBeside.push_back(std::make_pair(pane.name().str(), beside));
+  _dockBeside.push_back(std::make_pair(std::string(pane.windowId()), beside));
   setCurrentPane(nPanes() - 1);
   return pane;
   }
@@ -273,7 +275,7 @@ namespace CAP
   std::snprintf(name, sizeof(name), "Data %d", ++_dataCounter);
   _dataPanes.emplace_back(new DataPane(name));
   DataPane & pane = *_dataPanes.back();
-  std::string beside = _panes.empty() ? std::string() : currentPane().name().str();
+  std::string beside = _panes.empty() ? std::string() : std::string(currentPane().windowId());
   _dockBeside.push_back(std::make_pair(std::string("###") + name, beside));
   return pane;
   }
@@ -284,14 +286,14 @@ namespace CAP
   if (nPanes() == 1)
     {
     // the last canvas (moved out of the main window): an empty one takes its place in the main window
-    ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->name().data()) : nullptr;
+    ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->windowId()) : nullptr;
     if (!window || !window->Viewport || window->Viewport == ImGui::GetMainViewport()) return;
     newPane();
     _gridColumns = 1;
     _layoutRequested = true;
     }
   // a dock space keeps its central node even when empty: lay the panes out again rather than leave a hole
-  ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->name().data()) : nullptr;
+  ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->windowId()) : nullptr;
   if (window && window->DockNode && window->DockNode->IsCentralNode())
     {
     _gridColumns = int(std::ceil(std::sqrt(double(nPanes() - 1))));
@@ -318,7 +320,7 @@ namespace CAP
   {
   // the node of the canvases: the largest one holding the first canvas pane but not the docked file browser
   ImGuiID dockspace = ImHashStr("CapDockSpace");
-  ImGuiWindow * first = _panes.empty() ? nullptr : ImGui::FindWindowByName(_panes[0]->name().data());
+  ImGuiWindow * first = _panes.empty() ? nullptr : ImGui::FindWindowByName(_panes[0]->windowId());
   ImGuiWindow * browser = ImGui::FindWindowByName(FileBrowser::mainWindowName());
   ImGuiDockNode * browserNode = browser ? browser->DockNode : nullptr;
   auto holdsBrowser = [browserNode](ImGuiDockNode * node)
@@ -519,9 +521,9 @@ namespace CAP
       {
       ImGuiID left = 0;
       ImGui::DockBuilderSplitNode(rest, ImGuiDir_Left, 1.0f/float(count - c), &left, &rest);
-      ImGui::DockBuilderDockWindow(_panes[r*columns + c]->name().data(), left);
+      ImGui::DockBuilderDockWindow(_panes[r*columns + c]->windowId(), left);
       }
-    ImGui::DockBuilderDockWindow(_panes[r*columns + count - 1]->name().data(), rest);
+    ImGui::DockBuilderDockWindow(_panes[r*columns + count - 1]->windowId(), rest);
     }
   }
 
@@ -601,10 +603,10 @@ namespace CAP
     if (_focusRequested && k == _currentPane) ImGui::SetNextWindowFocus();
     // a close button when there are other canvases, or when the canvas was moved out of the main window (closing the
     // last canvas then puts an empty one in the main window, see closePane())
-    ImGuiWindow * window = ImGui::FindWindowByName(pane.name().data());
+    ImGuiWindow * window = ImGui::FindWindowByName(pane.windowId());
     bool outside = window && window->Viewport && window->Viewport != ImGui::GetMainViewport();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
-    bool visible = ImGui::Begin(pane.name().data(), (nPanes() > 1 || outside) ? &open : nullptr,
+    bool visible = ImGui::Begin(pane.windowLabel(), (nPanes() > 1 || outside) ? &open : nullptr,
                                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
     ImGui::PopStyleVar();
     if (visible)
@@ -672,7 +674,7 @@ namespace CAP
   // right: coordinates under the mouse, current canvas
   char right[160];
   std::snprintf(right, sizeof(right), "%s    %s  (%d canvas%s)", _hoverText.data(),
-                _panes.empty() ? "" : currentPane().name().data(), nPanes(), nPanes() > 1 ? "es" : "");
+                _panes.empty() ? "" : currentPane().title().data(), nPanes(), nPanes() > 1 ? "es" : "");
   float textWidth = ImGui::CalcTextSize(right).x;
   ImGui::SameLine(ImGui::GetWindowWidth() - textWidth - 12.0f);
   ImGui::TextUnformatted(right);
@@ -695,26 +697,78 @@ namespace CAP
     }
   }
 
-  bool CapGui::savePageSvg(const String & fileName)
+  namespace
   {
-  if (_areaWidth <= 0 || _areaHeight <= 0) return false;
-  GRAPHICS::SvgPainter svg(_areaWidth, _areaHeight);
-  for (auto & pane : _panes)        // typeset the LaTeX texts of all the canvases in one run
+  //! Draw into a page painter (SvgPainter or PdfPainter) and write it.
+  template <class PAINTER>
+  bool paint(const String & fileName, float width, float height, const std::function<void(PAINTER &)> & draw)
+  {
+  PAINTER painter(width, height);
+  draw(painter);
+  painter.endRegion();
+  return painter.write(fileName);
+  }
+  } // namespace
+
+  bool CapGui::saveFigure(const String & fileName, int paneIndex, int graphIndex)
+  {
+  if (paneIndex >= nPanes()) return false;
+  // the page: the area of the canvases, of one canvas, or of the cell of one graph (points = pixels on screen)
+  float pageWidth = _areaWidth, pageHeight = _areaHeight;
+  float x = 0, y = 0, w = 0, h = 0;
+  if (paneIndex >= 0)
     {
-    float x, y, w, h;
-    pane->canvasRect(x, y, w, h);
-    if (w > 0 && h > 0) GRAPHICS::LatexRenderer::instance().prepare(pane->canvas(), w, h);
+    _panes[paneIndex]->canvasRect(x, y, w, h);
+    pageWidth = w; pageHeight = h;
+    if (graphIndex >= 0)
+      {
+      GRAPHICS::Canvas & canvas = _panes[paneIndex]->canvas();
+      if (graphIndex >= canvas.nGraphs()) return false;
+      const GRAPHICS::Graph & graph = canvas.graph(graphIndex);
+      pageWidth  = (graph.cellXHigh() - graph.cellXLow())*w;
+      pageHeight = (graph.cellYHigh() - graph.cellYLow())*h;
+      }
     }
-  for (auto & pane : _panes)
+  if (pageWidth <= 0 || pageHeight <= 0) return false;
+  // typeset the LaTeX texts of the canvases drawn in one run
+  for (int k=0; k<nPanes(); k++)
     {
-    float x, y, w, h;
-    pane->canvasRect(x, y, w, h);
-    if (w <= 0 || h <= 0) continue;
-    svg.beginRegion(x - _areaX, y - _areaY, w, h);
-    pane->canvas().draw(svg);
+    if (paneIndex >= 0 && k != paneIndex) continue;
+    float px, py, pw, ph;
+    _panes[k]->canvasRect(px, py, pw, ph);
+    if (pw > 0 && ph > 0) GRAPHICS::LatexRenderer::instance().prepare(_panes[k]->canvas(), pw, ph);
     }
-  svg.endRegion();
-  return svg.write(fileName);
+  auto draw = [&](auto & painter)
+    {
+    if (paneIndex < 0)
+      {
+      for (auto & pane : _panes)
+        {
+        float px, py, pw, ph;
+        pane->canvasRect(px, py, pw, ph);
+        if (pw <= 0 || ph <= 0) continue;
+        painter.beginRegion(px - _areaX, py - _areaY, pw, ph);
+        pane->canvas().draw(painter);
+        }
+      return;
+      }
+    GRAPHICS::Canvas & canvas = _panes[paneIndex]->canvas();
+    if (graphIndex < 0) { painter.beginRegion(0, 0, w, h); canvas.draw(painter); return; }
+    // one graph: the canvas placed so that the cell of the graph fills the page (texts keep their size on screen)
+    const GRAPHICS::Graph & graph = canvas.graph(graphIndex);
+    painter.beginRegion(-graph.cellXLow()*w, -(1.0f - graph.cellYHigh())*h, w, h);
+    std::vector<GRAPHICS::Point2D> cell{GRAPHICS::Point2D(graph.cellXLow(), graph.cellYLow()),
+                                        GRAPHICS::Point2D(graph.cellXHigh(), graph.cellYLow()),
+                                        GRAPHICS::Point2D(graph.cellXHigh(), graph.cellYHigh()),
+                                        GRAPHICS::Point2D(graph.cellXLow(), graph.cellYHigh())};
+    GRAPHICS::LineAttributes noLine;
+    noLine.setStyle(0);
+    painter.drawPolygon(cell, canvas.background(), noLine);
+    graph.draw(painter);
+    };
+  if (FileSystem::hasExtension(fileName, ".pdf"))
+    return paint<GRAPHICS::PdfPainter>(fileName, pageWidth, pageHeight, draw);
+  return paint<GRAPHICS::SvgPainter>(fileName, pageWidth, pageHeight, draw);
   }
 
   } // namespace GUI

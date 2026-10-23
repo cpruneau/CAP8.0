@@ -173,8 +173,13 @@ namespace CAP
   ImFont * font() const { return _font; }
   //! @}
 
-  //! @brief Write the canvases, laid out as on screen, to an SVG file. @return false if it cannot be written
-  bool savePageSvg(const String & fileName);
+  //!
+  //! @brief Write a figure as shown on screen (1 pixel = 1 point) to an SVG or a PDF file (by its extension: ".pdf"
+  //! for PDF, SVG otherwise): the whole window (all the canvases, laid out as on screen), one canvas, or one graph.
+  //! @param fileName file @param pane canvas pane (-1: the whole window) @param graph graph of the pane (-1: the whole
+  //! pane) @return false if there is nothing to draw or the file cannot be written
+  //!
+  bool saveFigure(const String & fileName, int pane=-1, int graph=-1);
 
   //! Called every frame inside the ImGui frame, to draw the application's own windows (preferences, about, ...).
   std::function<void()> onFrame;
@@ -199,10 +204,10 @@ namespace CAP
   String _messageText;   //!< message box to show
   bool   _messageRequested;   //!< the message box opens at the next frame
   bool   _exitRequested;   //!< close the window at the end of the frame
-  float  _areaX;   //!< screen rectangle covering the canvas panes (for savePageSvg())
-  float  _areaY;   //!< screen rectangle covering the canvas panes (for savePageSvg())
-  float  _areaWidth;   //!< screen rectangle covering the canvas panes (for savePageSvg())
-  float  _areaHeight;   //!< screen rectangle covering the canvas panes (for savePageSvg())
+  float  _areaX;   //!< screen rectangle covering the canvas panes (for saveFigure())
+  float  _areaY;   //!< screen rectangle covering the canvas panes (for saveFigure())
+  float  _areaWidth;   //!< screen rectangle covering the canvas panes (for saveFigure())
+  float  _areaHeight;   //!< screen rectangle covering the canvas panes (for saveFigure())
   std::string _iniFile;   //!< file where ImGui keeps window positions (kept alive for ImGui)
   String _hoverText;   //!< data coordinates under the mouse (shown in the status bar on the next frame)
   std::vector<std::unique_ptr<FileBrowser>> _browsers;   //!< file browsers (the first one cannot be closed)

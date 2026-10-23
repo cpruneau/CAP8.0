@@ -53,6 +53,14 @@ namespace CAP
   _editBefore()
   {
   _canvas.divide(1,1);
+  setTitle(name);
+  }
+
+  void CanvasPane::setTitle(const String & title)
+  {
+  _title = title;
+  _windowId = std::string("###") + _name.str();
+  _windowLabel = _title.str() + _windowId;
   }
 
   void CanvasPane::setSelectedGraph(int k)
@@ -245,6 +253,10 @@ namespace CAP
       }
     ImGui::EndMenu();
     }
+  if (onSaveGraph || onSaveCanvas || onRename) ImGui::Separator();
+  if (onSaveGraph && ImGui::MenuItem("Save Graph As...")) onSaveGraph(_contextGraph);
+  if (onSaveCanvas && ImGui::MenuItem("Save Canvas As...")) onSaveCanvas();
+  if (onRename && ImGui::MenuItem("Rename Canvas...")) onRename();
   if (graph.hasMovedTexts() && ImGui::MenuItem("Reset Text Positions")) { changing(); graph.resetTextPositions(); }
   ImGui::Separator();
   bool logX = graph.isLogX(), logY = graph.isLogY(), legend = graph.showLegend();

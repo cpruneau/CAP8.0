@@ -57,6 +57,11 @@ namespace CAP
   GRAPHICS::Canvas & canvas() { return _canvas; }   //!< The canvas of the pane
   const GRAPHICS::Canvas & canvas() const { return _canvas; }   //!< The canvas of the pane
   const String & name() const { return _name; }   //!< Name of the pane (identifies its window)
+  const String & title() const { return _title; }   //!< Title shown on the tab of the pane (the name at first)
+  //! @brief Set the title shown on the tab (the window keeps its identity). @param title title
+  void setTitle(const String & title);
+  const char * windowId() const { return _windowId.c_str(); }   //!< "###name": id of the window, whatever its title
+  const char * windowLabel() const { return _windowLabel.c_str(); }   //!< "title###name": label of the window
 
   Mode mode() const { return _mode; }   //!< Add or Replace
   void setMode(Mode mode) { _mode = mode; }   //!< Set Add or Replace
@@ -103,10 +108,19 @@ namespace CAP
   //! Called by "Compare" in the context menu of a graph, for two histograms of the same rank shown in it.
   std::function<void(const MATH::DataPoints * first, const MATH::DataPoints * second,
                      const String & firstLabel, const String & secondLabel)> onCompare;
+  //! Called by "Save Graph As..." in the context menu of graph k.
+  std::function<void(int graph)> onSaveGraph;
+  //! Called by "Save Canvas As..." in the context menu of a graph.
+  std::function<void()> onSaveCanvas;
+  //! Called by "Rename Canvas..." in the context menu of a graph.
+  std::function<void()> onRename;
 
   protected:
 
   String _name;   //!< name of the pane
+  String _title;   //!< title shown on the tab
+  std::string _windowId;   //!< "###name"
+  std::string _windowLabel;   //!< "title###name"
   GRAPHICS::Canvas _canvas;   //!< the canvas, divided into graphs
   Mode _mode;   //!< Add or Replace
   int  _selectedGraph;   //!< index of the selected graph

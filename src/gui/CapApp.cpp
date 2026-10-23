@@ -186,6 +186,10 @@ namespace CAP
   _treeCounter(0),
   _removed(),
   _saveFile(),
+  _saveFormat(".svg"),
+  _renamePane(-1),
+  _renameText(),
+  _renameRequested(false),
   _undo(),
   _redo(),
   _clipboard(),
@@ -297,6 +301,14 @@ namespace CAP
   pane.onFit = [this](int item) { _gui.openFitDialog(item); };
   pane.onResidualMap = [this](const MATH::DataPoints * data, unsigned int fit) { showResidualMap(data, fit); };
   pane.onProjections = [this](const MATH::DataPoints * data) { showProjections(data); };
+  pane.onSaveGraph  = [this, &pane](int graph) { saveAs(paneIndex(pane), graph); };
+  pane.onSaveCanvas = [this, &pane]() { saveAs(paneIndex(pane)); };
+  pane.onRename     = [this, &pane]()
+    {
+    _renamePane = paneIndex(pane);
+    _renameText = pane.title().str();
+    _renameRequested = true;
+    };
   pane.onCompare = [this](const MATH::DataPoints * a, const MATH::DataPoints * b, const String & la, const String & lb)
     { showComparison(a, b, la, lb); };
   }
@@ -316,8 +328,10 @@ namespace CAP
   file.addItem("New Tree",       "file.newTree",    "",             "Make a new, empty tree in the browser used last: "
                                                                      "add folders, drag objects onto it, save it");
   file.addSeparator();
-  file.addItem("Save",           "file.save",       "Ctrl+S",       "Save the canvases shown in the window (SVG)");
-  file.addItem("Save As...",     "file.saveAs",     "Ctrl+Shift+S", "Save the canvases shown in the window to a new file (SVG)");
+  file.addItem("Save",           "file.save",       "Ctrl+S",       "Save the canvases shown in the window again (SVG or PDF)");
+  file.addItem("Save Window As...", "file.saveAs",  "Ctrl+Shift+S", "Save the canvases, laid out as in the window, to a new SVG or PDF file");
+  file.addItem("Save Canvas As...", "file.saveCanvas", "",          "Save the current canvas to an SVG or PDF file");
+  file.addItem("Save Graph As...",  "file.saveGraph",  "",          "Save the selected graph of the current canvas to an SVG or PDF file");
   file.addSeparator();
   file.addItem("Exit",           "file.exit",       "Ctrl+Q",       "Close the window and quit");
 
@@ -389,6 +403,7 @@ namespace CAP
   window.addSeparator();
   window.addItem("New Canvas",      "window.new",      "Ctrl+T", "Add a canvas pane beside the current one");
   window.addItem("Close Canvas",    "window.close",    "Ctrl+W", "Close the current canvas pane");
+  window.addItem("Rename Canvas...", "window.rename",  "",       "Change the title of the current canvas pane");
   window.addSeparator();
   window.addItem("Next Canvas",     "window.next",     "Ctrl+]", "Make the next canvas current");
   window.addItem("Previous Canvas", "window.previous", "Ctrl+[", "Make the previous canvas current");
@@ -445,12 +460,9 @@ namespace CAP
                            [this](const String & path) { openFolder(path); });
     }
   else if (c == "file.save" && !_saveFile.isNull()) save(_saveFile);
-  else if (c == "file.save" || c == "file.saveAs")
-    {
-    String name = _saveFile.isNull() ? String("canvases.svg") : FileSystem::name(_saveFile);
-    _gui.fileDialog().open(FileDialog::kSaveFile, "Save the canvases", _configuration.directory, {".svg"}, name,
-                           [this](const String & path) { save(path); });
-    }
+  else if (c == "file.save" || c == "file.saveAs") saveAs();
+  else if (c == "file.saveCanvas") saveAs(_gui.currentPaneIndex());
+  else if (c == "file.saveGraph") saveAs(_gui.currentPaneIndex(), _gui.currentPane().selectedGraph());
   else if (c == "file.newBrowser")
     {
     FileBrowser & browser = _gui.addBrowser();
@@ -524,6 +536,12 @@ namespace CAP
   else if (std::sscanf(c.data(), "window.layout.%dx%d", &columns, &rows) == 2) setLayout(columns, rows);
   else if (std::sscanf(c.data(), "window.graphs.%dx%d", &columns, &rows) == 2) setGraphs(columns, rows);
   else if (c == "window.new")      { recordUndo(); _gui.addPane(); }
+  else if (c == "window.rename")
+    {
+    _renamePane = _gui.currentPaneIndex();
+    _renameText = _gui.currentPane().title().str();
+    _renameRequested = true;
+    }
   else if (c == "window.close")    { if (_gui.nPanes() > 1) { recordUndo(); _gui.closePane(_gui.currentPaneIndex()); } }
   else if (c == "window.next")     _gui.setCurrentPane((_gui.currentPaneIndex() + 1) % _gui.nPanes());
   else if (c == "window.previous") _gui.setCurrentPane((_gui.currentPaneIndex() + _gui.nPanes() - 1) % _gui.nPanes());
@@ -1121,13 +1139,49 @@ namespace CAP
   pane.setSelectedGraph(0);
   }
 
-  void CapApp::save(const String & fileName)
+  int CapApp::paneIndex(const CanvasPane & pane)
+  {
+  for (int k=0; k<_gui.nPanes(); k++) if (&_gui.pane(k) == &pane) return k;
+  return -1;
+  }
+
+  void CapApp::saveAs(int pane, int graph)
+  {
+  if (pane >= _gui.nPanes()) return;
+  // default name: the last file of the window, the title of the canvas, or of the graph
+  auto fileName = [](const String & text)
+    {
+    std::string name;
+    for (char ch : text.str()) name += (std::isalnum((unsigned char) ch) || ch == '-' || ch == '_' || ch == '.') ? ch : '_';
+    return name;
+    };
+  String name;
+  if (pane < 0) name = _saveFile.isNull() ? String("canvases") + _saveFormat : FileSystem::name(_saveFile);
+  else
+    {
+    CanvasPane & p = _gui.pane(pane);
+    std::string base = fileName(p.title());
+    if (graph >= 0 && graph < p.canvas().nGraphs())
+      {
+      const String & title = p.canvas().graph(graph).title();
+      base = title.isNull() ? base + "_" + std::to_string(graph + 1) : fileName(title);
+      }
+    name = String(base.c_str()) + _saveFormat;
+    }
+  const char * title = pane < 0 ? "Save the window" : (graph < 0 ? "Save the canvas" : "Save the graph");
+  std::vector<String> types = _saveFormat == ".pdf" ? std::vector<String>{".pdf", ".svg"} : std::vector<String>{".svg", ".pdf"};
+  _gui.fileDialog().open(FileDialog::kSaveFile, title, _configuration.directory, types, name,
+                         [this, pane, graph](const String & path) { save(path, pane, graph); });
+  }
+
+  void CapApp::save(const String & fileName, int pane, int graph)
   {
   String name = fileName;
-  if (!name.endsWith(".svg")) name += ".svg";
-  if (_gui.savePageSvg(name))
+  if (!name.endsWith(".svg") && !name.endsWith(".pdf")) name += _saveFormat;
+  if (_gui.saveFigure(name, pane, graph))
     {
-    _saveFile = name;
+    if (pane < 0) _saveFile = name;
+    _saveFormat = name.endsWith(".pdf") ? ".pdf" : ".svg";
     _configuration.directory = FileSystem::parent(name);
     _gui.setStatus(String("Saved ") + name);
     }
@@ -1245,6 +1299,7 @@ namespace CAP
   renderAbout();
   renderShortcuts();
   renderCustomLayout();
+  renderRenameCanvas();
   renderComparison();
   if (_showImGuiDemo) ImGui::ShowDemoWindow(&_showImGuiDemo);
   }
@@ -1442,6 +1497,26 @@ namespace CAP
     if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
     ImGui::EndPopup();
     }
+  }
+
+  void CapApp::renderRenameCanvas()
+  {
+  if (_renameRequested) { ImGui::OpenPopup("Rename Canvas##rename"); _renameRequested = false; }
+  if (!ImGui::BeginPopupModal("Rename Canvas##rename", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+  if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
+  ImGui::SetNextItemWidth(260);
+  bool enter = ImGui::InputText("title", &_renameText, ImGuiInputTextFlags_EnterReturnsTrue);
+  bool valid = _renamePane >= 0 && _renamePane < _gui.nPanes() && !_renameText.empty();
+  ImGui::BeginDisabled(!valid);
+  if (ImGui::Button("Rename") || (enter && valid))
+    {
+    _gui.pane(_renamePane).setTitle(String(_renameText.c_str()));
+    ImGui::CloseCurrentPopup();
+    }
+  ImGui::EndDisabled();
+  ImGui::SameLine();
+  if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+  ImGui::EndPopup();
   }
 
   } // namespace GUI
