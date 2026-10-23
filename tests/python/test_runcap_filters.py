@@ -479,6 +479,18 @@ class TestReading(unittest.TestCase):
         self.assertEqual([t.name for t in read], ["EventIterator"])
         self.assertEqual(lib2, lib)
 
+    def test_run_root_name(self):
+        """CAP runs the task written at the root of the file (the wrapper holding FilterCreator and the tasks), also
+        for a workflow of one top-level task, as RunCAP's Run and --print-command give it."""
+        lib = library()
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "w.xml")
+            written = RunCAP.write_workflow(path, workflow(), lib, TEMPLATES)
+            tasks, lib2, _ = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+        self.assertEqual(len(tasks), 1)                                 # EventIterator alone, FilterCreator removed
+        self.assertEqual(written, "Workflow")
+        self.assertEqual(RunCAP.run_root_name(tasks, lib2, TEMPLATES), "Workflow")
+
     def test_writing_keeps_parameters(self):
         """Writing copies the tasks without copying their parameters (the GUI attaches widgets to them)."""
         tasks = workflow()

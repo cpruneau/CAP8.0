@@ -311,6 +311,14 @@ def root_task(tasks):
     return wrapper
 
 
+def run_root_name(tasks, library, templates):
+    """Name of the task CAP runs for a workflow written with its library: the root of the tasks written (FilterCreator
+    first, so the wrapper of the top-level tasks), as write_workflow() returns it."""
+    if library is None:
+        return root_task(tasks).name
+    return root_task(filters.prepared_for_writing(tasks, library, templates, Param, TaskConfig)).name
+
+
 def _indent(element, level=0):
     pad = "\n" + "  " * level
     if len(element):
@@ -1326,7 +1334,7 @@ def run_gui(initial_file=None, hook=None):
                 tasks = self.workflow()
                 if self.saved_path and not self.dirty:
                     path = self.saved_path
-                    name = root_task(tasks).name
+                    name = run_root_name(tasks, self.library, self.templates)   # as written in the file
                 else:
                     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     fd, path = tempfile.mkstemp(prefix="RunCAP_%s_" % stamp, suffix=".xml")
@@ -1518,7 +1526,8 @@ def main():
             print(e, file=sys.stderr)
             return 1
         if args[0] == "--print-command":
-            print(shell_text(run_command(args[1], root_task(tasks).name, load_settings()["output_dir"])))
+            print(shell_text(run_command(args[1], run_root_name(tasks, library, templates),
+                                         load_settings()["output_dir"])))
             return 0
         for w in warnings:
             print("warning: " + w)
