@@ -167,6 +167,22 @@ class TestDialog(unittest.TestCase):
         self.assertEqual(self.task.param("EVENT:CREATE").value, "true")
         self.assertTrue(self.changes)
 
+    def test_problems_of_the_workflow(self):
+        """The events of the analyzer are created by a generator of the workflow: no problem shown for them."""
+        F.default_event_settings(self.task, TEMPLATES)
+        F.choices(self.task)["EVENT"] = ["Event"]
+        self.library.add(F.FilterDef("EVENT", "Event"))
+        self.dialog._update_problems()
+        self.assertIn("uses the events Event, which no task creates", self.dialog.problems.get())     # alone
+        generator = TEMPLATES["CAP::BasicEventGen"].clone()
+        F.default_event_settings(generator, TEMPLATES)
+        F.choices(generator)["EVENT"] = ["Event"]
+        it = TEMPLATES["CAP::EventIterator"].clone()
+        it.children = [generator, self.task]
+        self.dialog.workflow = lambda: [it]
+        self.dialog._update_problems()
+        self.assertNotIn("which no task creates", self.dialog.problems.get())
+
 
 if __name__ == "__main__":
     unittest.main()

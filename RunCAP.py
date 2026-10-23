@@ -995,6 +995,9 @@ def run_gui(initial_file=None, hook=None):
                                 values=("FilterCreator", ", ".join(self.library.names("EVENT_FILTER")),
                                         ", ".join(self.library.names("PARTICLE_FILTER")), ", ".join(counts), "",
                                         "creates the filters of the Filters pane"))
+            # problems of the whole workflow (a task's events are created by another task, an analyzer belongs in
+            # an iterator, ...), then those of each task
+            all_errors = filters.check_choices(self.workflow(), self.library, self.templates)
             for item in self._workflow_items():
                 task = self.items[item]
                 depth, p = 0, self.tree.parent(item)
@@ -1003,8 +1006,7 @@ def run_gui(initial_file=None, hook=None):
                 choices = filters.choices(task)
                 others = sum(len(choices.get(k, [])) for k in filters.CORRECTION_KINDS)
                 folders = [f for f in filters.folders(task, self.templates) if filters.list_used(task, f.list)]
-                errors = [e for e in filters.check_choices([task], self.library, self.templates)
-                          if ("Task %s " % task.name) in e or ("Task %s:" % task.name) in e]
+                errors = [e for e in all_errors if ("Task %s " % task.name) in e or ("Task %s:" % task.name) in e]
                 self.summary.insert("", tk.END, iid=item, text="  " * depth + task.name, tags=("problem",) if errors else (),
                                     values=(short_class_name(task.cls), ", ".join(choices.get("EVENT_FILTER", [])),
                                             ", ".join(choices.get("PARTICLE_FILTER", [])), others or "",
@@ -1058,7 +1060,7 @@ def run_gui(initial_file=None, hook=None):
             dialog = RunCAPTaskDialog.TaskDialog(
                 self.root, self.items[item], self.templates, self.library,
                 {"valid_value": valid_value, "partial_value": partial_value, "severities": SEVERITIES},
-                rename=self._rename_task, changed=self._changed, show_filters=self.show_filters)
+                rename=self._rename_task, changed=self._changed, show_filters=self.show_filters, workflow=self.workflow)
             self.dialogs[item] = dialog
             dialog.bind("<Destroy>", lambda e, i=item, d=dialog: self.dialogs.pop(i, None) if e.widget is d
                         and self.dialogs.get(i) is d else None, add="+")

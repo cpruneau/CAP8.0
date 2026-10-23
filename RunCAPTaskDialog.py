@@ -51,10 +51,13 @@ class TaskDialog(tk.Toplevel):
     @param templates task templates; @param library RunCAPFilters.FilterLibrary of the workflow
     @param helpers {"valid_value", "partial_value", "severities"} of RunCAP.py
     @param rename called with (task, new name): None if renamed, else the reason it is not
-    @param changed called after any change; @param show_filters called with a kind to show the Filters pane"""
+    @param changed called after any change; @param show_filters called with a kind to show the Filters pane
+    @param workflow returns the top-level tasks of the workflow, whose problems concern the task too (e.g. its events
+    created by another task); by default the task alone"""
 
-    def __init__(self, master, task, templates, library, helpers, rename, changed, show_filters):
+    def __init__(self, master, task, templates, library, helpers, rename, changed, show_filters, workflow=None):
         tk.Toplevel.__init__(self, master)
+        self.workflow = workflow or (lambda: [task])
         self.task, self.templates, self.library = task, templates, library
         self.helpers, self.rename_task, self.changed, self.show_filters = helpers, rename, changed, show_filters
         self.geometry("1040x700")
@@ -102,7 +105,7 @@ class TaskDialog(tk.Toplevel):
             self._update_problems()
 
     def _update_problems(self):
-        errors = F.check_choices([self.task], self.library, self.templates)
+        errors = F.check_choices(self.workflow(), self.library, self.templates)
         mine = [e for e in errors if ("Task %s " % self.task.name) in e or ("Task %s:" % self.task.name) in e]
         more = "\n(and %d more)" % (len(mine) - 4) if len(mine) > 4 else ""
         self.problems.set("\n".join(mine[:4]) + more)
