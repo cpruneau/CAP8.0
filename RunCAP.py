@@ -14,7 +14,8 @@ Usage (from anywhere; the script locates CAP from its own position):
     python3 RunCAP.py --check FILE            # load FILE, check its values against the templates and exit (no GUI)
 
 The window has four parts, from top to bottom:
-  * a toolbar: Run, Save workflow, Load workflow, Save log, Clear log, Kill and Exit;
+  * a toolbar: Run, Save workflow, Load workflow, Clear workflow (a new, empty workflow), Save log, Clear log, Kill and
+    Exit;
   * the workflow editor: the tasks available in the current build (left), the workflow (right), and between them two
     arrow buttons. The right arrow appends the tasks selected on the left to the workflow (a task can be added several
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
@@ -674,6 +675,8 @@ def run_gui(initial_file=None, hook=None):
             self.run_button.pack(side=tk.LEFT)
             buttons = [("Save workflow\u2026", self.save_workflow, "Save the workflow and its parameters to an XML file"),
                        ("Load workflow\u2026", self.load_workflow, "Load a workflow XML file saved earlier"),
+                       ("Clear workflow", self.clear_workflow, "Start a new, empty workflow: no tasks, the default "
+                                                               "filters pane (one event, one particle database)"),
                        ("Save log\u2026", self.save_log, "Save the output below to a log file"),
                        ("Clear log", self.clear_log, "Clear the output below")]
             for text, command, tip in buttons:
@@ -1196,6 +1199,24 @@ def run_gui(initial_file=None, hook=None):
             self._update_title()
             self.status.set("Workflow saved to %s" % filename)
             return True
+
+        def clear_workflow(self):
+            """Start a new workflow: no tasks, the library of a new workflow, no file (the current one is offered to
+            be saved first)."""
+            if self.dirty and self._workflow_items():
+                answer = messagebox.askyesnocancel("Clear workflow", "Save the changes made to the workflow first?")
+                if answer is None or (answer and not self.save_workflow()):
+                    return
+            self.library = filters.FilterLibrary.with_defaults()
+            self.set_workflow([])
+            self.filters_panel.library = self.library
+            self.filters_panel.refresh()
+            self._show_job()
+            self.saved_path = ""
+            self.dirty = False
+            self._update_title()
+            self.count_label.configure(text="0 task(s)")
+            self.status.set("New workflow: add tasks with the right arrow.")
 
         def load_workflow(self, filename=None):
             if self.dirty and self._workflow_items() and not messagebox.askyesno(
