@@ -181,6 +181,24 @@ def makes_events(task):
     return name in EVENT_SOURCES or name.endswith(("Gen", "Generator", "Reader"))
 
 
+def update_event_settings(tasks, templates):
+    """Generators and readers that neither create nor import their events (workflows written before the events
+    settings were the tasks', when RunCAP wrote USE true and CREATE false for every task): they create them, and do
+    not use them. @return warnings"""
+    warnings = []
+    for task in _preorder(tasks):
+        if "EVENT" not in task_kinds(task, templates) or not makes_events(task):
+            continue
+        if any(_param_value(task, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
+            continue
+        for name, value in (("CREATE", "true"), ("USE", "false")):
+            p = task.param("EVENT:" + name)
+            if p is not None:
+                p.value = value
+        warnings.append("Task %s makes events: set to create them (Create) and not to use them." % task.name)
+    return warnings
+
+
 def default_event_settings(task, templates):
     """Events of a new task: created by a generator or reader, used by an analyzer, neither by the other tasks."""
     if "EVENT" not in task_kinds(task, templates):
@@ -1014,6 +1032,11 @@ def check_choices(tasks, library, templates):
             names = [f.name for f in folders(task, templates) if f.list in used]
             for name in sorted(set(n for n in names if names.count(n) > 1)):
                 errors.append("Task %s: several histogram folders are named %s (a filter chosen twice?)." % (task.name, name))
+    for task in _preorder(tasks):
+        if "EVENT" in task_kinds(task, templates) and makes_events(task) and not any(
+                _param_value(task, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
+            errors.append("Task %s makes events but is set neither to create nor to import them: set Create (Events "
+                          "line of its window)." % task.name)
     made = set()                                        # events created or imported by a task
     for task in _preorder(tasks):
         if any(_param_value(task, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):

@@ -343,6 +343,7 @@ def load_workflow_with_filters(path, templates):
         library.job[name] = value
     tasks = filters.remove_creator(tasks, library)
     more += filters.update_database_files(library)
+    more += filters.update_event_settings(tasks, templates)
     return tasks, library, warnings + more
 
 

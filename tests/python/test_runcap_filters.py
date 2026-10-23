@@ -56,6 +56,8 @@ def workflow():
     single = task("ParticleSingleAnalyzer", "Single")
     pair = task("ParticlePairAnalyzer", "Pair")
     it.children = [gen, single, pair]
+    for t in (it, gen, single, pair):
+        F.default_event_settings(t, TEMPLATES)                      # the generator creates the events
     for t in (single, pair):
         F.default_histogram_settings(t, TEMPLATES)                  # histograms used, created, exported
         for l in (2, 4) if t is pair else (2,):
@@ -390,6 +392,25 @@ class TestKeys(unittest.TestCase):
         self.assertIsNone(tasks[0].children[0].param("HISTOGRAM_1:EXPORT"))
         self.assertFalse([w for w in warnings if "HISTOGRAM_1:EXPORT" in w])
 
+    def test_event_settings_migrate(self):
+        """A workflow written before the event settings were the tasks' (generator: USE true, CREATE false)."""
+        tasks = workflow()
+        gen, single = tasks[0].children[0], tasks[0].children[1]
+        gen.param("EVENT:USE").value = "true"
+        gen.param("EVENT:CREATE").value = "false"
+        single.param("EVENT:USE").value = "true"
+        text = "\n".join(F.check_choices(tasks, library(), TEMPLATES))
+        self.assertIn("Task BasicEventGen makes events but is set neither to create nor to import them", text)
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "old.xml")
+            RunCAP.write_workflow(path, tasks, library(), TEMPLATES)
+            read, lib, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+        g = read[0].children[0]
+        self.assertEqual((g.param("EVENT:CREATE").value, g.param("EVENT:USE").value), ("true", "false"))
+        self.assertIn("Task BasicEventGen makes events: set to create them", "\n".join(warnings))
+        self.assertEqual(read[0].children[1].param("EVENT:USE").value, "true")      # the analyzer is unchanged
+        self.assertEqual(F.check_choices(read, lib, TEMPLATES), [])
+
     def test_use_migrates(self):
         """A workflow whose folders were written without USE (CAP did not read it): the lists are used."""
         a = task("ParticleSingleAnalyzer", "PSA")
@@ -576,6 +597,7 @@ class TestChecks(unittest.TestCase):
         lib = F.FilterLibrary()
         lib.add(F.FilterDef("EVENT_FILTER", "B", "", [F.Condition("IMPACT", F.DUAL_RANGE, 0, 2, 4, 6)]))
         g = task("GlauberGenerator")
+        F.default_event_settings(g, TEMPLATES)
         g.filters = {"EVENT_FILTER": ["B"]}
         self.assertEqual(F.check_choices([g], lib, TEMPLATES), [])
         g.filters["PARTICLE_FILTER"] = ["B"]
