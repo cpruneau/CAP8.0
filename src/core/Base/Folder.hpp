@@ -238,6 +238,33 @@ namespace CAP
   //! @brief Delete all entries of this folder (and its whole tree); the current folder becomes this folder.
   void clear() override;
 
+  //! @name Editing
+  //! @{
+  //!
+  //! @brief Add to the current folder a deep copy of an entry of another folder (or of this one): an object of any type,
+  //! or a folder with its whole tree. An entry of a lazily loaded file is decoded first, so that the copy does not
+  //! depend on the file. @param source folder holding the entry @param path name or path of the entry in source
+  //! @param name name of the copy (default: that of the entry)
+  //! @return name of the copy
+  //! @throws Exception if there is no such entry, the name is invalid or taken, or the object cannot be copied
+  //!
+  String copyEntry(const Folder & source, const String & path, const String & name="");
+  //! @brief A name not used in the current folder: name itself, or name_2, name_3, ... @param name name @return name
+  String uniqueName(const String & name) const;
+  //!
+  //! @brief Rename the entry at a path (a folder takes the new name too).
+  //! @param path name or path @param newName new name (in the same folder)
+  //! @throws Exception if there is no such entry, or the new name is invalid or taken
+  //!
+  void rename(const String & path, const String & newName);
+  //!
+  //! @brief Remove the entry at a path and give it to the caller, with its object (e.g. to keep alive objects shown
+  //! elsewhere). A folder taken becomes a top folder. @param path name or path
+  //! @return the entry, or nullptr if there is none
+  //!
+  std::unique_ptr<FolderItem> take(const String & path);
+  //! @}
+
   //! @brief Number of entries (objects and sub-folders) directly in this folder (not the current one). @return number of entries
   unsigned int size() const { return _entries.size(); }
   //! @brief Whether the folder has no entries. @return true if empty
