@@ -100,7 +100,13 @@ namespace CAP
 
   //! @name File browser
   //! @{
-  FileBrowser & browser() { return _browser; }   //!< The file browser
+  FileBrowser & browser() { return *_browsers.front(); }   //!< The first file browser
+  //! @brief The file browser used last (clicked or focused), where File > Open opens files. @return browser
+  FileBrowser & activeBrowser();
+  //! @brief The open file browsers, the first one first. @return browsers
+  const std::vector<std::unique_ptr<FileBrowser>> & browsers() const { return _browsers; }
+  //! @brief Open another file browser, docked with the first one (see onNewBrowser). @return browser
+  FileBrowser & addBrowser();
   bool browserVisible() const { return _settings.browserVisible; }   //!< Whether the file browser is shown
   void setBrowserVisible(bool visible) { _settings.browserVisible = visible; }   //!< Show or hide the file browser
   bool browserDocked() const { return _settings.browserDocked; }   //!< Whether the browser is docked in the main window
@@ -141,6 +147,10 @@ namespace CAP
   void openFitDialog(int item=-1) { _fitDialog.open(item); }
   //! Called for each new pane (to set its graphs and undo hook).
   std::function<void(CanvasPane &)> onNewPane;
+  //! Called for each file browser made (the first one included): the application connects it to its files.
+  std::function<void(FileBrowser &)> onNewBrowser;
+  //! Called when a browser other than the first is closed, before it is deleted.
+  std::function<void(FileBrowser &)> onCloseBrowser;
   //! Called before a pane is added or closed by the user (undo).
   std::function<void()> beforePanesChange;
   //! @}
@@ -194,7 +204,9 @@ namespace CAP
   float  _areaHeight;   //!< screen rectangle covering the canvas panes (for savePageSvg())
   std::string _iniFile;   //!< file where ImGui keeps window positions (kept alive for ImGui)
   String _hoverText;   //!< data coordinates under the mouse (shown in the status bar on the next frame)
-  FileBrowser _browser;   //!< file browser
+  std::vector<std::unique_ptr<FileBrowser>> _browsers;   //!< file browsers (the first one cannot be closed)
+  int _activeBrowser;   //!< index of the browser used last
+  int _browserCounter;   //!< number of the last browser made
   bool   _firstFrame;   //!< the next frame is the first one (the dock layout is built)
   bool   _layoutRequested;   //!< rebuild the dock layout (browser on the left of the canvases)
   bool   _undockRequested;   //!< move the browser to a window of its own

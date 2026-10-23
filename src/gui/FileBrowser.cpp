@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <cstring>
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -61,12 +62,9 @@ namespace CAP
     }
   return false;
   }
-
-  //! Path of the object currently pressed in the tree (to tell a click from the start of a drag).
-  std::string pressedObject;
   } // namespace
 
-  FileBrowser::FileBrowser()
+  FileBrowser::FileBrowser(int number)
   :
   onOpenFile(),
   onShowObject(),
@@ -80,8 +78,28 @@ namespace CAP
   _openFailed(),
   _reveal(),
   _filter(),
-  _selected()
+  _selected(),
+  _number(number),
+  _windowName(number <= 1 ? std::string(mainWindowName()) : std::string(mainWindowName()) + " " + std::to_string(number)),
+  _shown(),
+  _pressed(),
+  _nameRequest()
   { }
+
+  void FileBrowser::showFile(int id)
+  {
+  if (!showsFile(id)) _shown.push_back(id);
+  }
+
+  void FileBrowser::hideFile(int id)
+  {
+  _shown.erase(std::remove(_shown.begin(), _shown.end(), id), _shown.end());
+  }
+
+  bool FileBrowser::showsFile(int id) const
+  {
+  return std::find(_shown.begin(), _shown.end(), id) != _shown.end();
+  }
 
   bool FileBrowser::decodePayload(const void * data, int size, ObjectReference & reference)
   {
@@ -206,20 +224,21 @@ namespace CAP
 
   void FileBrowser::renderToolbar()
   {
-  float buttons = ImGui::CalcTextSize("Open...Folder...Refresh").x + 6*ImGui::GetStyle().FramePadding.x
-                  + 3*ImGui::GetStyle().ItemSpacing.x;
-  ImGui::SetNextItemWidth(std::max(80.0f, ImGui::GetContentRegionAvail().x - buttons));
-  ImGui::InputTextWithHint("##filter", "Filter objects", &_filter);
-  ImGui::SetItemTooltip("Show the objects whose name contains this text");
-  ImGui::SameLine();
   if (ImGui::Button("Open...") && onCommand) onCommand("file.open");
   ImGui::SetItemTooltip("Open a CAP file");
   ImGui::SameLine();
   if (ImGui::Button("Folder...") && onCommand) onCommand("file.openFolder");
   ImGui::SetItemTooltip("Browse a folder of the file system");
   ImGui::SameLine();
+  if (ImGui::Button("New Tree") && onNewTree) onNewTree();
+  ImGui::SetItemTooltip("Make a new, empty tree: add folders to it, drag objects and folders onto it (copies), then "
+                        "save it to a CAP file");
+  ImGui::SameLine();
   if (ImGui::Button("Refresh")) { refresh(); _openFailed.clear(); }
   ImGui::SetItemTooltip("Read the folders again");
+  ImGui::SetNextItemWidth(-FLT_MIN);
+  ImGui::InputTextWithHint("##filter", "Filter objects", &_filter);
+  ImGui::SetItemTooltip("Show the objects whose name contains this text");
   }
 
   void FileBrowser::render()
@@ -230,12 +249,15 @@ namespace CAP
 
   // files outside the folders
   std::vector<BrowserFile> loose;                     // copies: a file may be closed while the list is drawn
-  if (_files) for (const auto & f : *_files) if (!insideFolders(f.path.str())) loose.push_back(f);
+  for (int id : _shown)
+    if (const BrowserFile * f = fileById(id))
+      if (f->editable || !insideFolders(f->path.str())) loose.push_back(*f);
 
   if (loose.empty() && _folders.empty())
     {
     ImGui::Spacing();
-    ImGui::TextWrapped("Use File > Open to open a CAP file, or File > Open Folder to browse a folder.");
+    ImGui::TextWrapped("Use File > Open to open a CAP file, File > Open Folder to browse a folder, or New Tree to "
+                       "make a tree of copies.");
     ImGui::Spacing();
     ImGui::TextWrapped("Click an object to show it in the selected graph, or drag it onto a graph.");
     }
@@ -244,7 +266,7 @@ namespace CAP
     {
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::CollapsingHeader("Files"))
-      for (const BrowserFile & f : loose) renderFile(f, FileSystem::name(f.path));
+      for (const BrowserFile & f : loose) renderFile(f, f.editable ? f.name : FileSystem::name(f.path));
     }
   if (!_folders.empty())
     {
@@ -256,7 +278,8 @@ namespace CAP
       }
     }
   ImGui::EndChild();
-  if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) pressedObject.clear();
+  if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) _pressed.clear();
+  renderNameDialog();
   }
 
   void FileBrowser::renderFile(const BrowserFile & file, const String & label)
@@ -265,17 +288,31 @@ namespace CAP
   bool reveal = (_reveal == file.path.str());
   if (reveal) ImGui::SetNextItemOpen(true);
   else        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-  bool open = ImGui::TreeNodeEx("##file", ImGuiTreeNodeFlags_SpanAvailWidth, "%s", label.data());
+  bool open = ImGui::TreeNodeEx("##file", ImGuiTreeNodeFlags_SpanAvailWidth, "%s%s", label.data(),
+                                file.editable ? (file.path.isEmpty() ? "  (tree, not saved)" : "  (tree)") : "");
   if (reveal) { ImGui::SetScrollHereY(0.2f); _reveal.clear(); }
-  ImGui::SetItemTooltip("%s", file.path.data());
   ImGuiID nodeId = ImGui::GetItemID();
+  dragAndDrop(file.id, "", label, true, file.editable);
+  if (!ImGui::IsDragDropActive())
+    ImGui::SetItemTooltip("%s", file.editable ? (file.path.isEmpty() ? "Tree not saved yet: drag objects and folders "
+                                                 "onto it, right-click to add folders or save it" : file.path.data())
+                                              : file.path.data());
   bool close = false;
   if (ImGui::BeginPopupContextItem("##fileMenu"))
     {
     if (ImGui::MenuItem("Show All")    && onShowFolder) onShowFolder(file.id, "");
     ImGui::Separator();
-    if (ImGui::MenuItem("Reload")      && onReloadFile) onReloadFile(file.id);
-    if (ImGui::MenuItem("Close File")) close = true;
+    if (file.editable)
+      {
+      editMenu(file.id, "", true);
+      if (ImGui::MenuItem("Save Tree As...") && onSaveTree) onSaveTree(file.id);
+      if (ImGui::MenuItem("Close Tree")) close = true;
+      }
+    else
+      {
+      if (ImGui::MenuItem("Reload")      && onReloadFile) onReloadFile(file.id);
+      if (ImGui::MenuItem("Close File")) close = true;
+      }
     ImGui::EndPopup();
     }
   if (close)
@@ -288,7 +325,7 @@ namespace CAP
     }
   if (open)
     {
-    if (fileById(file.id) && file.file) renderFolder(file.id, *file.file, "");
+    if (fileById(file.id) && file.file) renderFolder(file.id, *file.file, "", file.editable);
     ImGui::TreePop();
     }
   ImGui::PopID();
@@ -333,7 +370,8 @@ namespace CAP
   ImGui::PopStyleColor();
   if (reveal) { ImGui::SetScrollHereY(0.2f); _reveal.clear(); }
   ImGuiID nodeId = ImGui::GetItemID();
-  ImGui::SetItemTooltip("%s%s", path.c_str(), loaded ? "" : "\nclick to open");
+  if (file) dragAndDrop(file->id, "", String(label), true, false);
+  if (!ImGui::IsDragDropActive()) ImGui::SetItemTooltip("%s%s", path.c_str(), loaded ? "" : "\nclick to open");
   if (ImGui::IsItemToggledOpen() && open && !file && onOpenFile)
     {
     int id = onOpenFile(String(path));
@@ -368,7 +406,7 @@ namespace CAP
   ImGui::PopID();
   }
 
-  void FileBrowser::renderFolder(int fileId, const Folder & folder, const std::string & prefix)
+  void FileBrowser::renderFolder(int fileId, const Folder & folder, const std::string & prefix, bool editable)
   {
   std::vector<String> names = folder.names();
   if (names.empty()) { ImGui::TextDisabled("(empty)"); return; }
@@ -381,21 +419,26 @@ namespace CAP
       ImGui::PushID(name.data());
       if (!_filter.empty()) ImGui::SetNextItemOpen(true);
       bool open = ImGui::TreeNodeEx("##folder", ImGuiTreeNodeFlags_SpanAvailWidth, "%s/", name.data());
+      dragAndDrop(fileId, path, name, true, editable);
       if (ImGui::BeginPopupContextItem("##folderMenu"))
         {
         if (ImGui::MenuItem("Show All") && onShowFolder) onShowFolder(fileId, String(path));
+        if (editable) { ImGui::Separator(); editMenu(fileId, path, true); }
         ImGui::EndPopup();
         }
-      ImGui::SetItemTooltip("%u entries; right-click: show all", sub->size());
-      if (open) { renderFolder(fileId, *sub, path); ImGui::TreePop(); }
+      if (!ImGui::IsDragDropActive())
+        ImGui::SetItemTooltip("%u entries; right-click: show all%s", sub->size(),
+                              editable ? ", add a folder, rename, remove" : "; drag it onto a tree to copy it");
+      if (open) { renderFolder(fileId, *sub, path, editable); ImGui::TreePop(); }
       ImGui::PopID();
       }
     else if (matches(name))
-      renderObject(fileId, folder, name, path);
+      renderObject(fileId, folder, name, path, editable);
     }
   }
 
-  void FileBrowser::renderObject(int fileId, const Folder & folder, const String & name, const std::string & path)
+  void FileBrowser::renderObject(int fileId, const Folder & folder, const String & name, const std::string & path,
+                                 bool editable)
   {
   // an object of a lazily opened file is read when it is hovered (tooltip) or shown, not when it is listed
   String kind, details;
@@ -419,8 +462,8 @@ namespace CAP
 
   // click (press and release on the object without dragging): show it
   std::string key = std::to_string(fileId) + "\n" + path;
-  if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) pressedObject = key;
-  if (showable && pressedObject == key && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
+  if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) _pressed = key;
+  if (showable && _pressed == key && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
       && ImGui::GetIO().MouseDragMaxDistanceSqr[0] < 16.0f)
     {
     _selected.file = fileId;
@@ -428,16 +471,9 @@ namespace CAP
     if (onShowObject) onShowObject(_selected);
     }
 
-  // drag onto a graph
-  if (showable && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-    {
-    ImGui::SetDragDropPayload(payloadType(), key.c_str(), key.size()+1);
-    ImGui::Text("%s", name.data());
-    ImGui::SameLine();
-    ImGui::TextDisabled("%s", kind.data());
-    ImGui::EndDragDropSource();
-    }
-  else if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+  // drag onto a graph (objects that can be shown) or onto a folder of a tree (copy)
+  dragAndDrop(fileId, path, name, false, editable);
+  if (!ImGui::IsDragDropActive() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
     {
     if (!loaded)
       {
@@ -462,11 +498,77 @@ namespace CAP
       reference.path = String(path);
       onShowData(reference);
       }
+    if (editable) { ImGui::Separator(); editMenu(fileId, path, false); }
     ImGui::EndPopup();
     }
   ImGui::SameLine();
   ImGui::TextDisabled("%s", kind.data());
   ImGui::PopID();
+  }
+
+  void FileBrowser::dragAndDrop(int fileId, const std::string & path, const String & name, bool isFolder,
+                                bool editable)
+  {
+  std::string key = std::to_string(fileId) + "\n" + path;
+  if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+    {
+    ImGui::SetDragDropPayload(isFolder ? folderPayloadType() : payloadType(), key.c_str(), key.size()+1);
+    ImGui::Text("%s%s", name.data(), isFolder ? "/" : "");
+    ImGui::TextDisabled(isFolder ? "drop it on a folder of a tree to copy it"
+                                 : "drop it on a graph to show it, or on a folder of a tree to copy it");
+    ImGui::EndDragDropSource();
+    }
+  if (!editable || !isFolder || !ImGui::BeginDragDropTarget()) return;
+  for (const char * type : { payloadType(), folderPayloadType() })
+    if (const ImGuiPayload * payload = ImGui::AcceptDragDropPayload(type))
+      {
+      ObjectReference source;
+      if (decodePayload(payload->Data, payload->DataSize, source) && onCopy)
+        onCopy(source, std::strcmp(type, folderPayloadType()) == 0, fileId, String(path));
+      }
+  ImGui::EndDragDropTarget();
+  }
+
+  void FileBrowser::editMenu(int fileId, const std::string & path, bool isFolder)
+  {
+  if (isFolder && ImGui::MenuItem("New Folder..."))
+    _nameRequest = NameRequest{NameRequest::kNewFolder, fileId, path, "folder", false};
+  if (path.empty()) return;
+  std::string leaf = path.substr(path.rfind('/') == std::string::npos ? 0 : path.rfind('/') + 1);
+  if (ImGui::MenuItem("Rename..."))
+    _nameRequest = NameRequest{NameRequest::kRename, fileId, path, leaf, false};
+  if (ImGui::MenuItem("Remove") && onRemove) onRemove(fileId, String(path));
+  }
+
+  void FileBrowser::renderNameDialog()
+  {
+  if (_nameRequest.kind == NameRequest::kNone) return;
+  const char * title = _nameRequest.kind == NameRequest::kNewFolder ? "New Folder##browserName" : "Rename##browserName";
+  if (!_nameRequest.opened) { ImGui::OpenPopup(title); _nameRequest.opened = true; }
+  if (!ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+    _nameRequest = NameRequest();                    // closed (Escape)
+    return;
+    }
+  ImGui::Text("%s", _nameRequest.kind == NameRequest::kNewFolder ? "Name of the new folder:" : "New name:");
+  if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
+  bool done = ImGui::InputText("##name", &_nameRequest.text, ImGuiInputTextFlags_EnterReturnsTrue);
+  done = ImGui::Button("OK") || done;
+  ImGui::SameLine();
+  bool cancel = ImGui::Button("Cancel");
+  if (done && !_nameRequest.text.empty())
+    {
+    if (_nameRequest.kind == NameRequest::kNewFolder && onNewFolder)
+      onNewFolder(_nameRequest.file, String(_nameRequest.path), String(_nameRequest.text));
+    if (_nameRequest.kind == NameRequest::kRename && onRename)
+      onRename(_nameRequest.file, String(_nameRequest.path), String(_nameRequest.text));
+    }
+  if (done || cancel)
+    {
+    _nameRequest = NameRequest();
+    ImGui::CloseCurrentPopup();
+    }
+  ImGui::EndPopup();
   }
 
   } // namespace GUI

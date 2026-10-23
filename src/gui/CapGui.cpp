@@ -62,7 +62,9 @@ namespace CAP
   _areaX(0), _areaY(0), _areaWidth(0), _areaHeight(0),
   _iniFile(),
   _hoverText(),
-  _browser(),
+  _browsers(),
+  _activeBrowser(0),
+  _browserCounter(1),
   _firstFrame(true),
   _layoutRequested(false),
   _undockRequested(false),
@@ -76,6 +78,7 @@ namespace CAP
   _focusRequested(false)
   {
   _fitPane.onNewFit = [this]() { openFitDialog(); };
+  _browsers.emplace_back(new FileBrowser(1));          // the first browser, always there
   }
 
   CapGui::~CapGui()
@@ -307,7 +310,7 @@ namespace CAP
   // the node of the canvases: the largest one holding the first canvas pane but not the docked file browser
   ImGuiID dockspace = ImHashStr("CapDockSpace");
   ImGuiWindow * first = _panes.empty() ? nullptr : ImGui::FindWindowByName(_panes[0]->name().data());
-  ImGuiWindow * browser = ImGui::FindWindowByName(FileBrowser::windowName());
+  ImGuiWindow * browser = ImGui::FindWindowByName(FileBrowser::mainWindowName());
   ImGuiDockNode * browserNode = browser ? browser->DockNode : nullptr;
   auto holdsBrowser = [browserNode](ImGuiDockNode * node)
     {
@@ -442,6 +445,22 @@ namespace CAP
 
   }
 
+  FileBrowser & CapGui::activeBrowser()
+  {
+  if (_activeBrowser < 0 || _activeBrowser >= int(_browsers.size())) _activeBrowser = 0;
+  return *_browsers[_activeBrowser];
+  }
+
+  FileBrowser & CapGui::addBrowser()
+  {
+  _browsers.emplace_back(new FileBrowser(++_browserCounter));
+  FileBrowser & browser = *_browsers.back();
+  if (onNewBrowser) onNewBrowser(browser);
+  _activeBrowser = int(_browsers.size()) - 1;
+  _settings.browserVisible = true;
+  return browser;
+  }
+
   void CapGui::setBrowserDocked(bool docked)
   {
   if (docked == _settings.browserDocked) return;
@@ -461,7 +480,7 @@ namespace CAP
     {
     ImGuiID left = 0;
     ImGui::DockBuilderSplitNode(dockId, ImGuiDir_Left, 0.22f, &left, &canvases);
-    ImGui::DockBuilderDockWindow(FileBrowser::windowName(), left);
+    ImGui::DockBuilderDockWindow(FileBrowser::mainWindowName(), left);
     }
   buildPaneGrid(canvases);
   ImGui::DockBuilderFinish(dockId);
@@ -515,15 +534,36 @@ namespace CAP
   if (!_settings.browserDocked) browserClass.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoAutoMerge;
   ImGui::SetNextWindowClass(&browserClass);
   bool visible = true;
-  if (ImGui::Begin(FileBrowser::windowName(), &visible))
+  if (ImGui::Begin(FileBrowser::mainWindowName(), &visible))
     {
     // follow what the user did with the mouse (docking or undocking the window)
     if (!_layoutRequested) _settings.browserDocked = ImGui::IsWindowDocked();
-    _browser.render();
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) _activeBrowser = 0;
+    _browsers.front()->render();
     }
   else if (!_layoutRequested) _settings.browserDocked = ImGui::IsWindowDocked();
   ImGui::End();
   _settings.browserVisible = visible;
+
+  // the other browsers: tabs beside the first one when they are made, then wherever they are moved
+  ImGuiWindow * first = ImGui::FindWindowByName(FileBrowser::mainWindowName());
+  for (std::size_t k=1; k<_browsers.size(); )
+    {
+    FileBrowser & browser = *_browsers[k];
+    if (first && first->DockId) ImGui::SetNextWindowDockID(first->DockId, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(380, viewport->WorkSize.y*0.75f), ImGuiCond_FirstUseEver);
+    bool open = true;
+    if (ImGui::Begin(browser.windowName(), &open))
+      {
+      if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) _activeBrowser = int(k);
+      browser.render();
+      }
+    ImGui::End();
+    if (open) { k++; continue; }
+    if (onCloseBrowser) onCloseBrowser(browser);
+    _browsers.erase(_browsers.begin() + long(k));
+    if (_activeBrowser >= int(k)) _activeBrowser = 0;
+    }
   }
 
   void CapGui::renderCanvases(String & hoverText)

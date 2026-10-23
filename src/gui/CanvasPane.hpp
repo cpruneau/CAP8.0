@@ -100,6 +100,9 @@ namespace CAP
   std::function<void(const MATH::DataPoints * data, unsigned int fit)> onResidualMap;
   //! Called by "Projections" in the context menu of a graph, for a histogram of rank 2 with fits.
   std::function<void(const MATH::DataPoints * data)> onProjections;
+  //! Called by "Compare" in the context menu of a graph, for two histograms of the same rank shown in it.
+  std::function<void(const MATH::DataPoints * first, const MATH::DataPoints * second,
+                     const String & firstLabel, const String & secondLabel)> onCompare;
 
   protected:
 

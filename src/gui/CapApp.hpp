@@ -20,6 +20,7 @@
 #include "Action.hpp"
 #include "CapGui.hpp"
 #include "Graph.hpp"
+#include "Folder.hpp"
 
 namespace CAP
 {
@@ -114,15 +115,39 @@ namespace CAP
   //! @name Files
   //! @{
 
-  //! @brief Open a CAP file and show its contents in the browser (if already open, reveal it).
-  //! @param fileName file @return id of the open file, or -1 if it cannot be read
-  int  openFile(const String & fileName);
-  //! @brief Show a folder of the file system in the browser. @param folder path
+  //! @brief Open a CAP file and show its contents in a browser (a file already open is shared, not read again).
+  //! @param fileName file @param browser browser (default: the one used last) @return id of the open file, or -1
+  //! if it cannot be read
+  int  openFile(const String & fileName, FileBrowser * browser=nullptr);
+  //! @brief Show a folder of the file system in the browser used last. @param folder path
   void openFolder(const String & folder);
-  //! @brief Close an open file (its objects stay in the graphs that show them). @param id file id
-  void closeFile(int id);
+  //! @brief Close an open file in a browser; it is closed when no browser shows it any more (its objects stay in the
+  //! graphs that show them). @param id file id @param browser browser (default: all)
+  void closeFile(int id, FileBrowser * browser=nullptr);
   //! @brief Read an open file again; the graphs showing its objects show the new versions. @param id file id
   void reloadFile(int id);
+  //! @brief Connect a file browser to the files of the application. @param browser browser
+  void connectBrowser(FileBrowser & browser);
+  //! @brief Make a new, empty tree (editable) in a browser. @param browser browser @return its id
+  int  newTree(FileBrowser & browser);
+  //!
+  //! @brief Copy an object or a folder into a folder of an editable tree (deep copy, under a name not used there).
+  //! @param source object or folder (an empty path: the whole tree of its file) @param folder whether it is a folder
+  //! @param target tree @param folderPath path of the folder of the tree ("" for its top) @return false on failure
+  //!
+  bool copyInto(const ObjectReference & source, bool folder, int target, const String & folderPath);
+  //! @brief Add a folder to a folder of an editable tree. @param target tree @param folderPath folder @param name name
+  void newFolder(int target, const String & folderPath, const String & name);
+  //! @brief Rename an entry of an editable tree. @param target tree @param path entry @param name new name
+  void renameEntry(int target, const String & path, const String & name);
+  //! @brief Remove an entry of an editable tree (its objects are kept for the graphs showing them). @param target
+  //! tree @param path entry
+  void removeEntry(int target, const String & path);
+  //! @brief Save an editable tree to a CAP file chosen by the user. @param target tree
+  void saveTree(int target);
+  //! @brief Save an editable tree to a CAP file (".cap" added if missing); the tree then takes its name.
+  //! @param target tree @param fileName file @return false if it cannot be saved (an open file, a write error)
+  bool saveTreeTo(int target, const String & fileName);
   //! @brief Show an object of an open file in the current graph (added or replacing, see CanvasPane::Mode).
   //! @param object reference @return false if it cannot be shown
   bool showObject(const ObjectReference & object);
@@ -146,6 +171,15 @@ namespace CAP
   //! @param data histogram of rank 2
   //!
   void showProjections(const MATH::DataPoints * data);
+  //!
+  //! @brief Compare two histograms of the same binning (e.g. from two files): a new pane with the two histograms
+  //! overlaid and their difference (second - first; for maps, the two maps and their difference side by side), and
+  //! the Comparison window with the chi-square compatibility test and, for histograms of rank 1, the
+  //! Kolmogorov-Smirnov test. @param first first histogram @param second second histogram @param firstLabel label of
+  //! the first @param secondLabel label of the second
+  //!
+  void showComparison(const MATH::DataPoints * first, const MATH::DataPoints * second, const String & firstLabel,
+                      const String & secondLabel);
   //! @brief Show the objects of a folder, one per graph of the current canvas (divided as needed).
   //! @param file file id @param folderPath folder in the file ("" for the top)
   void showFolder(int file, const String & folderPath);
@@ -188,10 +222,29 @@ namespace CAP
   std::vector<BrowserFile> _files;        //!< open files, shown in the browser
   std::vector<BrowserFile> _closedFiles;  //!< closed or replaced files: kept, since graphs and undo states may show their objects
   int _nextFileId;   //!< identifier of the next file opened
+  int _treeCounter;   //!< number of the last tree made (New Tree)
+  std::vector<std::unique_ptr<FolderItem>> _removed;   //!< entries removed from trees: kept for the graphs showing them
   String _saveFile;   //!< SVG file of the last Save As
   std::deque<Snapshot> _undo;   //!< states before the last changes (at most 50)
   std::deque<Snapshot> _redo;   //!< states undone
   std::vector<GRAPHICS::GraphItem> _clipboard;   //!< items copied (Edit > Copy)
+  //! Comparison shown in the Comparison window (see showComparison())
+  struct Comparison
+  {
+  const MATH::Histogram * first = nullptr;    //!< first histogram (not owned)
+  const MATH::Histogram * second = nullptr;   //!< second histogram (not owned)
+  String firstLabel;                          //!< its label
+  String secondLabel;                         //!< its label
+  int    mode = 0;                            //!< chi-square test: 0 counts, 1 values, 2 shapes
+  String chiSquare;                           //!< result of the chi-square test
+  String kolmogorov;                          //!< result of the Kolmogorov-Smirnov test (rank 1)
+  bool   open = false;                        //!< window shown
+  };
+  Comparison _comparison;   //!< last comparison
+  //! @brief Compute the tests of the comparison.
+  void computeComparison();
+  //! @brief Draw the Comparison window, if shown.
+  void renderComparison();
   bool _showPreferences;   //!< Preferences window shown
   bool _showAbout;   //!< About window shown
   bool _showShortcuts;   //!< Keyboard Shortcuts window shown

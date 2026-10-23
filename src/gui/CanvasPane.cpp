@@ -195,6 +195,29 @@ namespace CAP
       }
     ImGui::EndMenu();
     }
+  // two histograms of the same rank: overlay, difference, compatibility tests
+  std::vector<size_t> histograms;
+  for (size_t k=0; k<graph.items().size(); k++)
+    {
+    const GraphItem & item = graph.items()[k];
+    if (item.kind() == GraphItem::kData && dynamic_cast<const MATH::Histogram*>(item.data())) histograms.push_back(k);
+    }
+  if (onCompare && ImGui::BeginMenu("Compare", histograms.size() >= 2))
+    {
+    for (size_t i=0; i<histograms.size(); i++)
+      for (size_t j=i+1; j<histograms.size(); j++)
+        {
+        const GraphItem & a = graph.items()[histograms[i]];
+        const GraphItem & b = graph.items()[histograms[j]];
+        if (a.data()->rank() != b.data()->rank()) continue;
+        String entry = a.label() + String(" and ") + b.label() + String("##compare")
+                       + String(std::to_string(i*1000 + j).c_str());
+        if (ImGui::MenuItem(entry.data())) onCompare(a.data(), b.data(), a.label(), b.label());
+        }
+    ImGui::EndMenu();
+    }
+  if (onCompare && histograms.size() < 2 && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    ImGui::SetTooltip("Show two histograms in this graph (drag them from the browsers) to compare them");
   bool fittable = false;
   for (const auto & item : graph.items()) if (item.isFittable()) fittable = true;
   if (onFit && ImGui::BeginMenu("Fit", fittable))
