@@ -347,7 +347,7 @@ void ParticlePairDerivedHistos::create()
   }
 }
 
-void ParticlePairDerivedHistos::loadFrom(CapFile & inputFile)
+void ParticlePairDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   h_n1n1_phiphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_phiphi"));

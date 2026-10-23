@@ -15,7 +15,8 @@ A workflow has a library of named objects, shared by its tasks, of eight kinds:
 Each task chooses, for each kind it supports, how many objects it uses and which ones (by name). Analyzers fill one
 folder of histograms per combination of their filters: (event filter, particle filter) for single-particle analyzers,
 (event filter, particle filter 1, particle filter 2) for pair analyzers (with their single-particle folders too). The
-folders are named <prefix>_<event filter>_<particle filter>[_<particle filter 2>] (derived folders end with _D), and
+folders hold the histograms of each combination, written by the job to its output file in the folder
+<task>/<event filter>_<particle filter>[_<particle filter 2>] (with the derived histograms), and
 their binning is either the same for all (the HISTOGRAM group of the task) or set folder by folder.
 
 CAP reads all this from flat keys of the configuration of each task (see ManagedObjects::configureObjects() and the
@@ -25,7 +26,8 @@ configure() functions of the filters, efficiencies, smearers and histogram folde
     <task>:<KIND>_<k>:CONDITION:N
     <task>:<KIND>_<k>:CONDITION_<i>:TYPE, SUBTYPE, MINIMUM, MAXIMUM[, MINIMUM2, MAXIMUM2]
     <task>:<KIND>_<k>:<parameter>                              (efficiencies, smearers)
-    <task>:HISTOGRAM_<l>:N, <task>:HISTOGRAM_<l>_<k>:NAME, TITLE, OWNER, BASE_NAME[, <binning parameter>]
+    <task>:HISTOGRAM_<l>:N, USE, CREATE, IMPORT, <task>:HISTOGRAM_<l>_<k>:NAME, TITLE, OWNER[, <binning parameter>]
+    <main task>:JOB:OUTPUT_FILE, INPUT_FILE   (files of the job, see CAP.cxx)
 apply_choices() writes these keys from the library and the choices of the tasks; extract_choices() reads them back
 (library, choices and histogram options), so workflows written by hand or by earlier versions load too. The object of
 a name is defined (OWNER true, with its conditions or parameters) by the task FilterCreator, written first in the
@@ -279,6 +281,7 @@ class FilterLibrary:
     def __init__(self):
         self.objects = {kind: [] for kind in KINDS}
         self.settings = {kind: default_settings(kind) for kind in KINDS}
+        self.job = {name: "" for name in JOB_SETTINGS}      # files of the job (see JOB_SETTINGS)
 
     @staticmethod
     def with_defaults():
@@ -320,7 +323,8 @@ class FilterLibrary:
             k += 1
 
     def __eq__(self, other):
-        return isinstance(other, FilterLibrary) and self.objects == other.objects and self.settings == other.settings
+        return (isinstance(other, FilterLibrary) and self.objects == other.objects and self.settings == other.settings
+                and self.job == other.job)
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -328,12 +332,11 @@ class FilterLibrary:
 # ------------------------------------------------------------------------------------------------------------------
 
 class HistogramOptions:
-    """Histogram folders of an analyzer: prefix of their names; same binning for all (the HISTOGRAM group of the task),
-    or binning per combination of filters ({combination (tuple of filter names): {parameter: value}}, values missing
-    from a combination being those of the HISTOGRAM group)."""
+    """Binning of the histogram folders of an analyzer: the same for all (the HISTOGRAM group of the task), or per
+    combination of filters ({combination (tuple of filter names): {parameter: value}}, values missing from a
+    combination being those of the HISTOGRAM group)."""
 
-    def __init__(self, prefix="", same_binning=True, binning=None):
-        self.prefix = prefix
+    def __init__(self, same_binning=True, binning=None):
         self.same_binning = same_binning
         self.binning = dict(binning or {})
 
@@ -341,7 +344,7 @@ class HistogramOptions:
         return isinstance(other, HistogramOptions) and vars(self) == vars(other)
 
     def __repr__(self):
-        return "HistogramOptions(%r, same=%r, %d combinations)" % (self.prefix, self.same_binning, len(self.binning))
+        return "HistogramOptions(same=%r, %d combinations)" % (self.same_binning, len(self.binning))
 
 
 class Folder:
@@ -351,9 +354,10 @@ class Folder:
     def __init__(self, list_index, index, name, combination, derived):
         self.list = list_index
         self.index = index
-        self.name = name
+        self.name = name                        # name of the object in CAP's store
         self.combination = combination
         self.derived = derived
+        self.folder = "_".join(combination)     # folder in the folder of the task, in the files of the job
 
     def __repr__(self):
         return "Folder(HISTOGRAM_%d_%d, %s)" % (self.list, self.index, self.name)
@@ -405,9 +409,9 @@ def choices(task):
 
 
 def histogram_options(task):
-    """Histogram options of a task (created with the task name as prefix if needed)."""
+    """Histogram options of a task (created if needed)."""
     if not hasattr(task, "histograms") or task.histograms is None:
-        task.histograms = HistogramOptions(task.name)
+        task.histograms = HistogramOptions()
     return task.histograms
 
 
@@ -447,15 +451,23 @@ def list_used(task, list_index):
 
 
 #: Settings of a list of folders shown in the task windows, and those set for the lists of a new analyzer.
-FOLDER_LIST_SETTINGS = ("USE", "CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_NAME", "EXPORT", "EXPORT:PATH",
-                        "EXPORT:FILE_NAME", "EXPORT:FORCE_REWRITE")
+#: A list of folders has no files of its own: the job writes the histograms of all its tasks to one output file and
+#: reads those imported (IMPORT) from one input file (see JOB_SETTINGS).
+FOLDER_LIST_SETTINGS = ("USE", "CREATE", "IMPORT")
+#: Keys of earlier versions, dropped when a workflow is read: files of the lists of folders, base names of the folders,
+#: directory levels of FileIterator.
+OBSOLETE_KEY = re.compile(r"^(?:HISTOGRAM_[1-4]:(?:EXPORT(?::.*)?|IMPORT:.*|SCALE|OWNER)|nLevels)$")
+#: Files of the job, keys of the task CAP runs (<task>:JOB:<name>, see CAP.cxx): the output file, where the histograms of
+#: all the tasks are written (a folder per task holding a folder per combination of filters; by default <task>.cap),
+#: and the input file, read for the histograms imported (a derived run reads the output file of its fill run).
+JOB_SETTINGS = ("OUTPUT_FILE", "INPUT_FILE")
+JOB_KEY = re.compile(r"^JOB:(%s)$" % "|".join(JOB_SETTINGS))
 
 
 #: Runs of an analyzer: filling its histograms event by event (in an EventIterator), or computing its derived
 #: histograms from histograms filled by an earlier run (in a FileIterator: postProcess() calls calculateDerived()).
 FILL, DERIVED, CUSTOM = "fill", "derived", "custom"
 ITERATOR_OF_MODE = {FILL: "CAP::EventIterator", DERIVED: "CAP::FileIterator"}
-_LIST_FILES = {1: "", 2: "Derived", 3: "Single", 4: "SingleDerived"}
 
 
 def _set_list(task, list_index, name, value):
@@ -468,27 +480,18 @@ def _flag(task, list_index, name):
     return _param_value(task, "HISTOGRAM_%d:%s" % (list_index, name), "false") == "true"
 
 
-def _file(task, list_index, action):
-    """File name of the import or export of a list, or <task><suffix>.cap if not named."""
-    name = _param_value(task, "HISTOGRAM_%d:%s:FILE_NAME" % (list_index, action), "NONE")
-    return name if name not in ("", "NONE") else "%s%s.cap" % (task.name, _LIST_FILES[list_index])
-
-
 def set_histogram_mode(task, templates, mode):
-    """Set the folder lists of an analyzer for a run: FILL (its histograms used, created and exported to
-    <task>.cap; derived histograms not used) or DERIVED (its histograms used and imported from the file the fill run
-    exported them to; derived histograms used, created and exported to <task>Derived.cap)."""
+    """Set the folder lists of an analyzer for a run: FILL (its histograms used and created; derived histograms not
+    used) or DERIVED (its histograms used and imported from the input file of the job, the output file of the fill
+    run; derived histograms used and created). The job writes them all to its output file."""
     for l in folder_lists(task, templates):
         base = l in (1, 3)
         if mode == FILL:
-            settings = {"USE": base, "CREATE": base, "IMPORT": False, "EXPORT": base}
+            settings = {"USE": base, "CREATE": base, "IMPORT": False}
         else:
-            settings = {"USE": True, "CREATE": not base, "IMPORT": base, "EXPORT": not base}
+            settings = {"USE": True, "CREATE": not base, "IMPORT": base}
         for name, value in settings.items():
             _set_list(task, l, name, "true" if value else "false")
-        if base and mode == DERIVED:
-            _set_list(task, l, "IMPORT:FILE_NAME", _file(task, l, "EXPORT"))
-        _set_list(task, l, "EXPORT:FILE_NAME", _file(task, l, "EXPORT"))
 
 
 def histogram_mode(task, templates):
@@ -532,6 +535,8 @@ def derived_workflow(tasks, templates, TaskConfig):
         if histogram_layout(task, templates) is not None:
             analyzers = [_copy_task(task)]
             set_histogram_mode(analyzers[0], templates, DERIVED)
+            if analyzers[0].param("EVENT:USE") is not None:
+                analyzers[0].param("EVENT:USE").value = "false"
             return analyzers
         if not analyzers:
             return [t for c in task.children for t in convert(c)]
@@ -540,6 +545,9 @@ def derived_workflow(tasks, templates, TaskConfig):
         iterator.name = task.name
         for a in analyzers:
             set_histogram_mode(a, templates, DERIVED)
+            use = a.param("EVENT:USE")
+            if use is not None:
+                use.value = "false"         # no event loop: histograms read from the input file of the job
         iterator.children = analyzers
         return [iterator]
     return [t for task in tasks for t in convert(task)]
@@ -556,7 +564,7 @@ def folders(task, templates):
     layout = histogram_layout(task, templates)
     if layout is None:
         return []
-    prefix = histogram_options(task).prefix or task.name
+    prefix = task.name                  # objects shared by name in CAP's stores: unique across the tasks
     events = choices(task).get("EVENT_FILTER", [])
     particles = choices(task).get("PARTICLE_FILTER", [])
     result = []
@@ -724,7 +732,6 @@ def apply_choices(tasks, library, templates, Param):
             _set(task, prefix + "NAME", "string", f.name, Param)
             _set(task, prefix + "TITLE", "string", f.name, Param)
             _set(task, prefix + "OWNER", "bool", "true", Param)
-            _set(task, prefix + "BASE_NAME", "string", f.name, Param)
             if options.same_binning:
                 continue
             overrides = options.binning.get(f.combination, {})
@@ -780,7 +787,7 @@ def extract_choices(tasks, templates, library=None):
                 p.value = "true"
         if layout is not None:
             previous = getattr(task, "histograms", None)
-            task.histograms = previous if previous is not None else HistogramOptions(task.name)
+            task.histograms = previous if previous is not None else HistogramOptions()
             _histograms_from_keys(task, templates, values, warnings)
         strip_managed(task)
     for task in _preorder(tasks):
@@ -841,24 +848,16 @@ def _definition_from_keys(task, kind, k, name, values, warnings):
 
 
 def _histograms_from_keys(task, templates, values, warnings):
-    """Prefix and binning of the folders of a task from its keys (folders named <prefix>_<filters...>)."""
+    """Binning of the folders of a task from its keys (one folder per combination of its filters)."""
     options = task.histograms
     found = [f for f in folders(task, templates) if list_used(task, f.list)]
-    first = values.get("HISTOGRAM_1_0:NAME")
-    if first and found:
-        suffix = "_" + "_".join(found[0].combination)
-        if first.endswith(suffix) and len(first) > len(suffix):
-            options.prefix = first[:-len(suffix)]
-        found = [f for f in folders(task, templates) if list_used(task, f.list)]
-    renamed = [(f, values.get("HISTOGRAM_%d_%d:NAME" % (f.list, f.index))) for f in found]
-    renamed = [(f, old) for f, old in renamed if old and old != f.name]
     stated = 0
     for l in (1, 2, 3, 4):
         n = values.get("HISTOGRAM_%d:N" % l, "0") or "0"
         stated += int(n) if n.isdigit() else 0
-    if renamed or (stated and stated != len(found)):
-        warnings.append("Task %s: its histogram folders (%d) are not those of its filters (%d, named %s_<filters>): they "
-                        "will be written as such." % (task.name, stated, len(found), options.prefix))
+    if stated and stated != len(found):
+        warnings.append("Task %s: its histogram folders (%d) are not those of its filters (%d, one per combination): "
+                        "they will be written as such." % (task.name, stated, len(found)))
     names = binning_keys(task, templates)
     per_folder = {}
     for f in found:
@@ -929,6 +928,21 @@ def _valid(ptype, value):
     return True
 
 
+def check_job(tasks, library, templates):
+    """Problems of the files of the job: histograms imported without input file, input file written over."""
+    errors = []
+    importing = [t.name for t in _preorder(tasks)
+                 if any(list_used(t, l) and _flag(t, l, "IMPORT") for l in folder_lists(t, templates))]
+    input_file = library.job.get("INPUT_FILE", "")
+    if importing and not input_file:
+        errors.append("%s import%s histograms: name the input file of the job (the output file of the fill run)."
+                      % (", ".join(importing), "s" if len(importing) == 1 else ""))
+    if input_file and input_file == library.job.get("OUTPUT_FILE", ""):
+        errors.append("The input and output files of the job are the same file (%s): the output would replace it."
+                      % input_file)
+    return errors
+
+
 def short_class(cls):
     return cls.replace("CAP::", "")
 
@@ -991,20 +1005,12 @@ def check_choices(tasks, library, templates):
             if not choices(task).get("EVENT_FILTER") or not choices(task).get("PARTICLE_FILTER"):
                 errors.append("Task %s fills histograms per event filter and particle filter: choose at least one of each."
                               % task.name)
-            prefix = histogram_options(task).prefix
-            if prefix and not NAME_FULL.fullmatch(prefix):
-                errors.append("Task %s: invalid prefix '%s' of the histogram folders." % (task.name, prefix))
             for l in used:
                 label = list_label(task, templates, l).lower()
                 flag = lambda name: _param_value(task, "HISTOGRAM_%d:%s" % (l, name), "false") == "true"
-                file_name = lambda name: _param_value(task, "HISTOGRAM_%d:%s:FILE_NAME" % (l, name), "NONE")
                 if not flag("CREATE") and not flag("IMPORT"):
                     errors.append("Task %s: its %s are used but neither created nor imported (HISTOGRAM_%d)."
                                   % (task.name, label, l))
-                for action in ("IMPORT", "EXPORT"):
-                    if flag(action) and file_name(action) in ("", "NONE"):
-                        errors.append("Task %s: its %s are %sed but the file is not named (HISTOGRAM_%d)."
-                                      % (task.name, label, action.lower(), l))
             names = [f.name for f in folders(task, templates) if f.list in used]
             for name in sorted(set(n for n in names if names.count(n) > 1)):
                 errors.append("Task %s: several histogram folders are named %s (a filter chosen twice?)." % (task.name, name))
@@ -1039,6 +1045,8 @@ def runcap_element(library, tasks):
                 ET.SubElement(element, "CONDITION", attributes)
             for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
                 ET.SubElement(element, "PARAMETER", {"name": pname, "type": ptype}).text = o.parameters.get(pname, "")
+    if any(library.job.values()):
+        ET.SubElement(root, "JOB", {name.lower(): value for name, value in library.job.items() if value})
     for kind in KINDS:
         changed = {n: v for n, v in library.settings[kind].items() if v != default_settings(kind).get(n)}
         if changed:
@@ -1049,7 +1057,7 @@ def runcap_element(library, tasks):
         options = getattr(task, "histograms", None)
         if options is None:
             continue
-        element = ET.SubElement(root, "HISTOGRAMS", {"task": task.name, "prefix": options.prefix,
+        element = ET.SubElement(root, "HISTOGRAMS", {"task": task.name,
                                                      "same_binning": "true" if options.same_binning else "false"})
         for combo, overrides in sorted(options.binning.items()):
             c = ET.SubElement(element, "COMBINATION", {"filters": ",".join(combo)})
@@ -1076,6 +1084,10 @@ def read_runcap_element(element, tasks):
                 warnings.append("RUNCAP: invalid condition of %s (ignored)." % o.get("name", "?"))
         parameters = {p.get("name", ""): (p.text or "").strip() for p in o.findall("PARAMETER")}
         library.add(FilterDef(kind, o.get("name", ""), o.get("title", ""), conditions, parameters))
+    job = element.find("JOB")
+    if job is not None:
+        for name in JOB_SETTINGS:
+            library.job[name] = job.get(name.lower(), "")
     for e in element.findall("SETTINGS"):
         if e.get("kind") in KINDS:
             for p in e.findall("PARAMETER"):
@@ -1090,7 +1102,7 @@ def read_runcap_element(element, tasks):
         for c in h.findall("COMBINATION"):
             binning[tuple(c.get("filters", "").split(","))] = {p.get("name", ""): (p.text or "").strip()
                                                                for p in c.findall("PARAMETER")}
-        task.histograms = HistogramOptions(h.get("prefix", task.name), h.get("same_binning", "true") == "true", binning)
+        task.histograms = HistogramOptions(h.get("same_binning", "true") == "true", binning)
     return library, warnings
 
 

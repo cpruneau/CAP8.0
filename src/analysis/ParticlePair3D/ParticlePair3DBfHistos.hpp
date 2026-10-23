@@ -42,7 +42,7 @@ public:
                                const Configuration & configuration,
                                unsigned int index);
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Create the balance function histograms.
   virtual void create();
   //! @brief Compute the balance functions. @param pair12B pairs (1, 2bar) @param pair1B2B pairs (1bar, 2bar)

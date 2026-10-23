@@ -42,7 +42,10 @@ Workflow files: a CAP configuration file (root element CAP, TASK elements, see T
 "Workflow" of class CAP::Task, which executes them in order. Run uses the file last saved, or, when the workflow was
 changed since (or never saved), a temporary file. The job is run as:
     <CAP>/bin/CAP <root task> <directory of the file>/ <file name> <output directory>/
-in the output directory, with the environment of SetupCAP.sh (taken from BuildCAP.py's settings).
+in the output directory, with the environment of SetupCAP.sh (taken from BuildCAP.py's settings). The job writes the
+histograms of all its tasks to one output file in that directory (Output file; by default Workflow.cap): a folder per
+task, holding a folder per combination of event and particle filters with its histograms and derived histograms. A
+derived run reads the histograms it imports from its input file (Input file: the output file of the fill run).
 
 Filters (RunCAPFilters.py): the event and particle filters, efficiencies and smearers of a workflow form a library
 shared by its tasks; each task chooses its objects by name, and the analyzers get one histogram folder per combination
@@ -238,6 +241,8 @@ def task_from_element(element, templates, warnings):
     if element.get("severity"):
         t.severity = element.get("severity").upper()
     for p in read_parameters(element):
+        if filters.OBSOLETE_KEY.match(p.key) or filters.JOB_KEY.match(p.key):
+            continue            # keys of earlier versions; files of the job (see load_workflow_with_filters())
         existing = t.param(p.key)
         if existing is None:
             if t.known and not filters.MANAGED_KEY.match(p.key):
@@ -325,11 +330,17 @@ def load_workflow_with_filters(path, templates):
     parameters of the tasks (write_workflow() writes them again). Returns tasks, library, warnings."""
     tasks, warnings = load_workflow(path, templates)
     library = None
-    element = ET.parse(path).getroot().find("RUNCAP")
+    root = ET.parse(path).getroot()
+    top = root if root.tag == "TASK" else root.find("TASK")
+    job = {p.key[len("JOB:"):]: p.value for p in read_parameters(top) if filters.JOB_KEY.match(p.key)} \
+        if top is not None else {}
+    element = root.find("RUNCAP")
     if element is not None:
         library, more = filters.read_runcap_element(element, tasks)
         warnings += more
     library, more = filters.extract_choices(tasks, templates, library)
+    for name, value in job.items():
+        library.job[name] = value
     tasks = filters.remove_creator(tasks, library)
     more += filters.update_database_files(library)
     return tasks, library, warnings + more
@@ -344,6 +355,11 @@ def write_workflow(path, tasks, library=None, templates=None):
     else:
         written = tasks
     top = root_task(written)
+    if library is not None:                 # files of the job: keys of the task CAP runs (see CAP.cxx)
+        top.params = [p for p in top.params if not filters.JOB_KEY.match(p.key)]
+        for name, value in library.job.items():
+            if value:
+                top.params.append(Param("JOB:" + name, "string", value))
     document = ET.Element("CAP", {"version": "1"})
     document.append(task_to_element(top))
     if library is not None:
@@ -912,8 +928,23 @@ def run_gui(initial_file=None, hook=None):
             ttk.Entry(line, textvariable=self.output_dir, width=46).pack(side=tk.RIGHT, padx=4)
             label = ttk.Label(line, text="Output directory:")
             label.pack(side=tk.RIGHT)
-            ToolTip(label, "Directory of the histograms written by the job (last argument of bin/CAP); "
-                           "the job runs in this directory")
+            ToolTip(label, "Directory of the files of the job (last argument of bin/CAP); the job runs in this "
+                           "directory")
+            files = ttk.Frame(parent)
+            files.pack(fill=tk.X, pady=(0, 4))
+            self.job_vars = {}
+            for name, text, tip in (("OUTPUT_FILE", "Output file:", "File where the job writes the histograms of all its "
+                                     "tasks: a folder per task, holding a folder per combination of filters (default: "
+                                     "Workflow.cap)"),
+                                    ("INPUT_FILE", "Input file:", "File the histograms imported are read from (a derived "
+                                     "run reads the output file of its fill run)")):
+                label = ttk.Label(files, text=text)
+                label.pack(side=tk.LEFT, padx=(0 if name == "OUTPUT_FILE" else 16, 4))
+                ToolTip(label, tip)
+                var = tk.StringVar(self.root, value=self.library.job.get(name, ""))
+                ttk.Entry(files, textvariable=var, width=30).pack(side=tk.LEFT)
+                var.trace_add("write", lambda *a, n=name, v=var: self._set_job(n, v.get().strip()))
+                self.job_vars[name] = var
             box = ttk.Frame(parent)
             box.pack(fill=tk.BOTH, expand=True)
             columns = ("class", "events", "particles", "others", "folders", "problems")
@@ -932,6 +963,17 @@ def run_gui(initial_file=None, hook=None):
             bar.pack(side=tk.RIGHT, fill=tk.Y)
             self.summary.bind("<Double-Button-1>", lambda e: self.configure_task(self.summary.identify_row(e.y)))
             self.summary.bind("<Return>", lambda e: self.configure_task(self.summary.focus()))
+
+        def _set_job(self, name, value):
+            if self.library.job.get(name, "") != value:
+                self.library.job[name] = value
+                self._changed()
+
+        def _show_job(self):
+            """Show the files of the job of the library (after a load or a derived run)."""
+            for name, var in self.job_vars.items():
+                if var.get() != self.library.job.get(name, ""):
+                    var.set(self.library.job.get(name, ""))
 
         def _browse_output(self):
             path = self._dialog("askdirectory", initialdir=self.output_dir.get() or CAP_DIR)
@@ -980,7 +1022,11 @@ def run_gui(initial_file=None, hook=None):
                 if answer is None or (answer and not self.save_workflow()):
                     return
             analyzers = [t.name for t in all_tasks(derived) if filters.histogram_layout(t, self.templates)]
+            fill_output = self.library.job.get("OUTPUT_FILE") or WRAPPER_NAME + ".cap"   # (CAP runs the wrapper)
+            stem = fill_output[:-4] if fill_output.endswith(".cap") else fill_output
             self.set_workflow(derived)          # (the tree takes the subtasks)
+            self.library.job.update({"INPUT_FILE": fill_output, "OUTPUT_FILE": stem + "Derived.cap"})
+            self._show_job()
             self.saved_path = ""
             self._changed("Derived run of %s: save it, then run it after the fill run, with the same output directory."
                           % ", ".join(analyzers))
@@ -1025,9 +1071,6 @@ def run_gui(initial_file=None, hook=None):
                 return "Invalid task name '%s': use letters, digits, _ . - (no spaces or colons)." % new
             if new in self._used_names() - {task.name}:
                 return "Another task of the workflow is named %s." % new
-            options = getattr(task, "histograms", None)
-            if options is not None and options.prefix == task.name:
-                options.prefix = new                    # folders named after the task follow it
             task.name = new
             for item, t in self.items.items():
                 if t is task:
@@ -1122,6 +1165,7 @@ def run_gui(initial_file=None, hook=None):
             errors = check_workflow(tasks)
             if run:
                 errors += filters.check_choices(tasks, self.library, self.templates)
+                errors += filters.check_job(tasks, self.library, self.templates)
             else:
                 errors += filters.check_library(self.library)
             if errors:
@@ -1169,6 +1213,7 @@ def run_gui(initial_file=None, hook=None):
                 return
             self.library = library
             self.set_workflow(tasks)
+            self._show_job()
             self.filters_panel.library = library
             self.filters_panel.refresh()
             self.saved_path = filename
@@ -1453,7 +1498,8 @@ def main():
             return 0
         for w in warnings:
             print("warning: " + w)
-        errors = check_workflow(tasks) + filters.check_choices(tasks, library, templates)
+        errors = check_workflow(tasks) + filters.check_choices(tasks, library, templates) \
+            + filters.check_job(tasks, library, templates)
         for e in errors:
             print("error: " + e)
         print("%d task(s), %d warning(s), %d error(s)" % (len(list(all_tasks(tasks))), len(warnings), len(errors)))

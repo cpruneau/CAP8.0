@@ -46,7 +46,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the moments of an event (does nothing yet). @param mult event variable @param moments pT moments
   virtual void fill(double mult,vector<double> & moments);
   friend PtPtDerivedHistos;

@@ -18,7 +18,7 @@ namespace CAP
                          const Configuration & configuration,
                          unsigned int index);
   virtual void create();
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
 
   virtual void calculateDerivedHistograms(const ThermalHistos & h);
   

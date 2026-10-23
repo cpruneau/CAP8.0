@@ -48,7 +48,7 @@ namespace CAP
   h_ptAvgIncVsN = createHistogram(createName(_histogramBaseName,"n","ptAvgIncl"),n_nbins, n_min,  n_max,"n","ptAvgIncl");
   }
 
-  void GlobalDerivedHistos::loadFrom(CapFile & inputFile)
+  void GlobalDerivedHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   GlobalHistos::loadFrom(inputFile);

@@ -46,7 +46,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Compute the derived histograms. @param singleHistos constituent histograms @param pairHistos pair histograms
   virtual void calculateDerivedHistograms(const JetSingleHistos & singleHistos, const JetPairHistos & pairHistos);
 

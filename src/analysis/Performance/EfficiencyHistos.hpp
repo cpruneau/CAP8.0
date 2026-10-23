@@ -40,7 +40,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   virtual void fill(Particle & particle, double weight);
   
 protected:

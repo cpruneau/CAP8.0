@@ -44,7 +44,7 @@ public:
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Load the derived histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Compute F2, R2 and nu_dyn from the moments. @param baseHistos moments
   virtual void calculateDerivedHistograms(const NuDynHistos & baseHistos);
 

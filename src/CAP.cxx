@@ -17,6 +17,9 @@
 #include "Configuration.hpp"
 #include "PrintHelpers.hpp"
 #include "Task.hpp"
+#include "CapFile.hpp"
+#include "NameHelpers.hpp"
+#include <memory>
 #include "XmlDocument.hpp"
 #include "Exceptions.hpp"
 #include "FileSystem.hpp"
@@ -38,6 +41,18 @@ void usage()
   std::cout << "CAP  --xml-templates outputPath [className ...]" << std::endl;
   std::cout << "Write the XML template (all parameters, defaults and types) of the given task classes, or of all" << std::endl;
   std::cout << "task classes, to outputPath/<ClassName>.xml." << std::endl << std::endl << std::endl;
+}
+
+//!
+//! Name of a file of the job: a CAP file (".cap"; a name ending with ".root" is read and written as ".cap") in the
+//! histogram directory, unless absolute.
+//!
+CAP::String jobFile(const CAP::String & name, const CAP::String & histogramPath, CAP::String & path)
+{
+  CAP::String fileName = name;
+  if (fileName.endsWith(".root")) fileName = fileName.subString(0,fileName.length()-5)+CAP::String(".cap");
+  path = fileName.beginsWith("/") ? CAP::String("") : histogramPath;
+  return fileName;
 }
 
 void parse(int argc,
@@ -143,9 +158,38 @@ int main(int argc, char* argv[])
     configuration.loadFrom(configurationPath,configurationFile);
     mainTask = creatorTask->createTask(nullptr,mainTaskName,configuration);
     }
+  // Files of the job: the histograms of all its tasks are written to one output file (<main>:JOB:OUTPUT_FILE, by
+  // default <main>.cap), a folder per task holding a folder per combination of filters; those imported are read from
+  // one input file (<main>:JOB:INPUT_FILE) organized in the same way. Both are in the histogram directory.
+  const CAP::Configuration & jobConfiguration = mainTask->configuration();
+  CAP::String outputName = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:OUTPUT_FILE"),
+                                                        true,mainTask->name()+CAP::String(".cap"));
+  CAP::String inputName  = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:INPUT_FILE"),true,"NONE");
   mainTask->initialize();
+  if (!inputName.isEmpty() && inputName!="NONE")
+    {
+    CAP::String path;
+    CAP::String name = jobFile(inputName,histogramPath,path);
+    CAP::printValue("Input file of the job",CAP::CapFile::makeFileName(path,name));
+    std::unique_ptr<CAP::CapFile> input(CAP::CapFile::openOldCapFile(path,name));
+    mainTask->loadHistograms(*input);
+    }
   mainTask->execute();
   mainTask->finalize();
+  if (!outputName.isEmpty() && outputName!="NONE")
+    {
+    CAP::String path;
+    CAP::String name = jobFile(outputName,histogramPath,path);
+    std::unique_ptr<CAP::CapFile> output(CAP::CapFile::openRecreateCapFile(path,name));
+    mainTask->saveHistograms(*output);
+    if (output->names().empty())
+      CAP::printString("No histograms: no output file");
+    else
+      {
+      output->write();
+      CAP::printValue("Output file of the job",CAP::CapFile::makeFileName(path,name));
+      }
+    }
   delete mainTask;
   delete creatorTask;
   CAP::printLine();

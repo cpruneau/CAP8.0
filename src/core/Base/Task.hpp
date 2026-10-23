@@ -19,6 +19,8 @@
 #include <iostream>
 namespace CAP
 {
+  class Folder;
+
 
   //!
   //! @brief Base class of the analysis and simulation tasks, organized as a tree of subtasks.
@@ -105,6 +107,18 @@ namespace CAP
   virtual void partial();
   //! @brief Finalize the subtasks and stop the timer.
   virtual void finalize();
+  //!
+  //! @brief Add the histograms of this task and of its subtasks to the folder written to the output file of the job
+  //! (one sub-folder per task that has histograms, named after it; see CAP.cxx). Here: those of the subtasks.
+  //! @param top folder of the job
+  //!
+  virtual void saveHistograms(Folder & top);
+  //!
+  //! @brief Read the histograms of this task and of its subtasks from the folder of the input file of the job (the
+  //! sub-folder named after each task), for the histograms imported. Here: those of the subtasks.
+  //! @param top folder of the job
+  //!
+  virtual void loadHistograms(const Folder & top);
   //! @brief Reset the subtasks and set the execution counter to 0.
   virtual void reset();
   //! @brief Clear the execution counter and delete the subtasks.

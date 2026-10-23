@@ -75,7 +75,7 @@ void EventCountHistos::create()
  }
 
 //________________________________________________________________________
-void EventCountHistos::loadFrom(CapFile & inputFile)
+void EventCountHistos::loadFrom(const Folder & inputFile)
 {
 
   h_taskExecuted     = importHistogram(inputFile,createName(_histogramBaseName,"nTaskExecuted"));

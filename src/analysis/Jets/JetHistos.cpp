@@ -223,7 +223,7 @@ namespace CAP
   p_jet_netQSq = createProfile(createName(_histogramBaseName,"jet_netQSq_p"), jet_p_nbins,   jet_p_min,    jet_p_max,    "p_{T} (GeV/c)","<Q^2>");
   }
 
-  void JetHistos::loadFrom(CapFile & inputFile)
+  void JetHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_jet_count  = importHistogram(inputFile,createName(_histogramBaseName,"jet_count"));

@@ -254,7 +254,7 @@ void JetPairHistosDerived::create()
 
 }
 
-void JetPairHistosDerived::loadFrom(CapFile & inputFile)
+void JetPairHistosDerived::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   JetPairHistos::loadFrom(inputFile);

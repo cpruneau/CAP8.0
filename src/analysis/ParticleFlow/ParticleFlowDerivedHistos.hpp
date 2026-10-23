@@ -36,7 +36,7 @@ public:
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Load the derived histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile,);
+  virtual void loadFrom(const Folder & inputFile,);
   //! @brief Compute the derived histograms. @param baseHistos base histograms
   virtual void calculateDerivedHistograms(ParticleFlowHistos & baseHistos);
   //! @brief Copy the content of another group. @param group group to copy

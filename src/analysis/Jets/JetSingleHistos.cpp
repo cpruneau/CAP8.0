@@ -237,7 +237,7 @@ namespace CAP
   h_jet_n1m_z     = createHistogram(createName(_histogramBaseName,"jet_n1m_z"),     z_nbins,     z_min,     z_max,      "p_{t}","N_1^{-}");
   }
 
-  void JetSingleHistos::loadFrom(CapFile & inputFile)
+  void JetSingleHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_jet_n1_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1_pt"));

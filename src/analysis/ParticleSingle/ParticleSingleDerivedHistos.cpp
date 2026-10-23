@@ -128,7 +128,7 @@ void ParticleSingleDerivedHistos::create()
     }
 }
 
-void ParticleSingleDerivedHistos::loadFrom(CapFile & inputFile)
+void ParticleSingleDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_n1_phi      = importHistogram(inputFile,  createName(_histogramBaseName,"n1_phi"));

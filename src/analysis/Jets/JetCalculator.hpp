@@ -43,7 +43,7 @@ public:
   //! @brief Create the histograms. @param configuration configuration
   virtual void create(const Configuration & configuration);
   //! @brief Load the histograms from a file. @param inputFile file @param configuration configuration
-  virtual void loadFrom(CapFile & inputFile,const Configuration & configuration);
+  virtual void loadFrom(const Folder & inputFile,const Configuration & configuration);
   //! @brief Normalize the histograms.
   virtual void scaleHistograms();
 

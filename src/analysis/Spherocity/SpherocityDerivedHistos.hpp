@@ -39,7 +39,7 @@ public:
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Load the derived histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Compute the derived histograms (nothing yet). @param baseHistos base histograms
   virtual void calculateDerivedHistograms(SpherocityHistos & baseHistos);
 

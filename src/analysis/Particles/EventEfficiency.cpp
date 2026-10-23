@@ -135,7 +135,7 @@ void EventEfficiency::create()
   h_efficiency_mult  = createHistogram(createName(baseName(),"MULT"),nBins_mult,min_mult,max_mult,"mult","#epsilon",2);
 }
 
-void EventEfficiency::loadFrom(CapFile & inputFile)
+void EventEfficiency::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_efficiency_mult  = importHistogram(inputFile,createName(baseName(),"MULT"));

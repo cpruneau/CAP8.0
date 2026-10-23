@@ -40,7 +40,7 @@ public:
   //! @brief Create the histograms (according to the fill options).
   virtual void create();
   //! @brief Load the histograms from a file. @param file file
-  virtual void loadFrom(CapFile & file);
+  virtual void loadFrom(const Folder & file);
   //! @brief Fill the histograms. @param s0 spherocity S0 @param s1 spherocity S1 @param weight weight
   virtual void fill(double s0, double s1, double weight);
 

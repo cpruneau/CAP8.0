@@ -116,7 +116,7 @@ namespace CAP
 
   }
 
-  void ParticlePerformanceHistos::loadFrom(CapFile & inputFile)
+  void ParticlePerformanceHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   h_n1_dpt        = importHistogram(inputFile, createName(_histogramBaseName,"n1_dpPt"));

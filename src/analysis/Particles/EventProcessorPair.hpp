@@ -170,6 +170,51 @@ public:
   _managedHistogram_4s.reset();
   }
 
+  //!
+  //! @brief Add the histograms to the folder of the job: a folder named after the task, holding a folder per
+  //! combination of filters (combinationName(): event filter and two particle filters for the pairs, one for the
+  //! singles) with its histograms and derived histograms; then those of the subtasks. @param top folder of the job
+  //!
+  void saveHistograms(Folder & top) override
+  {
+  if (_managedHistogram_1s.size()+_managedHistogram_2s.size()+_managedHistogram_3s.size()+_managedHistogram_4s.size()>0)
+    {
+    Folder * folder = top.addFolder(Task::name());
+    auto pairs   = [this](unsigned int k) { return this->combinationName(k,2); };
+    auto singles = [this](unsigned int k) { return this->combinationName(k,1); };
+    _managedHistogram_1s.saveToFolders(*folder,pairs);
+    _managedHistogram_2s.saveToFolders(*folder,pairs);
+    _managedHistogram_3s.saveToFolders(*folder,singles);
+    _managedHistogram_4s.saveToFolders(*folder,singles);
+    }
+  EventProcessor::saveHistograms(top);
+  }
+
+  //!
+  //! @brief Read the histograms imported (IMPORT) from the folder of the job (the folder named after the task, a folder
+  //! per combination of filters); then those of the subtasks. @param top folder of the job
+  //! @throws Exception if a folder is missing
+  //!
+  void loadHistograms(const Folder & top) override
+  {
+  bool import1 = _managedHistogram_1s.imports() && _managedHistogram_1s.size()>0;
+  bool import2 = _managedHistogram_2s.imports() && _managedHistogram_2s.size()>0;
+  bool import3 = _managedHistogram_3s.imports() && _managedHistogram_3s.size()>0;
+  bool import4 = _managedHistogram_4s.imports() && _managedHistogram_4s.size()>0;
+  if (import1 || import2 || import3 || import4)
+    {
+    Folder * folder = top.folder(Task::name());
+    if (!folder) throw Exception(String("No folder ")+Task::name()+" in the input file",__FUNCTION__);
+    auto pairs   = [this](unsigned int k) { return this->combinationName(k,2); };
+    auto singles = [this](unsigned int k) { return this->combinationName(k,1); };
+    if (import1) _managedHistogram_1s.loadFromFolders(*folder,pairs);
+    if (import2) _managedHistogram_2s.loadFromFolders(*folder,pairs);
+    if (import3) _managedHistogram_3s.loadFromFolders(*folder,singles);
+    if (import4) _managedHistogram_4s.loadFromFolders(*folder,singles);
+    }
+  EventProcessor::loadHistograms(top);
+  }
+
   //! @brief Clear the task and the histogram groups.
   virtual void clear()
   {

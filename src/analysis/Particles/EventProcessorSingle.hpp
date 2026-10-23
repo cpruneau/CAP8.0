@@ -120,6 +120,43 @@ namespace CAP
   _managedHistograms_2s.reset();
   }
 
+  //!
+  //! @brief Add the histograms to the folder of the job: a folder named after the task, holding a folder per
+  //! combination of filters (combinationName()) with its histograms and derived histograms; then those of the
+  //! subtasks. @param top folder of the job
+  //!
+  void saveHistograms(Folder & top) override
+  {
+  if (_managedHistograms_1s.size()+_managedHistograms_2s.size()>0)
+    {
+    Folder * folder = top.addFolder(Task::name());
+    auto namer = [this](unsigned int k) { return this->combinationName(k,1); };
+    _managedHistograms_1s.saveToFolders(*folder,namer);
+    _managedHistograms_2s.saveToFolders(*folder,namer);
+    }
+  EventProcessor::saveHistograms(top);
+  }
+
+  //!
+  //! @brief Read the histograms imported (IMPORT) from the folder of the job (the folder named after the task, a folder
+  //! per combination of filters); then those of the subtasks. @param top folder of the job
+  //! @throws Exception if a folder is missing
+  //!
+  void loadHistograms(const Folder & top) override
+  {
+  bool import1 = _managedHistograms_1s.imports() && _managedHistograms_1s.size()>0;
+  bool import2 = _managedHistograms_2s.imports() && _managedHistograms_2s.size()>0;
+  if (import1 || import2)
+    {
+    Folder * folder = top.folder(Task::name());
+    if (!folder) throw Exception(String("No folder ")+Task::name()+" in the input file",__FUNCTION__);
+    auto namer = [this](unsigned int k) { return this->combinationName(k,1); };
+    if (import1) _managedHistograms_1s.loadFromFolders(*folder,namer);
+    if (import2) _managedHistograms_2s.loadFromFolders(*folder,namer);
+    }
+  EventProcessor::loadHistograms(top);
+  }
+
   //! @brief Clear the task and the histogram groups.
   virtual void clear()
   {

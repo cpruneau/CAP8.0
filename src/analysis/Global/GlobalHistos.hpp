@@ -68,7 +68,7 @@ public:
 
   //!
   //!Load histograms corresponding to the selected event and particle filters from the given file.
- virtual void loadFrom(CapFile & inputFile);
+ virtual void loadFrom(const Folder & inputFile);
 
   //!
   //!Fill eventswise observables for the selected filters

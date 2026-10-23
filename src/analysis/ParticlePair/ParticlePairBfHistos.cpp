@@ -235,7 +235,7 @@ if (eta_fill)
 }
 
 
-void ParticlePairBfHistos::loadFrom(CapFile & inputFile)
+void ParticlePairBfHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   ParticlePairDerivedHistos::loadFrom(inputFile);

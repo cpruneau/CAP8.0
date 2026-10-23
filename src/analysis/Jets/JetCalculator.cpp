@@ -103,7 +103,7 @@ void JetCalculator::setDefaultConfiguration()
   addProperty("z_max",     1.0);
 }
 
-void JetCalculator::loadFrom(CapFile & inputFile,const Configuration & configuration)
+void JetCalculator::loadFrom(const Folder & inputFile,const Configuration & configuration)
 {
   String bn = valueString("HistogramBaseName");
   JetHistos        * jetHistos;

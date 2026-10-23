@@ -251,7 +251,7 @@ void JetPairHistos::create()
   h_jet_n2mm_zz      = createHistogram(createName(_histogramBaseName,"jet_n2mm_zz"),z_nbins,z_min,z_max, z_nbins,z_min,z_max,"z_{1}","z_{2}","N_{2}^{--}");
 }
 
-void JetPairHistos::loadFrom(CapFile & inputFile)
+void JetPairHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   HistogramFolder::loadFrom(inputFile);

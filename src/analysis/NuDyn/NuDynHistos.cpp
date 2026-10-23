@@ -108,7 +108,7 @@ namespace CAP
   h_f2_22_evt = createProfile(createName(_histogramBaseName,"f2_22"),evt_nbins,evt_min,evt_max,"EvtClass","f_{2}^{22}");
   }
 
-  void NuDynHistos::loadFrom(CapFile & inputFile)
+  void NuDynHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_evt       = importHistogram(inputFile,createName(_histogramBaseName,"mult"));

@@ -49,7 +49,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
 
   //! @brief Fill the histograms with a jet pair. @param J1 first jet @param J2 second jet
   virtual void fill(PseudoJet& J1, PseudoJet& J2);

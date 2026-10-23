@@ -215,7 +215,7 @@ void ParticlePair3DDerivedHistos::create()
   
 }
 
-void ParticlePair3DDerivedHistos::loadFrom(CapFile & inputFile)
+void ParticlePair3DDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   h_n2_DeltaPs = importHistogram(inputFile,createName(_histogramBaseName,"n2_DeltaPs"));

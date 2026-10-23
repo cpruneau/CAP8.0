@@ -182,7 +182,7 @@ namespace CAP
 
   }
 
-  void JetPairMassHistos::loadFrom(CapFile & inputFile)
+  void JetPairMassHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_jetpair_n2_ptpt      = importHistogram(inputFile,createName(_histogramBaseName,"jetpair_n2_ptpt"));

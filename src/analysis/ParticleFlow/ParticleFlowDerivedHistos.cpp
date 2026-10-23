@@ -158,7 +158,7 @@ void ParticleFlowDerivedHistos::create()
   if ( reportStart(__FUNCTION__))  {/* no ops */};
 }
 
-void ParticleFlowDerivedHistos::loadFrom(CapFile & inputFile)
+void ParticleFlowDerivedHistos::loadFrom(const Folder & inputFile)
 {
 }
 

@@ -10,6 +10,7 @@
  *
  * *********************************************************************/
 #include "Task.hpp"
+#include "Folder.hpp"
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
@@ -134,6 +135,16 @@ namespace CAP
   void Task::postProcess()
   {
   if (reportDebug(__FUNCTION__))  { printCR(); };
+  }
+
+  void Task::saveHistograms(Folder & top)
+  {
+  for (auto & subtask : _subTasks) subtask->saveHistograms(top);
+  }
+
+  void Task::loadHistograms(const Folder & top)
+  {
+  for (auto & subtask : _subTasks) subtask->loadHistograms(top);
   }
 
   void Task::finalize()
@@ -492,6 +503,8 @@ namespace CAP
 
   void Task::unknownXmlParameter(const String & key)
   {
+  // Files of the job (<task>:JOB:OUTPUT_FILE, INPUT_FILE, read by CAP.cxx for the main task) are expected.
+  if (key.contains(":JOB:")) return;
   // Keys of the objects of managed lists (<task>:<TYPE>_<k>:..., the list having <task>:<TYPE>:N) are not in the
   // default configuration, whose lists are empty: they are expected.
   std::string text = key.data();

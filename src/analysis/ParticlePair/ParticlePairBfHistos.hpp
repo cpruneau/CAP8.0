@@ -45,7 +45,7 @@ public:
   //! @brief Create the balance function histograms.
   void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  void loadFrom(CapFile & inputFile);
+  void loadFrom(const Folder & inputFile);
   
   //! @brief Compute the balance functions and combinations from the correlation functions of the four combinations.
   //! @param pair12B pairs (1, 2bar) @param pair1B2B pairs (1bar, 2bar) @param pair1B2 pairs (1bar, 2) @param pair12 pairs (1, 2)

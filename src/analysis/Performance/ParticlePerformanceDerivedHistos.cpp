@@ -46,7 +46,7 @@ void ParticlePerformanceDerivedHistos::create()
   if (reportDebug(__FUNCTION__)) { printCR(); }
 }
 
-void ParticlePerformanceDerivedHistos::loadFrom(CapFile & inputFile)
+void ParticlePerformanceDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   ParticlePerformanceHistos::loadFrom(inputFile);

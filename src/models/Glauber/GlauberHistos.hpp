@@ -45,7 +45,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the histograms with an event. @param event event @param weight weight
   virtual void fill(GlauberEvent & event, double weight=1.0);
   //! @brief Configure the object from keys \<taskName\>:\<objectType\>:... (binning, options).

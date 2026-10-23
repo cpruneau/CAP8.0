@@ -17,13 +17,12 @@ namespace CAP
 {
 
   //!
-    //! @brief Task repeating the same subtasks on several input/output directories (e.g., to post-process the
-    //! histograms of many runs).
-    //!
-    //! For each directory pair, execute() sets \<name\>:HistogramsImportPath and \<name\>:HistogramsExportPath in the
-    //! configuration of each subtask and runs it. The directories are built from the environment variables
-    //! CAP_HISTOS_IMPORT_PATH and CAP_HISTOS_EXPORT_PATH according to \<name\>:nLevels (0: these directories only).
-    //! @note nLevels=1 (one level of subdirectories) is not implemented: execute() then throws.
+  //! @brief Task post-processing histograms read from the input file of the job, e.g. computing the derived histograms
+  //! of the analyzers it holds from the histograms of an earlier run (no event loop).
+  //!
+  //! The job reads the histograms its subtasks import (IMPORT) from its input file after initialization (see
+  //! Task::loadHistograms()); execute() then calls postProcess() of each subtask (EventProcessor::postProcess() computes
+  //! the derived histograms); the job writes them, with those imported, to its output file.
   //!
   class FileIterator
   :
@@ -39,24 +38,10 @@ namespace CAP
   FileIterator operator=(const FileIterator & task);
   //! @brief Destructor.
   virtual ~FileIterator() {}
-  //! @brief Add the default configuration: \<name\>:nLevels = 0.
-  virtual void setDefaultConfiguration();
-  //! @brief Configure the task (reads \<name\>:nLevels). @param configuration configuration
-  virtual void configure(const Configuration & configuration);
-  //! @brief Run the subtasks on each directory (see the class description).
-  //! @throws Exception if no directory is selected
+  //! @brief Post-process the subtasks (see the class description).
   virtual void execute();
 
-  protected:
-
-//  bool isGrid;
-//  int nBunches;
-//  int nSubBunches;
-//  String bunchLabel;
-//  String subBunchLabel;
-  //! Number of directory levels to iterate over (0: the import/export directories themselves).
-  int _nLevels;
-  ClassDef(FileIterator,0)
+  ClassDef(FileIterator,1)
   };
 
 } // namespace CAP

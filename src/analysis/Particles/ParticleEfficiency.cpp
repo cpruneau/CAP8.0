@@ -176,7 +176,7 @@ namespace CAP
 
   }
 
-  void ParticleEfficiency::loadFrom(CapFile & inputFile)
+  void ParticleEfficiency::loadFrom(const Folder & inputFile)
   {
   String name = "PART_EFF_ALL_ALL_etaPt";
   printValue(name,name);

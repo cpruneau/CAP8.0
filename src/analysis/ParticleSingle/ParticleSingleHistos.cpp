@@ -240,7 +240,7 @@ namespace CAP
   if (reportDebug(__FUNCTION__)) { printCR(); }
   }
 
-  void ParticleSingleHistos::loadFrom(CapFile & inputFile)
+  void ParticleSingleHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_n1         = importHistogram(inputFile,  createName(_histogramBaseName,"n1"));

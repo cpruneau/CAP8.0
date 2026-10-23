@@ -72,7 +72,7 @@ void SpherocityDerivedHistos::create()
 
 //!
 //!Load histograms corresponding to the selected event and particle filters from the given file.
-void SpherocityDerivedHistos::loadFrom(CapFile & inputFile)
+void SpherocityDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   SpherocityHistos::loadFrom(inputFile);

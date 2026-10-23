@@ -35,7 +35,7 @@ namespace CAP
   {   }
 
   // Fix me...
-  void ThermalDerivedHistos::loadFrom(CapFile & inputFile   __attribute__((unused)))
+  void ThermalDerivedHistos::loadFrom(const Folder & inputFile   __attribute__((unused)))
   {   }
 
   void ThermalDerivedHistos::cloneD(const ThermalDerivedHistos & source  __attribute__((unused)))

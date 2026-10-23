@@ -12,12 +12,13 @@ Tabs:
     are written from the choices below, see RunCAPFilters);
   * Filters (tasks that use filters, efficiencies or smearers): for each kind the task supports, how many objects it
     uses and which ones, by name, among those of the library of the workflow (Filters pane);
-  * Histograms (analyzers): for each list of folders (histograms, derived histograms; for pairs and singles of a pair
-    analyzer), whether it is used, created, imported (from a folder and file) and exported (to a folder and file); a
-    used list has one folder per combination of the filters chosen, named <prefix>_<event filter>_<particle filter>
-    [_<particle filter 2>] (derived folders ending with _D). Then the prefix and the binning of the folders: the
-    same for all (the HISTOGRAM group of the task), or folder by folder, the parameters not set for a folder being
-    those of the HISTOGRAM group.
+  * Histograms (analyzers): the run (fill the histograms, or compute the derived histograms from those of a fill run);
+    for each list of folders (histograms, derived histograms; for pairs and singles of a pair analyzer), whether it is
+    used, created by the run or imported from the input file of the job. The job writes the histograms of all its
+    tasks to its output file: a folder per task, holding a folder per combination of the filters chosen,
+    <event filter>_<particle filter>[_<particle filter 2>], with the histograms and the derived histograms. Then the
+    binning of the folders: the same for all (the HISTOGRAM group of the task), or folder by folder, the parameters
+    not set for a folder being those of the HISTOGRAM group.
 Changes apply to the task at once; the problems of the task (RunCAPFilters.check_choices()) are listed at the bottom.
 """
 
@@ -321,12 +322,6 @@ class TaskDialog(tk.Toplevel):
         base = [f for f in all_folders if not f.derived]
         head = ttk.Frame(tab)
         head.pack(fill=tk.X, pady=(0, 6))
-        ttk.Label(head, text="Prefix of the folder names:").pack(side=tk.LEFT)
-        prefix = tk.StringVar(self, value=options.prefix)
-        entry = ttk.Entry(head, textvariable=prefix, width=18)
-        entry.pack(side=tk.LEFT, padx=(4, 14))
-        entry.bind("<Return>", lambda e: self._set_prefix(prefix.get().strip(), entry))
-        entry.bind("<FocusOut>", lambda e: self._set_prefix(prefix.get().strip(), entry))
         same = tk.BooleanVar(self, value=options.same_binning)
         ttk.Checkbutton(head, text="Same binning for all folders", variable=same,
                         command=lambda: self._set_same(same.get())).pack(side=tk.LEFT)
@@ -350,7 +345,7 @@ class TaskDialog(tk.Toplevel):
         if not options.same_binning:
             for f in base:
                 mark = " •" if options.binning.get(f.combination) else ""
-                self.folder_list.insert(tk.END, f.name + mark)
+                self.folder_list.insert(tk.END, f.folder + mark)
                 self._list_entries.append(f.combination)
         ttk.Label(left, text="Derived folders (%s) use the\nbinning of their folder; •: own binning."
                   % F.DERIVED_SUFFIX, foreground="gray40", justify=tk.LEFT).pack(anchor="w", pady=(4, 0))
@@ -365,8 +360,8 @@ class TaskDialog(tk.Toplevel):
         self._show_binning()
 
     def _make_lists(self, tab):
-        """Use, creation, import and export of each list of folders; a used list has one folder per combination of
-        the filters chosen."""
+        """Use, creation and import of each list of folders; a used list has one folder per combination of the filters
+        chosen, in the folder of the task in the output file of the job."""
         run = ttk.Frame(tab)
         run.pack(fill=tk.X, pady=(0, 6))
         ttk.Label(run, text="Run:", style="Section.TLabel").pack(side=tk.LEFT, padx=(0, 8))
@@ -378,33 +373,25 @@ class TaskDialog(tk.Toplevel):
                             command=lambda v=var: self._set_mode(v.get())).pack(side=tk.LEFT, padx=(0, 14))
         if mode == F.CUSTOM:
             ttk.Label(run, text="(set by hand below)", foreground="gray40").pack(side=tk.LEFT)
-        box = ttk.LabelFrame(tab, text="  Folders of histograms: one per combination of the filters, for each list used  ",
-                             padding=(8, 4))
+        box = ttk.LabelFrame(tab, text="  Histograms, in the output file of the job: a folder %s/<event filter>_<particle "
+                                       "filter> per combination, for each list used  " % self.task.name, padding=(8, 4))
         box.pack(fill=tk.X, pady=(0, 8))
         all_folders = F.folders(self.task, self.templates)
         for r, l in enumerate(F.folder_lists(self.task, self.templates)):
             n = len([f for f in all_folders if f.list == l])
             used = F.list_used(self.task, l)
             ttk.Label(box, text="%s (HISTOGRAM_%d)" % (F.list_label(self.task, self.templates, l), l),
-                      style="Overridden.TLabel" if used else "TLabel").grid(row=2 * r, column=0, sticky="w",
-                                                                           pady=(4, 0))
+                      style="Overridden.TLabel" if used else "TLabel").grid(row=r, column=0, sticky="w", pady=2)
             line = ttk.Frame(box)
-            line.grid(row=2 * r, column=1, sticky="w", pady=(4, 0))
+            line.grid(row=r, column=1, sticky="w", padx=(8, 0), pady=2)
             self._list_flag(line, l, "USE", "Use")
             nE = len(F.choices(self.task).get("EVENT_FILTER", []))
             nP = len(F.choices(self.task).get("PARTICLE_FILTER", []))
             product = "%d \u00d7 %d%s" % (nE, nP, " \u00d7 %d" % nP if n == nE * nP * nP and nP > 1 else "")
             ttk.Label(line, text=("%s = %d folders" % (product, n)) if used else "no folder",
                       foreground="gray40").pack(side=tk.LEFT, padx=(4, 16))
-            self._list_flag(line, l, "CREATE", "Create", used)
-            self._list_flag(line, l, "EXPORT:FORCE_REWRITE", "Overwrite the export file", used)
-            files = ttk.Frame(box)
-            files.grid(row=2 * r + 1, column=1, sticky="w", pady=(0, 2))
-            for action, word in (("IMPORT", "from"), ("EXPORT", "to")):
-                self._list_flag(files, l, action, action.capitalize(), used)
-                self._list_entry(files, l, action + ":PATH", word, 8, used)
-                self._list_entry(files, l, action + ":FILE_NAME", "file", 13, used)
-                ttk.Frame(files, width=6).pack(side=tk.LEFT)
+            self._list_flag(line, l, "CREATE", "Create (filled by this run)", used)
+            self._list_flag(line, l, "IMPORT", "Import (from the input file of the job)", used)
 
     def _set_mode(self, mode):
         F.set_histogram_mode(self.task, self.templates, mode)
@@ -420,34 +407,12 @@ class TaskDialog(tk.Toplevel):
                         command=lambda: self._set_list(p, "true" if var.get() else "false", name == "USE")).pack(
             side=tk.LEFT, padx=(0, 6))
 
-    def _list_entry(self, parent, list_index, name, label, width, enabled=True):
-        p = self.task.param("HISTOGRAM_%d:%s" % (list_index, name))
-        if p is None:
-            return
-        ttk.Label(parent, text=label).pack(side=tk.LEFT, padx=(0, 2))
-        var = tk.StringVar(self, value=p.value)
-        ttk.Entry(parent, textvariable=var, width=width, state=tk.NORMAL if enabled else tk.DISABLED).pack(
-            side=tk.LEFT, padx=(0, 6))
-        var.trace_add("write", lambda *a: self._set_list(p, var.get().strip(), False))
-
     def _set_list(self, p, value, remake):
         if p.value != value:
             p.value = value
             if remake:                      # used or not: its folders appear or go
                 self._make_histograms()
             self._changed()
-
-    def _set_prefix(self, prefix, entry):
-        options = F.histogram_options(self.task)
-        if prefix == options.prefix:
-            return
-        if not F.NAME_FULL.fullmatch(prefix):
-            entry.configure(style="Invalid.TEntry")
-            self.problems.set("Invalid prefix '%s': letters, digits, _ . - (no spaces or colons)." % prefix)
-            return
-        options.prefix = prefix
-        self._make_histograms()
-        self._changed()
 
     def _set_same(self, same):
         F.histogram_options(self.task).same_binning = same

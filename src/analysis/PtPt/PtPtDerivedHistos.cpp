@@ -122,7 +122,7 @@ void PtPtDerivedHistos::create()
   h_dq1dq1dq1dq1_evt = createHistogram(createName(_histogramBaseName,"dq1dq1dq1dq1"),evt_nbins,evt_min,evt_max,xTitle,"#Delta q_{1}#Delta q_{1}#Delta q_{1}#Delta q_{1}");
 }
 
-void PtPtDerivedHistos::loadFrom(CapFile & inputFile)
+void PtPtDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   PtPtHistos::loadFrom(inputFile);

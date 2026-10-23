@@ -40,7 +40,7 @@ public:
   //! @brief Create the histograms nTaskExecuted, nEventAccepted and nParticleAccepted.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Add counts to the histograms.
   //! @param taskExecuted number of executions @param nEventsAccepted number of events accepted by each event filter
   //! @param nParticleAccepted number of particles accepted by each combination (index iEventFilter*nParticleFilters+iParticleFilter)

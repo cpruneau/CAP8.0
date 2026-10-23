@@ -37,9 +37,10 @@ namespace CAP
   //! Derived classes typically keep pointers to their histograms (e.g. h_n1). Those pointers refer to objects owned by
   //! the group; after a copy or an assignment, set them again from the new group, e.g. h_n1 = histogramLike(source.h_n1).
   //!
-  //! Files: the histograms are saved to, and loaded from, a CapFile (a Folder stored in a CAP binary file): saveTo()
-  //! copies them into the current folder of the file, and importHistogram() copies one back. The file is read or
-  //! written on disk with CapFile::read() and CapFile::write().
+  //! Files: the histograms are saved to, and loaded from, a folder: in a job, the folder of the combination of filters
+  //! of the group, in the folder of its task, in the output (input) file of the job (see Task::saveHistograms()).
+  //! saveTo() copies them into the folder, and importHistogram() copies one back. Their names are short (e.g. n1_pt):
+  //! the folders tell the groups apart.
   //!
   //! Profiles are MATH::Profile objects (createProfile(), importProfile()), filled with fill(x, value, weight); their
   //! bin values are the weighted means. They are stored, copied and saved as profiles.
@@ -84,7 +85,8 @@ namespace CAP
 
 
   //!
-  //! @brief Read the configuration of the group: the base name of its histograms (key taskName:objectType:index:BASE_NAME).
+  //! @brief Read the configuration of the group: for types other than HISTOGRAM... (corrections), the base name of the
+  //! histograms (taskName:objectType_index:BASE_NAME); the histograms of the analyzers have short names.
   //! @param taskName name of the task @param objectType type of object (e.g. "HISTOGRAM") @param configuration configuration
   //! @param index index of the group within the task
   //!
@@ -94,14 +96,13 @@ namespace CAP
   virtual void initialize() {}
   //! @brief Create the histograms of the group. @throws Exception here: derived classes implement it
   virtual void create();
-  //! @brief Load the histograms of the group from a file. @param file file (read with CapFile::read())
+  //! @brief Load the histograms of the group from a folder. @param file folder (e.g. that of the group in a CapFile)
   //! @throws Exception here: derived classes implement it (typically with importHistogram())
-  virtual void loadFrom(CapFile & file);
+  virtual void loadFrom(const Folder & file);
   //!
-  //! @brief Copy the histograms of the group into the current folder of a file, replacing entries with the same names.
-  //! The file is written on disk with CapFile::write(). @param file file
+  //! @brief Copy the histograms of the group into a folder, replacing entries with the same names. @param file folder
   //!
-  virtual void saveTo(CapFile & file) const;
+  virtual void saveTo(Folder & file) const;
   //! @brief Multiply all histograms by a factor (see scaleHistograms()). @param factor factor
   virtual void scaleObject(double factor) { scaleHistograms(factor); }
   //! @brief Reset the content of all histograms (their binning is kept).
@@ -222,21 +223,21 @@ namespace CAP
   //! @param file file (read with CapFile::read()) @param name name of the histogram @return the copy, owned by the group
   //! @throws FileException if the file has no histogram with that name
   //!
-  Histogram * importHistogram(const CapFile & file, const String & name);
+  Histogram * importHistogram(const Folder & file, const String & name);
 
   //!
   //! @brief Copy a profile from the current folder of a file into the group (replacing one with the same name).
   //! @param file file @param name name of the profile @return the copy, owned by the group
   //! @throws FileException if the file has no profile with that name
   //!
-  Profile * importProfile(const CapFile & file, const String & name);
+  Profile * importProfile(const Folder & file, const String & name);
 
   //!
   //! @brief Copy all the histograms and profiles of the current folder of a file into the group (replacing those with
   //! the same names). Other entries and sub-folders are ignored.
   //! @param file file (read with CapFile::read()) @return number of histograms copied
   //!
-  unsigned int importAllHistograms(const CapFile & file);
+  unsigned int importAllHistograms(const Folder & file);
 
   //! @}
 

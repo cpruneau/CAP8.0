@@ -65,7 +65,11 @@ namespace CAP
                                  const Configuration & configuration, unsigned int index)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  _histogramBaseName = configuration.valueString(createKey(taskName,objectType,index,"BASE_NAME"));
+  // The histograms of the analyzers (HISTOGRAM types) have short names (e.g. n1_pt): the folders of the files of the
+  // job (task, combination of filters) tell them apart. Corrections (efficiencies, smearers), imported from files of
+  // their own, keep the base name of their configuration (BASE_NAME).
+  if (!objectType.beginsWith("HISTOGRAM"))
+    _histogramBaseName = configuration.valueString(createKey(taskName,objectType,index,"BASE_NAME"));
   }
 
   void HistogramFolder::create()
@@ -73,12 +77,12 @@ namespace CAP
   throw Exception("HistogramFolder::create() must be implemented by the derived class",__FUNCTION__);
   }
 
-  void HistogramFolder::loadFrom(CapFile & file)
+  void HistogramFolder::loadFrom(const Folder & file)
   {
   throw FileException(file.path(),"HistogramFolder::loadFrom() must be implemented by the derived class",__FUNCTION__);
   }
 
-  void HistogramFolder::saveTo(CapFile & file) const
+  void HistogramFolder::saveTo(Folder & file) const
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   for (const Histogram * h : histograms())
@@ -228,7 +232,7 @@ namespace CAP
   // Files
   //////////////////////////////////////////////////////////////////////////
 
-  HistogramFolder::Histogram * HistogramFolder::importHistogram(const CapFile & file, const String & name)
+  HistogramFolder::Histogram * HistogramFolder::importHistogram(const Folder & file, const String & name)
   {
   const Histogram * source = file.get<Histogram>(name);
   if (!source) throw FileException(file.path(),String("No histogram named ")+name+" in the file",__FUNCTION__);
@@ -237,7 +241,7 @@ namespace CAP
   return append(copy.release());
   }
 
-  HistogramFolder::Profile * HistogramFolder::importProfile(const CapFile & file, const String & name)
+  HistogramFolder::Profile * HistogramFolder::importProfile(const Folder & file, const String & name)
   {
   const Profile * source = file.get<Profile>(name);
   if (!source) throw FileException(file.path(),String("No profile named ")+name+" in the file",__FUNCTION__);
@@ -248,7 +252,7 @@ namespace CAP
   return p;
   }
 
-  unsigned int HistogramFolder::importAllHistograms(const CapFile & file)
+  unsigned int HistogramFolder::importAllHistograms(const Folder & file)
   {
   unsigned int n = 0;
   for (const String & entry : file.names())

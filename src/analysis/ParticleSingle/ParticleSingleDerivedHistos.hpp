@@ -44,7 +44,7 @@ public:
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Load the derived histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Compute the projections and pT averages from base histograms. @param baseHistos base histograms
   virtual void calculateDerivedHistograms(ParticleSingleHistos & baseHistos);
   friend class ParticlePairDerivedHistos;

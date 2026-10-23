@@ -49,7 +49,7 @@ public:
   //! @brief Create the efficiency histogram.
   virtual void create();
   //! @brief Load the efficiency histogram from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Whether a particle is detected: random draw against efficiencyAt(). @param particle particle @return true if detected
   virtual bool accept(const Particle & particle);
   //! @brief Whether a particle of a given momentum is detected: random draw against efficiencyAt().

@@ -749,7 +749,7 @@ namespace CAP
   }
 
 
-  void GlauberHistos::loadFrom(CapFile & inputFile)
+  void GlauberHistos::loadFrom(const Folder & inputFile)
   {
   if (reportStart(__FUNCTION__)) { /* noops*/ };
   h_impactPar      = importHistogram(inputFile, createName(_histogramBaseName,"impact"));

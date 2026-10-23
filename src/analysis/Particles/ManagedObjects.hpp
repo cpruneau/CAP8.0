@@ -45,9 +45,10 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   //! Configuration (keys added by setDefaultObjectConfiguration(), read by configureObjects()), for task \<task\> and
   //! object type \<TYPE\> (e.g. PARTICLE_FILTER, HISTOGRAM_1):
   //! @code
-  //!   <task>:<TYPE>:USE, N, IMPORT, CREATE, EXPORT                    // flags and number of objects
-  //!   <task>:<TYPE>:IMPORT:BASE_NAME, IMPORT:PATH, IMPORT:FILE_NAME
-  //!   <task>:<TYPE>:EXPORT:BASE_NAME, EXPORT:PATH, EXPORT:FILE_NAME, EXPORT:FORCE_REWRITE
+  //!   <task>:<TYPE>:USE, N, IMPORT, CREATE                            // flags and number of objects
+  //!   <task>:<TYPE>:EXPORT                                            // not for HISTOGRAM types
+  //!   <task>:<TYPE>:IMPORT:BASE_NAME, IMPORT:PATH, IMPORT:FILE_NAME   // not for HISTOGRAM types
+  //!   <task>:<TYPE>:EXPORT:BASE_NAME, EXPORT:PATH, EXPORT:FILE_NAME, EXPORT:FORCE_REWRITE   // not for HISTOGRAM types
   //!   <task>:<TYPE>_<k>:NAME, TITLE, OWNER                            // object k
   //!   <task>:<TYPE>_<k>:<param>                                       // histogram folder k: its own binning
   //! @endcode
@@ -57,8 +58,10 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   //! An object whose OWNER flag is true is created (and configured) by this list and added to a static store shared by
   //! all lists of this type; otherwise the object of that name is taken from the store (shared between tasks).
   //!
-  //! Paths: for HISTOGRAM types, DEFAULT or relative paths are taken in $CAP_HISTOS_IMPORT_PATH (import) and
-  //! $CAP_HISTOS_EXPORT_PATH (export); for PARTICLE_DB, relative import paths are taken in $CAP_DATABASE_PATH.
+  //! Histograms (HISTOGRAM types) have no files of their own: the job writes those of all its tasks to one output file,
+  //! a folder per task and a sub-folder per object (saveToFolders()), and imports them (IMPORT) from one input file in
+  //! the same way (loadFromFolders(); see CAP.cxx). Other types: for PARTICLE_DB, relative import paths are taken in
+  //! $CAP_DATABASE_PATH.
   //! Files ending in .cap (or .root, read as .cap) are CAP files; a PARTICLE_DB is read from an XML file (.xml) holding
   //! the particles and their decay modes (see ParticleDbXml).
     //!
@@ -158,6 +161,7 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   configuration.addProperty(createKey(_taskName,_typeName,"N"),      0);
   configuration.addProperty(createKey(_taskName,_typeName,"IMPORT"), false);
   configuration.addProperty(createKey(_taskName,_typeName,"CREATE"), false);
+  if (isHistogramList()) return;    // histograms: read from and written to the files of the job (see CAP.cxx)
   configuration.addProperty(createKey(_taskName,_typeName,"EXPORT"), false);
   configuration.addProperty(createKey(_taskName,_typeName,"IMPORT:BASE_NAME"),"NONE");
   configuration.addProperty(createKey(_taskName,_typeName,"IMPORT:PATH"),"DEFAULT");
@@ -407,6 +411,9 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   _use            = configuration.valueBool(  createKey(_taskName,_typeName,"USE"));
   _create         = configuration.valueBool(  createKey(_taskName,_typeName,"CREATE"));
   _import         = configuration.valueBool(  createKey(_taskName,_typeName,"IMPORT"));
+  nObjects        = configuration.valueInt(   createKey(_taskName,_typeName,"N") );
+  if (!isHistogramList())
+    {
   _importBaseName = configuration.valueString(createKey(_taskName,_typeName,"IMPORT:BASE_NAME"));
   importPath      = configuration.valueString(createKey(_taskName,_typeName,"IMPORT:PATH"));
   _importFileName = configuration.valueString(createKey(_taskName,_typeName,"IMPORT:FILE_NAME"));
@@ -415,16 +422,10 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   exportPath      = configuration.valueString(createKey(_taskName,_typeName,"EXPORT:PATH"));
   _exportFileName = configuration.valueString(createKey(_taskName,_typeName,"EXPORT:FILE_NAME"));
   _forceRewrite   = configuration.valueBool(  createKey(_taskName,_typeName,"EXPORT:FORCE_REWRITE"));
-  nObjects        = configuration.valueInt(   createKey(_taskName,_typeName,"N") );
-  
-  // "DEFAULT", absolute, "./..." or relative to the directory of the environment variable
-  if (_typeName.beginsWith("HISTOGRAM"))
-    {
-    _importPath = FileSystem::configuredPath(importPath,"CAP_HISTOS_IMPORT_PATH");
-    _exportPath = FileSystem::configuredPath(exportPath,"CAP_HISTOS_EXPORT_PATH");
+    // "DEFAULT", absolute, "./..." or relative to the directory of the environment variable
+    if (_typeName.beginsWith("PARTICLE_DB"))
+      _importPath = FileSystem::configuredPath(importPath,"CAP_DATABASE_PATH");
     }
-  if (_typeName.beginsWith("PARTICLE_DB"))
-    _importPath = FileSystem::configuredPath(importPath,"CAP_DATABASE_PATH");
   bool verbose = true;
   if (reportInfo(__FUNCTION__))
     {
@@ -433,12 +434,15 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     printValue(createKey(_taskName,_typeName,"USE"),   _use);
     printValue(createKey(_taskName,_typeName,"CREATE"),_create);
     printValue(createKey(_taskName,_typeName,"IMPORT"),_import);
+    if (!isHistogramList())
+      {
     printValue(createKey(_taskName,_typeName,"IMPORT:PATH"),_importPath);
     printValue(createKey(_taskName,_typeName,"IMPORT:FILE_NAME"),_importFileName);
     printValue(createKey(_taskName,_typeName,"EXPORT"),_export);
     printValue(createKey(_taskName,_typeName,"EXPORT:PATH"),_exportPath);
     printValue(createKey(_taskName,_typeName,"EXPORT:FILE_NAME"),_exportFileName);
     printValue(createKey(_taskName,_typeName,"EXPORT:FORCE_REWRITE"),_forceRewrite);
+      }
     printValue(createKey(_taskName,_typeName,"N"),nObjects);
     }
   MANAGED * object;
@@ -509,20 +513,54 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   return true;
   }
   
-  //! @brief Import (IMPORT) and/or create (CREATE) the objects.
+  //! @brief Import (IMPORT) and/or create (CREATE) the objects. Histograms are imported by their task from the input
+  //! file of the job (loadFromFolders()).
   virtual void initialize()
   {
   if (reportInfo(__FUNCTION__)) { printCR(); }
-  if (_import) load();
+  if (_import && !isHistogramList()) load();
   if (_create) create();
   }
   
-  //! @brief Export the objects (EXPORT) and clear the list.
+  //! @brief Export the objects (EXPORT) and clear the list. Histograms are kept: the job writes them to its output
+  //! file after the tasks are finalized (saveToFolders()), and they are cleared with the list.
   virtual void finalize()
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
+  if (isHistogramList()) return;
   if (_export) exportObject();
   clear();
+  }
+
+  //! @brief Whether the list holds histogram folders (types HISTOGRAM...): no files of their own.
+  bool isHistogramList() const { return _typeName.beginsWith("HISTOGRAM"); }
+
+  //!
+  //! @brief Save each object of the list in a sub-folder of a folder (that of its task in the output file of the job).
+  //! @param parent folder @param folderName name of the sub-folder of object k (created if needed)
+  //!
+  template <class NAMER>
+  void saveToFolders(Folder & parent, NAMER folderName) const
+  {
+  for (unsigned int k=0; k<_objects.size(); k++) _objects[k]->saveTo(*parent.addFolder(folderName(k)));
+  }
+
+  //!
+  //! @brief Load each object of the list from a sub-folder of a folder (that of its task in the input file of the job).
+  //! @param parent folder @param folderName name of the sub-folder of object k
+  //! @throws Exception if a sub-folder is missing
+  //!
+  template <class NAMER>
+  void loadFromFolders(const Folder & parent, NAMER folderName)
+  {
+  for (unsigned int k=0; k<_objects.size(); k++)
+    {
+    const String name = folderName(k);
+    Folder * folder = parent.folder(name);
+    if (!folder)
+      throw Exception(String("Folder ")+name+" of "+_taskName+" (" +_typeName+") not found in the input file",__FUNCTION__);
+    _objects[k]->loadFrom(*folder);
+    }
   }
   
   //! @brief Create the content of each object.

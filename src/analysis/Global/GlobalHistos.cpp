@@ -225,7 +225,7 @@ namespace CAP
   p_ptAvgVsN = createProfile(createName(_histogramBaseName,String("n"),String("ptAvgProf")),n_nbins, n_min,  n_max, "n", "ptAvg");
   }
   
-  void GlobalHistos::loadFrom(CapFile & inputFile)
+  void GlobalHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_n  = importHistogram(inputFile, createName(_histogramBaseName,"n"));

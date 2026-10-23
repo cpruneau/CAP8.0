@@ -46,7 +46,7 @@ public:
   //! @brief Create the efficiency histogram.
   virtual void create();
   //! @brief Load the efficiency histogram from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Efficiency for an event. @param event event @return efficiency (currently 1)
   virtual double efficiencyAt(const Event & event);
   //! @brief Weight (inverse efficiency) of an event. @param event event @return weight

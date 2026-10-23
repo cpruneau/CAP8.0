@@ -28,7 +28,7 @@ const String createName(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   return name;
 }
@@ -47,7 +47,7 @@ const String createName(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += s2;
@@ -69,7 +69,7 @@ const String createName(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += s2;
@@ -95,7 +95,7 @@ const String createName(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += s2;
@@ -123,7 +123,7 @@ const String createName(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += s2;
@@ -154,7 +154,7 @@ const String createName(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += s2;
@@ -230,7 +230,7 @@ const String createNameI(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += i1;
@@ -253,7 +253,7 @@ const String createNameII(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += i1;
@@ -278,7 +278,7 @@ const String createNameIII(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += i1;
@@ -305,7 +305,7 @@ const String createNameIIII(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += s1;
   name += separator;
   name += i1;
@@ -333,7 +333,7 @@ const String createNameIS(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += i1;
   name += separator;
   name += suffix;
@@ -355,7 +355,7 @@ const String createNameIIS(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += i1;
   name += i2;
   name += separator;
@@ -379,7 +379,7 @@ const String createNameIIIS(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += i1;
   name += i2;
   name += i3;
@@ -405,7 +405,7 @@ const String createNameIIIIS(const String & s0,
       case 2: separator = ""; break;
     }
   String name = s0;
-  name += separator;
+  if (!s0.isEmpty()) name += separator;   // no leading separator without a prefix (e.g. histograms: "n1_pt")
   name += i1;
   name += i2;
   name += i3;

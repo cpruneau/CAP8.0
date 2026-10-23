@@ -110,7 +110,7 @@ namespace CAP
 
   }
 
-  void SpherocityHistos::loadFrom(CapFile & inputFile)
+  void SpherocityHistos::loadFrom(const Folder & inputFile)
   {
   if (fillS0) h_s0 = importHistogram(inputFile, createName(_histogramBaseName,"S0"));
   if (fillS1) h_s1 = importHistogram(inputFile, createName(_histogramBaseName,"S1"));

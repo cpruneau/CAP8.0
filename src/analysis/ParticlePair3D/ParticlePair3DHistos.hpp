@@ -47,7 +47,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the histograms with a pair: compute Qinv and (q_side, q_out, q_long).
   //! @param particle1 first particle @param particle2 second particle @param weight weight
   virtual void fill(Particle & particle1, Particle & particle2, double weight);

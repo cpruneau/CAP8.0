@@ -320,7 +320,7 @@ namespace CAP
     }
   }
 
-  void ParticlePairHistos::loadFrom(CapFile & inputFile)
+  void ParticlePairHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_n2          = importHistogram(inputFile,createName(_histogramBaseName,"n2"));

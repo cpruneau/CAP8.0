@@ -34,6 +34,7 @@ namespace CAP
   _managedEvents(src._managedEvents),
   _managedEventFilters(src._managedEventFilters),
   _managedHistograms(src._managedHistograms),
+  _eventFilterNames(src._eventFilterNames),
   _acceptedEventFilters(src._acceptedEventFilters),
   _eventAccepted(src._eventAccepted),
   _useRadialProfile(src._useRadialProfile)
@@ -47,6 +48,7 @@ namespace CAP
     _managedEvents = rhs._managedEvents;
     _managedEventFilters = rhs._managedEventFilters;
     _managedHistograms = rhs._managedHistograms;
+    _eventFilterNames = rhs._eventFilterNames;
     _acceptedEventFilters = rhs._acceptedEventFilters;
     _eventAccepted = rhs._eventAccepted;
     _useRadialProfile = rhs._useRadialProfile;
@@ -112,6 +114,8 @@ namespace CAP
   _managedEvents.configureObjects(configuration);
   _managedEventFilters.configureObjects(configuration);
   _managedHistograms.configureObjects(configuration);
+  _eventFilterNames.clear();
+  for (auto filter : eventFilters()) _eventFilterNames.push_back(filter->name());
   }
 
   void GlauberAnalyzer::initialize()
@@ -134,6 +138,33 @@ namespace CAP
   if (nef<1) nef = 1;
   _eventAccepted.initialize("EventAccepted",nef);
   _acceptedEventFilters.assign(nef,false);
+  }
+
+  namespace
+  {
+  //! Folder of histogram group k: named after event filter k.
+  String filterFolderName(const std::vector<String> & names, unsigned int k)
+  {
+  return k<names.size() ? names[k] : String("Folder_")+String(std::to_string(k).c_str());
+  }
+  }
+
+  void GlauberAnalyzer::saveHistograms(Folder & top)
+  {
+  if (_managedHistograms.size()>0)
+    _managedHistograms.saveToFolders(*top.addFolder(name()),[this](unsigned int k) { return filterFolderName(_eventFilterNames,k); });
+  Task::saveHistograms(top);
+  }
+
+  void GlauberAnalyzer::loadHistograms(const Folder & top)
+  {
+  if (_managedHistograms.imports() && _managedHistograms.size()>0)
+    {
+    Folder * folder = top.folder(name());
+    if (!folder) throw Exception(String("No folder ")+name()+" in the input file",__FUNCTION__);
+    _managedHistograms.loadFromFolders(*folder,[this](unsigned int k) { return filterFolderName(_eventFilterNames,k); });
+    }
+  Task::loadHistograms(top);
   }
 
   void GlauberAnalyzer::finalize()

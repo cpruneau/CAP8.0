@@ -45,6 +45,8 @@ namespace CAP
   _allAcceptedParticlesFilter6(),
   _allAcceptedParticlesFilter7(),
   _ptMomentOrder(2),
+  _eventFilterNames(),
+  _particleFilterNames(),
   _eventAccepted(),
   _evtType()
   {
@@ -84,6 +86,8 @@ namespace CAP
   _allAcceptedParticlesFilter6(source._allAcceptedParticlesFilter6),
   _allAcceptedParticlesFilter7(source._allAcceptedParticlesFilter7),
   _ptMomentOrder(source._ptMomentOrder),
+  _eventFilterNames(source._eventFilterNames),
+  _particleFilterNames(source._particleFilterNames),
   _eventAccepted(source._eventAccepted),
   _evtType(source._evtType)
   {   }
@@ -120,6 +124,8 @@ namespace CAP
     _allAcceptedParticlesFilter6 = rhs._allAcceptedParticlesFilter6;
     _allAcceptedParticlesFilter7 = rhs._allAcceptedParticlesFilter7;
     _ptMomentOrder = rhs._ptMomentOrder;
+    _eventFilterNames = rhs._eventFilterNames;
+    _particleFilterNames = rhs._particleFilterNames;
     _eventAccepted = rhs._eventAccepted;
     _evtType = rhs._evtType;
     }
@@ -152,6 +158,10 @@ namespace CAP
   _managedParticleFilters.configureObjects(configuration);
   _managedParticleEfficiencies.configureObjects(configuration);
   _managedParticleSmearers.configureObjects(configuration);
+  _eventFilterNames.clear();
+  _particleFilterNames.clear();
+  for (auto filter : eventFilters())    _eventFilterNames.push_back(filter->name());
+  for (auto filter : particleFilters()) _particleFilterNames.push_back(filter->name());
   }
 
   void EventProcessor::initialize()
@@ -369,6 +379,19 @@ namespace CAP
   {
   if (reportDebug(__FUNCTION__))  { printCR(); };
   calculateDerived();
+  }
+
+  String EventProcessor::combinationName(unsigned int index, unsigned int nParticles) const
+  {
+  unsigned int nE = _eventFilterNames.size(), nP = _particleFilterNames.size(), nCombinations = 1;
+  for (unsigned int i=0; i<nParticles; i++) nCombinations *= nP;
+  if (nE==0 || nP==0 || index>=nE*nCombinations) return String("Folder_")+String(std::to_string(index).c_str());
+  String name = _eventFilterNames[index/nCombinations];
+  unsigned int rest = index%nCombinations;
+  std::vector<unsigned int> particles(nParticles);
+  for (unsigned int i=nParticles; i>0; i--) { particles[i-1] = rest%nP; rest /= nP; }
+  for (unsigned int p : particles) { name += "_"; name += _particleFilterNames[p]; }
+  return name;
   }
 
   void EventProcessor::calculateDerived()

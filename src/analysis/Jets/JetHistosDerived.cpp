@@ -85,7 +85,7 @@ void JetHistosDerived::create()
   h_jet_netQrms_pt = createHistogram(createName(_histogramBaseName,"jet_netQrms_pt"), nBins_jet_pt,  min_jet_pt,  max_jet_pt,   "p_{T} (GeV/c)","<#Delta Q^2>");
 }
 
-void JetHistosDerived::loadFrom(CapFile & inputFile)
+void JetHistosDerived::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   JetHistos::loadFrom(inputFile);

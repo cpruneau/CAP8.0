@@ -72,7 +72,7 @@ void ParticleFlowHistos::create()
   if (reportStart(__FUNCTION__)) { /* noops*/ };
 }
 
-void ParticleFlowHistos::loadFrom(CapFile & inputFile)
+void ParticleFlowHistos::loadFrom(const Folder & inputFile)
 {
   if (reportStart(__FUNCTION__)) { /* noops*/ };
 }

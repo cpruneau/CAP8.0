@@ -44,7 +44,7 @@ public:
                                const Configuration & configuration,
                                unsigned int index);
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Compute the correlation functions. @param part1DerivedHistos derived single histograms of particle 1

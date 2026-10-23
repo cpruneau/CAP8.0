@@ -26,6 +26,8 @@ namespace CAP
   ManagedObjects<GlauberEventFilter>   _managedEventFilters;
   //! Histogram groups, one per event filter.
   ManagedObjects<GlauberHistos>        _managedHistograms;
+  //! Names of the event filters, kept from the configuration for the folders of the histograms (see saveHistograms()).
+  std::vector<String> _eventFilterNames;   //!
   //! Whether each event filter accepted the current event.
   std::vector<bool>                    _acceptedEventFilters;
   //! Number of events accepted by each event filter.
@@ -55,6 +57,12 @@ namespace CAP
   virtual void execute();
   //! @brief Finalize the task.
   virtual void finalize();
+  //! @brief Add the histograms to the folder of the job: a folder named after the task, holding a folder per event
+  //! filter. @param top folder of the job
+  void saveHistograms(Folder & top) override;
+  //! @brief Read the histograms imported (IMPORT) from the folder of the job (same folders as saveHistograms()).
+  //! @param top folder of the job @throws Exception if a folder is missing
+  void loadHistograms(const Folder & top) override;
   //! @brief Reset the task and its objects.
   virtual void reset();
   //! @brief Clear the task and its objects.
@@ -105,7 +113,7 @@ namespace CAP
 //                       double & areaAll);
 //  double calculatelength();
 
-  ClassDef(GlauberAnalyzer,0)
+  ClassDef(GlauberAnalyzer,1)
   };
 
 } // namespace CAP

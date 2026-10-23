@@ -212,7 +212,7 @@ void JetSingleHistosDerived::create()
 
 }
 
-void JetSingleHistosDerived::loadFrom(CapFile & inputFile)
+void JetSingleHistosDerived::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   JetSingleHistos::loadFrom(inputFile,taskName,objectType,configuration,index);
