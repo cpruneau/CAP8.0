@@ -12,8 +12,9 @@ functions at run time, as ROOT's dictionaries allow, without ROOT.
   `TClassTable`.
 - **Little else:** CAP files no longer need ROOT streaming, since `Folder` and `CapFile` have their own binary format.
   The remaining uses are drawing with ROOT and reading ROOT files (`Helpers`), and `InheritsFrom` checks.
-- **ROOT even in the basic headers:** `Aliases.hpp`, included by `Exceptions.hpp` and so by nearly everything,
-  includes ROOT's `Rtypes.h` for the `ClassDef` macros.
+- **ROOT in the basic headers, until October 2026:** `Aliases.hpp`, included by `Exceptions.hpp` and so by nearly
+  everything, included ROOT's `Rtypes.h` for the `ClassDef` macros. `Aliases` is gone; only the headers of classes
+  declared with `ClassDef` include `Rtypes.h`, through `ClassDef.hpp`.
 
 So ROOT's reflection is load-bearing in one place (creating tasks by name), and a build-time and header-level cost
 everywhere else.
@@ -88,7 +89,7 @@ signature, and functions with default arguments need one entry per arity (or a s
    and fall back on `TClass`. The test `TaskRegistry` checks that the registry holds every task class ROOT lists.
 2. **Register the classes an interpreter or the GUI needs:** histograms, functions, data points, fits, graphs,
    random numbers.
-3. **Remove `ClassDef`/LinkDef library by library** where nothing reads ROOT files of those classes. Replace
-   `Rtypes.h` in `Aliases.hpp` with an empty `ClassDef` when ROOT is absent.
+3. **Remove `ClassDef`/LinkDef library by library** where nothing reads ROOT files of those classes, with the
+   `#include "ClassDef.hpp"` of their headers.
 4. **Switch to C++26 reflection** once CAP builds without ROOT (or clang supports P2996): generate the descriptions
    instead of writing them.

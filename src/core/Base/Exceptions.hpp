@@ -2,7 +2,7 @@
 #define CAP_Exceptions
 #include <iostream>
 #include <exception>
-#include "Aliases.hpp"
+#include "String.hpp"
 
 //!
 //! @file Exceptions.hpp

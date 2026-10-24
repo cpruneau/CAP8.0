@@ -1,7 +1,7 @@
 #ifndef CAP_MATH_Function
 #define CAP_MATH_Function
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Object.hpp"
 #include "FitRecord.hpp"
 #include "ClassDef.hpp"

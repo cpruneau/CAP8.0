@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__ManagedObjects
 #define CAP__ManagedObjects
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "FileSystem.hpp"
 #include "Exceptions.hpp"
 #include "Configuration.hpp"

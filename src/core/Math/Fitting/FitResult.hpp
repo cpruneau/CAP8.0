@@ -12,7 +12,7 @@
 #ifndef CAP__MATH__FitResult
 #define CAP__MATH__FitResult
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Matrix.hpp"
 
 namespace CAP

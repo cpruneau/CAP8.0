@@ -276,9 +276,9 @@ target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})
 add_test(NAME TaskRegistry COMMAND TestTaskRegistry)
 
 # Sources that must compile without ROOT (no ROOT include path): the basic layer of Base, the reflection, the random
-# numbers, the interpreter. A ROOT header reaching one of them (e.g. through Aliases.hpp) fails this test.
+# numbers, the interpreter. A ROOT header reaching one of them fails this test.
 set(CAP_ROOT_FREE_SOURCES
-  core/Base/Aliases.cpp core/Base/Condition.cpp core/Base/Crc32.cpp core/Base/Exceptions.cpp core/Base/Factory.cpp
+  core/Base/Condition.cpp core/Base/Crc32.cpp core/Base/Exceptions.cpp core/Base/Factory.cpp
   core/Base/FileSystem.cpp core/Base/NameHelpers.cpp core/Base/PhysicsConstants.cpp core/Base/PrintHelpers.cpp
   core/Base/Reflection.cpp core/Base/String.cpp core/Base/XmlDocument.cpp core/Base/XmlElement.cpp
   core/Base/XmlReader.cpp core/Base/XmlWriter.cpp

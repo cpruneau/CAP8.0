@@ -13,7 +13,7 @@
 #define CAP__MATH__SearchEngine
 #include <random>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "SearchDomain.hpp"
 #include "SearchProblem.hpp"
 

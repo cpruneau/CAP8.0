@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <ctime>
 #include <istream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 #include "BinaryIO.hpp"
 #include "Object.hpp"

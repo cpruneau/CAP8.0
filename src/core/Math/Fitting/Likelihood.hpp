@@ -12,7 +12,7 @@
 #ifndef CAP__MATH__Likelihood
 #define CAP__MATH__Likelihood
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ChiSquare.hpp"
 
 namespace CAP

@@ -65,7 +65,7 @@ namespace CAP
   bool containsTypeNamed(const String & aName) const;
 
   //! @brief Number of types. @return number of types
-  Size_t size() { return _particleTypes.size();}
+  unsigned int size() { return _particleTypes.size();}
   //! @brief Types (owned by the database). @return types
   std::vector<ParticleType*> & particleTypes()   { return _particleTypes; }
   //! @brief Types (owned by the database). @return types

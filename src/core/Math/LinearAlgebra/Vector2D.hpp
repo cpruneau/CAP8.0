@@ -4,7 +4,7 @@
 #include <ostream>
 #include <iostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "ClassDef.hpp"
 

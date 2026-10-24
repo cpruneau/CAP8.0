@@ -10,7 +10,8 @@
 #ifndef CAP__ParticleType
 #define CAP__ParticleType
 #include <cmath>
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "SelectionGenerator.hpp"
 #include "ParticleDecayMode.hpp"
 #include "PhysicsConstants.hpp"

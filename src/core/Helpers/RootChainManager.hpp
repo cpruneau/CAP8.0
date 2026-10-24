@@ -9,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__RootChainManager
 #define CAP__RootChainManager
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "TChain.h"
 #include "TTree.h"
 #include "TBranch.h"

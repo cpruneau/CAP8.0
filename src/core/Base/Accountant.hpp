@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__Accountant
 #define CAP__Accountant
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Object.hpp"
 #include "ClassDef.hpp"
 

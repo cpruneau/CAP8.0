@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <ctime>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 
 namespace CAP

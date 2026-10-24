@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__Particle
 #define CAP__Particle
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Factory.hpp"
 #include "ParticleType.hpp"
 #include "VectorLorentz.hpp"

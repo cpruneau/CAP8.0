@@ -2,7 +2,7 @@
 #define CAP_MATH_SphericalHarmonics
 #include <vector>
 #include <complex>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Function.hpp"
 #include "ClassDef.hpp"
 

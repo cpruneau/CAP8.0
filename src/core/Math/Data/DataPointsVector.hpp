@@ -2,7 +2,7 @@
 #define CAP_MATH_DataPointsVector
 #include <type_traits>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "DataPoint.hpp"
 #include "DataPoint2D.hpp"
 #include "DataPoint3D.hpp"

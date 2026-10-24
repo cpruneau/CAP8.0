@@ -12,7 +12,7 @@
 #ifndef CAP__MATH__Prior
 #define CAP__MATH__Prior
 #include <functional>
-#include "Aliases.hpp"
+#include "String.hpp"
 
 namespace CAP
 {

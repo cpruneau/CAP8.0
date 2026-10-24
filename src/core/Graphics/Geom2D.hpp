@@ -1,6 +1,6 @@
 #ifndef CAP__Geom2D
 #define CAP__Geom2D
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Drawable2D.hpp"
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"

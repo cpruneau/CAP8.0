@@ -3,7 +3,7 @@
 #include <cmath>
 #include <ostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
 #include "ClassDef.hpp"

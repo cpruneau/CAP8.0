@@ -1,6 +1,7 @@
 #ifndef CAP__Line
 #define CAP__Line
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Drawable2D.hpp"
 #include "LineAttributes.hpp"
 #include "Point2D.hpp"

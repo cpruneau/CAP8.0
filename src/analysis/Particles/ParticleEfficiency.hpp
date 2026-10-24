@@ -9,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__ParticleEfficiency
 #define CAP__ParticleEfficiency
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "ClassDef.hpp"

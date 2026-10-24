@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 #include "ParticlePairFilter.hpp"
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "PrintHelpers.hpp"
 
 ClassImp(CAP::ParticlePairFilter);

@@ -15,7 +15,8 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TProfile2D.h"
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Configuration.hpp"
 #include "ManagedObject.hpp"
 #include "Exceptions.hpp"

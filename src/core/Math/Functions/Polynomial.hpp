@@ -3,7 +3,7 @@
 #include <vector>
 #include <initializer_list>
 #include <ostream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ParameterizedFunction.hpp"
 #include "ClassDef.hpp"
 

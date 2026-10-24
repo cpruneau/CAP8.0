@@ -9,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__Condition
 #define CAP__Condition
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 
 using CAP::String;

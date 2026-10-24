@@ -11,7 +11,7 @@
 #define CAP__LegendConfiguration
 #include <iostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "TLatex.h"
 #include "Configuration.hpp"
 #include "ClassDef.hpp"

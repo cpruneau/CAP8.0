@@ -2,7 +2,7 @@
 #define CAP_MATH_Matrix
 #include <vector>
 #include <ostream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "ClassDef.hpp"
 

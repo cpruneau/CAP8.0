@@ -9,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__EnvironmentVariables
 #define CAP__EnvironmentVariables
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Properties.hpp"
 #include "ClassDef.hpp"
 

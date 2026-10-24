@@ -1,7 +1,7 @@
 #ifndef CAP_MATH_Legendre
 #define CAP_MATH_Legendre
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Function.hpp"
 #include "ClassDef.hpp"
 

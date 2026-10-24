@@ -1,7 +1,7 @@
 #ifndef CAP__Renderer
 #define CAP__Renderer
 #include "TObject.h"
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ClassDef.hpp"
 
 namespace CAP

@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__StreamManager
 #define CAP__StreamManager
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "StreamHelpers.hpp"
 #include "Manager.hpp"
 

@@ -1,6 +1,6 @@
 #ifndef CAP__MODEL
 #define CAP__MODEL
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Event.hpp"
 #include "EventFilter.hpp"
 #include "Hypersurface.hpp"

@@ -11,7 +11,8 @@
 #ifndef CAP__Result
 #define CAP__Result
 
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Factory.hpp"
 #include "ResultType.hpp"
 #include "ResultDb.hpp"

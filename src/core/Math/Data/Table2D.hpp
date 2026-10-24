@@ -10,7 +10,7 @@
 #ifndef CAP_MATH_Table2D
 #define CAP_MATH_Table2D
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "Object.hpp"
 #include "ClassDef.hpp"

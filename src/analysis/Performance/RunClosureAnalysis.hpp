@@ -9,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__RunClosure
 #define CAP__RunClosure
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ClassDef.hpp"
 
 namespace CAP

@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__Manager
 #define CAP__Manager
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Exceptions.hpp"
 #include "List.hpp"
 #include "PrintHelpers.hpp"

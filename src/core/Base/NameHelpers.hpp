@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__NameHelpers
 #define CAP__NameHelpers
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 
 namespace CAP
 {

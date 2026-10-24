@@ -9,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__ParticleDigit
 #define CAP__ParticleDigit
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Factory.hpp"
 #include "ClassDef.hpp"
 

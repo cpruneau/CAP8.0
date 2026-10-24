@@ -15,7 +15,7 @@
 #include <memory>
 #include <typeinfo>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 
 namespace CAP
 {

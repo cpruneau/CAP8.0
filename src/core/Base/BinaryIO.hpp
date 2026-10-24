@@ -20,7 +20,7 @@
 #include <istream>
 #include <ostream>
 #include <fstream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 
 namespace CAP

@@ -21,7 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 
 namespace CAP
 {

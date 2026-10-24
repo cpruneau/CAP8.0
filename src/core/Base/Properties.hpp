@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__Properties
 #define CAP__Properties
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Property.hpp"
 #include "ClassDef.hpp"
 

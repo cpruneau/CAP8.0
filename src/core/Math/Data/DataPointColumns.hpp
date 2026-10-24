@@ -11,7 +11,7 @@
 #define CAP_MATH_DataPointColumns
 #include <memory>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
 #include "DataPoint2D.hpp"

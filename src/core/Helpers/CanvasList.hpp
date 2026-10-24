@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__CanvasList
 #define CAP__CanvasList
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "TCanvas.h"
 #include "TSystem.h"
 #include "CanvasConfiguration.hpp"

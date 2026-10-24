@@ -11,7 +11,7 @@
 #define CAP__StreamHelpers
 #include <iostream>
 #include <fstream>
-#include "Aliases.hpp"
+#include "String.hpp"
 
 namespace CAP
 {

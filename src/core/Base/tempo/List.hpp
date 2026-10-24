@@ -11,7 +11,7 @@
 #define CAP__List
 #include <iostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Object.hpp"
 
 //!

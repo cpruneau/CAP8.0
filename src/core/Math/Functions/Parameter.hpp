@@ -1,6 +1,7 @@
 #ifndef CAP_MATH_Parameter
 #define CAP_MATH_Parameter
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "ClassDef.hpp"
 

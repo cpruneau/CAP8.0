@@ -13,7 +13,7 @@
 #define CAP__MATH__Fitter
 #include <memory>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ChiSquare.hpp"
 #include "Likelihood.hpp"
 #include "ExtremumSearch.hpp"

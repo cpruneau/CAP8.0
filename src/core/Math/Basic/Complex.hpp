@@ -2,7 +2,7 @@
 #define CAP_Complex
 #include <cmath>
 #include <iostream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "MathConstants.hpp"
 #include "ClassDef.hpp"
 

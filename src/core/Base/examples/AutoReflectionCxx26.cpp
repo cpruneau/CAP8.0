@@ -12,9 +12,8 @@
 //! from the declaration of a class, with no hand-written description.
 //!
 //! Needs GCC 16 (Apple clang and LLVM clang 23 do not have it yet) and code built with it, hence without the ROOT
-//! libraries of Homebrew (built with clang and libc++). Aliases.hpp includes ROOT's Rtypes.h for the ClassDef
-//! macros: give it a stub defining ClassDef(a,b), ClassImp(a) and ClassDefOverride(a,b) as nothing. From src/core/Base:
-//!   g++-16 -std=c++26 -freflection -Istub -I. examples/AutoReflectionCxx26.cpp Reflection.cpp String.cpp \
+//! libraries of Homebrew (built with clang and libc++). The files used do not include ROOT. From src/core/Base:
+//!   g++-16 -std=c++26 -freflection -I. examples/AutoReflectionCxx26.cpp Reflection.cpp String.cpp \
 //!          Exceptions.cpp PrintHelpers.cpp NameHelpers.cpp -o AutoReflection
 #include <meta>
 #include <cmath>

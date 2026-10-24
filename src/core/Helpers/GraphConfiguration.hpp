@@ -9,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__GraphConfiguration
 #define CAP__GraphConfiguration
-//#include "Aliases.hpp"
+//#include "String.hpp"
 #include "Configuration.hpp"
 #include <vector>
 #include "ClassDef.hpp"

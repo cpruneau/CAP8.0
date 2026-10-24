@@ -9,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__Object
 #define CAP__Object
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 #include "ClassDef.hpp"
 

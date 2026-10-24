@@ -10,7 +10,7 @@
 #ifndef CAP__HistogramFolder
 #define CAP__HistogramFolder
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "CapFile.hpp"
 #include "Configuration.hpp"
 #include "Exceptions.hpp"

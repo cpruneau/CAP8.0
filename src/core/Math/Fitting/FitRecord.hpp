@@ -14,7 +14,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "FitResult.hpp"
 
 namespace CAP

@@ -2,7 +2,7 @@
 #define CAP__Drawable2D
 #include <vector>
 #include "TObject.h"
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Renderer.hpp"
 #include "Point2D.hpp"
 #include "ClassDef.hpp"

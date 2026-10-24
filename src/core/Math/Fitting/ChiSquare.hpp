@@ -1,6 +1,7 @@
 #ifndef CAP_MATH_ChiSquare
 #define CAP_MATH_ChiSquare
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "ParameterizedFunction.hpp"
 #include "DataPoints.hpp"
 #include "ClassDef.hpp"

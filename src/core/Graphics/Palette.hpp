@@ -12,7 +12,7 @@
 #ifndef CAP__Palette
 #define CAP__Palette
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Color.hpp"
 
 namespace CAP

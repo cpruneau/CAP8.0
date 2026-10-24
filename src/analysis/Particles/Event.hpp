@@ -9,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__Event
 #define CAP__Event
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Exceptions.hpp"
 #include "Particle.hpp"
 #include "ManagedObject.hpp"

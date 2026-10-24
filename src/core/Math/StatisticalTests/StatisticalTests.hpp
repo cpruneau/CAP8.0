@@ -14,7 +14,7 @@
 #define CAP__MATH__StatisticalTests
 #include <functional>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 
 namespace CAP
 {

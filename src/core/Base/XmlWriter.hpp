@@ -11,7 +11,7 @@
 #define CAP__XmlWriter
 #include <ostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 
 namespace CAP
 {

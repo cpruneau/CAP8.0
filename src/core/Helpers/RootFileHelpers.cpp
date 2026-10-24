@@ -199,7 +199,7 @@ std::vector<String> listFilesInDir(const String & pathname,
     {
     printCR();
     printValue("listFilesInDir() Number of files found",fileNames.size());
-    for (Size_t k=0; k<fileNames.size();k++)
+    for (unsigned int k=0; k<fileNames.size();k++)
       {
       String s = "File "; s += k;
       printValue(s,fileNames[k]);

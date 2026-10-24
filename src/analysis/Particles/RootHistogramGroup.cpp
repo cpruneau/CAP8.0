@@ -433,7 +433,7 @@ namespace CAP
   
   bool RootHistogramGroup::sameSizeAs(const RootHistogramGroup & g1, const RootHistogramGroup & g2) const
   {
-  Size_t n = size();
+  unsigned int n = size();
   return n==g1.size()  &&  n==g2.size();
   }
   
@@ -441,7 +441,7 @@ namespace CAP
                                   const RootHistogramGroup & g2,
                                   const RootHistogramGroup & g3) const
   {
-  Size_t n = size();
+  unsigned int n = size();
   return n==g1.size()  &&  n==g2.size()  &&  n==g3.size();
   }
   
@@ -450,7 +450,7 @@ namespace CAP
                                   const RootHistogramGroup & g3,
                                   const RootHistogramGroup & g4) const
   {
-  Size_t n = size();
+  unsigned int n = size();
   return n==g1.size()  &&  n==g2.size()  &&  n==g3.size()  &&  n==g4.size();
   }
   

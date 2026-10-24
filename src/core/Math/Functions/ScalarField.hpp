@@ -1,7 +1,7 @@
 #ifndef CAP__ScalarField
 #define CAP__ScalarField
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Object.hpp"
 #include "Function.hpp"
 #include "BinaryIO.hpp"

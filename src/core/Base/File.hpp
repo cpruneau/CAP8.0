@@ -11,7 +11,7 @@
 #define CAP__File
 #include <cstdint>
 #include <fstream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 #include "FileSystemEntry.hpp"
 #include "ClassDef.hpp"

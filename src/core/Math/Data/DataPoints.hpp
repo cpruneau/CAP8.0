@@ -1,7 +1,7 @@
 #ifndef CAP_MATH_DataPoints
 #define CAP_MATH_DataPoints
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Object.hpp"
 #include "DataPoint2D.hpp"
 #include "FitRecord.hpp"

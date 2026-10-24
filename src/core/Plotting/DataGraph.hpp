@@ -11,7 +11,7 @@
 #define CAP__DataGraph
 #include <ostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"

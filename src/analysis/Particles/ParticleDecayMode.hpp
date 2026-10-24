@@ -16,7 +16,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ParticleType.hpp"
 #include "ParticleDb.hpp"
 #include "ClassDef.hpp"
