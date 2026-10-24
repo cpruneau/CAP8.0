@@ -15,7 +15,6 @@
 #include "TFile.h"
 #include "EnvironmentVariables.hpp"
 #include "XmlDocument.hpp"
-#include "TClassTable.h"
 #include "Reflection.hpp"
 #include <algorithm>
 #include <typeinfo>
@@ -448,24 +447,14 @@ namespace CAP
 
   Task * Task::instantiateTask(const String & taskClassName)
   {
-  // the reflection registry first (no ROOT needed), then ROOT's dictionary
+  // the task classes are registered for the reflection (see registerTask() in TaskRegistration.hpp)
   const REFLECTION::Registry & registry = REFLECTION::Registry::instance();
   const REFLECTION::ClassInfo * taskInfo = registry.find(typeid(Task));
   const REFLECTION::ClassInfo * info = registry.find(taskClassName.str());
-  if (info && taskInfo && info->inheritsFrom(*taskInfo) && !info->constructors().empty())
-    {
-    void * object = info->construct();
-    return static_cast<Task*>(info->upcast(object, *taskInfo));
-    }
-  TClass * taskClass = TClass::GetClass(taskClassName);
-  if (!taskClass) throw UnknownClassException(taskClassName,__FUNCTION__);
-  if (!taskClass->IsLoaded()) throw Exception("!taskClass->IsLoaded()",__FUNCTION__);
-  if (!taskClass->GetNew())  throw Exception("does not have the accelerator function/wrapper",__FUNCTION__);
-  if (!taskClass->InheritsFrom(TClass::GetClass("CAP::Task")))
-    throw Exception(String("Class ")+taskClassName+" is not a CAP::Task",__FUNCTION__);
-  Task * task = static_cast<Task*>(taskClass->New());
-  if (!task) throw NullPointerException("taskClass->New() returned nullptr for class "+taskClassName,__FUNCTION__);
-  return task;
+  if (!info || !taskInfo) throw UnknownClassException(taskClassName,__FUNCTION__);
+  if (!info->inheritsFrom(*taskInfo)) throw Exception(String("Class ")+taskClassName+" is not a CAP::Task",__FUNCTION__);
+  if (info->constructors().empty()) throw Exception(String("Class ")+taskClassName+" has no default constructor registered",__FUNCTION__);
+  return static_cast<Task*>(info->upcast(info->construct(), *taskInfo));
   }
 
   // ---------------------------------------------------------------- XML mapping
@@ -608,22 +597,10 @@ namespace CAP
   std::vector<String> Task::taskClassNames()
   {
   std::vector<String> names;
-  // registered for the reflection
   const REFLECTION::Registry & registry = REFLECTION::Registry::instance();
   if (const REFLECTION::ClassInfo * taskInfo = registry.find(typeid(Task)))
     for (const std::string & name : registry.names(taskInfo))
       if (!registry.find(name)->constructors().empty()) names.push_back(String(name));
-  // known to ROOT
-  TClass * taskClass = TClass::GetClass("CAP::Task");
-  TClassTable::Init();
-  while (const char * className = TClassTable::Next())
-    {
-    TClass * c = TClass::GetClass(className);
-    if (!c || !c->InheritsFrom(taskClass) || !c->GetNew()) continue;
-    if (c->Property() & kIsAbstract) continue;
-    if (String(className).contains("<")) continue;   // class templates are bases of the analysis tasks
-    names.push_back(className);
-    }
   std::sort(names.begin(),names.end(),[](const String & a, const String & b) { return a.str()<b.str(); });
   names.erase(std::unique(names.begin(),names.end()),names.end());
   return names;
