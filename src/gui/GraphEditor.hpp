@@ -43,7 +43,7 @@ namespace CAP
   //! @param item index of the item @param point index of the data point that was clicked, or -1
   bool editItem(GRAPHICS::Graph & graph, int item, int point=-1);
   //! @brief Shape drawn over a graph: fill (color, pattern, opacity), outline or line (color, style, width, opacity),
-  //! arrow heads of a line. @param shape shape
+  //! arrow heads of a line, text (lines, color, font, size, alignment). @param shape shape
   bool editShape(GRAPHICS::Shape & shape);
 
   //! @name Widgets

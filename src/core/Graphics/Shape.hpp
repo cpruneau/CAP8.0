@@ -10,7 +10,7 @@
  *
  * *********************************************************************/
 //! @file Shape.hpp
-//! @brief Shape: rectangle, ellipse, triangle, polygon or line (with arrows) drawn over a graph.
+//! @brief Shape: rectangle, ellipse, triangle, polygon, line (with arrows) or text box drawn over a graph.
 #ifndef CAP__Shape
 #define CAP__Shape
 #include <vector>
@@ -31,7 +31,13 @@ namespace CAP
   //!  - rectangle, ellipse, triangle: two opposite corners of the box holding the shape (the triangle has its apex in
   //!    the middle of the side of the second corner, its base on the side of the first);
   //!  - polygon: its vertices (closed);
-  //!  - line: its ends (the arrow head of a single arrow at the second one).
+  //!  - line: its ends (the arrow head of a single arrow at the second one);
+  //!  - text: two opposite corners of the box of the text (drawn hollow and without boundary unless asked).
+  //!
+  //! Every shape can hold a text (setText(); several lines separated by '\n', LaTeX as in the titles), drawn with
+  //! textAttributes() (color, font, justification) at textPointSize() points (0: the automatic size of the texts of
+  //! the graph): in the middle of the box (or at its left or right side, by the justification) for rectangles,
+  //! ellipses and text boxes, at the centroid of triangles and polygons, and along the middle of a line, above it.
   //!
   //! The closed shapes are filled with fillAttributes() (color, opacity, solid or hatch pattern, see FillAttributes)
   //! and outlined with lineAttributes() (color, opacity, style, width); a line uses lineAttributes().
@@ -47,7 +53,7 @@ namespace CAP
   public:
 
   //! Kinds of shapes
-  enum Kind { kRectangle, kEllipse, kTriangle, kPolygon, kLine };
+  enum Kind { kRectangle, kEllipse, kTriangle, kPolygon, kLine, kText };
   //! Arrow heads of a line
   enum Arrows { kNoArrow, kSingleArrow, kDoubleArrow };
 
@@ -65,6 +71,10 @@ namespace CAP
   Arrows arrows() const { return _arrows; }   //!< Arrow heads (lines)
   void setArrows(Arrows arrows) { _arrows = arrows; }   //!< Set the arrow heads (lines)
   bool isClosed() const { return _kind != kLine; }   //!< Whether the shape is closed (filled)
+  float textPointSize() const { return _textPointSize; }   //!< Size of the text in points (0: automatic)
+  void setTextPointSize(float points) { _textPointSize = points; }   //!< Set the size of the text in points (0: automatic)
+  //! @brief Where the text is drawn: its anchor, in fractions of the cell (see the class description). @return point
+  Point2D textAnchor() const;
   //! @brief Readable name of a kind. @param kind kind @return "rectangle", "ellipse", ...
   static const char * kindName(Kind kind);
 
@@ -96,6 +106,10 @@ namespace CAP
 
   Kind   _kind;   //!< kind of the shape
   Arrows _arrows;   //!< arrow heads of a line
+  float  _textPointSize;   //!< size of the text in points (0: automatic)
+
+  //! @brief Draw the text of the shape. @param painter painter @param graph graph
+  void drawText(Painter & painter, const Graph & graph) const;
 
   ClassDef(Shape,0)
   };

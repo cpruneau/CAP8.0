@@ -124,6 +124,38 @@ int main(int argc, char ** argv)
     CHECK(pdf.document().find(" l\n") != std::string::npos || pdf.document().find(" l ") != std::string::npos);
   }
 
+  // ---- texts in shapes
+  {
+    Shape r = make(Shape::kRectangle, { Point2D(0.2f, 0.2f), Point2D(0.6f, 0.4f) }, 2, FillAttributes::kHollow);
+    CHECK(std::fabs(r.textAnchor().x() - 0.4f) < 1e-6f && std::fabs(r.textAnchor().y() - 0.3f) < 1e-6f);
+    r.textAttributes().setJustification(TextAttributes::kLeft);
+    CHECK(r.textAnchor().x() < 0.22f && r.textAnchor().x() > 0.2f);
+    Shape t = make(Shape::kTriangle, { Point2D(0.0f, 0.0f), Point2D(0.6f, 0.9f) }, 2, FillAttributes::kHollow);
+    CHECK(std::fabs(t.textAnchor().y() - 0.3f) < 1e-6f);                   // the centroid
+    Shape box(Shape::kText);
+    box.setPoints({ Point2D(0.3f, 0.6f), Point2D(0.7f, 0.8f) });
+    CHECK(box.lineAttributes().style() == 0 && box.contains(Point2D(0.5f, 0.7f), 0.01f, 0.01f));   // picked inside
+    box.setText("First line\nSecond line");
+    Shape line(Shape::kLine);
+    line.setPoints({ Point2D(0.1f, 0.1f), Point2D(0.5f, 0.3f) });
+    line.setText("along");
+    line.setTextPointSize(12);
+    Canvas canvas("c", "c", 400, 400);
+    canvas.divide(1, 1);
+    canvas.graph(0).addShape(box);
+    canvas.graph(0).addShape(line);
+    PdfPainter pdf(400, 400);
+    canvas.draw(pdf);
+    std::string doc = pdf.document();
+    CHECK(doc.find("(First line) Tj") != std::string::npos && doc.find("(Second line) Tj") != std::string::npos);
+    CHECK(doc.find("(along) Tj") != std::string::npos && doc.find("/F0 12") != std::string::npos);
+    CHECK(doc.find(" re") == std::string::npos);                          // no frame drawn for the text box
+    SvgPainter svg(400, 400);
+    canvas.draw(svg);
+    std::string page = svg.document().str();
+    CHECK(page.find(">First line<") != std::string::npos && page.find("rotate(") != std::string::npos);
+  }
+
   // ---- an example page
   if (argc > 1)
     {
@@ -148,7 +180,14 @@ int main(int argc, char ** argv)
     Shape both(Shape::kLine);
     both.setPoints({ Point2D(0.6f, 0.3f), Point2D(0.85f, 0.3f) });
     both.setArrows(Shape::kDoubleArrow);
+    both.setText("$\\Delta\\eta$ range");
     g.addShape(both);
+    Shape label(Shape::kText);
+    label.setPoints({ Point2D(0.15f, 0.82f), Point2D(0.45f, 0.95f) });
+    label.setText("A text box\nwith two lines");
+    label.textAttributes().setColor(4);
+    g.addShape(label);
+    g.shapes()[0].setText("hatched");
     SvgPainter svg(900, 600);
     canvas.draw(svg);
     CHECK(svg.write(String(argv[1])));

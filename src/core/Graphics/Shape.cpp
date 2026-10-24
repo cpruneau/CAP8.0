@@ -52,17 +52,21 @@ namespace CAP
   :
   Geom2D(),
   _kind(kind),
-  _arrows(kNoArrow)
+  _arrows(kNoArrow),
+  _textPointSize(0.0f)
   {
   _fillAttributes.set(0, 1.0, FillAttributes::kHollow);
-  _lineAttributes.set(1, 1.0, 1, 2.0f);
+  _lineAttributes.set(1, 1.0, kind == kText ? 0 : 1, 2.0f);   // a text box: no boundary unless asked
+  _textAttributes.setColor(1);
+  _textAttributes.setJustification(TextAttributes::kCenter);
   }
 
   Shape::Shape(const Shape & src)
   :
   Geom2D(src),
   _kind(src._kind),
-  _arrows(src._arrows)
+  _arrows(src._arrows),
+  _textPointSize(src._textPointSize)
   { }
 
   Shape & Shape::operator=(const Shape & rhs)
@@ -72,6 +76,7 @@ namespace CAP
     Geom2D::operator=(rhs);
     _kind   = rhs._kind;
     _arrows = rhs._arrows;
+    _textPointSize = rhs._textPointSize;
     }
   return *this;
   }
@@ -85,6 +90,7 @@ namespace CAP
     case kTriangle:  return "triangle";
     case kPolygon:   return "polygon";
     case kLine:      return "line";
+    case kText:      return "text";
     }
   return "shape";
   }
@@ -101,7 +107,7 @@ namespace CAP
   const Point2D & a = _points[0], & b = _points[1];
   switch (_kind)
     {
-    case kRectangle:
+    case kRectangle: case kText:
       return { a, Point2D(b.x(), a.y()), b, Point2D(a.x(), b.y()) };
     case kTriangle:
       return { a, Point2D(b.x(), a.y()), Point2D(0.5f*(a.x() + b.x()), b.y()) };
@@ -136,7 +142,8 @@ namespace CAP
   size_t nSegments = isClosed() ? n : n - 1;
   for (size_t k=0; k<nSegments; k++)
     if (segmentDistance(s, scaled(points[k]), scaled(points[(k + 1) % n])) <= 1.0f) return true;
-  return isClosed() && _fillAttributes.style() != FillAttributes::kHollow && inside(p, points);
+  // inside: a filled shape, or a text box (picked by its text)
+  return isClosed() && (_fillAttributes.style() != FillAttributes::kHollow || _kind == kText) && inside(p, points);
   }
 
   Point2D Shape::toCanvas(const Graph & graph, const Point2D & p)
@@ -151,6 +158,79 @@ namespace CAP
   return Point2D(w > 0 ? (p.x() - graph.cellXLow())/w : 0.0f, h > 0 ? (p.y() - graph.cellYLow())/h : 0.0f);
   }
 
+  Point2D Shape::textAnchor() const
+  {
+  if (_points.empty()) return Point2D();
+  if (_points.size() < 2) return _points[0];
+  const Point2D & a = _points[0], & b = _points[1];
+  switch (_kind)
+    {
+    case kRectangle: case kEllipse: case kText:
+      {
+      // the middle of the box, or a side of it (a small margin inside) by the justification
+      float x0 = std::min(a.x(), b.x()), x1 = std::max(a.x(), b.x()), inset = 0.04f*(x1 - x0);
+      float x = _textAttributes.justification() == TextAttributes::kLeft  ? x0 + inset
+              : _textAttributes.justification() == TextAttributes::kRight ? x1 - inset : 0.5f*(x0 + x1);
+      return Point2D(x, 0.5f*(a.y() + b.y()));
+      }
+    case kTriangle:   // centroid: a third of the height above the base
+      return Point2D(0.5f*(a.x() + b.x()), a.y() + (b.y() - a.y())/3.0f);
+    case kLine:
+      return Point2D(0.5f*(_points.front().x() + _points.back().x()), 0.5f*(_points.front().y() + _points.back().y()));
+    case kPolygon:
+      {
+      float x = 0, y = 0;
+      for (const auto & p : _points) { x += p.x(); y += p.y(); }
+      return Point2D(x/float(_points.size()), y/float(_points.size()));
+      }
+    }
+  return a;
+  }
+
+  void Shape::drawText(Painter & painter, const Graph & graph) const
+  {
+  if (_text.isNull() || _text.str().empty()) return;
+  const float W = painter.width(), H = painter.height();
+  if (W <= 0 || H <= 0) return;
+  // size: given in points, or that of the texts of the graph (as GraphRenderer chooses it)
+  float cellHeight = graph.cellYHigh() - graph.cellYLow(), cellWidth = graph.cellXHigh() - graph.cellXLow();
+  float scale = std::min(cellHeight, cellWidth*W/H);
+  float size = _textPointSize > 0 ? _textPointSize/H : std::min(std::max(0.045f*scale, 9.0f/H), 17.0f/H);
+  TextAttributes attributes(_textAttributes);
+  attributes.setSize(size);
+  std::vector<std::string> lines;
+  std::string s = _text.str();
+  for (std::size_t start = 0;;)
+    {
+    std::size_t end = s.find('\n', start);
+    lines.push_back(s.substr(start, end == std::string::npos ? std::string::npos : end - start));
+    if (end == std::string::npos) break;
+    start = end + 1;
+    }
+  Point2D anchor = toCanvas(graph, textAnchor());
+  float angle = 0.0f;                                   // degrees, counter-clockwise
+  float spacing = 1.25f*size*H;                         // device units between the lines
+  // a line: the text along it (never upside down), above it
+  float ux = 0.0f, uy = 1.0f;                           // direction "up" for the text, device units
+  if (_kind == kLine && _points.size() >= 2)
+    {
+    Point2D p0 = toCanvas(graph, _points.front()), p1 = toCanvas(graph, _points.back());
+    float dx = (p1.x() - p0.x())*W, dy = (p1.y() - p0.y())*H;
+    if (dx < 0 || (dx == 0 && dy < 0)) { dx = -dx; dy = -dy; }
+    angle = std::atan2(dy, dx)*180.0f/float(M_PI);
+    float d = std::sqrt(dx*dx + dy*dy);
+    if (d > 0) { ux = -dy/d; uy = dx/d; }
+    }
+  int n = int(lines.size());
+  for (int k=0; k<n; k++)
+    {
+    // the block of lines centered on the anchor (above it, for a line)
+    float offset = _kind == kLine ? 0.8f*size*H + float(n - 1 - k)*spacing : (0.5f*float(n - 1) - float(k))*spacing;
+    Point2D at(anchor.x() + offset*ux/W, anchor.y() + offset*uy/H);
+    painter.drawText(at, String(lines[size_t(k)]), attributes, angle);
+    }
+  }
+
   void Shape::draw(Painter & painter, const Graph & graph) const
   {
   if (_excluded || !isValid()) return;
@@ -158,9 +238,12 @@ namespace CAP
   for (const auto & p : outline()) points.push_back(toCanvas(graph, p));
   if (isClosed())
     {
-    painter.drawShape(points, _fillAttributes, _lineAttributes);
+    if (_kind != kText || _fillAttributes.style() != FillAttributes::kHollow || _lineAttributes.style() != 0)
+      painter.drawShape(points, _fillAttributes, _lineAttributes);
+    drawText(painter, graph);
     return;
     }
+  drawText(painter, graph);
   if (_lineAttributes.style() == 0) return;
   // a line, shortened under its arrow heads (so that a wide line does not show past the tip)
   const float W = painter.width(), H = painter.height();

@@ -76,8 +76,8 @@ namespace CAP
   //! @brief Divide the canvas into nColumns x nRows graphs (keeps the existing graphs, see Canvas::divide()).
   void divide(int nColumns, int nRows);
 
-  //! Tools of the shape palette (left of the toolbar): select and move, or draw a shape over a graph
-  enum Tool { kSelectTool, kRectangleTool, kEllipseTool, kTriangleTool, kPolygonTool, kLineTool };
+  //! Tools of the shape palette (left of the toolbar): select and move, or draw a shape or a text box over a graph
+  enum Tool { kSelectTool, kRectangleTool, kEllipseTool, kTriangleTool, kPolygonTool, kLineTool, kTextTool };
   Tool tool() const { return _tool; }   //!< Tool of the palette in use
   void setTool(Tool tool) { _tool = tool; _drafting = false; }   //!< Use a tool of the palette
   //! @brief Whether a shape is selected (clicked with the select tool). @return true if so

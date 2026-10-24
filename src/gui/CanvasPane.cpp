@@ -804,10 +804,11 @@ namespace CAP
     "Triangle: drag in a graph (Shift: as wide as high)",
     "Polygon: click its vertices; double-click, Enter or right-click to close it (Esc: cancel)",
     "Line: drag in a graph (Shift: horizontal, vertical or diagonal); arrows in its properties",
+    "Text: click in a graph (or drag its box), then type it; every shape can also hold a text (its properties)",
     };
   const float size = ImGui::GetFrameHeight();
   ImDrawList * drawList = ImGui::GetWindowDrawList();
-  for (int t=0; t<6; t++)
+  for (int t=0; t<7; t++)
     {
     if (t > 0) ImGui::SameLine(0, 2);
     ImGui::PushID(t);
@@ -842,6 +843,10 @@ namespace CAP
         drawList->AddPolyline(pentagon, 5, c, ImDrawFlags_Closed, 1.5f);
         break;
         }
+      case kTextTool:      // a T
+        drawList->AddLine(ImVec2(x0, y0+1), ImVec2(x1, y0+1), c, 2.0f);
+        drawList->AddLine(ImVec2(0.5f*(x0+x1), y0+1), ImVec2(0.5f*(x0+x1), y1), c, 2.0f);
+        break;
       case kLineTool:
         drawList->AddLine(ImVec2(x0, y1), ImVec2(x1-2, y0+2), c, 1.5f);
         drawList->AddTriangleFilled(ImVec2(x1+1, y0-1), ImVec2(x1-6, y0+1), ImVec2(x1-1, y0+6), c);
@@ -863,10 +868,16 @@ namespace CAP
     _hoverText = "Draw a shape (Esc: back to selecting)";
     if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left)) return false;
     static const Shape::Kind kinds[] = { Shape::kRectangle, Shape::kRectangle, Shape::kEllipse, Shape::kTriangle,
-                                         Shape::kPolygon, Shape::kLine };
+                                         Shape::kPolygon, Shape::kLine, Shape::kText };
     _draft = _shapeStyle;
     _draft.setKind(kinds[_tool]);
     if (_tool != kLineTool) _draft.setArrows(Shape::kNoArrow);
+    if (_tool == kTextTool)                                      // a text box: no fill or frame unless asked
+      {
+      _draft.fillAttributes().setStyle(FillAttributes::kHollow);
+      _draft.lineAttributes().setStyle(0);
+      }
+    _draft.setText("");                                          // the style of the last shape edited, not its text
     Point2D q = Shape::fromCanvas(_canvas.graph(k), p);
     _draft.setPoints({ q, q });
     _draftGraph = k;
@@ -901,9 +912,15 @@ namespace CAP
     {
     if (polygon && points.size() > 3) points.pop_back();          // the vertex following the mouse
     _drafting = false;
+    bool text = _tool == kTextTool;
     _tool = kSelectTool;
-    // big enough: at least 3 pixels across
+    // big enough: at least 3 pixels across (a text box clicked: 160 x 40 pixels around the click)
     float cw = (g.cellXHigh() - g.cellXLow())*_rectW, ch = (g.cellYHigh() - g.cellYLow())*_rectH;
+    if (text && points.size() >= 2 && std::fabs(points[1].x() - points[0].x())*cw < 8 && std::fabs(points[1].y() - points[0].y())*ch < 8)
+      {
+      Point2D c = points[0];
+      points = { Point2D(c.x() - 80.0f/cw, c.y() - 20.0f/ch), Point2D(c.x() + 80.0f/cw, c.y() + 20.0f/ch) };
+      }
     float xMin = 1e9f, xMax = -1e9f, yMin = 1e9f, yMax = -1e9f;
     for (const auto & v : points) { xMin = std::min(xMin, v.x()*cw); xMax = std::max(xMax, v.x()*cw); yMin = std::min(yMin, v.y()*ch); yMax = std::max(yMax, v.y()*ch); }
     if (!_draft.isValid() || std::max(xMax - xMin, yMax - yMin) < 3.0f) return;
@@ -911,6 +928,7 @@ namespace CAP
     g.addShape(_draft);
     _shapeGraph = _draftGraph;
     _shapeIndex = int(g.shapes().size()) - 1;
+    if (text) _openShapeEditor = true;                           // type the text at once
     };
   if (polygon)
     {
@@ -933,6 +951,17 @@ namespace CAP
     {
     const Graph & g = _canvas.graph(_draftGraph);
     if (_draft.isValid()) _draft.draw(painter, g);
+    if (_draft.kind() == Shape::kText && _draft.isValid())       // the box of a text, drawn with nothing yet
+      {
+      std::vector<ImVec2> box;
+      for (const auto & v : _draft.outline())
+        {
+        float x, y;
+        painter.toScreen(Shape::toCanvas(g, v), x, y);
+        box.push_back(ImVec2(x, y));
+        }
+      drawList->AddPolyline(box.data(), int(box.size()), blue, ImDrawFlags_Closed, 1.0f);
+      }
     if (_draft.kind() == Shape::kPolygon)                        // the edges so far, even before 3 vertices
       for (size_t v=0; v+1<_draft.points().size(); v++)
         {

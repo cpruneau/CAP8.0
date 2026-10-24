@@ -15,6 +15,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -193,7 +194,7 @@ namespace CAP
     ImGui::OpenPopup("palette");
   ImGui::SetItemTooltip("ROOT color %d: click to choose", color);
   ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
-  ImGui::TextUnformatted(label);
+  ImGui::TextUnformatted(label, std::strstr(label, "##"));   // without the part of the label that only identifies it
   if (ImGui::BeginPopup("palette"))
     {
     // ROOT's basic colors, then each named hue (kRed, kPink, ...) from light (-9) to dark (+3)
@@ -238,7 +239,7 @@ namespace CAP
   ImGui::SameLine();
   changed |= ImGui::Checkbox("italic", &italic);
   ImGui::SameLine();
-  ImGui::TextUnformatted(label);
+  ImGui::TextUnformatted(label, std::strstr(label, "##"));   // without the part of the label that only identifies it
   if (changed) font = TextAttributes::fontCode(family, bold, italic);
   ImGui::PopID();
   return changed;
@@ -301,7 +302,7 @@ namespace CAP
       }
     }
   ImGui::SameLine();
-  ImGui::TextUnformatted(label);
+  ImGui::TextUnformatted(label, std::strstr(label, "##"));   // without the part of the label that only identifies it
   ImGui::PopID();
   return changed;
   }
@@ -814,10 +815,45 @@ namespace CAP
   return true;
   }
 
+  //! Text of a shape: lines, LaTeX preview, color, font, size, justification. @return true if changed
+  static bool shapeTextEdit(Shape & shape)
+  {
+  bool changed = false;
+  section("Text");
+  std::string text = shape.text().str();
+  if (ImGui::IsWindowAppearing() && text.empty()) ImGui::SetKeyboardFocusHere();   // a new text: type at once
+  if (ImGui::InputTextMultiline("##text", &text, ImVec2(300, ImGui::GetTextLineHeight()*3.5f)))
+    {
+    shape.setText(String(text));
+    changed = true;
+    }
+  ImGui::SetItemTooltip("Several lines; LaTeX between $...$ or ROOT's # syntax, as in the titles");
+  latexPreview(shape.text());
+  TextAttributes & attributes = shape.textAttributes();
+  int color = attributes.color();
+  if (colorEdit("color##text", color)) { attributes.setColor(color, attributes.alpha()); changed = true; }
+  ImGui::SameLine(0, 20);
+  int font = attributes.font();
+  if (fontEdit("font", font)) { attributes.setFont(font); changed = true; }
+  float points = shape.textPointSize();
+  if (pointSizeEdit("size##text", points)) { shape.setTextPointSize(points); changed = true; }
+  if (shape.kind() == Shape::kRectangle || shape.kind() == Shape::kEllipse || shape.kind() == Shape::kText)
+    {
+    static const char * names[] = { "left", "center", "right" };
+    int j = int(attributes.justification());
+    ImGui::SetNextItemWidth(150);
+    if (ImGui::Combo("alignment", &j, names, 3)) { attributes.setJustification(TextAttributes::Justification(j)); changed = true; }
+    }
+  return changed;
+  }
+
   bool editShape(Shape & shape)
   {
   bool changed = false;
+  // Escape closes the dialog, before the text field would take it to undo the typing
+  if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) { ImGui::CloseCurrentPopup(); return false; }
   ImGui::Text("%c%s", std::toupper(Shape::kindName(shape.kind())[0]), Shape::kindName(shape.kind()) + 1);
+  if (shape.kind() == Shape::kText) changed |= shapeTextEdit(shape);   // a text box: its text first
   if (shape.isClosed())
     {
     section("Inside");
@@ -829,7 +865,7 @@ namespace CAP
     ImGui::SetNextItemWidth(150);
     if (ImGui::SliderFloat("opacity##fill", &alpha, 0.0f, 1.0f, "%.2f")) { fill.setAlpha(alpha); changed = true; }
     }
-  section(shape.isClosed() ? "Boundary" : "Line");
+  section(shape.kind() == Shape::kText ? "Frame" : shape.isClosed() ? "Boundary" : "Line");
   LineAttributes & line = shape.lineAttributes();
   int color = line.color(), style = line.style();
   float width = line.width(), alpha = line.alpha();
@@ -846,6 +882,7 @@ namespace CAP
     ImGui::SetNextItemWidth(150);
     if (ImGui::Combo("arrows", &a, arrows, 3)) { shape.setArrows(Shape::Arrows(a)); changed = true; }
     }
+  if (shape.kind() != Shape::kText) changed |= shapeTextEdit(shape);
   return changed;
   }
 
