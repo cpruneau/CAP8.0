@@ -57,6 +57,8 @@ File.cpp
 FileSystem.cpp
 FileSystemEntry.cpp
 Folder.cpp
+Reflection.cpp
+BaseReflection.cpp
 LongParameter.cpp
 NameHelpers.cpp
 Object.cpp
@@ -99,6 +101,9 @@ add_test(NAME FileLoading COMMAND TestFileLoading)
 add_executable(TestLazyLoading tests/TestLazyLoading.cpp)
 target_link_libraries(TestLazyLoading Base ${ROOT_LIBRARIES})
 add_test(NAME LazyLoading COMMAND TestLazyLoading)
+add_executable(TestReflection tests/TestReflection.cpp)
+target_link_libraries(TestReflection Base ${ROOT_LIBRARIES})
+add_test(NAME Reflection COMMAND TestReflection)
 add_executable(TestFolderEditing tests/TestFolderEditing.cpp)
 target_link_libraries(TestFolderEditing Base ${ROOT_LIBRARIES})
 add_test(NAME FolderEditing COMMAND TestFolderEditing)

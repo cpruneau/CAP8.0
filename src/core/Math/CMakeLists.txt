@@ -55,6 +55,7 @@ LINKDEF MathLinkDef.h)
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Math SHARED
 FolderTypes.cpp
+MathReflection.cpp
 # Basic
 Basic/Complex.cpp
 Basic/MathBasicFunctions.cpp
@@ -148,6 +149,9 @@ target_include_directories(Math  PUBLIC Base ${EXTRA_INCLUDES} )
 # here for the library and its dictionary, and in src/CMakeLists.txt for the other modules
 
 # Tests (run with ctest in the build directory; not installed)
+add_executable(TestMathReflection tests/TestMathReflection.cpp)
+target_link_libraries(TestMathReflection Math Base ${ROOT_LIBRARIES})
+add_test(NAME MathReflection COMMAND TestMathReflection)
 add_executable(TestRandom Random/tests/TestRandom.cpp)
 target_link_libraries(TestRandom Math Base ${ROOT_LIBRARIES})
 add_test(NAME Random COMMAND TestRandom)
