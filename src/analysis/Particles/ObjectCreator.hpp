@@ -120,7 +120,6 @@ protected:
   String _typeName;                   //!< type of the objects (prefix of their keys)
   ManagedObjects<MANAGED> _objects;   //!< objects created (OWNER true: they go to the store of their type)
 
-  ClassDefOverride(ObjectCreator,0)
 };
 
 //! @brief Task creating the event filters of a job (EVENT_FILTER). See ObjectCreator.

@@ -12,7 +12,6 @@
 #include "EventProcessorSingle.hpp"
 #include "GlobalHistos.hpp"
 #include "GlobalDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -53,7 +52,6 @@ public:
   //! @brief Compute the global quantities of the current event, store them in the event record and fill the histograms.
   virtual void execute();
 
-  ClassDef(GlobalAnalyzer,0)
 };
 
 }

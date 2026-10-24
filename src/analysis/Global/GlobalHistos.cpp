@@ -14,7 +14,6 @@
 #include "NameHelpers.hpp"
 #include "Configuration.hpp"
 
-ClassImp(CAP::GlobalHistos);
 
 namespace CAP
 {

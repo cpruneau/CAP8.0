@@ -248,7 +248,6 @@ namespace CAP
     }
   }
 
-  ClassDef(EventProcessorSingle,0)
   };
 
 } // namespace CAP

@@ -99,7 +99,6 @@ protected:
   }
 
 
-  ClassDef(Array<T>,0)
 };
 
 } // namespace CAP

@@ -2,23 +2,14 @@
 # Project CAP/Global
 ################################################################################################
 
-ROOT_GENERATE_DICTIONARY(G__Global
-GlobalAnalyzer.hpp
-GlobalDerivedHistos.hpp
-GlobalHistos.hpp
-LINKDEF GlobalLinkDef.h)
 
 
-################################################################################################
-# Create a shared library with generated dictionary
-################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Global SHARED
 GlobalTasks.cpp
 GlobalAnalyzer.cpp
 GlobalDerivedHistos.cpp
-GlobalHistos.cpp
-G__Global.cxx)
+GlobalHistos.cpp)
 
 target_link_libraries(Global Base  Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Global  PUBLIC Global Base  Particles  ${EXTRA_INCLUDES} )
@@ -28,6 +19,5 @@ target_include_directories(Global  PUBLIC Global Base  Particles  ${EXTRA_INCLUD
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libGlobal.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libGlobal_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Global  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

@@ -11,7 +11,6 @@
 #define CAP__GlobalHistos
 #include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -149,7 +148,6 @@ protected:
   double ptAvg_max;  ///< upper edge of the average pT axis
 
 
-  ClassDef(GlobalHistos,0)
 };
 
 } // namespace CAP

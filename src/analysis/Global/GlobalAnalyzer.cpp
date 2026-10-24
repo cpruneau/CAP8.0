@@ -13,7 +13,6 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-ClassImp(CAP::GlobalAnalyzer);
 
 namespace CAP
 {

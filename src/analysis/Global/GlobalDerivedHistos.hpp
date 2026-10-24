@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
 #include "GlobalHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -50,7 +49,6 @@ protected:
 
   Histogram* h_ptAvgIncVsN; //! Inclusive average pT vs multiplicity computed from ratio of ptSum profile average by average number of particles at given mul
 
-  ClassDef(GlobalDerivedHistos,0)
 
 };
 

@@ -167,7 +167,6 @@ protected:
   return *(_objects[_nextServed++]);
   }
 
-  ClassDef(Factory<T>,0)
 };
 
 } // namespace CAP
