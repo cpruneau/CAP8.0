@@ -83,8 +83,9 @@ signature, and functions with default arguments need one entry per arity (or a s
 
 ## Path away from ROOT's dictionaries
 
-1. **Register the task classes** with a one-line macro per task. Then make `Task::instantiateTask()` and
-   `taskClassNames()` use the registry, falling back on `TClass` until every task is registered.
+1. **Done: register the task classes.** All 34 are registered, one line each with `registerTask<T>()`, in a
+   `<Library>Tasks.cpp` file per library. `Task::instantiateTask()` and `taskClassNames()` use the registry first
+   and fall back on `TClass`. The test `TaskRegistry` checks that the registry holds every task class ROOT lists.
 2. **Register the classes an interpreter or the GUI needs:** histograms, functions, data points, fits, graphs,
    random numbers.
 3. **Remove `ClassDef`/LinkDef library by library** where nothing reads ROOT files of those classes. Replace

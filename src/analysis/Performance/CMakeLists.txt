@@ -22,6 +22,7 @@ LINKDEF PerformanceLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Performance SHARED
+PerformanceTasks.cpp
 ClosureCalculator.cpp
 ClosureIterator.cpp
 EventPlaneRandomizerTask.cpp

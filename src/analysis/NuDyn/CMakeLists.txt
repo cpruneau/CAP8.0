@@ -12,6 +12,7 @@ LINKDEF NuDynLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(NuDyn SHARED
+NuDynTasks.cpp
 NuDynAnalyzer.cpp
 NuDynDerivedHistos.cpp
 NuDynHistos.cpp

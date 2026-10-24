@@ -25,6 +25,7 @@ LINKDEF Therminator3LinkDef.h)
 
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Therminator3 SHARED
+Therminator3Tasks.cpp
 Chemistry.cpp
 Hypersurface.cpp
 Model.cpp

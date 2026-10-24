@@ -14,6 +14,7 @@ LINKDEF GlobalLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Global SHARED
+GlobalTasks.cpp
 GlobalAnalyzer.cpp
 GlobalDerivedHistos.cpp
 GlobalHistos.cpp

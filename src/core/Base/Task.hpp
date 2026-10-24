@@ -248,13 +248,14 @@ namespace CAP
   //!
   //! @brief Write the templates of task classes (see exportXmlTemplate()), each task being named after its class.
   //! @param path directory
-  //! @param classNames classes; all the non-abstract classes deriving from CAP::Task known to ROOT (see taskClassNames())
+  //! @param classNames classes; all the task classes (see taskClassNames())
   //! if empty
   //! @return names of the files written (classes that cannot be instantiated are skipped with a warning)
   //!
   static std::vector<String> exportXmlTemplates(const String & path, const std::vector<String> & classNames=std::vector<String>());
-  //! @brief Names of the non-abstract, non-template classes deriving from CAP::Task whose dictionaries are loaded.
-  //! @return sorted names
+  //! @brief Names of the task classes: those registered for the reflection (see registerTask() in
+  //! TaskRegistration.hpp), and the non-abstract, non-template classes deriving from CAP::Task whose ROOT dictionaries
+  //! are loaded. @return sorted names
   static std::vector<String> taskClassNames();
   //! @brief Fill a TASK element with the configuration of this task (severity attribute, parameters) and its subtasks.
   //! @param element element made by createXmlElement()
@@ -277,8 +278,9 @@ namespace CAP
 
   protected:
 
-  //! @brief Instantiate a task of a class through ROOT's dictionary. @param taskClassName class name @return new task
-  //! @throws UnknownClassException if the class is unknown; Exception if it cannot be instantiated
+  //! @brief Instantiate a task of a class: through the reflection registry if the class is registered (see
+  //! registerTask()), otherwise through ROOT's dictionary. @param taskClassName class name @return new task, owned by
+  //! the caller @throws UnknownClassException if the class is unknown; Exception if it cannot be instantiated
   static Task * instantiateTask(const String & taskClassName);
   //! @brief Name of the task (the keys of a task begin with its name). @return name
   String xmlKeyPath() const override;

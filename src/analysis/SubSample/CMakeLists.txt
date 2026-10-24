@@ -16,6 +16,7 @@ LINKDEF SubSampleLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(SubSample SHARED
+SubSampleTasks.cpp
 SubSampleStatCalculator.cpp
 RunSubSampleSum.cpp
 G__SubSample.cxx)

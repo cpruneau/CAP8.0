@@ -12,6 +12,7 @@ LINKDEF PtPtLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(PtPt SHARED
+PtPtTasks.cpp
 PtPtAnalyzer.cpp
 PtPtDerivedHistos.cpp
 PtPtHistos.cpp

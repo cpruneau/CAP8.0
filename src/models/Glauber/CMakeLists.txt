@@ -25,6 +25,7 @@ LINKDEF GlauberLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Glauber SHARED
+GlauberTasks.cpp
 GlauberAnalyzer.cpp
 GlauberDb.cpp
 GlauberEvent.cpp

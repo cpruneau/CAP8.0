@@ -209,7 +209,7 @@ namespace CAP
   }
   } // namespace
 
-  Value ClassInfo::create(const std::vector<Value> & arguments) const
+  void * ClassInfo::construct(const std::vector<Value> & arguments) const
   {
   std::string reason;
   std::vector<const Method *> candidates;
@@ -217,10 +217,20 @@ namespace CAP
     {
     candidates.push_back(&_constructors[k]);
     if (_constructors[k].nArguments != int(arguments.size())) continue;
-    try { return Value(_creators[k](arguments)); }
+    try { return _constructs[k](arguments); }
     catch (const ReflectionException & e) { reason = e.what(); }
     }
-  throw ReflectionException(noMatch("constructor of " + _name, candidates, arguments, reason), "ClassInfo::create");
+  throw ReflectionException(noMatch("constructor of " + _name, candidates, arguments, reason), "ClassInfo::construct");
+  }
+
+  Value ClassInfo::create(const std::vector<Value> & arguments) const
+  {
+  void * object = construct(arguments);
+  Instance o;
+  o.pointer = object;
+  o.type = this;
+  o.owner = std::shared_ptr<void>(object, _destroy);
+  return Value(o);
   }
 
   Value ClassInfo::call(void * object, const std::string & name, const std::vector<Value> & arguments) const

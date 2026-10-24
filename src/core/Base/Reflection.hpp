@@ -186,6 +186,10 @@ namespace CAP
   //! @brief New object, made by the constructor whose arguments match. @param arguments arguments
   //! @return the object, owned by the value (and its copies) @throws ReflectionException if none matches
   Value create(const std::vector<Value> & arguments={}) const;
+  //! @brief New object made with new by the constructor whose arguments match, owned by the caller (see create()
+  //! for an object owned by a Value). @param arguments arguments @return address of the object
+  //! @throws ReflectionException if no constructor matches
+  void * construct(const std::vector<Value> & arguments={}) const;
   //! @brief Call a member function on an object (the first of that name whose arguments match).
   //! @param object object of this class @param name function @param arguments arguments @return result
   //! @throws ReflectionException if there is no such function, or no overload accepts the arguments
@@ -207,8 +211,10 @@ namespace CAP
   void addField(Field f) { _fields.push_back(std::move(f)); }   //!< Add a field
   Field & lastField() { return _fields.back(); }   //!< The field added last
   void addMethod(Method m) { _methods.push_back(std::move(m)); }   //!< Add a member function
-  //! @brief Set how to make an object from arguments (one function per constructor). @param creators functions
-  std::vector<std::function<Instance(const std::vector<Value> &)>> & creators() { return _creators; }
+  //! @brief Add how to make an object from arguments, with new (one function per constructor). @param f function
+  void addConstruct(std::function<void *(const std::vector<Value> &)> f) { _constructs.push_back(std::move(f)); }
+  //! @brief Set how to delete an object of the class. @param f function
+  void setDestroy(std::function<void(void *)> f) { _destroy = std::move(f); }
   //! @}
 
   private:
@@ -217,7 +223,8 @@ namespace CAP
   const std::type_info & _type;   //!< C++ type
   std::vector<Base> _bases;   //!< direct bases
   std::vector<Method> _constructors;   //!< constructors (signatures)
-  std::vector<std::function<Instance(const std::vector<Value> &)>> _creators;   //!< one per constructor
+  std::vector<std::function<void *(const std::vector<Value> &)>> _constructs;   //!< one per constructor
+  std::function<void(void *)> _destroy;   //!< delete an object of the class
   std::vector<Field> _fields;   //!< fields
   std::vector<Method> _methods;   //!< member functions
   };
@@ -451,17 +458,13 @@ namespace CAP
   m.signature = m.signature.substr(m.signature.find('('));
   m.nArguments = int(sizeof...(A));
   _info->addConstructor(m);
-  const ClassInfo * info = _info.get();
-  _info->creators().push_back([info](const std::vector<Value> & arguments)
+  _info->addConstruct([](const std::vector<Value> & arguments) -> void *
     {
-    Instance o;
     T * object = nullptr;
     Detail::apply<void, A...>([&object](A... a) { object = new T(a...); }, arguments, std::index_sequence_for<A...>());
-    o.pointer = object;
-    o.type = info;
-    o.owner = std::shared_ptr<void>(object, [](void * p) { delete static_cast<T *>(p); });
-    return o;
+    return object;
     });
+  _info->setDestroy([](void * p) { delete static_cast<T *>(p); });
   return *this;
   }
 

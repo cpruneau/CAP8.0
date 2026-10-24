@@ -14,6 +14,7 @@ LINKDEF SpherocityLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Spherocity SHARED
+SpherocityTasks.cpp
 SpherocityDerivedHistos.cpp
 SpherocityHistos.cpp
 SpherocityAnalyzer.cpp

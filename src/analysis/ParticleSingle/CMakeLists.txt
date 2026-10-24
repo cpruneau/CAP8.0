@@ -14,7 +14,8 @@ LINKDEF ParticleSingleLinkDef.h)
 # Create a shared library with geneated dictionary
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
-add_library(ParticleSingle SHARED   ParticleSingleHistos.cpp ParticleSingleDerivedHistos.cpp  ParticleSingleAnalyzer.cpp G__ParticleSingle.cxx)
+add_library(ParticleSingle SHARED
+ParticleSingleTasks.cpp   ParticleSingleHistos.cpp ParticleSingleDerivedHistos.cpp  ParticleSingleAnalyzer.cpp G__ParticleSingle.cxx)
 
 message(STATUS "ROOT_LIBRARIES: ${ROOT_LIBRARIES}")
 message(STATUS "EXTRA_LIBS: ${EXTRA_LIBS}")

@@ -269,6 +269,11 @@ add_executable(CAP CAP.cxx)
 target_link_libraries(CAP PUBLIC ${CAP_LINKED_MODULES})
 install(TARGETS CAP RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
 
+# The task classes in the reflection registry, as ROOT lists them (run with ctest; not installed)
+add_executable(TestTaskRegistry tests/TestTaskRegistry.cpp)
+target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})
+add_test(NAME TaskRegistry COMMAND TestTaskRegistry)
+
 string(REPLACE ";" ", " optional_text "${CAP_OPTIONAL_BUILT}")
 if(optional_text STREQUAL "")
   set(optional_text "none")

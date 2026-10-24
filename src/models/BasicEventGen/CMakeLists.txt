@@ -10,6 +10,7 @@ LINKDEF BasicEventGenLinkDef.h)
 # Create a shared library with geneated dictionary
 ################################################################################################
 add_library(BasicEventGen SHARED
+BasicEventGenTasks.cpp
 BasicEventGen.cpp
 G__BasicEventGen.cxx)
 target_link_libraries(BasicEventGen  Base  Particles   ${ROOT_LIBRARIES} ${EXTRA_LIBS} )

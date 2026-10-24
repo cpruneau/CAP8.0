@@ -17,6 +17,7 @@ LINKDEF ParticlePair3DLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(ParticlePair3D SHARED
+ParticlePair3DTasks.cpp
 ParticlePair3DAnalyzer.cpp
 ParticlePair3DBfHistos.cpp
 ParticlePair3DDerivedHistos.cpp

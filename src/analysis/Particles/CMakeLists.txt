@@ -38,6 +38,7 @@ LINKDEF ParticlesLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Particles SHARED
+ParticlesTasks.cpp
 BaseHistos.cpp
 BaseDerivedHistos.cpp
 Event.cpp
