@@ -35,9 +35,10 @@ namespace CAP
   double sRapidity = dhs * std::cos(theta)/_lambda;
   _position.setTXYZ(tau *std::cosh(sRapidity),rho*std::cos(sPhi),rho*std::sin(sPhi),tau *std::sinh(sRapidity));
 
-  zeta             = gRandom->Rndm();
-  double zetac     = (zeta>0.9999999) ? 0.00000001 : 1.00-zeta;
-  double pT        = zeta/zetac;
+  // pT = u/(1-u): its own random number, zeta must stay the hypersurface angle used by dSigmaP below
+  double u         = gRandom->Rndm();
+  double zetac     = (u>0.9999999) ? 0.00000001 : 1.00-u;
+  double pT        = u/zetac;
   double dPt       = 1.0/(zetac*zetac);
   double pPhi      = twoPi() * gRandom->Rndm();
   double pRapidity = _pRapidityRange * (gRandom->Rndm() - 0.5);
