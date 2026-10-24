@@ -47,6 +47,7 @@ namespace CAP
       case 4:
       case 5:
       case 6:
+      // "linear" profile of the Therminator 2 paper (arXiv:1102.0273, Eq. 42): VelT is in the denominator
       vT = (rho/_rhoMax)/(_tVelocity+rho/_rhoMax); break;
     }
   // Invariants
@@ -72,11 +73,16 @@ namespace CAP
       case 5:
       Xt += -_delay * std::log(gRandom->Rndm()); break;
       case 6:
-      double energy = std::sqrt(mT*mT + Pz*Pz);
-      Xt += -_delay * std::log(gRandom->Rndm());
-      Xx += Xt * Px / energy;
-      Xy += Xt * Py / energy;
-      Xz += Xt * Pz / energy;
+        {
+        // formation: the particle streams freely with velocity p/E during the delay only, from its point
+        // on the hypersurface (Therminator 2 used the full time Xt, as if it streamed from t = 0)
+        double energy = std::sqrt(mT*mT + Pz*Pz);
+        double delay  = -_delay * std::log(gRandom->Rndm());
+        Xt += delay;
+        Xx += delay * Px / energy;
+        Xy += delay * Py / energy;
+        Xz += delay * Pz / energy;
+        }
       break;
     }
   _position.setTXYZ(Xt,Xx,Xy,Xz);
