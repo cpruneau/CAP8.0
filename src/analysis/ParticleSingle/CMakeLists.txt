@@ -6,8 +6,6 @@
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 #add_definitions(${ROOT_CXX_FLAGS})
 
-ROOT_GENERATE_DICTIONARY(G__ParticleSingle ParticleSingleHistos.hpp ParticleSingleDerivedHistos.hpp  ParticleSingleAnalyzer.hpp
-LINKDEF ParticleSingleLinkDef.h)
 
 
 ################################################################################################
@@ -15,7 +13,7 @@ LINKDEF ParticleSingleLinkDef.h)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(ParticleSingle SHARED
-ParticleSingleTasks.cpp   ParticleSingleHistos.cpp ParticleSingleDerivedHistos.cpp  ParticleSingleAnalyzer.cpp G__ParticleSingle.cxx)
+ParticleSingleTasks.cpp   ParticleSingleHistos.cpp ParticleSingleDerivedHistos.cpp  ParticleSingleAnalyzer.cpp)
 
 message(STATUS "ROOT_LIBRARIES: ${ROOT_LIBRARIES}")
 message(STATUS "EXTRA_LIBS: ${EXTRA_LIBS}")
@@ -28,6 +26,5 @@ target_include_directories(ParticleSingle  PUBLIC Base    Particles ParticleSing
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libParticleSingle.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libParticleSingle_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS ParticleSingle  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

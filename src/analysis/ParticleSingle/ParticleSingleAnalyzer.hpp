@@ -12,7 +12,6 @@
 #include "EventProcessorSingle.hpp"
 #include "ParticleSingleHistos.hpp"
 #include "ParticleSingleDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -49,7 +48,6 @@ public:
 
 protected:
 
-  ClassDef(ParticleSingleAnalyzer,0)
 };
 
 } // namespace CAP

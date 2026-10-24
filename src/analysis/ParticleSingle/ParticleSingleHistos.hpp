@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "MathConstants.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -112,7 +111,6 @@ public:
   //! Distribution of the PDG codes.
   Histogram * h_pdgId;
 
-  ClassDef(ParticleSingleHistos,0)
 
 };
 

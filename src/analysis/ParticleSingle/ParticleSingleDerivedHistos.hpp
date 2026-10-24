@@ -11,7 +11,6 @@
 #define CAP__ParticleSingleDerivedHistos
 #include "Profile.hpp"
 #include "ParticleSingleHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -76,7 +75,6 @@ protected:
   //! Average pT vs (y, phi).
   Histogram * h_avg_pt_phiY;
 
-  ClassDef(ParticleSingleDerivedHistos,0)
 
 };
 
