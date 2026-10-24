@@ -9,9 +9,6 @@
  * *********************************************************************/
 #include "EventFilter.hpp"
 #include "ManagedObjects.hpp"
-//ClassImp(CAP::ManagedObjects<CAP::EventFilter>);
-ClassImp(CAP::Filter<CAP::Event>);
-ClassImp(CAP::EventFilter);
 
 namespace CAP
 {

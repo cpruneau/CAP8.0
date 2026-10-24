@@ -13,7 +13,6 @@
 #include "Configuration.hpp"
 #include "EventFilter.hpp"
 #include "ParticleFilter.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -66,7 +65,6 @@ protected:
   //! Particle filters of the task.
   vector<ParticleFilter*> particleFilters;
 
-  ClassDef(EventCountHistos,0)
 
 };
 

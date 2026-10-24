@@ -10,7 +10,6 @@
 #ifndef CAP__EventIterator
 #define CAP__EventIterator
 #include "EventProcessor.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -57,7 +56,6 @@ protected:
   //! Report period, in events.
   long    _nEventsReport;
 
-  ClassDef(EventIterator,0)
 };
 
 }

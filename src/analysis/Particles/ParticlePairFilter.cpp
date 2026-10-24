@@ -11,7 +11,6 @@
 #include "String.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::ParticlePairFilter);
 
 namespace CAP
 {

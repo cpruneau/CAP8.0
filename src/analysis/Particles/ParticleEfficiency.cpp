@@ -15,7 +15,6 @@
 #include "Profile.hpp"
 #include "ParticleEfficiency.hpp"
 
-ClassImp(CAP::ParticleEfficiency);
 
 namespace CAP
 {

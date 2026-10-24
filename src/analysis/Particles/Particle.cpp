@@ -12,8 +12,6 @@
 #include "Particle.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::Particle);
-ClassImp(CAP::Factory<CAP::Particle>);
 
 
 namespace CAP

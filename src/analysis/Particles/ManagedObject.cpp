@@ -9,7 +9,6 @@
  * *********************************************************************/
 #include "ManagedObject.hpp"
 
-ClassImp(CAP::ManagedObject);
 
 namespace CAP
 {

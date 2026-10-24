@@ -17,7 +17,6 @@
 #include "PhysicsConstants.hpp"
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
-#include "ClassDef.hpp"
 
 using namespace std;
 using namespace CAP::Physics;
@@ -1316,7 +1315,6 @@ public:
   //! Singleton coding an anti-4He type.
   static  ParticleType * antiHe4Type;
 
-  ClassDef(ParticleType,0)
 };
 
 }

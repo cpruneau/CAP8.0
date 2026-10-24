@@ -11,7 +11,6 @@
 #include "ParticlePartition.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::ParticlePartition);
 
 namespace CAP
 {

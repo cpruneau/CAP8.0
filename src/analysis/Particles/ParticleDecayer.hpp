@@ -14,7 +14,6 @@
 #include "TRandom.h"
 #include "Particle.hpp"
 #include "VectorLorentz.hpp"
-#include "ClassDef.hpp"
 
 using namespace std;
 
@@ -123,7 +122,6 @@ protected:
 
 
 
-  ClassDef(ParticleDecayer,0)
 };
 
 }

@@ -20,7 +20,6 @@
 #include "Configuration.hpp"
 #include "ManagedObject.hpp"
 #include "Exceptions.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -293,7 +292,6 @@ namespace CAP
   //! @brief Difference of two groups, histogram by histogram.
   friend RootHistogramGroup operator-(const RootHistogramGroup & lhs,const RootHistogramGroup & rhs);
 
-  ClassDef(RootHistogramGroup,0)
   };
 
   RootHistogramGroup operator+(const RootHistogramGroup & lhs,const RootHistogramGroup & rhs);

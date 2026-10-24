@@ -16,7 +16,6 @@
 #include "StreamHelpers.hpp"
 //#include "Task.hpp"
 
-ClassImp(CAP::ParticleDb);
 
 namespace CAP
 {

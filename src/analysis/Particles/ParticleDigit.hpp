@@ -11,7 +11,6 @@
 #define CAP__ParticleDigit
 #include "String.hpp"
 #include "Factory.hpp"
-#include "ClassDef.hpp"
 
 using namespace std;
 namespace CAP
@@ -76,7 +75,6 @@ namespace CAP
   static Factory<ParticleDigit> * factory();
 
 
-  ClassDef(ParticleDigit,0)
   };
 
 }

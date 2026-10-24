@@ -13,7 +13,6 @@
 #include "Configuration.hpp"
 #include "CapFile.hpp"
 #include <fstream>
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -77,7 +76,6 @@ namespace CAP
 
   protected:
 
-  ClassDef(ManagedObject,0)
   };
 
 }

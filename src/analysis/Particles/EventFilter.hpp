@@ -13,7 +13,6 @@
 #include "Event.hpp"
 #include "Filter.hpp"
 #include "ManagedObject.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -69,7 +68,6 @@ namespace CAP
     kSphero0,kSphero1,kSphero2,kSphero3,kSphero4,kSphero5
   };
   
-  ClassDef(EventFilter,0)
   };
   
 } // namespace CAP

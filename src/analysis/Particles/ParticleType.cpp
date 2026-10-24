@@ -13,7 +13,6 @@
 #include "PhysicsConstants.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::ParticleType);
 
 namespace CAP
 {

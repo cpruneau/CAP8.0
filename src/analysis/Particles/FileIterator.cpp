@@ -11,7 +11,6 @@
 #include "PrintHelpers.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::FileIterator);
 
 namespace CAP
 {

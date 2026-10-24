@@ -9,7 +9,6 @@
  * *********************************************************************/
 #include "EventProcessor.hpp"
 
-ClassImp(CAP::EventProcessor);
 
 namespace CAP
 {

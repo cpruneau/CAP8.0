@@ -16,7 +16,6 @@
 #include "RootHistogramHelpers.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::RootHistogramGroup);
 
 namespace CAP
 {

@@ -18,7 +18,6 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 #include <fstream>
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -305,7 +304,6 @@ namespace CAP
   //! @brief Histogram of other with the name of h, checked compatible. @param other group @param h histogram @param source caller
   static const Histogram & counterpart(const HistogramFolder & other, const Histogram & h, const char * source);
 
-  ClassDefOverride(HistogramFolder,0)
   };
 
   //! @relates HistogramFolder

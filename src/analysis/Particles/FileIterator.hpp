@@ -10,7 +10,6 @@
 #ifndef CAP__FileIterator
 #define CAP__FileIterator
 #include "EventProcessor.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -40,7 +39,6 @@ namespace CAP
   //! @brief Post-process the subtasks (see the class description).
   virtual void execute();
 
-  ClassDef(FileIterator,1)
   };
 
 } // namespace CAP

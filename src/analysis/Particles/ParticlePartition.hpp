@@ -14,7 +14,6 @@
 #include <iostream>
 #include <vector>
 #include "ParticleType.hpp"
-#include "ClassDef.hpp"
 
 
 namespace CAP
@@ -83,7 +82,6 @@ public:
 
   std::ostream & print(  );
 
-  ClassDef(ParticlePartition,0)
 };
 
 } //namespace CAP

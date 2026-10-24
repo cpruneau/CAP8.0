@@ -26,7 +26,6 @@
 #include <type_traits>
 #include <utility>
 #include <iostream>
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -692,7 +691,6 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   for (auto & object : _objects) object->scaleObject(scaleFactors[k++]);
   }
   
-  //  ClassDef(ManagedObjects<MANAGED>,0)
   };
   
   template <class MANAGED>

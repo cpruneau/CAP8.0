@@ -10,8 +10,6 @@
 #include "Event.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::Event);
-ClassImp(CAP::Manager<CAP::Event>);
 
 namespace CAP
 {

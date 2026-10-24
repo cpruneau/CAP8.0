@@ -12,7 +12,6 @@
 #include "String.hpp"
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -82,7 +81,6 @@ protected:
   double phi_min;  ///< lower edge of the azimuth axis
   double phi_max;  ///< upper edge of the azimuth axis
 
-  ClassDef(ParticleEfficiency,0)
 };
 
 }

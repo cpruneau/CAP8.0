@@ -11,7 +11,6 @@
 #define CAP__EventEfficiency
 #include "HistogramFolder.hpp"
 #include "Event.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -72,7 +71,6 @@ protected:
   double max_mult;
 
 
-  ClassDef(EventEfficiency,0)
 };
 
 }

@@ -16,7 +16,6 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-ClassImp(CAP::ParticleSmearer);
 
 namespace CAP
 {

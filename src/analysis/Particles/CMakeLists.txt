@@ -6,32 +6,6 @@
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 #add_definitions(${ROOT_CXX_FLAGS})
 
-ROOT_GENERATE_DICTIONARY(G__Particles
-BaseHistos.hpp
-BaseDerivedHistos.hpp
-Event.hpp
-EventEfficiency.hpp
-EventFilter.hpp
-EventIterator.hpp
-EventMerger.hpp
-EventProcessor.hpp
-EventSmearer.hpp
-FileIterator.hpp
-HistogramFolder.hpp
-RootHistogramGroup.hpp
-ManagedObject.hpp
-ObjectCreator.hpp
-Particle.hpp
-ParticleDecayMode.hpp
-ParticleDb.hpp
-ParticleDecayer.hpp
-ParticleDecayerTask.hpp
-ParticleEfficiency.hpp
-ParticleFilter.hpp
-ParticlePairFilter.hpp
-ParticleSmearer.hpp
-ParticleType.hpp
-LINKDEF ParticlesLinkDef.h)
 
 ################################################################################################
 # Create a shared library with geneated dictionary
@@ -64,12 +38,10 @@ ParticleEfficiency.cpp
 ParticleFilter.cpp
 ParticlePairFilter.cpp
 ParticleSmearer.cpp
-ParticleType.cpp
-G__Particles.cxx)
+ParticleType.cpp)
 
 target_link_libraries(Particles Base Math Helpers   ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Particles  PUBLIC Base Math Helpers Particles  ${EXTRA_INCLUDES} )
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libParticles.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libParticles_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Particles  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

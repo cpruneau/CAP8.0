@@ -22,7 +22,6 @@
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmearer.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -130,7 +129,6 @@ public:
   EventFilterCreator() : ObjectCreator<EventFilter>("EVENT_FILTER") { appendClassName("EventFilterCreator"); setName("EventFilterCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new EventFilterCreator(*this); }
-  ClassDefOverride(EventFilterCreator,0)
 };
 
 //! @brief Task creating the particle filters of a job (PARTICLE_FILTER). See ObjectCreator.
@@ -141,7 +139,6 @@ public:
   ParticleFilterCreator() : ObjectCreator<ParticleFilter>("PARTICLE_FILTER") { appendClassName("ParticleFilterCreator"); setName("ParticleFilterCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new ParticleFilterCreator(*this); }
-  ClassDefOverride(ParticleFilterCreator,0)
 };
 
 //! @brief Task creating the event efficiencies of a job (EVENT_EFFICIENCY). See ObjectCreator.
@@ -152,7 +149,6 @@ public:
   EventEfficiencyCreator() : ObjectCreator<EventEfficiency>("EVENT_EFFICIENCY") { appendClassName("EventEfficiencyCreator"); setName("EventEfficiencyCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new EventEfficiencyCreator(*this); }
-  ClassDefOverride(EventEfficiencyCreator,0)
 };
 
 //! @brief Task creating the particle efficiencies of a job (PARTICLE_EFFICIENCY). See ObjectCreator.
@@ -163,7 +159,6 @@ public:
   ParticleEfficiencyCreator() : ObjectCreator<ParticleEfficiency>("PARTICLE_EFFICIENCY") { appendClassName("ParticleEfficiencyCreator"); setName("ParticleEfficiencyCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new ParticleEfficiencyCreator(*this); }
-  ClassDefOverride(ParticleEfficiencyCreator,0)
 };
 
 //! @brief Task creating the event smearers of a job (EVENT_SMEARER). See ObjectCreator.
@@ -174,7 +169,6 @@ public:
   EventSmearerCreator() : ObjectCreator<EventSmearer>("EVENT_SMEARER") { appendClassName("EventSmearerCreator"); setName("EventSmearerCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new EventSmearerCreator(*this); }
-  ClassDefOverride(EventSmearerCreator,0)
 };
 
 //! @brief Task creating the particle smearers of a job (PARTICLE_SMEARER). See ObjectCreator.
@@ -185,7 +179,6 @@ public:
   ParticleSmearerCreator() : ObjectCreator<ParticleSmearer>("PARTICLE_SMEARER") { appendClassName("ParticleSmearerCreator"); setName("ParticleSmearerCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new ParticleSmearerCreator(*this); }
-  ClassDefOverride(ParticleSmearerCreator,0)
 };
 
 //! @brief Task creating the events of a job (EVENT), filled by the generators or readers. See ObjectCreator.
@@ -196,7 +189,6 @@ public:
   EventCreator() : ObjectCreator<Event>("EVENT") { appendClassName("EventCreator"); setName("EventCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new EventCreator(*this); }
-  ClassDefOverride(EventCreator,0)
 };
 
 //! @brief Task creating the particle databases of a job (PARTICLE_DB), imported at initialization (IMPORT, from an
@@ -208,7 +200,6 @@ public:
   ParticleDbCreator() : ObjectCreator<ParticleDb>("PARTICLE_DB") { appendClassName("ParticleDbCreator"); setName("ParticleDbCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new ParticleDbCreator(*this); }
-  ClassDefOverride(ParticleDbCreator,0)
 };
 
 //!
@@ -239,7 +230,6 @@ public:
   virtual ~FilterCreator() {}
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new FilterCreator(*this); }
-  ClassDefOverride(FilterCreator,0)
 };
 
 } // namespace CAP

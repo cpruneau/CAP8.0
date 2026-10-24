@@ -19,7 +19,6 @@
 #include "String.hpp"
 #include "ParticleType.hpp"
 #include "ParticleDb.hpp"
-#include "ClassDef.hpp"
 
 using namespace std;
 
@@ -98,7 +97,6 @@ namespace CAP
   //! @brief Print the branching ratio and the products.
   void print();
 
-  ClassDef(ParticleDecayMode,0)
   };
 
 } // namespace CAP

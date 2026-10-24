@@ -15,7 +15,6 @@
 #include "Particle.hpp"
 #include "ManagedObject.hpp"
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -191,7 +190,6 @@ protected:
   //! Spherocity of each particle selection.
   std::vector<double> _spherocity;
 
-  ClassDef(Event,0)
 };
 
 } //namespace CAP

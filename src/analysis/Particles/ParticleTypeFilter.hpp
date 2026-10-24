@@ -4,7 +4,6 @@
 #include "Filter.hpp"
 #include "ManagedObject.hpp"
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -50,7 +49,6 @@ namespace CAP
                                const Configuration & configuration,
                                unsigned int index);
 
-  ClassDef(ParticleTypeFilter,0)
   };
 
 }

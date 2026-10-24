@@ -10,7 +10,6 @@
 #ifndef CAP__BaseDerivedHistos
 #define CAP__BaseDerivedHistos
 #include "BaseHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -38,7 +37,6 @@ protected:
   //! @brief Copy the content of another group (nothing in the base class). @param group group to copy
   virtual void cloneD(const BaseDerivedHistos & group  __attribute__((unused))) {}
 
-  ClassDef(BaseDerivedHistos,0)
 };
 
 } // namespace CAP

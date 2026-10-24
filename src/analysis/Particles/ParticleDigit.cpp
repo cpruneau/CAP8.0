@@ -12,8 +12,6 @@
 #include "Factory.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::Factory<ParticleDigit>);
-ClassImp(CAP::ParticleDigit);
 
 namespace CAP
 {

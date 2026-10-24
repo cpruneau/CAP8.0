@@ -16,7 +16,6 @@
 #include "ParticleDecayer.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::ParticleDecayer);
 
 namespace CAP
 {

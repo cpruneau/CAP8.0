@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "Event.hpp"
 #include "MathConstants.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -48,7 +47,6 @@ protected:
   //! @brief Copy the content of another smearer. @param source smearer to copy
   virtual void cloneB(const EventSmearer & source);
 
-  ClassDef(EventSmearer,0)
 
 };
 

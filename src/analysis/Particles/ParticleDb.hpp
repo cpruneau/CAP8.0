@@ -14,7 +14,6 @@
 #include "ManagedObject.hpp"
 #include "Object.hpp"
 #include "ParticleType.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -220,7 +219,6 @@ namespace CAP
   //! Lifetime threshold of the lifetime-based selections of decays.
   double _dbMaxLifeTime;
 
-  ClassDef(ParticleDb,1)
   };
 
 } //namespace CAP

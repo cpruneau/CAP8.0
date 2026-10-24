@@ -12,15 +12,6 @@
 #include "ObjectCreator.hpp"
 
 templateClassImp(CAP::ObjectCreator);
-ClassImp(CAP::EventFilterCreator);
-ClassImp(CAP::ParticleFilterCreator);
-ClassImp(CAP::EventEfficiencyCreator);
-ClassImp(CAP::ParticleEfficiencyCreator);
-ClassImp(CAP::EventSmearerCreator);
-ClassImp(CAP::ParticleSmearerCreator);
-ClassImp(CAP::EventCreator);
-ClassImp(CAP::ParticleDbCreator);
-ClassImp(CAP::FilterCreator);
 
 namespace CAP
 {

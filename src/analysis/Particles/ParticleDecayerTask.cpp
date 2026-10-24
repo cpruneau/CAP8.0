@@ -13,7 +13,6 @@
 #include "VectorLorentz.hpp"
 #include "ParticleDbExceptions.hpp"
 
-ClassImp(CAP::ParticleDecayerTask);
 
 namespace CAP
 {

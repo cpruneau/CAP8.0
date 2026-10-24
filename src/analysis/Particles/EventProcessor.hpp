@@ -22,7 +22,6 @@
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmearer.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -241,7 +240,6 @@ namespace CAP
   //! acceptedParticleFilters(). @param particles particles @return true if at least one filter accepts a particle
   virtual bool filterParticles(std::vector<Particle*> & particles);
 
-  ClassDef(EventProcessor,1)
   };
 
 } // namespace CAP

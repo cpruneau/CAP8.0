@@ -13,7 +13,6 @@
 #include "Task.hpp"
 #include <cmath>
 
-ClassImp(CAP::HistogramFolder);
 
 namespace CAP
 {

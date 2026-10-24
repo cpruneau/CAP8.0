@@ -19,7 +19,6 @@
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmearer.hpp"
 #include "ParticleDecayer.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -55,7 +54,6 @@ public:
   //!
   virtual void decayParticle(Particle & particle, Event & event);
 
-  ClassDef(ParticleDecayerTask,0)
 };
 
 } // namespace CAP

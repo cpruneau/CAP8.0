@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "MathConstants.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -38,7 +37,6 @@ public:
   //! @brief Copy the content of another group (warning only in the base class; derived classes override it).
   //! @param source group to copy
   virtual void cloneB(const BaseHistos & source);
-  ClassDef(BaseHistos,0)
 };
 
 } // namespace CAP

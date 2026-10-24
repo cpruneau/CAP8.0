@@ -11,7 +11,6 @@
 #define CAP__ParticlePairFilter
 #include "Filter.hpp"
 #include "Particle.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -44,7 +43,6 @@ protected:
   double Deta_min;  ///< lower edge of the Delta eta axis
   double Deta_max;  ///< upper edge of the Delta eta axis
 
-  ClassDef(ParticlePairFilter,0)
 };
 
 } // namespace CAP

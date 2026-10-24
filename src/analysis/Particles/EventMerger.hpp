@@ -10,7 +10,6 @@
 #ifndef CAP__EventMerger
 #define CAP__EventMerger
 #include "EventProcessor.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -52,7 +51,6 @@ protected:
   //! Number of events taken from each input stream (subtask) per merged event.
   std::vector<unsigned int> _nEventsPerStream;
 
-  ClassDef(EventMerger,0)
 };
 
 }

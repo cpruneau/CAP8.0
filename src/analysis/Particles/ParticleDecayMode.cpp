@@ -17,7 +17,6 @@
 
 //#include "SelectionGenerator.hpp"
 
-ClassImp(CAP::ParticleDecayMode);
 
 namespace CAP
 {

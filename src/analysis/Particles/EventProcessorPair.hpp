@@ -10,7 +10,6 @@
 #ifndef CAP__EventProcessorPair
 #define CAP__EventProcessorPair
 #include "EventProcessor.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -315,7 +314,6 @@ public:
 
 
 
-  //ClassDef(EventProcessorPair,0)
 };
 
 } // namespace CAP

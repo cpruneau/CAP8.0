@@ -14,7 +14,6 @@
 #include "Profile.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::EventEfficiency);
 
 namespace CAP
 {

@@ -14,7 +14,6 @@
 #include "Factory.hpp"
 #include "ParticleType.hpp"
 #include "VectorLorentz.hpp"
-#include "ClassDef.hpp"
 
 using namespace std;
 using namespace CAP::MATH;
@@ -589,7 +588,6 @@ public:
   //!
   static Particle * neutron();
 
-  ClassDef(Particle,0)
 
 };
 
