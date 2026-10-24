@@ -73,8 +73,9 @@ namespace CAP
 
   void LatexDocument::create()
   {
-  std::ofstream & p = openOutputAsciiFile(_outputPath,_outFileName,".tex",true);
+  std::ofstream & p = openOutputAsciiFile(_outputPath,_outFileName,".tex",false);
   write(p);
+  p.close();   // complete on disk (e.g. for pdflatex)
   }
 
   void LatexDocument::writeHeader(std::ofstream & out)
@@ -167,23 +168,18 @@ namespace CAP
   void LatexDocument::setScopeToParent()
   {
   LatexElement * p = _currentScope->parent();
-  printValue("setScopeToParent() Current Scope",_currentScope->name());
   if (p)
     {
-    printValue("setScopeToParent() Parent name",p->name());
     _currentScope = p;
     }
-  printValue("setScopeToParent() Current Scope",_currentScope->name());
   }
 
   LatexFrame & LatexDocument::addFrame(const String & title)
   {
   LatexFrame * f = new LatexFrame();
   f->setTitle(title);
-  printValue("addFrame(0) title",currentScope()->name());
   currentScope()->addChild(f);
   setCurrentScope(f);
-  printValue("addFrame(1) title",currentScope()->name());
   return *f;
   }
 
@@ -192,11 +188,8 @@ namespace CAP
   LatexSection * s =  new LatexSection();
   s->setTitle(title);
   s->setLabel(label);
-  printValue("addSection() title",title);
-  printValue("addSection   currentScope() name",currentScope()->name());
   currentScope()->addChild(s);
   setCurrentScope(s);
-  printValue("addSection   currentScope() name",currentScope()->name());
   return *s;
   }
 
@@ -205,11 +198,8 @@ namespace CAP
   LatexSubsection * s = new LatexSubsection();
   s->setTitle(title);
   s->setLabel(label);
-  printValue("addSubection() title",title);
-  printValue("addSubection   currentScope() name",currentScope()->name());
   currentScope()->addChild(s);
   setCurrentScope(s);
-  printValue("addSubection   currentScope() name",currentScope()->name());
   return *s;
   }
 
@@ -218,11 +208,8 @@ namespace CAP
   LatexSubsubsection * s = new LatexSubsubsection();
   s->setTitle(title);
   s->setLabel(label);
-  printValue("addSubsubsection() title",title);
-  printValue("addSubsubsection   currentScope() name",currentScope()->name());
   currentScope()->addChild(s);
   setCurrentScope(s);
-  printValue("addSubsubsection   currentScope() name",currentScope()->name());
 
   return *s;
   }
@@ -343,7 +330,6 @@ namespace CAP
   if (verbose)
     {
     printCR();
-    printValue("fileList.size()",fileList.size());
     }
   addFigures(path,fileList);
 
@@ -353,11 +339,9 @@ namespace CAP
   if (verbose)
     {
     printCR();
-    printValue("directories.size()",nDirectories);
     }
   for (auto dir : directories)
     {
-    printValue("dir", dir);
     String subPath = FileSystem::join(path,dir);
     addSubection(dir,dir);
     addFiguresFrom(subPath,"pdf",0);
