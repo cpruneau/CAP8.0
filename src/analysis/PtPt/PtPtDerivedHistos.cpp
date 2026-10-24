@@ -16,7 +16,6 @@
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::PtPtDerivedHistos);
 
 namespace CAP
 {

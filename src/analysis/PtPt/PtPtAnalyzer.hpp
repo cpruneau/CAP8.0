@@ -12,7 +12,6 @@
 #include "EventProcessorSingle.hpp"
 #include "PtPtHistos.hpp"
 #include "PtPtDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -48,7 +47,6 @@ public:
   //! @brief Analyze the current event (applies the filters only, see the class description).
   virtual void execute();
 
-  ClassDef(PtPtAnalyzer,0)
 };
 
 } // namespace CAP

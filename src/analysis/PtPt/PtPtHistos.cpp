@@ -15,7 +15,6 @@
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::PtPtHistos);
 
 namespace CAP
 {

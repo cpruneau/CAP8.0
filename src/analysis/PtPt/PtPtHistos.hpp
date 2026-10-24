@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -82,7 +81,6 @@ protected:
   double evt_max;  ///< upper edge of the event variable axis
 
 
-  ClassDef(PtPtHistos,0)
 };
 
 } // namespace CAP

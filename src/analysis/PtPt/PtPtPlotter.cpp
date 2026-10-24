@@ -16,7 +16,6 @@
 
 using CAP::PtPtPlotter;
 
-ClassImp(PtPtPlotter);
 
 PtPtPlotter::PtPtPlotter()
 :

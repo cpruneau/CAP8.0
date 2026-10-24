@@ -1,11 +1,6 @@
 ################################################################################################
 # Project CAP/PtPt
 ################################################################################################
-ROOT_GENERATE_DICTIONARY(G__PtPt
-PtPtAnalyzer.hpp
-PtPtDerivedHistos.hpp
-PtPtHistos.hpp
-LINKDEF PtPtLinkDef.h)
 
 ################################################################################################
 # Create a shared library with geneated dictionary
@@ -15,12 +10,10 @@ add_library(PtPt SHARED
 PtPtTasks.cpp
 PtPtAnalyzer.cpp
 PtPtDerivedHistos.cpp
-PtPtHistos.cpp
-G__PtPt.cxx)
+PtPtHistos.cpp)
 
 target_link_libraries(PtPt Base  Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(PtPt  PUBLIC Base  Particles  PtPt ${EXTRA_INCLUDES} ) 
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libPtPt.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libPtPt_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS PtPt  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

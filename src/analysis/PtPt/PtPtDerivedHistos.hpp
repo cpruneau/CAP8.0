@@ -11,7 +11,6 @@
 #define CAP__PtPtDerivedHistos
 #include "HistogramFolder.hpp"
 #include "PtPtHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -67,7 +66,6 @@ protected:
   
   //! Particle filters.
   vector<ParticleFilter*> particleFilters;
-  ClassDef(PtPtDerivedHistos,0)
 };
 
 } // namespace CAP

@@ -12,7 +12,6 @@
 #include "Plotter.hpp"
 #include "PtPtHistos.hpp"
 #include "PtPtDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -59,7 +58,6 @@ public:
                                 String ** histLabels,
                                 GraphConfiguration  ** graphConfigurations);
 
-  ClassDef(PtPtPlotter,0)
 };
 
 
