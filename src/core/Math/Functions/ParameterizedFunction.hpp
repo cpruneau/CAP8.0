@@ -5,7 +5,6 @@
 #include "Parameter.hpp"
 #include "Function.hpp"
 #include "VectorND.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -318,7 +317,6 @@ namespace CAP
   //!
   double operator()(double x) const { return evaluateAt(x); }
 
-  ClassDef(ParameterizedFunction,1)
   };
 
   } // namespace MATH

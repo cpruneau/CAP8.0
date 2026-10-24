@@ -12,7 +12,6 @@
 #include <string>
 #include "BinaryIO.hpp"
 
-ClassImp(CAP::MATH::Histogram);
 
 namespace CAP
 {

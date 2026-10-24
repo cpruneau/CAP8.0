@@ -2,7 +2,6 @@
 #define CAP_MATH_Normal
 #include <cmath>
 #include "ParameterizedFunction.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -149,7 +148,6 @@ namespace CAP
 
   //! @}
 
-  ClassDef(Normal,1)
   };
 
   } // namespace MATH

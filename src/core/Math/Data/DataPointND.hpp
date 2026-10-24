@@ -14,7 +14,6 @@
 #include "String.hpp"
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -155,7 +154,6 @@ namespace CAP
 
   //! @}
 
-  ClassDefOverride(DataPointND,1)
   };
 
   } // namespace MATH

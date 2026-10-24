@@ -15,7 +15,6 @@
 #include <iostream>
 #include <numeric>
 
-ClassImp(CAP::MATH::DataPointColumns);
 
 namespace CAP
 {

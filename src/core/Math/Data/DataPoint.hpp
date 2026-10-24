@@ -15,7 +15,6 @@
 #include <type_traits>
 #include <vector>
 #include "String.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -187,7 +186,6 @@ namespace CAP
   virtual void combine(const DataPoint & p1, const DataPoint & p2, double value, double d1, double d2);
 
 
-  ClassDef(DataPoint,1)
   };
 
   //! @relates DataPoint

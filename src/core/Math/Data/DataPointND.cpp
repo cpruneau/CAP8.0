@@ -10,7 +10,6 @@
 #include "DataPointND.hpp"
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::DataPointND);
 
 namespace CAP
 {

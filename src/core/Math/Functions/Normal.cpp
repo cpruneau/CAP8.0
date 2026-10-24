@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <vector>
 
-ClassImp(CAP::MATH::Normal);
 
 namespace CAP
 {

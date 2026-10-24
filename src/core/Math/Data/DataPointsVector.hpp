@@ -10,7 +10,6 @@
 #include "DataPoints.hpp"
 #include "BinaryIO.hpp"
 #include "MathExceptions.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -369,7 +368,6 @@ namespace CAP
 
   //! @}
 
-  ClassDefOverride(DataPointsVector,2)
   };
 
   //! @relates DataPointsVector

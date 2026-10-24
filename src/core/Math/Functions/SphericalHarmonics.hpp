@@ -4,7 +4,6 @@
 #include <complex>
 #include "String.hpp"
 #include "Function.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -105,7 +104,6 @@ namespace CAP
   int _m;           //!< order m
   Part _part;       //!< quantity returned by evaluateAt()
 
-  ClassDef(SphericalHarmonics,1)
   };
 
   } // namespace MATH

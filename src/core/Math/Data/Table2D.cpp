@@ -17,7 +17,6 @@
 #include <iostream>
 #include <sstream>
 
-ClassImp(CAP::MATH::Table2D);
 
 namespace CAP
 {

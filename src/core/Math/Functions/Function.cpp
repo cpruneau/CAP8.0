@@ -2,7 +2,6 @@
 #include <string>
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Function);
 
 namespace CAP
 {

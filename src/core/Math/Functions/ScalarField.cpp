@@ -3,7 +3,6 @@
 #include <string>
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::ScalarField);
 
 namespace CAP
 {

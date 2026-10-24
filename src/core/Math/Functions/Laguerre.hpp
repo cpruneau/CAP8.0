@@ -3,7 +3,6 @@
 #include <vector>
 #include "String.hpp"
 #include "Function.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -100,7 +99,6 @@ namespace CAP
   unsigned int _degree;  //!< degree n
   double _alpha;         //!< parameter alpha
 
-  ClassDef(Laguerre,1)
   };
 
   } // namespace MATH

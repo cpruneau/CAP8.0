@@ -8,7 +8,6 @@
 #include <vector>
 #include "String.hpp"
 #include "BinaryIO.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -189,7 +188,6 @@ public:
 
   //! @}
 
-  ClassDef(Vector3D,1)
 
 };
 

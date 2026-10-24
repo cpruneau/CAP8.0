@@ -1,7 +1,6 @@
 #include "Histogram.hpp"
 #include <vector>
 
-ClassImp(CAP::Histogram);
 
 namespace CAP
 {

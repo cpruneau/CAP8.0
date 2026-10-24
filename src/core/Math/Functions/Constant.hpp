@@ -1,7 +1,6 @@
 #ifndef CAP_MATH_Constant
 #define CAP_MATH_Constant
 #include "Polynomial.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -48,7 +47,6 @@ namespace CAP
   //! @brief Set the value of the constant. @param c0 new value
   void setValue(double c0) { setParameterValue(0,c0); }
 
-  ClassDef(Constant,1)
   };
 
   } // namespace MATH

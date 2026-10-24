@@ -3,7 +3,6 @@
 #include "PrintHelpers.hpp"
 #include <iostream>
 
-ClassImp(CAP::MATH::VectorLorentz);
 
 
 namespace CAP

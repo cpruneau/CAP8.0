@@ -4,7 +4,6 @@
 #include "String.hpp"
 #include "Object.hpp"
 #include "FitRecord.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -133,7 +132,6 @@ namespace CAP
   unsigned int _rank;  //!< number of independent variables
   FitList _fits;   //!<! fits attached (not streamed by ROOT; shared by copies)
 
-  ClassDef(Function,1)
   };
 
   } // namespace MATH

@@ -11,7 +11,6 @@
 #include "MathExceptions.hpp"
 #include <algorithm>
 
-ClassImp(CAP::MATH::DataPoint);
 
 namespace CAP
 {

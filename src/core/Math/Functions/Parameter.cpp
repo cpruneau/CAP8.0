@@ -2,7 +2,6 @@
 #include "Parameter.hpp"
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Parameter);
 
 namespace CAP
 {

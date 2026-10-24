@@ -1,7 +1,6 @@
 #include "Partition.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::MATH::Partition);
 
 
 namespace CAP

@@ -11,7 +11,6 @@
 #define CAP__Profile
 #include "Histogram.hpp"
 #include "CapFile.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -155,7 +154,6 @@ protected:
   std::vector<double> _sumWY;   //!< sum of weight*value of each bin
   std::vector<double> _sumWY2;  //!< sum of weight*value^2 of each bin
 
-  ClassDefOverride(Profile,1)
 };
 
 //! @brief Copy of a profile (nullptr if p is null). @param p profile @return copy owned by the caller, or nullptr

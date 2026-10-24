@@ -2,7 +2,6 @@
 #define CAP_MATH_Exponential
 #include <cmath>
 #include "ParameterizedFunction.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -97,7 +96,6 @@ namespace CAP
   //! @brief Set both parameters. @param a amplitude @param b coefficient of x in the exponent
   void setParameters(double a, double b) { setParameterValue(0,a); setParameterValue(1,b); }
 
-  ClassDef(Exponential,1)
   };
 
   } // namespace MATH

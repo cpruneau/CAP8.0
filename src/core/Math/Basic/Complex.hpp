@@ -4,7 +4,6 @@
 #include <iostream>
 #include "String.hpp"
 #include "MathConstants.hpp"
-#include "ClassDef.hpp"
 
 //using CAP::MATH::
 namespace CAP
@@ -150,7 +149,6 @@ public:
   friend Complex operator -(T d, const Complex & c)
   {return Complex(d-c.Re() , -c.Im());}
 
-  ClassDef(Complex,1)  //Complex Class
 };
 
 template <typename T>

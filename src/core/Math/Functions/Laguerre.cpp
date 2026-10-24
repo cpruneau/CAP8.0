@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Laguerre);
 
 namespace CAP
 {

@@ -1,7 +1,6 @@
 #include "Linear.hpp"
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Linear);
 
 namespace CAP
 {

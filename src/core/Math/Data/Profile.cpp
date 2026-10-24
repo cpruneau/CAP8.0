@@ -13,7 +13,6 @@
 #include <iostream>
 #include <cmath>
 
-ClassImp(CAP::MATH::Profile);
 
 namespace CAP
 {

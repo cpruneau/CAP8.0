@@ -5,7 +5,6 @@
 #include "BesselFunctions.hpp"
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Bessel);
 
 namespace CAP
 {

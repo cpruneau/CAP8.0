@@ -3,7 +3,6 @@
 #include <vector>
 #include "String.hpp"
 #include "Function.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -125,7 +124,6 @@ namespace CAP
   BesselType   _type;   //!< kind of function
   unsigned int _order;  //!< order n
 
-  ClassDef(Bessel,1)
   };
 
   } // namespace MATH

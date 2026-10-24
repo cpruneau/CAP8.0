@@ -13,7 +13,6 @@
 #include "String.hpp"
 #include "BinaryIO.hpp"
 #include "Object.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -212,7 +211,6 @@ namespace CAP
 
   //! @}
 
-  ClassDefOverride(Table2D,1)
   };
 
   } // namespace MATH

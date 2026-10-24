@@ -2,7 +2,6 @@
 #define CAP_MATH_LogNormal
 #include <cmath>
 #include "ParameterizedFunction.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -150,7 +149,6 @@ namespace CAP
 
   //! @}
 
-  ClassDef(LogNormal,1)
   };
 
   } // namespace MATH

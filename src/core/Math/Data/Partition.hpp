@@ -5,7 +5,6 @@
 #include "String.hpp"
 #include "Object.hpp"
 #include "MathExceptions.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -342,7 +341,6 @@ namespace CAP
   //!
   void checkDimIndex(unsigned int dimIndex, const char * source) const;
 
-  ClassDef(Partition,2)
 
   };
 

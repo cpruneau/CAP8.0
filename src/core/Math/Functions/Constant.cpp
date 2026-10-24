@@ -1,6 +1,5 @@
 #include "Constant.hpp"
 
-ClassImp(CAP::MATH::Constant);
 
 namespace CAP
 {

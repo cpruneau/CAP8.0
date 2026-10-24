@@ -3,7 +3,6 @@
 #include <vector>
 #include "String.hpp"
 #include "Function.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -210,7 +209,6 @@ namespace CAP
   std::vector<Function*> _functions;  //!< component functions (not owned)
   Operation _operation;  //!< how the functions are combined
 
-  ClassDef(CompositeFunction,2)
   };
 
   } // namespace MATH

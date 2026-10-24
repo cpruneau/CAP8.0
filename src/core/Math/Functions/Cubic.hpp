@@ -1,7 +1,6 @@
 #ifndef CAP_MATH_Cubic
 #define CAP_MATH_Cubic
 #include "Polynomial.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -66,7 +65,6 @@ namespace CAP
   //!
   double inflectionX() const;
 
-  ClassDef(Cubic,1)
   };
 
   } // namespace MATH

@@ -6,7 +6,6 @@
 #include <functional>
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::ParameterizedFunction);
 
 namespace CAP
 {

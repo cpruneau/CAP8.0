@@ -5,7 +5,6 @@
 #include <ostream>
 #include "String.hpp"
 #include "ParameterizedFunction.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -238,7 +237,6 @@ namespace CAP
   //!
   friend std::ostream& operator<<(std::ostream& out, const Polynomial & p);
 
-  ClassDef(Polynomial,1)
   };
 
   //! @relates Polynomial

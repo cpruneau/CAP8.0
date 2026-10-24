@@ -1,6 +1,5 @@
 #include "Quartic.hpp"
 
-ClassImp(CAP::MATH::Quartic);
 
 namespace CAP
 {

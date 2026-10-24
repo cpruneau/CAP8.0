@@ -3,7 +3,6 @@
 #include <vector>
 #include "String.hpp"
 #include "BinaryIO.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -193,7 +192,6 @@ namespace CAP
   double _minimum;  //!< minimum allowed value
   double _maximum;  //!< maximum allowed value
 
-  ClassDef(Parameter,1)
   };
 
   } // namespace MATH

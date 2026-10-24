@@ -2,7 +2,6 @@
 #include "MathConstants.hpp"
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::LogNormal);
 
 namespace CAP
 {

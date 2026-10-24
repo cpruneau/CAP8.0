@@ -5,7 +5,6 @@
 #include "Object.hpp"
 #include "DataPoint2D.hpp"
 #include "FitRecord.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -282,7 +281,6 @@ namespace CAP
   //!
   double extremum(unsigned int index, bool findMaximum, const char * source) const;
 
-  //ClassDef(DataPoints,1)
   };
 
   } // namespace MATH

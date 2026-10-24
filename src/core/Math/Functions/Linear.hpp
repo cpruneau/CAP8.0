@@ -1,7 +1,6 @@
 #ifndef CAP_MATH_Linear
 #define CAP_MATH_Linear
 #include "Polynomial.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -64,7 +63,6 @@ namespace CAP
   //!
   double root() const;
 
-  ClassDef(Linear,1)
   };
 
   } // namespace MATH

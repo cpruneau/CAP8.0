@@ -4,7 +4,6 @@
 #include "String.hpp"
 #include "ParameterizedFunction.hpp"
 #include "DataPoints.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -175,7 +174,6 @@ namespace CAP
   bool _useXErrors;                       //!< whether the x uncertainties are included
   bool _binAveraging;                     //!< the function is averaged over the bins of a histogram
 
-  ClassDef(ChiSquare,2)
   };
 
   } // namespace MATH

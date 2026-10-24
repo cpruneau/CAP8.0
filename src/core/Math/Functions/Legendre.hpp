@@ -3,7 +3,6 @@
 #include <vector>
 #include "String.hpp"
 #include "Function.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -92,7 +91,6 @@ namespace CAP
 
   unsigned int _degree;  //!< degree n
 
-  ClassDef(Legendre,1)
   };
 
   } // namespace MATH

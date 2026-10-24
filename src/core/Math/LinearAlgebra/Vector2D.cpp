@@ -3,7 +3,6 @@
 #include "MathConstants.hpp"
 #include <iostream>
 
-ClassImp(CAP::MATH::Vector2D);
 
 
 namespace CAP

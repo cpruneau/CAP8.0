@@ -1,7 +1,6 @@
 #ifndef CAP_MATH_Quartic
 #define CAP_MATH_Quartic
 #include "Polynomial.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -60,7 +59,6 @@ namespace CAP
   }
   using Polynomial::setCoefficients; // keep the vector version visible
 
-  ClassDef(Quartic,1)
   };
 
   } // namespace MATH
