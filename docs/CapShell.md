@@ -78,6 +78,8 @@ lines.
 | Mathematics | `sqrt exp log log10 sin cos tan asin acos atan atan2 floor ceil round abs pow` |
 | CAP files | `ls(file)`, `read(file, path)`, `write(file, h, ...)` (histograms and profiles, under their names) |
 | Figures | `save(file, h, ...)`: one graph, 800 × 600 points, SVG or PDF by the extension |
+| Canvases | `Canvas(name, title, width, height)`; `c.divide(columns, rows)`, `c.graph(k)`, `c.save(file)`, `c.saveGraph(k, file)`; graphs: `g.add(h)`, `g.title`, `g.logX`, `g.logY`, `g.legend`, `g.colorPalette`, `g.restyleItems()` |
+| The session's canvases | `canvases(group)`, `canvas(name or index)`, `canvasNames()`, `register(c, name, group)`, `saveAll(directory, ".pdf", perGraph)`, `book(file.pdf)`, `presentation(file.tex, title, perGraph, compile)` |
 
 ## Errors
 
@@ -107,5 +109,17 @@ CAP_REFLECTION(MyClasses)
 ```
 
 For C++ default arguments, add a short form, e.g. `.function("mean", +[](const Histogram & h) { return h.mean(); })`.
-The classes available today are `CAP::Object`, `Partition`, `DataPoints`, `Histogram`, `RandomGenerator` and
-`MersenneTwister`.
+The classes available today are `CAP::Object`, `Partition`, `DataPoints`, `Histogram`, `RandomGenerator`,
+`MersenneTwister`, `Canvas` and `Graph`.
+
+## Canvases
+
+The canvases of a session are listed (not owned) by `CanvasRegistry`: in CapGui every canvas pane is listed, grouped
+by window; in a script, `register(c, name, group)` lists a canvas made there (until it is deleted).
+
+```
+for c in canvases() { c.save(c.name + ".pdf") }        # every canvas to its own file
+saveAll("figures", ".svg", true)                        # or every graph
+book("all.pdf")                                         # one page per canvas, to print
+presentation("talk/talk.tex", "Results of the week")   # Beamer slides, compiled with pdflatex
+```

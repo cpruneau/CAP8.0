@@ -59,6 +59,7 @@ Drawable2D.cpp
 FillAttributes.cpp
 Geom2D.cpp
 Graph.cpp
+GraphicsReflection.cpp
 GraphRenderer.cpp
 GraphRenderer3D.cpp
 Grid2D.cpp

@@ -118,6 +118,20 @@ int main()
   CHECK(run("type(back)").toText() == "CAP::MATH::Histogram" && run("back.integral() == h.integral()").toBool());
   run("save(\"" + dir + "/gauss.pdf\", h)\nsave(\"" + dir + "/gauss.svg\", h, back)");
   CHECK(top.contains("gauss.pdf") && top.contains("gauss.svg"));
+  // the canvases of the session: made, listed, reached by name and index, saved
+  run("c = Canvas(\"c1\", \"First\", 600, 400)\nc.divide(2, 1)\nc.graph(0).add(h)\nc.graph(1).add(back)\n"
+      "d = Canvas(\"c2\", \"Second\")\nd.divide(1, 1)\nd.graph(0).add(h)");
+  CHECK(run("register(c, \"first\", \"group A\")").toText() == "first" && run("register(d)").toText() == "c2");
+  CHECK(run("len(canvases())").toInteger() == 2 && run("len(canvases(\"group A\"))").toInteger() == 1);
+  CHECK(run("canvas(\"first\").nGraphs()").toInteger() == 2 && run("canvas(1).graph(0).nItems()").toInteger() == 1);
+  CHECK(run("canvasNames()").toList().size() == 2);
+  run("n = 0\nfor cv in canvases() { n += cv.nGraphs() }");
+  CHECK(run("n").toInteger() == 3);
+  CHECK(run("len(saveAll(\"" + dir + "/all\", \".svg\", true))").toInteger() == 3);
+  run("book(\"" + dir + "/book.pdf\")");
+  CHECK(top.contains("book.pdf") && top.contains("all/first_1.svg"));
+  run("c = none");                                                      // the canvas deleted: no longer listed
+  CHECK(run("len(canvases())").toInteger() == 1);
   // a file of commands
   {
     FILE * f = std::fopen((dir + "/script.caps").c_str(), "w");

@@ -9,9 +9,13 @@ Interpreter.cpp
 Lexer.cpp
 Parser.cpp)
 target_link_libraries(Interpreter Math Base ${ROOT_LIBRARIES})
-if(TARGET Graphics)   # save(): figures as SVG or PDF
+if(TARGET Graphics)   # save(): figures as SVG or PDF; the canvases of the session
   target_link_libraries(Interpreter Graphics)
   target_compile_definitions(Interpreter PRIVATE CAP_INTERPRETER_GRAPHICS)
+  if(TARGET Latex)    # presentation()
+    target_link_libraries(Interpreter Latex)
+    target_compile_definitions(Interpreter PRIVATE CAP_INTERPRETER_LATEX)
+  endif()
 endif()
 install(TARGETS Interpreter LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

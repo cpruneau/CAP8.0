@@ -20,8 +20,12 @@
 #include "Profile.hpp"
 #ifdef CAP_INTERPRETER_GRAPHICS
 #include "Canvas.hpp"
+#include "CanvasRegistry.hpp"
 #include "PdfPainter.hpp"
 #include "SvgPainter.hpp"
+#endif
+#ifdef CAP_INTERPRETER_LATEX
+#include "CanvasPresentation.hpp"
 #endif
 
 namespace CAP
@@ -260,6 +264,87 @@ namespace CAP
     else { GRAPHICS::SvgPainter painter(800, 600); canvas.draw(painter); ok = painter.write(path); }
     if (!ok) throw InterpreterException(String("Cannot write ") + path, line);
     return Value();
+    });
+
+  // ---- the canvases of the session (see CanvasRegistry)
+  interpreter.addBuiltin("canvases", "canvases(group)", "The canvases of the session (of a group, if given), in the order listed.",
+    [](Interpreter &, const std::vector<Value> & a, int line)
+    {
+    count("canvases", a, 0, 1, line);
+    std::vector<Value> list;
+    for (GRAPHICS::Canvas * c : GRAPHICS::CanvasRegistry::session().canvases(a.empty() ? String() : String(a[0].toText())))
+      list.push_back(reference(*c));
+    return Value(list);
+    });
+  interpreter.addBuiltin("canvas", "canvas(name), canvas(index)", "A canvas of the session, by its name or its index.",
+    [](Interpreter &, const std::vector<Value> & a, int line)
+    {
+    count("canvas", a, 1, 1, line);
+    GRAPHICS::CanvasRegistry & registry = GRAPHICS::CanvasRegistry::session();
+    if (a[0].kind() == Value::kText)
+      {
+      GRAPHICS::Canvas * c = registry.find(String(a[0].toText()));
+      if (!c) throw InterpreterException(String("No canvas named ") + String(a[0].toText()), line);
+      return reference(*c);
+      }
+    long k = a[0].toInteger();
+    if (k < 0 || k >= registry.size()) throw InterpreterException(String("No canvas ") + String(std::to_string(k)), line);
+    return reference(registry.canvas(int(k)));
+    });
+  interpreter.addBuiltin("canvasNames", "canvasNames()", "Names of the canvases of the session.",
+    [](Interpreter &, const std::vector<Value> & a, int line)
+    {
+    count("canvasNames", a, 0, 0, line);
+    std::vector<Value> names;
+    GRAPHICS::CanvasRegistry & registry = GRAPHICS::CanvasRegistry::session();
+    for (int k=0; k<registry.size(); k++) names.push_back(Value(registry.name(k).str()));
+    return Value(names);
+    });
+  interpreter.addBuiltin("register", "register(canvas, name, group)",
+    "List a canvas made in a script among the canvases of the session (until it is deleted); returns the name given.",
+    [](Interpreter &, const std::vector<Value> & a, int line)
+    {
+    count("register", a, 1, 3, line);
+    GRAPHICS::Canvas * c = as<GRAPHICS::Canvas>(a[0]);
+    if (!c) throw InterpreterException("register: not a canvas", line);
+    return Value(GRAPHICS::CanvasRegistry::session().add(*c, a.size() > 1 ? String(a[1].toText()) : String(),
+                                                         a.size() > 2 ? String(a[2].toText()) : String()).str());
+    });
+  interpreter.addBuiltin("saveAll", "saveAll(directory, extension, perGraph)",
+    "Save every canvas of the session (or every graph) to its own file: extension \".pdf\" (default) or \".svg\". Returns the files.",
+    [](Interpreter &, const std::vector<Value> & a, int line)
+    {
+    count("saveAll", a, 1, 3, line);
+    std::vector<String> files = GRAPHICS::CanvasRegistry::session().saveAll(FileSystem::expand(a[0].toText()),
+        a.size() > 1 ? String(a[1].toText()) : String(".pdf"), a.size() > 2 && a[2].toBool());
+    std::vector<Value> list;
+    for (const auto & f : files) list.push_back(Value(f.str()));
+    return Value(list);
+    });
+  interpreter.addBuiltin("book", "book(file)", "Write every canvas of the session as a page of one PDF file, to print.",
+    [](Interpreter &, const std::vector<Value> & a, int line)
+    {
+    count("book", a, 1, 1, line);
+    if (!GRAPHICS::CanvasRegistry::session().writeBook(FileSystem::expand(a[0].toText())))
+      throw InterpreterException(String("Cannot write ") + String(a[0].toText()), line);
+    return Value();
+    });
+#endif
+#ifdef CAP_INTERPRETER_LATEX
+  interpreter.addBuiltin("presentation", "presentation(file.tex, title, perGraph, compile)",
+    "A Beamer presentation of the canvases of the session, a frame per canvas (or per graph), compiled with pdflatex (default).",
+    [](Interpreter &, const std::vector<Value> & a, int line)
+    {
+    count("presentation", a, 2, 4, line);
+    String path = FileSystem::expand(a[0].toText());
+    CanvasPresentation p{String(a[1].toText())};
+    p.setOnePerGraph(a.size() > 2 && a[2].toBool());
+    p.addCanvases(GRAPHICS::CanvasRegistry::session());
+    String tex = p.write(FileSystem::parent(path), FileSystem::stem(path));
+    if (tex.str().empty()) throw InterpreterException(String("Cannot write ") + path, line);
+    if ((a.size() < 4 || a[3].toBool()) && !CanvasPresentation::compile(tex))
+      throw InterpreterException(String("pdflatex failed on ") + tex, line);
+    return Value(tex.str());
     });
 #endif
   }
