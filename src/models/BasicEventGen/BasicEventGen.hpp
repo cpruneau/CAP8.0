@@ -11,7 +11,6 @@
 #define CAP__BasicEventGen
 #include "EventProcessor.hpp"
 #include "ParticleDb.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -70,7 +69,6 @@ protected:
   //! Generated types.
   std::vector<ParticleType*> types;
 
-  ClassDef(BasicEventGen,0)
 };
 
 }

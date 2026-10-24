@@ -11,7 +11,6 @@
 #include "MathConstants.hpp"
 #include "VectorLorentz.hpp"
 
-ClassImp(CAP::BasicEventGen);
 
 namespace CAP
 {
