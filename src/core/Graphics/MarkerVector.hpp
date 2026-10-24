@@ -4,7 +4,6 @@
 #include "MarkerAttributes.hpp"
 #include "AxisRange.hpp"
 #include "DataPoints.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -53,7 +52,6 @@ namespace CAP
   float _frameXHigh;
   float _frameYHigh;
 
-  ClassDef(MarkerVector,0)
   };
 
   } // namespace GRAPHICS

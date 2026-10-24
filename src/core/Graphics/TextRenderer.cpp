@@ -1,7 +1,6 @@
 #include "TextRenderer.hpp"
 #include "Painter.hpp"
 
-ClassImp(CAP::GRAPHICS::TextRenderer);
 
 namespace CAP
 {

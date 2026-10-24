@@ -2,7 +2,6 @@
 #define CAP__GraphRenderer
 #include "Renderer.hpp"
 #include "Graph.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -39,7 +38,6 @@ namespace CAP
   //!
   void draw3D(const Graph & graph, Painter & painter, const Graph::View & view, float textSize, float cellWidth, float cellHeight) const;
 
-  ClassDef(GraphRenderer,0)
   };
 
   } // namespace GRAPHICS

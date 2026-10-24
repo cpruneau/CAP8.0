@@ -1,7 +1,6 @@
 #ifndef CAP__AxisRenderer
 #define CAP__AxisRenderer
 #include "Renderer.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -25,7 +24,6 @@ namespace CAP
   //! Shared instance used by default by the drawables this renderer handles.
   static const AxisRenderer * defaultRenderer();
 
-  ClassDef(AxisRenderer,0)
   };
 
   } // namespace GRAPHICS

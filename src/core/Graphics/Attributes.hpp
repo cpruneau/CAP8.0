@@ -1,7 +1,6 @@
 #ifndef CAP__Attributes
 #define CAP__Attributes
 #include "TObject.h"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -43,7 +42,6 @@ namespace CAP
 
   static Attributes * _defaultAttributes;
 
-  ClassDef(Attributes,0)
   };
 
 

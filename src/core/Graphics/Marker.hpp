@@ -2,7 +2,6 @@
 #define CAP__Marker
 #include "Drawable2D.hpp"
 #include "MarkerAttributes.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -26,7 +25,6 @@ namespace CAP
 
   MarkerAttributes _markerAttributes;
 
-  ClassDef(Marker,0)
   };
 
 

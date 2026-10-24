@@ -1,7 +1,6 @@
 #ifndef CAP__MarkerRenderer
 #define CAP__MarkerRenderer
 #include "Renderer.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -25,7 +24,6 @@ namespace CAP
   //! Shared instance used by default by the drawables this renderer handles.
   static const MarkerRenderer * defaultRenderer();
 
-  ClassDef(MarkerRenderer,0)
   };
 
   } // namespace GRAPHICS

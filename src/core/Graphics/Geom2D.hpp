@@ -5,7 +5,6 @@
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
 #include "TextAttributes.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -59,7 +58,6 @@ namespace CAP
   LineAttributes _lineAttributes;
   TextAttributes _textAttributes;
 
-  ClassDef(Geom2D,0)
   };
 
   } // namespace GRAPHICS

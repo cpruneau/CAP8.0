@@ -5,7 +5,6 @@
 #include "LineAttributes.hpp"
 #include "TextAttributes.hpp"
 #include "Rect2D.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -162,7 +161,6 @@ namespace CAP
   mutable Rect2D _titleRect; //! not streamed (set when drawn)
   mutable Rect2D _bodyRect;  //! not streamed (set when drawn)
 
-  ClassDef(Axis,0)
   };
   } // namespace GRAPHICS
 } // namespace CAP

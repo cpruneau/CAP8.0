@@ -1,7 +1,6 @@
 #ifndef CAP__AxisRange
 #define CAP__AxisRange
 #include "TObject.h"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -29,7 +28,6 @@ namespace CAP
   float _maximum;
 
  
-  ClassDef(AxisRange,0)
   };
 
   } // namespace GRAPHICS

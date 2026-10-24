@@ -4,7 +4,6 @@
 #include "LatexRenderer.hpp"
 #include "SvgPainter.hpp"
 
-ClassImp(CAP::GRAPHICS::Canvas);
 
 namespace CAP
 {

@@ -1,6 +1,5 @@
 #include "Renderer.hpp"
 
-ClassImp(CAP::GRAPHICS::Renderer);
 
 namespace CAP
 {

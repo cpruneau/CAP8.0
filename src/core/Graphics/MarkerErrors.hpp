@@ -1,7 +1,6 @@
 #ifndef CAP__MarkerErrors
 #define CAP__MarkerErrors
 #include "Drawable2D.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -25,7 +24,6 @@ namespace CAP
 
   protected:
 
-  ClassDef(Marker,0)
   };
 
   class MarkerVector : public Drawable2D
@@ -49,7 +47,6 @@ namespace CAP
 
   std::vector<Point2D> _points;
 
-  ClassDef(MarkerVector,0)
   };
 
   } // namespace GRAPHICS

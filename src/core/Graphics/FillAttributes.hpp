@@ -1,7 +1,6 @@
 #ifndef CAP__FillAttributes
 #define CAP__FillAttributes
 #include "Attributes.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -43,7 +42,6 @@ namespace CAP
   static FillAttributes * _defaultFillAttributes;
 
 
-  ClassDef(FillAttributes,0)
   };
 
   } // namespace GRAPHICS

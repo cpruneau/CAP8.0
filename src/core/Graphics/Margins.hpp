@@ -2,7 +2,6 @@
 #define CAP__Margins
 #include "TObject.h"
 #include "String.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -63,7 +62,6 @@ namespace CAP
   static float _defaultRight;
   static float _defaultTop;
 
-  ClassDef(Margins,0)
   };
 
 

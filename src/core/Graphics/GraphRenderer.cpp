@@ -13,7 +13,6 @@
 #include "Histogram.hpp"
 #include "TColor.h"
 
-ClassImp(CAP::GRAPHICS::GraphRenderer);
 
 namespace CAP
 {

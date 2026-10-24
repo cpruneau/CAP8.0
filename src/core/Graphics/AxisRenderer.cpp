@@ -5,7 +5,6 @@
 #include "Axis.hpp"
 #include "Painter.hpp"
 
-ClassImp(CAP::GRAPHICS::AxisRenderer);
 
 namespace CAP
 {

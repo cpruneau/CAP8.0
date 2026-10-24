@@ -1,6 +1,5 @@
 #include "LineAttributes.hpp"
 
-ClassImp(CAP::GRAPHICS::LineAttributes);
 
 namespace CAP
 {

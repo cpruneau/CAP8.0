@@ -13,7 +13,6 @@
 #define CAP__Shape
 #include <vector>
 #include "Geom2D.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -110,7 +109,6 @@ namespace CAP
   //! @brief Draw the text of the shape. @param painter painter @param graph graph
   void drawText(Painter & painter, const Graph & graph) const;
 
-  ClassDef(Shape,0)
   };
 
   } // namespace GRAPHICS

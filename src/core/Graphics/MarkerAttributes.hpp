@@ -1,7 +1,6 @@
 #ifndef CAP__MarkerAttributes
 #define CAP__MarkerAttributes
 #include "Attributes.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -33,7 +32,6 @@ namespace CAP
 
   static MarkerAttributes * _defaultMarkerAttributes;
 
-  ClassDef(MarkerAttributes,0)
   };
 
   }  // namespace GRAPHICS

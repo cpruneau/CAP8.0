@@ -2,7 +2,6 @@
 #define CAP__Polygon
 #include <vector>
 #include "Geom2D.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -41,7 +40,6 @@ namespace CAP
   int   _nSides;
   std::vector<Point2D> _vertices;
 
-  ClassDef(Polygon,0)
   };
 
   } //  namespace GRAPHICS

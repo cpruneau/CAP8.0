@@ -22,7 +22,6 @@
 #include "ParameterizedFunction.hpp"
 #include "Histogram.hpp"
 
-ClassImp(CAP::GRAPHICS::Graph);
 
 namespace CAP
 {

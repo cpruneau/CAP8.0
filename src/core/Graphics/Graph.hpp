@@ -25,7 +25,6 @@
 #include "Grid2D.hpp"
 #include "Palette.hpp"
 #include "Shape.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -801,7 +800,6 @@ namespace CAP
   mutable Rect2D _legendRect;                         //!<! where the legend was drawn (not streamed)
   mutable std::vector<PointPosition> _pointPositions; //!<! where the data points were drawn (not streamed)
 
-  ClassDef(Graph,0)
   };
 
   //! @brief Round [low,high] outward to multiples of a 1, 2, 5 x 10^k step (about 5 intervals); step is set.

@@ -85,17 +85,13 @@ if(APPLE)
   set_source_files_properties(MacOsCanvas.mm PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x objective-c++ -fobjc-arc")
 endif()
 
-ROOT_GENERATE_DICTIONARY(G__Graphics
-${GRAPHICS_HEADERS}
-LINKDEF GraphicsLinkDef.h)
 
 ################################################################################################
 # Create a shared library with geneated dictionary
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Graphics SHARED
-${GRAPHICS_SOURCES}
-G__Graphics.cxx)
+${GRAPHICS_SOURCES})
 
 target_link_libraries(Graphics Base Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 if(APPLE)
@@ -121,7 +117,6 @@ add_executable(TestGraph3D tests/TestGraph3D.cpp)
 target_link_libraries(TestGraph3D Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Graph3D COMMAND TestGraph3D)
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libGraphics.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libGraphics_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Graphics  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 
 # macOS demo program: bin/MacOsCanvasDemo opens a window showing a sample canvas

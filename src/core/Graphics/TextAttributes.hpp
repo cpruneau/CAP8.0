@@ -1,7 +1,6 @@
 #ifndef CAP__TextAttributes
 #define CAP__TextAttributes
 #include "Attributes.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -67,7 +66,6 @@ namespace CAP
 
   static TextAttributes * _defaultTextAttributes;
 
-  ClassDef(TextAttributes,0)
   };
 
   } // namespace GRAPHICS

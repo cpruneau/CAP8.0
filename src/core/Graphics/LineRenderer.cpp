@@ -2,7 +2,6 @@
 #include "Line.hpp"
 #include "Painter.hpp"
 
-ClassImp(CAP::GRAPHICS::LineRenderer);
 
 namespace CAP
 {

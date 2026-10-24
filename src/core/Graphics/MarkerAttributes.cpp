@@ -1,6 +1,5 @@
 #include "MarkerAttributes.hpp"
 
-ClassImp(CAP::GRAPHICS::MarkerAttributes);
 
 namespace CAP
 {

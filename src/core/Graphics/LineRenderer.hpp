@@ -1,7 +1,6 @@
 #ifndef CAP__LineRenderer
 #define CAP__LineRenderer
 #include "Renderer.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -25,7 +24,6 @@ namespace CAP
   //! Shared instance used by default by the drawables this renderer handles.
   static const LineRenderer * defaultRenderer();
 
-  ClassDef(LineRenderer,0)
   };
 
   } // namespace GRAPHICS

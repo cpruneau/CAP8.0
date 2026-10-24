@@ -1,7 +1,6 @@
 #include "Marker.hpp"
 #include "MarkerRenderer.hpp"
 
-ClassImp(CAP::GRAPHICS::Marker);
 
 namespace CAP
 {

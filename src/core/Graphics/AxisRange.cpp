@@ -2,7 +2,6 @@
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::GRAPHICS::AxisRange);
 
 namespace CAP
 {

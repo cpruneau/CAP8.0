@@ -7,7 +7,6 @@
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
 #include "Graph.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -102,7 +101,6 @@ namespace CAP
   void layout();
   void clearGraphs();
 
-  ClassDef(Canvas,0)
   };
 
   } // namespace GRAPHICS

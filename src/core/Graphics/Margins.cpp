@@ -1,6 +1,5 @@
 #include "Margins.hpp"
 
-ClassImp(CAP::GRAPHICS::Margins);
 
 namespace CAP
 {

@@ -5,7 +5,6 @@
 #include "String.hpp"
 #include "Renderer.hpp"
 #include "Point2D.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -77,7 +76,6 @@ namespace CAP
   std::vector<Point2D> _points;
   std::vector<Drawable2D*> _children;
 
-  ClassDef(Drawable2D,0)
   };
 
   } // namespace GRAPHICS

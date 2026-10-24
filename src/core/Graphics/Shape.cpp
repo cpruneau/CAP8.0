@@ -13,7 +13,6 @@
 #include "Graph.hpp"
 #include "Painter.hpp"
 
-ClassImp(CAP::GRAPHICS::Shape);
 
 namespace CAP
 {
