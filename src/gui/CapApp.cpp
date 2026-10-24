@@ -20,6 +20,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "FileSystem.hpp"
+#include "RootFileConversion.hpp"
 #include "CapApp.hpp"
 #include "XmlDocument.hpp"
 #include "Exceptions.hpp"
@@ -320,7 +321,7 @@ namespace CAP
   MenuBar & bar = _gui.menuBar();
 
   Menu & file = bar.addMenu("File");
-  file.addItem("Open...",        "file.open",       "Ctrl+O",       "Open a CAP file");
+  file.addItem("Open...",        "file.open",       "Ctrl+O",       "Open a CAP file, or the histograms of a ROOT file");
   file.addItem("Open Folder...", "file.openFolder", "Ctrl+Shift+O", "Show a folder of the file system in the browser");
   file.addItem("Close All Files", "file.closeAll",  "",             "Close the CAP files open in the browsers");
   file.addSeparator();
@@ -447,11 +448,12 @@ namespace CAP
   int columns = 0, rows = 0;
   if (c == "file.open")
     {
-    // the configured types that can be opened (CAP files only, for now)
+    // the configured types that can be opened (CAP and ROOT files)
     std::vector<String> types;
-    for (const auto & e : _configuration.extensions) if (FileSystem::hasExtension(String("x") + e, ".cap")) types.push_back(e);
+    for (const auto & e : _configuration.extensions)
+      if (FileSystem::hasExtension(String("x") + e, ".cap") || FileSystem::hasExtension(String("x") + e, ".root")) types.push_back(e);
     if (types.empty()) types.push_back(".cap");
-    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a CAP file", _configuration.directory, types, "",
+    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a CAP or ROOT file", _configuration.directory, types, "",
                            [this](const String & path) { openFile(path); });
     }
   else if (c == "file.openFolder")
@@ -594,11 +596,19 @@ namespace CAP
   return FileSystem::normalize(path);
   }
 
-  //! Read a CAP file. @param error set to the problem @return the file, or nullptr
+  //! Read a CAP file, or import the histograms of a ROOT file (kept in memory). @param error set to the problem
+  //! @return the file, or nullptr
   std::shared_ptr<CapFile> readCapFile(const String & path, String & error)
   {
   try
     {
+    if (FileSystem::hasExtension(path, ".root"))
+      {
+      auto file = std::make_shared<CapFile>(String(""), File::kReadWrite);
+      file->setFolderName(FileSystem::stem(path));
+      importRootFile(path, *file);
+      return file;
+      }
     auto file = std::make_shared<CapFile>(path, File::kReadOnly);
     file->load(File::Loading::kLazy);   // the tree at once; objects read when first shown
     return file;
@@ -692,6 +702,7 @@ namespace CAP
   browser.onRename     = [this](int file, const String & path, const String & name) { renameEntry(file, path, name); };
   browser.onRemove     = [this](int file, const String & path) { removeEntry(file, path); };
   browser.onSaveTree   = [this](int file) { saveTree(file); };
+  browser.onExportRoot = [this](int file, const String & path) { exportRoot(file, path); };
   }
 
   namespace
@@ -814,6 +825,33 @@ namespace CAP
   String name = tree->path.isEmpty() ? tree->name + String(".cap") : FileSystem::name(tree->path);
   _gui.fileDialog().open(FileDialog::kSaveFile, "Save the tree", _configuration.directory, {".cap"}, name,
                          [this, target](const String & chosen) { saveTreeTo(target, chosen); });
+  }
+
+  void CapApp::exportRoot(int target, const String & folderPath)
+  {
+  BrowserFile * entry = file(target);
+  if (!entry || !entry->file) return;
+  String base = folderPath.isEmpty() ? (entry->editable ? entry->name : FileSystem::stem(entry->path)) : FileSystem::name(folderPath);
+  _gui.fileDialog().open(FileDialog::kSaveFile, "Export to a ROOT file", _configuration.directory, {".root"},
+                         base + String(".root"), [this, target, folderPath](const String & chosen)
+    {
+    BrowserFile * from = file(target);
+    if (!from || !from->file) return;
+    String path = FileSystem::hasExtension(chosen, ".root") ? chosen : chosen + String(".root");
+    Folder & top = from->file->folder();
+    Folder * folder = folderPath.isEmpty() ? &top : top.folder(folderPath);
+    if (!folder) { _gui.showMessage("Export to ROOT", String("No folder ") + folderPath); return; }
+    try
+      {
+      std::vector<String> skipped;
+      int n = exportRootFile(*folder, path, &skipped);
+      _configuration.directory = FileSystem::parent(path);
+      String status = String(std::to_string(n).c_str()) + String(n == 1 ? " histogram" : " histograms") + String(" written to ") + path;
+      if (!skipped.empty()) status += String(" (") + String(std::to_string(skipped.size()).c_str()) + String(" other objects skipped)");
+      _gui.setStatus(status);
+      }
+    catch (const std::exception & e) { _gui.showMessage("Export to ROOT", String(e.what())); }
+    });
   }
 
   bool CapApp::saveTreeTo(int target, const String & fileName)

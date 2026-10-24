@@ -59,7 +59,7 @@ namespace CAP
   bool   logY         = false;   //!< logarithmic y axis in new graphs
   String mode         = "add";   //!< what showing an object does: "add" or "replace"
   String directory;   //!< folder where the file dialogs start (empty: the current folder)
-  std::vector<String> extensions{".cap"};   //!< types listed by the Open dialog (only those CapGui can open are used)
+  std::vector<String> extensions{".cap", ".root"};   //!< types listed by the Open dialog (only those CapGui can open are used)
   bool   demo         = false;  //!< show the demonstration objects at startup (otherwise the canvases start empty)
   bool   latex        = true;   //!< typeset the texts with '$' or '\' by LaTeX (see GRAPHICS::LatexRenderer)
   String latexBin;              //!< directory of latex and dvisvgm (empty: looked for)
@@ -145,6 +145,9 @@ namespace CAP
   void removeEntry(int target, const String & path);
   //! @brief Save an editable tree to a CAP file chosen by the user. @param target tree
   void saveTree(int target);
+  //! @brief Ask for a ROOT file, then write the histograms of a folder of a file or tree to it (see exportRootFile()).
+  //! @param target file or tree @param folderPath folder ("" for the top)
+  void exportRoot(int target, const String & folderPath);
   //! @brief Save an editable tree to a CAP file (".cap" added if missing); the tree then takes its name.
   //! @param target tree @param fileName file @return false if it cannot be saved (an open file, a write error)
   bool saveTreeTo(int target, const String & fileName);

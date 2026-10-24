@@ -158,9 +158,9 @@ namespace CAP
   auto found = _listings.find(directory);
   if (found != _listings.end()) return found->second;
   Listing & l = _listings[directory];
-  // sub-directories and CAP files, directories first, by name (case-insensitive); hidden entries left out
+  // sub-directories, CAP and ROOT files, directories first, by name (case-insensitive); hidden entries left out
   FileSystem::ListOptions options;
-  options.extensions = { ".cap" };
+  options.extensions = { ".cap", ".root" };
   try
     {
     for (const auto & entry : FileSystem::list(String(directory), options))
@@ -306,11 +306,13 @@ namespace CAP
       {
       editMenu(file.id, "", true);
       if (ImGui::MenuItem("Save Tree As...") && onSaveTree) onSaveTree(file.id);
+      if (ImGui::MenuItem("Export to ROOT...") && onExportRoot) onExportRoot(file.id, "");
       if (ImGui::MenuItem("Close Tree")) close = true;
       }
     else
       {
       if (ImGui::MenuItem("Reload")      && onReloadFile) onReloadFile(file.id);
+      if (ImGui::MenuItem("Export to ROOT...") && onExportRoot) onExportRoot(file.id, "");
       if (ImGui::MenuItem("Close File")) close = true;
       }
     ImGui::EndPopup();
@@ -384,6 +386,7 @@ namespace CAP
     if (ImGui::MenuItem("Show All")   && onShowFolder) onShowFolder(file->id, "");
     ImGui::Separator();
     if (ImGui::MenuItem("Reload")     && onReloadFile) onReloadFile(file->id);
+    if (ImGui::MenuItem("Export to ROOT...") && onExportRoot) onExportRoot(file->id, "");
     if (ImGui::MenuItem("Close File")) close = true;
     ImGui::EndPopup();
     }
@@ -423,6 +426,7 @@ namespace CAP
       if (ImGui::BeginPopupContextItem("##folderMenu"))
         {
         if (ImGui::MenuItem("Show All") && onShowFolder) onShowFolder(fileId, String(path));
+        if (ImGui::MenuItem("Export to ROOT...") && onExportRoot) onExportRoot(fileId, String(path));
         if (editable) { ImGui::Separator(); editMenu(fileId, path, true); }
         ImGui::EndPopup();
         }
