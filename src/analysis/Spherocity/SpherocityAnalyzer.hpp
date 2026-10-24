@@ -12,7 +12,6 @@
 #include "EventProcessorSingle.hpp"
 #include "SpherocityHistos.hpp"
 #include "SpherocityDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -55,7 +54,6 @@ protected:
   int    nSteps;   //!< Number of azimuthal steps used in the calculation of the transverse spherocity.
   double stepSize; //!< Two-pi/nSteps.
 
-  ClassDef(SpherocityAnalyzer,0)
 };
 
 } //namespace CAP

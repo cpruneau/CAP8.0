@@ -11,7 +11,6 @@
 #define CAP__SpherocityHistos
 #include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -65,7 +64,6 @@ protected:
   //! S1 vs S0.
   Histogram * h_s1VsS0;
 
-  ClassDef(SpherocityHistos, 1);
 };
 
 } // namespace CAP

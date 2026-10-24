@@ -17,7 +17,6 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 
-ClassImp(CAP::SpherocityDerivedHistos);
 
 namespace CAP
 {

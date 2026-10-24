@@ -14,7 +14,6 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::SpherocityAnalyzer);
 
 using CAP::MATH::absolute;
 

@@ -10,7 +10,6 @@
 #ifndef CAP__SpherocityDerivedHistos
 #define CAP__SpherocityDerivedHistos
 #include "SpherocityHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -47,7 +46,6 @@ protected:
   //! @brief Copy the content of another group. @param group group to copy
   void cloneD(const SpherocityDerivedHistos & group);
    
-  ClassDef(SpherocityDerivedHistos, 1);
 };
 
 } // namespace CAP
