@@ -15,7 +15,6 @@
 #include "Profile.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::ParticlePairDerivedHistos);
 
 namespace CAP
 {

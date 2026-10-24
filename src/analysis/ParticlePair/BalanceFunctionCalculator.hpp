@@ -11,7 +11,6 @@
 #define CAP__BalanceFunctionCalculator
 #include "Profile.hpp"
 #include "Calculator.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -221,7 +220,6 @@ protected:
   //! Whether the differences are computed.
   bool calculateDiffs;
 
-  ClassDef(BalanceFunctionCalculator,0)
 };
 
 } // namespace CAP

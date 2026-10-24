@@ -12,7 +12,6 @@
 #include "Calculator.hpp"
 #include "ParticlePairDerivedHistos.hpp"
 #include "ParticlePairBfHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -41,7 +40,6 @@ public:
   //! @brief Compute the balance functions.
   virtual void execute();
 
-  ClassDef(ParticlePairBfCalculator,0)
 };
 
 } // namespace CAP

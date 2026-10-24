@@ -11,7 +11,6 @@
 #define CAP__ParticlePairBfHistos
 #include "ParticlePairDerivedHistos.hpp"
 #include "HistogramFolder.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -112,7 +111,6 @@ protected:
   Histogram* h_R2_B21_DyDphi;  ///< balance function B(2|1) from R2 vs (Delta y, Delta phi)
   Histogram* h_R2_Bs_DyDphi;  ///< sum of the balance functions from R2 vs (Delta y, Delta phi)
 
-  ClassDef(ParticlePairBfHistos,1)
 
 };
 

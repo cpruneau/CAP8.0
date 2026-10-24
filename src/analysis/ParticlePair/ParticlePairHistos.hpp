@@ -11,7 +11,6 @@
 #define CAP__ParticlePairHistos
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
-#include "ClassDef.hpp"
 
 
 namespace CAP
@@ -152,7 +151,6 @@ protected:
   Histogram * h_n2_DyDphi;  ///< pair density vs (Delta y, Delta phi)
   Histogram * h_DptDpt_DyDphi;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi)
 
-  ClassDef(ParticlePairHistos,0)
 };
 
 } // namespace CAP

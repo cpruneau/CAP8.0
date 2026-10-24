@@ -14,7 +14,6 @@
 #include "ParticleSingleDerivedHistos.hpp"
 #include "ParticlePairHistos.hpp"
 #include "HistogramFolder.hpp"
-#include "ClassDef.hpp"
 
 using CAP::MATH::absolute;
 
@@ -142,7 +141,6 @@ protected:
   Histogram* h_G2_DyDphi_shft;  ///< transverse momentum correlator G2 vs (Delta y, Delta phi), Delta phi range shifted
   Histogram* h_DptDpt_DyDphi_shft;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi), Delta phi range shifted
   
-  ClassDef(ParticlePairDerivedHistos,1)
 
 };
 

@@ -14,7 +14,6 @@
 #include "ParticlePairHistos.hpp"
 #include "ParticlePairDerivedHistos.hpp"
 #include "ParticlePairBfHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -80,7 +79,6 @@ public:
   //! @brief Analyze the current event: apply the filters and fill the pair histograms of each accepted combination.
   virtual void execute();
 
-  ClassDef(ParticlePairAnalyzer,0)
 };
 
 } // namespace CAP

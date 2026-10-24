@@ -13,7 +13,6 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::BalanceFunctionCalculator)
 
 namespace CAP
 {
