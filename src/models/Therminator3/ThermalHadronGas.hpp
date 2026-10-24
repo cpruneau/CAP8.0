@@ -13,7 +13,6 @@
 #define CAP_ThermalHadronGas
 #include "ThermalHadron.hpp"
 #include "ParticleDb.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -162,7 +161,6 @@ namespace CAP
   void loadFromAscii(std::ifstream & inputFile, const ParticleDb & db);
   void saveToAscii(std::ofstream & outputFile);
   
-  ClassDef(ThermalHadronGas,0)
   };
 
 } // namespace CAP

@@ -9,7 +9,6 @@
 #include "ModelHydro3D.hpp"
 #include "ModelKrakowSFO.hpp"
 
-ClassImp(CAP::Therminator3);
 
 namespace CAP
 {

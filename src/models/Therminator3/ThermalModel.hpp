@@ -4,7 +4,6 @@
 #include "EventProcessor.hpp"
 #include "ThermalHistos.hpp"
 #include "ThermalHadronGasFD.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -41,7 +40,6 @@ namespace CAP
   ThermalHadronGasFD _thermalHadronGas;
   ThermalHistos _histograms;
 
-  ClassDef(ThermalModel,0)
 
   };
 

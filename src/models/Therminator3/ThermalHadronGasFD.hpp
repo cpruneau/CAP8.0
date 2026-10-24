@@ -12,7 +12,6 @@
 #ifndef CAP_ThermalHadronGasFD
 #define CAP_ThermalHadronGasFD
 #include "ThermalHadronGas.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -77,7 +76,6 @@ namespace CAP
   int generateRandomHadronByIndex();
 
 
-  ClassDef(ThermalHadronGasFD,0)
   };
 
 } // namespace CAP

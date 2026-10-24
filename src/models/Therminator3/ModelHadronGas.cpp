@@ -1,7 +1,6 @@
 #include "ModelHadronGas.hpp"
 #include "MathConstants.hpp"
 
-ClassImp(CAP::ModelHadronGas);
 using CAP::MATH::twoPiCube;
 using CAP::MATH::twoPi;
 

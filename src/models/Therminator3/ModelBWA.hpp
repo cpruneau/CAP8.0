@@ -1,7 +1,6 @@
 #ifndef CAP__ModelBWA_H_
 #define CAP__ModelBWA_H_
 #include "Model.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -13,7 +12,6 @@ namespace CAP
   ModelBWA();
   virtual ~ModelBWA() {}
   virtual double calculateIntegrand(ThermalHadron & hadron);
-  ClassDef(ModelBWA,0)
   };
 
 } // namespace CAP

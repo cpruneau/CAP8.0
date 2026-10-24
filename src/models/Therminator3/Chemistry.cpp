@@ -3,7 +3,6 @@
 
 //using Tpower;
 
-ClassImp(CAP::Chemistry);
 
 using CAP::MATH::power;
 using CAP::MATH::ScalarField;

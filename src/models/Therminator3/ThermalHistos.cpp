@@ -13,7 +13,6 @@
 #include "ThermalHadron.hpp"
 #include "ThermalHadronGas.hpp"
 
-ClassImp(CAP::ThermalHistos);
 
 namespace CAP
 {

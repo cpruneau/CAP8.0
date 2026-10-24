@@ -6,8 +6,6 @@
 #include <fstream>
 
 using namespace std;
-ClassImp(CAP::CollisionSystem);
-ClassImp(CAP::Model);
 
 namespace CAP
 {

@@ -1,7 +1,6 @@
 #ifndef CAP__ModelHadronGas
 #define CAP__ModelHadronGas
 #include "Model.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -13,7 +12,6 @@ namespace CAP
   ModelHadronGas();
   virtual ~ModelHadronGas() {}
   virtual double calculateIntegrand(ThermalHadron & hadron);
-  ClassDef(ModelHadronGas,0)
   };
 
 } // namespace CAP

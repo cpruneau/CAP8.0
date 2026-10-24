@@ -5,7 +5,6 @@
 #include <cmath>
 #include <TMath.h>
 #include "Math/SpecFunc.h"
-ClassImp(CAP::ThermalHadron);
 
 namespace CAP
 {

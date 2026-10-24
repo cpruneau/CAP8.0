@@ -1,7 +1,6 @@
 #ifndef CAP__ModelKrakowSFO
 #define CAP__ModelKrakowSFO
 #include "Model.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -13,7 +12,6 @@ namespace CAP
   ModelKrakowSFO();
   virtual ~ModelKrakowSFO() {}
   virtual double calculateIntegrand(ThermalHadron & hadron);
-  ClassDef(ModelKrakowSFO,0)
   };
 
 } // namespace CAP

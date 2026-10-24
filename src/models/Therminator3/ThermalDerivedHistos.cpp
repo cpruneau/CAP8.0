@@ -5,7 +5,6 @@
 #include "Profile.hpp"
 #include "CapFile.hpp"
 
-ClassImp(CAP::ThermalDerivedHistos);
 
 namespace CAP
 {

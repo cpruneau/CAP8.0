@@ -10,7 +10,6 @@
 #define CAP_ThermalHistos
 #include "HistogramFolder.hpp"
 #include "ThermalHadronGasFD.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -121,7 +120,6 @@ namespace CAP
   double  mass_min;
   double  mass_max;
   
-  ClassDef(ThermalHistos,0)
   
   };
   

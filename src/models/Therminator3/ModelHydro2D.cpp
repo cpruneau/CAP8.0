@@ -2,7 +2,6 @@
 #include "XmlDocument.hpp"
 #include "XmlScalarField.hpp"
 
-ClassImp(CAP::ModelHydro2D);
 using CAP::MATH::twoPiCube;
 using CAP::MATH::twoPi;
 using CAP::Physics::hBarC;

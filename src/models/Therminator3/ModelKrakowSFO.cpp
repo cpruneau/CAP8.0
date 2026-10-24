@@ -1,6 +1,5 @@
 #include "ModelKrakowSFO.hpp"
 
-ClassImp(CAP::ModelKrakowSFO);
 
 using CAP::MATH::twoPi;
 using CAP::MATH::twoPiCube;

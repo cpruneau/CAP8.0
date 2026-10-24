@@ -10,7 +10,6 @@
 #include "ThermalHadronGas.hpp"
 #include "Thermodynamics.hpp"
 #include "VectorLorentz.hpp"
-#include "ClassDef.hpp"
 //#include <iostream>
 
 using CAP::MATH::ScalarField;
@@ -74,7 +73,6 @@ namespace CAP
   return gammaAtBetaSq(vSq/lightVelocitySq_SI());
   }
 
-  ClassDef(Model,0)
   };
 
 } // namespace CAP

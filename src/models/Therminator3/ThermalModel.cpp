@@ -4,7 +4,6 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::ThermalModel);
 
 namespace CAP
 {

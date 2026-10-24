@@ -2,7 +2,6 @@
 #define CAP_CHEMISTRY_H_
 #include "ScalarField.hpp"
 #include "ParticleType.hpp"
-#include "ClassDef.hpp"
 
 using CAP::MATH::ScalarField;
 
@@ -113,7 +112,6 @@ namespace CAP
   ScalarField   _lambdaCField;
 
 
-  ClassDef(Chemistry,0)
   };
 
 }  //namespace CAP

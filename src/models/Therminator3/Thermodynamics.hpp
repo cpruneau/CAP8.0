@@ -3,7 +3,6 @@
 #include "ScalarField.hpp"
 #include "Chemistry.hpp"
 #include "Viscosity.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -68,7 +67,6 @@ namespace CAP
   MATH::ScalarField _temperature;
   Viscosity   _viscosity;
 
-  ClassDef(Thermodynamics,0)
   };
 
 

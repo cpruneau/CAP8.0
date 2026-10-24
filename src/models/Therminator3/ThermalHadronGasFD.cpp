@@ -3,7 +3,6 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::ThermalHadronGas);
 
 using namespace std;
 

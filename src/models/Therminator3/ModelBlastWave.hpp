@@ -1,7 +1,6 @@
 #ifndef CAP__ModelBlastWave
 #define CAP__ModelBlastWave
 #include "Model.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -14,7 +13,6 @@ namespace CAP
   ModelBlastWave();
   virtual ~ModelBlastWave() {}
   virtual double calculateIntegrand(ThermalHadron & hadron);
-  ClassDef(ModelBlastWave,0)
   };
 
 } // namespace CAP

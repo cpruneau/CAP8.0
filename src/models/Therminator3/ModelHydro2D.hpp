@@ -1,7 +1,6 @@
 #ifndef CAP__ModelHydro2D
 #define CAP__ModelHydro2D
 #include "Model.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -23,7 +22,6 @@ namespace CAP
   ScalarField _vtFluidField;
   ScalarField _phiFluidField;
 
-  ClassDef(ModelHydro2D,0)
   };
 
 } // namespace CAP

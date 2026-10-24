@@ -3,7 +3,6 @@
 #include <vector>
 #include "ParticleType.hpp"
 #include "TObject.h"
-#include "ClassDef.hpp"
 
 class ThermalHadronGas;
 class Model;
@@ -102,7 +101,6 @@ namespace CAP
   static unsigned int truncateOrder();
   static void setTruncateOrder(unsigned int n);
 
-  ClassDef(ThermalHadron,0)
   };
 
 } // namespace CAP

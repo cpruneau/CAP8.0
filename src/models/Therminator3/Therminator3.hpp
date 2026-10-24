@@ -7,7 +7,6 @@
 #include "ThermalHistos.hpp"
 #include "ThermalDerivedHistos.hpp"
 #include "ThermalHadronGas.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -52,7 +51,6 @@ namespace CAP
   Model * _model;
   ThermalHistos _histograms;
 
-  ClassDef(Therminator3,0)
 
   };
 
