@@ -17,7 +17,6 @@
 #include <sstream>
 #include <utility>
 
-ClassImp(CAP::CapFile);
 
 namespace CAP
 {

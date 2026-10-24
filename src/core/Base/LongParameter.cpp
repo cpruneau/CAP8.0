@@ -10,7 +10,6 @@
 #include "LongParameter.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::LongParameter);
 
 namespace CAP
 {

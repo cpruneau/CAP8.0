@@ -10,7 +10,6 @@
 #ifndef CAP__CommandLineParser
 #define CAP__CommandLineParser
 #include "Parser.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -41,7 +40,6 @@ public:
   //! @brief Copy assignment. @param parser parser to copy @return this parser
   CommandLineParser & operator=(const CommandLineParser & parser);
 
-  ClassDef(CommandLineParser,0)
 };
 
 }

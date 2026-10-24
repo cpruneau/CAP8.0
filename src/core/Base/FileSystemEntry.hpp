@@ -13,7 +13,6 @@
 #define CAP__FileSystemEntry
 #include "FileSystem.hpp"
 #include "Object.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -97,7 +96,6 @@ protected:
 
   String _path;  //!< path of the entry
 
-  ClassDefOverride(FileSystemEntry,0)
 };
 
 } // namespace CAP

@@ -11,7 +11,6 @@
 #define CAP__PropertiesParser
 #include "Parser.hpp"
 #include "Properties.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -65,7 +64,6 @@ public:
                              const String & _fileName,
                              const String & _extension) ;
 
-  ClassDef(PropertiesParser,0)
 
 };
 

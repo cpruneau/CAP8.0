@@ -13,7 +13,6 @@
 #include <chrono>
 #include <fstream>
 #include "TObject.h"
-#include "ClassDef.hpp"
 using namespace std;
 using namespace std::chrono;
 
@@ -68,7 +67,6 @@ public:
   int    deltaMinutes;                          //!< minutes (0-59) of the interval duration
   double deltaSeconds;                          //!< seconds (below 60) of the interval duration
 
-  ClassDef(Timer,0)
 };
 
 }

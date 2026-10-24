@@ -13,7 +13,6 @@
 #include <climits>
 #include <cstdlib>
 
-ClassImp(CAP::Property);
 
 namespace CAP
 {

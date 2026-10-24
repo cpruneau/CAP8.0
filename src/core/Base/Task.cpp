@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <typeinfo>
 
-ClassImp(CAP::Task);
 
 namespace CAP
 {

@@ -11,7 +11,6 @@
 #include "Accountant.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::Accountant);
 
 namespace CAP
 {

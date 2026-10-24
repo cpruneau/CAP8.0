@@ -10,7 +10,6 @@
 #include "Parser.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::Parser);
 
 namespace CAP
 {

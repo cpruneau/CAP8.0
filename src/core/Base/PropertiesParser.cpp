@@ -11,7 +11,6 @@
 #include "PrintHelpers.hpp"
 #include "StreamHelpers.hpp"
 
-ClassImp(CAP::PropertiesParser);
 
 namespace CAP
 {

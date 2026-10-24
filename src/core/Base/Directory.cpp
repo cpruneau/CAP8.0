@@ -16,7 +16,6 @@
 #include "Directory.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::Directory);
 
 namespace CAP
 {

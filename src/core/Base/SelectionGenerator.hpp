@@ -11,7 +11,6 @@
 #define CAP__SelectionGenerator
 #include <vector>
 #include "TRandom.h"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -56,7 +55,6 @@ public:
 protected:
 
   std::vector<double> cumulativeProbability; //!< normalized cumulative probabilities
-  ClassDef(SelectionGenerator,0)
 };
 
 }

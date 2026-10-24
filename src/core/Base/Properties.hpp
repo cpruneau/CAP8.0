@@ -12,7 +12,6 @@
 #include <vector>
 #include "String.hpp"
 #include "Property.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -197,7 +196,6 @@ namespace CAP
   
   std::vector<Property> _properties; //!< properties, in insertion order
   
-  ClassDef(Properties,0)
   
   };
   

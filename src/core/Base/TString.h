@@ -35,7 +35,6 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
-#include "ClassDef.hpp"
 #if (__cplusplus >= 202002L)
 #  include <compare>
 #endif
@@ -471,7 +470,6 @@ public:
 #endif
    ;
 
-   ClassDef(TString,2)  //Basic string class
 };
 
 // Related global functions

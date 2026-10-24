@@ -10,7 +10,6 @@
 #ifndef CAP__Configuration
 #define CAP__Configuration
 #include "Properties.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -120,7 +119,6 @@ class Configuration : public Properties
   }
 
 protected:
-  ClassDef(Configuration,0)
   
 };
 

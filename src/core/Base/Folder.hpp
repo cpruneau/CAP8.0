@@ -15,7 +15,6 @@
 #include "Exceptions.hpp"
 #include "BinaryIO.hpp"
 #include "Object.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -440,7 +439,6 @@ namespace CAP
   std::string _currentPath;      //!<! path of the current folder from the top ("" when it is this folder)
 
 
-  //ClassDef(Folder,1)
   };
 
   //!

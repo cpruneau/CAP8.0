@@ -17,7 +17,6 @@
 #include <cmath>
 #include <iomanip>
 #include "Object.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -45,7 +44,6 @@ namespace CAP
 
   protected:
 
-  ClassDef(Parser,0)
   };
 
 } // namespace CAP

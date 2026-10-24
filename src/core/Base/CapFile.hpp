@@ -13,7 +13,6 @@
 #include "Folder.hpp"
 #include "Accountant.hpp"
 #include <vector>
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -288,7 +287,6 @@ protected:
   Folder _folder;  //!<! folder held (not streamed by ROOT)
   std::shared_ptr<const LazySource> _source;  //!<! file the objects not decoded come from (lazy loading)
 
-  ClassDefOverride(CapFile,0)
 };
 
 } // namespace CAP

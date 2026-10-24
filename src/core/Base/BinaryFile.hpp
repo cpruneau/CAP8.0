@@ -13,7 +13,6 @@
 #define CAP__BinaryFile
 #include <string>
 #include "File.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -85,7 +84,6 @@ protected:
   std::string _bytes;  //!<! bytes held (not streamed by ROOT)
   bool        _lazy;   //!< loaded lazily: nothing held
 
-  ClassDefOverride(BinaryFile,0)
 };
 
 } // namespace CAP

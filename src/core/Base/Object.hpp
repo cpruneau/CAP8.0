@@ -11,7 +11,6 @@
 #define CAP__Object
 #include "String.hpp"
 #include "Exceptions.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -292,7 +291,6 @@ protected:
   unsigned int _loggerStyle;  //!< logging style (not used yet)
   unsigned int _index;                //!< Version index of this object instance.
 
-  ClassDef(Object,0)
 };
 
 } // namespace CAP

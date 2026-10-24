@@ -10,7 +10,6 @@
 #include "Timer.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::Timer);
 
 CAP::Timer::Timer()
 :

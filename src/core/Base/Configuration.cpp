@@ -9,7 +9,6 @@
  * *********************************************************************/
 #include "Configuration.hpp"
 
-ClassImp(CAP::Configuration);
 
 namespace CAP
 {

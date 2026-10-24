@@ -11,7 +11,6 @@
 #define CAP__ConfigurationManager
 #include "Object.hpp"
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -405,7 +404,6 @@ protected:
 
   Configuration _configuration;  //!< parameters
   String _configurationPath;  //!< path prepended to the keys of the single-key functions
-  ClassDef(ConfigurationManager,0)
 };
 
 } // namespace CAP

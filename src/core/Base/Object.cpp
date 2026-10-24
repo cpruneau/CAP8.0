@@ -13,7 +13,6 @@
 using std::cout;
 using std::endl;
 
-ClassImp(CAP::Object);
 
 namespace CAP
 {

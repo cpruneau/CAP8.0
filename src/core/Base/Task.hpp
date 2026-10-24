@@ -15,7 +15,6 @@
 #include "Timer.hpp"
 #include "XmlDocument.hpp"
 #include <iostream>
-#include "ClassDef.hpp"
 namespace CAP
 {
   class Folder;
@@ -314,7 +313,6 @@ namespace CAP
   //!
   Timer _timer;
 
-  ClassDef(Task,0)
   };
 
 }

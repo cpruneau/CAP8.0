@@ -10,7 +10,6 @@
 #include "SelectionGenerator.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::SelectionGenerator);
 
 CAP::SelectionGenerator::SelectionGenerator()
 :

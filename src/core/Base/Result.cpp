@@ -13,9 +13,7 @@
 using CAP::Factory;
 using CAP::Particle;
 
-ClassImp(Factory<Particle>);
 
-ClassImp(Particle);
 
 Particle::Particle()
 :

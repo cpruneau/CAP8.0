@@ -11,7 +11,6 @@
 #define CAP__LongParameter
 #include "Object.hpp"
 #include "BinaryIO.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -62,7 +61,6 @@ protected:
 
   long _value; //!< value of the parameter
 
-  ClassDefOverride(LongParameter,1)
 };
 
 } // namespace CAP

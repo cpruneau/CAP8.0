@@ -14,7 +14,6 @@
 #include "String.hpp"
 #include "Exceptions.hpp"
 #include "FileSystemEntry.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -171,7 +170,6 @@ protected:
   bool         _loaded;  //!< the structure was loaded from the file, or saved to it
   std::fstream _stream;  //!<! stream of the open file (not streamed by ROOT)
 
-  ClassDefOverride(File,0)
 };
 
 } // namespace CAP

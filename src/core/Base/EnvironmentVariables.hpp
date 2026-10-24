@@ -11,7 +11,6 @@
 #define CAP__EnvironmentVariables
 #include "String.hpp"
 #include "Properties.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -58,7 +57,6 @@ protected:
   //! @brief Read the CAP environment variables from the operating system.
   void initialize();
 
-  ClassDef(EnvironmentVariables,0)
 };
 
 } // namespace CAP

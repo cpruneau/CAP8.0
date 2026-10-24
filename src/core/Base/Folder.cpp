@@ -11,7 +11,6 @@
 #include <cxxabi.h>
 #endif
 
-ClassImp(CAP::Folder);
 
 namespace CAP
 {

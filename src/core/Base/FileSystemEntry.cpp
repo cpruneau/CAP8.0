@@ -12,7 +12,6 @@
 #include "FileSystemEntry.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::FileSystemEntry);
 
 namespace CAP
 {

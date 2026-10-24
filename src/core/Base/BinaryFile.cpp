@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <iterator>
 
-ClassImp(CAP::BinaryFile);
 
 namespace CAP
 {

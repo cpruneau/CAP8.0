@@ -15,7 +15,6 @@
 #include <cstdlib>
 #include <iomanip>
 
-ClassImp(CAP::ConfigurationManager);
 
 namespace CAP
 {

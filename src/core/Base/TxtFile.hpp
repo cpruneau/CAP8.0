@@ -11,7 +11,6 @@
 #define CAP__TxtFile
 #include <vector>
 #include "File.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -98,7 +97,6 @@ protected:
 
   std::vector<String> _lines;  //!< lines of text
 
-  ClassDefOverride(TxtFile,0)
 };
 
 } // namespace CAP

@@ -12,7 +12,6 @@
 #include <vector>
 #include "String.hpp"
 #include "Object.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -90,7 +89,6 @@ protected:
   
   std::vector<long> _counts; //!< counts
 
-  ClassDef(Accountant,0)
 };
 
 } // namespace CAP

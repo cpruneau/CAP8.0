@@ -10,7 +10,6 @@
 #include "Properties.hpp"
 #include "PropertiesParser.hpp"
 
-ClassImp(CAP::Properties);
 
 namespace CAP
 {

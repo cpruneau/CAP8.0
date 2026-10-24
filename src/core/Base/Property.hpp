@@ -10,7 +10,6 @@
 #ifndef CAP__Property
 #define CAP__Property
 #include "Object.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -223,7 +222,6 @@ protected:
   String _value; //!< value, stored as a string
   Type   _type;  //!< type of the value
 
-  ClassDef(Property,0)
 
 };
 

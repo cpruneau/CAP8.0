@@ -13,7 +13,6 @@
 #include "EnvironmentVariables.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::EnvironmentVariables);
 
 namespace CAP
 {
