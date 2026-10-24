@@ -27,6 +27,7 @@
 #pragma link C++ class CAP::GRAPHICS::Polygon+;
 #pragma link C++ class CAP::GRAPHICS::PolygonRenderer+;
 #pragma link C++ class CAP::GRAPHICS::Renderer+;
+#pragma link C++ class CAP::GRAPHICS::Shape+;
 #pragma link C++ class CAP::GRAPHICS::TextAttributes+;
 #pragma link C++ class CAP::GRAPHICS::TextRenderer+;
 #ifdef __APPLE__

@@ -35,6 +35,7 @@ Point2D.hpp
 Point3D.hpp
 Rect2D.hpp
 Polygon.hpp
+Shape.hpp
 Projection3D.hpp
 PolygonRenderer.hpp
 Renderer.hpp
@@ -68,6 +69,7 @@ MarkerVector.cpp
 Painter.cpp
 Palette.cpp
 Polygon.cpp
+Shape.cpp
 Projection3D.cpp
 PolygonRenderer.cpp
 Renderer.cpp
@@ -112,6 +114,9 @@ add_test(NAME Graph2D COMMAND TestGraph2D)
 add_executable(TestPdfPainter tests/TestPdfPainter.cpp)
 target_link_libraries(TestPdfPainter Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME PdfPainter COMMAND TestPdfPainter)
+add_executable(TestShapes tests/TestShapes.cpp)
+target_link_libraries(TestShapes Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME Shapes COMMAND TestShapes)
 add_executable(TestGraph3D tests/TestGraph3D.cpp)
 target_link_libraries(TestGraph3D Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Graph3D COMMAND TestGraph3D)

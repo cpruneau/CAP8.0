@@ -343,7 +343,7 @@ namespace CAP
   edit.addItem("Cut",    "edit.cut",    "Ctrl+X", "Copy the contents of the selected graph, then clear it");
   edit.addItem("Copy",   "edit.copy",   "Ctrl+C", "Copy the contents of the selected graph");
   edit.addItem("Paste",  "edit.paste",  "Ctrl+V", "Show the copied objects in the selected graph");
-  edit.addItem("Delete", "edit.delete", "Delete", "Clear the selected graph");
+  edit.addItem("Delete", "edit.delete", "Delete", "Remove the selected shape, or clear the selected graph");
   edit.addSeparator();
   edit.addItem("Clear Canvas",       "edit.clearCanvas", "", "Clear all the graphs of the current canvas");
   edit.addItem("Clear All Canvases", "edit.clearAll",    "", "Clear all the graphs of all the canvases");
@@ -499,18 +499,19 @@ namespace CAP
     if (pane.mode() == CanvasPane::kReplace) pane.currentGraph().clearItems();
     for (const auto & item : _clipboard) pane.currentGraph().add(item);
     }
+  else if (c == "edit.delete" && _gui.currentPane().hasSelectedShape()) _gui.currentPane().deleteSelectedShape();
   else if (c == "edit.delete")      { recordUndo(); _gui.currentPane().currentGraph().clearItems(); }
   else if (c == "edit.clearCanvas")
     {
     recordUndo();
     Canvas & canvas = _gui.currentPane().canvas();
-    for (int k=0; k<canvas.nGraphs(); k++) canvas.graph(k).clearItems();
+    for (int k=0; k<canvas.nGraphs(); k++) { canvas.graph(k).clearItems(); canvas.graph(k).clearShapes(); }
     }
   else if (c == "edit.clearAll")
     {
     recordUndo();
     for (int p=0; p<_gui.nPanes(); p++)
-      for (int k=0; k<_gui.pane(p).canvas().nGraphs(); k++) _gui.pane(p).canvas().graph(k).clearItems();
+      for (int k=0; k<_gui.pane(p).canvas().nGraphs(); k++) { _gui.pane(p).canvas().graph(k).clearItems(); _gui.pane(p).canvas().graph(k).clearShapes(); }
     }
   else if (c == "edit.preferences") _showPreferences = true;
   else if (c == "edit.fit") _gui.openFitDialog();

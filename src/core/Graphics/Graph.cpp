@@ -285,6 +285,7 @@ namespace CAP
   _cellXLow(src._cellXLow), _cellYLow(src._cellYLow), _cellXHigh(src._cellXHigh), _cellYHigh(src._cellYHigh),
   _margins(src._margins),
   _items(src._items),
+  _shapes(src._shapes),
   _logX(src._logX), _logY(src._logY),
   _autoX(src._autoX), _autoY(src._autoY),
   _xMinimum(src._xMinimum), _xMaximum(src._xMaximum), _yMinimum(src._yMinimum), _yMaximum(src._yMaximum),
@@ -318,6 +319,22 @@ namespace CAP
   _titleRect(src._titleRect), _legendRect(src._legendRect), _pointPositions(src._pointPositions)
   { }
 
+  void Graph::draw(Painter & painter) const
+  {
+  if (_excluded) return;
+  Drawable2D::draw(painter);
+  for (const auto & shape : _shapes) shape.draw(painter, *this);
+  }
+
+  int Graph::shapeAt(const Point2D & p, float toleranceX, float toleranceY) const
+  {
+  float w = _cellXHigh - _cellXLow, h = _cellYHigh - _cellYLow;
+  if (w <= 0 || h <= 0) return -1;
+  Point2D q = Shape::fromCanvas(*this, p);
+  for (int k=int(_shapes.size())-1; k>=0; k--) if (_shapes[size_t(k)].contains(q, toleranceX/w, toleranceY/h)) return k;
+  return -1;
+  }
+
   Graph & Graph::operator=(const Graph & rhs)
   {
   if (this != &rhs)
@@ -326,6 +343,7 @@ namespace CAP
     _cellXLow = rhs._cellXLow; _cellYLow = rhs._cellYLow; _cellXHigh = rhs._cellXHigh; _cellYHigh = rhs._cellYHigh;
     _margins = rhs._margins;
     _items = rhs._items;
+    _shapes = rhs._shapes;
     _logX = rhs._logX; _logY = rhs._logY;
     _autoX = rhs._autoX; _autoY = rhs._autoY;
     _xMinimum = rhs._xMinimum; _xMaximum = rhs._xMaximum; _yMinimum = rhs._yMinimum; _yMaximum = rhs._yMaximum;

@@ -26,6 +26,7 @@
 #include "Rect2D.hpp"
 #include "Grid2D.hpp"
 #include "Palette.hpp"
+#include "Shape.hpp"
 
 namespace CAP
 {
@@ -475,6 +476,23 @@ namespace CAP
   const std::vector<GraphItem> & items() const { return _items; }   //!< Items shown, in drawing order
   //! @}
 
+  //! @name Shapes drawn over the graph (rectangles, ellipses, triangles, polygons, lines and arrows; see Shape)
+  //! @{
+  //! @brief Add a shape, drawn over everything else (the shapes added later over the earlier ones). @param shape shape
+  //! @return the shape added
+  Shape & addShape(const Shape & shape) { _shapes.push_back(shape); return _shapes.back(); }
+  //! @brief Remove all the shapes.
+  void clearShapes() { _shapes.clear(); }
+  std::vector<Shape> & shapes() { return _shapes; }   //!< Shapes, in drawing order
+  const std::vector<Shape> & shapes() const { return _shapes; }   //!< Shapes, in drawing order
+  //! @brief Shape under a point of the canvas, the top one. @param p point (normalized canvas coordinates)
+  //! @param toleranceX,toleranceY distance counted as near (canvas units) @return index, or -1
+  int shapeAt(const Point2D & p, float toleranceX, float toleranceY) const;
+  //! @}
+
+  //! @brief Draw the graph (frame, axes, items, legend), then its shapes. @param painter painter
+  void draw(Painter & painter) const override;
+
   //! @name Scales and ranges
   //! @{
   void setLogX(bool v) { _logX = v; }   //!< Logarithmic x axis or not
@@ -735,6 +753,7 @@ namespace CAP
   float _cellYHigh;   //!< cell of the graph (normalized canvas coordinates)
   Margins _margins;   //!< margins between the cell and the frame
   std::vector<GraphItem> _items; //!<! items shown (not streamed: the objects shown are not owned)
+  std::vector<Shape> _shapes; //!<! shapes drawn over the graph
   bool  _logX;   //!< logarithmic axes
   bool  _logY;   //!< logarithmic axes
   bool  _autoX;   //!< automatic ranges

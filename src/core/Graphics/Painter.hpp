@@ -27,7 +27,8 @@ namespace CAP
   //! Style conventions (ROOT-like):
   //!  - colors are ROOT color indices (resolved by rgb())
   //!  - line style 0 = no line, 1 = solid, 2 = dashed, 3 = dotted, 4 = dash-dot
-  //!  - fill style 0 = hollow, any other value = solid fill
+  //!  - fill style 0 = hollow, any other value = solid fill; drawShape() also draws the hatch patterns of
+  //!    FillAttributes (3004, 3005, ...)
   //!  - marker size 1 is about 8 device units across
   //!  - text size is a fraction of the canvas height
   //!
@@ -47,6 +48,15 @@ namespace CAP
 
   //! Closed polygon: filled with fill, outlined with line.
   virtual void drawPolygon(const std::vector<Point2D> & points, const FillAttributes & fill, const LineAttributes & line) = 0;
+
+  //! Closed polygon as drawPolygon(), with the hatch patterns of FillAttributes drawn as lines of the fill color
+  //! (spaced by about 8 device units), clipped to the polygon (any polygon, convex or not).
+  void drawShape(const std::vector<Point2D> & points, const FillAttributes & fill, const LineAttributes & line);
+
+  //! Lines of a hatch pattern clipped to a polygon, as pairs of points (normalized canvas coordinates).
+  //! @param points polygon @param style FillAttributes pattern @param spacing distance between lines (device units)
+  //! @return segments: points 2k and 2k+1 are the ends of segment k
+  std::vector<Point2D> hatchSegments(const std::vector<Point2D> & points, int style, float spacing=8.0f) const;
 
   //! Polygon filled with any color, without outline (e.g. a cell of a color map). The default uses the ROOT
   //! color nearest to color, through drawPolygon(); the painters override it.

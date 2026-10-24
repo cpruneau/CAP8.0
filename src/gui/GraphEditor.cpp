@@ -11,6 +11,7 @@
  * *********************************************************************/
 //! @file GraphEditor.cpp
 //! @brief Implementation of the GraphEditor dialogs and widgets.
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -794,6 +795,57 @@ namespace CAP
   ImGui::Spacing();
   ImGui::Separator();
   if (ImGui::Button("Remove from the graph")) { graph.items().erase(graph.items().begin() + k); changed = true; ImGui::CloseCurrentPopup(); }
+  return changed;
+  }
+
+  bool fillStyleEdit(const char * label, int & style)
+  {
+  static const int styles[] = { FillAttributes::kHollow, FillAttributes::kSolid, FillAttributes::kHatchForward,
+                                FillAttributes::kHatchBackward, FillAttributes::kHatchVertical,
+                                FillAttributes::kHatchHorizontal, FillAttributes::kCrossHatch, FillAttributes::kGrid };
+  static const char * names[] = { "hollow", "solid", "hatched ////", "hatched \\\\\\\\", "vertical lines",
+                                  "horizontal lines", "cross-hatched", "grid" };
+  int s = 1;
+  for (int k=0; k<8; k++) if (styles[k] == style) s = k;
+  if (style == 0) s = 0;
+  ImGui::SetNextItemWidth(150);
+  if (!ImGui::Combo(label, &s, names, 8)) return false;
+  style = styles[s];
+  return true;
+  }
+
+  bool editShape(Shape & shape)
+  {
+  bool changed = false;
+  ImGui::Text("%c%s", std::toupper(Shape::kindName(shape.kind())[0]), Shape::kindName(shape.kind()) + 1);
+  if (shape.isClosed())
+    {
+    section("Inside");
+    FillAttributes & fill = shape.fillAttributes();
+    int color = fill.color(), style = fill.style();
+    float alpha = fill.alpha();
+    if (colorEdit("color", color)) { fill.setColor(color, alpha); if (style == 0) fill.setStyle(FillAttributes::kSolid); changed = true; }
+    if (fillStyleEdit("pattern", style)) { fill.setStyle(style); changed = true; }
+    ImGui::SetNextItemWidth(150);
+    if (ImGui::SliderFloat("opacity##fill", &alpha, 0.0f, 1.0f, "%.2f")) { fill.setAlpha(alpha); changed = true; }
+    }
+  section(shape.isClosed() ? "Boundary" : "Line");
+  LineAttributes & line = shape.lineAttributes();
+  int color = line.color(), style = line.style();
+  float width = line.width(), alpha = line.alpha();
+  if (colorEdit("color##line", color)) { line.setColor(color, alpha); changed = true; }
+  if (lineStyleEdit("style", style, shape.isClosed())) { line.setStyle(style); changed = true; }
+  ImGui::SetNextItemWidth(150);
+  if (ImGui::SliderFloat("width", &width, 0.5f, 10.0f, "%.1f")) { line.setWidth(width); changed = true; }
+  ImGui::SetNextItemWidth(150);
+  if (ImGui::SliderFloat("opacity##line", &alpha, 0.0f, 1.0f, "%.2f")) { line.setAlpha(alpha); changed = true; }
+  if (!shape.isClosed())
+    {
+    static const char * arrows[] = { "none", "single (at the end)", "double" };
+    int a = int(shape.arrows());
+    ImGui::SetNextItemWidth(150);
+    if (ImGui::Combo("arrows", &a, arrows, 3)) { shape.setArrows(Shape::Arrows(a)); changed = true; }
+    }
   return changed;
   }
 

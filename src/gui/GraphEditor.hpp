@@ -42,6 +42,9 @@ namespace CAP
   //! @brief Item of the graph (data points or function): label, markers, line, uncertainties. @param graph graph
   //! @param item index of the item @param point index of the data point that was clicked, or -1
   bool editItem(GRAPHICS::Graph & graph, int item, int point=-1);
+  //! @brief Shape drawn over a graph: fill (color, pattern, opacity), outline or line (color, style, width, opacity),
+  //! arrow heads of a line. @param shape shape
+  bool editShape(GRAPHICS::Shape & shape);
 
   //! @name Widgets
   //! @{
@@ -55,6 +58,9 @@ namespace CAP
   bool markerEdit(const char * label, int & style, int color);
   //! @brief Text size in points, or automatic (0). @param label label @param points size (0: automatic)
   bool pointSizeEdit(const char * label, float & points);
+  //! @brief Fill style: hollow, solid or a hatch pattern (see GRAPHICS::FillAttributes). @param label label
+  //! @param style fill style
+  bool fillStyleEdit(const char * label, int & style);
   //!
   //! @brief Preview of a text typeset by LaTeX (nothing for a plain text): the image, or the LaTeX error, or why the
   //! text is drawn with a font; for a text in ROOT syntax, its translation too. The text is typeset in the background
