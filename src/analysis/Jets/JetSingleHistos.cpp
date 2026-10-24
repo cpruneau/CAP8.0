@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -18,7 +16,6 @@
 #include "Configuration.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::JetSingleHistos);
 
 namespace CAP
 {
@@ -237,7 +234,7 @@ namespace CAP
   h_jet_n1m_z     = createHistogram(createName(_histogramBaseName,"jet_n1m_z"),     z_nbins,     z_min,     z_max,      "p_{t}","N_1^{-}");
   }
 
-  void JetSingleHistos::loadFrom(CapFile & inputFile)
+  void JetSingleHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_jet_n1_pt    = importHistogram(inputFile,createName(_histogramBaseName,"jet_n1_pt"));

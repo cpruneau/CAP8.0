@@ -148,7 +148,6 @@ namespace CAP
 
   //! @}
 
-  ClassDef(Normal,1)
   };
 
   } // namespace MATH

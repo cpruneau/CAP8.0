@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-20242, Claude Pruneau
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__NameHelpers
 #define CAP__NameHelpers
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 
 namespace CAP
 {

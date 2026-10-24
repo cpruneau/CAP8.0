@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__ParticleEfficiency
 #define CAP__ParticleEfficiency
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 
@@ -49,7 +47,7 @@ public:
   //! @brief Create the efficiency histogram.
   virtual void create();
   //! @brief Load the efficiency histogram from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Whether a particle is detected: random draw against efficiencyAt(). @param particle particle @return true if detected
   virtual bool accept(const Particle & particle);
   //! @brief Whether a particle of a given momentum is detected: random draw against efficiencyAt().
@@ -83,7 +81,6 @@ protected:
   double phi_min;  ///< lower edge of the azimuth axis
   double phi_max;  ///< upper edge of the azimuth axis
 
-  ClassDef(ParticleEfficiency,0)
 };
 
 }

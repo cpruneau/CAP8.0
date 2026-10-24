@@ -1,6 +1,5 @@
 #include "FillAttributes.hpp"
 
-ClassImp(CAP::GRAPHICS::FillAttributes);
 
 namespace CAP
 {

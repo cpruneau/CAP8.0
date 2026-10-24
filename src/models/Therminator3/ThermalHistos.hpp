@@ -1,9 +1,8 @@
 // Author: Claude Pruneau   09/25/2019
 
 /***********************************************************************
- * Copyright (C) 2019, Claude Pruneau.
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  **********************************************************************/
@@ -42,7 +41,7 @@ namespace CAP
                          const Configuration & configuration,
                          unsigned int index);
   virtual void create();
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   virtual void fill(const ThermalHadronGasFD & hadronGas);
   //virtual void fillRho1VsP(ThermalHadronGas & hadronGas, double _volume);
   
@@ -121,7 +120,6 @@ namespace CAP
   double  mass_min;
   double  mass_max;
   
-  ClassDef(ThermalHistos,0)
   
   };
   

@@ -218,7 +218,6 @@ namespace CAP
   //! Density distribution of the neutrons.
   NuclearDistribution _neutronDistribution;
 
-  ClassDef(GlauberNucleus,1) // GlauberNucleus class
   };
   
 } // namespace CAP

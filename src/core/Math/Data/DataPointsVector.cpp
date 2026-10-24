@@ -4,7 +4,6 @@
 #include <iostream>
 #include <memory>
 
-ClassImp(CAP::MATH::DataPointsVector);
 
 namespace CAP
 {

@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -54,7 +52,6 @@ public:
   //! @brief Compute the global quantities of the current event, store them in the event record and fill the histograms.
   virtual void execute();
 
-  ClassDef(GlobalAnalyzer,0)
 };
 
 }

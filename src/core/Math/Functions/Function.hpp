@@ -1,7 +1,7 @@
 #ifndef CAP_MATH_Function
 #define CAP_MATH_Function
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Object.hpp"
 #include "FitRecord.hpp"
 
@@ -132,7 +132,6 @@ namespace CAP
   unsigned int _rank;  //!< number of independent variables
   FitList _fits;   //!<! fits attached (not streamed by ROOT; shared by copies)
 
-  ClassDef(Function,1)
   };
 
   } // namespace MATH

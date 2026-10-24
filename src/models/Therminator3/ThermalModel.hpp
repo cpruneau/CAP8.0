@@ -40,7 +40,6 @@ namespace CAP
   ThermalHadronGasFD _thermalHadronGas;
   ThermalHistos _histograms;
 
-  ClassDef(ThermalModel,0)
 
   };
 

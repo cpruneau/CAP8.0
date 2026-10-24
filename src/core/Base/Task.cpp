@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -10,17 +8,17 @@
  *
  * *********************************************************************/
 #include "Task.hpp"
+#include "Folder.hpp"
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 #include "TFile.h"
 #include "EnvironmentVariables.hpp"
 #include "XmlDocument.hpp"
-#include "TClassTable.h"
+#include "Reflection.hpp"
 #include <algorithm>
 #include <typeinfo>
 
-ClassImp(CAP::Task);
 
 namespace CAP
 {
@@ -134,6 +132,16 @@ namespace CAP
   void Task::postProcess()
   {
   if (reportDebug(__FUNCTION__))  { printCR(); };
+  }
+
+  void Task::saveHistograms(Folder & top)
+  {
+  for (auto & subtask : _subTasks) subtask->saveHistograms(top);
+  }
+
+  void Task::loadHistograms(const Folder & top)
+  {
+  for (auto & subtask : _subTasks) subtask->loadHistograms(top);
   }
 
   void Task::finalize()
@@ -438,15 +446,14 @@ namespace CAP
 
   Task * Task::instantiateTask(const String & taskClassName)
   {
-  TClass * taskClass = TClass::GetClass(taskClassName);
-  if (!taskClass) throw UnknownClassException(taskClassName,__FUNCTION__);
-  if (!taskClass->IsLoaded()) throw Exception("!taskClass->IsLoaded()",__FUNCTION__);
-  if (!taskClass->GetNew())  throw Exception("does not have the accelerator function/wrapper",__FUNCTION__);
-  if (!taskClass->InheritsFrom(TClass::GetClass("CAP::Task")))
-    throw Exception(String("Class ")+taskClassName+" is not a CAP::Task",__FUNCTION__);
-  Task * task = static_cast<Task*>(taskClass->New());
-  if (!task) throw NullPointerException("taskClass->New() returned nullptr for class "+taskClassName,__FUNCTION__);
-  return task;
+  // the task classes are registered for the reflection (see registerTask() in TaskRegistration.hpp)
+  const REFLECTION::Registry & registry = REFLECTION::Registry::instance();
+  const REFLECTION::ClassInfo * taskInfo = registry.find(typeid(Task));
+  const REFLECTION::ClassInfo * info = registry.find(taskClassName.str());
+  if (!info || !taskInfo) throw UnknownClassException(taskClassName,__FUNCTION__);
+  if (!info->inheritsFrom(*taskInfo)) throw Exception(String("Class ")+taskClassName+" is not a CAP::Task",__FUNCTION__);
+  if (info->constructors().empty()) throw Exception(String("Class ")+taskClassName+" has no default constructor registered",__FUNCTION__);
+  return static_cast<Task*>(info->upcast(info->construct(), *taskInfo));
   }
 
   // ---------------------------------------------------------------- XML mapping
@@ -492,6 +499,8 @@ namespace CAP
 
   void Task::unknownXmlParameter(const String & key)
   {
+  // Files of the job (<task>:JOB:OUTPUT_FILE, INPUT_FILE, read by CAP.cxx for the main task) are expected.
+  if (key.contains(":JOB:")) return;
   // Keys of the objects of managed lists (<task>:<TYPE>_<k>:..., the list having <task>:<TYPE>:N) are not in the
   // default configuration, whose lists are empty: they are expected.
   std::string text = key.data();
@@ -587,16 +596,10 @@ namespace CAP
   std::vector<String> Task::taskClassNames()
   {
   std::vector<String> names;
-  TClass * taskClass = TClass::GetClass("CAP::Task");
-  TClassTable::Init();
-  while (const char * className = TClassTable::Next())
-    {
-    TClass * c = TClass::GetClass(className);
-    if (!c || !c->InheritsFrom(taskClass) || !c->GetNew()) continue;
-    if (c->Property() & kIsAbstract) continue;
-    if (String(className).contains("<")) continue;   // class templates are bases of the analysis tasks
-    names.push_back(className);
-    }
+  const REFLECTION::Registry & registry = REFLECTION::Registry::instance();
+  if (const REFLECTION::ClassInfo * taskInfo = registry.find(typeid(Task)))
+    for (const std::string & name : registry.names(taskInfo))
+      if (!registry.find(name)->constructors().empty()) names.push_back(String(name));
   std::sort(names.begin(),names.end(),[](const String & a, const String & b) { return a.str()<b.str(); });
   names.erase(std::unique(names.begin(),names.end()),names.end());
   return names;

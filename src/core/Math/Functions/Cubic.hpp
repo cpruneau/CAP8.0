@@ -65,7 +65,6 @@ namespace CAP
   //!
   double inflectionX() const;
 
-  ClassDef(Cubic,1)
   };
 
   } // namespace MATH

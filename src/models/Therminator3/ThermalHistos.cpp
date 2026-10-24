@@ -13,7 +13,6 @@
 #include "ThermalHadron.hpp"
 #include "ThermalHadronGas.hpp"
 
-ClassImp(CAP::ThermalHistos);
 
 namespace CAP
 {
@@ -151,7 +150,7 @@ namespace CAP
   }
   
   // Fix me...
-  void ThermalHistos::loadFrom(CapFile & inputFile __attribute__((unused)))
+  void ThermalHistos::loadFrom(const Folder & inputFile __attribute__((unused)))
   {
   
   }

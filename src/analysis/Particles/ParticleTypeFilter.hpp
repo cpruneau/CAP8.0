@@ -49,7 +49,6 @@ namespace CAP
                                const Configuration & configuration,
                                unsigned int index);
 
-  ClassDef(ParticleTypeFilter,0)
   };
 
 }

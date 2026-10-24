@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -19,7 +17,6 @@
 #include "NameHelpers.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::JetPairHistos);
 
 namespace CAP
 {
@@ -251,7 +248,7 @@ void JetPairHistos::create()
   h_jet_n2mm_zz      = createHistogram(createName(_histogramBaseName,"jet_n2mm_zz"),z_nbins,z_min,z_max, z_nbins,z_min,z_max,"z_{1}","z_{2}","N_{2}^{--}");
 }
 
-void JetPairHistos::loadFrom(CapFile & inputFile)
+void JetPairHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   HistogramFolder::loadFrom(inputFile);

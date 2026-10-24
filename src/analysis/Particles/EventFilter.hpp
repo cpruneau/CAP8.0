@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -70,7 +68,6 @@ namespace CAP
     kSphero0,kSphero1,kSphero2,kSphero3,kSphero4,kSphero5
   };
   
-  ClassDef(EventFilter,0)
   };
   
 } // namespace CAP

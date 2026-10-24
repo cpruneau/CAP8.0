@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -13,7 +11,7 @@
 #define CAP__File
 #include <cstdint>
 #include <fstream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 #include "FileSystemEntry.hpp"
 
@@ -172,7 +170,6 @@ protected:
   bool         _loaded;  //!< the structure was loaded from the file, or saved to it
   std::fstream _stream;  //!<! stream of the open file (not streamed by ROOT)
 
-  ClassDefOverride(File,0)
 };
 
 } // namespace CAP

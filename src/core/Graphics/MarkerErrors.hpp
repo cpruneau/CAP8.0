@@ -24,7 +24,6 @@ namespace CAP
 
   protected:
 
-  ClassDef(Marker,0)
   };
 
   class MarkerVector : public Drawable2D
@@ -48,7 +47,6 @@ namespace CAP
 
   std::vector<Point2D> _points;
 
-  ClassDef(MarkerVector,0)
   };
 
   } // namespace GRAPHICS

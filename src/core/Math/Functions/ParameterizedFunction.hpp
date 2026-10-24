@@ -1,7 +1,7 @@
 #ifndef CAP_MATH_ParameterizedFunction
 #define CAP_MATH_ParameterizedFunction
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Parameter.hpp"
 #include "Function.hpp"
 #include "VectorND.hpp"
@@ -317,7 +317,6 @@ namespace CAP
   //!
   double operator()(double x) const { return evaluateAt(x); }
 
-  ClassDef(ParameterizedFunction,1)
   };
 
   } // namespace MATH

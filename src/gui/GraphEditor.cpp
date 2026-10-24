@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,9 +9,11 @@
  * *********************************************************************/
 //! @file GraphEditor.cpp
 //! @brief Implementation of the GraphEditor dialogs and widgets.
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -192,7 +192,7 @@ namespace CAP
     ImGui::OpenPopup("palette");
   ImGui::SetItemTooltip("ROOT color %d: click to choose", color);
   ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
-  ImGui::TextUnformatted(label);
+  ImGui::TextUnformatted(label, std::strstr(label, "##"));   // without the part of the label that only identifies it
   if (ImGui::BeginPopup("palette"))
     {
     // ROOT's basic colors, then each named hue (kRed, kPink, ...) from light (-9) to dark (+3)
@@ -237,7 +237,7 @@ namespace CAP
   ImGui::SameLine();
   changed |= ImGui::Checkbox("italic", &italic);
   ImGui::SameLine();
-  ImGui::TextUnformatted(label);
+  ImGui::TextUnformatted(label, std::strstr(label, "##"));   // without the part of the label that only identifies it
   if (changed) font = TextAttributes::fontCode(family, bold, italic);
   ImGui::PopID();
   return changed;
@@ -300,7 +300,7 @@ namespace CAP
       }
     }
   ImGui::SameLine();
-  ImGui::TextUnformatted(label);
+  ImGui::TextUnformatted(label, std::strstr(label, "##"));   // without the part of the label that only identifies it
   ImGui::PopID();
   return changed;
   }
@@ -794,6 +794,93 @@ namespace CAP
   ImGui::Spacing();
   ImGui::Separator();
   if (ImGui::Button("Remove from the graph")) { graph.items().erase(graph.items().begin() + k); changed = true; ImGui::CloseCurrentPopup(); }
+  return changed;
+  }
+
+  bool fillStyleEdit(const char * label, int & style)
+  {
+  static const int styles[] = { FillAttributes::kHollow, FillAttributes::kSolid, FillAttributes::kHatchForward,
+                                FillAttributes::kHatchBackward, FillAttributes::kHatchVertical,
+                                FillAttributes::kHatchHorizontal, FillAttributes::kCrossHatch, FillAttributes::kGrid };
+  static const char * names[] = { "hollow", "solid", "hatched ////", "hatched \\\\\\\\", "vertical lines",
+                                  "horizontal lines", "cross-hatched", "grid" };
+  int s = 1;
+  for (int k=0; k<8; k++) if (styles[k] == style) s = k;
+  if (style == 0) s = 0;
+  ImGui::SetNextItemWidth(150);
+  if (!ImGui::Combo(label, &s, names, 8)) return false;
+  style = styles[s];
+  return true;
+  }
+
+  //! Text of a shape: lines, LaTeX preview, color, font, size, justification. @return true if changed
+  static bool shapeTextEdit(Shape & shape)
+  {
+  bool changed = false;
+  section("Text");
+  std::string text = shape.text().str();
+  if (ImGui::IsWindowAppearing() && text.empty()) ImGui::SetKeyboardFocusHere();   // a new text: type at once
+  if (ImGui::InputTextMultiline("##text", &text, ImVec2(300, ImGui::GetTextLineHeight()*3.5f)))
+    {
+    shape.setText(String(text));
+    changed = true;
+    }
+  ImGui::SetItemTooltip("Several lines; LaTeX between $...$ or ROOT's # syntax, as in the titles");
+  latexPreview(shape.text());
+  TextAttributes & attributes = shape.textAttributes();
+  int color = attributes.color();
+  if (colorEdit("color##text", color)) { attributes.setColor(color, attributes.alpha()); changed = true; }
+  ImGui::SameLine(0, 20);
+  int font = attributes.font();
+  if (fontEdit("font", font)) { attributes.setFont(font); changed = true; }
+  float points = shape.textPointSize();
+  if (pointSizeEdit("size##text", points)) { shape.setTextPointSize(points); changed = true; }
+  if (shape.kind() == Shape::kRectangle || shape.kind() == Shape::kEllipse || shape.kind() == Shape::kText)
+    {
+    static const char * names[] = { "left", "center", "right" };
+    int j = int(attributes.justification());
+    ImGui::SetNextItemWidth(150);
+    if (ImGui::Combo("alignment", &j, names, 3)) { attributes.setJustification(TextAttributes::Justification(j)); changed = true; }
+    }
+  return changed;
+  }
+
+  bool editShape(Shape & shape)
+  {
+  bool changed = false;
+  // Escape closes the dialog, before the text field would take it to undo the typing
+  if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) { ImGui::CloseCurrentPopup(); return false; }
+  ImGui::Text("%c%s", std::toupper(Shape::kindName(shape.kind())[0]), Shape::kindName(shape.kind()) + 1);
+  if (shape.kind() == Shape::kText) changed |= shapeTextEdit(shape);   // a text box: its text first
+  if (shape.isClosed())
+    {
+    section("Inside");
+    FillAttributes & fill = shape.fillAttributes();
+    int color = fill.color(), style = fill.style();
+    float alpha = fill.alpha();
+    if (colorEdit("color", color)) { fill.setColor(color, alpha); if (style == 0) fill.setStyle(FillAttributes::kSolid); changed = true; }
+    if (fillStyleEdit("pattern", style)) { fill.setStyle(style); changed = true; }
+    ImGui::SetNextItemWidth(150);
+    if (ImGui::SliderFloat("opacity##fill", &alpha, 0.0f, 1.0f, "%.2f")) { fill.setAlpha(alpha); changed = true; }
+    }
+  section(shape.kind() == Shape::kText ? "Frame" : shape.isClosed() ? "Boundary" : "Line");
+  LineAttributes & line = shape.lineAttributes();
+  int color = line.color(), style = line.style();
+  float width = line.width(), alpha = line.alpha();
+  if (colorEdit("color##line", color)) { line.setColor(color, alpha); changed = true; }
+  if (lineStyleEdit("style", style, shape.isClosed())) { line.setStyle(style); changed = true; }
+  ImGui::SetNextItemWidth(150);
+  if (ImGui::SliderFloat("width", &width, 0.5f, 10.0f, "%.1f")) { line.setWidth(width); changed = true; }
+  ImGui::SetNextItemWidth(150);
+  if (ImGui::SliderFloat("opacity##line", &alpha, 0.0f, 1.0f, "%.2f")) { line.setAlpha(alpha); changed = true; }
+  if (!shape.isClosed())
+    {
+    static const char * arrows[] = { "none", "single (at the end)", "double" };
+    int a = int(shape.arrows());
+    ImGui::SetNextItemWidth(150);
+    if (ImGui::Combo("arrows", &a, arrows, 3)) { shape.setArrows(Shape::Arrows(a)); changed = true; }
+    }
+  if (shape.kind() != Shape::kText) changed |= shapeTextEdit(shape);
   return changed;
   }
 

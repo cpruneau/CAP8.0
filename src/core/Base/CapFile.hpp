@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -289,7 +287,6 @@ protected:
   Folder _folder;  //!<! folder held (not streamed by ROOT)
   std::shared_ptr<const LazySource> _source;  //!<! file the objects not decoded come from (lazy loading)
 
-  ClassDefOverride(CapFile,0)
 };
 
 } // namespace CAP

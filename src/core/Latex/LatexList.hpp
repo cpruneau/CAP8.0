@@ -28,7 +28,6 @@ namespace CAP
   
   int _type;
 
-  //ClassDef(LatexList,0)
   };
 } // namespace CAP
 

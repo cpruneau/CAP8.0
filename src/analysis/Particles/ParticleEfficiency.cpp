@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -17,7 +15,6 @@
 #include "Profile.hpp"
 #include "ParticleEfficiency.hpp"
 
-ClassImp(CAP::ParticleEfficiency);
 
 namespace CAP
 {
@@ -176,7 +173,7 @@ namespace CAP
 
   }
 
-  void ParticleEfficiency::loadFrom(CapFile & inputFile)
+  void ParticleEfficiency::loadFrom(const Folder & inputFile)
   {
   String name = "PART_EFF_ALL_ALL_etaPt";
   printValue(name,name);

@@ -2,7 +2,6 @@
 #include "XmlDocument.hpp"
 #include "XmlScalarField.hpp"
 
-ClassImp(CAP::ModelHydro3D);
 
 namespace CAP
 {

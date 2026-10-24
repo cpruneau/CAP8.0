@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -51,7 +49,7 @@ public:
                                const Configuration & configuration,
                                unsigned int index);
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Compute the correlation functions.
@@ -143,7 +141,6 @@ protected:
   Histogram* h_G2_DyDphi_shft;  ///< transverse momentum correlator G2 vs (Delta y, Delta phi), Delta phi range shifted
   Histogram* h_DptDpt_DyDphi_shft;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi), Delta phi range shifted
   
-  ClassDef(ParticlePairDerivedHistos,1)
 
 };
 

@@ -23,7 +23,6 @@ namespace CAP
 
   String _comm;
 
-  //ClassDef(LatexCommand,0)
   };
 
 } // namespace CAP

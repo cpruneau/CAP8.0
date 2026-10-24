@@ -52,7 +52,6 @@ namespace CAP
   float _frameXHigh;
   float _frameYHigh;
 
-  ClassDef(MarkerVector,0)
   };
 
   } // namespace GRAPHICS

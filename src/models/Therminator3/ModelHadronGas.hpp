@@ -12,7 +12,6 @@ namespace CAP
   ModelHadronGas();
   virtual ~ModelHadronGas() {}
   virtual double calculateIntegrand(ThermalHadron & hadron);
-  ClassDef(ModelHadronGas,0)
   };
 
 } // namespace CAP

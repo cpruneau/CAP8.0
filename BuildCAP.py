@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # **********************************************************************
-# Copyright (C) 2019-2024, Claude Pruneau
+# Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
 # All rights reserved.
 #
 # For the licensing terms see LICENSE.
@@ -59,17 +59,21 @@ SETTINGS_FILE = os.path.join(CAP_DIR, ".BuildCAP.json")
 CORE_MODULES = ["Base", "Math", "Helpers", "Particles", "Global", "ParticleSingle", "ParticlePair", "ParticlePair3D",
                 "PtPt", "NuDyn", "Spherocity", "SubSample", "Performance", "BasicEventGen", "Glauber"]
 
-#: Optional modules: CMake option, folder in src, description, default.
+#: Optional modules: CMake option, folder in src (or name of a feature, see FEATURE_OPTIONS), description, default.
 OPTIONAL_MODULES = [
     ("CAP_WITH_THERMINATOR3", "Therminator3", "Thermal model event generator", True),
     ("CAP_WITH_LATEX",        "Latex",        "LaTeX documents of results", True),
     ("CAP_WITH_GRAPHICS",     "Graphics",     "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)", True),
     ("CAP_WITH_GUI",          "CapGui",       "Graphical interface bin/CapGui (Dear ImGui; needs Graphics)", True),
+    ("CAP_WITH_ROOT_FILES",   "ROOT files",   "Read and write ROOT histograms (.root files in the CapGui browser, CapRootConvert)", True),
     ("CAP_WITH_JETS",         "Jets",         "Jet analysis (needs FastJet; in progress)", False),
     ("CAP_WITH_EPOS",         "Epos",         "EPOS event reader", False),
     ("CAP_WITH_PHSD",         "PHSD",         "PHSD event reader (in progress)", False),
     ("CAP_WITH_PYTHIA8",      "Pythia",       "Pythia8 event generator interface (needs Pythia8)", False),
 ]
+
+#: Options of OPTIONAL_MODULES that turn a feature on or off rather than build a folder of src.
+FEATURE_OPTIONS = {"CAP_WITH_ROOT_FILES"}
 
 #: External packages: key, label, CMake prefix variable, file identifying a valid prefix, bundled globs (relative to
 #: the CAP directory), environment variables, configuration tool.
@@ -405,7 +409,7 @@ def run_gui():
                 ttk.Checkbutton(optional, text=folder, variable=var,
                                 command=self._update_dependent_rows).grid(row=i, column=0, sticky="w")
                 ttk.Label(optional, text=desc, foreground="gray35").grid(row=i, column=1, sticky="w", padx=(6, 0))
-                if not module_dir(folder):
+                if opt not in FEATURE_OPTIONS and not module_dir(folder):
                     ttk.Label(optional, text="(missing from src)", foreground="red").grid(row=i, column=2, sticky="w")
 
             ext = ttk.LabelFrame(parent, text="Event generators and external packages", padding=8)

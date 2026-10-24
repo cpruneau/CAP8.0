@@ -1,7 +1,6 @@
 #include "Marker.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::GRAPHICS::Marker);
 
 namespace CAP
 {

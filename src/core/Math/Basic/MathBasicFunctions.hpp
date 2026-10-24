@@ -560,48 +560,48 @@ namespace CAP
 
   //!
   //! Returns a value with the magnitude of `a` and the sign of `b`.
-  //! `a`and `b` are `Short_t`.
+  //! `a`and `b` are `short`.
   //!
   inline float copySign(float a, float b)
   { return std::copysign(a,b);  }
 
   //!
   //! Returns a value with the magnitude of `a` and the sign of `b`.
-  //! `a`and `b` are `Double_t`.
+  //! `a`and `b` are `double`.
   //!
-  inline Double_t copySign(Double_t a, Double_t b)
+  inline double copySign(double a, double b)
   { return std::copysign(a,b);  }
 
   //!
   //! Returns a value with the magnitude of `a` and the sign of `b`.
-  //! `a`and `b` are `LongDouble_t`.
+  //! `a`and `b` are `long double`.
   //!
-  inline LongDouble_t copySign(LongDouble_t a, LongDouble_t b)
+  inline long double copySign(long double a, long double b)
   { return std::copysign(a,b);  }
 
   //! Returns `x` if `lb < x < up`, `lb` if `x < lb` and `ub` if `x > ub`.
-  //! `lb`, `ub` and `x` are `Short_t`.
-  inline Short_t range(Short_t lb, Short_t ub, Short_t x)
+  //! `lb`, `ub` and `x` are `short`.
+  inline short range(short lb, short ub, short x)
   { return x < lb ? lb : (x > ub ? ub : x); }
 
   //! Returns `x` if `lb < x < up`, `lb` if `x < lb` and `ub` if `x > ub`.
-  //! `lb`, `ub` and `x` are `Int_t`.
-  inline Int_t range(Int_t lb, Int_t ub, Int_t x)
+  //! `lb`, `ub` and `x` are `int`.
+  inline int range(int lb, int ub, int x)
   { return x < lb ? lb : (x > ub ? ub : x); }
 
   //! Returns `x` if `lb < x < up`, `lb` if `x < lb` and `ub` if `x > ub`.
-  //! `lb`, `ub` and `x` are `Long_t`.
-  inline Long_t range(Long_t lb, Long_t ub, Long_t x)
+  //! `lb`, `ub` and `x` are `long`.
+  inline long range(long lb, long ub, long x)
   { return x < lb ? lb : (x > ub ? ub : x); }
 
   //! Returns `x` if `lb < x < up`, `lb` if `x < lb` and `ub` if `x > ub`.
-  //! `lb`, `ub` and `x` are `ULong_t`.
-  inline ULong_t range(ULong_t lb, ULong_t ub, ULong_t x)
+  //! `lb`, `ub` and `x` are `unsigned long`.
+  inline unsigned long range(unsigned long lb, unsigned long ub, unsigned long x)
   { return x < lb ? lb : (x > ub ? ub : x); }
 
   //! Returns `x` if `lb < x < up`, `lb` if `x < lb` and `ub` if `x > ub`.
-  //! `lb`, `ub` and `x` are `Double_t`.
-  inline Double_t range(Double_t lb, Double_t ub, Double_t x)
+  //! `lb`, `ub` and `x` are `double`.
+  inline double range(double lb, double ub, double x)
   { return x < lb ? lb : (x > ub ? ub : x); }
 
   //! Binary search in an array defined by its iterators.
@@ -626,7 +626,7 @@ namespace CAP
   //! Array is supposed  to be sorted prior to this call.
   //! If match is found, function returns position of element.
   //! If no match found, function gives nearest element smaller than value.
-  template <typename T> Long64_t binarySearch(Long64_t n, const T  *array, T value)
+  template <typename T> long long binarySearch(long long n, const T  *array, T value)
   {
   const T* pind;
   pind = std::lower_bound(array, array + n, value);
@@ -641,7 +641,7 @@ namespace CAP
   //! Array is supposed  to be sorted prior to this call.
   //! If match is found, function returns position of element.
   //! If no match found, function gives nearest element smaller than value.
-  template <typename T> Long64_t binarySearch(Long64_t n, const T **array, T value)
+  template <typename T> long long binarySearch(long long n, const T **array, T value)
   {
   const T* pind;
   pind = std::lower_bound(*array, *array + n, value);

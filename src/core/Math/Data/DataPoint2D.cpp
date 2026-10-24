@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <iostream>
 
-ClassImp(CAP::MATH::DataPoint2D);
 
 namespace CAP
 {

@@ -134,7 +134,6 @@ class GlauberGenerator
   //! Fluctuating cross section distribution (owned).
   PTotProfile     *_ptotProfile;
 
-  ClassDef(GlauberGenerator,0)
 };
 
 //  _smearingProfile = new SmearingProfile();

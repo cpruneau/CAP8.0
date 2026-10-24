@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -50,7 +48,6 @@ protected:
   //! @warning Currently always returns the mass of PDG code 211 (pi+).
   double getMassFor(ParticleFilter* pf);
   
-  ClassDef(ParticlePair3DAnalyzer,0)
 };
 
 } // namespace CAP

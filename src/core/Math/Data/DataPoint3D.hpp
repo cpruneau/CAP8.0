@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -13,7 +11,7 @@
 #define CAP_MATH_DataPoint3D
 #include <ostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
 
@@ -190,7 +188,6 @@ namespace CAP
 
   //! @}
 
-  ClassDefOverride(DataPoint3D,1)
   };
 
   } // namespace MATH

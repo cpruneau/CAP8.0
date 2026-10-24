@@ -15,6 +15,7 @@ option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
 option(CAP_WITH_GRAPHICS     "Build the Graphics module (2D drawing; macOS window and demo)"  ON)
 option(CAP_WITH_GUI          "Build bin/CapGui, the graphical interface (Dear ImGui; requires Graphics)" ON)
+option(CAP_WITH_ROOT_FILES   "Read and write ROOT histograms: .root files in the CapGui browser, bin/CapRootConvert" ON)
 option(CAP_WITH_JETS         "Build the Jets module (requires FastJet)"                       OFF)
 option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader)"                      OFF)
 option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      OFF)
@@ -76,7 +77,7 @@ find_package(ROOT REQUIRED COMPONENTS EG MathCore MathMore RIO Hist Tree Net )
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 ################################################################################################
 include(${ROOT_USE_FILE})
-include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Helpers" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
+include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Helpers" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
  )
 add_definitions(${ROOT_CXX_FLAGS})
 add_compile_options(-Wall -Wextra -pedantic)
@@ -186,6 +187,9 @@ if(CAP_WITH_GRAPHICS)   # not linked into the CAP executable (nothing in CAP use
   list(APPEND CAP_OPTIONAL_BUILT Graphics)
 endif()
 
+add_subdirectory(core/Interpreter)   # bin/CapShell: the CAP command line interpreter (after Graphics, for figures)
+list(APPEND CAP_OPTIONAL_BUILT CapShell)
+
 if(CAP_WITH_GUI)        # bin/CapGui: Dear ImGui + GLFW (distributed in <CAP>/external), OpenGL
   if(CAP_WITH_GRAPHICS)
     add_subdirectory(gui)
@@ -265,6 +269,47 @@ endif()
 add_executable(CAP CAP.cxx)
 target_link_libraries(CAP PUBLIC ${CAP_LINKED_MODULES})
 install(TARGETS CAP RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+
+# The task classes in the reflection registry (run with ctest; not installed)
+add_executable(TestTaskRegistry tests/TestTaskRegistry.cpp)
+target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})
+add_test(NAME TaskRegistry COMMAND TestTaskRegistry)
+
+# Sources that must compile without ROOT (no ROOT include path): most of Base (strings, files, folders, CAP files,
+# XML, configuration, reflection), the random numbers, the interpreter, Graphics (colors included). A ROOT header reaching one of them fails this test.
+set(CAP_ROOT_FREE_SOURCES
+  core/Base/Accountant.cpp core/Base/BinaryFile.cpp core/Base/CapFile.cpp core/Base/CmdlineParser.cpp
+  core/Base/Condition.cpp core/Base/Configuration.cpp core/Base/ConfigurationManager.cpp core/Base/Crc32.cpp
+  core/Base/Directory.cpp core/Base/Exceptions.cpp core/Base/Factory.cpp core/Base/File.cpp core/Base/FileSystem.cpp
+  core/Base/FileSystemEntry.cpp core/Base/Filter.cpp core/Base/Folder.cpp core/Base/LongParameter.cpp
+  core/Base/NameHelpers.cpp core/Base/Object.cpp core/Base/Parser.cpp core/Base/PhysicsConstants.cpp
+  core/Base/PrintHelpers.cpp core/Base/Properties.cpp core/Base/PropertiesParser.cpp core/Base/Property.cpp
+  core/Base/Reflection.cpp core/Base/String.cpp core/Base/TxtFile.cpp core/Base/XmlDocument.cpp
+  core/Base/XmlElement.cpp core/Base/XmlFile.cpp core/Base/XmlReader.cpp core/Base/XmlWriter.cpp
+  core/Math/Random/MersenneTwister.cpp core/Math/Random/RandomDistribution.cpp core/Math/Random/RandomGenerator.cpp
+  core/Interpreter/Interpreter.cpp core/Interpreter/Lexer.cpp core/Interpreter/Parser.cpp core/Interpreter/CapShell.cxx
+  core/Graphics/Attributes.cpp core/Graphics/Axis.cpp core/Graphics/AxisRange.cpp core/Graphics/AxisRenderer.cpp
+  core/Graphics/Canvas.cpp core/Graphics/CanvasRegistry.cpp core/Graphics/ColorTable.cpp core/Graphics/Drawable2D.cpp core/Graphics/FillAttributes.cpp
+  core/Graphics/Geom2D.cpp core/Graphics/Graph.cpp core/Graphics/GraphRenderer.cpp core/Graphics/GraphRenderer3D.cpp
+  core/Graphics/Grid2D.cpp core/Graphics/LatexRenderer.cpp core/Graphics/Line.cpp core/Graphics/LineAttributes.cpp
+  core/Graphics/LineRenderer.cpp core/Graphics/Margins.cpp core/Graphics/Marker.cpp
+  core/Graphics/MarkerAttributes.cpp core/Graphics/MarkerRenderer.cpp core/Graphics/MarkerVector.cpp
+  core/Graphics/Painter.cpp core/Graphics/Palette.cpp core/Graphics/Palettes.cpp core/Graphics/PdfPainter.cpp
+  core/Graphics/Polygon.cpp core/Graphics/PolygonRenderer.cpp core/Graphics/Projection3D.cpp
+  core/Graphics/Renderer.cpp core/Graphics/Shape.cpp core/Graphics/SvgPainter.cpp core/Graphics/TextAttributes.cpp
+  core/Graphics/TextRenderer.cpp)
+set(CAP_ROOT_FREE_COMMAND ${CMAKE_CXX_COMPILER} -std=c++17 -fsyntax-only)
+if(CMAKE_OSX_SYSROOT)
+  list(APPEND CAP_ROOT_FREE_COMMAND -isysroot ${CMAKE_OSX_SYSROOT})
+endif()
+foreach(dir core/Base core/Math core/Math/Basic core/Math/LinearAlgebra core/Math/Functions core/Math/Data core/Math/Search
+            core/Math/Fitting core/Math/StatisticalTests core/Math/Random core/Interpreter core/Graphics)
+  list(APPEND CAP_ROOT_FREE_COMMAND -I${CMAKE_SOURCE_DIR}/${dir})
+endforeach()
+foreach(source ${CAP_ROOT_FREE_SOURCES})
+  list(APPEND CAP_ROOT_FREE_COMMAND ${CMAKE_SOURCE_DIR}/${source})
+endforeach()
+add_test(NAME RootFreeSources COMMAND ${CAP_ROOT_FREE_COMMAND})
 
 string(REPLACE ";" ", " optional_text "${CAP_OPTIONAL_BUILT}")
 if(optional_text STREQUAL "")

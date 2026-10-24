@@ -25,7 +25,6 @@ namespace CAP
   ScalarField uyFluidVelocityField;
   ScalarField rapidityFluidField;
 
-  ClassDef(ModelHydro3D,0)
   };
 
 

@@ -62,7 +62,6 @@ namespace CAP
   //!
   double extremumValue() const { return evaluateAt(extremumX()); }
 
-  ClassDef(Parabolic,1)
   };
 
   } // namespace MATH

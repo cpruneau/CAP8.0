@@ -8,7 +8,6 @@
 #include <string>
 #include <iostream>
 
-ClassImp(CAP::MATH::DataPoints);
 
 namespace CAP
 {

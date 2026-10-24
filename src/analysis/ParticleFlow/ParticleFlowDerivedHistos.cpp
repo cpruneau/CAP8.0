@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -17,7 +15,6 @@
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::ParticleFlowDerivedHistos);
 
 namespace CAP
 {
@@ -158,7 +155,7 @@ void ParticleFlowDerivedHistos::create()
   if ( reportStart(__FUNCTION__))  {/* no ops */};
 }
 
-void ParticleFlowDerivedHistos::loadFrom(CapFile & inputFile)
+void ParticleFlowDerivedHistos::loadFrom(const Folder & inputFile)
 {
 }
 

@@ -1,8 +1,6 @@
 #include "GlauberEvent.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-ClassImp(CAP::Manager<CAP::GlauberEvent>);
-ClassImp(CAP::GlauberEvent)
 
 namespace CAP
 {

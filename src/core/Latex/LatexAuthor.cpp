@@ -1,5 +1,4 @@
 #include "LatexAuthor.hpp"
-////ClassImp(CAP::LatexAuthor);
 
 namespace CAP
 {

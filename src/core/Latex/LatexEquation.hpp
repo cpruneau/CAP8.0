@@ -18,7 +18,6 @@ namespace CAP
   virtual void writeContent(std::ofstream & out);
   virtual void writeTrailer(std::ofstream & out);
 
-  //ClassDef(LatexEquation,0)
   };
 
 } // namespace CAP

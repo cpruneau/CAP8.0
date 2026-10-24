@@ -22,7 +22,6 @@ namespace CAP
   ScalarField _vtFluidField;
   ScalarField _phiFluidField;
 
-  ClassDef(ModelHydro2D,0)
   };
 
 } // namespace CAP

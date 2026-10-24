@@ -1,8 +1,7 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Chun Shen
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Chun Shen
  * All rights reserved.
  *
- * Based on the ROOT package and environment
  * This code is adapted from Chun Shen's code
  * for the purpose of computing hadronic resonance
  * correlations..
@@ -18,7 +17,6 @@
 
 //#include "SelectionGenerator.hpp"
 
-ClassImp(CAP::ParticleDecayMode);
 
 namespace CAP
 {

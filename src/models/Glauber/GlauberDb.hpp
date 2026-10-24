@@ -49,7 +49,6 @@ namespace CAP
 
 
 
-  ClassDef(GlauberDb,0)
   };
 
 } // namespace CAP

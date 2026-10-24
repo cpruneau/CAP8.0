@@ -6,34 +6,6 @@
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 #add_definitions(${ROOT_CXX_FLAGS})
 
-ROOT_GENERATE_DICTIONARY(G__Base
-Accountant.hpp
-Configuration.hpp
-ConfigurationManager.hpp
-EnvironmentVariables.hpp
-Factory.hpp
-Filter.hpp
-BinaryFile.hpp
-CapFile.hpp
-Directory.hpp
-File.hpp
-FileSystem.hpp
-FileSystemEntry.hpp
-Folder.hpp
-LongParameter.hpp
-Object.hpp
-Parser.hpp
-PrintHelpers.hpp
-Properties.hpp
-PropertiesParser.hpp
-Property.hpp
-String.hpp
-SelectionGenerator.hpp
-StreamHelpers.hpp
-Task.hpp
-Timer.hpp
-TxtFile.hpp
-LINKDEF BaseLinkDef.h)
 
 ################################################################################################
 # Create a shared library with geneated dictionary
@@ -57,6 +29,8 @@ File.cpp
 FileSystem.cpp
 FileSystemEntry.cpp
 Folder.cpp
+Reflection.cpp
+BaseReflection.cpp
 LongParameter.cpp
 NameHelpers.cpp
 Object.cpp
@@ -75,8 +49,7 @@ XmlDocument.cpp
 XmlElement.cpp
 XmlFile.cpp
 XmlReader.cpp
-XmlWriter.cpp
-G__Base.cxx)
+XmlWriter.cpp)
 
 target_link_libraries(Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Base PUBLIC Base ${EXTRA_INCLUDES} )
@@ -99,7 +72,12 @@ add_test(NAME FileLoading COMMAND TestFileLoading)
 add_executable(TestLazyLoading tests/TestLazyLoading.cpp)
 target_link_libraries(TestLazyLoading Base ${ROOT_LIBRARIES})
 add_test(NAME LazyLoading COMMAND TestLazyLoading)
+add_executable(TestReflection tests/TestReflection.cpp)
+target_link_libraries(TestReflection Base ${ROOT_LIBRARIES})
+add_test(NAME Reflection COMMAND TestReflection)
+add_executable(TestFolderEditing tests/TestFolderEditing.cpp)
+target_link_libraries(TestFolderEditing Base ${ROOT_LIBRARIES})
+add_test(NAME FolderEditing COMMAND TestFolderEditing)
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libBase.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libBase_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Base  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

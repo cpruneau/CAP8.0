@@ -25,7 +25,6 @@ namespace CAP
 
   MarkerAttributes _markerAttributes;
 
-  ClassDef(Marker,0)
   };
 
 

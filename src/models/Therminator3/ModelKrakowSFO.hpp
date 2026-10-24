@@ -12,7 +12,6 @@ namespace CAP
   ModelKrakowSFO();
   virtual ~ModelKrakowSFO() {}
   virtual double calculateIntegrand(ThermalHadron & hadron);
-  ClassDef(ModelKrakowSFO,0)
   };
 
 } // namespace CAP

@@ -1,6 +1,4 @@
 #include "LatexSubsubsection.hpp"
-////ClassImp(CAP::LatexSubsubsection);
-////ClassImp(CAP::LatexParagraph);
 
 namespace CAP
 {

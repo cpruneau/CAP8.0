@@ -24,7 +24,6 @@ namespace CAP
   //! Shared instance used by default by the drawables this renderer handles.
   static const LineRenderer * defaultRenderer();
 
-  ClassDef(LineRenderer,0)
   };
 
   } // namespace GRAPHICS

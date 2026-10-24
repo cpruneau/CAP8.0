@@ -1,7 +1,6 @@
 #include "Cubic.hpp"
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Cubic);
 
 namespace CAP
 {

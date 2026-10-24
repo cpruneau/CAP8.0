@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -18,7 +16,6 @@
 #include "Configuration.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::JetPairMassHistos);
 
 namespace CAP
 {
@@ -182,7 +179,7 @@ namespace CAP
 
   }
 
-  void JetPairMassHistos::loadFrom(CapFile & inputFile)
+  void JetPairMassHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_jetpair_n2_ptpt      = importHistogram(inputFile,createName(_histogramBaseName,"jetpair_n2_ptpt"));

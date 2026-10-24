@@ -66,7 +66,6 @@ namespace CAP
 
   static TextAttributes * _defaultTextAttributes;
 
-  ClassDef(TextAttributes,0)
   };
 
   } // namespace GRAPHICS

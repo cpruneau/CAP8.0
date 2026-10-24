@@ -2,7 +2,7 @@
 #define CAP__GlauberNucleon
 #include "GlauberExceptions.hpp"
 #include "MathConstants.hpp"
-#include "Aliases.hpp"
+#include "String.hpp"
 //#include "TF1.h"
 //#include "TF2.h"
 #include "VectorLorentz.hpp"
@@ -126,7 +126,6 @@ public:
   //! @brief Print the nucleon.
   void   print() const;
 
-  ClassDef(GlauberNucleon,1) // GlauberNucleon class
 };
 
 }  // namespace CAP

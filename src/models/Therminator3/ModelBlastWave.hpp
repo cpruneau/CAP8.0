@@ -13,7 +13,6 @@ namespace CAP
   ModelBlastWave();
   virtual ~ModelBlastWave() {}
   virtual double calculateIntegrand(ThermalHadron & hadron);
-  ClassDef(ModelBlastWave,0)
   };
 
 } // namespace CAP

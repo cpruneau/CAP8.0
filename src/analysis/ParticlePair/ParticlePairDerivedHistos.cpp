@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -17,7 +15,6 @@
 #include "Profile.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::ParticlePairDerivedHistos);
 
 namespace CAP
 {
@@ -347,7 +344,7 @@ void ParticlePairDerivedHistos::create()
   }
 }
 
-void ParticlePairDerivedHistos::loadFrom(CapFile & inputFile)
+void ParticlePairDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   h_n1n1_phiphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_phiphi"));

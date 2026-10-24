@@ -1,5 +1,5 @@
 # **********************************************************************
-# Copyright (C) 2019-2026, Claude Pruneau
+# Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
 # All rights reserved.
 #
 # For the licensing terms see LICENSE.
@@ -101,7 +101,7 @@ class TestDialog(unittest.TestCase):
         self.dialog._set_count("PARTICLE_FILTER", 2)
         self.assertEqual(self.dialog.folder_list.get(0, tk.END), (D.DEFAULT_ENTRY,))      # same binning
         self.dialog._set_same(False)
-        self.assertEqual(self.dialog.folder_list.get(0, tk.END), (D.DEFAULT_ENTRY, "PSA_MB_PiP", "PSA_MB_PiM"))
+        self.assertEqual(self.dialog.folder_list.get(0, tk.END), (D.DEFAULT_ENTRY, "MB_PiP", "MB_PiM"))
         self.dialog.folder_list.selection_clear(0, tk.END)
         self.dialog.folder_list.selection_set(2)
         self.dialog._show_binning()
@@ -114,13 +114,11 @@ class TestDialog(unittest.TestCase):
         entry.insert(0, "13")
         options = F.histogram_options(self.task)
         self.assertEqual(options.binning, {("MB", "PiM"): {"pt_nbins": "13"}})
-        self.assertEqual(self.dialog.folder_list.get(2), "PSA_MB_PiM •")
+        self.assertEqual(self.dialog.folder_list.get(2), "MB_PiM •")
         entry.delete(0, tk.END)
         entry.insert(0, self.task.param("HISTOGRAM:pt_nbins").value)        # back to the default
         self.assertEqual(options.binning, {})
-        self.dialog._set_prefix("SG", tk.ttk.Entry(_root))
-        self.assertEqual(options.prefix, "SG")
-        self.assertEqual(self.dialog.folder_list.get(1), "SG_MB_PiP")
+        self.assertEqual(self.dialog.folder_list.get(1), "MB_PiP")     # folders named after the filters
 
     def test_rename_and_problems(self):
         self.dialog.name_var.set("Taken")
@@ -156,7 +154,7 @@ class TestDialog(unittest.TestCase):
         self.assertEqual(F.histogram_mode(self.task, TEMPLATES), F.FILL)
         self.dialog._set_mode(F.DERIVED)
         self.assertEqual(F.histogram_mode(self.task, TEMPLATES), F.DERIVED)
-        self.assertEqual(self.task.param("HISTOGRAM_1:IMPORT:FILE_NAME").value, "PSA.cap")
+        self.assertEqual(self.task.param("HISTOGRAM_1:IMPORT").value, "true")
         self.assertTrue(self.changes)
 
     def test_event_settings(self):
@@ -168,6 +166,22 @@ class TestDialog(unittest.TestCase):
         self.dialog._set_event(self.task.param("EVENT:CREATE"), "true")
         self.assertEqual(self.task.param("EVENT:CREATE").value, "true")
         self.assertTrue(self.changes)
+
+    def test_problems_of_the_workflow(self):
+        """The events of the analyzer are created by a generator of the workflow: no problem shown for them."""
+        F.default_event_settings(self.task, TEMPLATES)
+        F.choices(self.task)["EVENT"] = ["Event"]
+        self.library.add(F.FilterDef("EVENT", "Event"))
+        self.dialog._update_problems()
+        self.assertIn("uses the events Event, which no task creates", self.dialog.problems.get())     # alone
+        generator = TEMPLATES["CAP::BasicEventGen"].clone()
+        F.default_event_settings(generator, TEMPLATES)
+        F.choices(generator)["EVENT"] = ["Event"]
+        it = TEMPLATES["CAP::EventIterator"].clone()
+        it.children = [generator, self.task]
+        self.dialog.workflow = lambda: [it]
+        self.dialog._update_problems()
+        self.assertNotIn("which no task creates", self.dialog.problems.get())
 
 
 if __name__ == "__main__":

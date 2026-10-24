@@ -1,6 +1,5 @@
 #include "Geom2D.hpp"
 
-ClassImp(CAP::GRAPHICS::Geom2D);
 
 namespace CAP
 {

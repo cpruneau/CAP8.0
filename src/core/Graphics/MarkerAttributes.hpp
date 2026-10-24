@@ -32,7 +32,6 @@ namespace CAP
 
   static MarkerAttributes * _defaultMarkerAttributes;
 
-  ClassDef(MarkerAttributes,0)
   };
 
   }  // namespace GRAPHICS

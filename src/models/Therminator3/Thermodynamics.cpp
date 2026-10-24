@@ -2,7 +2,6 @@
 #include "Thermodynamics.hpp"
 #include "TMath.h"
 
-ClassImp(CAP::Thermodynamics);
 
 namespace CAP
 {

@@ -12,7 +12,6 @@ namespace CAP
   ModelBWA();
   virtual ~ModelBWA() {}
   virtual double calculateIntegrand(ThermalHadron & hadron);
-  ClassDef(ModelBWA,0)
   };
 
 } // namespace CAP

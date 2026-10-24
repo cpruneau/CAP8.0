@@ -14,7 +14,6 @@ namespace CAP
   virtual ~LatexFigureGroup() { }
   virtual void writeContent(std::ofstream & out);
 
-  //ClassDef(LatexFigureGroup,0)
   };
 
 } // namespace CAP

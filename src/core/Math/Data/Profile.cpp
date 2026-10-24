@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -15,7 +13,6 @@
 #include <iostream>
 #include <cmath>
 
-ClassImp(CAP::MATH::Profile);
 
 namespace CAP
 {
@@ -113,6 +110,17 @@ namespace MATH
   double nEff     = _sumW2[k]>0.0 ? sw*sw/_sumW2[k] : 0.0;
   double error    = nEff>0.0 ? std::sqrt(variance/nEff) : 0.0;
   setValue(k,1,mean,error);
+  }
+
+  void Profile::setSums(unsigned int k, long entries, double sumW, double sumW2, double sumWY, double sumWY2)
+  {
+  checkGlobal(k,__FUNCTION__);
+  _counts[k] = entries;
+  _sumW[k]   = sumW;
+  _sumW2[k]  = sumW2;
+  _sumWY[k]  = sumWY;
+  _sumWY2[k] = sumWY2;
+  updateBin(k);
   }
 
   void Profile::fill(double x, double value, double weight)

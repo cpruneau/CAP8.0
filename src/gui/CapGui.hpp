@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -14,6 +12,7 @@
 #ifndef CAP__GUI__CapGui
 #define CAP__GUI__CapGui
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -100,7 +99,13 @@ namespace CAP
 
   //! @name File browser
   //! @{
-  FileBrowser & browser() { return _browser; }   //!< The file browser
+  FileBrowser & browser() { return *_browsers.front(); }   //!< The first file browser
+  //! @brief The file browser used last (clicked or focused), where File > Open opens files. @return browser
+  FileBrowser & activeBrowser();
+  //! @brief The open file browsers, the first one first. @return browsers
+  const std::vector<std::unique_ptr<FileBrowser>> & browsers() const { return _browsers; }
+  //! @brief Open another file browser, docked with the first one (see onNewBrowser). @return browser
+  FileBrowser & addBrowser();
   bool browserVisible() const { return _settings.browserVisible; }   //!< Whether the file browser is shown
   void setBrowserVisible(bool visible) { _settings.browserVisible = visible; }   //!< Show or hide the file browser
   bool browserDocked() const { return _settings.browserDocked; }   //!< Whether the browser is docked in the main window
@@ -117,7 +122,8 @@ namespace CAP
   void setPaneCount(int n);
   //! @brief Add a pane, docked beside the current one, and make it current. @return the new pane
   CanvasPane & addPane();
-  //! @brief Close pane k (not the last one). @param k index of the pane
+  //! @brief Close pane k: not the last one, unless it was moved out of the main window (an empty pane then takes its
+  //! place in the main window). @param k index of the pane
   void closePane(int k);
   int  nColumns() const { return _columns; }   //!< Columns of the last grid layout of the canvases
   int  nRows()    const { return _rows; }   //!< Rows of the last grid layout of the canvases
@@ -137,10 +143,18 @@ namespace CAP
   void setFitPaneVisible(bool visible);
   bool fitPaneVisible() const { return _fitsVisible; }   //!< Whether the fit pane is shown
   FitPane & fitPane() { return _fitPane; }   //!< The fit pane
+  //! @brief Show or hide the Canvases window: the canvases of the session by window, with their graphs, to go to any
+  //! of them, and to save them all or make a presentation of them. @param visible choice
+  void setCanvasListVisible(bool visible) { _canvasListVisible = visible; }
+  bool canvasListVisible() const { return _canvasListVisible; }   //!< Whether the Canvases window is shown
   //! @brief Open the Fit window for the selected graph of the current canvas. @param item index of the item to fit (-1: any)
   void openFitDialog(int item=-1) { _fitDialog.open(item); }
   //! Called for each new pane (to set its graphs and undo hook).
   std::function<void(CanvasPane &)> onNewPane;
+  //! Called for each file browser made (the first one included): the application connects it to its files.
+  std::function<void(FileBrowser &)> onNewBrowser;
+  //! Called when a browser other than the first is closed, before it is deleted.
+  std::function<void(FileBrowser &)> onCloseBrowser;
   //! Called before a pane is added or closed by the user (undo).
   std::function<void()> beforePanesChange;
   //! @}
@@ -162,11 +176,18 @@ namespace CAP
   ImFont * font() const { return _font; }
   //! @}
 
-  //! @brief Write the canvases, laid out as on screen, to an SVG file. @return false if it cannot be written
-  bool savePageSvg(const String & fileName);
+  //!
+  //! @brief Write a figure as shown on screen (1 pixel = 1 point) to an SVG or a PDF file (by its extension: ".pdf"
+  //! for PDF, SVG otherwise): the whole window (all the canvases, laid out as on screen), one canvas, or one graph.
+  //! @param fileName file @param pane canvas pane (-1: the whole window) @param graph graph of the pane (-1: the whole
+  //! pane) @return false if there is nothing to draw or the file cannot be written
+  //!
+  bool saveFigure(const String & fileName, int pane=-1, int graph=-1);
 
   //! Called every frame inside the ImGui frame, to draw the application's own windows (preferences, about, ...).
   std::function<void()> onFrame;
+  //! Called by the buttons of the Canvases window, with a menu command ("file.saveAll", "file.saveBook", ...).
+  std::function<void(const String & command)> onCommand;
   //! Called when the user closes the window; return false to keep it open.
   std::function<bool()> onCloseRequest;
 
@@ -188,13 +209,15 @@ namespace CAP
   String _messageText;   //!< message box to show
   bool   _messageRequested;   //!< the message box opens at the next frame
   bool   _exitRequested;   //!< close the window at the end of the frame
-  float  _areaX;   //!< screen rectangle covering the canvas panes (for savePageSvg())
-  float  _areaY;   //!< screen rectangle covering the canvas panes (for savePageSvg())
-  float  _areaWidth;   //!< screen rectangle covering the canvas panes (for savePageSvg())
-  float  _areaHeight;   //!< screen rectangle covering the canvas panes (for savePageSvg())
+  float  _areaX;   //!< screen rectangle covering the canvas panes (for saveFigure())
+  float  _areaY;   //!< screen rectangle covering the canvas panes (for saveFigure())
+  float  _areaWidth;   //!< screen rectangle covering the canvas panes (for saveFigure())
+  float  _areaHeight;   //!< screen rectangle covering the canvas panes (for saveFigure())
   std::string _iniFile;   //!< file where ImGui keeps window positions (kept alive for ImGui)
   String _hoverText;   //!< data coordinates under the mouse (shown in the status bar on the next frame)
-  FileBrowser _browser;   //!< file browser
+  std::vector<std::unique_ptr<FileBrowser>> _browsers;   //!< file browsers (the first one cannot be closed)
+  int _activeBrowser;   //!< index of the browser used last
+  int _browserCounter;   //!< number of the last browser made
   bool   _firstFrame;   //!< the next frame is the first one (the dock layout is built)
   bool   _layoutRequested;   //!< rebuild the dock layout (browser on the left of the canvases)
   bool   _undockRequested;   //!< move the browser to a window of its own
@@ -209,6 +232,8 @@ namespace CAP
   FitPane _fitPane;          //!< results of the fits of the selected graph
   FitDialog _fitDialog;      //!< the Fit window
   bool   _fitsVisible = false;   //!< the fit pane is shown
+  bool   _canvasListVisible = false;   //!< the Canvases window is shown
+  std::map<unsigned int, int> _windowNumbers;   //!< number of each separate window (viewport id), for the groups
   bool   _fitsDockRequested = false;   //!< dock the fit pane below the canvases at the next frame
   bool   _fitsShownOnce = false;   //!< the fit pane was shown (it opens by itself only once)
 
@@ -228,6 +253,8 @@ namespace CAP
   void buildPaneGrid(unsigned int nodeId);
   //! @brief Draw the fit pane, if shown (opened by itself the first time the selected graph has fits).
   void renderFitPane();
+  //! @brief The Canvases window, if shown.
+  void renderCanvasList();
   //! @brief Dock the fit pane below the canvases.
   void dockFitPane();
   //! @brief Create a canvas pane (not yet docked). @return the pane

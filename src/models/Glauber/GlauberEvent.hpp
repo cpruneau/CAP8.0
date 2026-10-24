@@ -223,7 +223,6 @@ namespace CAP
   //  double   calcEvent(double bgen);
   //  double   calcResult(double bgen);
 
-  ClassDef(GlauberEvent, 1)
   };
 
 } // namespace CAP

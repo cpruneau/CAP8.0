@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -57,9 +55,17 @@ namespace CAP
   GRAPHICS::Canvas & canvas() { return _canvas; }   //!< The canvas of the pane
   const GRAPHICS::Canvas & canvas() const { return _canvas; }   //!< The canvas of the pane
   const String & name() const { return _name; }   //!< Name of the pane (identifies its window)
+  const String & title() const { return _title; }   //!< Title shown on the tab of the pane (the name at first)
+  //! @brief Set the title shown on the tab (the window keeps its identity). @param title title
+  void setTitle(const String & title);
+  const char * windowId() const { return _windowId.c_str(); }   //!< "###name": id of the window, whatever its title
+  const char * windowLabel() const { return _windowLabel.c_str(); }   //!< "title###name": label of the window
 
   Mode mode() const { return _mode; }   //!< Add or Replace
   void setMode(Mode mode) { _mode = mode; }   //!< Set Add or Replace
+  //! @brief Whether the shapes of a graph stay when its contents are replaced (Replace mode, folders shown).
+  bool keepShapes() const { return _keepShapes; }
+  void setKeepShapes(bool keep) { _keepShapes = keep; }   //!< Keep the shapes of a graph when its contents are replaced
   //! @brief Index of the selected graph (the target of Add/Replace, Log X/Y, Copy/Paste).
   int  selectedGraph() const { return _selectedGraph; }
   //! @brief Select graph k (nothing if out of range). @param k index of the graph
@@ -70,6 +76,15 @@ namespace CAP
   GRAPHICS::GraphItem & show(const GRAPHICS::GraphItem & item);
   //! @brief Divide the canvas into nColumns x nRows graphs (keeps the existing graphs, see Canvas::divide()).
   void divide(int nColumns, int nRows);
+
+  //! Tools of the shape palette (left of the toolbar): select and move, or draw a shape or a text box over a graph
+  enum Tool { kSelectTool, kRectangleTool, kEllipseTool, kTriangleTool, kPolygonTool, kLineTool, kTextTool };
+  Tool tool() const { return _tool; }   //!< Tool of the palette in use
+  void setTool(Tool tool) { _tool = tool; _drafting = false; }   //!< Use a tool of the palette
+  //! @brief Whether a shape is selected (clicked with the select tool). @return true if so
+  bool hasSelectedShape() const;
+  //! @brief Remove the selected shape (undo recorded).
+  void deleteSelectedShape();
 
   bool showToolbar() const { return _showToolbar; }   //!< Whether the toolbar is shown
   void setShowToolbar(bool v) { _showToolbar = v; }   //!< Show or hide the toolbar
@@ -100,12 +115,25 @@ namespace CAP
   std::function<void(const MATH::DataPoints * data, unsigned int fit)> onResidualMap;
   //! Called by "Projections" in the context menu of a graph, for a histogram of rank 2 with fits.
   std::function<void(const MATH::DataPoints * data)> onProjections;
+  //! Called by "Compare" in the context menu of a graph, for two histograms of the same rank shown in it.
+  std::function<void(const MATH::DataPoints * first, const MATH::DataPoints * second,
+                     const String & firstLabel, const String & secondLabel)> onCompare;
+  //! Called by "Save Graph As..." in the context menu of graph k.
+  std::function<void(int graph)> onSaveGraph;
+  //! Called by "Save Canvas As..." in the context menu of a graph.
+  std::function<void()> onSaveCanvas;
+  //! Called by "Rename Canvas..." in the context menu of a graph.
+  std::function<void()> onRename;
 
   protected:
 
   String _name;   //!< name of the pane
+  String _title;   //!< title shown on the tab
+  std::string _windowId;   //!< "###name"
+  std::string _windowLabel;   //!< "title###name"
   GRAPHICS::Canvas _canvas;   //!< the canvas, divided into graphs
   Mode _mode;   //!< Add or Replace
+  bool _keepShapes;   //!< the shapes of a graph stay when its contents are replaced
   int  _selectedGraph;   //!< index of the selected graph
   bool _showToolbar;   //!< the toolbar is shown
   int  _contextGraph;   //!< graph whose context menu is open
@@ -118,7 +146,8 @@ namespace CAP
   float _rectH;   //!< screen rectangle of the canvas at the last render (pixels)
 
   //! What a drag of the left mouse button does.
-  enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels, kRotate };
+  enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels, kRotate,
+                  kMoveShape, kMoveVertex };
   //! State of a drag of the left mouse button
   struct Drag
   {
@@ -130,6 +159,9 @@ namespace CAP
   float initialX = 0;  //!< position (offset, legend corner, label gap) before the drag
   float initialY = 0;  //!< position (offset, legend corner, label gap) before the drag
   bool  moved = false;   //!< the mouse moved enough to start the drag
+  int   shape = -1;   //!< shape moved (kMoveShape), or whose point is moved (kMoveVertex)
+  int   vertex = -1;   //!< point of the shape moved (kMoveVertex)
+  std::vector<GRAPHICS::Point2D> points;   //!< points of the shape before the drag
   };
   Drag _drag;   //!< drag in progress (kind kNoDrag if none)
   int  _editGraph;                     //!< graph whose part is edited in the "editor" popup
@@ -137,6 +169,15 @@ namespace CAP
   bool _editRecorded;                  //!< undo state recorded for the current dialog
   bool _openEditor;                    //!< open the editor popup at the next opportunity
   GRAPHICS::Graph _editBefore;         //!< graph when the dialog was opened (for undo)
+  Tool _tool;                          //!< tool of the shape palette in use
+  GRAPHICS::Shape _shapeStyle;         //!< attributes given to new shapes (those of the shape edited last)
+  int  _shapeGraph;                    //!< graph of the selected shape (-1: no shape selected)
+  int  _shapeIndex;                    //!< index of the selected shape in its graph
+  bool _drafting;                      //!< a shape is being drawn
+  int  _draftGraph;                    //!< graph of the shape being drawn
+  GRAPHICS::Shape _draft;              //!< shape being drawn (points: fractions of the cell)
+  bool _openShapeEditor;               //!< open the shape dialog at the next opportunity
+  bool _openShapeMenu;                 //!< open the context menu of the selected shape at the next opportunity
 
   void changing() { if (beforeChange) beforeChange(); }   //!< Record the undo state before a change
   //! @brief Draw the toolbar: Add/Replace, Log X/Y, Graphs, Clear, +.
@@ -151,6 +192,16 @@ namespace CAP
   bool handleMouse(ImGuiPainter & painter, bool hovered);
   //! Apply the move of the current drag (screen displacement dx, dy in pixels).
   void applyMove(float dx, float dy);
+  //! @brief Draw the palette of tools (select, rectangle, ellipse, triangle, polygon, line).
+  void renderPalette();
+  //! @brief Mouse with a drawing tool: draw a new shape in the graph under the mouse. @return true if the pane was clicked
+  bool handleDrawing(ImGuiPainter & painter, bool hovered, int graph, const GRAPHICS::Point2D & p);
+  //! @brief Outline and handles of the selected shape, and the shape being drawn.
+  void drawShapeOverlay(ImGuiPainter & painter);
+  //! @brief Context menu and dialog of the selected shape, if open.
+  void renderShapeMenus();
+  //! @brief The selected shape, or null (checked against the graphs, which undo may have changed). @return shape
+  GRAPHICS::Shape * selectedShape();
   };
 
   } // namespace GUI

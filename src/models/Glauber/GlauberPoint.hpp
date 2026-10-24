@@ -61,7 +61,6 @@ protected:
   //! y coordinate.
   float _y;
 
-  ClassDef(GlauberPoint,1) // GlauberPoint class
 
 };
 

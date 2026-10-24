@@ -30,7 +30,6 @@ class LatexFrame : public LatexElement
   virtual void addEquation(const String & text,const String & equationLabel);
 
 
-  //ClassDef(LatexFrame,0)
   };
 
 } // namespace CAP

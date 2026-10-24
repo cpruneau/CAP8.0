@@ -1,7 +1,6 @@
 #ifndef CAP__Renderer
 #define CAP__Renderer
-#include "TObject.h"
-#include "Aliases.hpp"
+#include "String.hpp"
 
 namespace CAP
 {
@@ -30,7 +29,6 @@ namespace CAP
   virtual void initialize();
   virtual void reset();
 
-  ClassDef(Renderer,0)
   };
 
   } // namespace GRAPHICS

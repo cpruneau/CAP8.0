@@ -12,7 +12,6 @@ using namespace std;
 using CAP::MATH::twoPiCube;
 using CAP::MATH::twoPi;
 
-ClassImp(CAP::Model);
 
 namespace CAP
 {

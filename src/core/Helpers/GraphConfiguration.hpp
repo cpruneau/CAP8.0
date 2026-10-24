@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__GraphConfiguration
 #define CAP__GraphConfiguration
-//#include "Aliases.hpp"
+//#include "String.hpp"
 #include "Configuration.hpp"
 #include <vector>
 
@@ -42,7 +40,6 @@ public:
 
   static std::vector<GraphConfiguration> createConfigurationPalette(unsigned int n, int dimension);
 
-  ClassDef(GraphConfiguration,0)
 };
 
 } // namespace CAP

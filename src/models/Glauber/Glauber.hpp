@@ -161,7 +161,6 @@ class GlauberMC
     static void         PrintVersion()               {cout << "GlauberMC " << Version() << endl;}
     static const char  *Version()                    {return "v3.2";}
 
-    ClassDef(GlauberMC,6) // GlauberMC class
 };
 
 //---------------------------------------------------------------------------------
@@ -177,8 +176,6 @@ TF1 *nNProfile(double _xSection, double omega, double G)
 
 
 
-ClassImp(GlauberMC)
-  ClassImp(GlauberMC::GlauberEventStat)
 //---------------------------------------------------------------------------------
 
 GlauberMC::GlauberMC(const char* NA, const char* NB, double xsect, double xsectsigma) :

@@ -2,7 +2,7 @@
 #define CAP_MATH_Matrix
 #include <vector>
 #include <ostream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 
 namespace CAP
@@ -188,7 +188,6 @@ namespace CAP
   unsigned int _nColumns;       //!< number of columns
   std::vector<double> _values;  //!< elements, row by row: element (i,j) is _values[i*_nColumns + j]
 
-  ClassDef(Matrix,1)
   };
 
   //! @relates Matrix

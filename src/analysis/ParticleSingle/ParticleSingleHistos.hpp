@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -48,7 +46,7 @@ public:
   //! @brief Create the histograms (according to the fill options).
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the particle histograms. @param particle particle @param weight weight (e.g., inverse efficiency)
   virtual void fill(Particle & particle, double weight);
   //! @brief Fill the event histograms. @param nAccepted number of accepted particles @param totalEnergy their total energy
@@ -113,7 +111,6 @@ public:
   //! Distribution of the PDG codes.
   Histogram * h_pdgId;
 
-  ClassDef(ParticleSingleHistos,0)
 
 };
 

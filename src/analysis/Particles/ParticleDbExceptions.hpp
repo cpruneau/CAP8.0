@@ -1,6 +1,6 @@
 #ifndef CAP_ParticleDbExceptions
 #define CAP_ParticleDbExceptions
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 namespace CAP
 {

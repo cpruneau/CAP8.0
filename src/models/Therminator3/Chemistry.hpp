@@ -112,7 +112,6 @@ namespace CAP
   ScalarField   _lambdaCField;
 
 
-  ClassDef(Chemistry,0)
   };
 
 }  //namespace CAP

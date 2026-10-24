@@ -1,7 +1,7 @@
 #ifndef CAP_MATH_Bessel
 #define CAP_MATH_Bessel
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Function.hpp"
 
 namespace CAP
@@ -124,7 +124,6 @@ namespace CAP
   BesselType   _type;   //!< kind of function
   unsigned int _order;  //!< order n
 
-  ClassDef(Bessel,1)
   };
 
   } // namespace MATH

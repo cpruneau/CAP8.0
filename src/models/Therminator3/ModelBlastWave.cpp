@@ -1,5 +1,4 @@
 #include "ModelBlastWave.hpp"
-ClassImp(CAP::ModelBlastWave);
 using CAP::MATH::twoPiCube;
 using CAP::MATH::twoPi;
 

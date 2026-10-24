@@ -1,5 +1,5 @@
 # **********************************************************************
-# Copyright (C) 2019-2026, Claude Pruneau
+# Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
 # All rights reserved.
 #
 # For the licensing terms see LICENSE.
@@ -56,6 +56,8 @@ def workflow():
     single = task("ParticleSingleAnalyzer", "Single")
     pair = task("ParticlePairAnalyzer", "Pair")
     it.children = [gen, single, pair]
+    for t in (it, gen, single, pair):
+        F.default_event_settings(t, TEMPLATES)                      # the generator creates the events
     for t in (single, pair):
         F.default_histogram_settings(t, TEMPLATES)                  # histograms used, created, exported
         for l in (2, 4) if t is pair else (2,):
@@ -235,7 +237,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(s["HISTOGRAM_1_1:NAME"], "Single_MB_PiM")
         self.assertEqual(s["HISTOGRAM_1_2:NAME"], "Single_Central_PiP")
         self.assertEqual(s["HISTOGRAM_2_3:NAME"], "Single_Central_PiM_D")
-        self.assertEqual(s["HISTOGRAM_2_3:BASE_NAME"], "Single_Central_PiM_D")
+        self.assertNotIn("HISTOGRAM_2_3:BASE_NAME", s)                    # short names: the folders tell them apart
         self.assertEqual(s["HISTOGRAM_1_0:OWNER"], "true")
         self.assertNotIn("HISTOGRAM_1_0:pt_nbins", s)
 
@@ -269,9 +271,8 @@ class TestKeys(unittest.TestCase):
         F.default_histogram_settings(pair, TEMPLATES)
         v = values(pair)
         self.assertEqual([v["HISTOGRAM_%d:USE" % l] for l in (1, 2, 3, 4)], ["true", "false", "true", "false"])
-        self.assertEqual((v["HISTOGRAM_1:CREATE"], v["HISTOGRAM_1:EXPORT"]), ("true", "true"))
-        self.assertEqual([v["HISTOGRAM_%d:EXPORT:FILE_NAME" % l] for l in (1, 2, 3, 4)],
-                         ["Pair.cap", "PairDerived.cap", "PairSingle.cap", "PairSingleDerived.cap"])
+        self.assertEqual((v["HISTOGRAM_1:CREATE"], v["HISTOGRAM_1:IMPORT"]), ("true", "false"))
+        self.assertFalse(any(k.startswith("HISTOGRAM_1:EXPORT") or k.startswith("HISTOGRAM_1:IMPORT:") for k in v))
         self.assertEqual(F.list_label(pair, TEMPLATES, 4), "Derived single histograms")
 
     def test_histogram_modes(self):
@@ -281,11 +282,9 @@ class TestKeys(unittest.TestCase):
         F.set_histogram_mode(a, TEMPLATES, F.DERIVED)
         v = values(a)
         self.assertEqual(F.histogram_mode(a, TEMPLATES), F.DERIVED)
-        self.assertEqual((v["HISTOGRAM_1:USE"], v["HISTOGRAM_1:IMPORT"], v["HISTOGRAM_1:CREATE"], v["HISTOGRAM_1:EXPORT"]),
-                         ("true", "true", "false", "false"))
-        self.assertEqual(v["HISTOGRAM_1:IMPORT:FILE_NAME"], "PSA.cap")          # the file of the fill run
-        self.assertEqual((v["HISTOGRAM_2:USE"], v["HISTOGRAM_2:CREATE"], v["HISTOGRAM_2:EXPORT"]), ("true",) * 3)
-        self.assertEqual(v["HISTOGRAM_2:EXPORT:FILE_NAME"], "PSADerived.cap")
+        self.assertEqual((v["HISTOGRAM_1:USE"], v["HISTOGRAM_1:IMPORT"], v["HISTOGRAM_1:CREATE"]),
+                         ("true", "true", "false"))                          # from the input file of the job
+        self.assertEqual((v["HISTOGRAM_2:USE"], v["HISTOGRAM_2:CREATE"], v["HISTOGRAM_2:IMPORT"]), ("true", "true", "false"))
         a.param("HISTOGRAM_2:CREATE").value = "false"
         self.assertEqual(F.histogram_mode(a, TEMPLATES), F.CUSTOM)
 
@@ -315,6 +314,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(F.histogram_mode(single, TEMPLATES), F.DERIVED)
         self.assertEqual(single.filters, tasks[0].children[1].filters)
         self.assertEqual(F.histogram_mode(tasks[0].children[1], TEMPLATES), F.CUSTOM)   # the workflow is unchanged
+        self.assertEqual(single.param("EVENT:USE").value, "false")              # no event loop
         self.assertEqual(F.check_choices(derived, library(), TEMPLATES), [])
 
     def test_event_settings(self):
@@ -347,6 +347,70 @@ class TestKeys(unittest.TestCase):
         self.assertIn("Task BasicEventGen imports events but the file is not named",
                       "\n".join(F.check_choices(tasks, library(), TEMPLATES)))
 
+    def test_job_files(self):
+        """The files of the job: keys of the task CAP runs, in the RUNCAP element too; read back."""
+        lib = library()
+        lib.job.update({"OUTPUT_FILE": "fill.cap"})
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "w.xml")
+            RunCAP.write_workflow(path, workflow(), lib, TEMPLATES)
+            top = ET.parse(path).getroot().find("TASK")
+            keys = {p.get("name"): p.text for g in top.findall("GROUP") if g.get("name") == "JOB"
+                    for p in g.findall("PARAMETER")}
+            self.assertEqual(keys, {"OUTPUT_FILE": "fill.cap"})
+            _, lib2, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            self.assertEqual(lib2.job, {"OUTPUT_FILE": "fill.cap", "INPUT_FILE": ""})
+            tree = ET.parse(path)
+            tree.getroot().remove(tree.getroot().find("RUNCAP"))     # from the keys alone
+            tree.write(path)
+            _, lib3, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            self.assertEqual(lib3.job["OUTPUT_FILE"], "fill.cap")
+            self.assertEqual(warnings, [])
+
+    def test_check_job(self):
+        tasks = workflow()
+        single = tasks[0].children[1]
+        F.set_histogram_mode(single, TEMPLATES, F.DERIVED)
+        lib = library()
+        self.assertIn("Single imports histograms: name the input file", "\n".join(F.check_job(tasks, lib, TEMPLATES)))
+        lib.job.update({"INPUT_FILE": "a.cap", "OUTPUT_FILE": "a.cap"})
+        self.assertIn("are the same file", "\n".join(F.check_job(tasks, lib, TEMPLATES)))
+        lib.job["OUTPUT_FILE"] = "b.cap"
+        self.assertEqual(F.check_job(tasks, lib, TEMPLATES), [])
+
+    def test_obsolete_keys(self):
+        """Keys of earlier versions (files of the lists of folders) are dropped when a workflow is read."""
+        it = task("EventIterator")
+        a = task("ParticleSingleAnalyzer", "PSA")
+        it.children = [a]
+        a.params += [RunCAP.Param("HISTOGRAM_1:EXPORT", "bool", "true"),
+                     RunCAP.Param("HISTOGRAM_1:EXPORT:FILE_NAME", "string", "x.cap")]
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "old.xml")
+            RunCAP.write_workflow(path, [it])
+            tasks, _, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+        self.assertIsNone(tasks[0].children[0].param("HISTOGRAM_1:EXPORT"))
+        self.assertFalse([w for w in warnings if "HISTOGRAM_1:EXPORT" in w])
+
+    def test_event_settings_migrate(self):
+        """A workflow written before the event settings were the tasks' (generator: USE true, CREATE false)."""
+        tasks = workflow()
+        gen, single = tasks[0].children[0], tasks[0].children[1]
+        gen.param("EVENT:USE").value = "true"
+        gen.param("EVENT:CREATE").value = "false"
+        single.param("EVENT:USE").value = "true"
+        text = "\n".join(F.check_choices(tasks, library(), TEMPLATES))
+        self.assertIn("Task BasicEventGen makes events but is set neither to create nor to import them", text)
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "old.xml")
+            RunCAP.write_workflow(path, tasks, library(), TEMPLATES)
+            read, lib, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+        g = read[0].children[0]
+        self.assertEqual((g.param("EVENT:CREATE").value, g.param("EVENT:USE").value), ("true", "false"))
+        self.assertIn("Task BasicEventGen makes events: set to create them", "\n".join(warnings))
+        self.assertEqual(read[0].children[1].param("EVENT:USE").value, "true")      # the analyzer is unchanged
+        self.assertEqual(F.check_choices(read, lib, TEMPLATES), [])
+
     def test_use_migrates(self):
         """A workflow whose folders were written without USE (CAP did not read it): the lists are used."""
         a = task("ParticleSingleAnalyzer", "PSA")
@@ -358,11 +422,11 @@ class TestKeys(unittest.TestCase):
     def test_per_folder_binning(self):
         tasks = workflow()
         single = tasks[0].children[1]
-        single.histograms = F.HistogramOptions("S", False, {("Central", "PiM"): {"pt_nbins": "7"}})
+        single.histograms = F.HistogramOptions(False, {("Central", "PiM"): {"pt_nbins": "7"}})
         F.apply_choices(tasks, library(), TEMPLATES, RunCAP.Param)
         s = values(single)
         default = s["HISTOGRAM:pt_nbins"]
-        self.assertEqual(s["HISTOGRAM_1_0:NAME"], "S_MB_PiP")
+        self.assertEqual(s["HISTOGRAM_1_0:NAME"], "Single_MB_PiP")
         self.assertEqual(s["HISTOGRAM_1_0:pt_nbins"], default)
         self.assertEqual(s["HISTOGRAM_1_3:pt_nbins"], "7")
         self.assertEqual(s["HISTOGRAM_2_3:pt_nbins"], "7")        # derived folders as their base folder
@@ -381,7 +445,7 @@ class TestReading(unittest.TestCase):
 
     def test_roundtrip(self):
         tasks = workflow()
-        tasks[0].children[1].histograms = F.HistogramOptions("S", False, {("Central", "PiM"): {"pt_nbins": "7"}})
+        tasks[0].children[1].histograms = F.HistogramOptions(False, {("Central", "PiM"): {"pt_nbins": "7"}})
         lib = library()
         before = [p.key for p in tasks[0].children[1].params]
         read, lib2, warnings = self.roundtrip(tasks, lib)
@@ -392,7 +456,7 @@ class TestReading(unittest.TestCase):
         self.assertEqual(single.filters, tasks[0].children[1].filters)
         self.assertEqual(pair.filters, tasks[0].children[2].filters)
         self.assertEqual(single.histograms, tasks[0].children[1].histograms)
-        self.assertEqual(pair.histograms, F.HistogramOptions("Pair"))
+        self.assertEqual(pair.histograms, F.HistogramOptions())
         self.assertFalse(any(F.MANAGED_KEY.match(p.key) for p in single.params))
         self.assertEqual(len(read), 1)                                                # FilterCreator removed
 
@@ -414,6 +478,18 @@ class TestReading(unittest.TestCase):
         self.assertEqual(warnings, [])
         self.assertEqual([t.name for t in read], ["EventIterator"])
         self.assertEqual(lib2, lib)
+
+    def test_run_root_name(self):
+        """CAP runs the task written at the root of the file (the wrapper holding FilterCreator and the tasks), also
+        for a workflow of one top-level task, as RunCAP's Run and --print-command give it."""
+        lib = library()
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "w.xml")
+            written = RunCAP.write_workflow(path, workflow(), lib, TEMPLATES)
+            tasks, lib2, _ = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+        self.assertEqual(len(tasks), 1)                                 # EventIterator alone, FilterCreator removed
+        self.assertEqual(written, "Workflow")
+        self.assertEqual(RunCAP.run_root_name(tasks, lib2, TEMPLATES), "Workflow")
 
     def test_writing_keeps_parameters(self):
         """Writing copies the tasks without copying their parameters (the GUI attaches widgets to them)."""
@@ -458,7 +534,7 @@ class TestReading(unittest.TestCase):
         self.assertEqual(psa.filters, {"EVENT_FILTER": ["All"], "PARTICLE_FILTER": ["Ch"]})
         self.assertEqual(lib.get("EVENT_FILTER", "All").conditions, [F.Condition("MULT_0", F.RANGE, 0, 1000)])
         self.assertEqual(lib.get("PARTICLE_FILTER", "Ch").conditions[0].form, F.FLAG)
-        self.assertEqual(psa.histograms, F.HistogramOptions("SG", False, {("All", "Ch"): {"pt_nbins": "11"}}))
+        self.assertEqual(psa.histograms, F.HistogramOptions(False, {("All", "Ch"): {"pt_nbins": "11"}}))
 
     def test_renamed_folders_warn(self):
         it = task("EventIterator")
@@ -517,11 +593,8 @@ class TestChecks(unittest.TestCase):
         self.assertIn("Task Pair uses no event", text)
         self.assertEqual(len(errors), 8)
         pair.param("HISTOGRAM_3:CREATE").value = "false"
-        pair.param("HISTOGRAM_4:EXPORT").value = "true"
-        pair.param("HISTOGRAM_4:EXPORT:FILE_NAME").value = "NONE"
         text = "\n".join(F.check_choices(tasks, lib, TEMPLATES))
         self.assertIn("single histograms are used but neither created nor imported (HISTOGRAM_3)", text)
-        self.assertIn("derived single histograms are exported but the file is not named (HISTOGRAM_4)", text)
 
     def test_list_flags_off(self):
         """FilterCreator imports, creates and exports the objects: never the tasks (their model is unchanged)."""
@@ -536,6 +609,7 @@ class TestChecks(unittest.TestCase):
         lib = F.FilterLibrary()
         lib.add(F.FilterDef("EVENT_FILTER", "B", "", [F.Condition("IMPACT", F.DUAL_RANGE, 0, 2, 4, 6)]))
         g = task("GlauberGenerator")
+        F.default_event_settings(g, TEMPLATES)
         g.filters = {"EVENT_FILTER": ["B"]}
         self.assertEqual(F.check_choices([g], lib, TEMPLATES), [])
         g.filters["PARTICLE_FILTER"] = ["B"]

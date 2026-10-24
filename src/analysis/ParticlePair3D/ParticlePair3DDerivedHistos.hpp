@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -44,7 +42,7 @@ public:
                                const Configuration & configuration,
                                unsigned int index);
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Compute the correlation functions. @param part1DerivedHistos derived single histograms of particle 1
@@ -122,7 +120,6 @@ protected:
   void projectInto(const Histogram * source, unsigned int axis, const String & targetName);
 
 
-  ClassDef(ParticlePair3DDerivedHistos,1)
 
 };
 

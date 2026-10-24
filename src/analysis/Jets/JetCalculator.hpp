@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -43,7 +41,7 @@ public:
   //! @brief Create the histograms. @param configuration configuration
   virtual void create(const Configuration & configuration);
   //! @brief Load the histograms from a file. @param inputFile file @param configuration configuration
-  virtual void loadFrom(CapFile & inputFile,const Configuration & configuration);
+  virtual void loadFrom(const Folder & inputFile,const Configuration & configuration);
   //! @brief Normalize the histograms.
   virtual void scaleHistograms();
 
@@ -54,7 +52,6 @@ protected:
   //! @brief Number of jet filters. @return number
   unsigned int nJetFilters();
 
-  ClassDef(JetCalculator,0)
 };
 
 } // namespace CAP

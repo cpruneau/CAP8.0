@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -44,7 +42,7 @@ public:
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Load the derived histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Compute the projections and pT averages from base histograms. @param baseHistos base histograms
   virtual void calculateDerivedHistograms(ParticleSingleHistos & baseHistos);
   friend class ParticlePairDerivedHistos;
@@ -77,7 +75,6 @@ protected:
   //! Average pT vs (y, phi).
   Histogram * h_avg_pt_phiY;
 
-  ClassDef(ParticleSingleDerivedHistos,0)
 
 };
 

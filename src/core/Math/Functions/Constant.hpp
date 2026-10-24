@@ -47,7 +47,6 @@ namespace CAP
   //! @brief Set the value of the constant. @param c0 new value
   void setValue(double c0) { setParameterValue(0,c0); }
 
-  ClassDef(Constant,1)
   };
 
   } // namespace MATH

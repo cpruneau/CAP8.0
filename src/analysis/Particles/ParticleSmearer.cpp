@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -18,7 +16,6 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-ClassImp(CAP::ParticleSmearer);
 
 namespace CAP
 {
@@ -151,7 +148,7 @@ void ParticleSmearer::create()
   h_eta_rms  = createHistogram("PART_RMS_ETA_ALL_ALL_etaPt",  eta_nbins, eta_min, eta_max, pt_nbins,  pt_min,  pt_max,  "#eta", "p_{T}","eta_{rms}", 2);
 }
 
-void ParticleSmearer::loadFrom(CapFile & inputFile)
+void ParticleSmearer::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_pt_bias  = importHistogram(inputFile,"PART_BIAS_PT_ALL_ALL_etaPt");

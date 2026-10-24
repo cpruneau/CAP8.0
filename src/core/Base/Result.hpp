@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -13,7 +11,8 @@
 #ifndef CAP__Result
 #define CAP__Result
 
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Factory.hpp"
 #include "ResultType.hpp"
 #include "ResultDb.hpp"
@@ -236,7 +235,6 @@ protected:
   
 
 
-  ClassDef(Result,0)
 
 };
 

@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -17,7 +15,8 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TProfile2D.h"
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Configuration.hpp"
 #include "ManagedObject.hpp"
 #include "Exceptions.hpp"
@@ -293,7 +292,6 @@ namespace CAP
   //! @brief Difference of two groups, histogram by histogram.
   friend RootHistogramGroup operator-(const RootHistogramGroup & lhs,const RootHistogramGroup & rhs);
 
-  ClassDef(RootHistogramGroup,0)
   };
 
   RootHistogramGroup operator+(const RootHistogramGroup & lhs,const RootHistogramGroup & rhs);

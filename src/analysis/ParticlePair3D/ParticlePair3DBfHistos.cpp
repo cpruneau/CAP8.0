@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -24,7 +22,6 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 
-ClassImp(CAP::ParticlePair3DBfHistos);
 
 namespace CAP
 {
@@ -124,7 +121,7 @@ void ParticlePair3DBfHistos::create()
   h_Bs_DeltaPl    = createHistogram(createName(_histogramBaseName,"Bs_DeltaPl"),  DeltaPl_nbins,DeltaPl_min, DeltaPl_max, "p_{l}","B_{s1}");
 }
 
-void ParticlePair3DBfHistos::loadFrom(CapFile & inputFile)
+void ParticlePair3DBfHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_B12_Qinv    = importHistogram(inputFile,createName(_histogramBaseName,"B12_Qinv"));

@@ -1,6 +1,5 @@
 #include "ModelBWA.hpp"
 
-ClassImp(CAP::ModelBWA);
 
 using namespace std;
 using CAP::MATH::twoPi;

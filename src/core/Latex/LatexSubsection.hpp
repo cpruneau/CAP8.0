@@ -14,7 +14,6 @@ namespace CAP
   virtual ~LatexSubsection() { }
   virtual void writeHeader(std::ofstream & out);
 
-  //ClassDef(LatexSubsection,0)
   };
 
 } // namespace CAP

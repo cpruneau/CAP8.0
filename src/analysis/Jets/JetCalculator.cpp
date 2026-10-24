@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -20,7 +18,6 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::JetCalculator);
 
 namespace CAP
 {
@@ -103,7 +100,7 @@ void JetCalculator::setDefaultConfiguration()
   addProperty("z_max",     1.0);
 }
 
-void JetCalculator::loadFrom(CapFile & inputFile,const Configuration & configuration)
+void JetCalculator::loadFrom(const Folder & inputFile,const Configuration & configuration)
 {
   String bn = valueString("HistogramBaseName");
   JetHistos        * jetHistos;

@@ -9,8 +9,11 @@
   <Window title="CAP" width="1400" height="900" theme="light" fontSize="15" viewports="true"/>
   <!-- canvas panes in the window: columns x rows; toolbars: buttons above each canvas -->
   <Canvases columns="1" rows="1" toolbars="true"/>
-  <!-- graphs in each new canvas (columns x rows) and their defaults; mode: add or replace -->
-  <Graphs columns="1" rows="1" legend="true" logX="false" logY="false" mode="add"/>
+  <!-- graphs in each new canvas (columns x rows) and their defaults; mode: add or replace; keepShapes: shapes and
+       texts stay in a graph when its contents are replaced; the palettes of the session: colors (default, okabe-ito,
+       fits), markers (default, open), shading (viridis, bird, grayscale, diverging) -->
+  <Graphs columns="1" rows="1" legend="true" logX="false" logY="false" mode="add" keepShapes="true"
+          colorPalette="default" markerPalette="default" shadingPalette="viridis"/>
   <!-- folder where the file dialogs start (empty: the current folder) and the file types they list (only the types
        CapGui can open are used: .cap) -->
   <Files directory="" extensions=".cap"/>

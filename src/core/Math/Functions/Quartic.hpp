@@ -59,7 +59,6 @@ namespace CAP
   }
   using Polynomial::setCoefficients; // keep the vector version visible
 
-  ClassDef(Quartic,1)
   };
 
   } // namespace MATH

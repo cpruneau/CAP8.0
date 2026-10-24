@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -47,7 +45,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the histograms with a pair: compute Qinv and (q_side, q_out, q_long).
   //! @param particle1 first particle @param particle2 second particle @param weight weight
   virtual void fill(Particle & particle1, Particle & particle2, double weight);
@@ -86,7 +84,6 @@ protected:
   Histogram * h_n2_Qinv;  ///< pair density vs Qinv
   Histogram * h_n2_DeltaP;  ///< pair density vs (q_side, q_out, q_long)
 
-  ClassDef(ParticlePair3DHistos,0)
 };
 
 } // namespace CAP

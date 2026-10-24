@@ -11,7 +11,6 @@
 #include <cxxabi.h>
 #endif
 
-ClassImp(CAP::Folder);
 
 namespace CAP
 {
@@ -279,6 +278,66 @@ namespace CAP
   for (auto it=parent->_entries.begin(); it!=parent->_entries.end(); ++it)
     if (it->name==leaf) { parent->_entries.erase(it); return true; }
   return false;
+  }
+
+  String Folder::copyEntry(const Folder & source, const String & path, const String & name)
+  {
+  const Entry * e = source.findPath(path);
+  if (!e) throw Exception(String("No entry ")+path+" in folder "+source.name(),"Folder::copyEntry()");
+  std::string leaf = path.data();
+  std::size_t slash = leaf.rfind('/');
+  if (slash!=std::string::npos) leaf = leaf.substr(slash+1);
+  String copyName = name.isEmpty() ? String(leaf.c_str()) : name;
+  e->item->load();                                  // a copy independent of the file it was read from
+  std::unique_ptr<FolderItem> copy(e->item->clone());
+  if (Folder * f = copy->asFolder()) { f->loadAll(); f->setName(copyName); }
+  current()->addItem(copyName,copy.release());
+  return copyName;
+  }
+
+  String Folder::uniqueName(const String & name) const
+  {
+  const Folder * target = current();
+  if (!target->findEntry(name.data())) return name;
+  for (int k=2; ; k++)
+    {
+    String candidate = name+String("_")+String(std::to_string(k).c_str());
+    if (!target->findEntry(candidate.data())) return candidate;
+    }
+  }
+
+  void Folder::rename(const String & path, const String & newName)
+  {
+  checkName(newName,"Folder::rename()");
+  std::string leaf;
+  Folder * parent = parentOf(path,leaf);
+  if (!parent) throw Exception(String("No entry ")+path,"Folder::rename()");
+  if (leaf==newName.data()) return;
+  if (parent->findEntry(newName.data())) throw Exception(String("An entry named ")+newName+" already exists","Folder::rename()");
+  for (auto & e : parent->_entries)
+    if (e.name==leaf)
+      {
+      e.name = newName.data();
+      if (Folder * f = e.item->asFolder()) f->setName(newName);
+      return;
+      }
+  throw Exception(String("No entry ")+path,"Folder::rename()");
+  }
+
+  std::unique_ptr<FolderItem> Folder::take(const String & path)
+  {
+  std::string leaf;
+  Folder * parent = parentOf(path,leaf);
+  if (!parent) return nullptr;
+  for (auto it=parent->_entries.begin(); it!=parent->_entries.end(); ++it)
+    if (it->name==leaf)
+      {
+      std::unique_ptr<FolderItem> item = std::move(it->item);
+      parent->_entries.erase(it);
+      if (Folder * f = item->asFolder()) f->_parent = nullptr;
+      return item;
+      }
+  return nullptr;
   }
 
   void Folder::clear()

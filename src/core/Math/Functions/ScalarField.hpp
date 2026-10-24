@@ -1,7 +1,7 @@
 #ifndef CAP__ScalarField
 #define CAP__ScalarField
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Object.hpp"
 #include "Function.hpp"
 #include "BinaryIO.hpp"
@@ -347,7 +347,6 @@ namespace CAP
   std::vector<unsigned int> _nPoints;  //!< number of nodes along each axis (empty for a constant field)
   std::vector<double> _values;         //!< node values, axis 0 varying fastest (empty for a constant field)
 
-  ClassDef(ScalarField,1)
 
   private:
   //! @brief Add sign*rhs. @param rhs field @param sign +1 or -1 @param source name of the calling function

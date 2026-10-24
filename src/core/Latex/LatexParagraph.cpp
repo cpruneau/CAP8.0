@@ -1,5 +1,4 @@
 #include "LatexParagraph.hpp"
-////ClassImp(CAP::LatexParagraph);
 
 namespace CAP
 {

@@ -1,9 +1,7 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * Copyright (C) 2016, Chun Shen
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -66,7 +64,7 @@ namespace CAP
   bool containsTypeNamed(const String & aName) const;
 
   //! @brief Number of types. @return number of types
-  Size_t size() { return _particleTypes.size();}
+  unsigned int size() { return _particleTypes.size();}
   //! @brief Types (owned by the database). @return types
   std::vector<ParticleType*> & particleTypes()   { return _particleTypes; }
   //! @brief Types (owned by the database). @return types
@@ -221,7 +219,6 @@ namespace CAP
   //! Lifetime threshold of the lifetime-based selections of decays.
   double _dbMaxLifeTime;
 
-  ClassDef(ParticleDb,1)
   };
 
 } //namespace CAP

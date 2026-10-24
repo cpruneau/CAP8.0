@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez     
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -406,7 +404,6 @@ protected:
 
   Configuration _configuration;  //!< parameters
   String _configurationPath;  //!< path prepended to the keys of the single-key functions
-  ClassDef(ConfigurationManager,0)
 };
 
 } // namespace CAP

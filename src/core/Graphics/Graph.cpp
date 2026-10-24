@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -24,7 +22,6 @@
 #include "ParameterizedFunction.hpp"
 #include "Histogram.hpp"
 
-ClassImp(CAP::GRAPHICS::Graph);
 
 namespace CAP
 {
@@ -175,12 +172,14 @@ namespace CAP
 
   void GraphItem::applyDefaultStyle(int k)
   {
-  static const int colors[]  = {1, 2, 4, 8, 6, 9, 28, 46};
-  static const int markers[] = {20, 21, 22, 23, 33, 29, 34, 47};
-  int n = (k < 0 ? 0 : k) % 8;
-  _line.setColor(colors[n]);
-  _marker.setColor(colors[n]);
-  _marker.setStyle(markers[n]);
+  applyDefaultStyle(k, Palettes::session().colorPalette(), Palettes::session().markerPalette());
+  }
+
+  void GraphItem::applyDefaultStyle(int k, const ColorPalette & colors, const MarkerPalette & markers)
+  {
+  _line.setColor(colors.color(k));
+  _marker.setColor(colors.color(k));
+  _marker.setStyle(markers.marker(k));
   }
 
   unsigned int GraphItem::nFits() const
@@ -215,9 +214,8 @@ namespace CAP
 
   LineAttributes GraphItem::defaultFitLine(unsigned int k)
   {
-  static const int colors[] = { 2, 4, 8, 6, 9, 46, 28, 7 };   // red, blue, green, magenta, ...
   LineAttributes line;
-  line.set(colors[k % 8], 1.0, 1, 2.0);
+  line.set(Palettes::session().colorPaletteOr("fits").color(int(k)), 1.0, 1, 2.0);
   return line;
   }
 
@@ -240,6 +238,9 @@ namespace CAP
   _cellXLow(0.0), _cellYLow(0.0), _cellXHigh(1.0), _cellYHigh(1.0),
   _margins(0.18, 0.15, 0.05, 0.09),
   _items(),
+  _shapes(),
+  _colorPaletteName(),
+  _markerPaletteName(),
   _logX(false), _logY(false),
   _autoX(true), _autoY(true),
   _xMinimum(0.0), _xMaximum(1.0), _yMinimum(0.0), _yMaximum(1.0),
@@ -249,7 +250,7 @@ namespace CAP
   _yAxis(),
   _zAxis(),
   _logZ(false), _autoZ(true), _zMinimum(0.0), _zMaximum(1.0), _symmetricZ(false),
-  _paletteType(Palette::kViridis), _paletteSteps(0), _showColorScale(true),
+  _paletteType(int(Palettes::session().shadingPalette().type())), _paletteSteps(Palettes::session().shadingPalette().nSteps()), _showColorScale(true),
   _frameFill(*FillAttributes::defaultFillAttributes()),
   _frameLine(*LineAttributes::defaultLineAttributes()),
   _titleAttributes(*TextAttributes::defaultTextAttributes()),
@@ -285,6 +286,9 @@ namespace CAP
   _cellXLow(src._cellXLow), _cellYLow(src._cellYLow), _cellXHigh(src._cellXHigh), _cellYHigh(src._cellYHigh),
   _margins(src._margins),
   _items(src._items),
+  _shapes(src._shapes),
+  _colorPaletteName(src._colorPaletteName),
+  _markerPaletteName(src._markerPaletteName),
   _logX(src._logX), _logY(src._logY),
   _autoX(src._autoX), _autoY(src._autoY),
   _xMinimum(src._xMinimum), _xMaximum(src._xMaximum), _yMinimum(src._yMinimum), _yMaximum(src._yMaximum),
@@ -318,6 +322,22 @@ namespace CAP
   _titleRect(src._titleRect), _legendRect(src._legendRect), _pointPositions(src._pointPositions)
   { }
 
+  void Graph::draw(Painter & painter) const
+  {
+  if (_excluded) return;
+  Drawable2D::draw(painter);
+  for (const auto & shape : _shapes) shape.draw(painter, *this);
+  }
+
+  int Graph::shapeAt(const Point2D & p, float toleranceX, float toleranceY) const
+  {
+  float w = _cellXHigh - _cellXLow, h = _cellYHigh - _cellYLow;
+  if (w <= 0 || h <= 0) return -1;
+  Point2D q = Shape::fromCanvas(*this, p);
+  for (int k=int(_shapes.size())-1; k>=0; k--) if (_shapes[size_t(k)].contains(q, toleranceX/w, toleranceY/h)) return k;
+  return -1;
+  }
+
   Graph & Graph::operator=(const Graph & rhs)
   {
   if (this != &rhs)
@@ -326,6 +346,9 @@ namespace CAP
     _cellXLow = rhs._cellXLow; _cellYLow = rhs._cellYLow; _cellXHigh = rhs._cellXHigh; _cellYHigh = rhs._cellYHigh;
     _margins = rhs._margins;
     _items = rhs._items;
+    _shapes = rhs._shapes;
+    _colorPaletteName = rhs._colorPaletteName;
+    _markerPaletteName = rhs._markerPaletteName;
     _logX = rhs._logX; _logY = rhs._logY;
     _autoX = rhs._autoX; _autoY = rhs._autoY;
     _xMinimum = rhs._xMinimum; _xMaximum = rhs._xMaximum; _yMinimum = rhs._yMinimum; _yMaximum = rhs._yMaximum;
@@ -551,7 +574,7 @@ namespace CAP
   for (auto & existing : _items) if (existing.object() == item.object()) return existing;
   _items.push_back(item);
   GraphItem & added = _items.back();
-  added.applyDefaultStyle(int(_items.size()) - 1);
+  added.applyDefaultStyle(int(_items.size()) - 1, colorPalette(), markerPalette());
   if (fresh)
     {
     setTitlesFrom(added);

@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -18,7 +16,6 @@
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::NuDynDerivedHistos);
 
 namespace CAP
 {
@@ -96,7 +93,7 @@ void NuDynDerivedHistos::create()
   h_nudyn_evt = createHistogram(createName(_histogramBaseName,"Nu_dyn"),evt_nbins,evt_min,evt_max,"evtClass","#nu_{Dyn}");
 }
 
-void NuDynDerivedHistos::loadFrom(CapFile & inputFile)
+void NuDynDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   NuDynHistos::loadFrom(inputFile);

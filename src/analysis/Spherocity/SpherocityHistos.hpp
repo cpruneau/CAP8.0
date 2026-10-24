@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -40,7 +38,7 @@ public:
   //! @brief Create the histograms (according to the fill options).
   virtual void create();
   //! @brief Load the histograms from a file. @param file file
-  virtual void loadFrom(CapFile & file);
+  virtual void loadFrom(const Folder & file);
   //! @brief Fill the histograms. @param s0 spherocity S0 @param s1 spherocity S1 @param weight weight
   virtual void fill(double s0, double s1, double weight);
 
@@ -66,7 +64,6 @@ protected:
   //! S1 vs S0.
   Histogram * h_s1VsS0;
 
-  ClassDef(SpherocityHistos, 1);
 };
 
 } // namespace CAP

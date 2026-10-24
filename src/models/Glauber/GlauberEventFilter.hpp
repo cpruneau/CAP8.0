@@ -44,7 +44,6 @@ namespace CAP
                          const Configuration & configuration,
                          unsigned int index);
   
-  ClassDef(GlauberEventFilter,0)
   };
 
 } // namespace CAP

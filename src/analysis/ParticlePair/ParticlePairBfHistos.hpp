@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -45,7 +43,7 @@ public:
   //! @brief Create the balance function histograms.
   void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  void loadFrom(CapFile & inputFile);
+  void loadFrom(const Folder & inputFile);
   
   //! @brief Compute the balance functions and combinations from the correlation functions of the four combinations.
   //! @param pair12B pairs (1, 2bar) @param pair1B2B pairs (1bar, 2bar) @param pair1B2 pairs (1bar, 2) @param pair12 pairs (1, 2)
@@ -113,7 +111,6 @@ protected:
   Histogram* h_R2_B21_DyDphi;  ///< balance function B(2|1) from R2 vs (Delta y, Delta phi)
   Histogram* h_R2_Bs_DyDphi;  ///< sum of the balance functions from R2 vs (Delta y, Delta phi)
 
-  ClassDef(ParticlePairBfHistos,1)
 
 };
 

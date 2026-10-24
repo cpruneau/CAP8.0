@@ -161,7 +161,6 @@ namespace CAP
   mutable Rect2D _titleRect; //! not streamed (set when drawn)
   mutable Rect2D _bodyRect;  //! not streamed (set when drawn)
 
-  ClassDef(Axis,0)
   };
   } // namespace GRAPHICS
 } // namespace CAP

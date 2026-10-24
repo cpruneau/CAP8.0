@@ -3,7 +3,7 @@
 #include <vector>
 #include <initializer_list>
 #include <ostream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ParameterizedFunction.hpp"
 
 namespace CAP
@@ -237,7 +237,6 @@ namespace CAP
   //!
   friend std::ostream& operator<<(std::ostream& out, const Polynomial & p);
 
-  ClassDef(Polynomial,1)
   };
 
   //! @relates Polynomial

@@ -4,8 +4,6 @@
 #include "PrintHelpers.hpp"
 #include "StreamHelpers.hpp"
 
-ClassImp(CAP::Manager<CAP::GlauberDb>);
-ClassImp(CAP::GlauberDb)
 
 using CAP::MATH::power;
 

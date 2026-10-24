@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__CanvasList
 #define CAP__CanvasList
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "TCanvas.h"
 #include "TSystem.h"
 #include "CanvasConfiguration.hpp"
@@ -54,7 +53,6 @@ protected:
 
   std::vector<TCanvas*> _canvases;
 
-  ClassDef(CanvasList,0)
 
 };
 

@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -49,7 +47,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the histograms with the constituents of a jet. @param J jet
   virtual void fill(PseudoJet& J);
 
@@ -101,7 +99,6 @@ public:
   double z_min;  ///< lower edge of the z axis
   double z_max;  ///< upper edge of the z axis
 
-  ClassDef(JetSingleHistos,0)
 
 };
 

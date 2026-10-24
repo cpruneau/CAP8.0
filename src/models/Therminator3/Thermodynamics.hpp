@@ -67,7 +67,6 @@ namespace CAP
   MATH::ScalarField _temperature;
   Viscosity   _viscosity;
 
-  ClassDef(Thermodynamics,0)
   };
 
 

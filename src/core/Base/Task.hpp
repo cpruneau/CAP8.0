@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -19,6 +17,8 @@
 #include <iostream>
 namespace CAP
 {
+  class Folder;
+
 
   //!
   //! @brief Base class of the analysis and simulation tasks, organized as a tree of subtasks.
@@ -105,6 +105,18 @@ namespace CAP
   virtual void partial();
   //! @brief Finalize the subtasks and stop the timer.
   virtual void finalize();
+  //!
+  //! @brief Add the histograms of this task and of its subtasks to the folder written to the output file of the job
+  //! (one sub-folder per task that has histograms, named after it; see CAP.cxx). Here: those of the subtasks.
+  //! @param top folder of the job
+  //!
+  virtual void saveHistograms(Folder & top);
+  //!
+  //! @brief Read the histograms of this task and of its subtasks from the folder of the input file of the job (the
+  //! sub-folder named after each task), for the histograms imported. Here: those of the subtasks.
+  //! @param top folder of the job
+  //!
+  virtual void loadHistograms(const Folder & top);
   //! @brief Reset the subtasks and set the execution counter to 0.
   virtual void reset();
   //! @brief Clear the execution counter and delete the subtasks.
@@ -234,12 +246,12 @@ namespace CAP
   //!
   //! @brief Write the templates of task classes (see exportXmlTemplate()), each task being named after its class.
   //! @param path directory
-  //! @param classNames classes; all the non-abstract classes deriving from CAP::Task known to ROOT (see taskClassNames())
+  //! @param classNames classes; all the task classes (see taskClassNames())
   //! if empty
   //! @return names of the files written (classes that cannot be instantiated are skipped with a warning)
   //!
   static std::vector<String> exportXmlTemplates(const String & path, const std::vector<String> & classNames=std::vector<String>());
-  //! @brief Names of the non-abstract, non-template classes deriving from CAP::Task whose dictionaries are loaded.
+  //! @brief Names of the task classes, registered for the reflection (see registerTask() in TaskRegistration.hpp).
   //! @return sorted names
   static std::vector<String> taskClassNames();
   //! @brief Fill a TASK element with the configuration of this task (severity attribute, parameters) and its subtasks.
@@ -263,8 +275,9 @@ namespace CAP
 
   protected:
 
-  //! @brief Instantiate a task of a class through ROOT's dictionary. @param taskClassName class name @return new task
-  //! @throws UnknownClassException if the class is unknown; Exception if it cannot be instantiated
+  //! @brief Instantiate a task of a class registered for the reflection (see registerTask() in TaskRegistration.hpp).
+  //! @param taskClassName class name @return new task, owned by the caller
+  //! @throws UnknownClassException if the class is not registered; Exception if it cannot be instantiated
   static Task * instantiateTask(const String & taskClassName);
   //! @brief Name of the task (the keys of a task begin with its name). @return name
   String xmlKeyPath() const override;
@@ -300,7 +313,6 @@ namespace CAP
   //!
   Timer _timer;
 
-  ClassDef(Task,0)
   };
 
 }

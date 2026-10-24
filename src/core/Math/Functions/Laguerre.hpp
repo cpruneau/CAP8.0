@@ -1,7 +1,7 @@
 #ifndef CAP_MATH_Laguerre
 #define CAP_MATH_Laguerre
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Function.hpp"
 
 namespace CAP
@@ -99,7 +99,6 @@ namespace CAP
   unsigned int _degree;  //!< degree n
   double _alpha;         //!< parameter alpha
 
-  ClassDef(Laguerre,1)
   };
 
   } // namespace MATH

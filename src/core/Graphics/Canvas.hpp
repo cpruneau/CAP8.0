@@ -1,7 +1,7 @@
 #ifndef CAP__Canvas
 #define CAP__Canvas
-#include "TObject.h"
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Drawable2D.hpp"
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
@@ -21,6 +21,8 @@ namespace CAP
   //! width() and height() are the requested size in device units (points/pixels); element
   //! coordinates are normalized, (0,0) lower-left to (1,1) upper-right.
   //!
+  class CanvasRegistry;
+
   class Canvas : public Drawable2D
   {
   public:
@@ -29,7 +31,9 @@ namespace CAP
   Canvas(const String & name, const String & title, int width=800, int height=600);
   Canvas(const Canvas & src);
   Canvas  & operator=(const Canvas & rhs);
-  virtual ~Canvas() { clearGraphs(); }
+  virtual ~Canvas();
+  //! @brief Registry listing the canvas, or null (see CanvasRegistry; copies of a canvas are not listed).
+  CanvasRegistry * registry() const { return _registry; }
 
   void setSize(int width, int height) { _width = width; _height = height; }
   int  width()  const { return _width;  }
@@ -96,11 +100,12 @@ namespace CAP
   int _nColumns;
   int _nRows;
   std::vector<Graph*> _graphs; //! owned; not streamed
+  CanvasRegistry * _registry;   //!< registry listing the canvas (not copied)
+  friend class CanvasRegistry;
 
   void layout();
   void clearGraphs();
 
-  ClassDef(Canvas,0)
   };
 
   } // namespace GRAPHICS

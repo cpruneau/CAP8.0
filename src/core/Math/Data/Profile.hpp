@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -94,6 +92,10 @@ public:
   double sumWeightedValues2(unsigned int k) const{ checkGlobal(k,__FUNCTION__); return _sumWY2[k]; }
   //! @brief Number of entries of a bin. @param k global bin index @return number of fill() calls in the bin
   long   nEntries(unsigned int k) const          { checkGlobal(k,__FUNCTION__); return _counts[k]; }
+  //! @brief Set the sums of a bin (e.g. copied from a ROOT TProfile); its mean and uncertainty follow.
+  //! @param k global bin index @param entries number of entries @param sumW sum of w @param sumW2 sum of w^2
+  //! @param sumWY sum of w*value @param sumWY2 sum of w*value^2
+  void   setSums(unsigned int k, long entries, double sumW, double sumW2, double sumWY, double sumWY2);
   //! @}
 
   //! @name Operations keeping the sums
@@ -152,7 +154,6 @@ protected:
   std::vector<double> _sumWY;   //!< sum of weight*value of each bin
   std::vector<double> _sumWY2;  //!< sum of weight*value^2 of each bin
 
-  ClassDefOverride(Profile,1)
 };
 
 //! @brief Copy of a profile (nullptr if p is null). @param p profile @return copy owned by the caller, or nullptr

@@ -17,7 +17,6 @@ namespace CAP
   void setTitle(const String &title) { setName(title); }
   const String & title() const { return name(); }
 
-  //ClassDef(LatexSubsubsection,0)
   };
 
 

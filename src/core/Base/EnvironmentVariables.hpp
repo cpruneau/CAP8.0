@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez     
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__EnvironmentVariables
 #define CAP__EnvironmentVariables
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Properties.hpp"
 
 namespace CAP
@@ -59,7 +57,6 @@ protected:
   //! @brief Read the CAP environment variables from the operating system.
   void initialize();
 
-  ClassDef(EnvironmentVariables,0)
 };
 
 } // namespace CAP

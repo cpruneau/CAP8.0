@@ -1,6 +1,6 @@
 #ifndef CAP_PrintHelpers
 #define CAP_PrintHelpers
-#include "Aliases.hpp"
+#include "String.hpp"
 #include <iostream>
 #include <iomanip>
 

@@ -51,7 +51,6 @@ namespace CAP
   Model * _model;
   ThermalHistos _histograms;
 
-  ClassDef(Therminator3,0)
 
   };
 

@@ -14,6 +14,8 @@ Axis.hpp
 AxisRange.hpp
 AxisRenderer.hpp
 Canvas.hpp
+CanvasRegistry.hpp
+ColorTable.hpp
 Color.hpp
 Drawable2D.hpp
 FillAttributes.hpp
@@ -31,14 +33,17 @@ MarkerRenderer.hpp
 MarkerVector.hpp
 Painter.hpp
 Palette.hpp
+Palettes.hpp
 Point2D.hpp
 Point3D.hpp
 Rect2D.hpp
 Polygon.hpp
+Shape.hpp
 Projection3D.hpp
 PolygonRenderer.hpp
 Renderer.hpp
 SvgPainter.hpp
+PdfPainter.hpp
 TextAttributes.hpp
 TextRenderer.hpp)
 
@@ -48,10 +53,13 @@ Axis.cpp
 AxisRange.cpp
 AxisRenderer.cpp
 Canvas.cpp
+CanvasRegistry.cpp
+ColorTable.cpp
 Drawable2D.cpp
 FillAttributes.cpp
 Geom2D.cpp
 Graph.cpp
+GraphicsReflection.cpp
 GraphRenderer.cpp
 GraphRenderer3D.cpp
 Grid2D.cpp
@@ -66,11 +74,14 @@ MarkerRenderer.cpp
 MarkerVector.cpp
 Painter.cpp
 Palette.cpp
+Palettes.cpp
 Polygon.cpp
+Shape.cpp
 Projection3D.cpp
 PolygonRenderer.cpp
 Renderer.cpp
 SvgPainter.cpp
+PdfPainter.cpp
 TextAttributes.cpp
 TextRenderer.cpp)
 
@@ -81,17 +92,13 @@ if(APPLE)
   set_source_files_properties(MacOsCanvas.mm PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x objective-c++ -fobjc-arc")
 endif()
 
-ROOT_GENERATE_DICTIONARY(G__Graphics
-${GRAPHICS_HEADERS}
-LINKDEF GraphicsLinkDef.h)
 
 ################################################################################################
 # Create a shared library with geneated dictionary
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Graphics SHARED
-${GRAPHICS_SOURCES}
-G__Graphics.cxx)
+${GRAPHICS_SOURCES})
 
 target_link_libraries(Graphics Base Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 if(APPLE)
@@ -107,11 +114,22 @@ add_test(NAME LatexRenderer COMMAND TestLatexRenderer)
 add_executable(TestGraph2D tests/TestGraph2D.cpp)
 target_link_libraries(TestGraph2D Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Graph2D COMMAND TestGraph2D)
+add_executable(TestPdfPainter tests/TestPdfPainter.cpp)
+target_link_libraries(TestPdfPainter Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME PdfPainter COMMAND TestPdfPainter)
+add_executable(TestCanvasRegistry tests/TestCanvasRegistry.cpp)
+target_link_libraries(TestCanvasRegistry Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME CanvasRegistry COMMAND TestCanvasRegistry)
+add_executable(TestColors tests/TestColors.cpp)
+target_link_libraries(TestColors Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME Colors COMMAND TestColors)
+add_executable(TestShapes tests/TestShapes.cpp)
+target_link_libraries(TestShapes Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME Shapes COMMAND TestShapes)
 add_executable(TestGraph3D tests/TestGraph3D.cpp)
 target_link_libraries(TestGraph3D Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Graph3D COMMAND TestGraph3D)
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libGraphics.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libGraphics_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Graphics  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 
 # macOS demo program: bin/MacOsCanvasDemo opens a window showing a sample canvas

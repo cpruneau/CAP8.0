@@ -132,7 +132,6 @@ protected:
   double _maxRadius;  ///< maximum radius (fm)
   int    _radialDistType;  ///< type of radial distribution (see NuclearDistribution)
 
-  ClassDef(GlauberNucleusType,1) // GlauberNucleus class
 };
 
 }  // namespace CAP

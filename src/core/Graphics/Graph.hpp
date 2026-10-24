@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -26,6 +24,8 @@
 #include "Rect2D.hpp"
 #include "Grid2D.hpp"
 #include "Palette.hpp"
+#include "Shape.hpp"
+#include "Palettes.hpp"
 
 namespace CAP
 {
@@ -94,6 +94,9 @@ namespace CAP
   //! filled circle, square, triangles, diamond, star, cross and a few others. @param k index of the item in its graph
   //!
   void applyDefaultStyle(int k);
+  //! @brief Color and marker of item k of palettes. @param k index of the item @param colors color palette
+  //! @param markers marker palette
+  void applyDefaultStyle(int k, const ColorPalette & colors, const MarkerPalette & markers);
 
   Kind kind() const { return _kind; }   //!< Function or data points
   const MATH::Function   * function() const { return _function; }   //!< The function shown (kFunction), or null
@@ -475,6 +478,41 @@ namespace CAP
   const std::vector<GraphItem> & items() const { return _items; }   //!< Items shown, in drawing order
   //! @}
 
+  //! @name Shapes drawn over the graph (rectangles, ellipses, triangles, polygons, lines and arrows; see Shape)
+  //! @{
+  //! @brief Add a shape, drawn over everything else (the shapes added later over the earlier ones). @param shape shape
+  //! @return the shape added
+  Shape & addShape(const Shape & shape) { _shapes.push_back(shape); return _shapes.back(); }
+  //! @brief Remove all the shapes.
+  void clearShapes() { _shapes.clear(); }
+  std::vector<Shape> & shapes() { return _shapes; }   //!< Shapes, in drawing order
+  const std::vector<Shape> & shapes() const { return _shapes; }   //!< Shapes, in drawing order
+  //! @brief Shape under a point of the canvas, the top one. @param p point (normalized canvas coordinates)
+  //! @param toleranceX,toleranceY distance counted as near (canvas units) @return index, or -1
+  int shapeAt(const Point2D & p, float toleranceX, float toleranceY) const;
+  //! @}
+
+  //! @name Palettes of the items (see Palettes)
+  //! @{
+  //! @brief Color palette giving the colors of the items added (empty: the current one of the session).
+  //! @param name name of a palette of Palettes::session()
+  void setColorPaletteName(const String & name) { _colorPaletteName = name; }
+  //! @brief Marker palette giving the markers of the items added (empty: the current one of the session).
+  //! @param name name of a palette of Palettes::session()
+  void setMarkerPaletteName(const String & name) { _markerPaletteName = name; }
+  const String & colorPaletteName() const { return _colorPaletteName; }   //!< Name of its color palette ("": the session's)
+  const String & markerPaletteName() const { return _markerPaletteName; }   //!< Name of its marker palette ("": the session's)
+  //! @brief Color palette used: its own, or the current one of the session. @return palette
+  const ColorPalette & colorPalette() const { return Palettes::session().colorPaletteOr(_colorPaletteName); }
+  //! @brief Marker palette used: its own, or the current one of the session. @return palette
+  const MarkerPalette & markerPalette() const { return Palettes::session().markerPaletteOr(_markerPaletteName); }
+  //! @brief Give the items their colors and markers again, from the palettes (after a change of palette).
+  void restyleItems() { for (std::size_t k=0; k<_items.size(); k++) _items[k].applyDefaultStyle(int(k), colorPalette(), markerPalette()); }
+  //! @}
+
+  //! @brief Draw the graph (frame, axes, items, legend), then its shapes. @param painter painter
+  void draw(Painter & painter) const override;
+
   //! @name Scales and ranges
   //! @{
   void setLogX(bool v) { _logX = v; }   //!< Logarithmic x axis or not
@@ -735,6 +773,9 @@ namespace CAP
   float _cellYHigh;   //!< cell of the graph (normalized canvas coordinates)
   Margins _margins;   //!< margins between the cell and the frame
   std::vector<GraphItem> _items; //!<! items shown (not streamed: the objects shown are not owned)
+  std::vector<Shape> _shapes; //!<! shapes drawn over the graph
+  String _colorPaletteName;   //!< color palette of the items (empty: the current one of the session)
+  String _markerPaletteName;   //!< marker palette of the items (empty: the current one of the session)
   bool  _logX;   //!< logarithmic axes
   bool  _logY;   //!< logarithmic axes
   bool  _autoX;   //!< automatic ranges
@@ -783,7 +824,6 @@ namespace CAP
   mutable Rect2D _legendRect;                         //!<! where the legend was drawn (not streamed)
   mutable std::vector<PointPosition> _pointPositions; //!<! where the data points were drawn (not streamed)
 
-  ClassDef(Graph,0)
   };
 
   //! @brief Round [low,high] outward to multiples of a 1, 2, 5 x 10^k step (about 5 intervals); step is set.

@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -16,7 +14,6 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-ClassImp(CAP::GlobalDerivedHistos);
 
 namespace CAP
 {
@@ -48,7 +45,7 @@ namespace CAP
   h_ptAvgIncVsN = createHistogram(createName(_histogramBaseName,"n","ptAvgIncl"),n_nbins, n_min,  n_max,"n","ptAvgIncl");
   }
 
-  void GlobalDerivedHistos::loadFrom(CapFile & inputFile)
+  void GlobalDerivedHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   GlobalHistos::loadFrom(inputFile);

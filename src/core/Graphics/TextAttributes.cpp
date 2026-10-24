@@ -1,6 +1,5 @@
 #include "TextAttributes.hpp"
 
-ClassImp(CAP::GRAPHICS::TextAttributes);
 
 namespace CAP
 {

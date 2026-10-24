@@ -2,7 +2,6 @@
 #include "Polygon.hpp"
 #include "PolygonRenderer.hpp"
 
-ClassImp(CAP::GRAPHICS::Polygon);
 
 namespace CAP
 {

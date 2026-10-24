@@ -1,6 +1,5 @@
 #include "Drawable2D.hpp"
 
-ClassImp(CAP::GRAPHICS::Drawable2D);
 
 namespace CAP
 {

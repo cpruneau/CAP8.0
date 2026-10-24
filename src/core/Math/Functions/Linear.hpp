@@ -63,7 +63,6 @@ namespace CAP
   //!
   double root() const;
 
-  ClassDef(Linear,1)
   };
 
   } // namespace MATH

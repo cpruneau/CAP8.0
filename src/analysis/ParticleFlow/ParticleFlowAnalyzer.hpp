@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -54,7 +52,6 @@ public:
   //! @brief Analyze the current event.
   virtual void execute();
 
-  ClassDef(ParticleFlowAnalyzer,0)
 };
 
 } // namespace CAP

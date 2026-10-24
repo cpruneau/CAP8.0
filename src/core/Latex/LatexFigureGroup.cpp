@@ -1,5 +1,4 @@
 #include "LatexFigureGroup.hpp"
-////ClassImp(CAP::LatexFigureGroup);
 
 namespace CAP
 {

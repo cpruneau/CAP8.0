@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -44,7 +42,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Compute the derived histograms. @param jetSingleHistos constituent histograms
   virtual void calculateDerivedHistograms(const JetSingleHistos & jetSingleHistos);
 
@@ -86,7 +84,6 @@ protected:
   double z_min;  ///< lower edge of the z axis
   double z_max;  ///< upper edge of the z axis
 
-  ClassDef(JetSingleHistosDerived,0)
 
 };
 

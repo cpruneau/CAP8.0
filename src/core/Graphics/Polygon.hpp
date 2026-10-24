@@ -40,7 +40,6 @@ namespace CAP
   int   _nSides;
   std::vector<Point2D> _vertices;
 
-  ClassDef(Polygon,0)
   };
 
   } //  namespace GRAPHICS

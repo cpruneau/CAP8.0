@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -39,7 +37,6 @@ protected:
   //! @brief Copy the content of another group (nothing in the base class). @param group group to copy
   virtual void cloneD(const BaseDerivedHistos & group  __attribute__((unused))) {}
 
-  ClassDef(BaseDerivedHistos,0)
 };
 
 } // namespace CAP

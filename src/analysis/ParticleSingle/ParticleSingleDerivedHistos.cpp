@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -17,7 +15,6 @@
 #include "NameHelpers.hpp"
 #include "Configuration.hpp"
 
-ClassImp(CAP::ParticleSingleDerivedHistos);
 
 namespace CAP
 {
@@ -128,7 +125,7 @@ void ParticleSingleDerivedHistos::create()
     }
 }
 
-void ParticleSingleDerivedHistos::loadFrom(CapFile & inputFile)
+void ParticleSingleDerivedHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_n1_phi      = importHistogram(inputFile,  createName(_histogramBaseName,"n1_phi"));

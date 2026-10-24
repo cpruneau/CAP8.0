@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -68,7 +66,7 @@ public:
 
   //!
   //!Load histograms corresponding to the selected event and particle filters from the given file.
- virtual void loadFrom(CapFile & inputFile);
+ virtual void loadFrom(const Folder & inputFile);
 
   //!
   //!Fill eventswise observables for the selected filters
@@ -150,7 +148,6 @@ protected:
   double ptAvg_max;  ///< upper edge of the average pT axis
 
 
-  ClassDef(GlobalHistos,0)
 };
 
 } // namespace CAP

@@ -1,6 +1,7 @@
 #ifndef CAP_RootHistogramHelpers
 #define CAP_RootHistogramHelpers
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "TFile.h"
 #include "TH1.h"
 #include "TH2.h"

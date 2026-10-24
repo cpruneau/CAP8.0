@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -53,7 +51,6 @@ protected:
   double zRms; //!< rms of the vertex distribution along the z-axis
   double tRms; //!< rms of the vertex distribution along the t-axis
   
-  ClassDef(EventVertexRandomizerTask,0)
 };
 
 } // namespace CAP

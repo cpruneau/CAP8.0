@@ -1,5 +1,4 @@
 #include "LatexPackage.hpp"
-////ClassImp(CAP::LatexPackage);
 
 namespace CAP
 {

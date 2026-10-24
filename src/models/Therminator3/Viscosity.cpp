@@ -27,7 +27,6 @@
  ********************************************************************************/
 #include "Viscosity.hpp"
 
-ClassImp(CAP::Viscosity);
 
 namespace CAP
 {

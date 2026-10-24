@@ -5,7 +5,6 @@
 #include <utility>
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Matrix);
 
 namespace CAP
 {

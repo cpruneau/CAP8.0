@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -99,7 +97,6 @@ protected:
 
   std::vector<String> _lines;  //!< lines of text
 
-  ClassDefOverride(TxtFile,0)
 };
 
 } // namespace CAP

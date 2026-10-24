@@ -86,7 +86,6 @@ namespace CAP
   std::vector<float>  _floats;   //!< values in single precision (used when !_double)
   std::vector<double> _doubles;  //!< values in double precision (used when _double)
 
-  ClassDef(BinValues,1)
   };
 
   //!
@@ -1346,7 +1345,6 @@ namespace CAP
   //!
   friend std::ostream& operator<<(std::ostream& out, const Histogram & h);
 
-  ClassDef(Histogram,2)
 
   };
 

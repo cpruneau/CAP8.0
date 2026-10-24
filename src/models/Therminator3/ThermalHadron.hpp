@@ -101,7 +101,6 @@ namespace CAP
   static unsigned int truncateOrder();
   static void setTruncateOrder(unsigned int n);
 
-  ClassDef(ThermalHadron,0)
   };
 
 } // namespace CAP

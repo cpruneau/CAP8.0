@@ -3,7 +3,6 @@
 #include "LatexFigure.hpp"
 #include "LatexText.hpp"
 #include "LatexList.hpp"
-////ClassImp(CAP::LatexFrame);
 
 namespace CAP
 {

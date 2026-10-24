@@ -21,7 +21,6 @@ namespace CAP
 
   String _option;
 
-  //ClassDef(LatexPackage,0)
   };
 
 } // namespace CAP

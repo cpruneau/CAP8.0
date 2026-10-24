@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -17,7 +15,6 @@
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::PtPtHistos);
 
 namespace CAP
 {
@@ -152,7 +149,7 @@ namespace CAP
   h_Q4_evt =       createProfile(createName(_histogramBaseName,"Q4"),      evt_nbins,evt_min,evt_max,xTitle,"Q_{4}");
   }
 
-  void PtPtHistos::loadFrom(CapFile & inputFile)
+  void PtPtHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   h_f1_evt = importProfile(inputFile,createName(_histogramBaseName,"n1"));

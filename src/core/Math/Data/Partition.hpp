@@ -2,7 +2,7 @@
 #define CAP_Partition
 #include <vector>
 #include <map>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Object.hpp"
 #include "MathExceptions.hpp"
 
@@ -341,7 +341,6 @@ namespace CAP
   //!
   void checkDimIndex(unsigned int dimIndex, const char * source) const;
 
-  ClassDef(Partition,2)
 
   };
 

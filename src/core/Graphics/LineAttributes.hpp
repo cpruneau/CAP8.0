@@ -33,7 +33,6 @@ namespace CAP
   static LineAttributes * _defaultLineAttributes;
 
 
-  ClassDef(LineAttributes,0)
   };
 
   } // namespace GRAPHICS

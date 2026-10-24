@@ -2,7 +2,6 @@
 #include "PrintHelpers.hpp"
 #include "TRandom.h"
 
-ClassImp(CAP::GlauberNucleon)
 
 namespace CAP
 {

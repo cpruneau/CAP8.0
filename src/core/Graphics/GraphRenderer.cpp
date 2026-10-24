@@ -11,9 +11,8 @@
 #include "FitRecord.hpp"
 #include "ParameterizedFunction.hpp"
 #include "Histogram.hpp"
-#include "TColor.h"
+#include "ColorTable.hpp"
 
-ClassImp(CAP::GRAPHICS::GraphRenderer);
 
 namespace CAP
 {
@@ -380,7 +379,7 @@ namespace CAP
     if (item.contourUsesPalette())
       {
       Color c = graph.colorOf(view, level);
-      line.setColor(TColor::GetColor(c.red, c.green, c.blue), line.alpha());
+      line.setColor(ColorTable::instance().index(c), line.alpha());
       }
     for (const auto & polyline : grid.contour(level, view.logZ))
       {

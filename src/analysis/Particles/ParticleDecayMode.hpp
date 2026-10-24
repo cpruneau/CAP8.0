@@ -1,8 +1,7 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Chun Shen
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Chun Shen
  * All rights reserved.
  *
- * Based on the ROOT package and environment
  * This code is adapted from Chun Shen's code
  * for the purpose of computing hadronic resonance
  * correlations..
@@ -17,7 +16,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ParticleType.hpp"
 #include "ParticleDb.hpp"
 
@@ -98,7 +97,6 @@ namespace CAP
   //! @brief Print the branching ratio and the products.
   void print();
 
-  ClassDef(ParticleDecayMode,0)
   };
 
 } // namespace CAP

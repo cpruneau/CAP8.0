@@ -1,6 +1,6 @@
 #ifndef CAP__ModelSettings
 #define CAP__ModelSettings
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "ParticleType.hpp"
 #include <iostream>
 

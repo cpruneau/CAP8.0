@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -12,7 +10,8 @@
 #ifndef CAP__ParticleType
 #define CAP__ParticleType
 #include <cmath>
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "SelectionGenerator.hpp"
 #include "ParticleDecayMode.hpp"
 #include "PhysicsConstants.hpp"
@@ -1316,7 +1315,6 @@ public:
   //! Singleton coding an anti-4He type.
   static  ParticleType * antiHe4Type;
 
-  ClassDef(ParticleType,0)
 };
 
 }

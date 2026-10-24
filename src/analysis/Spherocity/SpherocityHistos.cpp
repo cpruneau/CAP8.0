@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -19,7 +17,6 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 
-ClassImp(CAP::SpherocityHistos);
 
 namespace CAP
 {
@@ -110,7 +107,7 @@ namespace CAP
 
   }
 
-  void SpherocityHistos::loadFrom(CapFile & inputFile)
+  void SpherocityHistos::loadFrom(const Folder & inputFile)
   {
   if (fillS0) h_s0 = importHistogram(inputFile, createName(_histogramBaseName,"S0"));
   if (fillS1) h_s1 = importHistogram(inputFile, createName(_histogramBaseName,"S1"));

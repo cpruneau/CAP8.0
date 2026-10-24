@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -12,7 +10,7 @@
 #ifndef CAP_MATH_Table2D
 #define CAP_MATH_Table2D
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "Object.hpp"
 
@@ -213,7 +211,6 @@ namespace CAP
 
   //! @}
 
-  ClassDefOverride(Table2D,1)
   };
 
   } // namespace MATH

@@ -1,14 +1,12 @@
 /* **********************************************************************
- * Copyright (C) 2019-2022, Claude Pruneau, Victor Gonzalez, Sumit Basu
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Sumit Basu
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
  * Author: Claude Pruneau,   04/01/2022
  * Copyright 2016 Chun Shen
- * Copyright 2022 Claude Pruneau
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  *
  * *********************************************************************/
 #ifndef CAP_ThermalHadronGasFD
@@ -78,7 +76,6 @@ namespace CAP
   int generateRandomHadronByIndex();
 
 
-  ClassDef(ThermalHadronGasFD,0)
   };
 
 } // namespace CAP

@@ -1,6 +1,6 @@
 #ifndef CAP__Hypersurface
 #define CAP__Hypersurface
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "VectorLorentz.hpp"
 
 using CAP::MATH::VectorLorentz;

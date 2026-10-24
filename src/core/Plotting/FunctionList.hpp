@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -23,7 +21,8 @@
 #include "TF1.h"
 #include "TF2.h"
 #include "TRandom.h"
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "TLatex.h"
 #include "TLine.h"
 #include "TArrow.h"
@@ -66,7 +65,6 @@ public:
   std::vector<TF1*> & functions();
   ();
   
-  ClassDef(FunctionList,0)
 }; // FunctionList
 
 

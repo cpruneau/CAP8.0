@@ -3892,7 +3892,7 @@ namespace CAP
   double findMinimum(std::vector<double> & values)
   {
   double min = 1.0E100;
-  for (Size_t k=0; k<values.size(); k++)
+  for (unsigned int k=0; k<values.size(); k++)
     {
     if (values[k]<min) min = values[k];
     //cout << "k   " << k << " v: " << values[k] << " min: " << min << endl;
@@ -3903,7 +3903,7 @@ namespace CAP
   double findMaximum(std::vector<double> & values)
   {
   double max = -1.0E100;
-  for (Size_t k=0; k<values.size(); k++)
+  for (unsigned int k=0; k<values.size(); k++)
     {
     if (values[k]>max) max = values[k];
     //cout << "k   " << k << " v: " << values[k] << " max: " << max << endl;
@@ -3916,7 +3916,7 @@ namespace CAP
   {
   double min = 1.0E100;
   double max = -1.0E100;
-  for (Size_t k=0; k<values.size(); k++)
+  for (unsigned int k=0; k<values.size(); k++)
     {
     if (values[k]<min) min = values[k];
     if (values[k]>max) max = values[k];

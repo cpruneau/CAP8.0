@@ -5,7 +5,6 @@
 #include <string>
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::ChiSquare);
 
 namespace CAP
 {

@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -43,7 +41,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the histograms with a particle. @param particle particle @param weight weight
   virtual void fill(Particle & particle, double weight);
 
@@ -79,7 +77,6 @@ protected:
   //! Multiplicity of accepted particles per event.
   Histogram * h_n1;
 
-  ClassDef(ParticleFlowHistos,0)
 
 };
 

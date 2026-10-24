@@ -3,7 +3,7 @@
 #include <cmath>
 #include <ostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
 
@@ -328,7 +328,6 @@ namespace CAP
   //! @brief Extends DataPoint::combine() with first-order propagation of the x-y covariance (mean of d1*cov1 and d2*cov2).
   void combine(const DataPoint & p1, const DataPoint & p2, double value, double d1, double d2) override;
 
-  ClassDefOverride(DataPoint2D,2)
 
   };
 

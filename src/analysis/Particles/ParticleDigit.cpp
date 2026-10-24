@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -14,8 +12,6 @@
 #include "Factory.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::Factory<ParticleDigit>);
-ClassImp(CAP::ParticleDigit);
 
 namespace CAP
 {

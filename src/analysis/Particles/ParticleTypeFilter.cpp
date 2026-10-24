@@ -1,7 +1,6 @@
 #include "ParticleTypeFilter.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::Filter<CAP::ParticleType>);
 
 namespace CAP
 {

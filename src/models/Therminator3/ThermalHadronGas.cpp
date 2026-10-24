@@ -5,7 +5,6 @@
 #include <iostream>
 #include <fstream>
 
-ClassImp(CAP::ThermalHadronGas);
 
 //using namespace std;
 

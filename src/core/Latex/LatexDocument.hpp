@@ -100,7 +100,6 @@ namespace CAP
   String _abstract;
   LatexElement * _currentScope;
  
-  //ClassDef(LatexDocument,0)
 
   };
 

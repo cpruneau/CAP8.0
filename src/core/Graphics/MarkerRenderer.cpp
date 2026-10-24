@@ -3,7 +3,6 @@
 #include "MarkerVector.hpp"
 #include "Painter.hpp"
 
-ClassImp(CAP::GRAPHICS::MarkerRenderer);
 
 namespace CAP
 {

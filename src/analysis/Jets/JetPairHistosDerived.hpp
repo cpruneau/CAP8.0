@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -46,7 +44,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Compute the derived histograms. @param singleHistos constituent histograms @param pairHistos pair histograms
   virtual void calculateDerivedHistograms(const JetSingleHistos & singleHistos, const JetPairHistos & pairHistos);
 
@@ -105,7 +103,6 @@ protected:
   Histogram *  h_jet_b2s_jtjt;  ///< balance function B2, summed charges, vs (jt1, jt2)
   Histogram *  h_jet_b2s_zz;  ///< balance function B2, summed charges, vs (z1, z2)
 
-  ClassDef(JetPairHistosDerived,0)
 
 };
 

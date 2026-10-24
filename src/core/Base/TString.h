@@ -470,7 +470,6 @@ public:
 #endif
    ;
 
-   ClassDef(TString,2)  //Basic string class
 };
 
 // Related global functions

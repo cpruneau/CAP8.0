@@ -1,8 +1,7 @@
 #ifndef CAP__Drawable2D
 #define CAP__Drawable2D
 #include <vector>
-#include "TObject.h"
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Renderer.hpp"
 #include "Point2D.hpp"
 
@@ -76,7 +75,6 @@ namespace CAP
   std::vector<Point2D> _points;
   std::vector<Drawable2D*> _children;
 
-  ClassDef(Drawable2D,0)
   };
 
   } // namespace GRAPHICS

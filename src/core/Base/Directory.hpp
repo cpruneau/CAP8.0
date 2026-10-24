@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -110,7 +108,6 @@ public:
   //! @brief Size in a short readable form: "512 B", "12.4 kB", "3.1 MB", "2.0 GB". @param bytes size @return text
   static String readableSize(std::uintmax_t bytes);
 
-  ClassDefOverride(Directory,0)
 };
 
 } // namespace CAP

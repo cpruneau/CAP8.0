@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -51,7 +49,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the histograms with a jet. @param J jet
   virtual void fill(PseudoJet& J);
   //! @brief Scale the histograms. @param value factor
@@ -112,7 +110,6 @@ protected:
   double jet_eta_max;  ///< upper edge of the jet pseudorapidity axis
   double jet_netQ_max;  ///< upper edge of the jet net charge axis
 
-  ClassDef(JetHistos,0)
 
 };
 

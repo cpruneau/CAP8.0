@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -41,7 +39,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the histograms with a particle (compared with its truth particle). @param particle particle @param weight weight
   virtual void fill(Particle & particle, double weight);
 
@@ -97,7 +95,6 @@ int Drapidity_nbins;  ///< number of bins of the Delta y axis
 double Drapidity_min;  ///< lower edge of the Delta y axis
 double Drapidity_max;  ///< upper edge of the Delta y axis
 
-ClassDef(ParticlePerformanceHistos,0)
 
 };
 

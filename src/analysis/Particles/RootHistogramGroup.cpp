@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez     
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -18,7 +16,6 @@
 #include "RootHistogramHelpers.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::RootHistogramGroup);
 
 namespace CAP
 {
@@ -435,7 +432,7 @@ namespace CAP
   
   bool RootHistogramGroup::sameSizeAs(const RootHistogramGroup & g1, const RootHistogramGroup & g2) const
   {
-  Size_t n = size();
+  unsigned int n = size();
   return n==g1.size()  &&  n==g2.size();
   }
   
@@ -443,7 +440,7 @@ namespace CAP
                                   const RootHistogramGroup & g2,
                                   const RootHistogramGroup & g3) const
   {
-  Size_t n = size();
+  unsigned int n = size();
   return n==g1.size()  &&  n==g2.size()  &&  n==g3.size();
   }
   
@@ -452,7 +449,7 @@ namespace CAP
                                   const RootHistogramGroup & g3,
                                   const RootHistogramGroup & g4) const
   {
-  Size_t n = size();
+  unsigned int n = size();
   return n==g1.size()  &&  n==g2.size()  &&  n==g3.size()  &&  n==g4.size();
   }
   

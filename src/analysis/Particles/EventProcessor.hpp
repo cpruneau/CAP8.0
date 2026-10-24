@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -91,6 +89,10 @@ namespace CAP
 
   //! Highest order of the pT moments computed by filterParticles().
   unsigned int _ptMomentOrder;
+  //! Names of the event and particle filters, kept from the configuration for the folders of the histograms in the
+  //! files of the job (written after the filter lists are finalized, see combinationName()).
+  std::vector<String> _eventFilterNames;      //!
+  std::vector<String> _particleFilterNames;   //!
   //! Number of events accepted by each event filter.
   Accountant _eventAccepted;
   //! Quantity used to classify the events (an EventFilter::EventFilterType, see getEvtClassValue()).
@@ -221,6 +223,14 @@ namespace CAP
   virtual void postProcess();
   //! @brief Compute the derived histograms (implemented by derived classes). @throws NoImplementationException here
   virtual void calculateDerived();
+  //!
+  //! @brief Name of the folder of the histograms of a combination of filters, in the files of the job:
+  //! \<event filter\>_\<particle filter\> (or \<event filter\>_\<particle filter 1\>_\<particle filter 2\> for pairs), the
+  //! combinations being indexed e*nP + p (or e*nP*nP + p1*nP + p2).
+  //! @param index index of the combination @param nParticles number of particle filters of a combination (1 or 2)
+  //! @return name (Folder_\<index\> beyond the combinations of the filters)
+  //!
+  String combinationName(unsigned int index, unsigned int nParticles) const;
   //! @brief Compute the balance functions (implemented by derived classes). @throws NoImplementationException here
   virtual void calculateBf();
   //! @brief Apply the event filters to an event: update acceptedEventFilters() and eventAccepted().
@@ -230,7 +240,6 @@ namespace CAP
   //! acceptedParticleFilters(). @param particles particles @return true if at least one filter accepts a particle
   virtual bool filterParticles(std::vector<Particle*> & particles);
 
-  ClassDef(EventProcessor,0)
   };
 
 } // namespace CAP

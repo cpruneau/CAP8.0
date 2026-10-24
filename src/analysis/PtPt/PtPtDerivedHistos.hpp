@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -43,7 +41,7 @@ public:
   //! @brief Create the derived histograms.
   virtual void create();
   //! @brief Load the derived histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Compute the derived quantities from the moments. @param baseHistos moments
   virtual void calculateDerivedHistograms(const PtPtHistos & baseHistos);
 
@@ -68,7 +66,6 @@ protected:
   
   //! Particle filters.
   vector<ParticleFilter*> particleFilters;
-  ClassDef(PtPtDerivedHistos,0)
 };
 
 } // namespace CAP

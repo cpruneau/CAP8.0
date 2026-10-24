@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -16,7 +14,6 @@
 #include "Profile.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::EventEfficiency);
 
 namespace CAP
 {
@@ -135,7 +132,7 @@ void EventEfficiency::create()
   h_efficiency_mult  = createHistogram(createName(baseName(),"MULT"),nBins_mult,min_mult,max_mult,"mult","#epsilon",2);
 }
 
-void EventEfficiency::loadFrom(CapFile & inputFile)
+void EventEfficiency::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_efficiency_mult  = importHistogram(inputFile,createName(baseName(),"MULT"));

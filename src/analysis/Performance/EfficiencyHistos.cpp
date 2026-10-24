@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -17,7 +15,6 @@
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::ParticlePerformanceHistos);
 
 namespace CAP
 {
@@ -92,7 +89,7 @@ namespace CAP
 
   }
 
-  void ParticlePerformanceHistos::loadFrom(CapFile & inputFile)
+  void ParticlePerformanceHistos::loadFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   h_n1_dpt        = importHistogram(inputFile, createName(_histogramBaseName,"n1_dpPt"));

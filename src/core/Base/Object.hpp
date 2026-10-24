@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez     
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__Object
 #define CAP__Object
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Exceptions.hpp"
 
 namespace CAP
@@ -293,7 +291,6 @@ protected:
   unsigned int _loggerStyle;  //!< logging style (not used yet)
   unsigned int _index;                //!< Version index of this object instance.
 
-  ClassDef(Object,0)
 };
 
 } // namespace CAP

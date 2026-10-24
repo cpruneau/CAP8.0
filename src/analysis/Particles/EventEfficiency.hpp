@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -46,7 +44,7 @@ public:
   //! @brief Create the efficiency histogram.
   virtual void create();
   //! @brief Load the efficiency histogram from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Efficiency for an event. @param event event @return efficiency (currently 1)
   virtual double efficiencyAt(const Event & event);
   //! @brief Weight (inverse efficiency) of an event. @param event event @return weight
@@ -73,7 +71,6 @@ protected:
   double max_mult;
 
 
-  ClassDef(EventEfficiency,0)
 };
 
 }

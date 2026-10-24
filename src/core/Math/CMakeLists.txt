@@ -10,44 +10,6 @@
 #   Fitting        fits (Fitter, likelihoods, chi square, Bayesian fits, fit records)
 #   StatisticalTests  statistical tests (binomial, Poisson, z, t, chi square, histograms, Kolmogorov-Smirnov)
 ################################################################################################
-ROOT_GENERATE_DICTIONARY(G__Math
-ParameterizedFunction.hpp
-Bessel.hpp
-ChiSquare.hpp
-Complex.hpp
-CompositeFunction.hpp
-Constant.hpp
-Cubic.hpp
-DataPoint.hpp
-DataPointColumns.hpp
-DataPoint2D.hpp
-DataPoint3D.hpp
-DataPointND.hpp
-DataPoints.hpp
-DataPointsVector.hpp
-Exponential.hpp
-Function.hpp
-Histogram.hpp
-Profile.hpp
-Partition.hpp
-Vector2D.hpp
-Vector3D.hpp
-VectorLorentz.hpp
-VectorND.hpp
-Laguerre.hpp
-Legendre.hpp
-Linear.hpp
-Matrix.hpp
-LogNormal.hpp
-Normal.hpp
-Parabolic.hpp
-Parameter.hpp
-Polynomial.hpp
-Table2D.hpp
-Quartic.hpp
-ScalarField.hpp
-SphericalHarmonics.hpp
-LINKDEF MathLinkDef.h)
 
 ################################################################################################
 # Create a shared library with geneated dictionary
@@ -55,6 +17,7 @@ LINKDEF MathLinkDef.h)
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Math SHARED
 FolderTypes.cpp
+MathReflection.cpp
 # Basic
 Basic/Complex.cpp
 Basic/MathBasicFunctions.cpp
@@ -137,7 +100,9 @@ Fitting/Prior.cpp
 # StatisticalTests
 StatisticalTests/Distributions.cpp
 StatisticalTests/StatisticalTests.cpp
-G__Math.cxx)
+Random/MersenneTwister.cpp
+Random/RandomDistribution.cpp
+Random/RandomGenerator.cpp)
 
 target_link_libraries(Math Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Math  PUBLIC Base ${EXTRA_INCLUDES} )
@@ -145,6 +110,12 @@ target_include_directories(Math  PUBLIC Base ${EXTRA_INCLUDES} )
 # here for the library and its dictionary, and in src/CMakeLists.txt for the other modules
 
 # Tests (run with ctest in the build directory; not installed)
+add_executable(TestMathReflection tests/TestMathReflection.cpp)
+target_link_libraries(TestMathReflection Math Base ${ROOT_LIBRARIES})
+add_test(NAME MathReflection COMMAND TestMathReflection)
+add_executable(TestRandom Random/tests/TestRandom.cpp)
+target_link_libraries(TestRandom Math Base ${ROOT_LIBRARIES})
+add_test(NAME Random COMMAND TestRandom)
 add_executable(TestExtremumSearch Search/tests/TestExtremumSearch.cpp)
 target_link_libraries(TestExtremumSearch Math Base ${ROOT_LIBRARIES})
 add_test(NAME ExtremumSearch COMMAND TestExtremumSearch)
@@ -173,6 +144,5 @@ add_executable(TestFits2D Fitting/tests/TestFits2D.cpp)
 target_link_libraries(TestFits2D Math Base ${ROOT_LIBRARIES})
 add_test(NAME Fits2D COMMAND TestFits2D)
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libMath.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libMath_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

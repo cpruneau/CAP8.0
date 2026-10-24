@@ -1,7 +1,7 @@
 #ifndef CAP_MATH_Legendre
 #define CAP_MATH_Legendre
 #include <vector>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "Function.hpp"
 
 namespace CAP
@@ -91,7 +91,6 @@ namespace CAP
 
   unsigned int _degree;  //!< degree n
 
-  ClassDef(Legendre,1)
   };
 
   } // namespace MATH

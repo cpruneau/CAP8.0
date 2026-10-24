@@ -3,7 +3,6 @@
 #include "ParameterizedFunction.hpp"
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::CompositeFunction);
 
 namespace CAP
 {

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <ostream>
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "BinaryIO.hpp"
 #include "Exceptions.hpp"
 #include "MathConstants.hpp"
@@ -252,7 +252,6 @@ public:
 
   //! @}
 
-  ClassDef(VectorLorentz,1)
 
 };
 

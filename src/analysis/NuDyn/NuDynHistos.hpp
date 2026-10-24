@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -67,7 +65,7 @@ public:
   //! @brief Create the histograms.
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(CapFile & inputFile);
+  virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the moments of an event. @param mult event variable @param n1_1 multiplicity of selection 1
   //! @param n1_2 multiplicity of selection 2 @param n2_11 n1(n1-1) @param n2_12 n1 n2 @param n2_22 n2(n2-1)
   virtual void fill(double mult, double n1_1, double n1_2, double n2_11, double n2_12, double n2_22);
@@ -102,7 +100,6 @@ protected:
   double evt_max;  ///< upper edge of the event variable axis
 
 
-  ClassDef(NuDynHistos,0)
 };
 
 } // namespace CAP

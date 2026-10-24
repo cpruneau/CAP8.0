@@ -3,7 +3,6 @@
 #include "MathExceptions.hpp"
 #include "MathConstants.hpp"
 
-ClassImp(CAP::MATH::Vector3D);
 
 
 namespace CAP

@@ -1,7 +1,6 @@
 #include "Parabolic.hpp"
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Parabolic);
 
 namespace CAP
 {

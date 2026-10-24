@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez   
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,7 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__Event
 #define CAP__Event
-#include "Aliases.hpp"
+#include <vector>
+#include "String.hpp"
 #include "Exceptions.hpp"
 #include "Particle.hpp"
 #include "ManagedObject.hpp"
@@ -191,7 +190,6 @@ protected:
   //! Spherocity of each particle selection.
   std::vector<double> _spherocity;
 
-  ClassDef(Event,0)
 };
 
 } //namespace CAP

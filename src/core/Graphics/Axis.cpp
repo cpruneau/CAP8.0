@@ -2,7 +2,6 @@
 #include "Axis.hpp"
 #include "AxisRenderer.hpp"
 
-ClassImp(CAP::GRAPHICS::Axis);
 
 namespace CAP
 {

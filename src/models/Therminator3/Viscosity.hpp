@@ -68,7 +68,6 @@ namespace CAP
   int _type;                     //!< viscosity type: bit 0x01 bulk, bit 0x02 shear
   MATH::ScalarField _shear[10];
 
-  ClassDef(Viscosity,0)
   };
 
 } // namespace CAP

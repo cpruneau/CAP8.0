@@ -109,12 +109,10 @@ namespace CAP
     static void         PrintVersion()               {cout << "GlauberMC " << Version() << endl;}
     static const char  *Version()                    {return "v3.2";}
     
-    ClassDef(GlauberMC,6) // GlauberMC class
   };
   
 }
 
-ClassImp(GlauberMC)
 
 GlauberM::GlauberMC()
 {

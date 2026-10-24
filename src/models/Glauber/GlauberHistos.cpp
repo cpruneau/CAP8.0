@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau, Victor Gonzalez
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -20,7 +18,6 @@
 #include "TEllipse.h"
 #include "TCanvas.h"
 
-ClassImp(CAP::GlauberHistos);
 
 using CAP::MATH::pi;
 
@@ -749,7 +746,7 @@ namespace CAP
   }
 
 
-  void GlauberHistos::loadFrom(CapFile & inputFile)
+  void GlauberHistos::loadFrom(const Folder & inputFile)
   {
   if (reportStart(__FUNCTION__)) { /* noops*/ };
   h_impactPar      = importHistogram(inputFile, createName(_histogramBaseName,"impact"));

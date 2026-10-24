@@ -5,7 +5,6 @@
 #include <cmath>
 #include "MathExceptions.hpp"
 
-ClassImp(CAP::MATH::Polynomial);
 
 namespace CAP
 {

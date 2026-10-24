@@ -1,8 +1,6 @@
 /* **********************************************************************
- * Copyright (C) 2019-2024, Claude Pruneau
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
- *
- * Based on the ROOT package and environment
  *
  * For the licensing terms see LICENSE.
  *
@@ -11,7 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__RootChainManager
 #define CAP__RootChainManager
-#include "Aliases.hpp"
+#include "String.hpp"
 #include "TChain.h"
 #include "TTree.h"
 #include "TBranch.h"
@@ -57,7 +55,6 @@ protected:
   long _entryIndex;
   int  _clonesMaxArraySize;
 
-  ClassDef(RootChainManager,0)
 
 };
 

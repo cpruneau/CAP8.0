@@ -1,7 +1,6 @@
 #include "GlauberNucleusType.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::GlauberNucleusType)
 
 namespace CAP
 {

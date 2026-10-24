@@ -2,7 +2,6 @@
 #include "MathExceptions.hpp"
 #include <iostream>
 
-ClassImp(CAP::MATH::VectorND);
 
 
 namespace CAP
