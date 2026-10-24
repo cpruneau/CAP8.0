@@ -116,10 +116,21 @@ namespace CAP
   _pageWidth(width), _pageHeight(height),
   _regionX(0), _regionY(0), _regionWidth(width), _regionHeight(height),
   _content(),
+  _pages(),
   _alphas()
   {
   for (bool & used : _fontsUsed) used = false;
   _content << "1 j\n";                                  // round joins
+  }
+
+  void PdfPainter::newPage(float width, float height)
+  {
+  _pages.push_back(Page{ _content.str(), _pageWidth, _pageHeight });
+  _content.str("");
+  _content.clear();
+  _content << "1 j\n";
+  _pageWidth = width; _pageHeight = height;
+  endRegion();
   }
 
   void PdfPainter::beginRegion(float x, float y, float width, float height)
@@ -477,11 +488,13 @@ namespace CAP
 
   std::string PdfPainter::document() const
   {
-  std::string content = _content.str();
+  std::vector<Page> pages = _pages;
+  pages.push_back(Page{ _content.str(), _pageWidth, _pageHeight });
+  int n = int(pages.size());
   std::vector<std::string> objects;                    // object k+1
-  // 1 catalog, 2 pages, 3 page, 4 content, then the fonts and the graphics states
-  std::ostringstream fonts, states;
-  int next = 5;
+  // 1 catalog, 2 pages, then a page and its content for each page (3+2k, 4+2k), then the fonts and graphics states
+  std::ostringstream fonts, states, kids;
+  int next = 3 + 2*n;
   std::vector<std::string> extra;
   for (int k=0; k<13; k++)
     {
@@ -495,12 +508,17 @@ namespace CAP
     states << "/" << alpha.second << " " << next++ << " 0 R ";
     extra.push_back("<< /Type /ExtGState /ca " + num(alpha.first/1000.0) + " /CA " + num(alpha.first/1000.0) + " >>");
     }
+  for (int k=0; k<n; k++) kids << (k ? " " : "") << 3 + 2*k << " 0 R";
   objects.push_back("<< /Type /Catalog /Pages 2 0 R >>");
-  objects.push_back("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-  objects.push_back("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + num(_pageWidth) + " " + num(_pageHeight)
-                    + "] /Contents 4 0 R /Resources << /Font << " + fonts.str() + ">> /ExtGState << " + states.str()
-                    + ">> >> >>");
-  objects.push_back("<< /Length " + std::to_string(content.size()) + " >>\nstream\n" + content + "endstream");
+  objects.push_back("<< /Type /Pages /Kids [" + kids.str() + "] /Count " + std::to_string(n) + " >>");
+  for (int k=0; k<n; k++)
+    {
+    const Page & page = pages[size_t(k)];
+    objects.push_back("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + num(page.width) + " " + num(page.height)
+                      + "] /Contents " + std::to_string(4 + 2*k) + " 0 R /Resources << /Font << " + fonts.str()
+                      + ">> /ExtGState << " + states.str() + ">> >> >>");
+    objects.push_back("<< /Length " + std::to_string(page.content.size()) + " >>\nstream\n" + page.content + "endstream");
+    }
   for (const auto & e : extra) objects.push_back(e);
 
   std::string out = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";   // binary marker: the file holds 8-bit text

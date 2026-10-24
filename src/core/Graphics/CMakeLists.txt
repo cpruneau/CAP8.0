@@ -14,6 +14,7 @@ Axis.hpp
 AxisRange.hpp
 AxisRenderer.hpp
 Canvas.hpp
+CanvasRegistry.hpp
 ColorTable.hpp
 Color.hpp
 Drawable2D.hpp
@@ -52,6 +53,7 @@ Axis.cpp
 AxisRange.cpp
 AxisRenderer.cpp
 Canvas.cpp
+CanvasRegistry.cpp
 ColorTable.cpp
 Drawable2D.cpp
 FillAttributes.cpp
@@ -114,6 +116,9 @@ add_test(NAME Graph2D COMMAND TestGraph2D)
 add_executable(TestPdfPainter tests/TestPdfPainter.cpp)
 target_link_libraries(TestPdfPainter Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME PdfPainter COMMAND TestPdfPainter)
+add_executable(TestCanvasRegistry tests/TestCanvasRegistry.cpp)
+target_link_libraries(TestCanvasRegistry Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME CanvasRegistry COMMAND TestCanvasRegistry)
 add_executable(TestColors tests/TestColors.cpp)
 target_link_libraries(TestColors Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Colors COMMAND TestColors)

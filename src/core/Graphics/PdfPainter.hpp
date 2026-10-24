@@ -14,6 +14,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 #include "Painter.hpp"
 
 namespace CAP
@@ -52,6 +53,11 @@ namespace CAP
   void beginRegion(float x, float y, float width, float height);
   //! @brief Back to the whole page.
   void endRegion();
+  //! @brief End the page and start a new one (a document of several pages: a book of canvases, to print).
+  //! @param width width of the new page (points) @param height height
+  void newPage(float width, float height);
+  //! @brief Number of pages, the current one included. @return number
+  int nPages() const { return int(_pages.size()) + 1; }
 
   virtual float width()  const { return _regionWidth;  }   //!< Width of the current region (points)
   virtual float height() const { return _regionHeight; }   //!< Height of the current region (points)
@@ -91,7 +97,10 @@ namespace CAP
   float _regionY;   //!< rectangle of the page drawn into (points, y down)
   float _regionWidth;   //!< rectangle of the page drawn into (points, y down)
   float _regionHeight;   //!< rectangle of the page drawn into (points, y down)
-  std::ostringstream _content;   //!< content stream (drawing operators)
+  std::ostringstream _content;   //!< content stream (drawing operators) of the current page
+  //! A finished page: its drawing operators and size
+  struct Page { std::string content; float width; float height; };
+  std::vector<Page> _pages;   //!< pages finished (newPage())
   std::map<int, std::string> _alphas;   //!< graphics states of the opacities used: per mille -> name
   bool _fontsUsed[13];   //!< standard fonts used
 

@@ -289,7 +289,7 @@ set(CAP_ROOT_FREE_SOURCES
   core/Math/Random/MersenneTwister.cpp core/Math/Random/RandomDistribution.cpp core/Math/Random/RandomGenerator.cpp
   core/Interpreter/Interpreter.cpp core/Interpreter/Lexer.cpp core/Interpreter/Parser.cpp core/Interpreter/CapShell.cxx
   core/Graphics/Attributes.cpp core/Graphics/Axis.cpp core/Graphics/AxisRange.cpp core/Graphics/AxisRenderer.cpp
-  core/Graphics/Canvas.cpp core/Graphics/ColorTable.cpp core/Graphics/Drawable2D.cpp core/Graphics/FillAttributes.cpp
+  core/Graphics/Canvas.cpp core/Graphics/CanvasRegistry.cpp core/Graphics/ColorTable.cpp core/Graphics/Drawable2D.cpp core/Graphics/FillAttributes.cpp
   core/Graphics/Geom2D.cpp core/Graphics/Graph.cpp core/Graphics/GraphRenderer.cpp core/Graphics/GraphRenderer3D.cpp
   core/Graphics/Grid2D.cpp core/Graphics/LatexRenderer.cpp core/Graphics/Line.cpp core/Graphics/LineAttributes.cpp
   core/Graphics/LineRenderer.cpp core/Graphics/Margins.cpp core/Graphics/Marker.cpp

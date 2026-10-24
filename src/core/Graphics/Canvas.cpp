@@ -1,4 +1,5 @@
 #include "Canvas.hpp"
+#include "CanvasRegistry.hpp"
 #include "Painter.hpp"
 #include <cmath>
 #include "LatexRenderer.hpp"
@@ -28,7 +29,8 @@ namespace CAP
   _background(whiteBackground()),
   _nColumns(0),
   _nRows(0),
-  _graphs()
+  _graphs(),
+  _registry(nullptr)
   {
   setName("Canvas");
   setTitle("Canvas");
@@ -42,7 +44,8 @@ namespace CAP
   _background(whiteBackground()),
   _nColumns(0),
   _nRows(0),
-  _graphs()
+  _graphs(),
+  _registry(nullptr)
   {
   setName(name);
   setTitle(title);
@@ -56,9 +59,16 @@ namespace CAP
   _background(src._background),
   _nColumns(src._nColumns),
   _nRows(src._nRows),
-  _graphs()
+  _graphs(),
+  _registry(nullptr)
   {
   for (auto g : src._graphs) _graphs.push_back(new Graph(*g));
+  }
+
+  Canvas::~Canvas()
+  {
+  if (_registry) _registry->remove(*this);
+  clearGraphs();
   }
 
   Canvas  & Canvas::operator=(const Canvas & rhs)
