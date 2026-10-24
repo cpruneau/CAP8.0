@@ -11,7 +11,6 @@
 #define CAP__NuDynHistos
 #include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -101,7 +100,6 @@ protected:
   double evt_max;  ///< upper edge of the event variable axis
 
 
-  ClassDef(NuDynHistos,0)
 };
 
 } // namespace CAP

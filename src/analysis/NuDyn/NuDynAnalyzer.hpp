@@ -12,7 +12,6 @@
 #include "EventProcessorSingle.hpp"
 #include "NuDynHistos.hpp"
 #include "NuDynDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -53,7 +52,6 @@ public:
   //! @brief Analyze the current event (see the class description).
   virtual void execute();
  
-  ClassDef(NuDynAnalyzer,0)
 };
 
 } // namespace CAP

@@ -16,7 +16,6 @@
 
 using CAP::NuDynPlotter;
 
-ClassImp(NuDynPlotter);
 
 NuDynPlotter::NuDynPlotter()
 :

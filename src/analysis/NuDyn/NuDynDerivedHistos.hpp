@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "NuDynHistos.hpp"
 #include "ParticleFilter.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -66,7 +65,6 @@ protected:
   //! nu_dyn vs event variable.
   Histogram * h_nudyn_evt;
 
-  ClassDef(NuDynDerivedHistos,0)
 };
 
 } // namespace CAP

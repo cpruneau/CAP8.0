@@ -16,7 +16,6 @@
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::NuDynHistos);
 
 namespace CAP
 {

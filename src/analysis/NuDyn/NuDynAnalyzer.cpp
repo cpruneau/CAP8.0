@@ -12,7 +12,6 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::NuDynAnalyzer);
 
 namespace CAP
 {
