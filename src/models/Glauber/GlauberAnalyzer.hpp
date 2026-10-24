@@ -6,6 +6,7 @@
 #include "GlauberEvent.hpp"
 #include "GlauberEventFilter.hpp"
 #include "GlauberHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

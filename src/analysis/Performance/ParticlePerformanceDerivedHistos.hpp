@@ -12,6 +12,7 @@
 #ifndef CAP__ParticlePerformanceDerivedHistos
 #define CAP__ParticlePerformanceDerivedHistos
 #include "ParticlePerformanceHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

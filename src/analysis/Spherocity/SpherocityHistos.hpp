@@ -13,6 +13,7 @@
 #define CAP__SpherocityHistos
 #include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

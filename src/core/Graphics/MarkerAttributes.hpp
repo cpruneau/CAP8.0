@@ -1,6 +1,7 @@
 #ifndef CAP__MarkerAttributes
 #define CAP__MarkerAttributes
 #include "Attributes.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

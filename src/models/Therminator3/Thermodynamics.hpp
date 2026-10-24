@@ -3,6 +3,7 @@
 #include "ScalarField.hpp"
 #include "Chemistry.hpp"
 #include "Viscosity.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

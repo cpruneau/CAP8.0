@@ -12,6 +12,7 @@
 #ifndef CAP__CommandLineParser
 #define CAP__CommandLineParser
 #include "Parser.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

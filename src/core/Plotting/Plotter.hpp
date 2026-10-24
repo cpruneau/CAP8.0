@@ -20,6 +20,7 @@
 #include "GraphConfiguration.hpp"
 //#include "LegendConfiguration.hpp"
 #include "Task.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

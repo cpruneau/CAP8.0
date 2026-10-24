@@ -10,6 +10,7 @@
 #include "ThermalHadronGas.hpp"
 #include "Thermodynamics.hpp"
 #include "VectorLorentz.hpp"
+#include "ClassDef.hpp"
 //#include <iostream>
 
 using CAP::MATH::ScalarField;

@@ -14,6 +14,7 @@
 
 
 #include "VirtualPS.hpp"
+#include "ClassDef.hpp"
 
 class Point2Ds;
 

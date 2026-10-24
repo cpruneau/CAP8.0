@@ -12,6 +12,7 @@
 #ifndef CAP__EventProcessorPair
 #define CAP__EventProcessorPair
 #include "EventProcessor.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include "ClassDef.hpp"
 #if (__cplusplus >= 202002L)
 #  include <compare>
 #endif

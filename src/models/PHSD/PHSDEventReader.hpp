@@ -12,6 +12,7 @@
 #ifndef CAP__PHSDEventReader
 #define CAP__PHSDEventReader
 #include "EventProcessor.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

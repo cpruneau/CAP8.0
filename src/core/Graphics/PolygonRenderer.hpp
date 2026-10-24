@@ -1,6 +1,7 @@
 #ifndef CAP__PolygonRenderer
 #define CAP__PolygonRenderer
 #include "Renderer.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

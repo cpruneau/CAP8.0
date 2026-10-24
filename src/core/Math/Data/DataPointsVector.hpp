@@ -10,6 +10,7 @@
 #include "DataPoints.hpp"
 #include "BinaryIO.hpp"
 #include "MathExceptions.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

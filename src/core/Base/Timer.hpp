@@ -15,6 +15,7 @@
 #include <chrono>
 #include <fstream>
 #include "TObject.h"
+#include "ClassDef.hpp"
 using namespace std;
 using namespace std::chrono;
 

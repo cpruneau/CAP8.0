@@ -12,6 +12,7 @@
 #ifndef CAP__CalibrationProducer
 #define CAP__CalibrationProducer
 #include "HistogramTask.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

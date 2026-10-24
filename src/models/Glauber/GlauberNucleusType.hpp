@@ -2,6 +2,7 @@
 #define CAP_GlauberNucleusType
 
 #include "GlauberExceptions.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

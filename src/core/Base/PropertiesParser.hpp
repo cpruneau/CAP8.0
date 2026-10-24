@@ -13,6 +13,7 @@
 #define CAP__PropertiesParser
 #include "Parser.hpp"
 #include "Properties.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

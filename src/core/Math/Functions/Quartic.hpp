@@ -1,6 +1,7 @@
 #ifndef CAP_MATH_Quartic
 #define CAP_MATH_Quartic
 #include "Polynomial.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

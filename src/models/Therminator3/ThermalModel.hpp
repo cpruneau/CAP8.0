@@ -4,6 +4,7 @@
 #include "EventProcessor.hpp"
 #include "ThermalHistos.hpp"
 #include "ThermalHadronGasFD.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -13,6 +13,7 @@
 #define CAP__ParticlePairFilter
 #include "Filter.hpp"
 #include "Particle.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -14,6 +14,7 @@
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "ParticleDigit.hpp"
+#include "ClassDef.hpp"
 
 
 

@@ -29,6 +29,7 @@
 #ifndef CAP__VISCOSITY_H_
 #define CAP__VISCOSITY_H_
 #include "ScalarField.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

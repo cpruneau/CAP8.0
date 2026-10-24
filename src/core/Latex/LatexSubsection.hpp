@@ -1,6 +1,7 @@
 #ifndef CAP__LatexSubsection
 #define CAP__LatexSubsection
 #include "LatexSection.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

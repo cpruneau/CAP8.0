@@ -15,6 +15,7 @@
 #include "TChain.h"
 #include "TTree.h"
 #include "TBranch.h"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

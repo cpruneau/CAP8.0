@@ -13,6 +13,7 @@
 #define CAP__ParticleFlowDerivedHistos
 #include "Profile.hpp"
 #include "ParticleFlowHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

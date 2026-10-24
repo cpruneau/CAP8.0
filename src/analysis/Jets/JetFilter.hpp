@@ -14,6 +14,7 @@
 #include "Filter.hpp"
 #include "fastjet/PseudoJet.hh"
 #include "Particle.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

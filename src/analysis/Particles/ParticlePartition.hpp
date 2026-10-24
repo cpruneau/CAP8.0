@@ -16,6 +16,7 @@
 #include <iostream>
 #include <vector>
 #include "ParticleType.hpp"
+#include "ClassDef.hpp"
 
 
 namespace CAP

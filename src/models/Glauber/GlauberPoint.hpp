@@ -3,6 +3,7 @@
 #include <cmath>
 #include "TObject.h"
 #include <cmath>
+#include "ClassDef.hpp"
 
 namespace CAP
 {

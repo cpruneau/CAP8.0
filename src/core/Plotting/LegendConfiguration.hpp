@@ -16,6 +16,7 @@
 #include "Aliases.hpp"
 #include "TLatex.h"
 #include "Configuration.hpp"
+#include "ClassDef.hpp"
 using std::vector;
 
 namespace CAP

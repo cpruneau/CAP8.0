@@ -5,6 +5,7 @@
 #include "GlauberEventFilter.hpp"
 #include "ManagedObjects.hpp"
 #include "Task.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

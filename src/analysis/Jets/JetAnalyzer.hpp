@@ -13,6 +13,7 @@
 #define CAP__JetAnalyzer
 #include "EventProcessor.hpp"
 #include "JetFilter.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -13,7 +13,6 @@
 #define CAP__Aliases
 #include <vector>
 #include "String.hpp"
-#include "Rtypes.h"   // ClassDef/ClassImp macros of the ROOT dictionaries (CAP::String itself does not use ROOT)
 
 namespace CAP
 {

@@ -4,6 +4,7 @@
 #include "Drawable2D.hpp"
 #include "LineAttributes.hpp"
 #include "Point2D.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

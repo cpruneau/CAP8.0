@@ -16,6 +16,7 @@
 #include "Aliases.hpp"
 #include "Exceptions.hpp"
 #include "FileSystemEntry.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

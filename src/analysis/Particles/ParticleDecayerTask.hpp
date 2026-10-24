@@ -21,6 +21,7 @@
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmearer.hpp"
 #include "ParticleDecayer.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

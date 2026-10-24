@@ -13,6 +13,7 @@
 #define CAP__ParticleDigit
 #include "Aliases.hpp"
 #include "Factory.hpp"
+#include "ClassDef.hpp"
 
 using namespace std;
 namespace CAP

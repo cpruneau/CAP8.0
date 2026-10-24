@@ -13,6 +13,7 @@
 #define CAP__Profile
 #include "Histogram.hpp"
 #include "CapFile.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

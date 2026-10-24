@@ -4,6 +4,7 @@
 #include <complex>
 #include "Aliases.hpp"
 #include "Function.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

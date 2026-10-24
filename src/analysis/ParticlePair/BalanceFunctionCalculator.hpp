@@ -13,6 +13,7 @@
 #define CAP__BalanceFunctionCalculator
 #include "Profile.hpp"
 #include "Calculator.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

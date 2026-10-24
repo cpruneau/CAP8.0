@@ -13,6 +13,7 @@
 #define CAP__SelectionGenerator
 #include <vector>
 #include "TRandom.h"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

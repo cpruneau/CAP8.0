@@ -13,6 +13,7 @@
 #define CAP__EnvironmentVariables
 #include "Aliases.hpp"
 #include "Properties.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

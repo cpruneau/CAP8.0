@@ -15,6 +15,7 @@
 #include "Particle.hpp"
 #include "MathConstants.hpp"
 #include "Configuration.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

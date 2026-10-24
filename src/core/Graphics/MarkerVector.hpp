@@ -4,6 +4,7 @@
 #include "MarkerAttributes.hpp"
 #include "AxisRange.hpp"
 #include "DataPoints.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

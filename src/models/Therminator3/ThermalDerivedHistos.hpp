@@ -1,6 +1,7 @@
 #ifndef CAP_ThermalDerivedHistos
 #define CAP_ThermalDerivedHistos
 #include "ThermalHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

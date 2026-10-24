@@ -12,6 +12,7 @@
 #ifndef CAP__SpherocityDerivedHistos
 #define CAP__SpherocityDerivedHistos
 #include "SpherocityHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

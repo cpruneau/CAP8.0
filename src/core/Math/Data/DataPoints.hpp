@@ -5,6 +5,7 @@
 #include "Object.hpp"
 #include "DataPoint2D.hpp"
 #include "FitRecord.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

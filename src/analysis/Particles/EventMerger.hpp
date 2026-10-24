@@ -12,6 +12,7 @@
 #ifndef CAP__EventMerger
 #define CAP__EventMerger
 #include "EventProcessor.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

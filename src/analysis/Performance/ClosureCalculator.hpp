@@ -12,6 +12,7 @@
 #ifndef CAP__ClosureCalculator
 #define CAP__ClosureCalculator
 #include "Task.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

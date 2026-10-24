@@ -1,6 +1,7 @@
 #ifndef CAP__ModelKrakowSFO
 #define CAP__ModelKrakowSFO
 #include "Model.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

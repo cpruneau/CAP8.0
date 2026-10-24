@@ -1,6 +1,7 @@
 #ifndef CAP__ModelHadronGas
 #define CAP__ModelHadronGas
 #include "Model.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

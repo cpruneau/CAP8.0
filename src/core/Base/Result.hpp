@@ -17,6 +17,7 @@
 #include "Factory.hpp"
 #include "ResultType.hpp"
 #include "ResultDb.hpp"
+#include "ClassDef.hpp"
 
 using namespace std;
 

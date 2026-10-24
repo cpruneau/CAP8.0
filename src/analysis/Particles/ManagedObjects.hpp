@@ -27,6 +27,7 @@
 #include <type_traits>
 #include <utility>
 #include <iostream>
+#include "ClassDef.hpp"
 
 namespace CAP
 {

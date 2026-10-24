@@ -1,6 +1,7 @@
 #ifndef CAP__AxisRenderer
 #define CAP__AxisRenderer
 #include "Renderer.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

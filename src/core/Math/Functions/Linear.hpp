@@ -1,6 +1,7 @@
 #ifndef CAP_MATH_Linear
 #define CAP_MATH_Linear
 #include "Polynomial.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

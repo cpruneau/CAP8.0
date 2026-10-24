@@ -16,6 +16,7 @@
 #include <iostream>
 #include <vector>
 #include "FileSystemEntry.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

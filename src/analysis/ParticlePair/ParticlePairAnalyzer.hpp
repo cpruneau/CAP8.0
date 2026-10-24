@@ -16,6 +16,7 @@
 #include "ParticlePairHistos.hpp"
 #include "ParticlePairDerivedHistos.hpp"
 #include "ParticlePairBfHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

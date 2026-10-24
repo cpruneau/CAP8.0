@@ -13,6 +13,7 @@
 #define CAP__Object
 #include "Aliases.hpp"
 #include "Exceptions.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

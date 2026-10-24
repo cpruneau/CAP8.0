@@ -2,6 +2,7 @@
 #define CAP__GraphRenderer
 #include "Renderer.hpp"
 #include "Graph.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

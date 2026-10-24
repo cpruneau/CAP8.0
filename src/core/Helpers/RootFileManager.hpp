@@ -12,6 +12,7 @@
 #ifndef CAP__RootFileManager
 #define CAP__RootFileManager
 #include "Manager.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

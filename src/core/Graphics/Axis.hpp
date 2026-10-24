@@ -5,6 +5,7 @@
 #include "LineAttributes.hpp"
 #include "TextAttributes.hpp"
 #include "Rect2D.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

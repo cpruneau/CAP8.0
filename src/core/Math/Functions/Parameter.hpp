@@ -2,6 +2,7 @@
 #define CAP_MATH_Parameter
 #include "Aliases.hpp"
 #include "BinaryIO.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

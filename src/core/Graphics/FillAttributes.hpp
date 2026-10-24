@@ -1,6 +1,7 @@
 #ifndef CAP__FillAttributes
 #define CAP__FillAttributes
 #include "Attributes.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

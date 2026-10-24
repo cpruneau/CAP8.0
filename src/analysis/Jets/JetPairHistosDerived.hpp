@@ -15,6 +15,7 @@
 #include "JetSingleHistos.hpp"
 #include "JetPairHistos.hpp"
 #include "MathConstants.hpp"
+#include "ClassDef.hpp"
 
 //using namespace fastjet;
 

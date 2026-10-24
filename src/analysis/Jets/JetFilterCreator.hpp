@@ -14,6 +14,7 @@
 #define CAP__JetFilterCreator
 #include "FilterCreator.hpp"
 #include "PseudoJet.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

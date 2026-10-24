@@ -1,6 +1,7 @@
 #ifndef CAP__LineRenderer
 #define CAP__LineRenderer
 #include "Renderer.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

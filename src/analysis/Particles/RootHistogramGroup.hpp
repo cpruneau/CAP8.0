@@ -21,6 +21,7 @@
 #include "Configuration.hpp"
 #include "ManagedObject.hpp"
 #include "Exceptions.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

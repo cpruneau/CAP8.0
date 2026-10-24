@@ -12,6 +12,7 @@
 #ifndef CAP__SubSampleStatCalculator
 #define CAP__SubSampleStatCalculator
 #include "Task.hpp"
+#include "ClassDef.hpp"
 
 using namespace std;
 

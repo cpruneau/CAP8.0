@@ -3,6 +3,7 @@
 #include "Aliases.hpp"
 #include "ParameterizedFunction.hpp"
 #include "DataPoints.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

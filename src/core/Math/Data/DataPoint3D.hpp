@@ -16,6 +16,7 @@
 #include "Aliases.hpp"
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -13,6 +13,7 @@
 #define CAP__Accountant
 #include "Aliases.hpp"
 #include "Object.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

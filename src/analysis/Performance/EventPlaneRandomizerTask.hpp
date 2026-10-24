@@ -12,6 +12,7 @@
 #ifndef CAP__EventPlaneRandomizerTask
 #define CAP__EventPlaneRandomizerTask
 #include "EventProcessor.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

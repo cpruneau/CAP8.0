@@ -12,6 +12,7 @@
 #ifndef CAP__MeasurementSimulator
 #define CAP__MeasurementSimulator
 #include "EventProcessor.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -16,6 +16,7 @@
 #include "ParticleSingleDerivedHistos.hpp"
 #include "ParticlePairHistos.hpp"
 #include "HistogramFolder.hpp"
+#include "ClassDef.hpp"
 
 using CAP::MATH::absolute;
 

@@ -1,6 +1,7 @@
 #ifndef CAP__MarkerRenderer
 #define CAP__MarkerRenderer
 #include "Renderer.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

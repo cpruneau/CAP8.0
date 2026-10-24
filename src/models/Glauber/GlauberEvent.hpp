@@ -6,6 +6,7 @@
 #include "GlauberEventMoments.hpp"
 #include "ManagedObject.hpp"
 #include "Configuration.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -15,6 +15,7 @@
 #include "fastjet/ClusterSequence.hh"
 #include "MathConstants.hpp"
 #include "ParticleTypeList.hpp"
+#include "ClassDef.hpp"
 
 using namespace fastjet;
 

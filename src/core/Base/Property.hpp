@@ -12,6 +12,7 @@
 #ifndef CAP__Property
 #define CAP__Property
 #include "Object.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

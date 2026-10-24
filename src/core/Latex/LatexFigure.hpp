@@ -1,6 +1,7 @@
 #ifndef CAP__LatexFigure
 #define CAP__LatexFigure
 #include "LatexElement.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

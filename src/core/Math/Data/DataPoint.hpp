@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <vector>
 #include "Aliases.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -4,6 +4,7 @@
 #include "GlauberNucleon.hpp"
 #include "GlauberNucleusType.hpp"
 #include "NuclearDistribution.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

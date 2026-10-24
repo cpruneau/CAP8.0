@@ -15,6 +15,7 @@
 #include "Exceptions.hpp"
 #include "BinaryIO.hpp"
 #include "Object.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

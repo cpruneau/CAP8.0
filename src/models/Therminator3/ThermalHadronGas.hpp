@@ -15,6 +15,7 @@
 #define CAP_ThermalHadronGas
 #include "ThermalHadron.hpp"
 #include "ParticleDb.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

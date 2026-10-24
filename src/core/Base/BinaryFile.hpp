@@ -15,6 +15,7 @@
 #define CAP__BinaryFile
 #include <string>
 #include "File.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

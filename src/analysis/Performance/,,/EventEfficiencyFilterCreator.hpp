@@ -13,6 +13,7 @@
 #define CAP__EventEfficiencyFilterCreator
 #include "FilterCreator.hpp"
 #include "EventEfficiencyFilter.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

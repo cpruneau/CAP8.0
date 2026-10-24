@@ -12,6 +12,7 @@
 #include "LatexSubsection.hpp"
 #include "LatexSubsubsection.hpp"
 #include "LatexText.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

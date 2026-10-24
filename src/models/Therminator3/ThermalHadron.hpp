@@ -3,6 +3,7 @@
 #include <vector>
 #include "ParticleType.hpp"
 #include "TObject.h"
+#include "ClassDef.hpp"
 
 class ThermalHadronGas;
 class Model;

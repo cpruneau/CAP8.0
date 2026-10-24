@@ -5,6 +5,7 @@
 #include "Aliases.hpp"
 #include "Renderer.hpp"
 #include "Point2D.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -4,6 +4,7 @@
 #include <iostream>
 #include "Aliases.hpp"
 #include "MathConstants.hpp"
+#include "ClassDef.hpp"
 
 //using CAP::MATH::
 namespace CAP

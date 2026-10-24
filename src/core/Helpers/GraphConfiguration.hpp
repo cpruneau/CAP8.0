@@ -14,6 +14,7 @@
 //#include "Aliases.hpp"
 #include "Configuration.hpp"
 #include <vector>
+#include "ClassDef.hpp"
 
 namespace CAP
 {

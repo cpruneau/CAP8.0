@@ -6,6 +6,7 @@
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
 #include "Graph.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

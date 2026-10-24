@@ -13,6 +13,7 @@
 #define CAP__ParticlePairBfHistos
 #include "ParticlePairDerivedHistos.hpp"
 #include "HistogramFolder.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

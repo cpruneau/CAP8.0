@@ -13,6 +13,7 @@
 #define CAP__LongParameter
 #include "Object.hpp"
 #include "BinaryIO.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

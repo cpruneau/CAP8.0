@@ -7,6 +7,7 @@
 //#include "TF2.h"
 #include "VectorLorentz.hpp"
 #include "NuclearDistribution.hpp"
+#include "ClassDef.hpp"
 
 using CAP::MATH::VectorLorentz;
 

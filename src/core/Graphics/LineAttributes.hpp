@@ -1,6 +1,7 @@
 #ifndef CAP__LineAttributes
 #define CAP__LineAttributes
 #include "Attributes.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

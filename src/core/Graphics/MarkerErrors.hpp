@@ -1,6 +1,7 @@
 #ifndef CAP__MarkerErrors
 #define CAP__MarkerErrors
 #include "Drawable2D.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

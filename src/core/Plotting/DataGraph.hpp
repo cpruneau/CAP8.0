@@ -20,6 +20,7 @@
 #include "TGraphAsymmErrors.h"
 #include "TH1D.h"
 #include "GraphConfiguration.hpp"
+#include "ClassDef.hpp"
 
 using std::vector;
 

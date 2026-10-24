@@ -5,6 +5,7 @@
 #include "Parameter.hpp"
 #include "Function.hpp"
 #include "VectorND.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

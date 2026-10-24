@@ -13,6 +13,7 @@
 #define CAP__ConfigurationManager
 #include "Object.hpp"
 #include "Configuration.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

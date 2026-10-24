@@ -20,6 +20,7 @@
 #include "Aliases.hpp"
 #include "ParticleType.hpp"
 #include "ParticleDb.hpp"
+#include "ClassDef.hpp"
 
 using namespace std;
 

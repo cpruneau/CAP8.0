@@ -275,6 +275,27 @@ add_executable(TestTaskRegistry tests/TestTaskRegistry.cpp)
 target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})
 add_test(NAME TaskRegistry COMMAND TestTaskRegistry)
 
+# Sources that must compile without ROOT (no ROOT include path): the basic layer of Base, the reflection, the random
+# numbers, the interpreter. A ROOT header reaching one of them (e.g. through Aliases.hpp) fails this test.
+set(CAP_ROOT_FREE_SOURCES
+  core/Base/Aliases.cpp core/Base/Condition.cpp core/Base/Crc32.cpp core/Base/Exceptions.cpp core/Base/Factory.cpp
+  core/Base/FileSystem.cpp core/Base/NameHelpers.cpp core/Base/PhysicsConstants.cpp core/Base/PrintHelpers.cpp
+  core/Base/Reflection.cpp core/Base/String.cpp core/Base/XmlDocument.cpp core/Base/XmlElement.cpp
+  core/Base/XmlReader.cpp core/Base/XmlWriter.cpp
+  core/Math/Random/MersenneTwister.cpp core/Math/Random/RandomDistribution.cpp core/Math/Random/RandomGenerator.cpp
+  core/Interpreter/Interpreter.cpp core/Interpreter/Lexer.cpp core/Interpreter/Parser.cpp core/Interpreter/CapShell.cxx)
+set(CAP_ROOT_FREE_COMMAND ${CMAKE_CXX_COMPILER} -std=c++17 -fsyntax-only)
+if(CMAKE_OSX_SYSROOT)
+  list(APPEND CAP_ROOT_FREE_COMMAND -isysroot ${CMAKE_OSX_SYSROOT})
+endif()
+foreach(dir core/Base core/Math/Basic core/Math/Random core/Interpreter)
+  list(APPEND CAP_ROOT_FREE_COMMAND -I${CMAKE_SOURCE_DIR}/${dir})
+endforeach()
+foreach(source ${CAP_ROOT_FREE_SOURCES})
+  list(APPEND CAP_ROOT_FREE_COMMAND ${CMAKE_SOURCE_DIR}/${source})
+endforeach()
+add_test(NAME RootFreeSources COMMAND ${CAP_ROOT_FREE_COMMAND})
+
 string(REPLACE ";" ", " optional_text "${CAP_OPTIONAL_BUILT}")
 if(optional_text STREQUAL "")
   set(optional_text "none")

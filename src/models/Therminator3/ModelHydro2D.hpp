@@ -1,6 +1,7 @@
 #ifndef CAP__ModelHydro2D
 #define CAP__ModelHydro2D
 #include "Model.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

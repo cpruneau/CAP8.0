@@ -2,6 +2,7 @@
 #define CAP_CHEMISTRY_H_
 #include "ScalarField.hpp"
 #include "ParticleType.hpp"
+#include "ClassDef.hpp"
 
 using CAP::MATH::ScalarField;
 

@@ -14,6 +14,7 @@
 #include "Profile.hpp"
 #include "ParticleSingleDerivedHistos.hpp"
 #include "ParticlePair3DHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

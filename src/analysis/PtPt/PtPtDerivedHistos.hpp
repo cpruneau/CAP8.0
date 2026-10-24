@@ -13,6 +13,7 @@
 #define CAP__PtPtDerivedHistos
 #include "HistogramFolder.hpp"
 #include "PtPtHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

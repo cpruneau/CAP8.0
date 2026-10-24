@@ -12,6 +12,7 @@
 #ifndef CAP__EventVertexRandomizerTask
 #define CAP__EventVertexRandomizerTask
 #include "EventProcessor.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

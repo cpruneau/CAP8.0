@@ -5,6 +5,7 @@
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
 #include "TextAttributes.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

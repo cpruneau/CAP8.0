@@ -7,6 +7,7 @@
 #include "ThermalHistos.hpp"
 #include "ThermalDerivedHistos.hpp"
 #include "ThermalHadronGas.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

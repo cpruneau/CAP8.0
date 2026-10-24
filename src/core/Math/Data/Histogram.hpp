@@ -11,6 +11,7 @@
 #include "DataPoints.hpp"
 #include "DataPointsVector.hpp"
 #include "BinaryIO.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -1,6 +1,7 @@
 #ifndef CAP_MATH_Parabolic
 #define CAP_MATH_Parabolic
 #include "Polynomial.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

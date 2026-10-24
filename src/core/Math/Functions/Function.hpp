@@ -4,6 +4,7 @@
 #include "Aliases.hpp"
 #include "Object.hpp"
 #include "FitRecord.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

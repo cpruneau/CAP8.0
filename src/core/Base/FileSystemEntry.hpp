@@ -15,6 +15,7 @@
 #define CAP__FileSystemEntry
 #include "FileSystem.hpp"
 #include "Object.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

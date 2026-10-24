@@ -1,6 +1,7 @@
 #ifndef CAP_MATH_Constant
 #define CAP_MATH_Constant
 #include "Polynomial.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

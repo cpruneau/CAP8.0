@@ -2,6 +2,7 @@
 #define CAP__PDF
 #include "VirtualPS.hpp"
 #include <vector>
+#include "ClassDef.hpp"
 
 class Points2D;
 

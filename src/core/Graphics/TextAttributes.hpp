@@ -1,6 +1,7 @@
 #ifndef CAP__TextAttributes
 #define CAP__TextAttributes
 #include "Attributes.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

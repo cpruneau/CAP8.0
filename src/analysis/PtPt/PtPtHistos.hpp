@@ -14,6 +14,7 @@
 #include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
 #include "Configuration.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

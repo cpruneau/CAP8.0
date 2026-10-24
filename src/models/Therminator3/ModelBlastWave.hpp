@@ -1,6 +1,7 @@
 #ifndef CAP__ModelBlastWave
 #define CAP__ModelBlastWave
 #include "Model.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

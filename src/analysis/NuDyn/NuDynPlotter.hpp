@@ -14,6 +14,7 @@
 #include "Plotter.hpp"
 #include "NuDynHistos.hpp"
 #include "NuDynDerivedHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

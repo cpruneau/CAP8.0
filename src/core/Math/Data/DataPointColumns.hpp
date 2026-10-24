@@ -18,6 +18,7 @@
 #include "DataPoint.hpp"
 #include "DataPoint2D.hpp"
 #include "DataPoints.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

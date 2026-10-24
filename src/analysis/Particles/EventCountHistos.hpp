@@ -15,6 +15,7 @@
 #include "Configuration.hpp"
 #include "EventFilter.hpp"
 #include "ParticleFilter.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

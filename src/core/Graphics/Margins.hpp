@@ -2,6 +2,7 @@
 #define CAP__Margins
 #include "TObject.h"
 #include "Aliases.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

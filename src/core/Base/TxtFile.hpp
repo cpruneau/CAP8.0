@@ -13,6 +13,7 @@
 #define CAP__TxtFile
 #include <vector>
 #include "File.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

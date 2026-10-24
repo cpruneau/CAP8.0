@@ -5,6 +5,7 @@
 #include "Object.hpp"
 #include "Function.hpp"
 #include "BinaryIO.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

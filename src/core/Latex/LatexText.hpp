@@ -1,6 +1,7 @@
 #ifndef CAP__LatexText
 #define CAP__LatexText
 #include "LatexElement.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -17,6 +17,7 @@
 #include "Timer.hpp"
 #include "XmlDocument.hpp"
 #include <iostream>
+#include "ClassDef.hpp"
 namespace CAP
 {
   class Folder;

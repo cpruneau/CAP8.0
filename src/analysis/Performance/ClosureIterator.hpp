@@ -12,6 +12,7 @@
 #ifndef CAP__ClosureIterator
 #define CAP__ClosureIterator
 #include "Task.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

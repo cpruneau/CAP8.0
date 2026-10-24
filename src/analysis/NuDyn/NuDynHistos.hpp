@@ -13,6 +13,7 @@
 #define CAP__NuDynHistos
 #include "HistogramFolder.hpp"
 #include "ParticleFilter.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

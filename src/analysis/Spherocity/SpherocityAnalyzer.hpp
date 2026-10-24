@@ -14,6 +14,7 @@
 #include "EventProcessorSingle.hpp"
 #include "SpherocityHistos.hpp"
 #include "SpherocityDerivedHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

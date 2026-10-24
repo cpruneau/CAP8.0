@@ -1,6 +1,7 @@
 #ifndef CAP__TextRenderer
 #define CAP__TextRenderer
 #include "Renderer.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

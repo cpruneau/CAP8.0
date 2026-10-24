@@ -16,6 +16,7 @@
 #include "ManagedObject.hpp"
 #include "Object.hpp"
 #include "ParticleType.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

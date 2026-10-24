@@ -1,6 +1,7 @@
 #ifndef CAP__LatexEquation
 #define CAP__LatexEquation
 #include "LatexElement.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

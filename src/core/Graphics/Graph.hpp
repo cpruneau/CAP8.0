@@ -27,6 +27,7 @@
 #include "Grid2D.hpp"
 #include "Palette.hpp"
 #include "Shape.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -14,6 +14,7 @@
 #include "HistogramFolder.hpp"
 #include "Event.hpp"
 #include "MathConstants.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

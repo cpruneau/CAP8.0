@@ -1,6 +1,7 @@
 #ifndef CAP__ImageDump
 #define CAP__ImageDump
 #include "VirtualPS.hpp"
+#include "ClassDef.hpp"
 class Image;
 class Color;
 class Point2D;

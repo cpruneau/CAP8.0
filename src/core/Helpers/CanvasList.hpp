@@ -15,6 +15,7 @@
 #include "TCanvas.h"
 #include "TSystem.h"
 #include "CanvasConfiguration.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

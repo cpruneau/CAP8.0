@@ -18,6 +18,7 @@
 #include "PhysicsConstants.hpp"
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
+#include "ClassDef.hpp"
 
 using namespace std;
 using namespace CAP::Physics;

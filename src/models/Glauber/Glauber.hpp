@@ -3,6 +3,7 @@
 #include "Task.hpp"
 #include "HistogramFolder.hpp"
 #include "Histogramset.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

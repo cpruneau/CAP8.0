@@ -15,6 +15,7 @@
 #include "Event.hpp"
 #include "Filter.hpp"
 #include "ManagedObject.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

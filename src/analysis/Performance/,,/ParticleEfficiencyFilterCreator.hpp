@@ -22,6 +22,7 @@
 #include "ParticleSmearer.hpp"
 #include "BaseHistos.hpp"
 #include "BaseDerivedHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

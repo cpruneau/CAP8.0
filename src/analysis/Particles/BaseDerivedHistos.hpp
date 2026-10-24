@@ -12,6 +12,7 @@
 #ifndef CAP__BaseDerivedHistos
 #define CAP__BaseDerivedHistos
 #include "BaseHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

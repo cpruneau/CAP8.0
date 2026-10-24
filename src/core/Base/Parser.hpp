@@ -19,6 +19,7 @@
 #include <cmath>
 #include <iomanip>
 #include "Object.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

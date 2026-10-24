@@ -12,6 +12,7 @@
 #ifndef CAP__RunSubSampleSum
 #define CAP__RunSubSampleSum
 #include "Aliases.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

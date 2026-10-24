@@ -13,6 +13,7 @@
 #define CAP__EventEfficiency
 #include "HistogramFolder.hpp"
 #include "Event.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

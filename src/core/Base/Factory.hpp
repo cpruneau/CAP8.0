@@ -12,6 +12,7 @@
 #ifndef CAPFactory
 #define CAPFactory
 #include "Exceptions.hpp"
+#include "ClassDef.hpp"
 
 //!
 //! @class CAP::Factory

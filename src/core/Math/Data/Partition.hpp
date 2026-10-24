@@ -5,6 +5,7 @@
 #include "Aliases.hpp"
 #include "Object.hpp"
 #include "MathExceptions.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -20,6 +20,7 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 #include <fstream>
+#include "ClassDef.hpp"
 
 namespace CAP
 {

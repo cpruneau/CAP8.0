@@ -14,6 +14,7 @@
 #include "Plotter.hpp"
 #include "PtPtHistos.hpp"
 #include "PtPtDerivedHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

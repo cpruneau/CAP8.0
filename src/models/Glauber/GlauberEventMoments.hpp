@@ -1,6 +1,7 @@
 #ifndef CAP__GlauberEventMoments
 #define CAP__GlauberEventMoments
 #include "PrintHelpers.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

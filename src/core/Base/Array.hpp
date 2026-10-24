@@ -12,6 +12,7 @@
 #ifndef CAP__Array
 #define CAP__Array
 #include "Object.hpp"
+#include "ClassDef.hpp"
 
 //!
 //! @class CAP::Array

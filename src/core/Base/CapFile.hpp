@@ -15,6 +15,7 @@
 #include "Folder.hpp"
 #include "Accountant.hpp"
 #include <vector>
+#include "ClassDef.hpp"
 
 namespace CAP
 {

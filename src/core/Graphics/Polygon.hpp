@@ -2,6 +2,7 @@
 #define CAP__Polygon
 #include <vector>
 #include "Geom2D.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

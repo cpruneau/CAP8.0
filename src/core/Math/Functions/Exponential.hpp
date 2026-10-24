@@ -2,6 +2,7 @@
 #define CAP_MATH_Exponential
 #include <cmath>
 #include "ParameterizedFunction.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

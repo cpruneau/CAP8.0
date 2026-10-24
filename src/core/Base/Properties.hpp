@@ -13,6 +13,7 @@
 #define CAP__Properties
 #include "Aliases.hpp"
 #include "Property.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

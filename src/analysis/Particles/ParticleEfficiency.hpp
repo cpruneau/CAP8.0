@@ -14,6 +14,7 @@
 #include "Aliases.hpp"
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

@@ -18,6 +18,7 @@
 #include "GlauberEvent.hpp"
 #include "HistogramFolder.hpp"
 #include "MathConstants.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

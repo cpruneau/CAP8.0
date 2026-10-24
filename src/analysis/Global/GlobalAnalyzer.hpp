@@ -14,6 +14,7 @@
 #include "EventProcessorSingle.hpp"
 #include "GlobalHistos.hpp"
 #include "GlobalDerivedHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

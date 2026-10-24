@@ -14,6 +14,7 @@
 #include "EventProcessorSingle.hpp"
 #include "ParticleFlowHistos.hpp"
 #include "ParticleFlowDerivedHistos.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

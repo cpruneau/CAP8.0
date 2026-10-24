@@ -13,6 +13,7 @@
 #define CAP__JetCalculator
 #include "Calculator.hpp"
 #include "JetFilter.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

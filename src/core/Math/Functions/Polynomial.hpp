@@ -5,6 +5,7 @@
 #include <ostream>
 #include "Aliases.hpp"
 #include "ParameterizedFunction.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

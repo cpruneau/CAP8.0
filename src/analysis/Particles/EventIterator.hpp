@@ -12,6 +12,7 @@
 #ifndef CAP__EventIterator
 #define CAP__EventIterator
 #include "EventProcessor.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {

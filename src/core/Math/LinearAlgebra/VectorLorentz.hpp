@@ -10,6 +10,7 @@
 #include "Exceptions.hpp"
 #include "MathConstants.hpp"
 #include "Vector3D.hpp"
+#include "ClassDef.hpp"
 
 namespace CAP
 {
