@@ -25,7 +25,11 @@ CAP_REFLECTION(Math)
     .property("nBinsTotal", &Partition::nBinsTotal)
     .method("nBins", &Partition::nBins)
     .method("minimum", &Partition::minimum)
-    .method("maximum", &Partition::maximum);
+    .method("maximum", &Partition::maximum)
+    // the default arguments (axis 0)
+    .function("nBins", +[](const Partition & p) { return p.nBins(); })
+    .function("minimum", +[](const Partition & p) { return p.minimum(); })
+    .function("maximum", +[](const Partition & p) { return p.maximum(); });
 
   ClassBuilder<DataPoints>("CAP::MATH::DataPoints")
     .base<Object>()
@@ -48,6 +52,7 @@ CAP_REFLECTION(Math)
     .method("binUncertaintyAt", static_cast<double (Histogram::*)(unsigned int) const>(&Histogram::binUncertaintyAt))
     .method("binEntriesAt", static_cast<double (Histogram::*)(unsigned int) const>(&Histogram::binEntriesAt))
     .method("mean", &Histogram::mean)
+    .function("mean", +[](const Histogram & h) { return h.mean(); })
     .function("integral", +[](const Histogram & h) { return h.integral(); })
     .method("scale", &Histogram::scale)
     .method("print", &Histogram::print);

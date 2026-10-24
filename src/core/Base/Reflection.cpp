@@ -71,7 +71,7 @@ namespace CAP
 
   const Instance & Value::toInstance() const
   {
-  if (kind() != kObject) throw ReflectionException(String("Not an object: ") + String(print()), "Value::toInstance");
+  if (kind() != kInstance) throw ReflectionException(String("Not an object: ") + String(print()), "Value::toInstance");
   return std::get<Instance>(_value);
   }
 
@@ -91,7 +91,7 @@ namespace CAP
     case kInteger: out << std::get<long>(_value); break;
     case kReal:    out.precision(10); out << std::get<double>(_value); break;
     case kText:    return "\"" + std::get<std::string>(_value) + "\"";
-    case kObject:
+    case kInstance:
       {
       const Instance & o = std::get<Instance>(_value);
       out << "<" << (o.type ? o.type->name() : std::string("?")) << " at " << o.pointer << ">";
@@ -112,7 +112,7 @@ namespace CAP
   std::string Value::typeName() const
   {
   static const char * names[] = { "none", "boolean", "integer", "real", "text", "object", "list" };
-  if (kind() == kObject && std::get<Instance>(_value).type) return std::get<Instance>(_value).type->name();
+  if (kind() == kInstance && std::get<Instance>(_value).type) return std::get<Instance>(_value).type->name();
   return names[kind()];
   }
 
@@ -236,14 +236,21 @@ namespace CAP
     try { return m.invoke(object, arguments); }
     catch (const ReflectionException & e) { reason = e.what(); }
     }
+  std::size_t own = candidates.size();
+  std::string baseError;
   for (const auto & b : _bases)
     if (const ClassInfo * c = Registry::instance().find(*b.type))
       if (!c->methods(name).empty())
         {
         try { return c->call(b.upcast(object), name, arguments); }
-        catch (const ReflectionException & e) { reason = e.what(); for (const Method * m : c->methods(name)) candidates.push_back(m); }
+        catch (const ReflectionException & e)
+          {
+          if (baseError.empty()) baseError = e.what();
+          for (const Method * m : c->methods(name)) candidates.push_back(m);
+          }
         }
   if (candidates.empty()) throw ReflectionException(String("No function ") + String(name) + String(" in ") + String(_name), "ClassInfo::call");
+  if (own == 0) throw ReflectionException(String(baseError), "ClassInfo::call");   // the functions of a base only: its message
   throw ReflectionException(noMatch("function " + name, candidates, arguments, reason), "ClassInfo::call");
   }
 
@@ -344,7 +351,7 @@ namespace CAP
     std::free(name);
     throw ReflectionException(String("Unregistered class ") + readable, "Reflection");
     }
-  if (value.kind() != Value::kObject)
+  if (value.kind() != Value::kInstance)
     throw ReflectionException(String("Expected ") + String(target->name()) + String(", not ") + String(value.typeName()), "Reflection");
   const Instance & o = value.toInstance();
   void * p = o.type ? o.type->upcast(o.pointer, *target) : nullptr;

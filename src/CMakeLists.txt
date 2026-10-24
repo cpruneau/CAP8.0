@@ -76,7 +76,7 @@ find_package(ROOT REQUIRED COMPONENTS EG MathCore MathMore RIO Hist Tree Net )
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 ################################################################################################
 include(${ROOT_USE_FILE})
-include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Helpers" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
+include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Helpers" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
  )
 add_definitions(${ROOT_CXX_FLAGS})
 add_compile_options(-Wall -Wextra -pedantic)
@@ -185,6 +185,9 @@ if(CAP_WITH_GRAPHICS)   # not linked into the CAP executable (nothing in CAP use
   add_subdirectory(core/Graphics)
   list(APPEND CAP_OPTIONAL_BUILT Graphics)
 endif()
+
+add_subdirectory(core/Interpreter)   # bin/CapShell: the CAP command line interpreter (after Graphics, for figures)
+list(APPEND CAP_OPTIONAL_BUILT CapShell)
 
 if(CAP_WITH_GUI)        # bin/CapGui: Dear ImGui + GLFW (distributed in <CAP>/external), OpenGL
   if(CAP_WITH_GRAPHICS)

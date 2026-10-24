@@ -86,7 +86,7 @@ namespace CAP
   {
   public:
   //! Kinds of values
-  enum Kind { kNone, kBool, kInteger, kReal, kText, kObject, kList };
+  enum Kind { kNone, kBool, kInteger, kReal, kText, kInstance, kList };
 
   Value() : _value() { }   //!< Nothing
   Value(bool v) : _value(v) { }   //!< Boolean
@@ -328,6 +328,20 @@ namespace CAP
   static Stored get(Stored & s) { return s; }
   };
 
+  //! Instance of an object of static type P: of its dynamic type if P is polymorphic and that class is registered.
+  template <typename P>
+  Instance instance(const P * object)
+  {
+  Instance o;
+  o.pointer = const_cast<void *>(static_cast<const void *>(object));
+  o.type = classOf<P>();
+  if constexpr (std::is_polymorphic<P>::value)
+    if (const ClassInfo * dynamic = Registry::instance().find(typeid(*object)))
+      if (dynamic != o.type) { o.type = dynamic; o.pointer = const_cast<void *>(dynamic_cast<const void *>(object)); }
+  if (!o.type) throw ReflectionException(String("Unregistered class: ") + String(typeName(typeid(P))), "Reflection");
+  return o;
+  }
+
   //! A result of type R as a Value.
   template <typename R>
   Value result(R && r)
@@ -347,22 +361,16 @@ namespace CAP
     {
     using P = typename std::remove_cv<typename std::remove_pointer<D>::type>::type;
     if (!r) return Value();
-    const ClassInfo * c = classOf<P>();
-    if (!c) throw ReflectionException(String("Result of an unregistered class: ") + String(typeName(typeid(P))), "Reflection");
-    Instance o;
-    o.pointer = const_cast<void *>(static_cast<const void *>(r));
-    o.type = c;
-    return Value(o);
+    return Value(instance<P>(r));
     }
   else
     {
+    if constexpr (std::is_lvalue_reference<R>::value) return Value(instance<D>(&r));   // a reference: the object itself
     const ClassInfo * c = classOf<D>();
     if (!c) throw ReflectionException(String("Result of an unregistered class: ") + String(typeName(typeid(D))), "Reflection");
     Instance o;
     o.type = c;
-    if constexpr (std::is_lvalue_reference<R>::value)
-      o.pointer = const_cast<void *>(static_cast<const void *>(&r));       // a reference: the object itself
-    else
+    if constexpr (!std::is_lvalue_reference<R>::value)
       {
       std::shared_ptr<D> copy = std::make_shared<D>(std::forward<R>(r));  // a value: a copy owned by the Value
       o.pointer = copy.get();
@@ -393,6 +401,19 @@ namespace CAP
   }
   } // namespace Detail
   //! @endcond
+
+  //! @brief Value referring to an object owned elsewhere (of its dynamic class if registered). @param object object
+  //! @return value
+  template <typename T> Value reference(T & object) { return Value(Detail::instance<T>(&object)); }
+  //! @brief Value owning an object made with new (deleted with the last copy of the value). @param object object
+  //! @return value
+  template <typename T> Value owned(T * object)
+  {
+  Instance o = Detail::instance<T>(object);
+  o.owner = std::shared_ptr<T>(object);
+  return Value(o);
+  }
+
 
   //!
   //! @brief Describe a class T and register it (when the builder is destroyed: at the end of the statement).
