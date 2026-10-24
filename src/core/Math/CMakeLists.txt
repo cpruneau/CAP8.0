@@ -137,6 +137,9 @@ Fitting/Prior.cpp
 # StatisticalTests
 StatisticalTests/Distributions.cpp
 StatisticalTests/StatisticalTests.cpp
+Random/MersenneTwister.cpp
+Random/RandomDistribution.cpp
+Random/RandomGenerator.cpp
 G__Math.cxx)
 
 target_link_libraries(Math Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
@@ -145,6 +148,9 @@ target_include_directories(Math  PUBLIC Base ${EXTRA_INCLUDES} )
 # here for the library and its dictionary, and in src/CMakeLists.txt for the other modules
 
 # Tests (run with ctest in the build directory; not installed)
+add_executable(TestRandom Random/tests/TestRandom.cpp)
+target_link_libraries(TestRandom Math Base ${ROOT_LIBRARIES})
+add_test(NAME Random COMMAND TestRandom)
 add_executable(TestExtremumSearch Search/tests/TestExtremumSearch.cpp)
 target_link_libraries(TestExtremumSearch Math Base ${ROOT_LIBRARIES})
 add_test(NAME ExtremumSearch COMMAND TestExtremumSearch)
