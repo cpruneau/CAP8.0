@@ -11,7 +11,6 @@
 #include "TAttLine.h"
 #include "TAttMarker.h"
 
-ClassImp(CAP::GraphConfiguration);
 
 namespace CAP
 {

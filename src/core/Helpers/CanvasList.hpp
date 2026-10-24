@@ -14,7 +14,6 @@
 #include "TCanvas.h"
 #include "TSystem.h"
 #include "CanvasConfiguration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -54,7 +53,6 @@ protected:
 
   std::vector<TCanvas*> _canvases;
 
-  ClassDef(CanvasList,0)
 
 };
 

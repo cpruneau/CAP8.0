@@ -10,7 +10,6 @@
 #ifndef CAP__RootFileManager
 #define CAP__RootFileManager
 #include "Manager.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -26,7 +25,6 @@ public:
 //  virtual void resetObjectAt(unsigned int index);
 //  virtual void clearObjectAt(unsigned int index);
 
-  ClassDef(Manager,0)
 };
 
 

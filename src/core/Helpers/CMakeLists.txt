@@ -6,12 +6,6 @@
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 #add_definitions(${ROOT_CXX_FLAGS})
 
-ROOT_GENERATE_DICTIONARY(G__Helpers
-CanvasConfiguration.hpp
-CanvasList.hpp
-GraphConfiguration.hpp
-RootChainManager.hpp
-LINKDEF HelpersLinkDef.h)
 
 ################################################################################################
 # Create a shared library with geneated dictionary
@@ -25,8 +19,7 @@ RootChainManager.cpp
 RootFileHelpers.cpp
 RootHistogramHelpers.cpp
 RootConversion.cpp
-RootFileConversion.cpp
-G__Helpers.cxx)
+RootFileConversion.cpp)
 
 target_link_libraries(Helpers Base Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Helpers PUBLIC Base Math ${EXTRA_INCLUDES} )
@@ -47,6 +40,5 @@ if(CAP_WITH_ROOT_FILES)
   install(TARGETS CapRootConvert RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
 endif()
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libHelpers.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libHelpers_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Helpers  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

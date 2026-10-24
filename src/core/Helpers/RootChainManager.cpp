@@ -11,7 +11,6 @@
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::RootChainManager);
 
 namespace CAP
 {

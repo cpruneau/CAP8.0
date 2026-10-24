@@ -12,7 +12,6 @@
 //#include "String.hpp"
 #include "Configuration.hpp"
 #include <vector>
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -41,7 +40,6 @@ public:
 
   static std::vector<GraphConfiguration> createConfigurationPalette(unsigned int n, int dimension);
 
-  ClassDef(GraphConfiguration,0)
 };
 
 } // namespace CAP

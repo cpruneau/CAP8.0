@@ -10,7 +10,6 @@
 #include "CanvasList.hpp"
 #include "FileSystem.hpp"
 
-ClassImp(CAP::CanvasList);
 
 namespace CAP
 {

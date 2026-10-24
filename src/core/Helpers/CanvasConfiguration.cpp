@@ -10,7 +10,6 @@
 #include "CanvasList.hpp"
 using CAP::CanvasConfiguration;
 
-ClassImp(CanvasConfiguration);
 
 CanvasConfiguration::CanvasConfiguration()
 :

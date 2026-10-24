@@ -10,7 +10,6 @@
 #ifndef CAP__CanvasConfiguration
 #define CAP__CanvasConfiguration
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -81,7 +80,6 @@ public:
   //!
   virtual void setPosition(int x, int y);
   
-  ClassDef(CanvasConfiguration,0)
 
 };
 

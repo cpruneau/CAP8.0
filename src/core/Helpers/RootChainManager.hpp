@@ -13,7 +13,6 @@
 #include "TChain.h"
 #include "TTree.h"
 #include "TBranch.h"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -56,7 +55,6 @@ protected:
   long _entryIndex;
   int  _clonesMaxArraySize;
 
-  ClassDef(RootChainManager,0)
 
 };
 
