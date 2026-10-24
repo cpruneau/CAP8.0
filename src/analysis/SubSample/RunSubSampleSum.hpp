@@ -10,7 +10,6 @@
 #ifndef CAP__RunSubSampleSum
 #define CAP__RunSubSampleSum
 #include "String.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -38,7 +37,6 @@ public:
            String & histogramExportFileName,
            bool verbose=true);
 
-  ClassDef(RunSubSampleSum,0)
 };
 
 }    // namespace CAP

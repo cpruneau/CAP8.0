@@ -20,7 +20,6 @@
 #include "ManagedObjects.hpp"
 #include <memory>
 
-ClassImp(CAP::SubSampleStatCalculator);
 
 namespace CAP
 {

@@ -10,7 +10,6 @@
 #ifndef CAP__SubSampleStatCalculator
 #define CAP__SubSampleStatCalculator
 #include "Task.hpp"
-#include "ClassDef.hpp"
 
 using namespace std;
 
@@ -61,7 +60,6 @@ protected:
   //! Output file name.
   String _exportFile;
 
-  ClassDef(SubSampleStatCalculator,0)
 };
 
 } // namespace CAP

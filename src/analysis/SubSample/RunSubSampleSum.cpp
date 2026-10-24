@@ -14,7 +14,6 @@
 #include "SubSampleStatCalculator.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::RunSubSampleSum);
 
 namespace CAP
 {
