@@ -244,6 +244,18 @@ namespace CAP
   int  _renamePane;   //!< canvas pane renamed in the Rename Canvas dialog (-1: none)
   std::string _renameText;   //!< title edited in the Rename Canvas dialog
   bool _renameRequested;   //!< Rename Canvas dialog to open
+  //! Values of the Presentation dialog
+  struct PresentationSettings
+  {
+  bool requested = false;   //!< the dialog opens at the next frame
+  std::string title = "Results";   //!< title
+  std::string author;   //!< author
+  std::string affiliation;   //!< affiliation of the author
+  bool perGraph = false;   //!< one frame per graph
+  bool compile = true;   //!< compile with pdflatex
+  bool open = true;   //!< open the PDF made
+  };
+  PresentationSettings _presentation;   //!< Presentation dialog
   std::deque<Snapshot> _undo;   //!< states before the last changes (at most 50)
   std::deque<Snapshot> _redo;   //!< states undone
   std::vector<GRAPHICS::GraphItem> _clipboard;   //!< items copied (Edit > Copy)
@@ -305,6 +317,10 @@ namespace CAP
   void renderCustomLayout();
   //! @brief Rename Canvas dialog.
   void renderRenameCanvas();
+  //! @brief Presentation dialog (a Beamer presentation of the canvases).
+  void renderPresentation();
+  //! @brief Write (and compile) the presentation of the canvases. @param texFile .tex file chosen
+  void makePresentation(const String & texFile);
   //! @brief Open file of an identifier. @param id identifier @return file, or null
   BrowserFile * file(int id);
   };

@@ -23,6 +23,7 @@
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 #include "CapGui.hpp"
+#include "CanvasRegistry.hpp"
 #include "ImGuiPainter.hpp"
 #include "LatexRenderer.hpp"
 #include "LatexTextures.hpp"
@@ -356,6 +357,81 @@ namespace CAP
   _fitsVisible = open;
   }
 
+  void CapGui::renderCanvasList()
+  {
+  if (!_canvasListVisible) return;
+  bool open = true;
+  // the first time: a tab beside the file browser docked in the main window, or a window of its own (never over the
+  // canvases)
+  ImGuiWindow * browser = ImGui::FindWindowByName(FileBrowser::mainWindowName());
+  if (!ImGui::FindWindowByName("Canvases"))
+    {
+    if (browser && browser->DockId && browser->Viewport == ImGui::GetMainViewport()) ImGui::SetNextWindowDockID(browser->DockId);
+    else
+      {
+      ImGuiViewport * main = ImGui::GetMainViewport();
+      ImGui::SetNextWindowPos(ImVec2(main->WorkPos.x + 40, main->WorkPos.y + 60));
+      ImGui::SetNextWindowSize(ImVec2(320, 420));
+      }
+    }
+  if (ImGui::Begin("Canvases", &open))
+    {
+    GRAPHICS::CanvasRegistry & registry = GRAPHICS::CanvasRegistry::session();
+    auto button = [this](const char * label, const char * command, const char * tip)
+      {
+      if (ImGui::SmallButton(label) && onCommand) onCommand(command);
+      ImGui::SetItemTooltip("%s", tip);
+      };
+    button("Save All...", "file.saveAll", "Save every canvas to its own file (SVG or PDF)");
+    ImGui::SameLine();
+    button("Book...", "file.saveBook", "Every canvas as a page of one PDF file, to print");
+    ImGui::SameLine();
+    button("Presentation...", "file.presentation", "A Beamer presentation (LaTeX) of the canvases");
+    ImGui::Separator();
+    ImGui::TextDisabled("%d canvas%s", registry.size(), registry.size() == 1 ? "" : "es");
+    for (const String & group : registry.groups())
+      {
+      ImGui::PushID(group.data());
+      ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+      if (ImGui::TreeNode("##group", "%s", group.str().empty() ? "(no group)" : group.data()))
+        {
+        for (int k=0; k<registry.size(); k++)
+          {
+          if (!(registry.group(k) == group)) continue;
+          GRAPHICS::Canvas & canvas = registry.canvas(k);
+          int pane = -1;                                       // the pane showing it (none: a canvas of a script)
+          for (int p=0; p<nPanes(); p++) if (&_panes[size_t(p)]->canvas() == &canvas) pane = p;
+          ImGui::PushID(k);
+          ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth
+                                     | (pane == _currentPane ? ImGuiTreeNodeFlags_Selected : 0);
+          bool expanded = ImGui::TreeNodeEx("##canvas", flags, "%s  (%d graph%s)", registry.name(k).data(),
+                                            canvas.nGraphs(), canvas.nGraphs() == 1 ? "" : "s");
+          if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen() && pane >= 0) setCurrentPane(pane);
+          if (expanded)
+            {
+            for (int g=0; g<canvas.nGraphs(); g++)
+              {
+              const GRAPHICS::Graph & graph = canvas.graph(g);
+              String label = graph.title().str().empty() ? String("graph ") + String(std::to_string(g + 1)) : graph.title();
+              char text[256];
+              std::snprintf(text, sizeof(text), "%s  (%d object%s%s)##g%d", label.data(), int(graph.items().size()),
+                            graph.items().size() == 1 ? "" : "s", graph.shapes().empty() ? "" : ", shapes", g);
+              bool selected = pane == _currentPane && pane >= 0 && _panes[size_t(pane)]->selectedGraph() == g;
+              if (ImGui::Selectable(text, selected) && pane >= 0) { setCurrentPane(pane); _panes[size_t(pane)]->setSelectedGraph(g); }
+              }
+            ImGui::TreePop();
+            }
+          ImGui::PopID();
+          }
+        ImGui::TreePop();
+        }
+      ImGui::PopID();
+      }
+    }
+  ImGui::End();
+  _canvasListVisible = open;
+  }
+
   void CapGui::setShowToolbars(bool v)
   {
   _settings.toolbars = v;
@@ -448,6 +524,7 @@ namespace CAP
   renderCanvases(hoverText);
 
   renderBrowser();
+  renderCanvasList();
   _fileDialog.render();
   renderMessage();
   if (onFrame) onFrame();
@@ -603,6 +680,20 @@ namespace CAP
     // last canvas then puts an empty one in the main window, see closePane())
     ImGuiWindow * window = ImGui::FindWindowByName(pane.windowId());
     bool outside = window && window->Viewport && window->Viewport != ImGui::GetMainViewport();
+    // its group in the registry of the canvases: the main window, or the separate window holding it
+    if (pane.canvas().registry())
+      {
+      String group = "Main window";
+      if (outside)
+        {
+        auto found = _windowNumbers.find(window->Viewport->ID);
+        if (found == _windowNumbers.end()) found = _windowNumbers.emplace(window->Viewport->ID, int(_windowNumbers.size()) + 2).first;
+        group = String("Window ") + String(std::to_string(found->second));
+        }
+      GRAPHICS::CanvasRegistry & registry = *pane.canvas().registry();
+      int k = registry.indexOf(pane.canvas());
+      if (k >= 0 && !(registry.group(k) == group)) registry.setGroup(pane.canvas(), group);
+      }
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
     bool visible = ImGui::Begin(pane.windowLabel(), (nPanes() > 1 || outside) ? &open : nullptr,
                                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);

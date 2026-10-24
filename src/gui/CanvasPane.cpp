@@ -14,6 +14,7 @@
 #include <cstdio>
 #include "imgui.h"
 #include "CanvasPane.hpp"
+#include "CanvasRegistry.hpp"
 #include "ParameterizedFunction.hpp"
 #include "Histogram.hpp"
 #include "FitRecord.hpp"
@@ -62,11 +63,13 @@ namespace CAP
   {
   _canvas.divide(1,1);
   setTitle(name);
+  GRAPHICS::CanvasRegistry::session().add(_canvas, name, "Main window");   // listed until the pane is closed
   }
 
   void CanvasPane::setTitle(const String & title)
   {
   _title = title;
+  if (_canvas.registry()) _canvas.registry()->rename(_canvas, title);
   _windowId = std::string("###") + _name.str();
   _windowLabel = _title.str() + _windowId;
   }

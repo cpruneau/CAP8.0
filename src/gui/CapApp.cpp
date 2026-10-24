@@ -22,6 +22,10 @@
 #include "RootFileConversion.hpp"
 #endif
 #include "CapApp.hpp"
+#include "CanvasRegistry.hpp"
+#ifdef CAP_GUI_PRESENTATIONS
+#include "CanvasPresentation.hpp"
+#endif
 #include "XmlDocument.hpp"
 #include "Exceptions.hpp"
 #include "Normal.hpp"
@@ -251,6 +255,7 @@ namespace CAP
   buildMenus();
   _gui.menuBar().addListener(this);
   _gui.onFrame = [this]() { updateMenuStates(); renderWindows(); };
+  _gui.onCommand = [this](const String & command) { actionPerformed(ActionEvent{command, nullptr}); };
 
   connectBrowser(_gui.browser());
   _gui.onNewBrowser = [this](FileBrowser & browser) { connectBrowser(browser); };
@@ -337,6 +342,13 @@ namespace CAP
   file.addItem("Save Canvas As...", "file.saveCanvas", "",          "Save the current canvas to an SVG or PDF file");
   file.addItem("Save Graph As...",  "file.saveGraph",  "",          "Save the selected graph of the current canvas to an SVG or PDF file");
   file.addSeparator();
+  file.addItem("Save All Canvases...", "file.saveAll", "",          "Save every canvas to its own file in a folder (the format saved last)");
+  file.addItem("Save All Graphs...",   "file.saveAllGraphs", "",    "Save every graph of every canvas to its own file in a folder");
+  file.addItem("Save Book as PDF...",  "file.saveBook", "",         "Every canvas as a page of one PDF file, to print");
+#ifdef CAP_GUI_PRESENTATIONS
+  file.addItem("Make Presentation...", "file.presentation", "",     "A Beamer presentation (LaTeX) of the canvases, one frame each");
+#endif
+  file.addSeparator();
   file.addItem("Exit",           "file.exit",       "Ctrl+Q",       "Close the window and quit");
 
   Menu & edit = bar.addMenu("Edit");
@@ -363,6 +375,8 @@ namespace CAP
                                           "File browser in its own window instead of docked in the main window");
   browserWindow.setCheckable(true);
   browserWindow.setChecked(!_configuration.gui.browserDocked);
+  MenuItem & canvasList = view.addItem("Canvases", "view.canvases", "", "The canvases of the session by window, with their graphs");
+  canvasList.setCheckable(true);
   MenuItem & fits = view.addItem("Fit Results", "view.fits", "", "Show the results of the fits of the selected graph, below the canvases");
   fits.setCheckable(true);
   view.addSeparator();
@@ -439,6 +453,7 @@ namespace CAP
   if (MenuItem * item = bar.findItem("help.imguiDemo")) item->setChecked(_showImGuiDemo);
   if (MenuItem * item = bar.findItem("view.browser"))       item->setChecked(_gui.browserVisible());
   if (MenuItem * item = bar.findItem("view.fits"))          item->setChecked(_gui.fitPaneVisible());
+  if (MenuItem * item = bar.findItem("view.canvases"))      item->setChecked(_gui.canvasListVisible());
   if (MenuItem * item = bar.findItem("view.browserWindow")) item->setChecked(!_gui.browserDocked());
   if (MenuItem * item = bar.findItem("file.closeAll"))      item->setEnabled(!_files.empty());
   _configuration.gui.browserVisible = _gui.browserVisible();
@@ -489,6 +504,33 @@ namespace CAP
   else if (c == "file.exit") _gui.requestExit();
   else if (c == "view.browser") _gui.setBrowserVisible(!_gui.browserVisible());
   else if (c == "view.fits") _gui.setFitPaneVisible(!_gui.fitPaneVisible());
+  else if (c == "view.canvases") _gui.setCanvasListVisible(!_gui.canvasListVisible());
+  else if (c == "file.saveAll" || c == "file.saveAllGraphs")
+    {
+    bool perGraph = c == "file.saveAllGraphs";
+    _gui.fileDialog().open(FileDialog::kOpenFolder, perGraph ? "Folder for all the graphs" : "Folder for all the canvases",
+                           _configuration.directory, {}, "", [this, perGraph](const String & folder)
+      {
+      std::vector<String> files = GRAPHICS::CanvasRegistry::session().saveAll(folder, _saveFormat, perGraph);
+      _configuration.directory = folder;
+      _gui.setStatus(String(std::to_string(files.size()).c_str()) + String(" files written to ") + folder);
+      });
+    }
+  else if (c == "file.saveBook")
+    {
+    _gui.fileDialog().open(FileDialog::kSaveFile, "Save all the canvases as one PDF", _configuration.directory, {".pdf"},
+                           "canvases.pdf", [this](const String & chosen)
+      {
+      String path = FileSystem::hasExtension(chosen, ".pdf") ? chosen : chosen + String(".pdf");
+      if (GRAPHICS::CanvasRegistry::session().writeBook(path))
+        {
+        _configuration.directory = FileSystem::parent(path);
+        _gui.setStatus(String("Saved ") + path + String(" (") + String(std::to_string(GRAPHICS::CanvasRegistry::session().size()).c_str()) + String(" pages)"));
+        }
+      else _gui.showMessage("Save Book", String("Cannot write ") + path);
+      });
+    }
+  else if (c == "file.presentation") _presentation.requested = true;
   else if (c == "view.browserWindow") _gui.setBrowserDocked(!_gui.browserDocked());
   else if (c == "edit.undo") undo();
   else if (c == "edit.redo") redo();
@@ -1406,6 +1448,7 @@ namespace CAP
   renderShortcuts();
   renderCustomLayout();
   renderRenameCanvas();
+  renderPresentation();
   renderComparison();
   if (_showImGuiDemo) ImGui::ShowDemoWindow(&_showImGuiDemo);
   }
@@ -1626,6 +1669,61 @@ namespace CAP
   ImGui::SameLine();
   if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
   ImGui::EndPopup();
+  }
+
+  void CapApp::renderPresentation()
+  {
+#ifdef CAP_GUI_PRESENTATIONS
+  if (_presentation.requested) { ImGui::OpenPopup("Presentation##dialog"); _presentation.requested = false; }
+  if (!ImGui::BeginPopupModal("Presentation##dialog", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+  PresentationSettings & p = _presentation;
+  int n = GRAPHICS::CanvasRegistry::session().size();
+  ImGui::Text("A Beamer presentation of the %d canvas%s of the session", n, n == 1 ? "" : "es");
+  ImGui::SetNextItemWidth(320); ImGui::InputText("title", &p.title);
+  ImGui::SetNextItemWidth(320); ImGui::InputText("author", &p.author);
+  ImGui::SetNextItemWidth(320); ImGui::InputText("affiliation", &p.affiliation);
+  ImGui::Checkbox("One frame per graph", &p.perGraph);
+  ImGui::Checkbox("Compile with pdflatex", &p.compile);
+  if (p.compile) { ImGui::SameLine(); ImGui::Checkbox("Open the PDF", &p.open); }
+  ImGui::BeginDisabled(n == 0);
+  if (ImGui::Button("Write..."))
+    {
+    ImGui::CloseCurrentPopup();
+    _gui.fileDialog().open(FileDialog::kSaveFile, "Presentation (.tex, its figures beside it)", _configuration.directory,
+                           {".tex"}, "presentation.tex", [this](const String & chosen) { makePresentation(chosen); });
+    }
+  ImGui::EndDisabled();
+  ImGui::SameLine();
+  if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+  ImGui::EndPopup();
+#endif
+  }
+
+  void CapApp::makePresentation(const String & texFile)
+  {
+#ifdef CAP_GUI_PRESENTATIONS
+  const PresentationSettings & p = _presentation;
+  CanvasPresentation presentation(String(p.title.c_str()));
+  if (!p.author.empty()) presentation.setAuthor(String(p.author.c_str()), "", String(p.affiliation.c_str()));
+  presentation.setOnePerGraph(p.perGraph);
+  presentation.addCanvases(GRAPHICS::CanvasRegistry::session());
+  String path = FileSystem::hasExtension(texFile, ".tex") ? texFile : texFile + String(".tex");
+  String tex = presentation.write(FileSystem::parent(path), FileSystem::stem(path));
+  if (tex.str().empty()) { _gui.showMessage("Presentation", String("Cannot write ") + path); return; }
+  _configuration.directory = FileSystem::parent(path);
+  if (!p.compile) { _gui.setStatus(String("Presentation written: ") + tex); return; }
+  String log;
+  if (!CanvasPresentation::compile(tex, &log))
+    {
+    _gui.showMessage("Presentation", String("pdflatex failed (") + tex + String("):\n") + String(log.str().substr(log.str().size() > 1500 ? log.str().size() - 1500 : 0)));
+    return;
+    }
+  String pdf = FileSystem::withExtension(tex, ".pdf");
+  _gui.setStatus(String("Presentation made: ") + pdf);
+  if (p.open) std::system((String("open '") + pdf + String("' &")).data());
+#else
+  (void)texFile;
+#endif
   }
 
   } // namespace GUI

@@ -12,6 +12,7 @@
 #ifndef CAP__GUI__CapGui
 #define CAP__GUI__CapGui
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -142,6 +143,10 @@ namespace CAP
   void setFitPaneVisible(bool visible);
   bool fitPaneVisible() const { return _fitsVisible; }   //!< Whether the fit pane is shown
   FitPane & fitPane() { return _fitPane; }   //!< The fit pane
+  //! @brief Show or hide the Canvases window: the canvases of the session by window, with their graphs, to go to any
+  //! of them, and to save them all or make a presentation of them. @param visible choice
+  void setCanvasListVisible(bool visible) { _canvasListVisible = visible; }
+  bool canvasListVisible() const { return _canvasListVisible; }   //!< Whether the Canvases window is shown
   //! @brief Open the Fit window for the selected graph of the current canvas. @param item index of the item to fit (-1: any)
   void openFitDialog(int item=-1) { _fitDialog.open(item); }
   //! Called for each new pane (to set its graphs and undo hook).
@@ -181,6 +186,8 @@ namespace CAP
 
   //! Called every frame inside the ImGui frame, to draw the application's own windows (preferences, about, ...).
   std::function<void()> onFrame;
+  //! Called by the buttons of the Canvases window, with a menu command ("file.saveAll", "file.saveBook", ...).
+  std::function<void(const String & command)> onCommand;
   //! Called when the user closes the window; return false to keep it open.
   std::function<bool()> onCloseRequest;
 
@@ -225,6 +232,8 @@ namespace CAP
   FitPane _fitPane;          //!< results of the fits of the selected graph
   FitDialog _fitDialog;      //!< the Fit window
   bool   _fitsVisible = false;   //!< the fit pane is shown
+  bool   _canvasListVisible = false;   //!< the Canvases window is shown
+  std::map<unsigned int, int> _windowNumbers;   //!< number of each separate window (viewport id), for the groups
   bool   _fitsDockRequested = false;   //!< dock the fit pane below the canvases at the next frame
   bool   _fitsShownOnce = false;   //!< the fit pane was shown (it opens by itself only once)
 
@@ -244,6 +253,8 @@ namespace CAP
   void buildPaneGrid(unsigned int nodeId);
   //! @brief Draw the fit pane, if shown (opened by itself the first time the selected graph has fits).
   void renderFitPane();
+  //! @brief The Canvases window, if shown.
+  void renderCanvasList();
   //! @brief Dock the fit pane below the canvases.
   void dockFitPane();
   //! @brief Create a canvas pane (not yet docked). @return the pane
