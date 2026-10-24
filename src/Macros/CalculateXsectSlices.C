@@ -1,5 +1,5 @@
 //  Created by Claude Pruneau on 6/19/2020.
-//  Copyright © 2020 Claude Pruneau. All rights reserved.
+//  Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani. All rights reserved.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <iostream>
