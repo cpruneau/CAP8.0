@@ -72,7 +72,11 @@ set_target_properties(CapGui PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON
 target_compile_definitions(CapGui PRIVATE CAP_SOURCE_ROOT="${CAP_TOP_DIR}")
 target_include_directories(CapGui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CAP_TOP_DIR}/external/nanosvg)
 set_source_files_properties(NanoSvg.cpp PROPERTIES COMPILE_OPTIONS "-w")   # nanosvg: third-party code, no warnings
-target_link_libraries(CapGui PRIVATE CapImGui Graphics Helpers Math Base ${ROOT_LIBRARIES})
+target_link_libraries(CapGui PRIVATE CapImGui Graphics Math Base ${ROOT_LIBRARIES})
+if(CAP_WITH_ROOT_FILES)   # .root files in the browser: their histograms converted (Helpers/RootFileConversion)
+  target_link_libraries(CapGui PRIVATE Helpers)
+  target_compile_definitions(CapGui PRIVATE CAP_WITH_ROOT_FILES)
+endif()
 
 if(APPLE)
   # macOS: CapGui.app, an application bundle that can be opened from the Finder or the Dock. Started that way it gets

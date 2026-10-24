@@ -60,7 +60,7 @@ namespace CAP
   String mode         = "add";   //!< what showing an object does: "add" or "replace"
   bool   keepShapes   = true;    //!< shapes stay in a graph when its contents are replaced
   String directory;   //!< folder where the file dialogs start (empty: the current folder)
-  std::vector<String> extensions{".cap", ".root"};   //!< types listed by the Open dialog (only those CapGui can open are used)
+  std::vector<String> extensions{".cap", ".root"};   // .root: only when CapGui is built with ROOT files   //!< types listed by the Open dialog (only those CapGui can open are used)
   bool   demo         = false;  //!< show the demonstration objects at startup (otherwise the canvases start empty)
   bool   latex        = true;   //!< typeset the texts with '$' or '\' by LaTeX (see GRAPHICS::LatexRenderer)
   String latexBin;              //!< directory of latex and dvisvgm (empty: looked for)
@@ -149,6 +149,12 @@ namespace CAP
   //! @brief Ask for a ROOT file, then write the histograms of a folder of a file or tree to it (see exportRootFile()).
   //! @param target file or tree @param folderPath folder ("" for the top)
   void exportRoot(int target, const String & folderPath);
+  //! @brief Ask for a file, then write a copy of a file or of one of its folders to a new CAP file (e.g. the histograms
+  //! converted from a ROOT file). @param target file or tree @param folderPath folder ("" for the whole file)
+  void saveCopy(int target, const String & folderPath);
+  //! @brief Write a copy of a file or folder to a new CAP file. @param target file or tree @param folderPath folder
+  //! @param fileName CAP file (".cap" added if missing) @return true on success
+  bool saveCopyTo(int target, const String & folderPath, const String & fileName);
   //! @brief Save an editable tree to a CAP file (".cap" added if missing); the tree then takes its name.
   //! @param target tree @param fileName file @return false if it cannot be saved (an open file, a write error)
   bool saveTreeTo(int target, const String & fileName);

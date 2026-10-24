@@ -127,7 +127,8 @@ namespace CAP
   std::function<void(int file, const String & path, const String & name)>       onRename;     //!< rename an entry
   std::function<void(int file, const String & path)>                           onRemove;     //!< remove an entry
   std::function<void(int file)>                                                onSaveTree;   //!< save a tree to a file
-  std::function<void(int file, const String & folderPath)>                     onExportRoot; //!< write a folder to a ROOT file
+  std::function<void(int file, const String & folderPath)>                     onExportRoot; //!< write a folder to a ROOT file (if ROOT files are supported)
+  std::function<void(int file, const String & folderPath)>                     onSaveCopy;   //!< write a file or folder to a new CAP file
   //! @}
 
   //! @brief Draw the browser in the current window.

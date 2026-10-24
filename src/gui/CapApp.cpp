@@ -20,7 +20,9 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "FileSystem.hpp"
+#ifdef CAP_WITH_ROOT_FILES
 #include "RootFileConversion.hpp"
+#endif
 #include "CapApp.hpp"
 #include "XmlDocument.hpp"
 #include "Exceptions.hpp"
@@ -454,7 +456,13 @@ namespace CAP
     // the configured types that can be opened (CAP and ROOT files)
     std::vector<String> types;
     for (const auto & e : _configuration.extensions)
-      if (FileSystem::hasExtension(String("x") + e, ".cap") || FileSystem::hasExtension(String("x") + e, ".root")) types.push_back(e);
+      {
+      bool root = FileSystem::hasExtension(String("x") + e, ".root");
+#ifndef CAP_WITH_ROOT_FILES
+      if (root) continue;                                // ROOT files not supported: not offered
+#endif
+      if (root || FileSystem::hasExtension(String("x") + e, ".cap")) types.push_back(e);
+      }
     if (types.empty()) types.push_back(".cap");
     _gui.fileDialog().open(FileDialog::kOpenFile, "Open a CAP or ROOT file", _configuration.directory, types, "",
                            [this](const String & path) { openFile(path); });
@@ -606,6 +614,7 @@ namespace CAP
   {
   try
     {
+#ifdef CAP_WITH_ROOT_FILES
     if (FileSystem::hasExtension(path, ".root"))
       {
       auto file = std::make_shared<CapFile>(String(""), File::kReadWrite);
@@ -613,6 +622,10 @@ namespace CAP
       importRootFile(path, *file);
       return file;
       }
+#else
+    if (FileSystem::hasExtension(path, ".root"))
+      { error = "this CapGui is built without ROOT files (BuildCAP.py: ROOT files)"; return nullptr; }
+#endif
     auto file = std::make_shared<CapFile>(path, File::kReadOnly);
     file->load(File::Loading::kLazy);   // the tree at once; objects read when first shown
     return file;
@@ -706,7 +719,10 @@ namespace CAP
   browser.onRename     = [this](int file, const String & path, const String & name) { renameEntry(file, path, name); };
   browser.onRemove     = [this](int file, const String & path) { removeEntry(file, path); };
   browser.onSaveTree   = [this](int file) { saveTree(file); };
+#ifdef CAP_WITH_ROOT_FILES
   browser.onExportRoot = [this](int file, const String & path) { exportRoot(file, path); };
+#endif
+  browser.onSaveCopy   = [this](int file, const String & path) { saveCopy(file, path); };
   }
 
   namespace
@@ -831,6 +847,7 @@ namespace CAP
                          [this, target](const String & chosen) { saveTreeTo(target, chosen); });
   }
 
+#ifdef CAP_WITH_ROOT_FILES
   void CapApp::exportRoot(int target, const String & folderPath)
   {
   BrowserFile * entry = file(target);
@@ -856,6 +873,51 @@ namespace CAP
       }
     catch (const std::exception & e) { _gui.showMessage("Export to ROOT", String(e.what())); }
     });
+  }
+#else
+  void CapApp::exportRoot(int, const String &) { }
+#endif
+
+  void CapApp::saveCopy(int target, const String & folderPath)
+  {
+  BrowserFile * entry = file(target);
+  if (!entry || !entry->file) return;
+  String base = folderPath.isEmpty() ? (entry->editable ? entry->name : FileSystem::stem(entry->path)) : FileSystem::name(folderPath);
+  _gui.fileDialog().open(FileDialog::kSaveFile, folderPath.isEmpty() ? "Save as a CAP file" : "Save the folder as a CAP file",
+                         _configuration.directory, {".cap"}, base + String(".cap"),
+                         [this, target, folderPath](const String & chosen) { saveCopyTo(target, folderPath, chosen); });
+  }
+
+  bool CapApp::saveCopyTo(int target, const String & folderPath, const String & fileName)
+  {
+  BrowserFile * entry = file(target);
+  if (!entry || !entry->file) return false;
+  String path = normalizedPath(FileSystem::hasExtension(fileName, ".cap") ? fileName : fileName + String(".cap"));
+  for (const auto & f : _files)
+    if (!f.editable && f.path == path)
+      {
+      _gui.showMessage("Save", String("The file ") + path + String(" is open: close it first (its objects are read from it)."));
+      return false;
+      }
+  try
+    {
+    Folder & top = entry->file->folder();
+    Folder * folder = folderPath.isEmpty() ? &top : top.folder(folderPath);
+    if (!folder) { _gui.showMessage("Save", String("No folder ") + folderPath); return false; }
+    folder->loadAll();                                   // objects of a file not read yet: read before the copy
+    CapFile output(path, File::kWriteOnly);
+    output = *folder;
+    output.setFolderName(FileSystem::stem(path));
+    output.write();
+    _configuration.directory = FileSystem::parent(path);
+    _gui.setStatus(String("Saved ") + path);
+    return true;
+    }
+  catch (const std::exception & e)
+    {
+    _gui.showMessage("Save", String("Cannot save ") + path + String(":\n") + String(e.what()));
+    return false;
+    }
   }
 
   bool CapApp::saveTreeTo(int target, const String & fileName)
