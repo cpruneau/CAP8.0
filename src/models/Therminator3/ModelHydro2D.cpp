@@ -1,6 +1,8 @@
 #include "ModelHydro2D.hpp"
 #include "XmlDocument.hpp"
 #include "XmlScalarField.hpp"
+#include "FileSystem.hpp"
+#include "NameHelpers.hpp"
 
 using CAP::MATH::twoPiCube;
 using CAP::MATH::twoPi;
@@ -12,6 +14,17 @@ namespace CAP
   :
   Model()
   {    }
+
+  void ModelHydro2D::configure(const String & taskName,
+                         const String & typeName,
+                         const Configuration & configuration)
+  {
+  Model::configure(taskName,typeName,configuration);
+  String path = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"HYPERS:IMPORT:PATH")),
+                                           "CAP_HYPERSURFACE_PATH");
+  String fileName = configuration.valueString(createKey(taskName,typeName,"HYPERS:IMPORT:FILE_NAME"));
+  readFromXmlFile(path.c_str(),fileName.c_str());
+  }
 
   double ModelHydro2D::calculateIntegrand(ThermalHadron & hadron)
   {

@@ -1,6 +1,8 @@
 #include "ModelHydro3D.hpp"
 #include "XmlDocument.hpp"
 #include "XmlScalarField.hpp"
+#include "FileSystem.hpp"
+#include "NameHelpers.hpp"
 
 
 namespace CAP
@@ -10,6 +12,17 @@ namespace CAP
   :
   Model()
   {   }
+
+  void ModelHydro3D::configure(const String & taskName,
+                         const String & typeName,
+                         const Configuration & configuration)
+  {
+  Model::configure(taskName,typeName,configuration);
+  String path = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"HYPERS:IMPORT:PATH")),
+                                           "CAP_HYPERSURFACE_PATH");
+  String fileName = configuration.valueString(createKey(taskName,typeName,"HYPERS:IMPORT:FILE_NAME"));
+  readFromXmlFile(path.c_str(),fileName.c_str());
+  }
 
   double ModelHydro3D::calculateIntegrand(ThermalHadron & hadron)
   {
@@ -101,6 +114,7 @@ namespace CAP
     return e->text();
     };
   _tauI            = parameter("Tau_i").atof() / CAP::Physics::hBarC();       // [GeV^-1]
+  _lambda          = parameter("Lambda").atof() / CAP::Physics::hBarC();      // [GeV^-1]
   temperature     = parameter("Temperature").atof() * 0.001;  // [GeV]
   muB             = parameter("Mu_B").atof() * 0.001;
   muI             = parameter("Mu_I").atof() * 0.001;
@@ -114,8 +128,8 @@ namespace CAP
   //deviceName      = xmlDoc.getXmlContent().data();
   systemName = parameter("colliding_system");
   _distanceField       = XmlScalarField::read(root,"Distance");      // [GeV^-1]
-  uxFluidVelocityField        = XmlScalarField::read(root,"FluiduxFluidVelocity");      // [1]
-  uyFluidVelocityField        = XmlScalarField::read(root,"FluiduyFluidVelocity");      // [1]
+  uxFluidVelocityField        = XmlScalarField::read(root,"FluidUx");      // [1]
+  uyFluidVelocityField        = XmlScalarField::read(root,"FluidUy");      // [1]
   rapidityFluidField  = XmlScalarField::read(root,"FluidRap");      // [1]
   setTemperature(temperature);
   setMuB(muB);
@@ -126,12 +140,21 @@ namespace CAP
   setSystemEnergy(systemEnergy);
   setCentralityRange(centralityMin,centralityMax);
   setImpactParameter(impactParameter);
-  // _distanceField derivatives
-  _distanceFieldDZeta = XmlScalarField::read(root,"DistanceDZeta");    // [GeV^-1/rad]
+  // derivatives: from the file when given, otherwise by finite differences (as Therminator 2 does)
+  if (root.findFirst("VECTOR3D","name","DistanceDZeta"))
+    _distanceFieldDZeta = XmlScalarField::read(root,"DistanceDZeta");    // [GeV^-1/rad]
+  else
+    _distanceFieldDZeta = _distanceField.derivativeX("DistanceDZeta");
 
-  _distanceFieldDPhi = XmlScalarField::read(root,"DistanceDPhi");    // [GeV^-1/rad]
+  if (root.findFirst("VECTOR3D","name","DistanceDPhi"))
+    _distanceFieldDPhi = XmlScalarField::read(root,"DistanceDPhi");    // [GeV^-1/rad]
+  else
+    _distanceFieldDPhi = _distanceField.derivativeY("DistanceDPhi");
 
-  _distanceFieldDTheta = XmlScalarField::read(root,"DistanceDTheta");    // [GeV^-1/rad]
+  if (root.findFirst("VECTOR3D","name","DistanceDTheta"))
+    _distanceFieldDTheta = XmlScalarField::read(root,"DistanceDTheta");    // [GeV^-1/rad]
+  else
+    _distanceFieldDTheta = _distanceField.derivativeZ("DistanceDTheta");
   }
 
 } // namespace CAP
