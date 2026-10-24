@@ -66,6 +66,10 @@ namespace CAP
   }
 
 
+  //! @brief Number of draws used to integrate the multiplicities. @param value number of draws
+  void setNSamples(unsigned int value) { _nSamples = value; }
+  unsigned int nSamples() const { return _nSamples; }
+
   void setDisableFeedDown(unsigned int value)
   {
   _disableFD = value;

@@ -13,6 +13,7 @@ namespace CAP
   ModelHydro3D();
   virtual ~ModelHydro3D() {}
   virtual double calculateIntegrand(ThermalHadron& hadron);
+  virtual void setHypercubeVolume();
   virtual void readFromXmlFile(const char * inputPath,
                                const char * inputFileName);
 

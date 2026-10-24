@@ -66,8 +66,15 @@ namespace CAP
     }
   double denom = stat + std::exp( (pDotU-chemPotential)/_temperature.value() );
   double integrand = sf*pT*dPt*dSigmaP/(denom*twoPiCube());
-  hadron.setIntegrand(integrand);
   return integrand; }
+
+  void ModelHydro3D::setHypercubeVolume()
+  {
+  // zeta x phi x theta ranges of the hypersurface grid (Therminator 2 Hypersurface_Lhyquid3D)
+  _sVolume = (_distanceField.maximum(0)-_distanceField.minimum(0)) * (_distanceField.maximum(1)-_distanceField.minimum(1))
+           * (_distanceField.maximum(2)-_distanceField.minimum(2));
+  _pVolume = _pRapidityRange * 1.0 * twoPi();
+  }
 
   void ModelHydro3D::readFromXmlFile(const char * _inputPath,
                                       const char * _inputFileName)

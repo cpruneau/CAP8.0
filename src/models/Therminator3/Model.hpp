@@ -49,7 +49,14 @@ namespace CAP
 
   virtual void print() const;
 
+  //! @brief Volume of the hypercube the integrand is sampled in: _sVolume (space-time) and _pVolume (momentum).
+  virtual void setHypercubeVolume();
+  //! @brief Monte Carlo integration of the Cooper-Frye integrand (Therminator 2 Integrator::Integrate): for each
+  //! hadron, the maximum of the integrand over _nSamples draws (stored with setIntegrand()) and the average
+  //! multiplicity, volume times the mean integrand (stored with setAvgMultiplicity()).
   virtual void calculateMultiplicities();
+  //! @brief Hadron gas of the model. @return hadron gas
+  ThermalHadronGas & thermalHadronGas() { return _thermalHadronGas; }
   virtual double calculateIntegrand(ThermalHadron& hadron);
   virtual void generateEvent(Event & event,const ParticleFilter & particleFilter);
 

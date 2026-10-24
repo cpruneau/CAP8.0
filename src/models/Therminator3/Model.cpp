@@ -44,6 +44,7 @@ namespace CAP
   _delay          = configuration.valueDouble(createKey(taskName,typeName,"Delay"));
   _backFlow       = configuration.valueBool(  createKey(taskName,typeName,"BackFlow"));
   _tGamma         = gammaAtBeta(_tVelocity);
+  _nSamples       = configuration.valueInt(   createKey(taskName,typeName,"NSamples"),true,100000);
 
   setSystemName(      configuration.valueString(createKey(taskName,typeName,"SystemName")));
   setSystemEnergy(    configuration.valueDouble(createKey(taskName,typeName,"SystemEnergy")));
@@ -82,14 +83,30 @@ namespace CAP
   }
 
 
+  void Model::setHypercubeVolume()
+  {
+  // spatial rapidity x azimuth x radius, and momentum rapidity x zeta in [0,1) x azimuth (Therminator 2 mHyperCube)
+  _sVolume = _sRapidityRange * twoPi() * _rhoMax;
+  _pVolume = _pRapidityRange * 1.0 * twoPi();
+  }
+
   void Model::calculateMultiplicities()
   {
+  setHypercubeVolume();
   _volume = _sVolume * _pVolume;
-//  for (auto & hadron : _thermalHadronGas.hadrons())
-//    {
-//    //ParticleType & type = hadron.type();
-//    //XXXX
-//    }
+  for (auto & hadron : _thermalHadronGas.hadrons())
+    {
+    double maxIntegrand = 0.0;
+    double sum = 0.0;
+    for (unsigned int iSample = 0; iSample < _nSamples; iSample++)
+      {
+      double integrand = calculateIntegrand(hadron);
+      if (integrand>maxIntegrand) maxIntegrand = integrand;
+      sum += integrand;
+      }
+    hadron.setIntegrand(maxIntegrand);
+    hadron.setAvgMultiplicity(_volume*sum/_nSamples);
+    }
   }
 
   double Model::calculateIntegrand(ThermalHadron & hadron)
@@ -117,23 +134,9 @@ namespace CAP
   double pDotU   = 1.0;
   double dSigmaP = 1.0;
   double denom = stat + std::exp( (pDotU-chemPotential)/_temperature.value() );
-  double integrand = sf*pT*dPt*dSigmaP/(denom*twoPiCube());
-  hadron.setIntegrand(integrand);
-  return integrand;
+  return sf*pT*dPt*dSigmaP/(denom*twoPiCube());
   }
 
-//  {
-//
-//  for (unsigned int iSample = 0; iSample < nSamplesIntegration; iSample++)
-//    {
-//    _integrand = calculateIntegrand(hadron);
-//    if (_integrand>maxIntegrand) maxIntegrand = _integrand;
-//    _mult += _integrand;
-//    }
-//  hadron.setIntegrand(maxIntegrand);
-//  hadron.setAvgMultiplicity(_mult*_volume/nSamplesIntegration);
-//  return _integrand;
-//  }
 
   void Model::generateEvent(Event & event,const ParticleFilter & particleFilter)
   {
@@ -177,6 +180,7 @@ namespace CAP
     // now generate the particles
     double   value;
     double   valueTest;
+    // maximum of the integrand sampled in calculateMultiplicities()
     double   maxIntegrand = hadron.integrand();
     unsigned int mult = hadron.multiplicity();
     unsigned int iParticle = 0;

@@ -85,7 +85,6 @@ namespace CAP
   double dSigmaP = tau*rho*(mTcoshDiff - _amp*pT*cosDphi);
   double denom   = stat + std::exp( (pDotU-chemPotential)/_temperature.value() );
   double integrand = sf*pT*dPt*dSigmaP/(denom*twoPiCube());
-  hadron.setIntegrand(integrand);
   return integrand;
   }
 
