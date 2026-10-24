@@ -65,6 +65,9 @@ namespace CAP
 
   Mode mode() const { return _mode; }   //!< Add or Replace
   void setMode(Mode mode) { _mode = mode; }   //!< Set Add or Replace
+  //! @brief Whether the shapes of a graph stay when its contents are replaced (Replace mode, folders shown).
+  bool keepShapes() const { return _keepShapes; }
+  void setKeepShapes(bool keep) { _keepShapes = keep; }   //!< Keep the shapes of a graph when its contents are replaced
   //! @brief Index of the selected graph (the target of Add/Replace, Log X/Y, Copy/Paste).
   int  selectedGraph() const { return _selectedGraph; }
   //! @brief Select graph k (nothing if out of range). @param k index of the graph
@@ -132,6 +135,7 @@ namespace CAP
   std::string _windowLabel;   //!< "title###name"
   GRAPHICS::Canvas _canvas;   //!< the canvas, divided into graphs
   Mode _mode;   //!< Add or Replace
+  bool _keepShapes;   //!< the shapes of a graph stay when its contents are replaced
   int  _selectedGraph;   //!< index of the selected graph
   bool _showToolbar;   //!< the toolbar is shown
   int  _contextGraph;   //!< graph whose context menu is open

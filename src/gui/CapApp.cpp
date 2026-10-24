@@ -94,6 +94,7 @@ namespace CAP
       logX         = e->attributeBool("logX", logX);
       logY         = e->attributeBool("logY", logY);
       mode         = e->attribute("mode", mode);
+      keepShapes   = e->attributeBool("keepShapes", keepShapes);
       }
     if (const XmlElement * e = root.child("Files"))
       {
@@ -148,6 +149,7 @@ namespace CAP
     graphs.setAttribute("logX", logX);
     graphs.setAttribute("logY", logY);
     graphs.setAttribute("mode", mode);
+    graphs.setAttribute("keepShapes", keepShapes);
     XmlElement & files = root.addChild("Files");
     files.setAttribute("directory", directory);
     String list;
@@ -296,6 +298,7 @@ namespace CAP
     graph.setLogY(_configuration.logY);
     }
   pane.setMode(_configuration.mode == "replace" ? CanvasPane::kReplace : CanvasPane::kAdd);
+  pane.setKeepShapes(_configuration.keepShapes);
   pane.beforeChange = [this]() { recordUndo(); };
   pane.onDrop = [this, &pane](int graph, const ObjectReference & object) { showObject(pane, graph, object); };
   pane.onShowData = [this](const MATH::DataPoints * data, const String & label) { showDataTable(data, label); };
@@ -496,7 +499,7 @@ namespace CAP
     {
     CanvasPane & pane = _gui.currentPane();
     recordUndo();
-    if (pane.mode() == CanvasPane::kReplace) pane.currentGraph().clearItems();
+    if (pane.mode() == CanvasPane::kReplace) { pane.currentGraph().clearItems(); if (!pane.keepShapes()) pane.currentGraph().clearShapes(); }
     for (const auto & item : _clipboard) pane.currentGraph().add(item);
     }
   else if (c == "edit.delete" && _gui.currentPane().hasSelectedShape()) _gui.currentPane().deleteSelectedShape();
@@ -1167,7 +1170,11 @@ namespace CAP
   CanvasPane & pane = _gui.currentPane();
   pane.canvas().divideFor(n);                          // the grid of Canvas::showOnePerGraph()
   pane.divide(pane.canvas().nColumns(), pane.canvas().nRows());
-  for (int k=0; k<pane.canvas().nGraphs(); k++) pane.canvas().graph(k).clearItems();
+  for (int k=0; k<pane.canvas().nGraphs(); k++)
+    {
+    pane.canvas().graph(k).clearItems();
+    if (!pane.keepShapes()) pane.canvas().graph(k).clearShapes();
+    }
   std::function<void()> hook = pane.beforeChange;
   pane.beforeChange = nullptr;                          // one undo step for the whole folder
   CanvasPane::Mode mode = pane.mode();
@@ -1405,6 +1412,9 @@ namespace CAP
   int mode = c.mode == "replace" ? 1 : 0;
   ImGui::RadioButton("Add", &mode, 0); ImGui::SameLine(); ImGui::RadioButton("Replace", &mode, 1);
   c.mode = mode ? "replace" : "add";
+  ImGui::SameLine(0, 20);
+  ImGui::Checkbox("Keep shapes", &c.keepShapes);
+  ImGui::SetItemTooltip("Shapes and texts stay in a graph when its contents are replaced");
 
   ImGui::SeparatorText("Startup");
   ImGui::Checkbox("Show the demonstration objects", &c.demo);

@@ -38,6 +38,7 @@ namespace CAP
   _name(name),
   _canvas(name, name),
   _mode(kAdd),
+  _keepShapes(true),
   _selectedGraph(0),
   _showToolbar(true),
   _contextGraph(-1),
@@ -80,6 +81,7 @@ namespace CAP
   GraphItem & CanvasPane::show(const GraphItem & item)
   {
   changing();
+  if (_mode == kReplace && !_keepShapes) currentGraph().clearShapes();
   return currentGraph().show(item, _mode == kReplace);   // default style; titles from a first object
   }
 
@@ -96,6 +98,10 @@ namespace CAP
   ImGui::PushID("toolbar");
   renderPalette();
   ImGui::SameLine(0, 18);
+  ImGui::Checkbox("Keep shapes", &_keepShapes);
+  ImGui::SetItemTooltip("Shapes and texts stay in a graph when its contents are replaced (Replace, or a folder shown); "
+                        "otherwise they go with them");
+  ImGui::SameLine();
   int mode = int(_mode);
   ImGui::RadioButton("Add", &mode, kAdd);
   ImGui::SetItemTooltip("Objects shown are added to the selected graph");
