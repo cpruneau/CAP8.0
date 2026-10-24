@@ -18,7 +18,6 @@
 #include "TGraphAsymmErrors.h"
 #include "TH1D.h"
 #include "GraphConfiguration.hpp"
-#include "ClassDef.hpp"
 
 using std::vector;
 
@@ -177,7 +176,6 @@ public:
   TGraph * getSystGraph() {  return graphs[1]; }
   int npoints() { return nPoints; }
 
-  ClassDef(DataGraph,0)
   
 };
 

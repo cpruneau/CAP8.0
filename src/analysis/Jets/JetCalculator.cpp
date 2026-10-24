@@ -18,7 +18,6 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::JetCalculator);
 
 namespace CAP
 {

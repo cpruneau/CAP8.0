@@ -19,7 +19,6 @@
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmearer.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -72,7 +71,6 @@ protected:
   //! Whether gauge bosons are saved.
   bool saveGaugeBosons;
 
-  ClassDef(PythiaEventGenerator,0)
 };
 
 }

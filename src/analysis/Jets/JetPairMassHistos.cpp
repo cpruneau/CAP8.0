@@ -16,7 +16,6 @@
 #include "Configuration.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::JetPairMassHistos);
 
 namespace CAP
 {

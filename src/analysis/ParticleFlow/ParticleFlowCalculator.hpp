@@ -12,7 +12,6 @@
 #include "Calculator.hpp"
 #include "ParticleFlowHistos.hpp"
 #include "ParticleFlowDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -37,7 +36,6 @@ public:
   //! @brief Add the default configuration.
   virtual void setDefaultConfiguration();
 
-  ClassDef(ParticleFlowCalculator,0)
 };
 
 } // namespace CAP

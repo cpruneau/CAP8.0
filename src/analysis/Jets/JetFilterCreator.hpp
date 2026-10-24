@@ -12,7 +12,6 @@
 #define CAP__JetFilterCreator
 #include "FilterCreator.hpp"
 #include "PseudoJet.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -48,7 +47,6 @@ public:
                     const vector<double> & conditionMaxima2,
                     bool verbose=true);
 
-  ClassDef(JetFilterCreator,0)
 };
 
 }

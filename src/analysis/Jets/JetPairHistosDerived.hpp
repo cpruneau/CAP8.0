@@ -13,7 +13,6 @@
 #include "JetSingleHistos.hpp"
 #include "JetPairHistos.hpp"
 #include "MathConstants.hpp"
-#include "ClassDef.hpp"
 
 //using namespace fastjet;
 
@@ -104,7 +103,6 @@ protected:
   Histogram *  h_jet_b2s_jtjt;  ///< balance function B2, summed charges, vs (jt1, jt2)
   Histogram *  h_jet_b2s_zz;  ///< balance function B2, summed charges, vs (z1, z2)
 
-  ClassDef(JetPairHistosDerived,0)
 
 };
 

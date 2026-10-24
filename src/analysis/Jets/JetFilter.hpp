@@ -12,7 +12,6 @@
 #include "Filter.hpp"
 #include "fastjet/PseudoJet.hh"
 #include "Particle.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -38,7 +37,6 @@ public:
   //! @brief Quantities a condition can test.
   enum JetFilterType   { kNone, kP, kPt, kEta, kMult };
 
-  ClassDef(JetFilter,0)
 };
 
 }

@@ -13,7 +13,6 @@
 #include "fastjet/ClusterSequence.hh"
 #include "MathConstants.hpp"
 #include "ParticleTypeList.hpp"
-#include "ClassDef.hpp"
 
 using namespace fastjet;
 
@@ -111,7 +110,6 @@ protected:
   double jet_eta_max;  ///< upper edge of the jet pseudorapidity axis
   double jet_netQ_max;  ///< upper edge of the jet net charge axis
 
-  ClassDef(JetHistos,0)
 
 };
 

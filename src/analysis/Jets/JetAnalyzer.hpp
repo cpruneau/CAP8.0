@@ -11,7 +11,6 @@
 #define CAP__JetAnalyzer
 #include "EventProcessor.hpp"
 #include "JetFilter.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -57,7 +56,6 @@ protected:
   double jetPtMin;
 
 
-  ClassDef(JetAnalyzer,0)
 };
 
 } // namespace CAP

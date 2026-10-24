@@ -12,7 +12,6 @@
 #include "FileSystem.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::PythiaEventReader);
 
 namespace CAP
 {

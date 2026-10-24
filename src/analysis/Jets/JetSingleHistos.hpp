@@ -13,7 +13,6 @@
 #include "fastjet/ClusterSequence.hh"
 #include "MathConstants.hpp"
 #include "ParticleTypeList.hpp"
-#include "ClassDef.hpp"
 
 using namespace fastjet;
 
@@ -100,7 +99,6 @@ public:
   double z_min;  ///< lower edge of the z axis
   double z_max;  ///< upper edge of the z axis
 
-  ClassDef(JetSingleHistos,0)
 
 };
 

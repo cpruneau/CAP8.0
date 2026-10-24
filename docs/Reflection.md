@@ -13,8 +13,8 @@ functions at run time, as ROOT's dictionaries allow, without ROOT.
 - **Little else:** CAP files no longer need ROOT streaming, since `Folder` and `CapFile` have their own binary format.
   The remaining uses are drawing with ROOT and reading ROOT files (`Helpers`), and `InheritsFrom` checks.
 - **ROOT in the basic headers, until October 2026:** `Aliases.hpp`, included by `Exceptions.hpp` and so by nearly
-  everything, included ROOT's `Rtypes.h` for the `ClassDef` macros. `Aliases` is gone; only the headers of classes
-  declared with `ClassDef` include `Rtypes.h`, through `ClassDef.hpp`.
+  everything, included ROOT's `Rtypes.h` for the `ClassDef` macros. `Aliases` is gone, and so are `ClassDef` and the
+  dictionaries (see below).
 
 So ROOT's reflection is load-bearing in one place (creating tasks by name), and a build-time and header-level cost
 everywhere else.
@@ -85,11 +85,16 @@ signature, and functions with default arguments need one entry per arity (or a s
 ## Path away from ROOT's dictionaries
 
 1. **Done: register the task classes.** All 34 are registered, one line each with `registerTask<T>()`, in a
-   `<Library>Tasks.cpp` file per library. `Task::instantiateTask()` and `taskClassNames()` use the registry first
-   and fall back on `TClass`. The test `TaskRegistry` checks that the registry holds every task class ROOT lists.
+   `<Library>Tasks.cpp` file per library. `Task::instantiateTask()` and `taskClassNames()` use the registry only.
 2. **Register the classes an interpreter or the GUI needs:** histograms, functions, data points, fits, graphs,
    random numbers.
-3. **Remove `ClassDef`/LinkDef library by library** where nothing reads ROOT files of those classes, with the
-   `#include "ClassDef.hpp"` of their headers.
+3. **Done (October 2026): no ROOT dictionaries.** `ClassDef`, `ClassImp`, the LinkDef files and
+   `ROOT_GENERATE_DICTIONARY` are gone from every library, removed one library at a time with a build, the tests
+   and a workflow run after each. Nothing in CAP wrote CAP objects into ROOT files, so no stored data depends on
+   them. The ROOT macros using CAP classes interactively (`src/Macros`) need CAP's headers on their include path
+   now that the libraries carry no dictionary. The optional modules Jets and Pythia were edited the same way but
+   could not be built here (FastJet and Pythia8 are not installed). PHSD fails to build, as it did before, for
+   reasons unrelated to the dictionaries. `core/Postscript`, not built, keeps `ClassDef` because its classes derive
+   from ROOT's.
 4. **Switch to C++26 reflection** once CAP builds without ROOT (or clang supports P2996): generate the descriptions
    instead of writing them.

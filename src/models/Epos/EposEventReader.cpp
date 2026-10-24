@@ -13,7 +13,6 @@
 #include "FileSystem.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::EposEventReader);
 
 namespace CAP
 {

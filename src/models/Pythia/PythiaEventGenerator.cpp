@@ -10,7 +10,6 @@
 #include <cstdlib>
 #include "PythiaEventGenerator.hpp"
 #include "Exceptions.hpp"
-ClassImp(CAP::PythiaEventGenerator);
 
 namespace CAP
 {

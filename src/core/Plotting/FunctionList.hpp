@@ -30,7 +30,6 @@
 #include "GraphConfiguration.hpp"
 #include "CanvasConfiguration.hpp"
 #include "CanvasList.hpp"
-#include "ClassDef.hpp"
 using namespace std;
 
 namespace CAP
@@ -66,7 +65,6 @@ public:
   std::vector<TF1*> & functions();
   ();
   
-  ClassDef(FunctionList,0)
 }; // FunctionList
 
 

@@ -11,8 +11,6 @@
 #include "JetFilter.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::FilterCreator<JetFilter>);
-ClassImp(CAP::JetFilterCreator);
 
 namespace CAP
 {

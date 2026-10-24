@@ -6,15 +6,13 @@
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 #add_definitions(${ROOT_CXX_FLAGS})
 
-ROOT_GENERATE_DICTIONARY(G__ParticleFlow ParticleFlowHistos.hpp ParticleFlowDerivedHistos.hpp  ParticleFlowAnalyzer.hpp
-LINKDEF ParticleFlowLinkDef.h)
 
 
 ################################################################################################
 # Create a shared library with geneated dictionary
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
-add_library(ParticleFlow SHARED   ParticleFlowHistos.cpp ParticleFlowDerivedHistos.cpp  ParticleFlowAnalyzer.cpp   G__ParticleFlow.cxx)
+add_library(ParticleFlow SHARED   ParticleFlowHistos.cpp ParticleFlowDerivedHistos.cpp  ParticleFlowAnalyzer.cpp)
 
 target_link_libraries(ParticleFlow Base  Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(ParticleFlow  PUBLIC Base   Particles ParticleFlow ${EXTRA_INCLUDES} )
@@ -24,6 +22,5 @@ target_include_directories(ParticleFlow  PUBLIC Base   Particles ParticleFlow ${
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libParticleFlow.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libParticleFlow_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS ParticleFlow  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

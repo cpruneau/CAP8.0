@@ -15,7 +15,6 @@
 
 using CAP::FunctionList;
 
-ClassImp(FunctionList);
 
 FunctionList::FunctionList()
 :

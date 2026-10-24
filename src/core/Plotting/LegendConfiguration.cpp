@@ -12,7 +12,6 @@
 using CAP::LegendConfiguration;
 using CAP::String;
 
-ClassImp(LegendConfiguration);
 
 LegendConfiguration::LegendConfiguration()
 :

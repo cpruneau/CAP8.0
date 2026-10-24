@@ -17,7 +17,6 @@
 #include "Configuration.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::JetSingleHistosDerived);
 
 namespace CAP
 {

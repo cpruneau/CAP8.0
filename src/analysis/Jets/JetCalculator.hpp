@@ -11,7 +11,6 @@
 #define CAP__JetCalculator
 #include "Calculator.hpp"
 #include "JetFilter.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -53,7 +52,6 @@ protected:
   //! @brief Number of jet filters. @return number
   unsigned int nJetFilters();
 
-  ClassDef(JetCalculator,0)
 };
 
 } // namespace CAP

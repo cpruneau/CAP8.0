@@ -13,7 +13,6 @@
 #include "fastjet/ClusterSequence.hh"
 #include "MathConstants.hpp"
 #include "ParticleTypeList.hpp"
-#include "ClassDef.hpp"
 
 using namespace fastjet;
 
@@ -95,7 +94,6 @@ protected:
   double mass_min;  ///< lower edge of the mass axis
   double mass_max;  ///< upper edge of the mass axis
 
-  ClassDef(JetPairMassHistos,0)
 
 };
 

@@ -14,7 +14,6 @@
 #include "String.hpp"
 #include "TLatex.h"
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 using std::vector;
 
 namespace CAP
@@ -125,7 +124,6 @@ protected:
   VectorString  legends;
   vector<TLatex*> labels;
 
-  ClassDef(LegendConfiguration,0)
 };
 
 } // namespace CAP

@@ -12,7 +12,6 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::ParticleFlowCalculator);
 
 namespace CAP
 {

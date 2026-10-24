@@ -14,7 +14,6 @@
 #include "fastjet/ClusterSequence.hh"
 #include "MathConstants.hpp"
 #include "ParticleTypeList.hpp"
-#include "ClassDef.hpp"
 
 using namespace fastjet;
 
@@ -67,7 +66,6 @@ protected:
   //! rms net charge of the constituents vs jet pT.
   Histogram *h_jet_netQrms_pt;
 
-  ClassDef(JetHistosDerived,0)
 
 };
 

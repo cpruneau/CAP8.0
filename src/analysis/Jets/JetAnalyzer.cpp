@@ -17,7 +17,6 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-ClassImp(CAP::JetAnalyzer);
 
 namespace CAP
 {

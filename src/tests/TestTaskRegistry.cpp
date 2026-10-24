@@ -8,14 +8,12 @@
  *
  * *********************************************************************/
 //! @file TestTaskRegistry.cpp
-//! @brief Tests of the task classes in the reflection registry: the same classes as ROOT's dictionaries list, each
-//! made by the registry with its own class, and Task::taskClassNames() listing them.
+//! @brief Tests of the task classes in the reflection registry: all registered, each made by the registry with its
+//! own class, and Task::taskClassNames() listing them.
 #include <algorithm>
 #include <cstdio>
 #include <set>
 #include <string>
-#include "TClass.h"
-#include "TClassTable.h"
 #include "Reflection.hpp"
 #include "Task.hpp"
 
@@ -32,22 +30,6 @@ void check(bool ok, const std::string & what, int line)
   if (ok) return;
   nFailures++;
   std::printf("FAILED (line %d): %s\n", line, what.c_str());
-}
-
-//! The task classes ROOT's dictionaries know (what Task::taskClassNames() returned before the registry).
-std::set<std::string> rootTaskClasses()
-{
-  std::set<std::string> names;
-  TClass * taskClass = TClass::GetClass("CAP::Task");
-  TClassTable::Init();
-  while (const char * className = TClassTable::Next())
-    {
-    TClass * c = TClass::GetClass(className);
-    if (!c || !c->InheritsFrom(taskClass) || !c->GetNew() || (c->Property() & kIsAbstract)) continue;
-    if (std::string(className).find('<') != std::string::npos) continue;
-    names.insert(className);
-    }
-  return names;
 }
 
 //! A task of a class, made as a workflow makes it (Task::instantiateTask() is protected).
@@ -67,12 +49,10 @@ int main()
   if (!taskInfo) return 1;
   std::set<std::string> registered;
   for (const auto & name : registry.names(taskInfo)) registered.insert(name);
-  std::set<std::string> root = rootTaskClasses();
-  for (const auto & name : root)
-    if (!registered.count(name)) { std::printf("  not registered: %s\n", name.c_str()); check(false, "registered " + name, __LINE__); }
-  for (const auto & name : registered)
-    if (!root.count(name)) std::printf("  registered, unknown to ROOT: %s\n", name.c_str());
-  CHECK(registered.size() >= 30);
+  CHECK(registered.size() >= 34);                                   // the task classes of the default build
+  for (const char * name : { "CAP::Task", "CAP::BasicEventGen", "CAP::EventIterator", "CAP::FilterCreator",
+                             "CAP::ParticleSingleAnalyzer", "CAP::GlauberGenerator", "CAP::PtPtAnalyzer" })
+    CHECK(registered.count(name) == 1);
 
   // each task made by the registry is of its class
   int made = 0;

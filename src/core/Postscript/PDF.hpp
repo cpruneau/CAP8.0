@@ -2,7 +2,7 @@
 #define CAP__PDF
 #include "VirtualPS.hpp"
 #include <vector>
-#include "ClassDef.hpp"
+#include "Rtypes.h"   // ClassDef: these classes derive from ROOT classes (TVirtualPS)
 
 class Points2D;
 

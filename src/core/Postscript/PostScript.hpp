@@ -14,7 +14,7 @@
 
 
 #include "VirtualPS.hpp"
-#include "ClassDef.hpp"
+#include "Rtypes.h"   // ClassDef: these classes derive from ROOT classes (TVirtualPS)
 
 class Point2Ds;
 

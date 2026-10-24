@@ -11,7 +11,6 @@
 #include "PrintHelpers.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::DataGraph);
 
 namespace CAP
 {

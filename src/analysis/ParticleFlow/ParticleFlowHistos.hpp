@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "MathConstants.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -78,7 +77,6 @@ protected:
   //! Multiplicity of accepted particles per event.
   Histogram * h_n1;
 
-  ClassDef(ParticleFlowHistos,0)
 
 };
 

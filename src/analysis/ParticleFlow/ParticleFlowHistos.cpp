@@ -15,7 +15,6 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-ClassImp(CAP::ParticleFlowHistos);
 
 namespace CAP
 {

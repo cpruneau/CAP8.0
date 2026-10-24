@@ -19,7 +19,6 @@
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmearer.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -83,7 +82,6 @@ protected:
   //! Input file(s) (DataImportPath/DataImportFile).
   String          _inputFiles;
 
-  ClassDef(EposEventReader,0)
 };
 
 }

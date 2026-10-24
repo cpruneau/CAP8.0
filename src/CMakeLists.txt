@@ -270,18 +270,22 @@ add_executable(CAP CAP.cxx)
 target_link_libraries(CAP PUBLIC ${CAP_LINKED_MODULES})
 install(TARGETS CAP RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
 
-# The task classes in the reflection registry, as ROOT lists them (run with ctest; not installed)
+# The task classes in the reflection registry (run with ctest; not installed)
 add_executable(TestTaskRegistry tests/TestTaskRegistry.cpp)
 target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})
 add_test(NAME TaskRegistry COMMAND TestTaskRegistry)
 
-# Sources that must compile without ROOT (no ROOT include path): the basic layer of Base, the reflection, the random
-# numbers, the interpreter. A ROOT header reaching one of them fails this test.
+# Sources that must compile without ROOT (no ROOT include path): most of Base (strings, files, folders, CAP files,
+# XML, configuration, reflection), the random numbers, the interpreter. A ROOT header reaching one of them fails this test.
 set(CAP_ROOT_FREE_SOURCES
-  core/Base/Condition.cpp core/Base/Crc32.cpp core/Base/Exceptions.cpp core/Base/Factory.cpp
-  core/Base/FileSystem.cpp core/Base/NameHelpers.cpp core/Base/PhysicsConstants.cpp core/Base/PrintHelpers.cpp
-  core/Base/Reflection.cpp core/Base/String.cpp core/Base/XmlDocument.cpp core/Base/XmlElement.cpp
-  core/Base/XmlReader.cpp core/Base/XmlWriter.cpp
+  core/Base/Accountant.cpp core/Base/BinaryFile.cpp core/Base/CapFile.cpp core/Base/CmdlineParser.cpp
+  core/Base/Condition.cpp core/Base/Configuration.cpp core/Base/ConfigurationManager.cpp core/Base/Crc32.cpp
+  core/Base/Directory.cpp core/Base/Exceptions.cpp core/Base/Factory.cpp core/Base/File.cpp core/Base/FileSystem.cpp
+  core/Base/FileSystemEntry.cpp core/Base/Filter.cpp core/Base/Folder.cpp core/Base/LongParameter.cpp
+  core/Base/NameHelpers.cpp core/Base/Object.cpp core/Base/Parser.cpp core/Base/PhysicsConstants.cpp
+  core/Base/PrintHelpers.cpp core/Base/Properties.cpp core/Base/PropertiesParser.cpp core/Base/Property.cpp
+  core/Base/Reflection.cpp core/Base/String.cpp core/Base/TxtFile.cpp core/Base/XmlDocument.cpp
+  core/Base/XmlElement.cpp core/Base/XmlFile.cpp core/Base/XmlReader.cpp core/Base/XmlWriter.cpp
   core/Math/Random/MersenneTwister.cpp core/Math/Random/RandomDistribution.cpp core/Math/Random/RandomGenerator.cpp
   core/Interpreter/Interpreter.cpp core/Interpreter/Lexer.cpp core/Interpreter/Parser.cpp core/Interpreter/CapShell.cxx)
 set(CAP_ROOT_FREE_COMMAND ${CMAKE_CXX_COMPILER} -std=c++17 -fsyntax-only)

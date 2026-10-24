@@ -18,7 +18,6 @@
 #include "GraphConfiguration.hpp"
 //#include "LegendConfiguration.hpp"
 #include "Task.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -112,7 +111,6 @@ protected:
   vector<CanvasConfiguration> canvasPalette;
   vector<GraphConfiguration> graphPalette;
 
-  ClassDef(Plotter,0)
 };
 
 } // namespace CAP

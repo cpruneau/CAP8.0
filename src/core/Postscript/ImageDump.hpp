@@ -1,7 +1,7 @@
 #ifndef CAP__ImageDump
 #define CAP__ImageDump
 #include "VirtualPS.hpp"
-#include "ClassDef.hpp"
+#include "Rtypes.h"   // ClassDef: these classes derive from ROOT classes (TVirtualPS)
 class Image;
 class Color;
 class Point2D;

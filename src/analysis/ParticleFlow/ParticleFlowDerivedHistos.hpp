@@ -11,7 +11,6 @@
 #define CAP__ParticleFlowDerivedHistos
 #include "Profile.hpp"
 #include "ParticleFlowHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -84,7 +83,6 @@ public:
   Histogram * h_avg_pt_y;  ///< average pT vs y
   Histogram * h_avg_pt_phiY;  ///< average pT vs (y, phi)
 
-  ClassDef(ParticleFlowDerivedHistos,0)
 
 };
 

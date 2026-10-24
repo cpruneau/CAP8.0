@@ -12,7 +12,6 @@
 #include "Profile.hpp"
 #include "JetSingleHistos.hpp"
 #include "MathConstants.hpp"
-#include "ClassDef.hpp"
 
 using namespace fastjet;
 
@@ -85,7 +84,6 @@ protected:
   double z_min;  ///< lower edge of the z axis
   double z_max;  ///< upper edge of the z axis
 
-  ClassDef(JetSingleHistosDerived,0)
 
 };
 

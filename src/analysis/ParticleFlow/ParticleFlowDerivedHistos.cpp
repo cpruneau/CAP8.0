@@ -15,7 +15,6 @@
 #include "Configuration.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::ParticleFlowDerivedHistos);
 
 namespace CAP
 {

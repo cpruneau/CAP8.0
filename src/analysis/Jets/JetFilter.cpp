@@ -12,8 +12,6 @@
 #include "PrintHelpers.hpp"
 #include "fastjet/ClusterSequence.hh"
 
-ClassImp(CAP::Filter<fastjet::PseudoJet>);
-ClassImp(CAP::JetFilter);
 
 namespace CAP
 {

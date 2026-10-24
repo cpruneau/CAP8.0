@@ -1,15 +1,13 @@
 ################################################################################################
 # Project CAP/Plotting
 ################################################################################################
-ROOT_GENERATE_DICTIONARY(G__Plotting CanvasList.hpp CanvasConfiguration.hpp DataGraph.hpp FunctionList.hpp GraphConfiguration.hpp  Plotter.hpp  LegendConfiguration.hpp LINKDEF PlottingLinkDef.h)
 #BalFctPlotter.hpp
 
 ################################################################################################
 # Create a shared library with geneated dictionary
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
-add_library(Plotting SHARED CanvasList.cpp CanvasConfiguration.cpp  DataGraph.cpp   FunctionList.cpp  GraphConfiguration.cpp Plotter.cpp LegendConfiguration.cpp
- G__Plotting.cxx)
+add_library(Plotting SHARED CanvasList.cpp CanvasConfiguration.cpp  DataGraph.cpp   FunctionList.cpp  GraphConfiguration.cpp Plotter.cpp LegendConfiguration.cpp)
  
  # BalFctPlotter.cpp
 
@@ -21,6 +19,5 @@ target_include_directories(Plotting  PUBLIC Plotting Base  ${EXTRA_INCLUDES} )
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/libPlotting.rootmap" "${CMAKE_CURRENT_BINARY_DIR}/libPlotting_rdict.pcm" DESTINATION "$ENV{CAP_LIB_PATH}")
 install(TARGETS Plotting  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

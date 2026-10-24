@@ -15,7 +15,6 @@
 #include "TLegend.h"
 #include "TLine.h"
 
-ClassImp(CAP::Plotter);
 
 namespace CAP
 {

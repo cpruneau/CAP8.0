@@ -17,7 +17,6 @@
 #include "NameHelpers.hpp"
 #include "Task.hpp"
 
-ClassImp(CAP::JetHistos);
 
 namespace CAP
 {

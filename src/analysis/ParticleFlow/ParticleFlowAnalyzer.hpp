@@ -12,7 +12,6 @@
 #include "EventProcessorSingle.hpp"
 #include "ParticleFlowHistos.hpp"
 #include "ParticleFlowDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -53,7 +52,6 @@ public:
   //! @brief Analyze the current event.
   virtual void execute();
 
-  ClassDef(ParticleFlowAnalyzer,0)
 };
 
 } // namespace CAP
