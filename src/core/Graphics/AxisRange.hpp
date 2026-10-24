@@ -1,6 +1,5 @@
 #ifndef CAP__AxisRange
 #define CAP__AxisRange
-#include "TObject.h"
 
 namespace CAP
 {

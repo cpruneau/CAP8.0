@@ -1,6 +1,5 @@
 #ifndef CAP__Margins
 #define CAP__Margins
-#include "TObject.h"
 #include "String.hpp"
 
 namespace CAP

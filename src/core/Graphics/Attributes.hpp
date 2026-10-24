@@ -1,6 +1,5 @@
 #ifndef CAP__Attributes
 #define CAP__Attributes
-#include "TObject.h"
 
 namespace CAP
 {

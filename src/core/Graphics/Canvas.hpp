@@ -1,6 +1,5 @@
 #ifndef CAP__Canvas
 #define CAP__Canvas
-#include "TObject.h"
 #include <vector>
 #include "String.hpp"
 #include "Drawable2D.hpp"

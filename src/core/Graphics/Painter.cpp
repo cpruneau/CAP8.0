@@ -2,8 +2,7 @@
 #include <cmath>
 #include "Painter.hpp"
 #include "LatexRenderer.hpp"
-#include "TROOT.h"
-#include "TColor.h"
+#include "ColorTable.hpp"
 
 namespace CAP
 {
@@ -27,7 +26,7 @@ namespace CAP
   void Painter::fillPolygon(const std::vector<Point2D> & points, const Color & color)
   {
   FillAttributes fill;
-  fill.set(TColor::GetColor(color.red, color.green, color.blue), color.alpha, 1001);
+  fill.set(ColorTable::instance().index(color), color.alpha, 1001);
   LineAttributes noLine;
   noLine.setStyle(0);
   drawPolygon(points, fill, noLine);
@@ -106,28 +105,7 @@ namespace CAP
 
   void Painter::rgb(int color, float & red, float & green, float & blue)
   {
-  if (gROOT)
-    {
-    TColor * c = gROOT->GetColor(color);
-    if (c)
-      {
-      red   = c->GetRed();
-      green = c->GetGreen();
-      blue  = c->GetBlue();
-      return;
-      }
-    }
-  // ROOT's basic colors 0-9 (kWhite, kBlack, kRed, kGreen, kBlue, kYellow, kMagenta, kCyan, ...)
-  static const float table[10][3] =
-    {
-    {1.00f, 1.00f, 1.00f}, {0.00f, 0.00f, 0.00f}, {1.00f, 0.00f, 0.00f}, {0.00f, 1.00f, 0.00f},
-    {0.00f, 0.00f, 1.00f}, {1.00f, 1.00f, 0.00f}, {1.00f, 0.00f, 1.00f}, {0.00f, 1.00f, 1.00f},
-    {0.35f, 0.83f, 0.33f}, {0.35f, 0.33f, 0.85f}
-    };
-  int k = (color >= 0 && color < 10) ? color : 1; // unknown colors fall back to black
-  red   = table[k][0];
-  green = table[k][1];
-  blue  = table[k][2];
+  ColorTable::instance().rgb(color, red, green, blue);
   }
 
   } // namespace GRAPHICS

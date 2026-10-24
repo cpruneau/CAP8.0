@@ -1,7 +1,6 @@
 #ifndef CAP__Drawable2D
 #define CAP__Drawable2D
 #include <vector>
-#include "TObject.h"
 #include "String.hpp"
 #include "Renderer.hpp"
 #include "Point2D.hpp"

@@ -25,7 +25,7 @@ namespace CAP
   //! them to its own device units. Renderers never talk to a platform API directly.
   //!
   //! Style conventions (ROOT-like):
-  //!  - colors are ROOT color indices (resolved by rgb())
+  //!  - colors are color numbers, with ROOT's numbering (resolved by rgb(), see ColorTable)
   //!  - line style 0 = no line, 1 = solid, 2 = dashed, 3 = dotted, 4 = dash-dot
   //!  - fill style 0 = hollow, any other value = solid fill; drawShape() also draws the hatch patterns of
   //!    FillAttributes (3004, 3005, ...)
@@ -84,8 +84,7 @@ namespace CAP
   //! drawn with a font. The image may hold an error instead (ok false): draw LatexRenderer::plainText().
   static const LatexImage * latexImage(const String & text);
 
-  //! Convert a ROOT color index to RGB components in [0,1].
-  //! Uses ROOT's color table when available, otherwise a built-in table of the basic colors.
+  //! Convert a color number (ROOT's numbering) to RGB components in [0,1] (see ColorTable).
   static void rgb(int color, float & red, float & green, float & blue);
 
   };

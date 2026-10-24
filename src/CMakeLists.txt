@@ -276,7 +276,7 @@ target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})
 add_test(NAME TaskRegistry COMMAND TestTaskRegistry)
 
 # Sources that must compile without ROOT (no ROOT include path): most of Base (strings, files, folders, CAP files,
-# XML, configuration, reflection), the random numbers, the interpreter. A ROOT header reaching one of them fails this test.
+# XML, configuration, reflection), the random numbers, the interpreter, Graphics (colors included). A ROOT header reaching one of them fails this test.
 set(CAP_ROOT_FREE_SOURCES
   core/Base/Accountant.cpp core/Base/BinaryFile.cpp core/Base/CapFile.cpp core/Base/CmdlineParser.cpp
   core/Base/Condition.cpp core/Base/Configuration.cpp core/Base/ConfigurationManager.cpp core/Base/Crc32.cpp
@@ -287,12 +287,23 @@ set(CAP_ROOT_FREE_SOURCES
   core/Base/Reflection.cpp core/Base/String.cpp core/Base/TxtFile.cpp core/Base/XmlDocument.cpp
   core/Base/XmlElement.cpp core/Base/XmlFile.cpp core/Base/XmlReader.cpp core/Base/XmlWriter.cpp
   core/Math/Random/MersenneTwister.cpp core/Math/Random/RandomDistribution.cpp core/Math/Random/RandomGenerator.cpp
-  core/Interpreter/Interpreter.cpp core/Interpreter/Lexer.cpp core/Interpreter/Parser.cpp core/Interpreter/CapShell.cxx)
+  core/Interpreter/Interpreter.cpp core/Interpreter/Lexer.cpp core/Interpreter/Parser.cpp core/Interpreter/CapShell.cxx
+  core/Graphics/Attributes.cpp core/Graphics/Axis.cpp core/Graphics/AxisRange.cpp core/Graphics/AxisRenderer.cpp
+  core/Graphics/Canvas.cpp core/Graphics/ColorTable.cpp core/Graphics/Drawable2D.cpp core/Graphics/FillAttributes.cpp
+  core/Graphics/Geom2D.cpp core/Graphics/Graph.cpp core/Graphics/GraphRenderer.cpp core/Graphics/GraphRenderer3D.cpp
+  core/Graphics/Grid2D.cpp core/Graphics/LatexRenderer.cpp core/Graphics/Line.cpp core/Graphics/LineAttributes.cpp
+  core/Graphics/LineRenderer.cpp core/Graphics/Margins.cpp core/Graphics/Marker.cpp
+  core/Graphics/MarkerAttributes.cpp core/Graphics/MarkerRenderer.cpp core/Graphics/MarkerVector.cpp
+  core/Graphics/Painter.cpp core/Graphics/Palette.cpp core/Graphics/Palettes.cpp core/Graphics/PdfPainter.cpp
+  core/Graphics/Polygon.cpp core/Graphics/PolygonRenderer.cpp core/Graphics/Projection3D.cpp
+  core/Graphics/Renderer.cpp core/Graphics/Shape.cpp core/Graphics/SvgPainter.cpp core/Graphics/TextAttributes.cpp
+  core/Graphics/TextRenderer.cpp)
 set(CAP_ROOT_FREE_COMMAND ${CMAKE_CXX_COMPILER} -std=c++17 -fsyntax-only)
 if(CMAKE_OSX_SYSROOT)
   list(APPEND CAP_ROOT_FREE_COMMAND -isysroot ${CMAKE_OSX_SYSROOT})
 endif()
-foreach(dir core/Base core/Math/Basic core/Math/Random core/Interpreter)
+foreach(dir core/Base core/Math core/Math/Basic core/Math/LinearAlgebra core/Math/Functions core/Math/Data core/Math/Search
+            core/Math/Fitting core/Math/StatisticalTests core/Math/Random core/Interpreter core/Graphics)
   list(APPEND CAP_ROOT_FREE_COMMAND -I${CMAKE_SOURCE_DIR}/${dir})
 endforeach()
 foreach(source ${CAP_ROOT_FREE_SOURCES})

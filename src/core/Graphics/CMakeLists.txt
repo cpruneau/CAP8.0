@@ -14,6 +14,7 @@ Axis.hpp
 AxisRange.hpp
 AxisRenderer.hpp
 Canvas.hpp
+ColorTable.hpp
 Color.hpp
 Drawable2D.hpp
 FillAttributes.hpp
@@ -31,6 +32,7 @@ MarkerRenderer.hpp
 MarkerVector.hpp
 Painter.hpp
 Palette.hpp
+Palettes.hpp
 Point2D.hpp
 Point3D.hpp
 Rect2D.hpp
@@ -50,6 +52,7 @@ Axis.cpp
 AxisRange.cpp
 AxisRenderer.cpp
 Canvas.cpp
+ColorTable.cpp
 Drawable2D.cpp
 FillAttributes.cpp
 Geom2D.cpp
@@ -68,6 +71,7 @@ MarkerRenderer.cpp
 MarkerVector.cpp
 Painter.cpp
 Palette.cpp
+Palettes.cpp
 Polygon.cpp
 Shape.cpp
 Projection3D.cpp
@@ -110,6 +114,9 @@ add_test(NAME Graph2D COMMAND TestGraph2D)
 add_executable(TestPdfPainter tests/TestPdfPainter.cpp)
 target_link_libraries(TestPdfPainter Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME PdfPainter COMMAND TestPdfPainter)
+add_executable(TestColors tests/TestColors.cpp)
+target_link_libraries(TestColors Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME Colors COMMAND TestColors)
 add_executable(TestShapes tests/TestShapes.cpp)
 target_link_libraries(TestShapes Graphics Math Base ${ROOT_LIBRARIES})
 add_test(NAME Shapes COMMAND TestShapes)
