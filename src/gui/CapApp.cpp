@@ -99,6 +99,9 @@ namespace CAP
       logY         = e->attributeBool("logY", logY);
       mode         = e->attribute("mode", mode);
       keepShapes   = e->attributeBool("keepShapes", keepShapes);
+      colorPalette   = e->attribute("colorPalette", colorPalette);
+      markerPalette  = e->attribute("markerPalette", markerPalette);
+      shadingPalette = e->attribute("shadingPalette", shadingPalette);
       }
     if (const XmlElement * e = root.child("Files"))
       {
@@ -154,6 +157,9 @@ namespace CAP
     graphs.setAttribute("logY", logY);
     graphs.setAttribute("mode", mode);
     graphs.setAttribute("keepShapes", keepShapes);
+    graphs.setAttribute("colorPalette", colorPalette);
+    graphs.setAttribute("markerPalette", markerPalette);
+    graphs.setAttribute("shadingPalette", shadingPalette);
     XmlElement & files = root.addChild("Files");
     files.setAttribute("directory", directory);
     String list;
@@ -239,6 +245,11 @@ namespace CAP
   if (_configurationFile.isNull()) _configurationFile = findConfigurationFile();
   String configurationError;
   bool configured = !_configurationFile.isNull() && _configuration.read(_configurationFile, configurationError);
+  // the palettes of the session, before any graph is made (new graphs take the current shading palette)
+  GRAPHICS::Palettes & palettes = GRAPHICS::Palettes::session();
+  if (!palettes.setColorPalette(_configuration.colorPalette))     _configuration.colorPalette = palettes.colorPalette().name();
+  if (!palettes.setMarkerPalette(_configuration.markerPalette))   _configuration.markerPalette = palettes.markerPalette().name();
+  if (!palettes.setShadingPalette(_configuration.shadingPalette)) _configuration.shadingPalette = palettes.shadingPaletteName();
   if (!FileSystem::home().isNull()) _configuration.gui.iniFile = FileSystem::join(FileSystem::home(), ".CapGui.ini");
   if (_configuration.directory.isNull())
     {
@@ -1518,6 +1529,47 @@ namespace CAP
   ImGui::SameLine(0, 20);
   ImGui::Checkbox("Keep shapes", &c.keepShapes);
   ImGui::SetItemTooltip("Shapes and texts stay in a graph when its contents are replaced");
+
+  ImGui::SeparatorText("Palettes of the session");
+  {
+  // the current palettes: graphs that do not choose their own follow them (colors and markers of the objects shown
+  // from now on, shading of the new graphs); "Apply to all graphs" restyles the graphs already there
+  GRAPHICS::Palettes & palettes = GRAPHICS::Palettes::session();
+  auto combo = [](const char * label, String & current, const std::vector<String> & names, const char * tip)
+    {
+    bool changed = false;
+    ImGui::SetNextItemWidth(170);
+    if (ImGui::BeginCombo(label, current.data()))
+      {
+      for (const String & n : names)
+        if (ImGui::Selectable(n.data(), n == current)) { current = n; changed = true; }
+      ImGui::EndCombo();
+      }
+    ImGui::SetItemTooltip("%s", tip);
+    return changed;
+    };
+  if (combo("colors", c.colorPalette, palettes.colorPaletteNames(), "Colors given in turn to the objects of a graph"))
+    palettes.setColorPalette(c.colorPalette);
+  ImGui::SameLine();
+  if (combo("markers", c.markerPalette, palettes.markerPaletteNames(), "Markers given in turn to the objects of a graph"))
+    palettes.setMarkerPalette(c.markerPalette);
+  if (combo("shading", c.shadingPalette, palettes.shadingPaletteNames(), "Colors of the maps, contours and 3D views of new graphs"))
+    palettes.setShadingPalette(c.shadingPalette);
+  ImGui::SameLine();
+  if (ImGui::Button("Apply to all graphs"))
+    {
+    recordUndo();
+    for (int p=0; p<_gui.nPanes(); p++)
+      for (int k=0; k<_gui.pane(p).canvas().nGraphs(); k++)
+        {
+        GRAPHICS::Graph & g = _gui.pane(p).canvas().graph(k);
+        g.restyleItems();                                    // with its own palettes, or the session's
+        g.setPalette(palettes.shadingPalette());
+        }
+    }
+  ImGui::SetItemTooltip("Give every object of every graph its color and marker from the palettes again, and every graph "
+                        "the shading palette (Edit > Undo to go back)");
+  }
 
   ImGui::SeparatorText("Startup");
   ImGui::Checkbox("Show the demonstration objects", &c.demo);

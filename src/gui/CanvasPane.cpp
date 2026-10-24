@@ -286,6 +286,36 @@ namespace CAP
     if (ImGui::MenuItem("Log Z", nullptr, logZ)) { changing(); graph.setLogZ(!logZ); }
     }
   if (ImGui::MenuItem("Legend", nullptr, legend)) { changing(); graph.setShowLegend(!legend); }
+  if (ImGui::BeginMenu("Palettes"))
+    {
+    // the palettes of this graph: "Session's" follows the current palettes of the session (Edit > Preferences)
+    GRAPHICS::Palettes & palettes = GRAPHICS::Palettes::session();
+    auto choose = [&](const char * menu, const String & current, const std::vector<String> & names, const String & sessions,
+                      const std::function<void(const String &)> & set)
+      {
+      if (!ImGui::BeginMenu(menu)) return;
+      String label = String("Session's (") + sessions + String(")");
+      if (ImGui::MenuItem(label.data(), nullptr, current.str().empty())) set(String());
+      ImGui::Separator();
+      for (const String & n : names) if (ImGui::MenuItem(n.data(), nullptr, n == current)) set(n);
+      ImGui::EndMenu();
+      };
+    choose("Colors", graph.colorPaletteName(), palettes.colorPaletteNames(), palettes.colorPalette().name(),
+           [&](const String & n) { changing(); graph.setColorPaletteName(n); graph.restyleItems(); });
+    choose("Markers", graph.markerPaletteName(), palettes.markerPaletteNames(), palettes.markerPalette().name(),
+           [&](const String & n) { changing(); graph.setMarkerPaletteName(n); graph.restyleItems(); });
+    if (graph.hasMaps() && ImGui::BeginMenu("Shading"))
+      {
+      for (const String & n : palettes.shadingPaletteNames())
+        {
+        const GRAPHICS::ShadingPalette * s = palettes.shadingPalette(n);
+        bool current = s && s->type() == graph.palette().type();
+        if (ImGui::MenuItem(n.data(), nullptr, current) && s) { changing(); graph.setPalette(*s); }
+        }
+      ImGui::EndMenu();
+      }
+    ImGui::EndMenu();
+    }
   bool fitted = false, curves = false, maps = false;
   for (const auto & item : graph.items())
     if (item.nFits() > 0) { fitted = true; curves = curves || !item.isMap(); maps = maps || item.isMap(); }

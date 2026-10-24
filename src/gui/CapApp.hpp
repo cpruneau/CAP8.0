@@ -38,7 +38,8 @@ namespace CAP
   //!   <CapGui version="1">
   //!     <Window title="CAP" width="1400" height="900" theme="light" fontSize="15" viewports="true"/>
   //!     <Canvases columns="1" rows="1" toolbars="true"/>          <!-- n x m canvas panes -->
-  //!     <Graphs columns="1" rows="1" legend="true" logX="false" logY="false" mode="add" keepShapes="true"/>  <!-- per new canvas -->
+  //!     <Graphs columns="1" rows="1" legend="true" logX="false" logY="false" mode="add" keepShapes="true"
+  //!             colorPalette="default" markerPalette="default" shadingPalette="viridis"/>  <!-- per new canvas -->
   //!     <Files directory="" extensions=".cap .root .xml"/>
   //!     <Browser visible="true" docked="true"/>                   <!-- docked: in the main window -->
   //!     <Demo enabled="false"/>                                <!-- true: demonstration objects at startup -->
@@ -57,6 +58,9 @@ namespace CAP
   bool   logY         = false;   //!< logarithmic y axis in new graphs
   String mode         = "add";   //!< what showing an object does: "add" or "replace"
   bool   keepShapes   = true;    //!< shapes stay in a graph when its contents are replaced
+  String colorPalette   = "default";   //!< current color palette of the session (see GRAPHICS::Palettes)
+  String markerPalette  = "default";   //!< current marker palette of the session
+  String shadingPalette = "viridis";   //!< current shading palette of the session
   String directory;   //!< folder where the file dialogs start (empty: the current folder)
   std::vector<String> extensions{".cap", ".root"};   // .root: only when CapGui is built with ROOT files   //!< types listed by the Open dialog (only those CapGui can open are used)
   bool   demo         = false;  //!< show the demonstration objects at startup (otherwise the canvases start empty)
