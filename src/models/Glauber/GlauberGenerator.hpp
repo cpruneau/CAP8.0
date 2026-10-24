@@ -5,7 +5,6 @@
 #include "GlauberEventFilter.hpp"
 #include "ManagedObjects.hpp"
 #include "Task.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -135,7 +134,6 @@ class GlauberGenerator
   //! Fluctuating cross section distribution (owned).
   PTotProfile     *_ptotProfile;
 
-  ClassDef(GlauberGenerator,0)
 };
 
 //  _smearingProfile = new SmearingProfile();

@@ -9,7 +9,6 @@
 #include "TRandom.h"
 
 
-ClassImp(CAP::GlauberGenerator)
 
 namespace CAP
 {

@@ -6,7 +6,6 @@
 #include "GlauberEventMoments.hpp"
 #include "ManagedObject.hpp"
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -224,7 +223,6 @@ namespace CAP
   //  double   calcEvent(double bgen);
   //  double   calcResult(double bgen);
 
-  ClassDef(GlauberEvent, 1)
   };
 
 } // namespace CAP

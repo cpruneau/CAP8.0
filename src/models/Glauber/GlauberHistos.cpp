@@ -18,7 +18,6 @@
 #include "TEllipse.h"
 #include "TCanvas.h"
 
-ClassImp(CAP::GlauberHistos);
 
 using CAP::MATH::pi;
 

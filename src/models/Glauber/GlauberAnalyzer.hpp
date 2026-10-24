@@ -6,7 +6,6 @@
 #include "GlauberEvent.hpp"
 #include "GlauberEventFilter.hpp"
 #include "GlauberHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -114,7 +113,6 @@ namespace CAP
 //                       double & areaAll);
 //  double calculatelength();
 
-  ClassDef(GlauberAnalyzer,1)
   };
 
 } // namespace CAP

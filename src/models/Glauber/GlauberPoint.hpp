@@ -3,7 +3,6 @@
 #include <cmath>
 #include "TObject.h"
 #include <cmath>
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -62,7 +61,6 @@ protected:
   //! y coordinate.
   float _y;
 
-  ClassDef(GlauberPoint,1) // GlauberPoint class
 
 };
 

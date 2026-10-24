@@ -10,8 +10,6 @@
 #include "GlauberEventFilter.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
-ClassImp(CAP::Filter<CAP::GlauberEvent>);
-ClassImp(CAP::GlauberEventFilter);
 
 namespace CAP
 {

@@ -7,7 +7,6 @@
 //#include "TF2.h"
 #include "VectorLorentz.hpp"
 #include "NuclearDistribution.hpp"
-#include "ClassDef.hpp"
 
 using CAP::MATH::VectorLorentz;
 
@@ -127,7 +126,6 @@ public:
   //! @brief Print the nucleon.
   void   print() const;
 
-  ClassDef(GlauberNucleon,1) // GlauberNucleon class
 };
 
 }  // namespace CAP

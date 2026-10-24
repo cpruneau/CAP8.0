@@ -4,7 +4,6 @@
 #include "GlauberNucleon.hpp"
 #include "GlauberNucleusType.hpp"
 #include "NuclearDistribution.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -219,7 +218,6 @@ namespace CAP
   //! Density distribution of the neutrons.
   NuclearDistribution _neutronDistribution;
 
-  ClassDef(GlauberNucleus,1) // GlauberNucleus class
   };
   
 } // namespace CAP

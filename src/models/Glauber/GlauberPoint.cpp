@@ -1,7 +1,6 @@
 #include "MathConstants.hpp"
 #include "GlauberPoint.hpp"
 
-ClassImp(CAP::GlauberPoint)
 
 namespace CAP
 {

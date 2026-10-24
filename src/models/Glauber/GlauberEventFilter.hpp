@@ -3,7 +3,6 @@
 #include "Filter.hpp"
 #include "GlauberEvent.hpp"
 #include "ManagedObject.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -45,7 +44,6 @@ namespace CAP
                          const Configuration & configuration,
                          unsigned int index);
   
-  ClassDef(GlauberEventFilter,0)
   };
 
 } // namespace CAP

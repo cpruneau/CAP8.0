@@ -1,7 +1,6 @@
 #ifndef CAP__GlauberEventMoments
 #define CAP__GlauberEventMoments
 #include "PrintHelpers.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -83,7 +82,6 @@ public:
   std::vector<double> _psiN;
   std::vector<double> _eccN;
 
-  ClassDef(GlauberEventMoments,0)
 };
 
 } // namespace CAP

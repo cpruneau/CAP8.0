@@ -3,7 +3,6 @@
 #include "PrintHelpers.hpp"
 #include "MathBasicFunctions.hpp"
 #include "MathConstants.hpp"
-ClassImp(CAP::GlauberEventMoments)
 
 using CAP::MATH::pi;
 using CAP::MATH::twoPi;

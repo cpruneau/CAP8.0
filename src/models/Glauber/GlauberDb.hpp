@@ -11,7 +11,6 @@
 #include "NucleonProfile.hpp"
 #include "PTotProfile.hpp"
 #include "SmearingProfile.hpp"
-#include "ClassDef.hpp"
 
 using namespace std;
 using CAP::MATH::pi;
@@ -50,7 +49,6 @@ namespace CAP
 
 
 
-  ClassDef(GlauberDb,0)
   };
 
 } // namespace CAP

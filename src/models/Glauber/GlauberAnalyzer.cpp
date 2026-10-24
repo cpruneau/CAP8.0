@@ -4,7 +4,6 @@
 #include "NuclearDistribution.hpp"
 #include "TRandom.h"
 
-ClassImp(CAP::GlauberAnalyzer);
 
 namespace CAP
 {

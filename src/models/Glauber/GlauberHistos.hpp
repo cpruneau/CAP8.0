@@ -16,7 +16,6 @@
 #include "GlauberEvent.hpp"
 #include "HistogramFolder.hpp"
 #include "MathConstants.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -235,7 +234,6 @@ protected:
   std::vector<Histogram*> h_events;  ///< event displays
 
 
-  ClassDef(GlauberHistos,0)
 };
 
 } // namespace CAP
