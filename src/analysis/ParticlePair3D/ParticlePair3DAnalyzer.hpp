@@ -14,7 +14,6 @@
 #include "ParticlePair3DHistos.hpp"
 #include "ParticlePair3DDerivedHistos.hpp"
 #include "ParticlePair3DBfHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -49,7 +48,6 @@ protected:
   //! @warning Currently always returns the mass of PDG code 211 (pi+).
   double getMassFor(ParticleFilter* pf);
   
-  ClassDef(ParticlePair3DAnalyzer,0)
 };
 
 } // namespace CAP

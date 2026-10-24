@@ -14,7 +14,6 @@
 #include "ParticleSingleDerivedHistos.hpp"
 #include "ParticlePair3DHistos.hpp"
 #include "ParticlePair3DDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -77,7 +76,6 @@ protected:
   //! Mass of particle 2.
   double mass2;
 
-  ClassDef(ParticlePair3DBfHistos,1)
 
 };
 

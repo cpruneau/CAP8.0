@@ -15,7 +15,6 @@
 #include "TRandom.h"
 #include "Task.hpp"
 
-ClassImp(CAP::ParticlePair3DDerivedHistos);
 
 namespace CAP
 {

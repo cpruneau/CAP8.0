@@ -22,7 +22,6 @@
 #include "Task.hpp"
 #include "Configuration.hpp"
 
-ClassImp(CAP::ParticlePair3DBfHistos);
 
 namespace CAP
 {

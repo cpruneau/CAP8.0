@@ -12,7 +12,6 @@
 #include "Profile.hpp"
 #include "ParticleSingleDerivedHistos.hpp"
 #include "ParticlePair3DHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -121,7 +120,6 @@ protected:
   void projectInto(const Histogram * source, unsigned int axis, const String & targetName);
 
 
-  ClassDef(ParticlePair3DDerivedHistos,1)
 
 };
 

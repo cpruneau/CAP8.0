@@ -14,7 +14,6 @@
 #include "Profile.hpp"
 #include "MathConstants.hpp"
 
-ClassImp(CAP::ParticlePair3DAnalyzer);
 
 namespace CAP
 {

@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "ParticleDigit.hpp"
-#include "ClassDef.hpp"
 
 
 
@@ -85,7 +84,6 @@ protected:
   Histogram * h_n2_Qinv;  ///< pair density vs Qinv
   Histogram * h_n2_DeltaP;  ///< pair density vs (q_side, q_out, q_long)
 
-  ClassDef(ParticlePair3DHistos,0)
 };
 
 } // namespace CAP
