@@ -32,6 +32,8 @@ namespace CAP
   VectorLorentz _position;
   VectorLorentz _momentum;
   ThermalHadronGas _thermalHadronGas;
+  double _maxIntegrandSafety;     //!< factor applied to the sampled maximum of the integrand in the accept/reject step
+  unsigned long _nOverflows;      //!< accepted draws whose integrand exceeded the (scaled) maximum
 
   public:
   Model();
@@ -57,6 +59,8 @@ namespace CAP
   virtual void calculateMultiplicities();
   //! @brief Hadron gas of the model. @return hadron gas
   ThermalHadronGas & thermalHadronGas() { return _thermalHadronGas; }
+  //! @brief Number of draws whose integrand exceeded the maximum used by the accept/reject step. @return count
+  unsigned long nOverflows() const { return _nOverflows; }
   virtual double calculateIntegrand(ThermalHadron& hadron);
   virtual void generateEvent(Event & event,const ParticleFilter & particleFilter);
 

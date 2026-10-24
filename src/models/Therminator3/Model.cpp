@@ -20,7 +20,9 @@ namespace CAP
   :
   ModelSettings(),
   Thermodynamics(),
-  Hypersurface()
+  Hypersurface(),
+  _maxIntegrandSafety(1.2),
+  _nOverflows(0)
   {    }
 
   void Model::configure(const String & taskName,
@@ -45,6 +47,7 @@ namespace CAP
   _backFlow       = configuration.valueBool(  createKey(taskName,typeName,"BackFlow"));
   _tGamma         = gammaAtBeta(_tVelocity);
   _nSamples       = configuration.valueInt(   createKey(taskName,typeName,"NSamples"),true,100000);
+  _maxIntegrandSafety = configuration.valueDouble(createKey(taskName,typeName,"MaxIntegrandSafety"),true,1.2);
 
   setSystemName(      configuration.valueString(createKey(taskName,typeName,"SystemName")));
   setSystemEnergy(    configuration.valueDouble(createKey(taskName,typeName,"SystemEnergy")));
@@ -180,13 +183,14 @@ namespace CAP
     // now generate the particles
     double   value;
     double   valueTest;
-    // maximum of the integrand sampled in calculateMultiplicities()
-    double   maxIntegrand = hadron.integrand();
+    // the maximum was sampled in calculateMultiplicities(); the safety factor covers values the sampling missed
+    double   maxIntegrand = _maxIntegrandSafety * hadron.integrand();
     unsigned int mult = hadron.multiplicity();
     unsigned int iParticle = 0;
     while (iParticle < mult)
       {
       value = calculateIntegrand(hadron);
+      if (value>maxIntegrand) _nOverflows++;
       valueTest = maxIntegrand * gRandom->Rndm();
       if (valueTest<value)
         {
