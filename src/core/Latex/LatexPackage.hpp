@@ -1,7 +1,6 @@
 #ifndef CAP__LatexPackage
 #define CAP__LatexPackage
 #include "LatexElement.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -22,7 +21,6 @@ namespace CAP
 
   String _option;
 
-  //ClassDef(LatexPackage,0)
   };
 
 } // namespace CAP

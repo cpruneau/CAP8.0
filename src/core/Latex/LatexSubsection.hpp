@@ -1,7 +1,6 @@
 #ifndef CAP__LatexSubsection
 #define CAP__LatexSubsection
 #include "LatexSection.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -15,7 +14,6 @@ namespace CAP
   virtual ~LatexSubsection() { }
   virtual void writeHeader(std::ofstream & out);
 
-  //ClassDef(LatexSubsection,0)
   };
 
 } // namespace CAP

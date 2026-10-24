@@ -1,5 +1,4 @@
 #include "LatexEquation.hpp"
-////ClassImp(CAP::LatexEquation);
 
 namespace CAP
 {

@@ -1,7 +1,6 @@
 #ifndef CAP__LatexEquation
 #define CAP__LatexEquation
 #include "LatexElement.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -19,7 +18,6 @@ namespace CAP
   virtual void writeContent(std::ofstream & out);
   virtual void writeTrailer(std::ofstream & out);
 
-  //ClassDef(LatexEquation,0)
   };
 
 } // namespace CAP

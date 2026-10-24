@@ -1,7 +1,6 @@
 #ifndef CAP__LatexFigure
 #define CAP__LatexFigure
 #include "LatexElement.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -45,7 +44,6 @@ namespace CAP
   int _trimRight;
   int _trimTop;
 
-  //ClassDef(LatexFigure,0)
   };
 
 } // namespace CAP

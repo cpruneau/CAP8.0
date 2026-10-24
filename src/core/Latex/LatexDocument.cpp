@@ -6,7 +6,6 @@
 #include "StreamHelpers.hpp"
 #include <iostream>
 
-////ClassImp(CAP::LatexDocument);
 using std::cout;
 using std::endl;
 

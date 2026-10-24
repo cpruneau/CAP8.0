@@ -1,7 +1,6 @@
 #ifndef CAP__LatexAuthor
 #define CAP__LatexAuthor
 #include "LatexElement.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -27,7 +26,6 @@ namespace CAP
   String _email;
   String _affiliation;
 
-  //ClassDef(LatexAuthor,0)
   };
 
 } // namespace CAP

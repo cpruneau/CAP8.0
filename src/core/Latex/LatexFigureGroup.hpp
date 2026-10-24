@@ -1,7 +1,6 @@
 #ifndef CAP__LatexFigureGroup
 #define CAP__LatexFigureGroup
 #include "LatexElement.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -15,7 +14,6 @@ namespace CAP
   virtual ~LatexFigureGroup() { }
   virtual void writeContent(std::ofstream & out);
 
-  //ClassDef(LatexFigureGroup,0)
   };
 
 } // namespace CAP

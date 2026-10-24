@@ -1,7 +1,6 @@
 #ifndef CAP__LatexList
 #define CAP__LatexList
 #include "LatexElement.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -29,7 +28,6 @@ namespace CAP
   
   int _type;
 
-  //ClassDef(LatexList,0)
   };
 } // namespace CAP
 

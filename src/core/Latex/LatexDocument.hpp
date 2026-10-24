@@ -12,7 +12,6 @@
 #include "LatexSubsection.hpp"
 #include "LatexSubsubsection.hpp"
 #include "LatexText.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -101,7 +100,6 @@ namespace CAP
   String _abstract;
   LatexElement * _currentScope;
  
-  //ClassDef(LatexDocument,0)
 
   };
 

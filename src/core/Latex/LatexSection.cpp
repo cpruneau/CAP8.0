@@ -1,5 +1,4 @@
 #include "LatexSection.hpp"
-////ClassImp(CAP::LatexSection);
 
 namespace CAP
 {
