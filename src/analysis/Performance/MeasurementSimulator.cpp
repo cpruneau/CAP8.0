@@ -14,7 +14,6 @@
 #include "Profile.hpp"
 #include "TRandom.h"
 
-ClassImp(CAP::MeasurementSimulator);
 
 namespace CAP
 {

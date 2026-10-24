@@ -11,7 +11,6 @@
 #define CAP__EventEfficiencyFilterCreator
 #include "FilterCreator.hpp"
 #include "EventEfficiencyFilter.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -40,7 +39,6 @@ public:
                                                const vector<double>  & conditionMaxima2,
                                                bool verbose=1);
   
-  ClassDef(EventEfficiencyFilterCreator,0)
 };
 
 }

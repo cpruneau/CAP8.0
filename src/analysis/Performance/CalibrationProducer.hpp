@@ -10,7 +10,6 @@
 #ifndef CAP__CalibrationProducer
 #define CAP__CalibrationProducer
 #include "HistogramTask.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -62,7 +61,6 @@ public:
   //! @brief Execute the task (process the current event).
   virtual void execute();
   
-  ClassDef(CalibrationProducer,0)
 };
 
 } // namespace CAP

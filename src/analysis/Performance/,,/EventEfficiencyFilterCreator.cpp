@@ -11,8 +11,6 @@
 #include "EventEfficiencyFilter.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::FilterCreator<EventEfficiencyFilter>);
-ClassImp(CAP::EventEfficiencyFilterCreator);
 
 namespace CAP
 {

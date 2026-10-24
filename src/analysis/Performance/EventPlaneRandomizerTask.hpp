@@ -10,7 +10,6 @@
 #ifndef CAP__EventPlaneRandomizerTask
 #define CAP__EventPlaneRandomizerTask
 #include "EventProcessor.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -31,7 +30,6 @@ public:
   virtual ~EventPlaneRandomizerTask() {}
   //! @brief Execute the task (process the current event).
   virtual void execute();
-  ClassDef(EventPlaneRandomizerTask,0)
 };
 
 } // namespace CAP

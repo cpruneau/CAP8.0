@@ -10,7 +10,6 @@
 #ifndef CAP__RunClosure
 #define CAP__RunClosure
 #include "String.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -39,7 +38,6 @@ public:
            String & histogramExportFileName,
            bool verbose=true);
 
-  ClassDef(RunClosureAnalysis,0)
 };
 
 }    // namespace CAP

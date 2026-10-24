@@ -11,7 +11,6 @@
 #include "PrintHelpers.hpp"
 #include "EfficiencyFunction.hpp"
 
-ClassImp(CAP::EfficiencyFunction);
 
 namespace CAP
 {

@@ -13,7 +13,6 @@
 #include "Profile.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::CalibrationProducer);
 namespace CAP
 {
 

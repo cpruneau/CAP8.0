@@ -18,7 +18,6 @@
 #include "RootFileHelpers.hpp"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::ClosureIterator);
 
 namespace CAP
 {

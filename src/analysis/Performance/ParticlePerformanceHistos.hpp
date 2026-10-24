@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -96,7 +95,6 @@ int Drapidity_nbins;  ///< number of bins of the Delta y axis
 double Drapidity_min;  ///< lower edge of the Delta y axis
 double Drapidity_max;  ///< upper edge of the Delta y axis
 
-ClassDef(ParticlePerformanceHistos,0)
 
 };
 

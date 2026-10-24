@@ -12,7 +12,6 @@
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "Configuration.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -58,7 +57,6 @@ protected:
   Profile * p_n1_dphiVsPt;
   Profile * p_n1_dphiVsEta;
 
-  ClassDef(ParticlePerformanceHistos,0)
 
 };
 

@@ -11,7 +11,6 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
-ClassImp(CAP::EventVertexRandomizerTask);
 
 namespace CAP
 {

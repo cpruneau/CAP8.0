@@ -12,7 +12,6 @@
 #include "EventProcessorSingle.hpp"
 #include "ParticlePerformanceHistos.hpp"
 #include "ParticlePerformanceDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -42,7 +41,6 @@ public:
 
 protected:
 
-  ClassDef(PerformanceAnalyzer,0)
 };
 
 } // namespace CAP

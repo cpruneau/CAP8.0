@@ -17,7 +17,6 @@
 #include "Profile.hpp"
 #include "HistogramFolder.hpp"
 
-ClassImp(CAP::ClosureCalculator);
 
 namespace CAP
 {

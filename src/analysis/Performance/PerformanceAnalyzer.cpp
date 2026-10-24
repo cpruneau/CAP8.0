@@ -14,7 +14,6 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-ClassImp(CAP::PerformanceAnalyzer);
 
 namespace CAP
 {

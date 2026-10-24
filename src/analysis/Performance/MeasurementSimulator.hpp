@@ -10,7 +10,6 @@
 #ifndef CAP__MeasurementSimulator
 #define CAP__MeasurementSimulator
 #include "EventProcessor.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -38,7 +37,6 @@ public:
   //! @brief Execute the task (process the current event).
   virtual void execute();
 
-  ClassDef(MeasurementSimulator,0)
 };
 
 } // namespace CAP

@@ -12,7 +12,6 @@
 #include "Exceptions.hpp"
 #include "ClosureCalculator.hpp"
 
-ClassImp(CAP::RunClosureAnalysis);
 
 namespace CAP
 {

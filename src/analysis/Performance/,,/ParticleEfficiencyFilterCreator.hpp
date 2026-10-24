@@ -20,7 +20,6 @@
 #include "ParticleSmearer.hpp"
 #include "BaseHistos.hpp"
 #include "BaseDerivedHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -49,7 +48,6 @@ public:
                                                   const vector<double>  & conditionMaxima2,
                                                   bool  verbose=true);
 
-  ClassDef(ParticleEfficiencyFilterCreator,0)
 };
 
 }

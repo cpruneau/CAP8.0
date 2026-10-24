@@ -10,7 +10,6 @@
 #ifndef CAP__EventVertexRandomizerTask
 #define CAP__EventVertexRandomizerTask
 #include "EventProcessor.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -52,7 +51,6 @@ protected:
   double zRms; //!< rms of the vertex distribution along the z-axis
   double tRms; //!< rms of the vertex distribution along the t-axis
   
-  ClassDef(EventVertexRandomizerTask,0)
 };
 
 } // namespace CAP

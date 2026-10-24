@@ -10,7 +10,6 @@
 #ifndef CAP__ParticlePerformanceDerivedHistos
 #define CAP__ParticlePerformanceDerivedHistos
 #include "ParticlePerformanceHistos.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -39,7 +38,6 @@ public:
   //! @brief Compute the derived histograms. @param base performance histograms
   virtual void calculateDerivedHistograms(const ParticlePerformanceHistos & base);
 
-  ClassDef(ParticlePerformanceDerivedHistos,0)
 };
 
 } // namespace CAP

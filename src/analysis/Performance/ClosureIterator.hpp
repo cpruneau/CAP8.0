@@ -10,7 +10,6 @@
 #ifndef CAP__ClosureIterator
 #define CAP__ClosureIterator
 #include "Task.hpp"
-#include "ClassDef.hpp"
 
 namespace CAP
 {
@@ -37,7 +36,6 @@ public:
   virtual void setDefaultConfiguration();
   //! @brief Execute the task (process the current event).
   virtual void execute();
-  ClassDef(ClosureIterator,0)
 };
 
 } // namespace CAP

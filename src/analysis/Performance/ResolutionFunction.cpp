@@ -12,7 +12,6 @@
 #include "TRandom.h"
 #include "Exceptions.hpp"
 
-ClassImp(CAP::ResolutionFunction);
 
 namespace CAP
 {

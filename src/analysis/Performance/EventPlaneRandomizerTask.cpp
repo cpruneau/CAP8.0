@@ -11,7 +11,6 @@
 #include "PrintHelpers.hpp"
 #include "MathConstants.hpp"
 
-ClassImp(CAP::EventPlaneRandomizerTask);
 
 namespace CAP
 {
