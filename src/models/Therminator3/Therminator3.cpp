@@ -1,5 +1,6 @@
 #include "Therminator3.hpp"
 #include "FileSystem.hpp"
+#include "StreamHelpers.hpp"
 #include <memory>
 #include "PrintHelpers.hpp"
 #include "ModelHadronGas.hpp"
@@ -16,6 +17,13 @@ namespace CAP
   Therminator3::Therminator3()
   :
   EventProcessor(),
+  _createEvents(true),
+  _importModel(false),
+  _exportModel(false),
+  _modelImportPath(""),
+  _modelImportFileName(""),
+  _modelExportPath(""),
+  _modelExportFileName(""),
   _modelSelected("BW"),
   _useHistos(true),
   _createHistos(true),
@@ -40,6 +48,13 @@ namespace CAP
   Therminator3::Therminator3(const Therminator3 & source)
   :
   EventProcessor(source),
+  _createEvents(source._createEvents),
+  _importModel(source._importModel),
+  _exportModel(source._exportModel),
+  _modelImportPath(source._modelImportPath),
+  _modelImportFileName(source._modelImportFileName),
+  _modelExportPath(source._modelExportPath),
+  _modelExportFileName(source._modelExportFileName),
   _modelSelected(source._modelSelected),
   _useHistos(source._useHistos),
   _createHistos(source._createHistos),
@@ -61,6 +76,13 @@ namespace CAP
   if (this!=&rhs)
     {
     EventProcessor::operator=(rhs);
+    _createEvents   = rhs._createEvents;
+    _importModel    = rhs._importModel;
+    _exportModel    = rhs._exportModel;
+    _modelImportPath     = rhs._modelImportPath;
+    _modelImportFileName = rhs._modelImportFileName;
+    _modelExportPath     = rhs._modelExportPath;
+    _modelExportFileName = rhs._modelExportFileName;
     _modelSelected  = rhs._modelSelected;
     _useHistos      = rhs._useHistos;
     _createHistos   = rhs._createHistos;
@@ -87,9 +109,10 @@ namespace CAP
 
   String objectType = "HYDRO_MODEL";
   _configuration.addProperty(createKey(taskName,objectType,"TYPE"), "BW");
+  _configuration.addProperty(createKey(taskName,objectType,"EVENTS:CREATE"), true);
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT"), false);
   _configuration.addProperty(createKey(taskName,objectType,"MULT:CREATE"), true);
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT"), true);
+  _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT"), false);
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:BASE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:FILE_NAME"),"NONE");
@@ -190,6 +213,13 @@ namespace CAP
   else
     throw Exception("Unknown model selected",__FUNCTION__);
   _model->configure(taskName,typeName,configuration);
+  _createEvents        = configuration.valueBool(  createKey(taskName,typeName,"EVENTS:CREATE"));
+  _importModel         = configuration.valueBool(  createKey(taskName,typeName,"MULT:IMPORT"));
+  _exportModel         = configuration.valueBool(  createKey(taskName,typeName,"MULT:EXPORT"));
+  _modelImportPath     = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"MULT:IMPORT:PATH")),"CAP_HISTOS_IMPORT_PATH");
+  _modelImportFileName = configuration.valueString(createKey(taskName,typeName,"MULT:IMPORT:FILE_NAME"));
+  _modelExportPath     = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"MULT:EXPORT:PATH")),"CAP_HISTOS_EXPORT_PATH");
+  _modelExportFileName = configuration.valueString(createKey(taskName,typeName,"MULT:EXPORT:FILE_NAME"));
   typeName = "HISTOGRAM";
   String importPathA;
   String exportPathA;
@@ -213,6 +243,18 @@ namespace CAP
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   EventProcessor::initialize();
+  // the integrand maxima and the average multiplicities: read back from a file, or integrated here
+  if (_importModel)
+    {
+    std::ifstream & inputFile = openInputAsciiFile(_modelImportPath,_modelImportFileName,".txt");
+    _model->loadFromAscii(inputFile,db());
+    inputFile.close();
+    }
+  else
+    {
+    _model->thermalHadronGas().loadHadrons(db());
+    _model->calculateMultiplicities();
+    }
   _histograms.create();
   }
 
@@ -220,14 +262,13 @@ namespace CAP
   {
   _taskExecuted.increment();
 
-  if (_createEvents) // fix me
+  if (_createEvents)
     {
-    //Event & theEvent = event();
-    //const std::vector<ParticleFilter*> & pFs = particleFilters();
-    Particle::factory().reset();
-    //ParticleDb & particleDb = db();
-    //std::vector<ParticleType*> & _particleTypes = particleDb._particleTypes();
-    //_model->generateEvent(event,_particleTypes,particleFilters); // each _model has its own event
+    // the event loop (EventIterator) resets the event and the particle factory before each execute()
+    static const ParticleFilter acceptAll;
+    const ParticleFilter & filter = particleFilters().empty() ? acceptAll : *particleFilters()[0];
+    _model->generateEvent(event(),filter);
+    _eventAccepted.increment();
     }
   }
 
@@ -238,9 +279,7 @@ namespace CAP
 
   if (_exportModel)
     {
-    int temp = 1000*_model->temperature();
-    _exportFileName = _exportBaseName + temp;
-    std::ofstream & outputFile = openOutputAsciiFile(_exportPath,_exportFileName,".txt",true);
+    std::ofstream & outputFile = openOutputAsciiFile(_modelExportPath,_modelExportFileName,".txt",true);
     _model->saveToAscii(outputFile);
     outputFile.close();
     }

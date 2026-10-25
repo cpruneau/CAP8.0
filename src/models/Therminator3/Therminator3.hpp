@@ -33,8 +33,13 @@ namespace CAP
 
   protected:
 
-  bool   _createEvents;
-  bool   _exportModel;
+  bool   _createEvents;         //!< generate an event at each execute()
+  bool   _importModel;          //!< read the integrated hadron gas (MULT:IMPORT) instead of integrating it
+  bool   _exportModel;          //!< write the integrated hadron gas (MULT:EXPORT)
+  String _modelImportPath;
+  String _modelImportFileName;
+  String _modelExportPath;
+  String _modelExportFileName;
 
   String _modelSelected;
   bool   _useHistos;
