@@ -238,6 +238,8 @@ namespace CAP
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   EventProcessor::initialize();
+  if (nParticleDbs()==0)
+    throw Exception("Therminator3 needs a particle database: set PARTICLE_DB:USE and PARTICLE_DB_0:NAME",__FUNCTION__);
   // the integrand maxima and the average multiplicities: read back from a file, or integrated here
   if (_importModel)
     {
