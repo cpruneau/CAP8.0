@@ -63,9 +63,7 @@ const double vT          = 0.341;
 const double temperature = 0.1656;
 const double muB         = 0.0285;
 const double muI         = -0.0009;
-// Therminator 2 counts strangeness as N(sbar)-N(s) (K+ = +1) while ParticleType::strangeness() is N(s)-N(sbar):
-// the sign of muS is flipped to give the same chemical potentials.
-const double muS         = -0.0069;
+const double muS         = 0.0069;
 
 //! Models with the parameters set directly (the members are protected).
 template <class M>
