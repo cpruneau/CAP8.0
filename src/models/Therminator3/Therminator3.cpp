@@ -234,7 +234,6 @@ namespace CAP
   void Therminator3::finalize()
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  if (_model) delete _model;
   EventProcessor::finalize();
 
   if (_exportModel)
@@ -255,6 +254,9 @@ namespace CAP
     _histograms.saveTo(*outputFile);
     outputFile->write();
     }
+  // the model is used above (temperature, saveToAscii): delete it last
+  delete _model;
+  _model = nullptr;
   }
 
 
