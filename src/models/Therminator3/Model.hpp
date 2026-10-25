@@ -74,16 +74,6 @@ namespace CAP
   return 1.0/std::sqrt(1-betaSq);
   }
 
-  inline double gammaAtV(double v)
-  {
-  return gammaAtBeta(v/lightVelocitySq_SI());
-  }
-
-  inline double gammaAtVSq(double vSq)
-  {
-  return gammaAtBetaSq(vSq/lightVelocitySq_SI());
-  }
-
   };
 
 } // namespace CAP
