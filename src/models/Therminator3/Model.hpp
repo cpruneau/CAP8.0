@@ -38,6 +38,8 @@ namespace CAP
   public:
   Model();
   virtual ~Model() {};
+  //! @brief Copy of this model, of its own class (Therminator3 copies its model with it). @return new model
+  virtual Model * clone() const { return new Model(*this); }
   //! @brief Model parameters from the configuration: the lengths and times (rhoMax, TauI, TauC, Delay) in fm,
   //! the temperature and the chemical potentials in GeV. The models work in GeV and GeV^-1, and the particles
   //! they emit have positions in fm.

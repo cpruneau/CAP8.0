@@ -67,11 +67,11 @@ namespace CAP
   _exportPath(source._exportPath),
   _exportFileName(source._exportFileName),
   _forceRewrite(source._forceRewrite),
-  _model(source._model),
+  _model(source._model ? source._model->clone() : nullptr),   // its own copy: no shared, doubly deleted model
   _histograms(source._histograms)
   {   }
 
-  Therminator3 Therminator3::operator=(const Therminator3 & rhs)
+  Therminator3 & Therminator3::operator=(const Therminator3 & rhs)
   {
   if (this!=&rhs)
     {
@@ -95,7 +95,8 @@ namespace CAP
     _exportPath     = rhs._exportPath;
     _exportFileName = rhs._exportFileName;
     _forceRewrite   = rhs._forceRewrite;
-    _model          = rhs._model;
+    delete _model;
+    _model          = rhs._model ? rhs._model->clone() : nullptr;
     _histograms     = rhs._histograms;
     }
   return *this;

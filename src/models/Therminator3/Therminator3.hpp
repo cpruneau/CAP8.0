@@ -18,8 +18,9 @@ namespace CAP
   
   Therminator3();
   Therminator3(const Therminator3 & task);
-  Therminator3 operator=(const Therminator3 & task);
-  virtual ~Therminator3(){};
+  //! @brief Assignment: this task gets its own copy of the model of task (see Model::clone()).
+  Therminator3 & operator=(const Therminator3 & task);
+  virtual ~Therminator3() { delete _model; }
   virtual void setDefaultConfiguration();
   virtual void configure(const Configuration & configuration);
   virtual void initialize();

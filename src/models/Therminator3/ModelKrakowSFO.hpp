@@ -11,6 +11,7 @@ namespace CAP
   public:
   ModelKrakowSFO();
   virtual ~ModelKrakowSFO() {}
+  virtual Model * clone() const { return new ModelKrakowSFO(*this); }
   virtual double calculateIntegrand(ThermalHadron & hadron);
   };
 

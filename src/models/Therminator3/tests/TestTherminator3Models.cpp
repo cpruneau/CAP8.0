@@ -19,6 +19,7 @@
 //! - Hydro3D on a hypersurface built to be a boost-invariant BlastWave one: same multiplicities as BlastWave.
 //! - Hydro2D on Therminator 2's RHIC 20-30% hypersurface (when $THERMINATOR2_DIR is set): multiplicities and <pT>
 //!   against a Therminator 2 run.
+//! - Copies of the Therminator3 task (copy constructor, assignment) own a copy of the model.
 //! - BWA with formation (subtype 6): every particle must stream back, during its delay, onto the hypersurface.
 #include <cmath>
 #include <cstdio>
@@ -35,6 +36,7 @@
 #include "ModelBWA.hpp"
 #include "ModelHydro2D.hpp"
 #include "ModelHydro3D.hpp"
+#include "Therminator3.hpp"
 
 using namespace CAP;
 
@@ -351,6 +353,24 @@ int main()
     }
   std::printf("BWA formation: %zu particles, %u not streaming back onto the hypersurface\n", event.particles().size(), nOff);
   check(event.particles().size()>100 && nOff==0, "BWA formation positions", __LINE__);
+
+  // ---------------------------------------------------------------- copies of the task: each its own model
+  {
+  Therminator3 * task = new Therminator3();
+  task->setDefaultConfiguration();
+  task->configure(task->configuration());
+  Therminator3 * copy = new Therminator3(*task);
+  Therminator3 assigned;
+  assigned = *task;
+  bool own = task->model() && copy->model() && assigned.model()
+          && copy->model()!=task->model() && assigned.model()!=task->model()
+          && dynamic_cast<ModelBlastWave*>(copy->model()) && dynamic_cast<ModelBlastWave*>(assigned.model())
+          && std::fabs(copy->model()->rhoMax()-task->model()->rhoMax()) < 1e-12;
+  delete task;   // the copies keep their models
+  own = own && std::fabs(copy->model()->rhoMax()-8.21/hbarc) < 1e-12;
+  delete copy;
+  check(own, "copies of Therminator3 own a copy of the model", __LINE__);
+  }
 
   std::printf("%d checks, %d failures\n", nChecks, nFailures);
   return nFailures ? 1 : 0;
