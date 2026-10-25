@@ -11,6 +11,7 @@
 using namespace std;
 using CAP::MATH::twoPiCube;
 using CAP::MATH::twoPi;
+using CAP::Physics::hBarC;
 
 
 namespace CAP
@@ -38,12 +39,13 @@ namespace CAP
   setMuC(        configuration.valueDouble(  createKey(taskName,typeName,"Thermodynamics:MuC")));
   _pRapidityRange = configuration.valueDouble(createKey(taskName,typeName,"pRapidityRange"));
   _sRapidityRange = configuration.valueDouble(createKey(taskName,typeName,"sRapidityRange"));
-  _rhoMax         = configuration.valueDouble(createKey(taskName,typeName,"rhoMax"));
-  _tauI           = configuration.valueDouble(createKey(taskName,typeName,"TauI"));
-  _tauC           = configuration.valueDouble(createKey(taskName,typeName,"TauC"));
+  // lengths and times are configured in fm and used in GeV^-1; temperatures and chemical potentials are in GeV
+  _rhoMax         = configuration.valueDouble(createKey(taskName,typeName,"rhoMax"))/hBarC();
+  _tauI           = configuration.valueDouble(createKey(taskName,typeName,"TauI"))/hBarC();
+  _tauC           = configuration.valueDouble(createKey(taskName,typeName,"TauC"))/hBarC();
   _tVelocity      = configuration.valueDouble(createKey(taskName,typeName,"tVelocity"));
   _amp            = configuration.valueDouble(createKey(taskName,typeName,"Amplitude"));
-  _delay          = configuration.valueDouble(createKey(taskName,typeName,"Delay"));
+  _delay          = configuration.valueDouble(createKey(taskName,typeName,"Delay"))/hBarC();
   _backFlow       = configuration.valueBool(  createKey(taskName,typeName,"BackFlow"));
   _tGamma         = gammaAtBeta(_tVelocity);
   _nSamples       = configuration.valueInt(   createKey(taskName,typeName,"NSamples"),true,100000);
@@ -176,7 +178,10 @@ namespace CAP
         Particle & particle = Particle::factory().nextObject();
         particle.setType(&type);
         particle.setLive(true);
-        particle.setPosition(_position);
+        // positions are computed in GeV^-1 and given to the particles in fm (as the decayer uses)
+        VectorLorentz position;
+        position.setTXYZ(_position.t()*hBarC(),_position.x()*hBarC(),_position.y()*hBarC(),_position.z()*hBarC());
+        particle.setPosition(position);
         particle.setMomentum(_momentum);
         iParticle++;
         if (particleFilter.accept(particle)) event.addParticle(&particle);

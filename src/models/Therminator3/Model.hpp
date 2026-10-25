@@ -38,6 +38,9 @@ namespace CAP
   public:
   Model();
   virtual ~Model() {};
+  //! @brief Model parameters from the configuration: the lengths and times (rhoMax, TauI, TauC, Delay) in fm,
+  //! the temperature and the chemical potentials in GeV. The models work in GeV and GeV^-1, and the particles
+  //! they emit have positions in fm.
   virtual void configure(const String & taskName,
                          const String & objectType,
                          const Configuration & configuration);

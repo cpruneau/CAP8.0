@@ -55,7 +55,7 @@ const std::vector<Species> species =
   { 3122, "Lambda",  17.0576, 0.82132, 0.00354 },
 };
 
-//! Therminator 2 fomodel/blastwave.ini, in GeV and GeV^-1 (Therminator3 does not convert units).
+//! Therminator 2 fomodel/blastwave.ini, in GeV and GeV^-1 (the units the models work in; configure() takes fm).
 const double hbarc       = Physics::hBarC();
 const double tau0        = 8.17/hbarc;
 const double rhoMax      = 8.21/hbarc;
@@ -214,7 +214,8 @@ int main()
   for (Particle * particle : event.particles())
     {
     // delay d with (t-d)^2 - (z-vz d)^2 = tau0^2 and |r_T - v_T d| <= rhoMax, d >= 0
-    const VectorLorentz & x = particle->position();
+    VectorLorentz x;  // positions are in fm, the hypersurface in GeV^-1
+    x.setTXYZ(particle->position().t()/hbarc,particle->position().x()/hbarc,particle->position().y()/hbarc,particle->position().z()/hbarc);
     const VectorLorentz & p = particle->momentum();
     double vx = p.x()/p.t(), vy = p.y()/p.t(), vz = p.z()/p.t();
     double a = 1.0 - vz*vz, b = -2.0*(x.t() - x.z()*vz), c = x.t()*x.t() - x.z()*x.z() - tau0*tau0;
