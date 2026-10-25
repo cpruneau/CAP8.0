@@ -20,8 +20,8 @@ namespace CAP
 //!
 //! Class encapsulates the plotting properties or attributes of a graph or histograms.
 //! This class is designed to work with other CAP graphics classes to set the plotting
-//! attributes of graphs (TGraph), histograms (TH1*), and data graphs (DataGraph) displaying
-//! data values, statistical error bars, and systematic error bars.
+//! attributes of graphs (TGraph) and histograms (TH1*) displaying data values, statistical error bars, and
+//! systematic error bars.
 //!
 //! Lines are used to draw connections between points as well as  (statistical) error bars.
 //! Markers are used to represent the data point position/value
