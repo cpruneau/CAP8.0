@@ -57,14 +57,16 @@ namespace CAP
 
   setSystemName(      configuration.valueString(createKey(taskName,typeName,"SystemName")));
   setSystemEnergy(    configuration.valueDouble(createKey(taskName,typeName,"SystemEnergy")));
+  // centrality or impact parameter, fixed or a range: ModelSettings keeps one of them, the last one configured
   setCentrality(      configuration.valueDouble(createKey(taskName,typeName,"Centrality")));
   double min = configuration.valueDouble(createKey(taskName,typeName,"CentralityMin"));
   double max = configuration.valueDouble(createKey(taskName,typeName,"CentralityMax"));
-  setCentralityRange(min,max);
-  min = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameter"));
-  max = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMin"));
-  setImpactParameter( configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMax")));
-  setImpactParameterRange(min,max);
+  if (max>min) setCentralityRange(min,max);
+  double impactParameter = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameter"));
+  if (impactParameter>0.0) setImpactParameter(impactParameter);
+  min = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMin"));
+  max = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMax"));
+  if (max>min) setImpactParameterRange(min,max);
    _thermalHadronGas.configure(taskName,typeName,configuration);
   }
 
