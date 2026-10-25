@@ -84,7 +84,6 @@ public:
   this->setMuS(muS);
   this->setMuC(0.0);
   this->setNSamples(nSamples);
-  this->setMultiplicityFraction(1.0,1.0,0);
   for (auto & s : species)
     {
     ThermalHadron hadron;

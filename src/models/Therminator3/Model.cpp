@@ -50,6 +50,10 @@ namespace CAP
   _tGamma         = gammaAtBeta(_tVelocity);
   _nSamples       = configuration.valueInt(   createKey(taskName,typeName,"NSamples"),true,100000);
   _maxIntegrandSafety = configuration.valueDouble(createKey(taskName,typeName,"MaxIntegrandSafety"),true,1.2);
+  // each event keeps the full average multiplicity unless a fraction range is configured
+  setMultiplicityFraction(configuration.valueDouble(createKey(taskName,typeName,"MultFractionMin"),true,1.0),
+                          configuration.valueDouble(createKey(taskName,typeName,"MultFractionMax"),true,1.0),
+                          configuration.valueInt(   createKey(taskName,typeName,"FluctuationType"),true,0));
 
   setSystemName(      configuration.valueString(createKey(taskName,typeName,"SystemName")));
   setSystemEnergy(    configuration.valueDouble(createKey(taskName,typeName,"SystemEnergy")));
