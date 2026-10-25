@@ -10,6 +10,15 @@
 
 namespace CAP
 {
+  //! @brief Therminator 3: thermal event generator on a freeze-out hypersurface (the models of Therminator 2).
+  //!
+  //! Configured like the other CAP tasks, from its TASK element in a workflow XML file (template written by
+  //! bin/CAP --xml-templates, edited with RunCAP.py); the keys below are relative to the task:
+  //! - HYDRO_MODEL:TYPE: HG, BW, BWA, SFO, HYDRO2D or HYDRO3D; HYDRO_MODEL:... the model parameters (lengths in fm,
+  //!   Thermodynamics:Temperature and the chemical potentials in GeV, see Model::configure()), HYPERS:IMPORT:PATH and
+  //!   FILE_NAME the hypersurface of the hydro models, MULT:IMPORT/EXPORT the integrated hadron gas, EVENTS:CREATE;
+  //! - HADRON_GAS:... the hadron gas (ThermalHadronGas::configure());
+  //! - HISTOGRAM:... the thermal histograms (ThermalHistos).
   class Therminator3
   :
   public EventProcessor

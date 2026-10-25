@@ -142,27 +142,17 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"ImpactParameter"),              0.0);
   _configuration.addProperty(createKey(taskName,objectType,"ImpactParameterMin"),           0.0);
   _configuration.addProperty(createKey(taskName,objectType,"ImpactParameterMax"),           0.0);
+  // integrated hadron gas: read from (MULT:IMPORT) or written to (MULT:EXPORT) a text file
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:CREATE"), true);
   _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:BASE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT:BASE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT:FORCE_REWRITE"),true);
 
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:IMPORT"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:CREATE"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:IMPORT:BASE_NAME"),"NONE");
+  // hypersurface file of the hydro models (HYDRO2D, HYDRO3D): a Therminator 2 XML hypersurface
   _configuration.addProperty(createKey(taskName,objectType,"HYPERS:IMPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"HYPERS:IMPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT:BASE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT:PATH"),"DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT:FORCE_REWRITE"),true);
 
   // parameters for event generation are handled in the base class.
 
@@ -174,35 +164,17 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"muC"),         0.0);
   _configuration.addProperty(createKey(taskName,objectType,"muB"),         0.0);
   _configuration.addProperty(createKey(taskName,objectType,"muT"),         0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT"),          false);
-  _configuration.addProperty(createKey(taskName,objectType,"CREATE"),          true);
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT"),          false);
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT:PATH"),     "DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT:BASE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:PATH"),     "DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:BASE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FORCE_REWRITE"),true);
 
   objectType = "HISTOGRAM";
-  if (reportInfo(__FUNCTION__))
-    {
-    printCR();
-    printValue("taskName",taskName);
-    printValue("objectType",objectType);
-    }
   _configuration.addProperty(createKey(taskName,objectType,"USE"),             false);
-  _configuration.addProperty(createKey(taskName,objectType,"N"),               0);
+  _configuration.addProperty(createKey(taskName,objectType,"BASE_NAME"),       "T3");
   _configuration.addProperty(createKey(taskName,objectType,"IMPORT"),          false);
   _configuration.addProperty(createKey(taskName,objectType,"CREATE"),          false);
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT"),          false);
   _configuration.addProperty(createKey(taskName,objectType,"IMPORT:BASE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"IMPORT:PATH"),     "DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT:FILE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:BASE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:PATH"),     "DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FILE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FORCE_REWRITE"),true);
   _configuration.addProperty(createKey(taskName,objectType,"index_fill"),    true);
   _configuration.addProperty(createKey(taskName,objectType,"index_nbins"),   200);
@@ -212,15 +184,6 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"mass_nbins"),    10);
   _configuration.addProperty(createKey(taskName,objectType,"mass_min"),      0.0);
   _configuration.addProperty(createKey(taskName,objectType,"mass_max"),      4.0);
-
-  printValue("HISTOGRAM:index_fill",_configuration.valueBool(createKey(taskName,objectType,"index_fill")));
-  printValue("HISTOGRAM:index_nbins",_configuration.valueInt(createKey(taskName,objectType,"index_nbins")));
-  printValue("HISTOGRAM:index_min",_configuration.valueDouble(createKey(taskName,objectType,"index_min")));
-  printValue("HISTOGRAM:index_max",_configuration.valueDouble(createKey(taskName,objectType,"index_max")));
-  printValue("HISTOGRAM:mass_fill",_configuration.valueBool(createKey(taskName,objectType,"mass_fill")));
-  printValue("HISTOGRAM:mass_nbins",_configuration.valueInt(createKey(taskName,objectType,"mass_nbins")));
-  printValue("HISTOGRAM:mass_min",_configuration.valueDouble(createKey(taskName,objectType,"mmass_min")));
-  printValue("HISTOGRAM:mass_max",_configuration.valueDouble(createKey(taskName,objectType,"mmass_max")));
   }
 
   void Therminator3::configure(const Configuration & configuration)
