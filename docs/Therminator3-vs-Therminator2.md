@@ -74,7 +74,6 @@ Therminator 2.0.3 was built from a scratch copy and run with `blastwave.ini`: In
 - HadronGas (new integrand) has no reference to compare with.
 
 ### New findings (not fixed)
-- `ThermalHadron::calculate…` (`ThermalHadron.cpp:178`) uses `bottomNumber()` and `topNumber()`. These are the numbers of b and t quarks, not net numbers, and not the bottomness sign convention.
 - `projects/test.ini` sets `RunThermalModel:HADRON_GAS:temperature`, while `ThermalModel` reads its gas from `ThermalHadronGas:…`.
 - `ModelSettings::setSystemEnergy(double)` assigns a number to a `String`.
 - The `Therminator3` copy constructor shares the `_model` pointer, so two copies would delete the model twice.
