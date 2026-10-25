@@ -112,32 +112,10 @@ namespace CAP
     }
   }
 
-  double Model::calculateIntegrand(ThermalHadron & hadron)
+  double Model::calculateIntegrand(ThermalHadron & hadron __attribute__((unused)))
   {
-  // Type of _statistics Bose-Einstein or Fermi-Dirac
-  ParticleType & type = hadron.type();
-  double sf    = type.spinFactor();
-  double stat  = type.statistics();
-  double mass  = type.mass();
-  double mass2 = mass*mass;
-  double chemPotential = chemicalPotential(type);
-
-  _position.setTXYZ(0.0,0.0,0.0,0.0);
-
-  double zeta      = gRandom->Rndm();
-  double zetac     = (zeta>0.9999999) ? 0.0000001 : 1.00-zeta;
-  double pT        = zeta/zetac;
-  double dPt       = 1.0/(zetac*zetac);
-  double pPhi      = twoPi() * gRandom->Rndm();
-  double pRapidity = _pRapidityRange * (gRandom->Rndm() - 0.5);
-  double mT        = std::sqrt(mass2+pT*pT);
-  double e         = mT * std::cosh(pRapidity);
-  _momentum.setTXYZ(e,pT*std::cos(pPhi),pT*std::sin(pPhi),mT*std::sinh(pRapidity));
-
-  double pDotU   = 1.0;
-  double dSigmaP = 1.0;
-  double denom = stat + std::exp( (pDotU-chemPotential)/_temperature.value() );
-  return sf*pT*dPt*dSigmaP/(denom*twoPiCube());
+  // each model (ModelHadronGas, ModelBlastWave, ...) has its own integrand
+  throw Exception("Model has no integrand: use one of the Model* classes",__FUNCTION__);
   }
 
 
