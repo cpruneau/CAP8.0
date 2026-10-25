@@ -110,6 +110,37 @@ namespace CAP
   String objectType = "HYDRO_MODEL";
   _configuration.addProperty(createKey(taskName,objectType,"TYPE"), "BW");
   _configuration.addProperty(createKey(taskName,objectType,"EVENTS:CREATE"), true);
+  // model parameters (Model::configure()): Therminator 2's blastwave.ini; lengths in fm, temperature and
+  // chemical potentials in GeV
+  _configuration.addProperty(createKey(taskName,objectType,"Type"),                         0);
+  _configuration.addProperty(createKey(taskName,objectType,"Subtype"),                      0);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:Temperature"),   0.1656);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:MuB"),           0.0285);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:MuI"),          -0.0009);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:MuS"),           0.0069);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:MuC"),           0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"pRapidityRange"),               4.0);
+  _configuration.addProperty(createKey(taskName,objectType,"sRapidityRange"),               8.0);
+  _configuration.addProperty(createKey(taskName,objectType,"rhoMax"),                       8.21);
+  _configuration.addProperty(createKey(taskName,objectType,"TauI"),                         8.17);
+  _configuration.addProperty(createKey(taskName,objectType,"TauC"),                         10.55);
+  _configuration.addProperty(createKey(taskName,objectType,"tVelocity"),                    0.341);
+  _configuration.addProperty(createKey(taskName,objectType,"Amplitude"),                    0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"Delay"),                        0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"BackFlow"),                     false);
+  _configuration.addProperty(createKey(taskName,objectType,"NSamples"),                     100000);
+  _configuration.addProperty(createKey(taskName,objectType,"MaxIntegrandSafety"),           1.2);
+  _configuration.addProperty(createKey(taskName,objectType,"MultFractionMin"),              1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"MultFractionMax"),              1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"FluctuationType"),              0);
+  _configuration.addProperty(createKey(taskName,objectType,"SystemName"),                   "PbPb");
+  _configuration.addProperty(createKey(taskName,objectType,"SystemEnergy"),                 5020.0);
+  _configuration.addProperty(createKey(taskName,objectType,"Centrality"),                   0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"CentralityMin"),                0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"CentralityMax"),                0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"ImpactParameter"),              0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"ImpactParameterMin"),           0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"ImpactParameterMax"),           0.0);
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT"), false);
   _configuration.addProperty(createKey(taskName,objectType,"MULT:CREATE"), true);
   _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT"), false);
