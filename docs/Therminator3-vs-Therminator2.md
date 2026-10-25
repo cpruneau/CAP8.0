@@ -73,10 +73,36 @@ Therminator 2.0.3 was built from a scratch copy and run with `blastwave.ini`: In
 - KrakowSFO and BWA subtypes 2–5 have not been compared with Therminator 2 runs. Their integrands are the same as in Therminator 2, formula for formula.
 - HadronGas (new integrand) has no reference to compare with.
 
+### Third round: XML configuration, test.xml, copies (25 October 2026)
+- **Copies of the task** (087b710). `Model::clone()` makes a copy of a model of its own class. The copy constructor and the assignment of `Therminator3` now give the new task its own model, so models are no longer shared or deleted twice. The destructor deletes the model, and `Hypersurface::operator=` now copies the transverse velocity. The test copies and assigns a configured task, deletes the original, and checks that the copies keep their own model.
+- **XML-only parameters** (4397878). Therminator3 reads its parameters from the shared `Configuration`; it has no `.ini`-specific code. `.ini` reading remains only in `CAP.cxx`, for the other tasks. Its XML template (`setDefaultConfiguration`) now holds exactly the keys the task reads:
+  - Removed: keys left over from the `.ini` configurations that nothing reads (`MULT:CREATE`, `MULT:*:BASE_NAME`, `HYPERS:IMPORT/CREATE/EXPORT` and their files, `HADRON_GAS:IMPORT/CREATE/EXPORT` and their files, `HISTOGRAM:N`, the `HISTOGRAM` file names).
+  - Added: `HISTOGRAM:BASE_NAME`, which is read but was not defined.
+  - The class comment of `Therminator3.hpp` says how the task is configured.
+- **Missing particle database** (6297ae7). Without one, the task now fails with an exception that names the missing `PARTICLE_DB` settings, instead of an out-of-bound index.
+- **`projects/test.xml` replaces `projects/test.ini`** (5a4bdfe). It is a RunCAP.py workflow with keys relative to their task:
+  - It holds the jobs RunThermalModel and RunAnalysis (Therminator3, the decayer, the single and pair analyzers), and the filters of the `.ini`, which RunCAP.py defines in FilterCreator.
+  - `RunThermalModel:HADRON_GAS:…` became `ThermalHadronGas:…`, the group ThermalModel reads, so the `.ini` values (T = 0.200 GeV) are now used.
+  - The Therminator task got the database `DefaultDb`.
+  - Left out: CalculateDerived (the fill job writes the derived histograms) and BasicEventGen (no job used it).
+  - Dropped: keys no class defines any more (`FORCE_REWRITE` of filters and databases, `PARTICLE_EFFICIENCIE:USE`, `PARTICLE_SMEARERS:USE`, `HISTOGRAM:pid_fill`, `HISTOGRAM:ptVsRapidity_fill`).
+  - `RunCAP.py --check` reports 0 errors and 1 warning: ThermalModel reads `HISTOGRAM:BASE_NAME` but does not define it.
+  - `bin/CAP` with only a task name now reads `test.xml` by default.
+- **Results of running `test.xml`:**
+  - The whole workflow stops in RunThermalModel. It fails the same way with the original `test.ini`; see the new findings below.
+  - **RunAnalysis on its own** (`test.xml` without RunThermalModel) ran 1000 events through `bin/CAP` in 22 min and completed: `CAP completed successfully`, with `Workflow.cap` written.
+  - After decays, ParticleSingleAnalyzer counts 1435.5 π⁺ and 1455.3 π⁻ per event, with ⟨pT⟩(π⁺) = 0.399 GeV.
+  - The Therminator 2 BlastWave run has 1642.5 final-state π⁺ per event (⟨pT⟩ 0.384 GeV), or 1385.0 (⟨pT⟩ 0.404 GeV) leaving out the pions of weak decays (Λ, K⁰, Σ, Ξ, Ω).
+  - CAP lies between the two, so its decayer performs some of the weak decays Therminator 2 performs, but not all. The primordial yields agree, so the remaining difference is in the decays. It was not traced further.
+  - The `n1` histograms of the analyzer keep the `.ini` range (0–500), which is below these multiplicities, so their entries are all overflow.
+- **Full suite.** `ctest`: 32/32 tests passed. `Therminator3Models`, now including the copy check, took 130 s with the Therminator 2 comparison.
+
 ### New findings (not fixed)
-- `projects/test.ini` sets `RunThermalModel:HADRON_GAS:temperature`, while `ThermalModel` reads its gas from `ThermalHadronGas:…`.
 - `ModelSettings::setSystemEnergy(double)` assigns a number to a `String`.
-- The `Therminator3` copy constructor shares the `_model` pointer, so two copies would delete the model twice.
+- **ThermalModel (RunThermalModel) fails in `ThermalHistos::fill()`** with an index-out-of-bound exception: a 15-bin histogram is filled at index 15.
+  - It fails the same way with the original `test.ini` (`bin/CAP RunThermalModel projects/ test.ini`, before the conversion), so it is not caused by the conversion or by Therminator3.
+  - The stable-hadron histograms are created with a fixed 15 bins (`ThermalHistos.cpp:86`). The exact histogram was not identified.
+- `ThermalModel::setDefaultConfiguration` does not define `HISTOGRAM:BASE_NAME`, which `ThermalHistos::configure` reads.
 
 The rest of this document is the original audit. The fixes are marked in §4.
 
