@@ -47,8 +47,11 @@ namespace CAP
 
   virtual void loadFrom(const Folder & file __attribute__((unused))) {}
   virtual void loadFromAscii(std::ifstream & file __attribute__((unused))) {}
+  //! @brief Integrated hadron gas (integrand maxima and average multiplicities) written by saveToAscii().
+  virtual void loadFromAscii(std::ifstream & file, const ParticleDb & particleDb) { _thermalHadronGas.loadFromAscii(file,particleDb); }
   virtual void saveTo(Folder & file __attribute__((unused))) {}
-  virtual void saveToAscii(std::ofstream & file __attribute__((unused))){}
+  //! @brief Write the integrated hadron gas (see ThermalHadronGas::saveToAscii()).
+  virtual void saveToAscii(std::ofstream & file) { _thermalHadronGas.saveToAscii(file); }
   virtual void saveToAscii2(std::ofstream & file1 __attribute__((unused)),
                             std::ofstream & file2 __attribute__((unused))) {}
 

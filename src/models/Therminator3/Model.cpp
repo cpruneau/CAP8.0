@@ -67,7 +67,7 @@ namespace CAP
   min = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMin"));
   max = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMax"));
   if (max>min) setImpactParameterRange(min,max);
-   _thermalHadronGas.configure(taskName,typeName,configuration);
+  _thermalHadronGas.configure(taskName,"HADRON_GAS",configuration);
   }
 
   void   Model::print() const

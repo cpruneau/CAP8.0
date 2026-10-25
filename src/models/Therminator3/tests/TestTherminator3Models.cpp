@@ -15,9 +15,11 @@
 //!   and the multiplicities and <pT> of generated events (Model::generateEvent()) against 1000 Therminator 2 events.
 //! - Hydro2D on a hypersurface built to be the BlastWave one (tau = const, rho in [0,rhoMax], constant vT): the
 //!   multiplicities must be those of BlastWave, which checks the dSigma.p of the hydro model.
+//! - The integrated hadron gas written by saveToAscii() and read back by loadFromAscii().
 //! - BWA with formation (subtype 6): every particle must stream back, during its delay, onto the hypersurface.
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <string>
 #include <vector>
 #include "TRandom.h"
@@ -166,6 +168,24 @@ int main()
     // the Monte Carlo integrations (2e6 draws here and in Therminator 2) each fluctuate by about 1%
     check(std::fabs(ratio-1.0)<0.025, std::string("BlastWave multiplicity of ")+species[k].name, __LINE__);
     }
+
+  // the integrated gas written by saveToAscii() reads back with loadFromAscii()
+  {
+  const char * gasFile = "TestTherminator3Models_gas.txt";
+  { std::ofstream out(gasFile); blastWave.saveToAscii(out); }
+  CAP::ThermalHadronGas gas;
+  { std::ifstream in(gasFile); gas.loadFromAscii(in,db); }
+  std::remove(gasFile);
+  bool same = gas.hadrons().size()==species.size();
+  for (unsigned int k=0; same && k<species.size(); k++)
+    {
+    const ThermalHadron & a = gas.hadrons()[k], & b = blastWave.thermalHadronGas().hadrons()[k];
+    same = a.type().pdgCode()==b.type().pdgCode()
+        && std::fabs(a.avgMultiplicity()-b.avgMultiplicity()) <= 1e-8*b.avgMultiplicity()
+        && std::fabs(a.integrand()-b.integrand()) <= 1e-8*b.integrand();
+    }
+  check(same, "hadron gas saved and loaded back", __LINE__);
+  }
 
   const int nEvents = 1000;
   std::vector<Generated> bw = generate(blastWave,nEvents);

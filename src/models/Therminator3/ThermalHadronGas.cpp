@@ -194,7 +194,7 @@ namespace CAP
   printLine();
   printLine();
   printString("Hadron Gas");
-  printValue("_temperature",_temperature);
+  printValue("temperature",_temperature);
   printValue("mu",_mu);
   printValue("muQ",_muQ);
   printValue("muS",_muS);
@@ -223,13 +223,13 @@ namespace CAP
                                    const String & objectType,
                                    const Configuration & configuration)
   {
-  _temperature = configuration.valueDouble(createKey(taskName,objectType,"_temperature"));
-  _muBaryon = configuration.valueDouble(   createKey(taskName,objectType,"_muBaryon"));
-  _muQ      = configuration.valueDouble(   createKey(taskName,objectType,"_muQ"));
-  _muS      = configuration.valueDouble(   createKey(taskName,objectType,"_muS"));
-  _muC      = configuration.valueDouble(   createKey(taskName,objectType,"_muC"));
-  _muB      = configuration.valueDouble(   createKey(taskName,objectType,"_muB"));
-  _muT      = configuration.valueDouble(   createKey(taskName,objectType,"_muT"));
+  _temperature = configuration.valueDouble(createKey(taskName,objectType,"temperature"));
+  _muBaryon = configuration.valueDouble(   createKey(taskName,objectType,"muBaryon"));
+  _muQ      = configuration.valueDouble(   createKey(taskName,objectType,"muQ"));
+  _muS      = configuration.valueDouble(   createKey(taskName,objectType,"muS"));
+  _muC      = configuration.valueDouble(   createKey(taskName,objectType,"muC"));
+  _muB      = configuration.valueDouble(   createKey(taskName,objectType,"muB"));
+  _muT      = configuration.valueDouble(   createKey(taskName,objectType,"muT"));
 
   if (0)
     {
@@ -287,7 +287,6 @@ namespace CAP
     try
       {
       int    pdgCode;
-      String name;
       double nDensity = 0;
       double eDensity = 0;
       double sDensity = 0;
@@ -295,9 +294,12 @@ namespace CAP
       double feedDownNumberDensity = 0;
       double integrand = 0;
       double averageMultiplicity = 0;
-      inputFile >> pdgCode >> integrand >> averageMultiplicity;
+      // one line per hadron, as written by saveToAscii()
+      inputFile >> pdgCode >> nDensity >> eDensity >> sDensity >> pressure >> feedDownNumberDensity >> integrand >> averageMultiplicity;
+      if (!inputFile) throw Exception("Truncated hadron gas file",__FUNCTION__);
 
       ParticleType * type = db.findPdgCode(pdgCode);
+      if (!type) throw Exception(String("Unknown PDG code ")+pdgCode,__FUNCTION__);
       ThermalHadron hadron;
       hadron.setType(type);
       hadron.setNumberDensity(nDensity);
@@ -319,18 +321,19 @@ namespace CAP
 
   void ThermalHadronGas::saveToAscii(std::ofstream & outputFile)
   {
+  // the number of hadrons, then one line per hadron (read back by loadFromAscii())
+  outputFile << _hadrons.size() << endl;
+  outputFile.precision(10);
   for (auto & hadron : _hadrons)
     {
-    const ParticleType & type = hadron.type();
-    outputFile << type.pdgCode() << endl;
-    outputFile << type.name() << endl;
-    outputFile << hadron.numberDensity() << endl;
-    outputFile << hadron.energyDensity() << endl;
-    outputFile << hadron.entropyDensity() << endl;
-    outputFile << hadron.partialPressure() << endl;
-    outputFile << hadron.numberDensityWFD() << endl;
-    outputFile << hadron.integrand() << endl;
-    outputFile << hadron.avgMultiplicity() << endl;
+    outputFile << hadron.type().pdgCode()      << " "
+               << hadron.numberDensity()       << " "
+               << hadron.energyDensity()       << " "
+               << hadron.entropyDensity()      << " "
+               << hadron.partialPressure()     << " "
+               << hadron.numberDensityWFD()    << " "
+               << hadron.integrand()           << " "
+               << hadron.avgMultiplicity()     << endl;
     }
   }
 }   // namespace CAP
