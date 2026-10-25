@@ -134,6 +134,7 @@ namespace CAP
   for (auto & hadron : hadrons)
     {
     ParticleType & type = hadron.type();
+    if (type.isPhoton()) continue; // no primordial photons (as in Therminator 2)
     mean  = multFraction * hadron.avgMultiplicity();
     switch (_fluctType)
       {
