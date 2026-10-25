@@ -16,9 +16,13 @@
 //! - Hydro2D on a hypersurface built to be the BlastWave one (tau = const, rho in [0,rhoMax], constant vT): the
 //!   multiplicities must be those of BlastWave, which checks the dSigma.p of the hydro model.
 //! - The integrated hadron gas written by saveToAscii() and read back by loadFromAscii().
+//! - Hydro3D on a hypersurface built to be a boost-invariant BlastWave one: same multiplicities as BlastWave.
+//! - Hydro2D on Therminator 2's RHIC 20-30% hypersurface (when $THERMINATOR2_DIR is set): multiplicities and <pT>
+//!   against a Therminator 2 run.
 //! - BWA with formation (subtype 6): every particle must stream back, during its delay, onto the hypersurface.
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -30,6 +34,7 @@
 #include "ModelBlastWave.hpp"
 #include "ModelBWA.hpp"
 #include "ModelHydro2D.hpp"
+#include "ModelHydro3D.hpp"
 
 using namespace CAP;
 
@@ -117,6 +122,40 @@ public:
       this->_distanceFieldDZeta(i,j,0) = -tau0*std::cos(zeta)/(std::sin(zeta)*std::sin(zeta));
       }
     }
+  }
+  //! 3+1 hypersurface of a boost-invariant BlastWave: tau = tauI + D sin(theta) sin(zeta) = tau0 (tauI = 0),
+  //! rho = D sin(theta) cos(zeta) = tau0 cot(zeta) in [0,rhoMax], eta = D cos(theta)/Lambda, with Lambda = tau0/6 and
+  //! theta in [pi/4,3pi/4], so |eta| reaches 6/sin(zeta) >= 6; radial flow u_T = gamma vT, fluid rapidity eta.
+  void setBlastWave3DHypersurface(unsigned int nZeta, unsigned int nPhi, unsigned int nTheta)
+  {
+  this->_tauI   = 0.0;
+  this->_lambda = tau0/6.0;
+  const double zetaMin = std::atan(tau0/rhoMax), zetaMax = M_PI/2, thetaMin = M_PI/4, thetaMax = 3*M_PI/4;
+  std::vector<double> minima = { zetaMin, 0.0, thetaMin }, maxima = { zetaMax, 2*M_PI, thetaMax };
+  std::vector<unsigned int> nPoints = { nZeta, nPhi, nTheta };
+  this->_distanceField        = ScalarField("Distance",      minima,maxima,nPoints);
+  this->_distanceFieldDZeta   = ScalarField("DistanceDZeta", minima,maxima,nPoints);
+  this->_distanceFieldDPhi    = ScalarField("DistanceDPhi",  minima,maxima,nPoints,0.0);
+  this->_distanceFieldDTheta  = ScalarField("DistanceDTheta",minima,maxima,nPoints);
+  this->uxFluidVelocityField  = ScalarField("FluidUx",       minima,maxima,nPoints);
+  this->uyFluidVelocityField  = ScalarField("FluidUy",       minima,maxima,nPoints);
+  this->rapidityFluidField    = ScalarField("FluidRap",      minima,maxima,nPoints);
+  const double uT = vT/std::sqrt(1.0-vT*vT);
+  for (unsigned int i=0; i<nZeta; i++)
+    for (unsigned int j=0; j<nPhi; j++)
+      for (unsigned int k=0; k<nTheta; k++)
+        {
+        double zeta  = zetaMin  + i*(zetaMax-zetaMin)/(nZeta-1);
+        double phi   = j*2*M_PI/(nPhi-1);
+        double theta = thetaMin + k*(thetaMax-thetaMin)/(nTheta-1);
+        double d     = tau0/(std::sin(theta)*std::sin(zeta));
+        this->_distanceField(i,j,k)       = d;
+        this->_distanceFieldDZeta(i,j,k)  = -d*std::cos(zeta)/std::sin(zeta);
+        this->_distanceFieldDTheta(i,j,k) = -d*std::cos(theta)/std::sin(theta);
+        this->uxFluidVelocityField(i,j,k) = uT*std::cos(phi);
+        this->uyFluidVelocityField(i,j,k) = uT*std::sin(phi);
+        this->rapidityFluidField(i,j,k)   = d*std::cos(theta)/this->_lambda;
+        }
   }
   unsigned long overflows() const { return this->nOverflows(); }
 };
@@ -218,6 +257,71 @@ int main()
     double ratio = n/bwMultiplicities[k];
     std::printf("  %-7s %10.3f (%10.3f)  ratio %.4f\n", species[k].name, n, bwMultiplicities[k], ratio);
     check(std::fabs(ratio-1.0)<0.025, std::string("Hydro2D multiplicity of ")+species[k].name, __LINE__);
+    }
+
+  // ---------------------------------------------------------------- Hydro3D on a boost-invariant BlastWave hypersurface
+  // compared with BlastWave over 12 units of spatial rapidity (the 3D surface reaches |eta| >= 6 everywhere)
+  {
+  TestModel<ModelBlastWave> wide;
+  wide.setUp(db,2000000);
+  wide._sRapidityRange = 12.0;
+  wide.calculateMultiplicities();
+  TestModel<ModelHydro3D> hydro3D;
+  hydro3D.setUp(db,2000000);
+  hydro3D.setBlastWave3DHypersurface(101,91,101);
+  hydro3D.calculateMultiplicities();
+  std::printf("Hydro3D on a BlastWave hypersurface: average multiplicity (BlastWave, 12 units of eta)\n");
+  for (unsigned int k=0; k<species.size(); k++)
+    {
+    double n = hydro3D.thermalHadronGas().hadrons()[k].avgMultiplicity();
+    double reference = wide.thermalHadronGas().hadrons()[k].avgMultiplicity();
+    std::printf("  %-7s %10.3f (%10.3f)  ratio %.4f\n", species[k].name, n, reference, n/reference);
+    check(std::fabs(n/reference-1.0)<0.025, std::string("Hydro3D multiplicity of ")+species[k].name, __LINE__);
+    }
+  }
+
+  // ---------------------------------------------------------------- Hydro2D on a Therminator 2 hypersurface
+  // Therminator 2's fomodel/lhyquid2dbi/RHICAuAu200c2030Ti455ti025Tf145.xml (lhyquid2dbi.ini: RapPRange 4,
+  // RapSRange 8), read with readFromXmlFile(); the directory of Therminator 2 is given by $THERMINATOR2_DIR
+  // (the check is skipped without it). Therminator 2 results: integration with 2e6 samples, 500 events.
+  const char * t2Dir = std::getenv("THERMINATOR2_DIR");
+  if (!t2Dir)
+    std::printf("Hydro2D on the Therminator 2 RHIC hypersurface: skipped (THERMINATOR2_DIR is not set)\n");
+  else
+    {
+    struct Reference { double multiplicity, perEvent, perEventError, meanPt, meanPtError; };
+    const std::vector<Reference> t2 =
+      {
+      { 195.559, 195.876, 0.626, 0.49337, 0.00110 },
+      {  48.1203, 47.864, 0.309, 0.67327, 0.00260 },
+      {  10.7583, 10.928, 0.148, 0.88912, 0.00666 },
+      {   3.82855, 3.924, 0.089, 0.96253, 0.01196 },
+      };
+    TestModel<ModelHydro2D> rhic;
+    rhic.setUp(db,2000000);
+    rhic.readFromXmlFile((String(t2Dir)+"/fomodel/lhyquid2dbi").c_str(),"RHICAuAu200c2030Ti455ti025Tf145.xml");
+    rhic.calculateMultiplicities();
+    const int nRhicEvents = 500;
+    std::vector<Generated> g = generate(rhic,nRhicEvents);
+    std::printf("Hydro2D on the Therminator 2 RHIC hypersurface: average multiplicity, per event and <pT> (Therminator 2)\n");
+    for (unsigned int k=0; k<species.size(); k++)
+      {
+      double n        = rhic.thermalHadronGas().hadrons()[k].avgMultiplicity();
+      double perEvent = g[k].n/nRhicEvents;
+      double perEventError = std::sqrt(g[k].n)/nRhicEvents;
+      double meanPt   = g[k].sumPt/g[k].n;
+      double error    = std::sqrt((g[k].sumPt2/g[k].n - meanPt*meanPt)/g[k].n);
+      double combined = std::sqrt(error*error + t2[k].meanPtError*t2[k].meanPtError);
+      double nPull    = (perEvent-t2[k].perEvent)/std::sqrt(perEventError*perEventError+t2[k].perEventError*t2[k].perEventError);
+      std::printf("  %-7s %9.3f (%9.3f) ratio %.4f   %8.3f +- %5.3f (%8.3f +- %5.3f) pull %+.2f   <pT> %.5f +- %.5f (%.5f +- %.5f) pull %+.2f\n",
+                  species[k].name, n, t2[k].multiplicity, n/t2[k].multiplicity, perEvent, perEventError,
+                  t2[k].perEvent, t2[k].perEventError, nPull, meanPt, error, t2[k].meanPt, t2[k].meanPtError,
+                  (meanPt-t2[k].meanPt)/combined);
+      check(std::fabs(n/t2[k].multiplicity-1.0)<0.025, std::string("RHIC Hydro2D multiplicity of ")+species[k].name, __LINE__);
+      check(std::fabs(nPull)<5, std::string("RHIC Hydro2D generated multiplicity of ")+species[k].name, __LINE__);
+      check(std::fabs(meanPt-t2[k].meanPt) < 5*combined, std::string("RHIC Hydro2D <pT> of ")+species[k].name, __LINE__);
+      }
+    std::printf("  draws above the accept/reject maximum: %lu\n", rhic.overflows());
     }
 
   // ---------------------------------------------------------------- BWA formation: back onto the hypersurface
