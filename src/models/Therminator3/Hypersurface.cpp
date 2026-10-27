@@ -61,6 +61,7 @@ namespace CAP
     _sVolume  =  rhs._sVolume;
     _pVolume  =  rhs._pVolume;
     _volume   =  rhs._volume;
+    _tVelocity = rhs._tVelocity;
     _tGamma   =  rhs._tGamma;
     _position =  rhs._position;
     _momentum =  rhs._momentum;

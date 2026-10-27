@@ -38,11 +38,12 @@ namespace CAP
   double e         = mT * std::cosh(pRapidity);
   _momentum.setTXYZ(e,pT*std::cos(pPhi),pT*std::sin(pPhi),mT*std::sinh(pRapidity));
 
-  double pDotU   = 1.0;
-  double dSigmaP = 1.0;
+  // static fireball: u = (cosh eta, 0, 0, sinh eta) on tau = tauI (BlastWave with vT = 0)
+  double mTcoshDiff = mT * std::cosh(sRapidity - pRapidity);
+  double pDotU   = mTcoshDiff;
+  double dSigmaP = tau*rho*mTcoshDiff;
   double denom = stat + std::exp( (pDotU-chemPotential)/_temperature.value() );
   double integrand = sf*pT*dPt*dSigmaP/(denom*twoPiCube());
-  hadron.setIntegrand(integrand);
   return integrand;
   }
 

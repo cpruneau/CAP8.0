@@ -382,8 +382,8 @@
     </PARTICLE>
     <PARTICLE name="kaon0492zero" title="K^{0}" pdg="311" charge="0" mass="0.497672" massUncertainty="0" width="0" widthUncertainty="0" spin="0" isospin="0.5" isospin3="-0.5" quarks="1" antiquarks="100" leptons="0"/>
     <PARTICLE name="kaon0492zero_bar" title="#bar{K}^{0}" pdg="-311" charge="0" mass="0.497672" massUncertainty="0" width="0" widthUncertainty="0" spin="0" isospin="0.5" isospin3="0.5" quarks="100" antiquarks="1" leptons="0"/>
-    <PARTICLE name="kaon0492plus" title="K^{+}" pdg="321" charge="1" mass="0.497672" massUncertainty="0" width="0" widthUncertainty="0" spin="0" isospin="0.5" isospin3="0.5" quarks="10" antiquarks="100" leptons="0"/>
-    <PARTICLE name="kaon0492minus" title="K^{-}" pdg="-321" charge="-1" mass="0.497672" massUncertainty="0" width="0" widthUncertainty="0" spin="0" isospin="0.5" isospin3="-0.5" quarks="100" antiquarks="10" leptons="0"/>
+    <PARTICLE name="kaon0492plus" title="K^{+}" pdg="321" charge="1" mass="0.493677" massUncertainty="0" width="0" widthUncertainty="0" spin="0" isospin="0.5" isospin3="0.5" quarks="10" antiquarks="100" leptons="0"/>
+    <PARTICLE name="kaon0492minus" title="K^{-}" pdg="-321" charge="-1" mass="0.493677" massUncertainty="0" width="0" widthUncertainty="0" spin="0" isospin="0.5" isospin3="-0.5" quarks="100" antiquarks="10" leptons="0"/>
     <PARTICLE name="kaon0892zero" title="K^{0}(892)" pdg="313" charge="0" mass="0.8961" massUncertainty="0" width="0.0507" widthUncertainty="0" spin="1" isospin="0.5" isospin3="-0.5" quarks="1" antiquarks="100" leptons="0">
       <DECAY branchingRatio="1" clebschGordan="true" products="pion0139minus kaon0492plus"/>
       <DECAY branchingRatio="1" clebschGordan="true" products="pion0135zero kaon0492zero"/>

@@ -12,6 +12,7 @@ namespace CAP
   public:
   ModelBlastWave();
   virtual ~ModelBlastWave() {}
+  virtual Model * clone() const { return new ModelBlastWave(*this); }
   virtual double calculateIntegrand(ThermalHadron & hadron);
   };
 

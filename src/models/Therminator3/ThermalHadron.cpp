@@ -175,7 +175,8 @@ namespace CAP
   double gSpin = _type->spinFactor();
   //double sign  = _type->isBaryon() ? -1.0 : 1.0;
   double prefactor = 0.5*gSpin/MATH::piSquare()/hBarC3();
-  double mu = muBaryon*_type->baryonNumber() + muS*_type->strangeness() + muC*_type->charm() + muB*_type->bottomNumber() + muT*_type->topNumber();
+  // strangeness S = N(sbar)-N(s): K+ has S = +1 (strangeness() is N(s)-N(sbar))
+  double mu = muBaryon*_type->baryonNumber() - muS*_type->strangeness() + muC*_type->charm() + muB*_type->bottomNumber() + muT*_type->topNumber();
   double beta      = 1.0/temperature;
   double beta2     = beta*beta;
   double betaMass  = beta*mass;

@@ -1,6 +1,8 @@
 #include "ModelHydro2D.hpp"
 #include "XmlDocument.hpp"
 #include "XmlScalarField.hpp"
+#include "FileSystem.hpp"
+#include "NameHelpers.hpp"
 
 using CAP::MATH::twoPiCube;
 using CAP::MATH::twoPi;
@@ -12,6 +14,17 @@ namespace CAP
   :
   Model()
   {    }
+
+  void ModelHydro2D::configure(const String & taskName,
+                         const String & typeName,
+                         const Configuration & configuration)
+  {
+  Model::configure(taskName,typeName,configuration);
+  String path = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"HYPERS:IMPORT:PATH")),
+                                           "CAP_HYPERSURFACE_PATH");
+  String fileName = configuration.valueString(createKey(taskName,typeName,"HYPERS:IMPORT:FILE_NAME"));
+  readFromXmlFile(path.c_str(),fileName.c_str());
+  }
 
   double ModelHydro2D::calculateIntegrand(ThermalHadron & hadron)
   {
@@ -36,9 +49,10 @@ namespace CAP
   double rho       = dhs*std::cos(zeta);
   _position.setTXYZ(tau*std::cosh(sRapidity),rho*std::cos(sPhi),rho*std::sin(sPhi),tau*std::sinh(sRapidity));
 
-  zeta      = gRandom->Rndm();
-  double zetac     = (zeta>0.9999999) ? 0.00000001 : 1.00-zeta;
-  double pT        = zeta/zetac;
+  // pT = u/(1-u): its own random number, zeta must stay the hypersurface angle used by dSigmaP below
+  double u         = gRandom->Rndm();
+  double zetac     = (u>0.9999999) ? 0.00000001 : 1.00-u;
+  double pT        = u/zetac;
   double dPt       = 1.0/(zetac*zetac);
   double pPhi      = twoPi() * gRandom->Rndm();
   double pRapidity = _pRapidityRange * (gRandom->Rndm() - 0.5);
@@ -68,8 +82,14 @@ namespace CAP
     }
   double denom = stat + std::exp( (pDotU-chemPotential)/_temperature.value() );
   double integrand = sf*pT*dPt*dSigmaP/(denom*twoPiCube());
-  hadron.setIntegrand(integrand);
   return integrand;
+  }
+
+  void ModelHydro2D::setHypercubeVolume()
+  {
+  // zeta x phi ranges of the hypersurface grid x spatial rapidity (Therminator 2 Hypersurface_Lhyquid2D)
+  _sVolume = (_distanceField.maximum(0)-_distanceField.minimum(0)) * (_distanceField.maximum(1)-_distanceField.minimum(1)) * _sRapidityRange;
+  _pVolume = _pRapidityRange * 1.0 * twoPi();
   }
 
   void   ModelHydro2D::readFromXmlFile(const char * inputPath,

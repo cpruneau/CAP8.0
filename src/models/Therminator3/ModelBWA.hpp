@@ -11,6 +11,7 @@ namespace CAP
   public:
   ModelBWA();
   virtual ~ModelBWA() {}
+  virtual Model * clone() const { return new ModelBWA(*this); }
   virtual double calculateIntegrand(ThermalHadron & hadron);
   };
 

@@ -70,7 +70,7 @@ namespace CAP
   double muC = _muCField.value();
   return (t.baryonNumber()*muB +
           t.isospin3()*muI +
-          t.strangeness()*muS +
+          -t.strangeness()*muS +   // strangeness S = N(sbar)-N(s): K+ has S = +1 (strangeness() is N(s)-N(sbar))
           t.charm()*muC );
   }
 
@@ -82,7 +82,7 @@ namespace CAP
   double muC = _muCField.interpolate(aX, aY, aZ);
   return (t.baryonNumber()*muB +
           t.isospin3()*muI +
-          t.strangeness()*muS +
+          -t.strangeness()*muS +   // strangeness S = N(sbar)-N(s): K+ has S = +1 (strangeness() is N(s)-N(sbar))
           t.charm()*muC );
   }
 

@@ -11,6 +11,7 @@
 using namespace std;
 using CAP::MATH::twoPiCube;
 using CAP::MATH::twoPi;
+using CAP::Physics::hBarC;
 
 
 namespace CAP
@@ -20,7 +21,9 @@ namespace CAP
   :
   ModelSettings(),
   Thermodynamics(),
-  Hypersurface()
+  Hypersurface(),
+  _maxIntegrandSafety(1.2),
+  _nOverflows(0)
   {    }
 
   void Model::configure(const String & taskName,
@@ -36,26 +39,35 @@ namespace CAP
   setMuC(        configuration.valueDouble(  createKey(taskName,typeName,"Thermodynamics:MuC")));
   _pRapidityRange = configuration.valueDouble(createKey(taskName,typeName,"pRapidityRange"));
   _sRapidityRange = configuration.valueDouble(createKey(taskName,typeName,"sRapidityRange"));
-  _rhoMax         = configuration.valueDouble(createKey(taskName,typeName,"rhoMax"));
-  _tauI           = configuration.valueDouble(createKey(taskName,typeName,"TauI"));
-  _tauC           = configuration.valueDouble(createKey(taskName,typeName,"TauC"));
+  // lengths and times are configured in fm and used in GeV^-1; temperatures and chemical potentials are in GeV
+  _rhoMax         = configuration.valueDouble(createKey(taskName,typeName,"rhoMax"))/hBarC();
+  _tauI           = configuration.valueDouble(createKey(taskName,typeName,"TauI"))/hBarC();
+  _tauC           = configuration.valueDouble(createKey(taskName,typeName,"TauC"))/hBarC();
   _tVelocity      = configuration.valueDouble(createKey(taskName,typeName,"tVelocity"));
   _amp            = configuration.valueDouble(createKey(taskName,typeName,"Amplitude"));
-  _delay          = configuration.valueDouble(createKey(taskName,typeName,"Delay"));
+  _delay          = configuration.valueDouble(createKey(taskName,typeName,"Delay"))/hBarC();
   _backFlow       = configuration.valueBool(  createKey(taskName,typeName,"BackFlow"));
   _tGamma         = gammaAtBeta(_tVelocity);
+  _nSamples       = configuration.valueInt(   createKey(taskName,typeName,"NSamples"),true,100000);
+  _maxIntegrandSafety = configuration.valueDouble(createKey(taskName,typeName,"MaxIntegrandSafety"),true,1.2);
+  // each event keeps the full average multiplicity unless a fraction range is configured
+  setMultiplicityFraction(configuration.valueDouble(createKey(taskName,typeName,"MultFractionMin"),true,1.0),
+                          configuration.valueDouble(createKey(taskName,typeName,"MultFractionMax"),true,1.0),
+                          configuration.valueInt(   createKey(taskName,typeName,"FluctuationType"),true,0));
 
   setSystemName(      configuration.valueString(createKey(taskName,typeName,"SystemName")));
   setSystemEnergy(    configuration.valueDouble(createKey(taskName,typeName,"SystemEnergy")));
+  // centrality or impact parameter, fixed or a range: ModelSettings keeps one of them, the last one configured
   setCentrality(      configuration.valueDouble(createKey(taskName,typeName,"Centrality")));
   double min = configuration.valueDouble(createKey(taskName,typeName,"CentralityMin"));
   double max = configuration.valueDouble(createKey(taskName,typeName,"CentralityMax"));
-  setCentralityRange(min,max);
-  min = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameter"));
-  max = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMin"));
-  setImpactParameter( configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMax")));
-  setImpactParameterRange(min,max);
-   _thermalHadronGas.configure(taskName,typeName,configuration);
+  if (max>min) setCentralityRange(min,max);
+  double impactParameter = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameter"));
+  if (impactParameter>0.0) setImpactParameter(impactParameter);
+  min = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMin"));
+  max = configuration.valueDouble(createKey(taskName,typeName,"ImpactParameterMax"));
+  if (max>min) setImpactParameterRange(min,max);
+  _thermalHadronGas.configure(taskName,"HADRON_GAS",configuration);
   }
 
   void   Model::print() const
@@ -82,58 +94,38 @@ namespace CAP
   }
 
 
+  void Model::setHypercubeVolume()
+  {
+  // spatial rapidity x azimuth x radius, and momentum rapidity x zeta in [0,1) x azimuth (Therminator 2 mHyperCube)
+  _sVolume = _sRapidityRange * twoPi() * _rhoMax;
+  _pVolume = _pRapidityRange * 1.0 * twoPi();
+  }
+
   void Model::calculateMultiplicities()
   {
+  setHypercubeVolume();
   _volume = _sVolume * _pVolume;
-//  for (auto & hadron : _thermalHadronGas.hadrons())
-//    {
-//    //ParticleType & type = hadron.type();
-//    //XXXX
-//    }
+  for (auto & hadron : _thermalHadronGas.hadrons())
+    {
+    double maxIntegrand = 0.0;
+    double sum = 0.0;
+    for (unsigned int iSample = 0; iSample < _nSamples; iSample++)
+      {
+      double integrand = calculateIntegrand(hadron);
+      if (integrand>maxIntegrand) maxIntegrand = integrand;
+      sum += integrand;
+      }
+    hadron.setIntegrand(maxIntegrand);
+    hadron.setAvgMultiplicity(_volume*sum/_nSamples);
+    }
   }
 
-  double Model::calculateIntegrand(ThermalHadron & hadron)
+  double Model::calculateIntegrand(ThermalHadron & hadron __attribute__((unused)))
   {
-  // Type of _statistics Bose-Einstein or Fermi-Dirac
-  ParticleType & type = hadron.type();
-  double sf    = type.spinFactor();
-  double stat  = type.statistics();
-  double mass  = type.mass();
-  double mass2 = mass*mass;
-  double chemPotential = chemicalPotential(type);
-
-  _position.setTXYZ(0.0,0.0,0.0,0.0);
-
-  double zeta      = gRandom->Rndm();
-  double zetac     = (zeta>0.9999999) ? 0.0000001 : 1.00-zeta;
-  double pT        = zeta/zetac;
-  double dPt       = 1.0/(zetac*zetac);
-  double pPhi      = twoPi() * gRandom->Rndm();
-  double pRapidity = _pRapidityRange * (gRandom->Rndm() - 0.5);
-  double mT        = std::sqrt(mass2+pT*pT);
-  double e         = mT * std::cosh(pRapidity);
-  _momentum.setTXYZ(e,pT*std::cos(pPhi),pT*std::sin(pPhi),mT*std::sinh(pRapidity));
-
-  double pDotU   = 1.0;
-  double dSigmaP = 1.0;
-  double denom = stat + std::exp( (pDotU-chemPotential)/_temperature.value() );
-  double integrand = sf*pT*dPt*dSigmaP/(denom*twoPiCube());
-  hadron.setIntegrand(integrand);
-  return integrand;
+  // each model (ModelHadronGas, ModelBlastWave, ...) has its own integrand
+  throw Exception("Model has no integrand: use one of the Model* classes",__FUNCTION__);
   }
 
-//  {
-//
-//  for (unsigned int iSample = 0; iSample < nSamplesIntegration; iSample++)
-//    {
-//    _integrand = calculateIntegrand(hadron);
-//    if (_integrand>maxIntegrand) maxIntegrand = _integrand;
-//    _mult += _integrand;
-//    }
-//  hadron.setIntegrand(maxIntegrand);
-//  hadron.setAvgMultiplicity(_mult*_volume/nSamplesIntegration);
-//  return _integrand;
-//  }
 
   void Model::generateEvent(Event & event,const ParticleFilter & particleFilter)
   {
@@ -150,6 +142,7 @@ namespace CAP
   for (auto & hadron : hadrons)
     {
     ParticleType & type = hadron.type();
+    if (type.isPhoton()) continue; // no primordial photons (as in Therminator 2)
     mean  = multFraction * hadron.avgMultiplicity();
     switch (_fluctType)
       {
@@ -177,19 +170,24 @@ namespace CAP
     // now generate the particles
     double   value;
     double   valueTest;
-    double   maxIntegrand = hadron.integrand();
+    // the maximum was sampled in calculateMultiplicities(); the safety factor covers values the sampling missed
+    double   maxIntegrand = _maxIntegrandSafety * hadron.integrand();
     unsigned int mult = hadron.multiplicity();
     unsigned int iParticle = 0;
     while (iParticle < mult)
       {
       value = calculateIntegrand(hadron);
+      if (value>maxIntegrand) _nOverflows++;
       valueTest = maxIntegrand * gRandom->Rndm();
       if (valueTest<value)
         {
         Particle & particle = Particle::factory().nextObject();
         particle.setType(&type);
         particle.setLive(true);
-        particle.setPosition(_position);
+        // positions are computed in GeV^-1 and given to the particles in fm (as the decayer uses)
+        VectorLorentz position;
+        position.setTXYZ(_position.t()*hBarC(),_position.x()*hBarC(),_position.y()*hBarC(),_position.z()*hBarC());
+        particle.setPosition(position);
         particle.setMomentum(_momentum);
         iParticle++;
         if (particleFilter.accept(particle)) event.addParticle(&particle);

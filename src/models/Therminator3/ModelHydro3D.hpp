@@ -12,7 +12,14 @@ namespace CAP
   public:
   ModelHydro3D();
   virtual ~ModelHydro3D() {}
+  virtual Model * clone() const { return new ModelHydro3D(*this); }
   virtual double calculateIntegrand(ThermalHadron& hadron);
+  //! @brief Model::configure(), then the hypersurface from the XML file HYPERS:IMPORT:PATH/HYPERS:IMPORT:FILE_NAME
+  //! (a Therminator 2 hypersurface file; the path is "DEFAULT", absolute, "./..." or relative to $CAP_HYPERSURFACE_PATH).
+  virtual void configure(const String & taskName,
+                         const String & objectType,
+                         const Configuration & configuration);
+  virtual void setHypercubeVolume();
   virtual void readFromXmlFile(const char * inputPath,
                                const char * inputFileName);
 

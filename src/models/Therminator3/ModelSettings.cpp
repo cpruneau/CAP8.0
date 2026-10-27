@@ -21,9 +21,9 @@ namespace CAP
   _centralityMax(1.0),
   _nSamples(100000),
   _fluctType(0),
-  _multFractionMin(0),
+  _multFractionMin(1),
   _multFractionMax(1),
-  _multFractionRange(1),
+  _multFractionRange(0),
   _disableFD(kDisableAll),
   _backFlow(0)
   { }

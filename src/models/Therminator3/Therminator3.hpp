@@ -10,6 +10,15 @@
 
 namespace CAP
 {
+  //! @brief Therminator 3: thermal event generator on a freeze-out hypersurface (the models of Therminator 2).
+  //!
+  //! Configured like the other CAP tasks, from its TASK element in a workflow XML file (template written by
+  //! bin/CAP --xml-templates, edited with RunCAP.py); the keys below are relative to the task:
+  //! - HYDRO_MODEL:TYPE: HG, BW, BWA, SFO, HYDRO2D or HYDRO3D; HYDRO_MODEL:... the model parameters (lengths in fm,
+  //!   Thermodynamics:Temperature and the chemical potentials in GeV, see Model::configure()), HYPERS:IMPORT:PATH and
+  //!   FILE_NAME the hypersurface of the hydro models, MULT:IMPORT/EXPORT the integrated hadron gas, EVENTS:CREATE;
+  //! - HADRON_GAS:... the hadron gas (ThermalHadronGas::configure());
+  //! - HISTOGRAM:... the thermal histograms (ThermalHistos).
   class Therminator3
   :
   public EventProcessor
@@ -18,8 +27,9 @@ namespace CAP
   
   Therminator3();
   Therminator3(const Therminator3 & task);
-  Therminator3 operator=(const Therminator3 & task);
-  virtual ~Therminator3(){};
+  //! @brief Assignment: this task gets its own copy of the model of task (see Model::clone()).
+  Therminator3 & operator=(const Therminator3 & task);
+  virtual ~Therminator3() { delete _model; }
   virtual void setDefaultConfiguration();
   virtual void configure(const Configuration & configuration);
   virtual void initialize();
@@ -33,8 +43,13 @@ namespace CAP
 
   protected:
 
-  bool   _createEvents;
-  bool   _exportModel;
+  bool   _createEvents;         //!< generate an event at each execute()
+  bool   _importModel;          //!< read the integrated hadron gas (MULT:IMPORT) instead of integrating it
+  bool   _exportModel;          //!< write the integrated hadron gas (MULT:EXPORT)
+  String _modelImportPath;
+  String _modelImportFileName;
+  String _modelExportPath;
+  String _modelExportFileName;
 
   String _modelSelected;
   bool   _useHistos;

@@ -61,7 +61,7 @@ void parse(int argc,
            CAP::String &  histogramPath)
 {
   CAP::String configurationPathDefault  = "Test/";
-  CAP::String configurationFileDefault  = "test.ini";
+  CAP::String configurationFileDefault  = "test.xml";
   CAP::String histogramPathDefault      = "test/";
 
   CAP::String hPath;

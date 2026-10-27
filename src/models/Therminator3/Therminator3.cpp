@@ -1,5 +1,6 @@
 #include "Therminator3.hpp"
 #include "FileSystem.hpp"
+#include "StreamHelpers.hpp"
 #include <memory>
 #include "PrintHelpers.hpp"
 #include "ModelHadronGas.hpp"
@@ -16,6 +17,13 @@ namespace CAP
   Therminator3::Therminator3()
   :
   EventProcessor(),
+  _createEvents(true),
+  _importModel(false),
+  _exportModel(false),
+  _modelImportPath(""),
+  _modelImportFileName(""),
+  _modelExportPath(""),
+  _modelExportFileName(""),
   _modelSelected("BW"),
   _useHistos(true),
   _createHistos(true),
@@ -40,6 +48,13 @@ namespace CAP
   Therminator3::Therminator3(const Therminator3 & source)
   :
   EventProcessor(source),
+  _createEvents(source._createEvents),
+  _importModel(source._importModel),
+  _exportModel(source._exportModel),
+  _modelImportPath(source._modelImportPath),
+  _modelImportFileName(source._modelImportFileName),
+  _modelExportPath(source._modelExportPath),
+  _modelExportFileName(source._modelExportFileName),
   _modelSelected(source._modelSelected),
   _useHistos(source._useHistos),
   _createHistos(source._createHistos),
@@ -52,15 +67,22 @@ namespace CAP
   _exportPath(source._exportPath),
   _exportFileName(source._exportFileName),
   _forceRewrite(source._forceRewrite),
-  _model(source._model),
+  _model(source._model ? source._model->clone() : nullptr),   // its own copy: no shared, doubly deleted model
   _histograms(source._histograms)
   {   }
 
-  Therminator3 Therminator3::operator=(const Therminator3 & rhs)
+  Therminator3 & Therminator3::operator=(const Therminator3 & rhs)
   {
   if (this!=&rhs)
     {
     EventProcessor::operator=(rhs);
+    _createEvents   = rhs._createEvents;
+    _importModel    = rhs._importModel;
+    _exportModel    = rhs._exportModel;
+    _modelImportPath     = rhs._modelImportPath;
+    _modelImportFileName = rhs._modelImportFileName;
+    _modelExportPath     = rhs._modelExportPath;
+    _modelExportFileName = rhs._modelExportFileName;
     _modelSelected  = rhs._modelSelected;
     _useHistos      = rhs._useHistos;
     _createHistos   = rhs._createHistos;
@@ -73,7 +95,8 @@ namespace CAP
     _exportPath     = rhs._exportPath;
     _exportFileName = rhs._exportFileName;
     _forceRewrite   = rhs._forceRewrite;
-    _model          = rhs._model;
+    delete _model;
+    _model          = rhs._model ? rhs._model->clone() : nullptr;
     _histograms     = rhs._histograms;
     }
   return *this;
@@ -87,27 +110,49 @@ namespace CAP
 
   String objectType = "HYDRO_MODEL";
   _configuration.addProperty(createKey(taskName,objectType,"TYPE"), "BW");
+  _configuration.addProperty(createKey(taskName,objectType,"EVENTS:CREATE"), true);
+  // model parameters (Model::configure()): Therminator 2's blastwave.ini; lengths in fm, temperature and
+  // chemical potentials in GeV
+  _configuration.addProperty(createKey(taskName,objectType,"Type"),                         0);
+  _configuration.addProperty(createKey(taskName,objectType,"Subtype"),                      0);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:Temperature"),   0.1656);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:MuB"),           0.0285);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:MuI"),          -0.0009);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:MuS"),           0.0069);
+  _configuration.addProperty(createKey(taskName,objectType,"Thermodynamics:MuC"),           0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"pRapidityRange"),               4.0);
+  _configuration.addProperty(createKey(taskName,objectType,"sRapidityRange"),               8.0);
+  _configuration.addProperty(createKey(taskName,objectType,"rhoMax"),                       8.21);
+  _configuration.addProperty(createKey(taskName,objectType,"TauI"),                         8.17);
+  _configuration.addProperty(createKey(taskName,objectType,"TauC"),                         10.55);
+  _configuration.addProperty(createKey(taskName,objectType,"tVelocity"),                    0.341);
+  _configuration.addProperty(createKey(taskName,objectType,"Amplitude"),                    0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"Delay"),                        0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"BackFlow"),                     false);
+  _configuration.addProperty(createKey(taskName,objectType,"NSamples"),                     100000);
+  _configuration.addProperty(createKey(taskName,objectType,"MaxIntegrandSafety"),           1.2);
+  _configuration.addProperty(createKey(taskName,objectType,"MultFractionMin"),              1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"MultFractionMax"),              1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"FluctuationType"),              0);
+  _configuration.addProperty(createKey(taskName,objectType,"SystemName"),                   "PbPb");
+  _configuration.addProperty(createKey(taskName,objectType,"SystemEnergy"),                 5020.0);
+  _configuration.addProperty(createKey(taskName,objectType,"Centrality"),                   0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"CentralityMin"),                0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"CentralityMax"),                0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"ImpactParameter"),              0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"ImpactParameterMin"),           0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"ImpactParameterMax"),           0.0);
+  // integrated hadron gas: read from (MULT:IMPORT) or written to (MULT:EXPORT) a text file
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:CREATE"), true);
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT"), true);
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:BASE_NAME"),"NONE");
+  _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT"), false);
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:IMPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT:BASE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"MULT:EXPORT:FORCE_REWRITE"),true);
 
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:IMPORT"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:CREATE"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT"), false);
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:IMPORT:BASE_NAME"),"NONE");
+  // hypersurface file of the hydro models (HYDRO2D, HYDRO3D): a Therminator 2 XML hypersurface
   _configuration.addProperty(createKey(taskName,objectType,"HYPERS:IMPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"HYPERS:IMPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT:BASE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT:PATH"),"DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"HYPERS:EXPORT:FORCE_REWRITE"),true);
 
   // parameters for event generation are handled in the base class.
 
@@ -119,35 +164,17 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"muC"),         0.0);
   _configuration.addProperty(createKey(taskName,objectType,"muB"),         0.0);
   _configuration.addProperty(createKey(taskName,objectType,"muT"),         0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT"),          false);
-  _configuration.addProperty(createKey(taskName,objectType,"CREATE"),          true);
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT"),          false);
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT:PATH"),     "DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT:BASE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:PATH"),     "DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:BASE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FILE_NAME"),"NONE");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FORCE_REWRITE"),true);
 
   objectType = "HISTOGRAM";
-  if (reportInfo(__FUNCTION__))
-    {
-    printCR();
-    printValue("taskName",taskName);
-    printValue("objectType",objectType);
-    }
   _configuration.addProperty(createKey(taskName,objectType,"USE"),             false);
-  _configuration.addProperty(createKey(taskName,objectType,"N"),               0);
+  _configuration.addProperty(createKey(taskName,objectType,"BASE_NAME"),       "T3");
   _configuration.addProperty(createKey(taskName,objectType,"IMPORT"),          false);
   _configuration.addProperty(createKey(taskName,objectType,"CREATE"),          false);
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT"),          false);
   _configuration.addProperty(createKey(taskName,objectType,"IMPORT:BASE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"IMPORT:PATH"),     "DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"IMPORT:FILE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:BASE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:PATH"),     "DEFAULT");
-  _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FILE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FORCE_REWRITE"),true);
   _configuration.addProperty(createKey(taskName,objectType,"index_fill"),    true);
   _configuration.addProperty(createKey(taskName,objectType,"index_nbins"),   200);
@@ -157,15 +184,6 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"mass_nbins"),    10);
   _configuration.addProperty(createKey(taskName,objectType,"mass_min"),      0.0);
   _configuration.addProperty(createKey(taskName,objectType,"mass_max"),      4.0);
-
-  printValue("HISTOGRAM:index_fill",_configuration.valueBool(createKey(taskName,objectType,"index_fill")));
-  printValue("HISTOGRAM:index_nbins",_configuration.valueInt(createKey(taskName,objectType,"index_nbins")));
-  printValue("HISTOGRAM:index_min",_configuration.valueDouble(createKey(taskName,objectType,"index_min")));
-  printValue("HISTOGRAM:index_max",_configuration.valueDouble(createKey(taskName,objectType,"index_max")));
-  printValue("HISTOGRAM:mass_fill",_configuration.valueBool(createKey(taskName,objectType,"mass_fill")));
-  printValue("HISTOGRAM:mass_nbins",_configuration.valueInt(createKey(taskName,objectType,"mass_nbins")));
-  printValue("HISTOGRAM:mass_min",_configuration.valueDouble(createKey(taskName,objectType,"mmass_min")));
-  printValue("HISTOGRAM:mass_max",_configuration.valueDouble(createKey(taskName,objectType,"mmass_max")));
   }
 
   void Therminator3::configure(const Configuration & configuration)
@@ -190,6 +208,13 @@ namespace CAP
   else
     throw Exception("Unknown model selected",__FUNCTION__);
   _model->configure(taskName,typeName,configuration);
+  _createEvents        = configuration.valueBool(  createKey(taskName,typeName,"EVENTS:CREATE"));
+  _importModel         = configuration.valueBool(  createKey(taskName,typeName,"MULT:IMPORT"));
+  _exportModel         = configuration.valueBool(  createKey(taskName,typeName,"MULT:EXPORT"));
+  _modelImportPath     = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"MULT:IMPORT:PATH")),"CAP_HISTOS_IMPORT_PATH");
+  _modelImportFileName = configuration.valueString(createKey(taskName,typeName,"MULT:IMPORT:FILE_NAME"));
+  _modelExportPath     = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"MULT:EXPORT:PATH")),"CAP_HISTOS_EXPORT_PATH");
+  _modelExportFileName = configuration.valueString(createKey(taskName,typeName,"MULT:EXPORT:FILE_NAME"));
   typeName = "HISTOGRAM";
   String importPathA;
   String exportPathA;
@@ -213,6 +238,20 @@ namespace CAP
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   EventProcessor::initialize();
+  if (nParticleDbs()==0)
+    throw Exception("Therminator3 needs a particle database: set PARTICLE_DB:USE and PARTICLE_DB_0:NAME",__FUNCTION__);
+  // the integrand maxima and the average multiplicities: read back from a file, or integrated here
+  if (_importModel)
+    {
+    std::ifstream & inputFile = openInputAsciiFile(_modelImportPath,_modelImportFileName,".txt");
+    _model->loadFromAscii(inputFile,db());
+    inputFile.close();
+    }
+  else
+    {
+    _model->thermalHadronGas().loadHadrons(db());
+    _model->calculateMultiplicities();
+    }
   _histograms.create();
   }
 
@@ -220,28 +259,24 @@ namespace CAP
   {
   _taskExecuted.increment();
 
-  if (_createEvents) // fix me
+  if (_createEvents)
     {
-    //Event & theEvent = event();
-    //const std::vector<ParticleFilter*> & pFs = particleFilters();
-    Particle::factory().reset();
-    //ParticleDb & particleDb = db();
-    //std::vector<ParticleType*> & _particleTypes = particleDb._particleTypes();
-    //_model->generateEvent(event,_particleTypes,particleFilters); // each _model has its own event
+    // the event loop (EventIterator) resets the event and the particle factory before each execute()
+    static const ParticleFilter acceptAll;
+    const ParticleFilter & filter = particleFilters().empty() ? acceptAll : *particleFilters()[0];
+    _model->generateEvent(event(),filter);
+    _eventAccepted.increment();
     }
   }
 
   void Therminator3::finalize()
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  if (_model) delete _model;
   EventProcessor::finalize();
 
   if (_exportModel)
     {
-    int temp = 1000*_model->temperature();
-    _exportFileName = _exportBaseName + temp;
-    std::ofstream & outputFile = openOutputAsciiFile(_exportPath,_exportFileName,".txt",true);
+    std::ofstream & outputFile = openOutputAsciiFile(_modelExportPath,_modelExportFileName,".txt",true);
     _model->saveToAscii(outputFile);
     outputFile.close();
     }
@@ -255,6 +290,9 @@ namespace CAP
     _histograms.saveTo(*outputFile);
     outputFile->write();
     }
+  // the model is used above (temperature, saveToAscii): delete it last
+  delete _model;
+  _model = nullptr;
   }
 
 
