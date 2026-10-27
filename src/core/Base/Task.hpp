@@ -91,10 +91,10 @@ namespace CAP
 
   //! @brief Add the default configuration of the task: <name>:TASK:NAME, <name>:TASK:CLASS and <name>:TASK:SEVERITY (INFO).
   //! Derived classes add their own parameters.
-  virtual void setDefaultConfiguration();
+  virtual void setDefaultConfiguration() override;
   //! @brief Take the properties of this task from a configuration and set the report level from <name>:TASK:SEVERITY.
   //! @param configuration configuration
-  virtual void configure(const Configuration & configuration);
+  virtual void configure(const Configuration & configuration) override;
   //! @brief Start the timer, reset the execution counter and initialize the subtasks.
   virtual void initialize();
   //! @brief Count the execution and execute the subtasks.
@@ -118,11 +118,11 @@ namespace CAP
   //!
   virtual void loadHistograms(const Folder & top);
   //! @brief Reset the subtasks and set the execution counter to 0.
-  virtual void reset();
+  virtual void reset() override;
   //! @brief Clear the execution counter and delete the subtasks.
-  virtual void clear();
+  virtual void clear() override;
   //! @brief Print the task, its execution counter, its subtasks and its timer.
-  virtual void print() const;
+  virtual void print() const override;
   //!
   //! @brief Create the subtasks of a task listed in a configuration (<parentName>:SUBTASK:N and
   //! <parentName>:SUBTASK_<k>:NAME), with createTask().

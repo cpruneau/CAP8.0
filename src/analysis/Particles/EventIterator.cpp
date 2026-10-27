@@ -7,7 +7,9 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
+#include <algorithm>
 #include "EventIterator.hpp"
+#include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
@@ -65,6 +67,35 @@ void EventIterator::configure(const Configuration & configuration)
     printValue(createKey(taskName,"EVENT:REQUESTED:N"),_nEventsRequested);
     printValue(createKey(taskName,"EVENT:REPORT:N"),   _nEventsReport);
     }
+}
+
+void EventIterator::initialize()
+{
+  // the event lists are set by configure(): checked before the subtasks initialize (PYTHIA's takes a while)
+  for (auto & subTask : subTasks()) checkEventsMadeBy(*subTask);
+  EventProcessor::initialize();
+}
+
+void EventIterator::checkEventsMadeBy(const Task & task) const
+{
+  if (dynamic_cast<const EventIterator*>(&task)) return;     // a nested iterator resets its own events
+  const EventProcessor * processor = dynamic_cast<const EventProcessor*>(&task);
+  if (processor && processor->makesEvents())
+    {
+    for (const Event * made : processor->events())
+      {
+      if (std::find(events().begin(),events().end(),made)!=events().end()) continue;
+      String message = "Events ";
+      message += made->name();
+      message += " made by task ";
+      message += task.name();
+      message += " are not used by the event iterator ";
+      message += name();
+      message += ": the iterator must use them (it resets them before each event)";
+      throw ConfigurationException(createKey(name(),"EVENT"),message,__FUNCTION__);
+      }
+    }
+  for (auto & subTask : task.subTasks()) checkEventsMadeBy(*subTask);
 }
 
 void EventIterator::execute()

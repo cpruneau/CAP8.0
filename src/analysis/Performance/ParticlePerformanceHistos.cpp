@@ -64,11 +64,13 @@ namespace CAP
   }
 
   void ParticlePerformanceHistos::configure(const String & taskName,
-                                            const String & objectType,
+                                            const String & type,
                                             const Configuration & configuration,
                                             unsigned int index)
   {
-  HistogramFolder::configure(taskName,objectType,configuration,index);
+  // the binning is in the HISTOGRAM group of the task, whatever the list of the folder (HISTOGRAM_1, ...)
+  String objectType = type.beginsWith("HISTOGRAM") ? String("HISTOGRAM") : type;
+  HistogramFolder::configure(taskName,type,configuration,index);
   pt_nbins   = configuration.valueInt(createKey(taskName,objectType,"pt_nbins"));
   pt_min     = configuration.valueDouble(createKey(taskName,objectType,"pt_min"));
   pt_max     = configuration.valueDouble(createKey(taskName,objectType,"pt_max"));

@@ -30,12 +30,6 @@ namespace CAP
   while (k<s.size() && std::isspace(static_cast<unsigned char>(s[k]))) k++;
   return s.substr(k);
   }
-
-  bool fail(String * reason, const std::string & message)
-  {
-  if (reason) *reason = String(message.c_str());
-  return false;
-  }
   }
 
   XmlFile::XmlFile(const String & path, Access access)

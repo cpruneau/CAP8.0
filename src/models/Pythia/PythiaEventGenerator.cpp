@@ -68,7 +68,6 @@ void PythiaEventGenerator::setDefaultConfiguration()
   _configuration.addProperty(createKey(taskName,"Print:Statistics"), true);
   _configuration.addProperty(createKey(taskName,"Beams:idA"),        2212);
   _configuration.addProperty(createKey(taskName,"Beams:idB"),        2212);
-  _configuration.addProperty(createKey(taskName,"Print:NEvents"),    0);
   _configuration.addProperty(createKey(taskName,"Beams:frameType"),  2);
   _configuration.addProperty(createKey(taskName,"Beams:eCM"),        2700.0);
   _configuration.addProperty(createKey(taskName,"Beams:eA"),         1350.0);
@@ -93,7 +92,7 @@ void PythiaEventGenerator::setDefaultConfiguration()
 
 //!
 //! Directory of the PYTHIA xml files: the xmlInputPath parameter, else $PYTHIA8DATA, else
-//! $CAP_PYTHIA8_PATH/share/Pythia8/xmldoc, else PYTHIA's own default.
+//! $CAP_PYTHIA8_PATH/share/Pythia8/xmldoc, else that of the Pythia8 CAP was built with (CAP_PYTHIA8_XMLDOC).
 //!
 static String pythiaXmlPath(const String & configured)
 {
@@ -107,7 +106,11 @@ static String pythiaXmlPath(const String & configured)
     path += "/share/Pythia8/xmldoc";
     return path;
     }
+#ifdef CAP_PYTHIA8_XMLDOC
+  return String(CAP_PYTHIA8_XMLDOC);
+#else
   return String("../share/Pythia8/xmldoc");
+#endif
 }
 
 void PythiaEventGenerator::initialize()
@@ -116,6 +119,8 @@ void PythiaEventGenerator::initialize()
   EventProcessor::initialize();
   String taskName = name();
   delete pythia;
+  typeOfCode.clear();
+  skippedCodes.clear();
   String xmlPath = pythiaXmlPath(_configuration.valueString(createKey(taskName,"xmlInputPath")));
   pythia = new Pythia8::Pythia(xmlPath.str(), _configuration.valueBool(createKey(taskName,"Print:Banner")));
   int frameType = _configuration.valueInt(createKey(taskName,"Beams:frameType"));
@@ -124,14 +129,17 @@ void PythiaEventGenerator::initialize()
   pythia->settings.mode("Beams:frameType", frameType);
   switch (frameType)
     {
-      default:
-      case 1:
+      case 1:   // beams along the z axis, energies given in the CM frame
       pythia->settings.parm("Beams:eCM",_configuration.valueDouble(createKey(taskName,"Beams:eCM")));
       break;
-      case 2:
+      case 2:   // beams along the z axis, energies of beams A and B given separately
       pythia->settings.parm("Beams:eA",_configuration.valueDouble(createKey(taskName,"Beams:eA")));
       pythia->settings.parm("Beams:eB",_configuration.valueDouble(createKey(taskName,"Beams:eB")));
       break;
+      default:
+      throw ConfigurationException(createKey(taskName,"Beams:frameType"),
+                                   "Only frame types 1 (Beams:eCM) and 2 (Beams:eA, Beams:eB) are supported",
+                                   __FUNCTION__);
     }
   saveFinalOnly   = _configuration.valueBool(createKey(taskName,"SaveFinalOnly"));
   savePhotons     = _configuration.valueBool(createKey(taskName,"SavePhotons"));
@@ -147,17 +155,6 @@ void PythiaEventGenerator::initialize()
     pythia->readString(seedValueString.str());
     printValue("Pythia:Random:setSeed","ON");
     printValue("Pythia:Random:SeedValue",seedValueString);
-    }
-  for (int k=0; k<kNPythiaOptions; k++)
-    {
-    String option = "Option"; option += k;
-    String value  = _configuration.valueString(createKey(taskName,option));
-    if (!value.isNull() && !value.contains("none"))
-      {
-      String label = "Pythia:"; label += option;
-      printValue(label.data(),value);
-      pythia->readString(value.str());
-      }
     }
   bool useQCDCR    = _configuration.valueBool(createKey(taskName,"UseQCDCR"));
   bool useRopes    = _configuration.valueBool(createKey(taskName,"UseRopes"));
@@ -217,8 +214,50 @@ void PythiaEventGenerator::initialize()
     pythia->readString("PartonVertex:protonRadius = 0.7");
     pythia->readString("PartonVertex:emissionWidth = 0.1");
     }
+  // the free-form options come last, so that an explicit setting overrides the presets above
+  for (int k=0; k<kNPythiaOptions; k++)
+    {
+    String option = "Option"; option += k;
+    String value  = _configuration.valueString(createKey(taskName,option));
+    if (!value.isNull() && !value.contains("none"))
+      {
+      String label = "Pythia:"; label += option;
+      printValue(label.data(),value);
+      pythia->readString(value.str());
+      }
+    }
   if (!pythia->init())
     throw Exception("Pythia8::Pythia::init() failed (check the beam settings, the options and xmlInputPath)",__FUNCTION__);
+}
+
+//!
+//! Type of a PDG code in the particle database of the task, or nullptr if the database does not have it (e.g. K0L and
+//! K0S, 130 and 310, kept undecayed by PYTHIA options but absent from DefaultDb): such particles are skipped.
+//!
+ParticleType * PythiaEventGenerator::particleType(int pdg)
+{
+  auto found = typeOfCode.find(pdg);
+  if (found!=typeOfCode.end())
+    {
+    if (!found->second) skippedCodes[pdg]++;
+    return found->second;
+    }
+  ParticleDb & particleDb = db();
+  ParticleType * type = (particleDb.findIndexForPdgCode(pdg)>=0) ? particleDb.findPdgCode(pdg) : nullptr;
+  typeOfCode[pdg] = type;
+  if (!type) skippedCodes[pdg]++;
+  return type;
+}
+
+void PythiaEventGenerator::reportSkippedCodes()
+{
+  if (skippedCodes.empty() || !reportWarning(__FUNCTION__)) return;
+  printValue("Particles skipped: PDG codes not in the particle database",long(skippedCodes.size()));
+  for (auto & entry : skippedCodes)
+    {
+    String label = "PDG code "; label += entry.first;
+    printValue(label.data(),entry.second);
+    }
 }
 
 //!
@@ -236,7 +275,6 @@ void PythiaEventGenerator::execute()
     return;
     }
   Event & theEvent = event();
-  ParticleDb & particleDb = db();
   ParticleFilter * particleFilter = particleFilters().empty() ? nullptr : particleFilters()[0];
   int nEntries = pythia->event.size();
   for (int i = 1; i < nEntries; i++)
@@ -250,15 +288,11 @@ void PythiaEventGenerator::execute()
     if (!saveNeutrinos   &&  (absPdg==12 || absPdg==14 || absPdg==16 || absPdg==18)) continue;
     if (!savePhotons     &&  pdg==22) continue;
     if (!saveGaugeBosons &&  absPdg>22 && absPdg<40) continue;
-    ParticleType * particleType = particleDb.findPdgCode(pdg);
-    if (!particleType)
-      {
-      if (reportDebug(__FUNCTION__)) printValue("PDG code not in the particle database (skipped)",pdg);
-      continue;
-      }
+    ParticleType * type = particleType(pdg);
+    if (!type) continue;                         // not in the particle database (reported by finalize())
     Particle & particle = Particle::factory().nextObject();
     particle.reset();
-    particle.setType(particleType);
+    particle.setType(type);
     particle.setLive(true);
     particle.setEPxPyPz(source.e(),source.px(),source.py(),source.pz());
     particle.setXYZT(source.xProd(),source.yProd(),source.zProd(),source.tProd());
@@ -271,6 +305,7 @@ void PythiaEventGenerator::execute()
 void PythiaEventGenerator::finalize()
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
+  reportSkippedCodes();
   if (pythia)
     {
     if (_configuration.valueBool(createKey(name(),"Print:Statistics")))

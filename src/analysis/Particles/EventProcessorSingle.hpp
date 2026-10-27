@@ -73,7 +73,7 @@ namespace CAP
   virtual ~EventProcessorSingle() {}
 
   //! @brief Add the default configuration of the task and of the histogram groups (HISTOGRAM_1, HISTOGRAM_2).
-  virtual void setDefaultConfiguration()
+  virtual void setDefaultConfiguration() override
   {
   EventProcessor::setDefaultConfiguration();
   const String & taskName = Task::name();
@@ -82,7 +82,7 @@ namespace CAP
   }
 
   //! @brief Configure the task and the histogram groups. @param configuration configuration
-  virtual void configure(const Configuration & configuration)
+  virtual void configure(const Configuration & configuration) override
   {
   if (reportDebug(__FUNCTION__)) { printCR();  }
   EventProcessor::configure(configuration);
@@ -92,7 +92,7 @@ namespace CAP
 
 
   //! @brief Initialize the task and the histogram groups.
-  virtual void initialize()
+  virtual void initialize() override
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::initialize();
@@ -101,7 +101,7 @@ namespace CAP
   }
 
   //! @brief Finalize the task and the histogram groups.
-  virtual void finalize()
+  virtual void finalize() override
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::finalize();
@@ -110,7 +110,7 @@ namespace CAP
   }
 
   //! @brief Reset the task and the histogram groups.
-  virtual void reset()
+  virtual void reset() override
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::reset();
@@ -156,7 +156,7 @@ namespace CAP
   }
 
   //! @brief Clear the task and the histogram groups.
-  virtual void clear()
+  virtual void clear() override
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::clear();
@@ -165,7 +165,7 @@ namespace CAP
   }
 
   //! @brief Print the task and the histogram groups.
-  virtual void print() const
+  virtual void print() const override
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::print();
@@ -189,7 +189,7 @@ namespace CAP
 
   //! @brief Scale the base histograms of each event filter by its factor. @param factors factor of each event filter
   //! @throws Exception if there are fewer factors than event filters or fewer groups than combinations
-  void scaleHistograms(const std::vector<double> & factors)
+  void scaleHistograms(const std::vector<double> & factors) override
   {
   if (reportDebug(__FUNCTION__))
     {
@@ -217,7 +217,7 @@ namespace CAP
   }
 
   //! @brief Compute the derived histograms of each (event filter, particle filter) combination from its base histograms.
-  virtual void calculateDerived()
+  virtual void calculateDerived() override
   {
   if (EventProcessor::reportDebug(__FUNCTION__))  { printCR(); };
   std::vector<HISTOGRAM_1*> & baseSingleHistos      = histograms_1();

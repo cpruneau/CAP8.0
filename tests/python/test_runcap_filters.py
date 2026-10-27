@@ -69,6 +69,8 @@ def workflow():
                       "PARTICLE_EFFICIENCY": ["Eff"], "EVENT": ["Event"], "PARTICLE_DB": ["ParticleDb"]}
     pair.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP", "PiM"], "EVENT": ["Event"],
                     "PARTICLE_DB": ["ParticleDb"]}
+    it.filters = {"EVENT": ["Event"]}
+    it.param("EVENT:USE").value = "true"                             # the iterator resets the events of the generator
     return [it]
 
 
@@ -410,6 +412,46 @@ class TestKeys(unittest.TestCase):
         self.assertIn("Task BasicEventGen makes events: set to create them", "\n".join(warnings))
         self.assertEqual(read[0].children[1].param("EVENT:USE").value, "true")      # the analyzer is unchanged
         self.assertEqual(F.check_choices(read, lib, TEMPLATES), [])
+
+    def test_iterator_uses_events(self):
+        """A workflow whose EventIterator does not use the events its generator creates (written before the iterator
+        reset them): on loading, the iterator uses them, and the checks report an iterator that does not."""
+        tasks = workflow()
+        it = tasks[0]
+        it.filters = {}
+        it.param("EVENT:USE").value = "false"
+        text = "\n".join(F.check_choices(tasks, library(), TEMPLATES))
+        self.assertIn("Event iterator EventIterator does not use the events Event made by its tasks", text)
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "old.xml")
+            RunCAP.write_workflow(path, tasks, library(), TEMPLATES)
+            read, lib, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+        self.assertEqual((F.choices(read[0]).get("EVENT"), read[0].param("EVENT:USE").value), (["Event"], "true"))
+        self.assertIn("Event iterator EventIterator set to use the events of its tasks (Event)", "\n".join(warnings))
+        self.assertEqual(F.check_choices(read, lib, TEMPLATES), [])
+        self.assertEqual(F.update_iterator_events(read, TEMPLATES), [])            # nothing more to do
+
+    def test_iterator_uses_events_of_all_generators(self):
+        """Embedding: two generators fill events under one iterator, which uses (resets) all of them."""
+        tasks = workflow()
+        it, gen = tasks[0], tasks[0].children[0]
+        second = task("BasicEventGen", "Embedded")
+        F.default_event_settings(second, TEMPLATES)
+        second.filters = dict(gen.filters, EVENT=["Event", "Other"])
+        it.children.insert(1, second)
+        self.assertEqual(F.events_made_below(it, TEMPLATES), ["Event", "Other"])
+        self.assertEqual(len(F.update_iterator_events(tasks, TEMPLATES)), 1)
+        self.assertEqual(F.choices(it)["EVENT"], ["Event", "Other"])
+
+    def test_nested_iterator_resets_its_own_events(self):
+        """The events made under a nested EventIterator are its own, not those of the enclosing iterator."""
+        outer = task("EventIterator", "Outer")
+        inner = workflow()[0]
+        inner.name = "Inner"
+        outer.children = [inner]
+        self.assertEqual(F.events_made_below(outer, TEMPLATES), [])
+        self.assertEqual(F.update_iterator_events([outer], TEMPLATES), [])
+        self.assertEqual(F.choices(outer).get("EVENT", []), [])
 
     def test_use_migrates(self):
         """A workflow whose folders were written without USE (CAP did not read it): the lists are used."""

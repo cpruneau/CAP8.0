@@ -71,11 +71,13 @@ namespace CAP
   }
 
   void SpherocityHistos::configure(const String & taskName,
-                                   const String & objectType,
+                                   const String & type,
                                    const Configuration & configuration,
                                    unsigned int index)
   {
-  HistogramFolder::configure(taskName,objectType,configuration,index);
+  // the binning is in the HISTOGRAM group of the task, whatever the list of the folder (HISTOGRAM_1, ...)
+  String objectType = type.beginsWith("HISTOGRAM") ? String("HISTOGRAM") : type;
+  HistogramFolder::configure(taskName,type,configuration,index);
   fillS0     = configuration.valueBool(createKey(taskName,objectType,"FillS0"));
   fillS1     = configuration.valueBool(createKey(taskName,objectType,"FillS1"));
   fillS1VsS0 = configuration.valueBool(createKey(taskName,objectType,"FillS1VsS0"));

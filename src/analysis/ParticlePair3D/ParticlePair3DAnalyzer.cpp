@@ -58,6 +58,9 @@ void ParticlePair3DAnalyzer::setDefaultConfiguration()
   _configuration.addProperty(createKey(taskName,objectType,"pt_nbins"),   100);
   _configuration.addProperty(createKey(taskName,objectType,"pt_min"),     0.0);
   _configuration.addProperty(createKey(taskName,objectType,"pt_max"),     100.0);
+  _configuration.addProperty(createKey(taskName,objectType,"eta_nbins"),   20);       // read by the single-particle histograms (eta_fill)
+  _configuration.addProperty(createKey(taskName,objectType,"eta_min"),     -1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"eta_max"),     1.0);
   _configuration.addProperty(createKey(taskName,objectType,"rapidity_nbins"),    200);
   _configuration.addProperty(createKey(taskName,objectType,"rapidity_min"),      -10.0);
   _configuration.addProperty(createKey(taskName,objectType,"rapidity_max"),      10.0);
@@ -73,6 +76,9 @@ void ParticlePair3DAnalyzer::setDefaultConfiguration()
   _configuration.addProperty(createKey(taskName,objectType,"p2_fill"),           false);
   _configuration.addProperty(createKey(taskName,objectType,"FillPid"),          false);
   _configuration.addProperty(createKey(taskName,objectType,"FillPtvsY"),        true); // needed for n1n1 calculation
+  _configuration.addProperty(createKey(taskName,objectType,"n2_nbins"),        100);    // pair multiplicity (ParticlePair3DHistos)
+  _configuration.addProperty(createKey(taskName,objectType,"n2_min"),          0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"n2_max"),          1000.0);
   _configuration.addProperty(createKey(taskName,objectType,"Qinv_nbins"),      90);     // q invariant
   _configuration.addProperty(createKey(taskName,objectType,"Qinv_min"),        0.0);
   _configuration.addProperty(createKey(taskName,objectType,"Qinv_max"),        1.8);

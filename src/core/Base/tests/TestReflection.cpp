@@ -61,8 +61,8 @@ enum Color { kRed = 2, kBlue = 4 };
 class Circle : public Named
 {
 public:
-  Circle() : _center(), _radius(1), _color(kRed), count(0) { }
-  Circle(const Point & center, double radius) : _center(center), _radius(radius), _color(kRed), count(0) { }
+  Circle() : count(0), _center(), _radius(1), _color(kRed) { }
+  Circle(const Point & center, double radius) : count(0), _center(center), _radius(radius), _color(kRed) { }
   double area() const { return M_PI*_radius*_radius; }
   void scale(double f) { _radius *= f; count++; }
   void scale(double fx, double fy) { _radius *= std::sqrt(fx*fy); count++; }   // overload

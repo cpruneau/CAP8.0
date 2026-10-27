@@ -1,0 +1,275 @@
+Import of the PDG charm and beauty hadrons into DB/ParticleData/ParticleDb.xml
+PDG: 2026 Review of Particle Physics, data release 2026-05-30 13:41:24 PDT, API version 2026.0
+PYTHIA decays: /usr/local/Cellar/pythia/8.318/share/Pythia8/xmldoc/ParticleData.xml
+
+150 particles added (85 with decays, 739 decay modes)
+  note:     Sigma_b()0                 5212 mass from PYTHIA (no PDG value): 5.8 GeV
+  note:     Sigma_b^*()0               5214 mass from PYTHIA (no PDG value): 5.81 GeV
+  decays:   D+                          411  69 channels (98% of PYTHIA's; lost: >4 products 2%)
+  decays:   D^*(2010)+                  413   3 channels (100% of PYTHIA's)
+  decays:   D_2^*(2460)+                415   6 channels (100% of PYTHIA's)
+  decays:   D0                          421  77 channels (88% of PYTHIA's; lost: >4 products 12%)
+  decays:   D^*(2007)0                  423   2 channels (100% of PYTHIA's)
+  decays:   D_2^*(2460)0                425   6 channels (100% of PYTHIA's)
+  decays:   D_s()+                      431  60 channels (100% of PYTHIA's; lost: >4 products 0%)
+  decays:   D_s^*()+                    433   2 channels (100% of PYTHIA's)
+  decays:   D_s2^*(2573)+               435   4 channels (100% of PYTHIA's)
+  stable:   eta_c(1S)                   441 partonic 79% of the PYTHIA decays (usable 21%; lost: partonic 79%)
+  stable:   J/psi(1S)                   443 partonic 80% of the PYTHIA decays (usable 20%; lost: partonic 80%, product not in the database 0%)
+  stable:   chi_c2(1P)                  445 partonic 73% of the PYTHIA decays (usable 26%; lost: partonic 73%, >4 products 1%)
+  stable:   B0                          511 partonic 50% of the PYTHIA decays (usable 48%; lost: partonic 50%, product not in the database 2%, >4 products 0%)
+  decays:   B^*0                        513   1 channels (100% of PYTHIA's)
+  decays:   B_2^*(5747)0                515   6 channels (100% of PYTHIA's)
+  stable:   B+                          521 partonic 43% of the PYTHIA decays (usable 57%; lost: partonic 43%, product not in the database 0%, >4 products 0%)
+  decays:   B^*+                        523   1 channels (100% of PYTHIA's)
+  decays:   B_2^*(5747)+                525   6 channels (100% of PYTHIA's)
+  stable:   B_s()0                      531 partonic 48% of the PYTHIA decays (usable 52%; lost: partonic 48%)
+  decays:   B_s^*0                      533   1 channels (100% of PYTHIA's)
+  decays:   B_s2^*(5840)0               535   4 channels (100% of PYTHIA's)
+  decays:   B_c()+                      541  82 channels (94% of PYTHIA's; lost: partonic 6%)
+  stable:   eta_b(1S)                   551 partonic 100% of the PYTHIA decays (usable 0%; lost: partonic 100%)
+  stable:   Upsilon(1S)                 553 partonic 92% of the PYTHIA decays (usable 8%; lost: partonic 92%)
+  stable:   chi_b2(1P)                  555 partonic 78% of the PYTHIA decays (usable 22%; lost: partonic 78%)
+  decays:   Sigma_c(2455)0             4112   1 channels (100% of PYTHIA's)
+  decays:   Sigma_c(2520)0             4114   1 channels (100% of PYTHIA's)
+  stable:   Lambda_c()+                4122 partonic 69% of the PYTHIA decays (usable 31%; lost: partonic 69%)
+  stable:   Xi_c()0                    4132 partonic 100% of the PYTHIA decays (usable 0%; lost: partonic 100%)
+  decays:   Sigma_c(2455)+             4212   1 channels (100% of PYTHIA's)
+  decays:   Sigma_c(2520)+             4214   1 channels (100% of PYTHIA's)
+  decays:   Sigma_c(2455)++            4222   1 channels (100% of PYTHIA's)
+  decays:   Sigma_c(2520)++            4224   1 channels (100% of PYTHIA's)
+  stable:   Xi_c()+                    4232 partonic 100% of the PYTHIA decays (usable 0%; lost: partonic 100%)
+  decays:   Xi_c^'()0                  4312   1 channels (100% of PYTHIA's)
+  decays:   Xi_c(2645)0                4314   2 channels (100% of PYTHIA's)
+  decays:   Xi_c^'()+                  4322   1 channels (100% of PYTHIA's)
+  decays:   Xi_c(2645)+                4324   2 channels (100% of PYTHIA's)
+  stable:   Omega_c()0                 4332 partonic 100% of the PYTHIA decays (usable 0%; lost: partonic 100%)
+  decays:   Omega_c(2770)0             4334   1 channels (100% of PYTHIA's)
+  decays:   Sigma_b()-                 5112   1 channels (100% of PYTHIA's)
+  decays:   Sigma_b^*()-               5114   1 channels (100% of PYTHIA's)
+  stable:   Lambda_b()0                5122 partonic 64% of the PYTHIA decays (usable 32%; lost: partonic 64%, product not in the database 2%, >4 products 2%)
+  stable:   Xi_b()-                    5132 partonic 94% of the PYTHIA decays (usable 6%; lost: partonic 94%)
+  decays:   Sigma_b()0                 5212   1 channels (100% of PYTHIA's)
+  decays:   Sigma_b^*()0               5214   1 channels (100% of PYTHIA's)
+  decays:   Sigma_b()+                 5222   1 channels (100% of PYTHIA's)
+  decays:   Sigma_b^*()+               5224   1 channels (100% of PYTHIA's)
+  stable:   Xi_b()0                    5232 partonic 94% of the PYTHIA decays (usable 6%; lost: partonic 94%)
+  stable:   Omega_b()-                 5332 partonic 94% of the PYTHIA decays (usable 6%; lost: partonic 94%)
+  decays:   D_0^*(2300)+              10411   2 channels (100% of PYTHIA's)
+  decays:   D_1(2420)+                10413   2 channels (100% of PYTHIA's)
+  decays:   D_0^*(2300)0              10421   2 channels (100% of PYTHIA's)
+  decays:   D_1(2420)0                10423   2 channels (100% of PYTHIA's)
+  decays:   D_s0^*(2317)+             10431   1 channels (100% of PYTHIA's)
+  decays:   D_s1(2536)+               10433   2 channels (100% of PYTHIA's)
+  stable:   chi_c0(1P)                10441 partonic 87% of the PYTHIA decays (usable 12%; lost: partonic 87%, >4 products 1%)
+  stable:   h_c(1P)                   10443 partonic 49% of the PYTHIA decays (usable 51%; lost: partonic 49%)
+  stable:   chi_b0(1P)                10551 partonic 98% of the PYTHIA decays (usable 2%; lost: partonic 98%)
+  stable:   h_b(1P)                   10553 partonic 100% of the PYTHIA decays (usable 0%; lost: partonic 100%)
+  decays:   Lambda_c(2595)+           14122   4 channels (52% of PYTHIA's; lost: closed 48%)
+  decays:   D_1(2430)0                20423   2 channels (100% of PYTHIA's)
+  decays:   D_s1(2460)+               20433   2 channels (100% of PYTHIA's)
+  stable:   chi_c1(1P)                20443 partonic 61% of the PYTHIA decays (usable 38%; lost: partonic 61%, >4 products 1%)
+  stable:   chi_b1(1P)                20553 partonic 65% of the PYTHIA decays (usable 35%; lost: partonic 65%)
+  stable:   Upsilon_2(1D)             20555 not in PYTHIA
+  decays:   psi(3770)                 30443   3 channels (100% of PYTHIA's)
+  stable:   eta_c(2S)                100441 partonic 94% of the PYTHIA decays (usable 6%; lost: partonic 94%)
+  stable:   psi(2S)                  100443 partonic 15% of the PYTHIA decays (usable 84%; lost: partonic 15%, product not in the database 0%, >4 products 1%)
+  stable:   chi_c2(3930)             100445 not in PYTHIA
+  stable:   eta_b(2S)                100551 not in PYTHIA
+  stable:   Upsilon(2S)              100553 partonic 49% of the PYTHIA decays (usable 51%; lost: partonic 49%)
+  stable:   chi_b2(2P)               100555 not in PYTHIA
+  stable:   Lambda_c(2625)+          104122 not in PYTHIA
+  stable:   Xi_c(2815)0              104312 not in PYTHIA
+  stable:   Xi_c(2790)0              104314 not in PYTHIA
+  stable:   Xi_c(2815)+              104322 not in PYTHIA
+  stable:   Xi_c(2790)+              104324 not in PYTHIA
+  stable:   chi_b0(2P)               110551 not in PYTHIA
+  stable:   h_b(2P)                  110553 not in PYTHIA
+  stable:   chi_b1(2P)               120553 not in PYTHIA
+  stable:   Upsilon(3S)              200553 partonic 64% of the PYTHIA decays (usable 36%; lost: partonic 64%)
+  stable:   chi_b2(3P)               200555 not in PYTHIA
+  stable:   Lambda_c(2880)+          204126 not in PYTHIA
+  stable:   chi_b1(3P)               220553 not in PYTHIA
+  stable:   Upsilon(4S)              300553 not in PYTHIA
+  stable:   psi(4040)               9000443 not in PYTHIA
+  stable:   Upsilon(10860)          9000553 not in PYTHIA
+  stable:   psi(4160)               9010443 not in PYTHIA
+  stable:   Upsilon(11020)          9010553 not in PYTHIA
+  stable:   psi(4415)               9020443 not in PYTHIA
+  note:     D^*(2007)0                  423 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Dbar^*(2007)0              -423 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     D_s^*()+                    433 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     D_s^*()-                   -433 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     B^*0                        513 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Bbar^*0                    -513 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     B^*+                        523 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     B^*-                       -523 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     B_s^*0                      533 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Bbar_s^*0                  -533 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Xi_c^'()0                  4312 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Xibar_c^'()0              -4312 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Xi_c^'()+                  4322 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Xibar_c^'()-              -4322 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Omega_c(2770)0             4334 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Omegabar_c(2770)0         -4334 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Sigma_b()0                 5212 width from PYTHIA (no PDG value): 0.00515 GeV
+  note:     Sigmabar_b()0             -5212 width from PYTHIA (no PDG value): 0.00515 GeV
+  note:     Sigma_b^*()0               5214 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     Sigmabar_b^*()0           -5214 no PDG or PYTHIA width: nominal 1e-06 GeV (prompt decays)
+  note:     D_s0^*(2317)+             10431 width from PYTHIA (no PDG value): 0.02 GeV
+  note:     D_s0^*(2317)-            -10431 width from PYTHIA (no PDG value): 0.02 GeV
+  note:     D_s1(2460)+               20433 width from PYTHIA (no PDG value): 0.03 GeV
+  note:     D_s1(2460)-              -20433 width from PYTHIA (no PDG value): 0.03 GeV
+  replaced: Omegabminus (5332), a placeholder, by the PDG particle (name kept)
+
+Particles added:
+  D1870plus                        411  D+                     m=1.869665   w=6.37003e-13 J=0    I=0.5  q=1000/1
+  D1870plus_bar                   -411  D-                     m=1.869665   w=6.37003e-13 J=0    I=0.5  q=1/1000
+  Dstar2010plus                    413  D^*(2010)+             m=2.010268   w=8.33858e-05 J=1    I=0.5  q=1000/1
+  Dstar2010plus_bar               -413  D^*(2010)-             m=2.010268   w=8.33858e-05 J=1    I=0.5  q=1/1000
+  D2star2461plus                   415  D_2^*(2460)+           m=2.461132   w=0.0472974   J=2    I=0.5  q=1000/1
+  D2star2461plus_bar              -415  D_2^*(2460)-           m=2.461132   w=0.0472974   J=2    I=0.5  q=1/1000
+  D1865zero                        421  D0                     m=1.864842   w=1.60413e-12 J=0    I=0.5  q=1000/10
+  D1865zero_bar                   -421  Dbar0                  m=1.864842   w=1.60413e-12 J=0    I=0.5  q=10/1000
+  Dstar2007zero                    423  D^*(2007)0             m=2.006857   w=1e-06       J=1    I=0.5  q=1000/10
+  Dstar2007zero_bar               -423  Dbar^*(2007)0          m=2.006857   w=1e-06       J=1    I=0.5  q=10/1000
+  D2star2461zero                   425  D_2^*(2460)0           m=2.461132   w=0.0472974   J=2    I=0.5  q=1000/10
+  D2star2461zero_bar              -425  Dbar_2^*(2460)0        m=2.461132   w=0.0472974   J=2    I=0.5  q=10/1000
+  Ds1968plus                       431  D_s()+                 m=1.968355   w=1.31323e-12 J=0    I=0    q=1000/100
+  Ds1968plus_bar                  -431  D_s()-                 m=1.968355   w=1.31323e-12 J=0    I=0    q=100/1000
+  Dsstar2112plus                   433  D_s^*()+               m=2.112198   w=1e-06       J=1    I=0    q=1000/100
+  Dsstar2112plus_bar              -433  D_s^*()-               m=2.112198   w=1e-06       J=1    I=0    q=100/1000
+  Ds2star2569plus                  435  D_s2^*(2573)+          m=2.569114   w=0.0169101   J=2    I=0    q=1000/100
+  Ds2star2569plus_bar             -435  D_s2^*(2573)-          m=2.569114   w=0.0169101   J=2    I=0    q=100/1000
+  etac2984zero                     441  eta_c(1S)              m=2.984095   w=0.0299813   J=0    I=0    q=1000/1000
+  Jpsi3097zero                     443  J/psi(1S)              m=3.0969     w=9.26029e-05 J=1    I=0    q=1000/1000
+  chic23556zero                    445  chi_c2(1P)             m=3.556168   w=0.00193994  J=2    I=0    q=1000/1000
+  B5280zero                        511  B0                     m=5.279717   w=0           J=0    I=0.5  q=1/10000
+  B5280zero_bar                   -511  Bbar0                  m=5.279717   w=0           J=0    I=0.5  q=10000/1
+  Bstar5325zero                    513  B^*0                   m=5.324745   w=1e-06       J=1    I=0.5  q=1/10000
+  Bstar5325zero_bar               -513  Bbar^*0                m=5.324745   w=1e-06       J=1    I=0.5  q=10000/1
+  B2star5740zero                   515  B_2^*(5747)0           m=5.739585   w=0.0242226   J=2    I=0.5  q=1/10000
+  B2star5740zero_bar              -515  Bbar_2^*(5747)0        m=5.739585   w=0.0242226   J=2    I=0.5  q=10000/1
+  B5279plus                        521  B+                     m=5.279406   w=0           J=0    I=0.5  q=10/10000
+  B5279plus_bar                   -521  B-                     m=5.279406   w=0           J=0    I=0.5  q=10000/10
+  Bstar5325plus                    523  B^*+                   m=5.324745   w=1e-06       J=1    I=0.5  q=10/10000
+  Bstar5325plus_bar               -523  B^*-                   m=5.324745   w=1e-06       J=1    I=0.5  q=10000/10
+  B2star5737plus                   525  B_2^*(5747)+           m=5.737257   w=0.0204283   J=2    I=0.5  q=10/10000
+  B2star5737plus_bar              -525  B_2^*(5747)-           m=5.737257   w=0.0204283   J=2    I=0.5  q=10000/10
+  Bs5367zero                       531  B_s()0                 m=5.366932   w=0           J=0    I=0    q=100/10000
+  Bs5367zero_bar                  -531  Bbar_s()0              m=5.366932   w=0           J=0    I=0    q=10000/100
+  Bsstar5415zero                   533  B_s^*0                 m=5.415442   w=1e-06       J=1    I=0    q=100/10000
+  Bsstar5415zero_bar              -533  Bbar_s^*0              m=5.415442   w=1e-06       J=1    I=0    q=10000/100
+  Bs2star5840zero                  535  B_s2^*(5840)0          m=5.839882   w=0.00148931  J=2    I=0    q=100/10000
+  Bs2star5840zero_bar             -535  Bbar_s2^*(5840)0       m=5.839882   w=0.00148931  J=2    I=0    q=10000/100
+  Bc6274plus                       541  B_c()+                 m=6.27447    w=1.29059e-12 J=0    I=0    q=1000/10000
+  Bc6274plus_bar                  -541  B_c()-                 m=6.27447    w=1.29059e-12 J=0    I=0    q=10000/1000
+  etab9399zero                     551  eta_b(1S)              m=9.398698   w=0.0099894   J=0    I=0    q=10000/10000
+  Upsilon9460zero                  553  Upsilon(1S)            m=9.4604     w=5.402e-05   J=1    I=0    q=10000/10000
+  chib29912zero                    555  chi_b2(1P)             m=9.91221    w=0           J=2    I=0    q=10000/10000
+  Sigmac2454zero                  4112  Sigma_c(2455)0         m=2.453751   w=0.00182902  J=0.5  I=1    q=1002/0
+  Sigmac2454zero_bar             -4112  Sigmabar_c(2455)0      m=2.453751   w=0.00182902  J=0.5  I=1    q=0/1002
+  Sigmac2518zero                  4114  Sigma_c(2520)0         m=2.518478   w=0.015321    J=1.5  I=1    q=1002/0
+  Sigmac2518zero_bar             -4114  Sigmabar_c(2520)0      m=2.518478   w=0.015321    J=1.5  I=1    q=0/1002
+  Lambdac2286plus                 4122  Lambda_c()+            m=2.286462   w=0           J=0.5  I=0    q=1011/0
+  Lambdac2286plus_bar            -4122  Lambdabar_c()-         m=2.286462   w=0           J=0.5  I=0    q=0/1011
+  Xic2471zero                     4132  Xi_c()0                m=2.470505   w=0           J=0.5  I=0.5  q=1101/0
+  Xic2471zero_bar                -4132  Xibar_c()0             m=2.470505   w=0           J=0.5  I=0.5  q=0/1101
+  Sigmac2453plus                  4212  Sigma_c(2455)+         m=2.452655   w=0.0023      J=0.5  I=1    q=1011/0
+  Sigmac2453plus_bar             -4212  Sigmabar_c(2455)-      m=2.452655   w=0.0023      J=0.5  I=1    q=0/1011
+  Sigmac2517plus                  4214  Sigma_c(2520)+         m=2.517368   w=0.0172      J=1.5  I=1    q=1011/0
+  Sigmac2517plus_bar             -4214  Sigmabar_c(2520)-      m=2.517368   w=0.0172      J=1.5  I=1    q=0/1011
+  Sigmac2454plusplus              4222  Sigma_c(2455)++        m=2.453972   w=0.00189015  J=0.5  I=1    q=1020/0
+  Sigmac2454plusplus_bar         -4222  Sigmabar_c(2455)--     m=2.453972   w=0.00189015  J=0.5  I=1    q=0/1020
+  Sigmac2518plusplus              4224  Sigma_c(2520)++        m=2.51841    w=0.0147782   J=1.5  I=1    q=1020/0
+  Sigmac2518plusplus_bar         -4224  Sigmabar_c(2520)--     m=2.51841    w=0.0147782   J=1.5  I=1    q=0/1020
+  Xic2468plus                     4232  Xi_c()+                m=2.467788   w=0           J=0.5  I=0.5  q=1110/0
+  Xic2468plus_bar                -4232  Xibar_c()-             m=2.467788   w=0           J=0.5  I=0.5  q=0/1110
+  Xicprime2579zero                4312  Xi_c^'()0              m=2.578805   w=1e-06       J=0.5  I=0.5  q=1101/0
+  Xicprime2579zero_bar           -4312  Xibar_c^'()0           m=2.578805   w=1e-06       J=0.5  I=0.5  q=0/1101
+  Xic2646zero                     4314  Xi_c(2645)0            m=2.646235   w=0.00235     J=1.5  I=0.5  q=1101/0
+  Xic2646zero_bar                -4314  Xibar_c(2645)0         m=2.646235   w=0.00235     J=1.5  I=0.5  q=0/1101
+  Xicprime2578plus                4322  Xi_c^'()+              m=2.578288   w=1e-06       J=0.5  I=0.5  q=1110/0
+  Xicprime2578plus_bar           -4322  Xibar_c^'()-           m=2.578288   w=1e-06       J=0.5  I=0.5  q=0/1110
+  Xic2645plus                     4324  Xi_c(2645)+            m=2.645171   w=0.00213807  J=1.5  I=0.5  q=1110/0
+  Xic2645plus_bar                -4324  Xibar_c(2645)-         m=2.645171   w=0.00213807  J=1.5  I=0.5  q=0/1110
+  Omegac2695zero                  4332  Omega_c()0             m=2.695275   w=0           J=0.5  I=0    q=1200/0
+  Omegac2695zero_bar             -4332  Omegabar_c()0          m=2.695275   w=0           J=0.5  I=0    q=0/1200
+  Omegac2766zero                  4334  Omega_c(2770)0         m=2.766008   w=1e-06       J=1.5  I=0    q=1200/0
+  Omegac2766zero_bar             -4334  Omegabar_c(2770)0      m=2.766008   w=1e-06       J=1.5  I=0    q=0/1200
+  Sigmab5816minus                 5112  Sigma_b()-             m=5.815637   w=0.00531373  J=0.5  I=1    q=10002/0
+  Sigmab5816minus_bar            -5112  Sigmabar_b()+          m=5.815637   w=0.00531373  J=0.5  I=1    q=0/10002
+  Sigmabstar5835minus             5114  Sigma_b^*()-           m=5.83474    w=0.0104363   J=1.5  I=1    q=10002/0
+  Sigmabstar5835minus_bar        -5114  Sigmabar_b^*()+        m=5.83474    w=0.0104363   J=1.5  I=1    q=0/10002
+  Lambdab5620zero                 5122  Lambda_b()0            m=5.619568   w=0           J=0.5  I=0    q=10011/0
+  Lambdab5620zero_bar            -5122  Lambdabar_b()0         m=5.619568   w=0           J=0.5  I=0    q=0/10011
+  Xib5797minus                    5132  Xi_b()-                m=5.796987   w=0           J=0.5  I=0.5  q=10101/0
+  Xib5797minus_bar               -5132  Xibar_b()+             m=5.796987   w=0           J=0.5  I=0.5  q=0/10101
+  Sigmab5800zero                  5212  Sigma_b()0             m=5.8        w=0.00515     J=0.5  I=1    q=10011/0
+  Sigmab5800zero_bar             -5212  Sigmabar_b()0          m=5.8        w=0.00515     J=0.5  I=1    q=0/10011
+  Sigmabstar5810zero              5214  Sigma_b^*()0           m=5.81       w=1e-06       J=1.5  I=1    q=10011/0
+  Sigmabstar5810zero_bar         -5214  Sigmabar_b^*()0        m=5.81       w=1e-06       J=1.5  I=1    q=0/10011
+  Sigmab5811plus                  5222  Sigma_b()+             m=5.810563   w=0.00495224  J=0.5  I=1    q=10020/0
+  Sigmab5811plus_bar             -5222  Sigmabar_b()-          m=5.810563   w=0.00495224  J=0.5  I=1    q=0/10020
+  Sigmabstar5830plus              5224  Sigma_b^*()+           m=5.830317   w=0.00942308  J=1.5  I=1    q=10020/0
+  Sigmabstar5830plus_bar         -5224  Sigmabar_b^*()-        m=5.830317   w=0.00942308  J=1.5  I=1    q=0/10020
+  Xib5792zero                     5232  Xi_b()0                m=5.791655   w=0           J=0.5  I=0.5  q=10110/0
+  Xib5792zero_bar                -5232  Xibar_b()0             m=5.791655   w=0           J=0.5  I=0.5  q=0/10110
+  Omegabminus                     5332  Omega_b()-             m=6.045771   w=0           J=0.5  I=0    q=10200/0
+  Omegab6046minus_bar            -5332  Omegabar_b()+          m=6.045771   w=0           J=0.5  I=0    q=0/10200
+  D0star2343plus                 10411  D_0^*(2300)+           m=2.343204   w=0.229273    J=0    I=0.5  q=1000/1
+  D0star2343plus_bar            -10411  D_0^*(2300)-           m=2.343204   w=0.229273    J=0    I=0.5  q=1/1000
+  D12422plus                     10413  D_1(2420)+             m=2.422082   w=0.0313389   J=1    I=0.5  q=1000/1
+  D12422plus_bar                -10413  D_1(2420)-             m=2.422082   w=0.0313389   J=1    I=0.5  q=1/1000
+  D0star2343zero                 10421  D_0^*(2300)0           m=2.343204   w=0.229273    J=0    I=0.5  q=1000/10
+  D0star2343zero_bar            -10421  Dbar_0^*(2300)0        m=2.343204   w=0.229273    J=0    I=0.5  q=10/1000
+  D12422zero                     10423  D_1(2420)0             m=2.422082   w=0.0313389   J=1    I=0.5  q=1000/10
+  D12422zero_bar                -10423  Dbar_1(2420)0          m=2.422082   w=0.0313389   J=1    I=0.5  q=10/1000
+  Ds0star2318plus                10431  D_s0^*(2317)+          m=2.317775   w=0.02        J=0    I=0    q=1000/100
+  Ds0star2318plus_bar           -10431  D_s0^*(2317)-          m=2.317775   w=0.02        J=0    I=0    q=100/1000
+  Ds12535plus                    10433  D_s1(2536)+            m=2.535115   w=0.000921082 J=1    I=0    q=1000/100
+  Ds12535plus_bar               -10433  D_s1(2536)-            m=2.535115   w=0.000921082 J=1    I=0    q=100/1000
+  chic03415zero                  10441  chi_c0(1P)             m=3.415497   w=0.012405    J=0    I=0    q=1000/1000
+  hc3525zero                     10443  h_c(1P)                m=3.525368   w=0.00078     J=1    I=0    q=1000/1000
+  chib09859zero                  10551  chi_b0(1P)             m=9.85944    w=0           J=0    I=0    q=10000/10000
+  hb9899zero                     10553  h_b(1P)                m=9.899279   w=0           J=1    I=0    q=10000/10000
+  Lambdac2592plus                14122  Lambda_c(2595)+        m=2.592252   w=0.00259     J=0.5  I=0    q=1011/0
+  Lambdac2592plus_bar           -14122  Lambdabar_c(2595)-     m=2.592252   w=0.00259     J=0.5  I=0    q=0/1011
+  D12412zero                     20423  D_1(2430)0             m=2.412035   w=0.314082    J=1    I=0.5  q=1000/10
+  D12412zero_bar                -20423  Dbar_1(2430)0          m=2.412035   w=0.314082    J=1    I=0.5  q=10/1000
+  Ds12460plus                    20433  D_s1(2460)+            m=2.459501   w=0.03        J=1    I=0    q=1000/100
+  Ds12460plus_bar               -20433  D_s1(2460)-            m=2.459501   w=0.03        J=1    I=0    q=100/1000
+  chic13511zero                  20443  chi_c1(1P)             m=3.51067    w=0.000819912 J=1    I=0    q=1000/1000
+  chib19893zero                  20553  chi_b1(1P)             m=9.89278    w=0           J=1    I=0    q=10000/10000
+  Upsilon210164zero              20555  Upsilon_2(1D)          m=10.16371   w=0           J=2    I=0    q=10000/10000
+  psi3774zero                    30443  psi(3770)              m=3.773677   w=0.0271802   J=1    I=0    q=1000/1000
+  etac3638zero                  100441  eta_c(2S)              m=3.637763   w=0.0116251   J=0    I=0    q=1000/1000
+  psi3686zero                   100443  psi(2S)                m=3.686097   w=0.000292595 J=1    I=0    q=1000/1000
+  chic23922zero                 100445  chi_c2(3930)           m=3.922461   w=0.0352      J=2    I=0    q=1000/1000
+  etab9999zero                  100551  eta_b(2S)              m=9.999      w=0           J=0    I=0    q=10000/10000
+  Upsilon10023zero              100553  Upsilon(2S)            m=10.0234    w=3.198e-05   J=1    I=0    q=10000/10000
+  chib210269zero                100555  chi_b2(2P)             m=10.26865   w=0           J=2    I=0    q=10000/10000
+  Lambdac2628plus               104122  Lambda_c(2625)+        m=2.627999   w=0           J=1.5  I=0    q=1011/0
+  Lambdac2628plus_bar          -104122  Lambdabar_c(2625)-     m=2.627999   w=0           J=1.5  I=0    q=0/1011
+  Xic2820zero                   104312  Xi_c(2815)0            m=2.819855   w=0.00254     J=1.5  I=0.5  q=1101/0
+  Xic2820zero_bar              -104312  Xibar_c(2815)0         m=2.819855   w=0.00254     J=1.5  I=0.5  q=0/1101
+  Xic2794zero                   104314  Xi_c(2790)0            m=2.793988   w=0.01        J=0.5  I=0.5  q=1101/0
+  Xic2794zero_bar              -104314  Xibar_c(2790)0         m=2.793988   w=0.01        J=0.5  I=0.5  q=0/1101
+  Xic2817plus                   104322  Xi_c(2815)+            m=2.816598   w=0.00215348  J=1.5  I=0.5  q=1110/0
+  Xic2817plus_bar              -104322  Xibar_c(2815)-         m=2.816598   w=0.00215348  J=1.5  I=0.5  q=0/1110
+  Xic2792plus                   104324  Xi_c(2790)+            m=2.792005   w=0.0089      J=0.5  I=0.5  q=1110/0
+  Xic2792plus_bar              -104324  Xibar_c(2790)-         m=2.792005   w=0.0089      J=0.5  I=0.5  q=0/1110
+  chib010232zero                110551  chi_b0(2P)             m=10.2325    w=0           J=0    I=0    q=10000/10000
+  hb10260zero                   110553  h_b(2P)                m=10.2598    w=0           J=1    I=0    q=10000/10000
+  chib110255zero                120553  chi_b1(2P)             m=10.25546   w=0           J=1    I=0    q=10000/10000
+  Upsilon10355zero              200553  Upsilon(3S)            m=10.3551    w=2.032e-05   J=1    I=0    q=10000/10000
+  chib210524zero                200555  chi_b2(3P)             m=10.52402   w=0           J=2    I=0    q=10000/10000
+  Lambdac2882plus               204126  Lambda_c(2880)+        m=2.881632   w=0.00559129  J=2.5  I=0    q=1011/0
+  Lambdac2882plus_bar          -204126  Lambdabar_c(2880)-     m=2.881632   w=0.00559129  J=2.5  I=0    q=0/1011
+  chib110513zero                220553  chi_b1(3P)             m=10.51342   w=0           J=1    I=0    q=10000/10000
+  Upsilon10579zero              300553  Upsilon(4S)            m=10.57938   w=0.0204859   J=1    I=0    q=10000/10000
+  psi4040zero                  9000443  psi(4040)              m=4.0396     w=0.0845      J=1    I=0    q=1000/1000
+  Upsilon10885zero             9000553  Upsilon(10860)         m=10.88522   w=0.0368487   J=1    I=0    q=10000/10000
+  psi4191zero                  9010443  psi(4160)              m=4.191318   w=0.0693144   J=1    I=0    q=1000/1000
+  Upsilon11000zero             9010553  Upsilon(11020)         m=10.99987   w=0.0242067   J=1    I=0    q=10000/10000
+  psi4415zero                  9020443  psi(4415)              m=4.414513   w=0.109874    J=1    I=0    q=1000/1000

@@ -358,7 +358,6 @@ void ParticlePair3DDerivedHistos::calculateDerivedHistograms(ParticleSingleDeriv
   int nPart1 = nParticle1;
   int nPart2 = nParticle2;
   Configuration & configuration = parentTask()->configuration();
-  const String & bn  = name();
   const String & ptn = parentName();
   long nMcSimEvents  = configuration.valueInt(ptn,   "nMcSimEvents");
   double scale = 1.0/double(nMcSimEvents);

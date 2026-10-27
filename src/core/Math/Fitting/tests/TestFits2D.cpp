@@ -183,7 +183,7 @@ int main()
     FitResult b = inBox.fit();
     CHECK(b.converged && b.nPoints == 16*24 && std::fabs(b.values[1] - 0.3) < 4*b.errors[1]);
     bool thrown = false;
-    try { inBox.setRange({ -2.0 }, { 2.0 }); } catch (const MathException &) { thrown = true; }
+    try { inBox.setRange(std::vector<double>{ -2.0 }, std::vector<double>{ 2.0 }); } catch (const MathException &) { thrown = true; }
     CHECK(thrown);
   }
 

@@ -131,6 +131,9 @@ namespace CAP
 
   //! @brief Number of events. @return number
   unsigned int nEvents() const  { return _managedEvents.size();  }
+  //! @brief Whether this task makes its events (creates or imports them: a generator, a reader, a model).
+  //! Their reset before each event is the event iterator's (see EventIterator). @return true if so
+  bool makesEvents() const { return _managedEvents.create() || _managedEvents.imports(); }
   //! @brief Number of event filters. @return number
   unsigned int nEventFilters() const  { return _managedEventFilters.size();  }
   //! @brief Number of event efficiencies. @return number

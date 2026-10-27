@@ -109,6 +109,8 @@ KIND_PARAMETERS = {
                          ("pt_nbins", "int", "100"), ("pt_min", "double", "0"), ("pt_max", "double", "10"),
                          ("eta_nbins", "int", "20"), ("eta_min", "double", "-1"), ("eta_max", "double", "1"),
                          ("phi_nbins", "int", "36"), ("phi_min", "double", "0"), ("phi_max", "double", _TWO_PI)],
+    # switch read by ParticleDb::configure(): true turns off the weak decays (K0S, K0L, Lambda, Sigma, Xi, Omega)
+    "PARTICLE_DB": [("_dbDisableWeakDecays", "bool", "false")],
 }
 
 #: Task creating the objects of the library, run first (CAP::FilterCreator), and its subtasks, one per kind.
@@ -196,6 +198,47 @@ def update_event_settings(tasks, templates):
             if p is not None:
                 p.value = value
         warnings.append("Task %s makes events: set to create them (Create) and not to use them." % task.name)
+    return warnings
+
+
+def events_made_below(iterator, templates):
+    """Events created or imported by the tasks an EventIterator runs (its subtasks, theirs, ...), in order: not those of
+    a nested EventIterator (it resets them itself), nor those of the Glauber tasks (stores of their own)."""
+    names = []
+
+    def visit(task):
+        for child in task.children:
+            if child.cls == ITERATOR_OF_MODE[FILL]:
+                continue
+            if not is_glauber(child) and "EVENT" in task_kinds(child, templates) and any(
+                    _param_value(child, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
+                names.extend(n for n in choices(child).get("EVENT", []) if n not in names)
+            visit(child)
+    visit(iterator)
+    return names
+
+
+def update_iterator_events(tasks, templates):
+    """Each EventIterator uses the events made by its tasks: it resets them (and counts them) before each event, so
+    that several generators can fill the same event (embedding). A generator does not reset its events. Applied when a
+    workflow is loaded and after each change in RunCAP.py. @return a warning for each iterator changed"""
+    warnings = []
+    for task in _preorder(tasks):
+        if task.cls != ITERATOR_OF_MODE[FILL]:
+            continue
+        made = events_made_below(task, templates)
+        if not made:
+            continue
+        used = choices(task).setdefault("EVENT", [])
+        missing = [name for name in made if name not in used]
+        use = task.param("EVENT:USE")
+        if not missing and (use is None or use.value == "true"):
+            continue
+        used.extend(missing)
+        if use is not None:
+            use.value = "true"
+        warnings.append("Event iterator %s set to use the events of its tasks (%s): it resets them before each event."
+                        % (task.name, ", ".join(made)))
     return warnings
 
 
@@ -1037,6 +1080,14 @@ def check_choices(tasks, library, templates):
                 _param_value(task, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
             errors.append("Task %s makes events but is set neither to create nor to import them: set Create (Events "
                           "line of its window)." % task.name)
+    for task in _preorder(tasks):
+        if task.cls == ITERATOR_OF_MODE[FILL]:
+            made_below = events_made_below(task, templates)
+            used = choices(task).get("EVENT", []) if _param_value(task, "EVENT:USE", "false") == "true" else []
+            missing = [name for name in made_below if name not in used]
+            if missing:
+                errors.append("Event iterator %s does not use the events %s made by its tasks: it must use them (it "
+                              "resets them before each event)." % (task.name, ", ".join(missing)))
     made = set()                                        # events created or imported by a task
     for task in _preorder(tasks):
         if any(_param_value(task, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):

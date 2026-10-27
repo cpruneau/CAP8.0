@@ -353,6 +353,7 @@ def load_workflow_with_filters(path, templates):
     tasks = filters.remove_creator(tasks, library)
     more += filters.update_database_files(library)
     more += filters.update_event_settings(tasks, templates)
+    more += filters.update_iterator_events(tasks, templates)
     return tasks, library, warnings + more
 
 
@@ -1154,6 +1155,7 @@ def run_gui(initial_file=None, hook=None):
         # ---------------------------------------------------------------------------------------------- files
         def _changed(self, message=None):
             self.dirty = True
+            filters.update_iterator_events(self.workflow(), self.templates)    # the iterators reset the events
             self._update_title()
             self._update_summary()
             self.count_label.configure(text="%d task(s)" % len(self._workflow_items()))
