@@ -73,8 +73,13 @@ namespace CAP
 
   void Partition::addDimension(unsigned int nBin, float minimum, float maximum, String title)
   {
-  if (nBin<1) throw Exception("Invalid dimension size nBins<1",__FUNCTION__);
-  if (minimum>=maximum) throw Exception("Invalid dimension range minimum>=maximum",__FUNCTION__);
+  if (nBin<1 || minimum>=maximum)
+    {
+    String message = (nBin<1) ? "Invalid dimension size nBins<1" : "Invalid dimension range minimum>=maximum";
+    message += " (axis "; message += title; message += ": "; message += int(nBin); message += " bins in [";
+    message += minimum; message += ","; message += maximum; message += "])";
+    throw Exception(message,__FUNCTION__);
+    }
   _nBinsTotal = (_rank==0) ? nBin : _nBinsTotal*nBin;
   _nBins.push_back(nBin);
   _minima.push_back(minimum);

@@ -23,27 +23,27 @@ namespace CAP
   ParticlePair3DHistos::ParticlePair3DHistos()
   :
   HistogramFolder(),
-  n2_nbins(0),
-  Qinv_nbins(0),
-  DeltaPs_nbins(0),
-  DeltaPo_nbins(0),
-  DeltaPl_nbins(0),
-  pt_nbins(0),
-  rapidity_nbins(0),
+  n2_nbins(100),
+  Qinv_nbins(100),
+  DeltaPs_nbins(100),
+  DeltaPo_nbins(100),
+  DeltaPl_nbins(100),
+  pt_nbins(100),
+  rapidity_nbins(100),
   n2_min(0),
-  n2_max(0),
+  n2_max(100),
   Qinv_min(0),
-  Qinv_max(0),
+  Qinv_max(10.0),
   DeltaPs_min(0),
-  DeltaPs_max(0),
+  DeltaPs_max(10.0),
   DeltaPo_min(0),
-  DeltaPo_max(0),
+  DeltaPo_max(10.0),
   DeltaPl_min(0),
-  DeltaPl_max(0),
+  DeltaPl_max(10.0),
   pt_min(0),
-  pt_max(0),
-  rapidity_minimum(0),
-  rapidity_maximum(0),
+  pt_max(10.0),
+  rapidity_minimum(-2),
+  rapidity_maximum(2),
   h_n2(nullptr),
   h_n2_Qinv(nullptr),
   h_n2_DeltaP(nullptr)
@@ -114,11 +114,18 @@ namespace CAP
   return *this;
   }
 
+  //!
+  //! Read the binning from the HISTOGRAM group of the task (<task>:HISTOGRAM:<param>): the list a folder belongs to
+  //! (HISTOGRAM_1, ...) is passed as type, and a folder with a binning of its own gets it in that group too (see
+  //! ManagedObjects::objectConfiguration()), as for ParticlePairHistos and ParticleSingleHistos.
+  //!
   void ParticlePair3DHistos::configure(const String & taskName,
-                                       const String & objectType,
+                                       const String & type,
                                        const Configuration & configuration,
-                                       unsigned int index __attribute__((unused)) )
+                                       unsigned int index)
   {
+  HistogramFolder::configure(taskName,type,configuration,index);
+  String objectType = "HISTOGRAM";
   n2_nbins       = configuration.valueInt(   createKey(taskName,objectType,"n2_nbins"));
   n2_min         = configuration.valueDouble(createKey(taskName,objectType,"n2_min"));
   n2_max         = configuration.valueDouble(createKey(taskName,objectType,"n2_max"));
@@ -134,7 +141,12 @@ namespace CAP
   DeltaPo_max    = configuration.valueDouble(createKey(taskName,objectType,"DeltaPo_max"));
   DeltaPl_min    = configuration.valueDouble(createKey(taskName,objectType,"DeltaPl_min"));
   DeltaPl_max    = configuration.valueDouble(createKey(taskName,objectType,"DeltaPl_max"));
-
+  pt_nbins          = configuration.valueInt(   createKey(taskName,objectType,"pt_nbins"));         // derived histograms
+  pt_min            = configuration.valueDouble(createKey(taskName,objectType,"pt_min"));
+  pt_max            = configuration.valueDouble(createKey(taskName,objectType,"pt_max"));
+  rapidity_nbins    = configuration.valueInt(   createKey(taskName,objectType,"rapidity_nbins"));
+  rapidity_minimum  = configuration.valueDouble(createKey(taskName,objectType,"rapidity_min"));
+  rapidity_maximum  = configuration.valueDouble(createKey(taskName,objectType,"rapidity_max"));
   if (reportDebug(__FUNCTION__))
     {
     printValue(createKey(taskName,objectType,"n2_nbins"),n2_nbins);
@@ -146,12 +158,8 @@ namespace CAP
     printValue(createKey(taskName,objectType,"DeltaPs_nbins"),DeltaPs_nbins);
     printValue(createKey(taskName,objectType,"DeltaPo_nbins"),DeltaPo_nbins);
     printValue(createKey(taskName,objectType,"DeltaPl_nbins"),DeltaPl_nbins);
-    printValue(createKey(taskName,objectType,"DeltaPs_min"),DeltaPs_min);
-    printValue(createKey(taskName,objectType,"DeltaPs_max"),DeltaPs_max);
-    printValue(createKey(taskName,objectType,"DeltaPo_min"),DeltaPo_min);
-    printValue(createKey(taskName,objectType,"DeltaPo_max"),DeltaPo_max);
-    printValue(createKey(taskName,objectType,"DeltaPl_min"),DeltaPl_min);
-    printValue(createKey(taskName,objectType,"DeltaPl_max"),DeltaPl_max);
+    printValue(createKey(taskName,objectType,"pt_nbins"),pt_nbins);
+    printValue(createKey(taskName,objectType,"rapidity_nbins"),rapidity_nbins);
     }
   }
 

@@ -60,7 +60,7 @@ TCanvas * CanvasList::createCanvas(const String & canvasName,
   int xInc = inc*size();
   TCanvas * canvas = new TCanvas(canvasName,
                                  canvasName,
-                                 inc+configuration.valueInt("windowXPosition"),
+                                 xInc+configuration.valueInt("windowXPosition"),
                                  configuration.valueInt("windowYPosition"),
                                  configuration.valueInt("windowWidth"),
                                  configuration.valueInt("windowHeight") );

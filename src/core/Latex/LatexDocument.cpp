@@ -335,7 +335,6 @@ namespace CAP
 
   // add subdirectories (if any) as subsections.
   std::vector<String> directories = listDirsIn(path,verbose);
-  int nDirectories = directories.size();
   if (verbose)
     {
     printCR();

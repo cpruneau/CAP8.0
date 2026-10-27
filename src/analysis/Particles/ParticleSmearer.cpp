@@ -171,6 +171,9 @@ void ParticleSmearer::loadFrom(const Folder & inputFile)
 
 void ParticleSmearer::smear(const Particle & source, Particle & target)
 {
+  if (!h_pt_bias || !h_pt_rms || !h_eta_bias || !h_eta_rms || !h_phi_bias || !h_phi_rms)
+    throw Exception(String("ParticleSmearer ")+name()+" has no bias and resolution maps: set CREATE or IMPORT of the "
+                    "PARTICLE_SMEARER list (FilterCreator)",__FUNCTION__);
   const VectorLorentz & in  = source.momentum();
   double pt   = in.perp();
   double phi  = in.phi();

@@ -260,6 +260,10 @@ namespace CAP
         type->isWeakBoson() ||
         type->isHiggsBoson()||
         mass > 2.5 )  continue;
+    // K0S and K0L (310, 130) are the mass eigenstates of K0 and anti-K0, which the gas already holds: in the database
+    // for the generators (e.g. PYTHIA), they would count the neutral kaons twice here
+    int pdg = type->pdgCode();
+    if (pdg==310 || pdg==130) continue;
     ThermalHadron hadron;
     hadron.clear();
     hadron.setType(type);

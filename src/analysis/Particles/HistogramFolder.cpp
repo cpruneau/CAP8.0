@@ -147,13 +147,28 @@ namespace CAP
   // Creating histograms
   //////////////////////////////////////////////////////////////////////////
 
+  //! Add an axis to the partition of a histogram being created, with an error naming the folder, the histogram and
+  //! the axis when the binning is invalid (a binning key of the task missing or zero, typically).
+  static void addAxis(MATH::Partition & partition, const String & folder, const String & histogram,
+                      unsigned int n, double minimum, double maximum, const String & title)
+  {
+  if (n<1 || !(minimum<maximum))
+    {
+    String message = "Histogram "; message += folder; message += "/"; message += histogram;
+    message += ", axis "; message += title; message += ": "; message += int(n); message += " bins in [";
+    message += minimum; message += ","; message += maximum; message += "] (check the binning keys of the task)";
+    throw Exception(message,"HistogramFolder::createHistogram");
+    }
+  partition.addDimension(n,minimum,maximum,title);
+  }
+
   HistogramFolder::Histogram * HistogramFolder::createHistogram(const String & name,
                                                               unsigned int n_x, double min_x, double max_x,
                                                               const String & title_x, const String & title_y,
                                                               int storageOption)
   {
   MATH::Partition partition;
-  partition.addDimension(n_x,min_x,max_x,title_x);
+  addAxis(partition,this->name(),name,n_x,min_x,max_x,title_x);
   Histogram * h = new Histogram(partition);
   h->setPrecision(Histogram::precisionFromStorageOption(storageOption));
   h->setName(name);
@@ -168,8 +183,8 @@ namespace CAP
                                                               const String & title_z, int storageOption)
   {
   MATH::Partition partition;
-  partition.addDimension(n_x,min_x,max_x,title_x);
-  partition.addDimension(n_y,min_y,max_y,title_y);
+  addAxis(partition,this->name(),name,n_x,min_x,max_x,title_x);
+  addAxis(partition,this->name(),name,n_y,min_y,max_y,title_y);
   Histogram * h = new Histogram(partition);
   h->setPrecision(Histogram::precisionFromStorageOption(storageOption));
   h->setName(name);
@@ -186,9 +201,9 @@ namespace CAP
                                                               int storageOption)
   {
   MATH::Partition partition;
-  partition.addDimension(n_x,min_x,max_x,title_x);
-  partition.addDimension(n_y,min_y,max_y,title_y);
-  partition.addDimension(n_z,min_z,max_z,title_z);
+  addAxis(partition,this->name(),name,n_x,min_x,max_x,title_x);
+  addAxis(partition,this->name(),name,n_y,min_y,max_y,title_y);
+  addAxis(partition,this->name(),name,n_z,min_z,max_z,title_z);
   Histogram * h = new Histogram(partition);
   h->setPrecision(Histogram::precisionFromStorageOption(storageOption));
   h->setName(name);
@@ -201,7 +216,7 @@ namespace CAP
                                                           const String & title_x, const String & title_y)
   {
   MATH::Partition partition;
-  partition.addDimension(n_x,min_x,max_x,title_x);
+  addAxis(partition,this->name(),name,n_x,min_x,max_x,title_x);
   Profile * p = new Profile(partition);
   p->setName(name);
   p->setTitle(title_y);
@@ -216,8 +231,8 @@ namespace CAP
                                                           const String & title_z)
   {
   MATH::Partition partition;
-  partition.addDimension(n_x,min_x,max_x,title_x);
-  partition.addDimension(n_y,min_y,max_y,title_y);
+  addAxis(partition,this->name(),name,n_x,min_x,max_x,title_x);
+  addAxis(partition,this->name(),name,n_y,min_y,max_y,title_y);
   Profile * p = new Profile(partition);
   p->setName(name);
   p->setTitle(title_z);

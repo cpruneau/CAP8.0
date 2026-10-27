@@ -107,10 +107,12 @@ namespace CAP
   }
 
   void PtPtHistos::configure(const String & taskName,
-                             const String & objectType,
+                             const String & type,
                              const Configuration & configuration,
                              unsigned int index __attribute__((unused)))
   {
+  // the binning is in the HISTOGRAM group of the task, whatever the list of the folder (HISTOGRAM_1, ...)
+  String objectType = type.beginsWith("HISTOGRAM") ? String("HISTOGRAM") : type;
   evtName   = configuration.valueString(createKey(taskName,objectType,"evtName"));
   evt_nbins = configuration.valueInt(   createKey(taskName,objectType,"evt_nbins"));
   evt_min   = configuration.valueDouble(createKey(taskName,objectType,"evt_min"));

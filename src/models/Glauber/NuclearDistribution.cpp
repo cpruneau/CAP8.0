@@ -77,7 +77,7 @@ namespace CAP
   double NuclearDistribution::evaluate(double x, double theta __attribute__((unused)) )
   {
   double result = -1.0;
-  double t0, t1, t2, t3, t4, t5, t6, tp, tm, xx;
+  double t0, t1, t2, t3, t4, t5, t6, tm, xx;
   switch (_type)
     {
       case 0: // exponential profile
@@ -115,7 +115,6 @@ namespace CAP
       //      f1 = new TF1(name,"x*x*([0]*[1]*([0]+[1])) /( 2*pi* (pow([0]-[1],2)) )* pow( (exp(-[0]*x)-exp(-[1]*x) )/x,2)",0.0,maxRadius);
       //      f1->SetParameters(radius,a,b);
       t0 = 0; // fix me...
-      tp = _radius + _a;
       tm = _radius - _a;
       t1 = _radius*_a*t0;
       t2 = 2*pi()*tm*tm;

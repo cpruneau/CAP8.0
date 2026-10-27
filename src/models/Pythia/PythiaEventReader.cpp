@@ -86,6 +86,8 @@ void PythiaEventReader::initialize()
   saveNeutrinos   = _configuration.valueBool(createKey(taskName,"SaveNeutrinos"));
   saveQuarks      = _configuration.valueBool(createKey(taskName,"SaveQuarks"));
   saveGaugeBosons = _configuration.valueBool(createKey(taskName,"SaveGaugeBosons"));
+  typeOfCode.clear();
+  skippedCodes.clear();
 
   String treeName = _configuration.valueString(createKey(taskName,"TreeName"));
   String path     = _configuration.valueString(createKey(taskName,"DataImportPath"));
@@ -145,6 +147,36 @@ void PythiaEventReader::initialize()
 }
 
 //!
+//! Type of a PDG code in the particle database of the task, or nullptr if the database does not have it (e.g. K0L and
+//! K0S, 130 and 310, kept undecayed by PYTHIA options but absent from DefaultDb): such particles are skipped.
+//!
+ParticleType * PythiaEventReader::particleType(int pdg)
+{
+  auto found = typeOfCode.find(pdg);
+  if (found!=typeOfCode.end())
+    {
+    if (!found->second) skippedCodes[pdg]++;
+    return found->second;
+    }
+  ParticleDb & particleDb = db();
+  ParticleType * type = (particleDb.findIndexForPdgCode(pdg)>=0) ? particleDb.findPdgCode(pdg) : nullptr;
+  typeOfCode[pdg] = type;
+  if (!type) skippedCodes[pdg]++;
+  return type;
+}
+
+void PythiaEventReader::reportSkippedCodes()
+{
+  if (skippedCodes.empty() || !reportWarning(__FUNCTION__)) return;
+  printValue("Particles skipped: PDG codes not in the particle database",long(skippedCodes.size()));
+  for (auto & entry : skippedCodes)
+    {
+    String label = "PDG code "; label += entry.first;
+    printValue(label.data(),entry.second);
+    }
+}
+
+//!
 //! Read the next PYTHIA event with more than two particles and add its particles to the current event (the event is
 //! reset by the event iterator). Throws EndOfDataException at the end of the input, which ends the event loop.
 //! Particles whose PDG code is not in the particle database are skipped; a particle is added if it passes the first
@@ -165,7 +197,6 @@ void PythiaEventReader::execute()
     throw Exception("More particles in the event than the reader can hold (nMaxTracks)",__FUNCTION__);
 
   Event & theEvent = event();
-  ParticleDb & particleDb = db();
   ParticleFilter * particleFilter = particleFilters().empty() ? nullptr : particleFilters()[0];
   for (int iParticle = 0; iParticle < nParticles; iParticle++)
     {
@@ -177,8 +208,8 @@ void PythiaEventReader::execute()
     if (!saveNeutrinos   &&  (absPdg==12 || absPdg==14 || absPdg==16 || absPdg==18)) continue;
     if (!savePhotons     &&  pdg==22) continue;
     if (!saveGaugeBosons &&  absPdg>22 && absPdg<40) continue;
-    ParticleType * type = particleDb.findPdgCode(pdg);
-    if (type==nullptr) continue;
+    ParticleType * type = particleType(pdg);
+    if (type==nullptr) continue;                 // not in the particle database (reported by finalize())
     Particle & particle = Particle::factory().nextObject();
     particle.reset();
     particle.setType(type);
@@ -189,6 +220,13 @@ void PythiaEventReader::execute()
     }
   _eventAccepted.increment();
   _taskExecuted.increment();
+}
+
+void PythiaEventReader::finalize()
+{
+  if (reportDebug(__FUNCTION__)) { printCR(); }
+  reportSkippedCodes();
+  EventProcessor::finalize();
 }
 
 } // namespace CAP

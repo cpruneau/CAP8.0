@@ -9,6 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__PythiaEventReader
 #define CAP__PythiaEventReader
+#include <map>
 #include "EventProcessor.hpp"
 #include "RootChainManager.hpp"
 #include "EventProcessor.hpp"
@@ -52,9 +53,20 @@ public:
   virtual void initialize();
   //! @brief Execute the task (process the current event).
   virtual void execute();
+  //! @brief Finalize the task (reports the PDG codes skipped).
+  virtual void finalize();
   
 protected:
 
+  //! @brief Type of a PDG code in the particle database, nullptr if the database does not have it (cached per code;
+  //! the codes missing are counted and reported by finalize()). @param pdg PDG code
+  ParticleType * particleType(int pdg);
+  //! @brief Report the PDG codes skipped because the particle database does not have them.
+  void reportSkippedCodes();
+  //! Types of the PDG codes met so far (nullptr: not in the particle database).
+  std::map<int,ParticleType*> typeOfCode;
+  //! Number of particles skipped, per PDG code missing from the particle database.
+  std::map<int,long> skippedCodes;
   //! Whether only final-state particles are saved.
   bool saveFinalOnly;
   //! Whether photons are saved.

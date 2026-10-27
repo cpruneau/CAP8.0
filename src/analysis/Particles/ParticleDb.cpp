@@ -35,7 +35,7 @@ namespace CAP
   _dbDisableNeutralDecays(false),
   _dbDisableChargedDecays(false),
   _dbDisableSelectedDecays(false),
-  _dbDisableWeakDecays(true),
+  _dbDisableWeakDecays(false), // weak decays on (as before: the switch was not applied); true turns them off
   _dbDisableLongLivedDecays(false),
   _dbDisableShortLivedDecays(false),
   //
@@ -421,13 +421,18 @@ namespace CAP
   // call (it was appended to, so repeated calls duplicated it). Codes absent from the database are skipped.
   // The Sigma0 (3212), which decays electromagnetically, is kept in the list as in the original version.
   static const int weakPdgCodes[] = {  311,  -311,    // K0, K0bar
+                                       310,   130,    // K0S, K0L
                                       3122, -3122,    // Lambda
                                       3112, -3112,    // Sigma-
                                       3212, -3212,    // Sigma0
                                       3222, -3222,    // Sigma+
                                       3312, -3312,    // Xi-
                                       3322, -3322,    // Xi0
-                                      3334, -3334 };  // Omega-
+                                      3334, -3334,    // Omega-
+                                       411,  -411,    // D+
+                                       421,  -421,    // D0
+                                       431,  -431,    // Ds+
+                                       541,  -541 };  // Bc+ (the other weakly decaying heavy hadrons have no decay modes)
   _weakDecays.clear();
   for (int code : weakPdgCodes)
     {
@@ -564,7 +569,7 @@ namespace CAP
     enableAllDecays(); // default
                        //    if (_dbDisableNeutralDecays)    disableNeutralDecays();
                        //    if (_dbDisableChargedDecays)    disableChargedDecays();
-                       //    if (_dbDisableWeakDecays)       disableWeakDecays();
+    if (_dbDisableWeakDecays)       disableWeakDecays();   // K0S, K0L, Lambda, Sigma, Xi, Omega (findWeakDecays())
                        //    if (_dbDisableLongLivedDecays)  disableDecaysTauGreatThan(_dbMaxLifeTime);
                        //    if (_dbDisableShortLivedDecays) disableDecaysTauShorterThan(_dbMaxLifeTime);
                        //    if (_dbDisableSelectedDecays)   disableSelectedDecays(); // default

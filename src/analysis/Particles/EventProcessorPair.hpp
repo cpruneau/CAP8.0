@@ -86,7 +86,7 @@ public:
   virtual ~EventProcessorPair() {}
 
   //! @brief Add the default configuration of the task and of the histogram groups (HISTOGRAM_1 to HISTOGRAM_4).
-  virtual void setDefaultConfiguration()
+  virtual void setDefaultConfiguration() override
   {
   EventProcessor::setDefaultConfiguration();
   const String & taskName = EventProcessor::name();
@@ -124,7 +124,7 @@ public:
 
 
   //! @brief Configure the task and the histogram groups. @param configuration configuration
-  virtual void configure(const Configuration & configuration)
+  virtual void configure(const Configuration & configuration) override
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();  }
   EventProcessor::configure(configuration);
@@ -135,7 +135,7 @@ public:
   }
 
   //! @brief Initialize the task and the histogram groups.
-  virtual void initialize()
+  virtual void initialize() override
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::initialize();
@@ -147,7 +147,7 @@ public:
 
 
   //! @brief Finalize the task and the histogram groups.
-  virtual void finalize()
+  virtual void finalize() override
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::finalize();
@@ -158,7 +158,7 @@ public:
   }
 
   //! @brief Reset the task and the histogram groups.
-  virtual void reset()
+  virtual void reset() override
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::reset();
@@ -214,7 +214,7 @@ public:
   }
 
   //! @brief Clear the task and the histogram groups.
-  virtual void clear()
+  virtual void clear() override
   {
   if (EventProcessor::reportDebug(__FUNCTION__)) { printCR();}
   EventProcessor::clear();
@@ -225,7 +225,7 @@ public:
   }
 
   //! @brief Print the task and the histogram groups.
-  virtual void print() const
+  virtual void print() const override
   {
   EventProcessor::print();
   _managedHistogram_1s.print();
@@ -236,7 +236,7 @@ public:
 
   //! @brief Compute the derived pair histograms of each (event filter, p1, p2) combination from the derived single
   //! histograms of p1 and p2 and the base pair histograms.
-  virtual void calculateDerived()
+  virtual void calculateDerived() override
   {
   if (EventProcessor::reportDebug(__FUNCTION__))  { printCR(); };
   std::vector<HISTOGRAM_1*> & basePairHistos      = histograms_1();
@@ -284,7 +284,7 @@ public:
   //! @brief Scale the base pair histograms (HISTOGRAM_1) of each event filter by its factor: all the (p1, p2) groups of
   //! event filter e (indices e*nPF*nPF+p1*nPF+p2). @param factors factor of each event filter
   //! @throws Exception if there are fewer factors than event filters or fewer groups than combinations
-  void scaleHistograms(const std::vector<double> & factors)
+  void scaleHistograms(const std::vector<double> & factors) override
   {
   if (reportDebug(__FUNCTION__))
     {

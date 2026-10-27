@@ -42,6 +42,14 @@ public:
   virtual void setDefaultConfiguration();
   //! @brief Configure the task (number of events and report period). @param configuration configuration
   virtual void configure(const Configuration & configuration);
+  //!
+  //! @brief Check that this iterator uses the events made by its subtasks, then initialize the task and its subtasks.
+  //!
+  //! The iterator resets its events (and so increments their index) before each event: several generators can then
+  //! fill the same event (embedding). A generator, reader or model does not reset its events.
+  //! @throws ConfigurationException if a subtask creates or imports events this iterator does not use
+  //!
+  virtual void initialize();
   //! @brief Run the event loop: for each requested event, execute the subtasks, and report progress periodically.
   virtual void execute();
   //! @brief Number of events to process. @return number of events
@@ -50,6 +58,9 @@ public:
   long nEventsReport() const { return _nEventsReport; }
 
 protected:
+  //! @brief Throw unless this iterator uses the events made by task and its subtasks (those of a nested
+  //! EventIterator excepted). @param task subtask to check
+  void checkEventsMadeBy(const Task & task) const;
 
   //! Number of events to process.
   long    _nEventsRequested;

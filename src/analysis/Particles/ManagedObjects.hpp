@@ -134,8 +134,8 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   _typeName("UNKNOWN"),
   _objects()
   {
-  setClassName("ManagedObjects<MANAGED>");
-  setName("ManagedObjects<MANAGED>");
+  setClassName("ManagedObjects");
+  setName("UNKNOWN:UNKNOWN");       // <task>:<TYPE> once known (see updateName())
   setMinimumReportLevel(Object::kInfo);
   }
   
@@ -153,9 +153,10 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
                                      const String & typeName,
                                      Configuration & configuration)
   {
-  if (reportStart(__FUNCTION__)) { printCR(); }
   _taskName = taskName;
   _typeName = typeName;
+  updateName();
+  if (reportStart(__FUNCTION__)) { printCR(); }
   configuration.addProperty(createKey(_taskName,_typeName,"USE"),    false);
   configuration.addProperty(createKey(_taskName,_typeName,"N"),      0);
   configuration.addProperty(createKey(_taskName,_typeName,"IMPORT"), false);
@@ -227,11 +228,15 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   //! @brief Set the export file name. @param option file name
   virtual void setExportFileName(const String & option) { _exportFileName = option;}
   //! @brief Set the name of the task. @param option name
-  virtual void setParentTaskName(const String & option) { _taskName = option;}
+  virtual void setParentTaskName(const String & option) { _taskName = option; updateName(); }
   //! @brief Set the name of the owner. @param option name
   virtual void setOwnerName(const String & option)      { _ownerName = option;}
   //! @brief Set the object type. @param option type
-  virtual void setTypeName(const String & option)       { _typeName  = option;}
+  virtual void setTypeName(const String & option)       { _typeName  = option; updateName(); }
+
+  //! @brief Name the list after its task and object type (\<task\>:\<TYPE\>, e.g. RunAnalysis:EVENT_FILTER), so that
+  //! its messages say which list they come from.
+  void updateName() { setName(createKey(_taskName,_typeName)); }
   
   
   

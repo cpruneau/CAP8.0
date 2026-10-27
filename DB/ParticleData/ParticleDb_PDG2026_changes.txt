@@ -1,0 +1,303 @@
+Changes to DB/ParticleData/ParticleDb.xml (written to DB/ParticleData/ParticleDb.xml), 2026 Review of Particle Physics, data release 2026-05-30 13:41:24 PDT, API version 2026.0
+147 MC codes, 59 particles with new properties, 67 particles with new branching ratios; 364 lines changed
+
+  code      f01500zero               9000223 -> 9030221    f_0(1500): 9000223 is the f_1(1510)
+  code      b11235plus                 10113 -> 10213      charge state: the PDG code of charge +1
+  code      b11235zero                 10213 -> 10113      charge state: the PDG code of charge +0
+  code      kaon1430zero               10311 -> 315        J=2, m=1.4256, width 0.0985: the K_2^*(1430); 10311 is the K_0^*(1430)
+  code      kaon1430zero_bar          -10311 -> -315       J=2, m=1.4256, width 0.0985: the K_2^*(1430); -10311 is the K_0^*(1430)
+  code      kaon1430plus               10321 -> 325        J=2, m=1.4256, width 0.0985: the K_2^*(1430); 10321 is the K_0^*(1430)
+  code      kaon1430minus             -10321 -> -325       J=2, m=1.4256, width 0.0985: the K_2^*(1430); -10321 is the K_0^*(1430)
+  code      kaon1410zero             9920313 -> 100313     the K^*(1410)0 (9920313 is not a PDG code)
+  code      kaon1410zero_bar        -9920313 -> -100313    the K^*(1410)0 (-9920313 is not a PDG code)
+  code      kaon1412zero              100313 -> 10311      J=0, m=1.412, width 0.294: the K_0^*(1430); 100313 is the K^*(1410)
+  code      kaon1412zero_bar         -100313 -> -10311     J=0, m=1.412, width 0.294: the K_0^*(1430); -100313 is the K^*(1410)
+  code      kaon1820plus               20315 -> 20325      charge state: the PDG code of charge +1
+  code      kaon1820minus             -20315 -> -20325     charge state: the PDG code of charge -1
+  code      kaon1820zero               20325 -> 20315      charge state: the PDG code of charge +0
+  code      kaon1820zero_bar          -20325 -> -20315     charge state: the PDG code of charge +0
+  code      Delta1600plusplus          31114 -> 32224      charge state: the PDG code of charge +2
+  code      Delta1600plus              32114 -> 32214      charge state: the PDG code of charge +1
+  code      Delta1600zero              32214 -> 32114      charge state: the PDG code of charge +0
+  code      Delta1600minus             32224 -> 31114      charge state: the PDG code of charge -1
+  code      Delta1600plusplus_bar     -31114 -> -32224     charge state: the PDG code of charge -2
+  code      Delta1600plus_bar         -32114 -> -32214     charge state: the PDG code of charge -1
+  code      Delta1600zero_bar         -32214 -> -32114     charge state: the PDG code of charge +0
+  code      Delta1600minus_bar        -32224 -> -31114     charge state: the PDG code of charge +1
+  code      Delta1620plusplus           1112 -> 2222       charge state: the PDG code of charge +2
+  code      Delta1620plus               1212 -> 2122       charge state: the PDG code of charge +1
+  code      Delta1620zero               2122 -> 1212       charge state: the PDG code of charge +0
+  code      Delta1620minus              2222 -> 1112       charge state: the PDG code of charge -1
+  code      Delta1620plusplus_bar      -1112 -> -2222      charge state: the PDG code of charge -2
+  code      Delta1620plus_bar          -1212 -> -2122      charge state: the PDG code of charge -1
+  code      Delta1620zero_bar          -2122 -> -1212      charge state: the PDG code of charge +0
+  code      Delta1620minus_bar         -2222 -> -1112      charge state: the PDG code of charge +1
+  code      Delta1950plusplus           1118 -> 2228       charge state: the PDG code of charge +2
+  code      Delta1950plus               2118 -> 2218       charge state: the PDG code of charge +1
+  code      Delta1950zero               2218 -> 2118       charge state: the PDG code of charge +0
+  code      Delta1950minus              2228 -> 1118       charge state: the PDG code of charge -1
+  code      Delta1950plusplus_bar      -1118 -> -2228      charge state: the PDG code of charge -2
+  code      Delta1950plus_bar          -2118 -> -2218      charge state: the PDG code of charge -1
+  code      Delta1950zero_bar          -2218 -> -2118      charge state: the PDG code of charge +0
+  code      Delta1950minus_bar         -2228 -> -1118      charge state: the PDG code of charge +1
+  code      Delta1930plusplus          11116 -> 12226      charge state: the PDG code of charge +2
+  code      Delta1930plus              11216 -> 12126      charge state: the PDG code of charge +1
+  code      Delta1930zero              12126 -> 11216      charge state: the PDG code of charge +0
+  code      Delta1930minus             12226 -> 11116      charge state: the PDG code of charge -1
+  code      Delta1930plusplus_bar     -11116 -> -12226     charge state: the PDG code of charge -2
+  code      Delta1930plus_bar         -11216 -> -12126     charge state: the PDG code of charge -1
+  code      Delta1930zero_bar         -12126 -> -11216     charge state: the PDG code of charge +0
+  code      Delta1930minus_bar        -12226 -> -11116     charge state: the PDG code of charge +1
+  code      Delta1920plusplus          21114 -> 22224      charge state: the PDG code of charge +2
+  code      Delta1920plus              22114 -> 22214      charge state: the PDG code of charge +1
+  code      Delta1920zero              22214 -> 22114      charge state: the PDG code of charge +0
+  code      Delta1920minus             22224 -> 21114      charge state: the PDG code of charge -1
+  code      Delta1920plusplus_bar     -21114 -> -22224     charge state: the PDG code of charge -2
+  code      Delta1920plus_bar         -22114 -> -22214     charge state: the PDG code of charge -1
+  code      Delta1920zero_bar         -22214 -> -22114     charge state: the PDG code of charge +0
+  code      Delta1920minus_bar        -22224 -> -21114     charge state: the PDG code of charge +1
+  code      Delta1700plusplus          11114 -> 12224      charge state: the PDG code of charge +2
+  code      Delta1700plus              12114 -> 12214      charge state: the PDG code of charge +1
+  code      Delta1700zero              12214 -> 12114      charge state: the PDG code of charge +0
+  code      Delta1700minus             12224 -> 11114      charge state: the PDG code of charge -1
+  code      Delta1700plusplus_bar     -11114 -> -12224     charge state: the PDG code of charge -2
+  code      Delta1700plus_bar         -12114 -> -12214     charge state: the PDG code of charge -1
+  code      Delta1700zero_bar         -12214 -> -12114     charge state: the PDG code of charge +0
+  code      Delta1700minus_bar        -12224 -> -11114     charge state: the PDG code of charge +1
+  code      Delta1910plusplus          21112 -> 22222      charge state: the PDG code of charge +2
+  code      Delta1910plus              21212 -> 22122      charge state: the PDG code of charge +1
+  code      Delta1910zero              22122 -> 21212      charge state: the PDG code of charge +0
+  code      Delta1910minus             22222 -> 21112      charge state: the PDG code of charge -1
+  code      Delta1910plusplus_bar     -21112 -> -22222     charge state: the PDG code of charge -2
+  code      Delta1910plus_bar         -21212 -> -22122     charge state: the PDG code of charge -1
+  code      Delta1910zero_bar         -22122 -> -21212     charge state: the PDG code of charge +0
+  code      Delta1910minus_bar        -22222 -> -21112     charge state: the PDG code of charge +1
+  code      Delta1905plusplus           1116 -> 2226       charge state: the PDG code of charge +2
+  code      Delta1905plus               1216 -> 2126       charge state: the PDG code of charge +1
+  code      Delta1905zero               2126 -> 1216       charge state: the PDG code of charge +0
+  code      Delta1905minus              2226 -> 1116       charge state: the PDG code of charge -1
+  code      Delta1905plusplus_bar      -1116 -> -2226      charge state: the PDG code of charge -2
+  code      Delta1905plus_bar          -1216 -> -2126      charge state: the PDG code of charge -1
+  code      Delta1905zero_bar          -2126 -> -1216      charge state: the PDG code of charge +0
+  code      Delta1905minus_bar         -2226 -> -1116      charge state: the PDG code of charge +1
+  code      Ns1650plus                 32112 -> 32212      charge state: the PDG code of charge +1
+  code      Ns1650zero                 32212 -> 32112      charge state: the PDG code of charge +0
+  code      Ns1650plus_bar            -32112 -> -32212     charge state: the PDG code of charge -1
+  code      Ns1650zero_bar            -32212 -> -32112     charge state: the PDG code of charge +0
+  code      Ns1675plus                  2116 -> 2216       charge state: the PDG code of charge +1
+  code      Ns1675zero                  2216 -> 2116       charge state: the PDG code of charge +0
+  code      Ns1675plus_bar             -2116 -> -2216      charge state: the PDG code of charge -1
+  code      Ns1675zero_bar             -2216 -> -2116      charge state: the PDG code of charge +0
+  code      Ns1680plus                 12116 -> 12216      charge state: the PDG code of charge +1
+  code      Ns1680zero                 12216 -> 12116      charge state: the PDG code of charge +0
+  code      Ns1680plus_bar            -12116 -> -12216     charge state: the PDG code of charge -1
+  code      Ns1680zero_bar            -12216 -> -12116     charge state: the PDG code of charge +0
+  code      Ns1700plus                 21214 -> 22124      charge state: the PDG code of charge +1
+  code      Ns1700zero                 22124 -> 21214      charge state: the PDG code of charge +0
+  code      Ns1700plus_bar            -21214 -> -22124     charge state: the PDG code of charge -1
+  code      Ns1700zero_bar            -22124 -> -21214     charge state: the PDG code of charge +0
+  code      Ns1710plus                 42112 -> 42212      charge state: the PDG code of charge +1
+  code      Ns1710zero                 42212 -> 42112      charge state: the PDG code of charge +0
+  code      Ns1710plus_bar            -42112 -> -42212     charge state: the PDG code of charge -1
+  code      Ns1710zero_bar            -42212 -> -42112     charge state: the PDG code of charge +0
+  code      Ns1720plus                 31214 -> 32124      charge state: the PDG code of charge +1
+  code      Ns1720zero                 32124 -> 31214      charge state: the PDG code of charge +0
+  code      Ns1720plus_bar            -31214 -> -32124     charge state: the PDG code of charge -1
+  code      Ns1720zero_bar            -32124 -> -31214     charge state: the PDG code of charge +0
+  code      Ns2190plus                  1218 -> 2128       charge state: the PDG code of charge +1
+  code      Ns2190zero                  2128 -> 1218       charge state: the PDG code of charge +0
+  code      Ns2190plus_bar             -1218 -> -2128      charge state: the PDG code of charge -1
+  code      Ns2190zero_bar             -2128 -> -1218      charge state: the PDG code of charge +0
+  code      Sigma1660plus              13112 -> 13222      charge state: the PDG code of charge +1
+  code      Sigma1660minus             13212 -> 13112      charge state: the PDG code of charge -1
+  code      Sigma1660zero              13222 -> 13212      charge state: the PDG code of charge +0
+  code      Sigma1660plus_bar         -13112 -> -13222     charge state: the PDG code of charge -1
+  code      Sigma1660minus_bar        -13212 -> -13112     charge state: the PDG code of charge +1
+  code      Sigma1660zero_bar         -13222 -> -13212     charge state: the PDG code of charge +0
+  code      Sigma1670plus              13114 -> 13224      charge state: the PDG code of charge +1
+  code      Sigma1670minus             13214 -> 13114      charge state: the PDG code of charge -1
+  code      Sigma1670zero              13224 -> 13214      charge state: the PDG code of charge +0
+  code      Sigma1670plus_bar         -13114 -> -13224     charge state: the PDG code of charge -1
+  code      Sigma1670minus_bar        -13214 -> -13114     charge state: the PDG code of charge +1
+  code      Sigma1670zero_bar         -13224 -> -13214     charge state: the PDG code of charge +0
+  code      Sigma1775plus               3116 -> 3226       charge state: the PDG code of charge +1
+  code      Sigma1775minus              3216 -> 3116       charge state: the PDG code of charge -1
+  code      Sigma1775zero               3226 -> 3216       charge state: the PDG code of charge +0
+  code      Sigma1775plus_bar          -3116 -> -3226      charge state: the PDG code of charge -1
+  code      Sigma1775minus_bar         -3216 -> -3116      charge state: the PDG code of charge +1
+  code      Sigma1775zero_bar          -3226 -> -3216      charge state: the PDG code of charge +0
+  code      Sigma1915plus              13116 -> 13226      charge state: the PDG code of charge +1
+  code      Sigma1915minus             13216 -> 13116      charge state: the PDG code of charge -1
+  code      Sigma1915zero              13226 -> 13216      charge state: the PDG code of charge +0
+  code      Sigma1915plus_bar         -13116 -> -13226     charge state: the PDG code of charge -1
+  code      Sigma1915minus_bar        -13216 -> -13116     charge state: the PDG code of charge +1
+  code      Sigma1915zero_bar         -13226 -> -13216     charge state: the PDG code of charge +0
+  code      Sigma1940plus              23114 -> 23224      charge state: the PDG code of charge +1
+  code      Sigma1940minus             23214 -> 23114      charge state: the PDG code of charge -1
+  code      Sigma1940zero              23224 -> 23214      charge state: the PDG code of charge +0
+  code      Sigma1940plus_bar         -23114 -> -23224     charge state: the PDG code of charge -1
+  code      Sigma1940minus_bar        -23214 -> -23114     charge state: the PDG code of charge +1
+  code      Sigma1940zero_bar         -23224 -> -23214     charge state: the PDG code of charge +0
+  code      Sigma2030plus               3118 -> 3228       charge state: the PDG code of charge +1
+  code      Sigma2030minus              3218 -> 3118       charge state: the PDG code of charge -1
+  code      Sigma2030zero               3228 -> 3218       charge state: the PDG code of charge +0
+  code      Sigma2030plus_bar          -3118 -> -3228      charge state: the PDG code of charge -1
+  code      Sigma2030minus_bar         -3218 -> -3118      charge state: the PDG code of charge +1
+  code      Sigma2030zero_bar          -3228 -> -3218      charge state: the PDG code of charge +0
+  code      Xi1530minus                 3324 -> 3314       charge state: the PDG code of charge -1
+  code      Xi1530minus_bar            -3324 -> -3314      charge state: the PDG code of charge +1
+  code      Xi1530zero                  3314 -> 3324       charge state: the PDG code of charge +0
+  code      Xi1530zero_bar             -3314 -> -3324      charge state: the PDG code of charge +0
+  isospin   down                              0 -> 0.5          (PDG d)
+  isospin   up                                0 -> 0.5          (PDG u)
+  width     top                            1.42 -> 1.4241       (PDG t)
+  isospin   down_bar                          0 -> 0.5          (PDG dbar)
+  isospin   up_bar                            0 -> 0.5          (PDG ubar)
+  width     top_bar                           0 -> 1.4241       (PDG tbar)
+  width     muon                          2e-06 -> 2.99593e-19  (PDG mu-)
+  width     muon_bar                      2e-06 -> 2.99593e-19  (PDG mu+)
+  width     Higgs                           3.7 -> 0.00303549   (PDG H)
+  spin      Higgs                             1 -> 0            (PDG H)
+  mass      f01710zero                    1.715 -> 1.723081     (PDG f_0(1710)0)
+  spin      rho1690zero                       0 -> 3            (PDG rho_3(1690)0)
+  mass      pion1670plus                   1.67 -> 1.670628     (PDG pi_2(1670)+)
+  width     pion1670plus                  0.259 -> 0.25753      (PDG pi_2(1670)+)
+  mass      pion1670minus                  1.67 -> 1.670628     (PDG pi_2(1670)-)
+  width     pion1670minus                 0.259 -> 0.25753      (PDG pi_2(1670)-)
+  mass      pion1670zero                   1.67 -> 1.670628     (PDG pi_2(1670)0)
+  width     pion1670zero                  0.259 -> 0.25753      (PDG pi_2(1670)0)
+  mass      eta1440zero                   1.435 -> 1.475528     (PDG eta(1475)0)
+  width     eta1440zero                   0.065 -> 0.0957311    (PDG eta(1475)0)
+  mass      f11420zero                   1.4263 -> 1.427708     (PDG f_1(1420)0)
+  width     a21320plus                    0.107 -> 0.104953     (PDG a_2(1320)+)
+  width     a21320minus                   0.107 -> 0.104953     (PDG a_2(1320)-)
+  width     a21320zero                    0.107 -> 0.104953     (PDG a_2(1320)0)
+  width     f21270zero                    0.185 -> 0.186554     (PDG f_2(1270)0)
+  width     phi1020zero                0.004458 -> 0.00424894   (PDG phi(1020)0)
+  mass      rho770plus                   0.7693 -> 0.7751079    (PDG rho(770)+)
+  mass      rho770minus                  0.7693 -> 0.7751079    (PDG rho(770)-)
+  mass      rho770zero                   0.7693 -> 0.7752612    (PDG rho(770)0)
+  width     rho770zero                   0.1502 -> 0.147391     (PDG rho(770)0)
+  mass      eta547zero                   0.5473 -> 0.5478619    (PDG eta)
+  width     eta547zero                    1e-06 -> 1.3078e-06   (PDG eta)
+  width     pion0135zero                      0 -> 7.81199e-09  (PDG pi0)
+  width     a42040plus                    0.361 -> 0.323894     (PDG a_4(1970)+)
+  width     a42040minus                   0.361 -> 0.323894     (PDG a_4(1970)-)
+  width     a42040zero                    0.361 -> 0.323894     (PDG a_4(1970)0)
+  width     phi1850zero                   0.087 -> 0.0868361    (PDG phi_3(1850)0)
+  width     kaon0892zero                 0.0507 -> 0.0470746    (PDG K^*(892)0)
+  width     kaon0892zero_bar             0.0507 -> 0.0470746    (PDG Kbar^*(892)0)
+  mass      kaon1430zero                 1.4256 -> 1.432353     (PDG K_2^*(1430)0)
+  mass      kaon1430zero_bar             1.4256 -> 1.432353     (PDG Kbar_2^*(1430)0)
+  mass      Lambda1405zero                1.406 -> 1.40512      (PDG Lambda(1405)0)
+  mass      Lambda1405zero_bar            1.406 -> 1.40512      (PDG Lambdabar(1405)0)
+  spin      Lambda1820zero                  0.5 -> 2.5          (PDG Lambda(1820)0)
+  spin      Lambda1820zero_bar              0.5 -> 2.5          (PDG Lambdabar(1820)0)
+  spin      Lambda1830zero                  0.5 -> 2.5          (PDG Lambda(1830)0)
+  spin      Lambda1830zero_bar              0.5 -> 2.5          (PDG Lambdabar(1830)0)
+  spin      Lambda2100zero                  1.5 -> 2.5          (PDG Lambda(2110)0)
+  spin      Lambda2100zero_bar              1.5 -> 2.5          (PDG Lambdabar(2110)0)
+  mass      Sigma1189minus                1.197 -> 1.197449     (PDG Sigma-)
+  mass      Sigma1189minus_bar            1.197 -> 1.197449     (PDG Sigmabar+)
+  mass      Sigma1192zero                 1.193 -> 1.192642     (PDG Sigma0)
+  mass      Sigma1192zero_bar             1.193 -> 1.192642     (PDG Sigmabar0)
+  mass      Sigma1189plus                 1.189 -> 1.18937      (PDG Sigma+)
+  mass      Sigma1189plus_bar             1.189 -> 1.18937      (PDG Sigmabar-)
+  spin      Sigma2030plus                   1.5 -> 3.5          (PDG Sigma(2030)+)
+  spin      Sigma2030minus                  1.5 -> 3.5          (PDG Sigma(2030)-)
+  spin      Sigma2030zero                   1.5 -> 3.5          (PDG Sigma(2030)0)
+  spin      Sigma2030plus_bar               1.5 -> 3.5          (PDG Sigmabar(2030)-)
+  spin      Sigma2030minus_bar              1.5 -> 3.5          (PDG Sigmabar(2030)+)
+  spin      Sigma2030zero_bar               1.5 -> 3.5          (PDG Sigmabar(2030)0)
+  mass      Xi1321minus                 1.32131 -> 1.321711     (PDG Xi-)
+  mass      Xi1321minus_bar             1.32131 -> 1.321711     (PDG Xibar+)
+  width     Xi1530minus                  0.0099 -> 0.00992121   (PDG Xi(1530)-)
+  width     Xi1530minus_bar              0.0099 -> 0.00992121   (PDG Xibar(1530)+)
+  mass      Omegabminus                       7 -> 6.045771     (PDG Omega_b()-)
+  spin      Omegabminus                       1 -> 0.5          (PDG Omega_b()-)
+  decay     rho1690plus            pion0139plus pion0135zero                                    0.29 -> 0.236
+  decay     rho1690minus           pion0139minus pion0135zero                                   0.29 -> 0.236
+  decay     rho1690zero            pion0135zero pion0135zero                                    0.29 -> 0.236
+  decay     f01500zero             eta547zero eta0prime                                         0.25 -> 0.022
+  decay     f01500zero             eta547zero eta547zero                                        0.25 -> 0.05952
+  decay     f01500zero             pion0139plus pion0139minus (CG) + pion0135zero pion0135zero  0.25 -> 0.3447
+  decay     a01450plus             pion0139plus eta547zero                                      0.3333 -> 0.09346
+  decay     a01450plus             pion0139plus eta0prime                                       0.3333 -> 0.03271
+  decay     a01450minus            pion0139minus eta547zero                                     0.3333 -> 0.09346
+  decay     a01450minus            pion0139minus eta0prime                                      0.3333 -> 0.03271
+  decay     a01450zero             pion0135zero eta547zero (CG)                                 0.3333 -> 0.09346
+  decay     a01450zero             pion0135zero eta0prime (CG)                                  0.3333 -> 0.03271
+  decay     f21270zero             pion0135zero pion0135zero (CG) + pion0139plus pion0139minus  1 -> 0.8426
+  decay     eta0prime              pion0135zero pion0135zero eta547zero                         0.209 -> 0.2237
+  decay     kaon1270zero           pion0139minus kaon0892plus (CG) + pion0135zero kaon0892zero  0.16 -> 0.1801
+  decay     kaon1270zero_bar       pion0139plus kaon0892minus (CG) + pion0135zero kaon0892zero_ 0.16 -> 0.1801
+  decay     kaon1270plus           pion0139plus kaon0892zero (CG) + pion0135zero kaon0892plus ( 0.16 -> 0.1801
+  decay     kaon1270minus          pion0139minus kaon0892zero_bar (CG) + pion0135zero kaon0892m 0.16 -> 0.1801
+  decay     kaon1412zero           pion0139minus kaon0492plus (CG) + pion0135zero kaon0492zero  1 -> 0.93
+  decay     kaon1412zero_bar       pion0139plus kaon0492minus (CG) + pion0135zero kaon0492zero_ 1 -> 0.93
+  decay     Delta1950plusplus      Delta1232plus pion0139plus (CG) + Delta1232plusplus pion0135 0.4 -> 0.04
+  decay     Delta1950plus          Delta1232plusplus pion0139minus (CG) + Delta1232zero pion013 0.4 -> 0.04
+  decay     Delta1950zero          Delta1232plus pion0139minus (CG) + Delta1232minus pion0139pl 0.4 -> 0.04
+  decay     Delta1950minus         Delta1232zero pion0139minus (CG) + Delta1232minus pion0135ze 0.4 -> 0.04
+  decay     Delta1950plusplus_bar  Delta1232plus_bar pion0139minus (CG) + Delta1232plusplus_bar 0.4 -> 0.04
+  decay     Delta1950plus_bar      Delta1232plusplus_bar pion0139plus (CG) + Delta1232zero_bar  0.4 -> 0.04
+  decay     Delta1950zero_bar      Delta1232plus_bar pion0139plus (CG) + Delta1232minus_bar pio 0.4 -> 0.04
+  decay     Delta1950minus_bar     Delta1232zero_bar pion0139plus (CG) + Delta1232minus_bar pio 0.4 -> 0.04
+  decay     Delta1930plusplus      Delta1232plus pion0139plus (CG) + Delta1232plusplus pion0135 0.2 -> 0.33
+  decay     Delta1930plus          Delta1232plusplus pion0139minus (CG) + Delta1232zero pion013 0.2 -> 0.33
+  decay     Delta1930zero          Delta1232plus pion0139minus (CG) + Delta1232minus pion0139pl 0.2 -> 0.33
+  decay     Delta1930minus         Delta1232zero pion0139minus (CG) + Delta1232minus pion0135ze 0.2 -> 0.33
+  decay     Delta1930plusplus_bar  Delta1232plus_bar pion0139minus (CG) + Delta1232plusplus_bar 0.2 -> 0.33
+  decay     Delta1930plus_bar      Delta1232plusplus_bar pion0139plus (CG) + Delta1232zero_bar  0.2 -> 0.33
+  decay     Delta1930zero_bar      Delta1232plus_bar pion0139plus (CG) + Delta1232minus_bar pio 0.2 -> 0.33
+  decay     Delta1930minus_bar     Delta1232zero_bar pion0139plus (CG) + Delta1232minus_bar pio 0.2 -> 0.33
+  decay     Delta1920plusplus      Delta1232plus pion0139plus (CG) + Delta1232plusplus pion0135 0.2 -> 0.38
+  decay     Delta1920plus          Delta1232plusplus pion0139minus (CG) + Delta1232zero pion013 0.2 -> 0.38
+  decay     Delta1920zero          Delta1232plus pion0139minus (CG) + Delta1232minus pion0139pl 0.2 -> 0.38
+  decay     Delta1920minus         Delta1232zero pion0139minus (CG) + Delta1232minus pion0135ze 0.2 -> 0.38
+  decay     Delta1920plusplus_bar  Delta1232plus_bar pion0139minus (CG) + Delta1232plusplus_bar 0.2 -> 0.38
+  decay     Delta1920plus_bar      Delta1232plusplus_bar pion0139plus (CG) + Delta1232zero_bar  0.2 -> 0.38
+  decay     Delta1920zero_bar      Delta1232plus_bar pion0139plus (CG) + Delta1232minus_bar pio 0.2 -> 0.38
+  decay     Delta1920minus_bar     Delta1232zero_bar pion0139plus (CG) + Delta1232minus_bar pio 0.2 -> 0.38
+  decay     Ns1675plus             Delta1232plusplus pion0139minus (CG) + Delta1232plus pion013 0.5 -> 0.19
+  decay     Ns1675zero             Delta1232minus pion0139plus (CG) + Delta1232zero pion0135zer 0.5 -> 0.19
+  decay     Ns1675plus_bar         Delta1232plusplus_bar pion0139plus (CG) + Delta1232plus_bar  0.5 -> 0.19
+  decay     Ns1675zero_bar         Delta1232minus_bar pion0139minus (CG) + Delta1232zero_bar pi 0.5 -> 0.19
+  decay     Lambda1800zero         pion0139plus Sigma1385minus (CG) + pion0139minus Sigma1385pl 0.225 -> 0.09
+  decay     Lambda1800zero         pion0139plus Sigma1189minus (CG) + pion0139minus Sigma1189pl 0.225 -> 0.27
+  decay     Lambda1800zero_bar     pion0139minus Sigma1385minus_bar (CG) + pion0139plus Sigma13 0.225 -> 0.09
+  decay     Lambda1800zero_bar     pion0139minus Sigma1189minus_bar (CG) + pion0139plus Sigma11 0.225 -> 0.27
+  decay     Lambda1810zero         pion0139plus Sigma1189minus (CG) + pion0139minus Sigma1189pl 0.25 -> 0.16
+  decay     Lambda1810zero_bar     pion0139minus Sigma1189minus_bar (CG) + pion0139plus Sigma11 0.25 -> 0.16
+  decay     Sigma1660plus          Sigma1189plus pion0135zero (CG) + Sigma1192zero pion0139plus 0.3333 -> 0.37
+  decay     Sigma1660minus         Sigma1189minus pion0135zero (CG) + Sigma1192zero pion0139min 0.3333 -> 0.37
+  decay     Sigma1660zero          Sigma1189plus pion0139minus (CG) + Sigma1189minus pion0139pl 0.3333 -> 0.37
+  decay     Sigma1660plus_bar      Sigma1189plus_bar pion0135zero (CG) + Sigma1192zero_bar pion 0.3333 -> 0.37
+  decay     Sigma1660minus_bar     Sigma1189minus_bar pion0135zero (CG) + Sigma1192zero_bar pio 0.3333 -> 0.37
+  decay     Sigma1660zero_bar      Sigma1189plus_bar pion0139plus (CG) + Sigma1189minus_bar pio 0.3333 -> 0.37
+  decay     Sigma1915plus          Lambda1115zero pion0139plus                                  0.4375 -> 0.06
+  decay     Sigma1915plus          pion0135zero Sigma1189plus (CG) + pion0139plus Sigma1192zero 0.4375 -> 0.1
+  decay     Sigma1915minus         Lambda1115zero pion0139minus                                 0.4375 -> 0.06
+  decay     Sigma1915minus         pion0135zero Sigma1189minus (CG) + pion0139minus Sigma1192ze 0.4375 -> 0.1
+  decay     Sigma1915zero          Lambda1115zero pion0135zero                                  0.4375 -> 0.06
+  decay     Sigma1915zero          pion0139plus Sigma1189minus (CG) + pion0139minus Sigma1189pl 0.4375 -> 0.1
+  decay     Sigma1915plus_bar      Lambda1115zero_bar pion0139minus                             0.4375 -> 0.06
+  decay     Sigma1915plus_bar      pion0135zero Sigma1189plus_bar (CG) + pion0139minus Sigma119 0.4375 -> 0.1
+  decay     Sigma1915minus_bar     Lambda1115zero_bar pion0139plus                              0.4375 -> 0.06
+  decay     Sigma1915minus_bar     pion0135zero Sigma1189minus_bar (CG) + pion0139plus Sigma119 0.4375 -> 0.1
+  decay     Sigma1915zero_bar      Lambda1115zero_bar pion0135zero                              0.4375 -> 0.06
+  decay     Sigma1915zero_bar      pion0139minus Sigma1189minus_bar (CG) + pion0139plus Sigma11 0.4375 -> 0.1
+  decay     Sigma1940plus          Lambda1115zero pion0139plus (CG)                             0.15 -> 0.06
+  decay     Sigma1940plus          pion0135zero Sigma1189plus (CG) + pion0139plus Sigma1192zero 0.15 -> 0.86
+  decay     Sigma1940minus         Lambda1115zero pion0139minus (CG)                            0.15 -> 0.06
+  decay     Sigma1940minus         pion0135zero Sigma1189minus (CG) + pion0139minus Sigma1192ze 0.15 -> 0.86
+  decay     Sigma1940zero          Lambda1115zero pion0135zero (CG)                             0.15 -> 0.06
+  decay     Sigma1940zero          pion0139plus Sigma1189minus (CG) + pion0139minus Sigma1189pl 0.15 -> 0.86
+  decay     Sigma1940plus_bar      Lambda1115zero_bar pion0139minus (CG)                        0.15 -> 0.06
+  decay     Sigma1940plus_bar      pion0135zero Sigma1189plus_bar (CG) + pion0139minus Sigma119 0.15 -> 0.86
+  decay     Sigma1940minus_bar     Lambda1115zero_bar pion0139plus (CG)                         0.15 -> 0.06
+  decay     Sigma1940minus_bar     pion0135zero Sigma1189minus_bar (CG) + pion0139plus Sigma119 0.15 -> 0.86
+  decay     Sigma1940zero_bar      Lambda1115zero_bar pion0135zero (CG)                         0.15 -> 0.06
+  decay     Sigma1940zero_bar      pion0139minus Sigma1189minus_bar (CG) + pion0139plus Sigma11 0.15 -> 0.86
+  decay     Omega1672minus         Xi1321minus pion0135zero                                     0.08 -> 0.08547
+  decay     Omega1672minus_bar     Xi1321minus_bar pion0135zero                                 0.08 -> 0.08547
