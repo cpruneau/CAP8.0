@@ -14,8 +14,8 @@ Usage (from anywhere; the script locates CAP from its own position):
     python3 RunCAP.py --check FILE            # load FILE, check its values against the templates and exit (no GUI)
 
 The window has four parts, from top to bottom:
-  * a toolbar: Run, Save workflow, Load workflow, Clear workflow (a new, empty workflow), Save log, Clear log, Kill and
-    Exit;
+  * a toolbar: Run (the stage shown), Run all stages, Save workflow, Load workflow, Clear workflow (a new, empty
+    workflow), Save log, Clear log, Kill and Exit;
   * the workflow editor: the tasks available in the current build (left), the workflow (right), and between them two
     arrow buttons. The right arrow appends the tasks selected on the left to the workflow (a task can be added several
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
@@ -27,8 +27,9 @@ The window has four parts, from top to bottom:
     smearers), the number of objects of that kind, and for each its name and title and its conditions (a range, two
     ranges, a value or a flag of one quantity) or binning parameters;
   * the tasks: one line per task of the workflow, in run order, with the filters it uses, the number of its
-    histogram folders and its first problem. Double-clicking a task (here or in the workflow), or Configure task,
-    opens its window (RunCAPTaskDialog.py): General (name, report level, the filters, corrections, events and particle
+    histogram folders and its first problem. Above it, the buttons of the stages of the workflow (Event Processing,
+    Derived Histos, Balance Fct) choose the stage shown in the workflow editor, and the files of its job. Double-clicking
+    a task (here or in the workflow) opens its window (RunCAPTaskDialog.py): General (name, report level, the filters, corrections, events and particle
     databases it uses, parameters) and Histograms (for each list of folders: use, creation, import, export; a used
     list has one folder per combination of the event and particle filters; prefix of the folder names, same binning
     for all folders or binning folder by folder). Booleans have a true/false menu, integers and reals fields that only accept numbers;
@@ -38,11 +39,19 @@ Available tasks: the XML templates written by "bin/CAP --xml-templates" (one fil
 parameter with its default value and type, see CAP::Task::exportXmlTemplates()). They are kept in <CAP>/DB/Templates
 and regenerated automatically when bin/CAP or the libraries are newer than them (or with the Refresh button).
 
-Workflow files: a CAP configuration file (root element CAP, TASK elements, see Task.hpp). A workflow of a single task
-(possibly with subtasks) is written as that task; several top-level tasks are written as subtasks of a task named
-"Workflow" of class CAP::Task, which executes them in order. Run uses the file last saved, or, when the workflow was
-changed since (or never saved), a temporary file. The job is run as:
-    <CAP>/bin/CAP <root task> <directory of the file>/ <file name> <output directory>/
+Stages: a workflow has up to three stages, each run by its own CAP job, one after the other: Event Processing
+(generators, analyzers filling their histograms event by event), Derived Histos (the calculators of the derived
+histograms, reading the output file of event processing; made from its analyzers the first time the stage is shown)
+and Balance Fct (the tasks computing balance functions: offered for workflows that have such tasks; adding one puts it
+in this stage). The stages are kept together: showing or adding one does not remove the others.
+
+Workflow files: a CAP configuration file (root element CAP, TASK elements, see Task.hpp) with a TASK element per stage
+that has tasks (attribute stage: EventProcessing, DerivedHistos, BalanceFct), the task CAP runs for that stage, holding
+its tasks (FilterCreator first) and the files of its job (JOB group). That task is named Workflow for event processing
+(as in the files written before the stages, which are read as event processing, or as derived histograms when all their
+analysis tasks are calculators), DerivedHistos and BalanceFct for the others. Run uses the file last saved, or, when the
+workflow was changed since (or never saved), a temporary file. The job of a stage is run as:
+    <CAP>/bin/CAP <task of the stage> <directory of the file>/ <file name> <output directory>/
 in the output directory, with the environment of SetupCAP.sh (taken from BuildCAP.py's settings). The job writes the
 histograms of all its tasks to one output file in that directory (Output file; by default Workflow.cap): a folder per
 task, holding a folder per combination of event and particle filters with its histograms and derived histograms. A
@@ -89,6 +98,19 @@ TYPE_ALIASES = {"bool": "bool", "boolean": "bool", "int": "int", "integer": "int
                 "double": "double", "float": "double", "real": "double", "string": "string", "text": "string"}
 #: Name and class of the task wrapping a workflow of several top-level tasks.
 WRAPPER_NAME, WRAPPER_CLASS = "Workflow", "CAP::Task"
+#: Stages of a workflow, run one after the other by separate CAP jobs: event processing (generators, analyzers filling
+#: histograms event by event), derived histograms (calculators computing them from the histograms of the first stage)
+#: and balance functions (computed from the derived histograms). A workflow file holds a TASK element per stage that has
+#: tasks (attribute stage, the name of the stage); CAP runs one of them (its name is the first argument of bin/CAP).
+EVENTS, DERIVED, BF = "EventProcessing", "DerivedHistos", "BalanceFct"
+STAGES = (EVENTS, DERIVED, BF)
+#: Titles of the stages (the buttons of RunCAP.py).
+STAGE_TITLES = {EVENTS: "Event Processing", DERIVED: "Derived Histos", BF: "Balance Fct"}
+#: Name of the task CAP runs for a stage of several tasks (the stage of event processing keeps the name of the earlier
+#: single-stage files, Workflow).
+STAGE_ROOTS = {EVENTS: WRAPPER_NAME, DERIVED: DERIVED, BF: BF}
+#: Classes of the tasks computing balance functions (they belong to the stage BF).
+BF_CLASS = re.compile(r"(?:Bf|BalanceFunction)Calculator$")
 
 INT_PARTIAL = re.compile(r"[+-]?\d*")
 FLOAT_PARTIAL = re.compile(r"[+-]?\d*\.?\d*([eE][+-]?\d*)?")
@@ -256,24 +278,61 @@ def task_from_element(element, templates, warnings):
     return t
 
 
-def load_workflow(path, templates):
-    """Top-level tasks (with subtasks) of a workflow file, and warnings. Raises ValueError for invalid files."""
+def is_bf_task(task):
+    """Whether a task computes balance functions (stage BF)."""
+    return bool(BF_CLASS.search(task.cls))
+
+
+def _stage_elements(path):
+    """The TASK elements of a workflow file by stage: {stage: [elements]}. A TASK element of the root names its stage
+    (attribute stage, or its name DerivedHistos or BalanceFct); the others are those of event processing (files written
+    before the stages). Raises ValueError for invalid files."""
     try:
         root = ET.parse(path).getroot()
     except ET.ParseError as e:
         raise ValueError("%s is not a valid XML file: %s" % (path, e))
-    if root.tag == "TASK":
-        elements = [root]
-    else:
-        elements = root.findall("TASK")
+    elements = [root] if root.tag == "TASK" else root.findall("TASK")
     if not elements:
         raise ValueError("%s contains no TASK element." % path)
-    warnings = []
-    tasks = [task_from_element(e, templates, warnings) for e in elements]
-    if (len(tasks) == 1 and tasks[0].name == WRAPPER_NAME and tasks[0].cls == WRAPPER_CLASS
+    by_stage = {}
+    for e in elements:
+        stage = e.get("stage") or (e.get("name") if e.get("name") in (DERIVED, BF) else EVENTS)
+        if stage not in STAGES:
+            raise ValueError("%s: unknown stage '%s' of task %s (%s)." % (path, stage, e.get("name", "?"),
+                                                                         ", ".join(STAGES)))
+        by_stage.setdefault(stage, []).append(e)
+    return by_stage
+
+
+def _unwrapped(tasks, stage):
+    """The tasks of a stage: those held by the task CAP runs for the stage (STAGE_ROOTS), if it only holds them."""
+    if (len(tasks) == 1 and tasks[0].name == STAGE_ROOTS[stage] and tasks[0].cls == WRAPPER_CLASS
             and not any(p.value != p.default for p in tasks[0].params)):
-        tasks = tasks[0].children
-    return tasks, warnings
+        return tasks[0].children
+    return tasks
+
+
+def load_stages(path, templates):
+    """Top-level tasks (with subtasks) of each stage of a workflow file: {stage: tasks}, warnings. A file of one stage
+    written before the stages whose analysis tasks all compute derived histograms (a derived run) is read as the stage
+    DERIVED. Raises ValueError for invalid files."""
+    warnings = []
+    stages = {}
+    for stage, elements in _stage_elements(path).items():
+        tasks = [task_from_element(e, templates, warnings) for e in elements]
+        stages[stage] = _unwrapped(tasks, stage)
+    if list(stages) == [EVENTS] and not any(e.get("stage") for e in _stage_elements(path)[EVENTS]):
+        analyses = [t for t in all_tasks(stages[EVENTS]) if filters.histogram_layout(t, templates)]
+        if analyses and all(filters.is_calculator(t, templates) for t in analyses):
+            stages = {DERIVED: stages[EVENTS]}
+    return stages, warnings
+
+
+def load_workflow(path, templates):
+    """Top-level tasks (with subtasks) of a workflow file (those of its first stage), and warnings. Raises ValueError
+    for invalid files."""
+    stages, warnings = load_stages(path, templates)
+    return next(stages[s] for s in STAGES if s in stages), warnings
 
 
 def all_tasks(tasks):
@@ -302,21 +361,21 @@ def task_to_element(t):
     return element
 
 
-def root_task(tasks):
-    """The task run by CAP: the single top-level task, or a wrapper holding the top-level tasks."""
-    if len(tasks) == 1:
+def root_task(tasks, name=WRAPPER_NAME):
+    """The task run by CAP: the single top-level task, or a wrapper (named name) holding the top-level tasks."""
+    if len(tasks) == 1 and name == WRAPPER_NAME:
         return tasks[0]
-    wrapper = TaskConfig(WRAPPER_NAME, WRAPPER_CLASS, "INFO")
+    wrapper = TaskConfig(name, WRAPPER_CLASS, "INFO")
     wrapper.children = list(tasks)
     return wrapper
 
 
-def run_root_name(tasks, library, templates):
-    """Name of the task CAP runs for a workflow written with its library: the root of the tasks written (FilterCreator
-    first, so the wrapper of the top-level tasks), as write_workflow() returns it."""
+def run_root_name(tasks, library, templates, stage=EVENTS):
+    """Name of the task CAP runs for a stage of a workflow written with its library: the root of the tasks written
+    (FilterCreator first, so the wrapper of the top-level tasks), as write_stages() names it."""
     if library is None:
-        return root_task(tasks).name
-    return root_task(filters.prepared_for_writing(tasks, library, templates, Param, TaskConfig)).name
+        return root_task(tasks, STAGE_ROOTS[stage]).name
+    return root_task(filters.prepared_for_writing(tasks, library, templates, Param, TaskConfig), STAGE_ROOTS[stage]).name
 
 
 def _indent(element, level=0):
@@ -332,49 +391,105 @@ def _indent(element, level=0):
         element.tail = pad
 
 
-def load_workflow_with_filters(path, templates):
-    """Top-level tasks of a workflow file with their filters (RunCAPFilters): the library of filters, efficiencies and
-    smearers (from the RUNCAP element of the file, if any, and the objects defined by the tasks), the choices of the
-    tasks (task.filters) and their histogram options (task.histograms); the keys of these objects are removed from the
-    parameters of the tasks (write_workflow() writes them again). Returns tasks, library, warnings."""
-    tasks, warnings = load_workflow(path, templates)
-    library = None
+def new_job():
+    """Files of the job of a stage, not named yet: {name: ""} for RunCAPFilters.JOB_SETTINGS."""
+    return {name: "" for name in filters.JOB_SETTINGS}
+
+
+def load_stages_with_filters(path, templates):
+    """Top-level tasks of each stage of a workflow file with their filters (RunCAPFilters): the library of filters,
+    efficiencies and smearers shared by the stages (from the RUNCAP element of the file, if any, and the objects
+    defined by the tasks), the choices of the tasks (task.filters) and their histogram options (task.histograms); the
+    keys of these objects are removed from the parameters of the tasks (write_stages() writes them again), and the
+    files of the job of each stage (the JOB keys of the task CAP runs for it). Returns {stage: tasks}, library,
+    {stage: job}, warnings."""
+    stages, warnings = load_stages(path, templates)
     root = ET.parse(path).getroot()
-    top = root if root.tag == "TASK" else root.find("TASK")
-    job = {p.key[len("JOB:"):]: p.value for p in read_parameters(top) if filters.JOB_KEY.match(p.key)} \
-        if top is not None else {}
+    elements = _stage_elements(path)
+    if list(stages) == [DERIVED] and DERIVED not in elements:          # a derived run written before the stages
+        elements = {DERIVED: elements[EVENTS]}
+    jobs = {stage: new_job() for stage in STAGES}
+    for stage, tops in elements.items():
+        if len(tops) == 1:
+            jobs[stage].update({p.key[len("JOB:"):]: p.value for p in read_parameters(tops[0])
+                                if filters.JOB_KEY.match(p.key)})
+    everything = [t for s in STAGES for t in stages.get(s, [])]
+    library = None
     element = root.find("RUNCAP")
     if element is not None:
-        library, more = filters.read_runcap_element(element, tasks)
+        library, more = filters.read_runcap_element(element, everything)
         warnings += more
-    library, more = filters.extract_choices(tasks, templates, library)
-    for name, value in job.items():
-        library.job[name] = value
-    tasks = filters.remove_creator(tasks, library)
+        first = next(s for s in STAGES if s in stages)
+        for name, value in library.job.items():           # files of the job written before the stages
+            if value and not jobs[first].get(name):
+                jobs[first][name] = value
+    more = []
+    lists = []
+    for stage in STAGES:
+        if stage not in stages:
+            continue
+        tasks = stages[stage]
+        library, extra = filters.extract_choices(tasks, templates, library)
+        more += extra
+        tasks = filters.remove_creator(tasks, library)
+        more += filters.update_event_settings(tasks, templates)
+        more += filters.update_iterator_events(tasks, templates)
+        lists += filters.update_histogram_lists(tasks, templates)
+        stages[stage] = tasks
     more += filters.update_database_files(library)
-    more += filters.update_event_settings(tasks, templates)
-    more += filters.update_iterator_events(tasks, templates)
-    return tasks, library, warnings + more
+    if lists:                              # the keys moved: no warning of their own
+        warnings = [w for w in warnings if not filters.is_numbered_list_warning(w)]
+    library.job = jobs[next(s for s in STAGES if s in stages)]
+    return stages, library, jobs, warnings + more + lists
+
+
+def load_workflow_with_filters(path, templates):
+    """Top-level tasks of the first stage of a workflow file with their filters (see load_stages_with_filters()); the
+    library holds the files of the job of that stage. Returns tasks, library, warnings."""
+    stages, library, jobs, warnings = load_stages_with_filters(path, templates)
+    return next(stages[s] for s in STAGES if s in stages), library, warnings
 
 
 def write_workflow(path, tasks, library=None, templates=None):
-    """Write the workflow to path. With a library (RunCAPFilters.FilterLibrary), the keys of the filters, efficiencies,
-    smearers and histogram folders chosen by the tasks are written in their parameters (the tasks are unchanged), and
-    the library in a RUNCAP element. Returns the name of the task to run."""
-    if library is not None:
-        written = filters.prepared_for_writing(tasks, library, templates or {}, Param, TaskConfig)
-    else:
-        written = tasks
-    top = root_task(written)
-    if library is not None:                 # files of the job: keys of the task CAP runs (see CAP.cxx)
-        top.params = [p for p in top.params if not filters.JOB_KEY.match(p.key)]
-        for name, value in library.job.items():
-            if value:
-                top.params.append(Param("JOB:" + name, "string", value))
+    """Write a workflow of one stage (event processing) to path (see write_stages()). Returns the name of the task to
+    run."""
+    jobs = {EVENTS: library.job} if library is not None else None
+    return write_stages(path, {EVENTS: tasks}, library, templates, jobs)[EVENTS]
+
+
+def write_stages(path, stages, library=None, templates=None, jobs=None):
+    """Write the stages of a workflow ({stage: top-level tasks}; stages without tasks are left out) to path: a TASK
+    element per stage, the task CAP runs for it (attribute stage), with the files of its job (jobs[stage]: keys JOB:...
+    of that task). With a library (RunCAPFilters.FilterLibrary), the keys of the filters, efficiencies, smearers and
+    histogram folders chosen by the tasks are written in their parameters (the tasks are unchanged), FilterCreator
+    first in each stage, and the library in a RUNCAP element. Returns {stage: name of the task to run}."""
     document = ET.Element("CAP", {"version": "1"})
-    document.append(task_to_element(top))
+    names = {}
+    everything = []
+    for stage in STAGES:
+        tasks = stages.get(stage) or []
+        if not tasks:
+            continue
+        written = filters.prepared_for_writing(tasks, library, templates or {}, Param, TaskConfig) \
+            if library is not None else tasks
+        everything += written
+        top = root_task(written, STAGE_ROOTS[stage])
+        job = (jobs or {}).get(stage) or {}
+        if library is not None or job:           # files of the job: keys of the task CAP runs (see CAP.cxx)
+            top.params = [p for p in top.params if not filters.JOB_KEY.match(p.key)]
+            for name, value in job.items():
+                if value:
+                    top.params.append(Param("JOB:" + name, "string", value))
+        element = task_to_element(top)
+        element.set("stage", stage)
+        document.append(element)
+        names[stage] = top.name
     if library is not None:
-        document.append(filters.runcap_element(library, written))
+        saved, library.job = library.job, {}           # the files of the jobs are in the TASK elements
+        try:
+            document.append(filters.runcap_element(library, everything))
+        finally:
+            library.job = saved
     _indent(document)
     with open(path, "wb") as f:
         f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -382,23 +497,25 @@ def write_workflow(path, tasks, library=None, templates=None):
                 % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").encode())
         f.write(ET.tostring(document, encoding="utf-8"))
         f.write(b"\n")
-    return top.name
+    return names
 
 
-def check_workflow(tasks):
-    """List of problems that prevent saving or running the workflow."""
+def check_workflow(tasks, stage=EVENTS):
+    """List of problems that prevent saving or running (the tasks of a stage of) the workflow."""
     errors = []
     if not tasks:
         return ["The workflow is empty: add tasks with the right arrow."]
     names = [t.name for t in all_tasks(tasks)]
-    if len(tasks) > 1 and WRAPPER_NAME in names:
-        errors.append("The name %s is reserved for the task holding a workflow of several tasks." % WRAPPER_NAME)
+    for reserved in sorted(set(STAGE_ROOTS.values()) & set(names)):
+        errors.append("The name %s is reserved for the task holding the tasks of a stage of the workflow." % reserved)
     for name in sorted(set(n for n in names if names.count(n) > 1)):
         errors.append("Several tasks are named %s: task names must be unique." % name)
     reserved = {filters.CREATOR_NAME} | {name for name, _ in filters.CREATORS.values()}
     for name in sorted(reserved & set(names)):
         errors.append("The name %s is reserved for the task creating the filters (FilterCreator)." % name)
     for t in all_tasks(tasks):
+        if is_bf_task(t) and stage != BF:
+            errors.append("Task %s computes balance functions: it belongs to the stage %s." % (t.name, STAGE_TITLES[BF]))
         if not NAME_FULL.fullmatch(t.name):
             errors.append("Invalid task name '%s' (letters, digits, _ . -; no spaces or colons)." % t.name)
         for p in t.params:
@@ -602,6 +719,10 @@ def run_gui(initial_file=None, hook=None):
             self.items = {}             # workflow tree item -> TaskConfig
             self.dialogs = {}           # workflow tree item -> window of the task (RunCAPTaskDialog)
             self.library = filters.FilterLibrary.with_defaults()   # objects of the workflow (Filters pane)
+            self.stage = EVENTS                         # stage shown in the workflow editor
+            self.stages = {s: [] for s in STAGES}       # tasks of the stages not shown (those shown are in the tree)
+            self.jobs = {s: new_job() for s in STAGES}         # files of the job of each stage (library.job: the stage shown)
+            self.library.job = self.jobs[self.stage]
             self.filters_panel = None       # Filters pane (RunCAPFiltersGui.FiltersPanel)
             self.saved_path = ""        # file of the last save or load
             self.dirty = False
@@ -638,6 +759,7 @@ def run_gui(initial_file=None, hook=None):
             self._make_output(output)
             self._update_arrows()
             self._update_title()
+            self._update_stages()
             root.protocol("WM_DELETE_WINDOW", self.exit)
             root.report_callback_exception = self._callback_error
             root.after(50, self._poll_queue)
@@ -680,8 +802,14 @@ def run_gui(initial_file=None, hook=None):
         def _make_toolbar(self):
             bar = ttk.Frame(self.root, padding=(6, 6, 6, 4))
             bar.pack(fill=tk.X)
-            self.run_button = ttk.Button(bar, text="\u25B6 Run workflow", style="Run.TButton", command=self.run)
+            self.run_button = ttk.Button(bar, text="\u25B6 Run " + STAGE_TITLES[EVENTS], style="Run.TButton",
+                                         command=self.run)
             self.run_button.pack(side=tk.LEFT)
+            ToolTip(self.run_button, "Run the stage shown in the workflow editor (one CAP job)")
+            self.run_all_button = ttk.Button(bar, text="\u25B6\u25B6 Run all stages", command=self.run_all)
+            self.run_all_button.pack(side=tk.LEFT, padx=(4, 0))
+            ToolTip(self.run_all_button, "Run the stages of the workflow that have tasks, one CAP job after the other: "
+                                         "event processing, derived histograms, balance functions")
             buttons = [("Save workflow\u2026", self.save_workflow, "Save the workflow and its parameters to an XML file"),
                        ("Load workflow\u2026", self.load_workflow, "Load a workflow XML file saved earlier"),
                        ("Clear workflow", self.clear_workflow, "Start a new, empty workflow: no tasks, the default "
@@ -738,8 +866,8 @@ def run_gui(initial_file=None, hook=None):
             ToolTip(self.right_arrow, "Add the selected tasks to the workflow")
             ToolTip(self.left_arrow, "Remove the selected tasks from the workflow")
 
-            ttk.Label(parent, text="Workflow (run order)", style="Section.TLabel").grid(
-                row=0, column=2, sticky="w", pady=(4, 2))
+            self.workflow_label = ttk.Label(parent, text="", style="Section.TLabel")
+            self.workflow_label.grid(row=0, column=2, sticky="w", pady=(4, 2))
             box = ttk.Frame(parent)
             box.grid(row=1, column=2, sticky="nsew")
             self.tree = ttk.Treeview(box, columns=("class",), selectmode="extended")
@@ -830,6 +958,8 @@ def run_gui(initial_file=None, hook=None):
             selected = [self.available_classes[i] for i in self.available.curselection()]
             if not selected:
                 return
+            if self.stage != BF and any(BF_CLASS.search(cls) for cls in selected):
+                self.show_stage(BF)                    # tasks of balance functions belong to their stage
             new = []
             for cls in selected:
                 task = new_task(cls, self.templates, self._used_names())
@@ -926,14 +1056,19 @@ def run_gui(initial_file=None, hook=None):
         def _make_parameters(self, parent):
             line = ttk.Frame(parent)
             line.pack(fill=tk.X, pady=(6, 4))
-            configure = ttk.Button(line, text="Configure task\u2026", command=self.configure_selected)
-            configure.pack(side=tk.LEFT)
-            ToolTip(configure, "Open the window of the selected task (or double-click a task): its parameters, "
-                               "filters and histograms")
-            derived = ttk.Button(line, text="Derived run\u2026", command=self.derived_run)
-            derived.pack(side=tk.LEFT, padx=(6, 0))
-            ToolTip(derived, "Make the workflow computing the derived histograms from the histograms this workflow "
-                             "exports: its analyzers, in FileIterators, import them and export the derived ones")
+            self.stage_var = tk.StringVar(self.root, value=self.stage)
+            self.stage_buttons = {}
+            tips = {EVENTS: "Show the tasks of event processing: generators, analyzers filling their histograms event "
+                            "by event",
+                    DERIVED: "Show the tasks computing the derived histograms from the histograms of event processing "
+                             "(made from its analyzers the first time, when there are none)",
+                    BF: "Show the tasks computing the balance functions (for workflows with such tasks)"}
+            for stage in STAGES:
+                b = ttk.Radiobutton(line, text=STAGE_TITLES[stage], value=stage, variable=self.stage_var,
+                                    style="Toolbutton", command=lambda s=stage: self.show_stage(s))
+                b.pack(side=tk.LEFT, padx=(0 if stage == EVENTS else 4, 0), ipadx=6)
+                ToolTip(b, tips[stage])
+                self.stage_buttons[stage] = b
             ttk.Label(line, text="Double-click a task to configure it.", foreground="gray40").pack(side=tk.LEFT,
                                                                                                 padx=10)
             ttk.Button(line, text="Browse\u2026", width=8, command=self._browse_output).pack(side=tk.RIGHT)
@@ -1025,33 +1160,73 @@ def run_gui(initial_file=None, hook=None):
                 if self.summary.exists(item):
                     self.summary.selection_set(item)
 
-        def derived_run(self):
-            """Replace the workflow by the one computing its derived histograms (filters and library unchanged)."""
-            tasks = self.workflow()
-            derived = filters.derived_workflow(tasks, self.templates, TaskConfig)
-            if not derived:
-                messagebox.showinfo("Derived run", "The workflow has no analyzer filling histograms.")
-                return
-            if self.dirty and self._workflow_items():
-                answer = messagebox.askyesnocancel("Derived run", "Save the current workflow (the fill run) first?")
-                if answer is None or (answer and not self.save_workflow()):
-                    return
-            analyzers = [t.name for t in all_tasks(derived) if filters.histogram_layout(t, self.templates)]
-            fill_output = self.library.job.get("OUTPUT_FILE") or WRAPPER_NAME + ".cap"   # (CAP runs the wrapper)
-            stem = fill_output[:-4] if fill_output.endswith(".cap") else fill_output
-            self.set_workflow(derived)          # (the tree takes the subtasks)
-            self.library.job.update({"INPUT_FILE": fill_output, "OUTPUT_FILE": stem + "Derived.cap"})
-            self._show_job()
-            self.saved_path = ""
-            self._changed("Derived run of %s: save it, then run it after the fill run, with the same output directory."
-                          % ", ".join(analyzers))
+        # ---------------------------------------------------------------------------------------------- stages
+        def stage_tasks(self, stage):
+            """Top-level tasks of a stage (those of the stage shown are in the tree)."""
+            return self.workflow() if stage == self.stage else self.stages[stage]
 
-        def configure_selected(self):
-            item = self._selected_one() or (self.summary.selection() or [None])[0]
-            if item is None or item == "__creator__":
-                messagebox.showinfo("Configure task", "Select a task of the workflow.")
+        def all_stages(self):
+            """{stage: top-level tasks} of all the stages."""
+            return {s: self.stage_tasks(s) for s in STAGES}
+
+        def _all_stage_tasks(self):
+            return [t for s in STAGES for t in all_tasks(self.stage_tasks(s))]
+
+        def _has_tasks(self):
+            return any(self.stage_tasks(s) for s in STAGES)
+
+        def _bf_enabled(self):
+            """The stage of balance functions is offered for workflows with tasks computing them."""
+            return any(is_bf_task(t) for t in self._all_stage_tasks())
+
+        def _update_stages(self):
+            """The stage buttons (the one shown is pressed; Balance Fct is muted for workflows without tasks of
+            balance functions), the title of the workflow editor and the Run button."""
+            self.stage_var.set(self.stage)
+            for stage, button in self.stage_buttons.items():
+                enabled = stage != BF or self._bf_enabled() or self.stage == BF
+                button.configure(state=tk.NORMAL if enabled else tk.DISABLED)
+            counts = ["%s %d" % (STAGE_TITLES[s], len(list(all_tasks(self.stage_tasks(s))))) for s in STAGES
+                      if s != self.stage and self.stage_tasks(s)]
+            self.workflow_label.configure(text="Workflow \u2014 %s (run order)%s" % (
+                STAGE_TITLES[self.stage], ("   [other stages: %s task(s)]" % ", ".join(counts)) if counts else ""))
+            self.run_button.configure(text="\u25B6 Run " + STAGE_TITLES[self.stage])
+
+        def show_stage(self, stage):
+            """Show the tasks of a stage in the workflow editor. The first time the stage of derived histograms is
+            shown without tasks, it gets the calculators of the analyzers of event processing (their histograms are
+            read from the output file of event processing); the tasks of event processing stay."""
+            if stage == self.stage:
+                self._update_stages()
                 return
-            self.configure_task(item)
+            self.stages[self.stage] = self.workflow()
+            made = None
+            if stage == DERIVED and not self.stages[DERIVED]:
+                made = filters.derived_workflow(self.stages[EVENTS], self.templates, TaskConfig)
+                if made:
+                    self.stages[DERIVED] = made
+                    output = self.jobs[EVENTS].get("OUTPUT_FILE") or WRAPPER_NAME + ".cap"   # (CAP runs the wrapper)
+                    stem = output[:-4] if output.endswith(".cap") else output
+                    if not self.jobs[DERIVED].get("INPUT_FILE"):
+                        self.jobs[DERIVED]["INPUT_FILE"] = output
+                    if not self.jobs[DERIVED].get("OUTPUT_FILE"):
+                        self.jobs[DERIVED]["OUTPUT_FILE"] = stem + "Derived.cap"
+            self.stage = stage
+            self.set_workflow(self.stages[stage])           # (the tree takes the subtasks)
+            self.library.job = self.jobs[stage]
+            self._show_job()
+            if made:
+                analyzers = [t.name for t in all_tasks(made) if filters.histogram_layout(t, self.templates)]
+                self._changed("Derived histograms of %s: computed by a second CAP job, from the output file of event "
+                              "processing (run event processing first)." % ", ".join(analyzers))
+            else:
+                self._update_title()
+                self._update_summary()
+                self.count_label.configure(text="%d task(s)" % len(self._workflow_items()))
+                self._update_stages()
+                hint = {EVENTS: "", DERIVED: " (no analyzer of event processing has derived histograms)"
+                        if not self._workflow_items() else "", BF: ""}[stage]
+                self.status.set("%s: %d task(s)%s." % (STAGE_TITLES[stage], len(self._workflow_items()), hint))
 
         def configure_task(self, item):
             """Open (or raise) the window of a task."""
@@ -1160,12 +1335,13 @@ def run_gui(initial_file=None, hook=None):
             self._update_summary()
             self.count_label.configure(text="%d task(s)" % len(self._workflow_items()))
             usage = [(t.name, sorted((k, tuple(v)) for k, v in filters.choices(t).items()))
-                     for t in all_tasks(self.workflow())]
+                     for t in self._all_stage_tasks()]
             if usage != getattr(self, "_usage", None):        # tasks chose other objects: "used by" of the pane
                 self._usage = usage
                 if self.filters_panel is not None:
                     self.filters_panel.refresh()
             self._update_arrows()
+            self._update_stages()
             if message:
                 self.status.set(message)
 
@@ -1173,16 +1349,26 @@ def run_gui(initial_file=None, hook=None):
             name = os.path.basename(self.saved_path) if self.saved_path else "untitled"
             self.root.title("CAP Workflow \u2014 %s%s" % (name, " *" if self.dirty else ""))
 
-        def _check(self, title, run=False):
-            """Problems that prevent saving (the workflow, the library) or running (also the choices of the tasks)."""
+        def _check(self, title, run=False, stages=None):
+            """Problems that prevent saving (the stages of the workflow, the library) or running stages (also the
+            choices of the tasks and the files of their jobs)."""
             self.root.focus_set()           # commit a task name being edited
             self.root.update_idletasks()
-            tasks = self.workflow()
-            errors = check_workflow(tasks)
-            if run:
-                errors += filters.check_choices(tasks, self.library, self.templates)
-                errors += filters.check_job(tasks, self.library, self.templates)
-            else:
+            stages = stages or [s for s in STAGES if self.stage_tasks(s)] or [self.stage]
+            errors = []
+            for stage in stages:
+                tasks = self.stage_tasks(stage)
+                prefix = "" if len(stages) == 1 else STAGE_TITLES[stage] + ": "
+                more = check_workflow(tasks, stage)
+                if run:
+                    more += filters.check_choices(tasks, self.library, self.templates)
+                    saved, self.library.job = self.library.job, self.jobs[stage]
+                    try:
+                        more += filters.check_job(tasks, self.library, self.templates)
+                    finally:
+                        self.library.job = saved
+                errors += [prefix + e for e in more]
+            if not run:
                 errors += filters.check_library(self.library)
             if errors:
                 more = "\n(and %d more)" % (len(errors) - 12) if len(errors) > 12 else ""
@@ -1200,7 +1386,7 @@ def run_gui(initial_file=None, hook=None):
             if not filename:
                 return False
             try:
-                write_workflow(filename, self.workflow(), self.library, self.templates)
+                write_stages(filename, self.all_stages(), self.library, self.templates, self.jobs)
             except OSError as e:
                 messagebox.showerror("Save workflow", "Cannot write %s:\n%s" % (filename, e))
                 return False
@@ -1215,11 +1401,15 @@ def run_gui(initial_file=None, hook=None):
         def clear_workflow(self):
             """Start a new workflow: no tasks, the library of a new workflow, no file (the current one is offered to
             be saved first)."""
-            if self.dirty and self._workflow_items():
+            if self.dirty and self._has_tasks():
                 answer = messagebox.askyesnocancel("Clear workflow", "Save the changes made to the workflow first?")
                 if answer is None or (answer and not self.save_workflow()):
                     return
             self.library = filters.FilterLibrary.with_defaults()
+            self.stage = EVENTS
+            self.stages = {s: [] for s in STAGES}
+            self.jobs = {s: new_job() for s in STAGES}
+            self.library.job = self.jobs[EVENTS]
             self.set_workflow([])
             self.filters_panel.library = self.library
             self.filters_panel.refresh()
@@ -1228,10 +1418,11 @@ def run_gui(initial_file=None, hook=None):
             self.dirty = False
             self._update_title()
             self.count_label.configure(text="0 task(s)")
+            self._update_stages()
             self.status.set("New workflow: add tasks with the right arrow.")
 
         def load_workflow(self, filename=None):
-            if self.dirty and self._workflow_items() and not messagebox.askyesno(
+            if self.dirty and self._has_tasks() and not messagebox.askyesno(
                     "Load workflow", "Discard the changes made to the current workflow?"):
                 return
             if not filename:
@@ -1241,12 +1432,16 @@ def run_gui(initial_file=None, hook=None):
             if not filename:
                 return
             try:
-                tasks, library, warnings = load_workflow_with_filters(filename, self.templates)
+                stages, library, jobs, warnings = load_stages_with_filters(filename, self.templates)
             except (ValueError, OSError) as e:
                 messagebox.showerror("Load workflow", str(e))
                 return
             self.library = library
-            self.set_workflow(tasks)
+            self.stages = {s: stages.get(s, []) for s in STAGES}
+            self.jobs = jobs
+            self.stage = next(s for s in STAGES if self.stages[s]) if any(self.stages.values()) else EVENTS
+            self.library.job = self.jobs[self.stage]
+            self.set_workflow(self.stages[self.stage])
             self._show_job()
             self.filters_panel.library = library
             self.filters_panel.refresh()
@@ -1256,7 +1451,10 @@ def run_gui(initial_file=None, hook=None):
             self.dirty = False
             self._update_title()
             self.count_label.configure(text="%d task(s)" % len(self._workflow_items()))
-            self.status.set("Workflow loaded from %s" % filename)
+            self._update_stages()
+            loaded = ["%s (%d)" % (STAGE_TITLES[s], len(list(all_tasks(self.stages[s])))) for s in STAGES
+                      if self.stages[s]]
+            self.status.set("Workflow loaded from %s: %s" % (filename, ", ".join(loaded)))
             for w in warnings:
                 self.append("Warning: %s\n" % w, "warning")
             if warnings:
@@ -1294,10 +1492,10 @@ def run_gui(initial_file=None, hook=None):
 
         def _object_users(self, kind, name):
             """Names of the tasks of the workflow that use an object of the library."""
-            return [t.name for t in all_tasks(self.workflow()) if name in filters.choices(t).get(kind, [])]
+            return [t.name for t in self._all_stage_tasks() if name in filters.choices(t).get(kind, [])]
 
         def _rename_object(self, kind, old, new):
-            for t in self.items.values():
+            for t in list(self.items.values()) + [t for s in STAGES if s != self.stage for t in all_tasks(self.stages[s])]:
                 names = filters.choices(t).get(kind)
                 if names:
                     filters.choices(t)[kind] = [new if n == old else n for n in names]
@@ -1307,7 +1505,7 @@ def run_gui(initial_file=None, hook=None):
                                        for combo, values in options.binning.items()}
 
         def _remove_objects(self, kind, names):
-            for t in self.items.values():
+            for t in list(self.items.values()) + [t for s in STAGES if s != self.stage for t in all_tasks(self.stages[s])]:
                 if filters.choices(t).get(kind):
                     filters.choices(t)[kind] = [n for n in filters.choices(t)[kind] if n not in names]
                 options = getattr(t, "histograms", None)
@@ -1320,12 +1518,23 @@ def run_gui(initial_file=None, hook=None):
             return self.worker is not None and self.worker.is_alive()
 
         def run(self):
+            """Run the stage shown (one CAP job)."""
+            self._run_stages([self.stage])
+
+        def run_all(self):
+            """Run the stages that have tasks, in order (one CAP job each; a job starts when the previous succeeded)."""
+            self._run_stages([s for s in STAGES if self.stage_tasks(s)])
+
+        def _run_stages(self, stages):
             if self._busy():
                 return
             if not os.path.exists(CAP_EXE):
                 messagebox.showerror("Run", "%s does not exist: build and install CAP first (BuildCAP.py)." % CAP_EXE)
                 return
-            if not self._check("Cannot run the workflow", run=True):
+            if not stages or not self.stage_tasks(stages[0]):
+                messagebox.showerror("Run", "The stage %s has no task." % STAGE_TITLES[self.stage])
+                return
+            if not self._check("Cannot run " + ", ".join(STAGE_TITLES[s] for s in stages), run=True, stages=stages):
                 return
             output_dir = self.output_dir.get().strip()
             if not output_dir:
@@ -1333,26 +1542,26 @@ def run_gui(initial_file=None, hook=None):
                 return
             try:
                 os.makedirs(output_dir, exist_ok=True)
-                tasks = self.workflow()
                 if self.saved_path and not self.dirty:
                     path = self.saved_path
-                    name = run_root_name(tasks, self.library, self.templates)   # as written in the file
+                    names = {s: run_root_name(self.stage_tasks(s), self.library, self.templates, s) for s in stages}
                 else:
                     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     fd, path = tempfile.mkstemp(prefix="RunCAP_%s_" % stamp, suffix=".xml")
                     os.close(fd)
-                    name = write_workflow(path, tasks, self.library, self.templates)
+                    names = write_stages(path, self.all_stages(), self.library, self.templates, self.jobs)
             except OSError as e:
                 messagebox.showerror("Run", str(e))
                 return
             self.settings["output_dir"] = output_dir
             save_settings(self.settings)
-            cmd = run_command(path, name, output_dir)
             stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.append("\n=== CAP job %s (%s) ===\n" % (name, stamp), "command")
+            self.append("\n=== CAP job%s %s (%s) ===\n" % ("s" if len(stages) > 1 else "",
+                                                          ", ".join(STAGE_TITLES[s] for s in stages), stamp), "command")
             if path != self.saved_path:
                 self.append("Workflow not saved since the last change: running the temporary file %s\n" % path)
-            self._start([("Running CAP", cmd, output_dir)], "job")
+            self._start([("Running CAP: %s" % STAGE_TITLES[s], run_command(path, names[s], output_dir), output_dir)
+                         for s in stages], "job")
 
         def generate_templates(self, force=False):
             if self._busy():
@@ -1370,6 +1579,7 @@ def run_gui(initial_file=None, hook=None):
             self.kill_requested = False
             self.start_time = time.time()
             self.run_button.configure(state=tk.DISABLED)
+            self.run_all_button.configure(state=tk.DISABLED)
             self.kill_button.configure(state=tk.NORMAL)
             env = job_environment()
             self.worker = threading.Thread(target=self._run_commands, args=(commands, env, kind), daemon=True)
@@ -1455,6 +1665,7 @@ def run_gui(initial_file=None, hook=None):
             self.append("=== %s ===\n" % text, "success" if ok else "failure")
             self.status.set(text)
             self.run_button.configure(state=tk.NORMAL)
+            self.run_all_button.configure(state=tk.NORMAL)
             self.kill_button.configure(state=tk.DISABLED)
             if kind == "templates":
                 if ok:
@@ -1472,6 +1683,8 @@ def run_gui(initial_file=None, hook=None):
                 self.status.set("No task templates in %s: build CAP, then click Refresh." % TEMPLATES_DIR)
             else:
                 self.status.set("%d task classes available." % len(self.templates))
+            for task in [t for s in STAGES if s != self.stage for t in all_tasks(self.stages[s])]:
+                task.known = task.cls in self.templates or task.cls == WRAPPER_CLASS
             for item, task in self.items.items():      # tasks of the workflow whose class appeared or disappeared
                 known = task.cls in self.templates or task.cls == WRAPPER_CLASS
                 if known != task.known:
@@ -1492,7 +1705,7 @@ def run_gui(initial_file=None, hook=None):
                 if not messagebox.askyesno("Exit", "A job is running. Kill it and exit?"):
                     return
                 self.kill()
-            elif self.dirty and self._workflow_items():
+            elif self.dirty and self._has_tasks():
                 answer = messagebox.askyesnocancel("Exit", "Save the changes made to the workflow before exiting?")
                 if answer is None or (answer and not self.save_workflow()):
                     return
@@ -1523,21 +1736,30 @@ def main():
             return 2
         templates = load_templates()
         try:
-            tasks, library, warnings = load_workflow_with_filters(args[1], templates)
+            stages, library, jobs, warnings = load_stages_with_filters(args[1], templates)
         except (ValueError, OSError) as e:
             print(e, file=sys.stderr)
             return 1
         if args[0] == "--print-command":
-            print(shell_text(run_command(args[1], run_root_name(tasks, library, templates),
-                                         load_settings()["output_dir"])))
+            for stage in STAGES:
+                if stages.get(stage):
+                    print(shell_text(run_command(args[1], run_root_name(stages[stage], library, templates, stage),
+                                                 load_settings()["output_dir"])))
             return 0
         for w in warnings:
             print("warning: " + w)
-        errors = check_workflow(tasks) + filters.check_choices(tasks, library, templates) \
-            + filters.check_job(tasks, library, templates)
+        errors, count = [], 0
+        for stage in STAGES:
+            tasks = stages.get(stage)
+            if not tasks:
+                continue
+            count += len(list(all_tasks(tasks)))
+            library.job = jobs[stage]
+            errors += ["%s: %s" % (STAGE_TITLES[stage], e) for e in check_workflow(tasks, stage)
+                       + filters.check_choices(tasks, library, templates) + filters.check_job(tasks, library, templates)]
         for e in errors:
             print("error: " + e)
-        print("%d task(s), %d warning(s), %d error(s)" % (len(list(all_tasks(tasks))), len(warnings), len(errors)))
+        print("%d task(s), %d warning(s), %d error(s)" % (count, len(warnings), len(errors)))
         return 1 if errors else 0
     try:
         import tkinter  # noqa: F401

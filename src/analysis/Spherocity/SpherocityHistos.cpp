@@ -69,6 +69,19 @@ namespace CAP
   if (source.h_s1)     h_s1 = source.h_s1;
   if (source.h_s1VsS0) h_s1VsS0 = source.h_s1VsS0;
   }
+  void SpherocityHistos::addDefaultConfiguration(Configuration & configuration, const String & taskName)
+  {
+  const String type = "HISTOGRAM";
+  configuration.addProperty(createKey(taskName,type,"SetEvent"),      true);
+  configuration.addProperty(createKey(taskName,type,"FillS0"),        true);
+  configuration.addProperty(createKey(taskName,type,"FillS1"),        false);
+  configuration.addProperty(createKey(taskName,type,"FillS1VsS0"),    false);
+  configuration.addProperty(createKey(taskName,type,"nSteps"),        1000);
+  configuration.addProperty(createKey(taskName,type,"spherocity_nbins"), 100);
+  configuration.addProperty(createKey(taskName,type,"spherocity_min"), 0.0);
+  configuration.addProperty(createKey(taskName,type,"spherocity_max"), 1.0);
+  }
+
 
   void SpherocityHistos::configure(const String & taskName,
                                    const String & type,

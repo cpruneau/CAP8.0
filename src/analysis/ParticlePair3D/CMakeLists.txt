@@ -14,7 +14,7 @@ add_library(ParticlePair3D SHARED
 ParticlePair3DTasks.cpp
 ParticlePair3DAnalyzer.cpp
 ParticlePair3DBfHistos.cpp
-ParticlePair3DDerivedHistos.cpp
+ParticlePair3DDerivedCalculator.cpp
 ParticlePair3DHistos.cpp)
 
 target_link_libraries(ParticlePair3D Base   Particles ParticleSingle ParticlePair ${ROOT_LIBRARIES} ${EXTRA_LIBS} )

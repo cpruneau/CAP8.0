@@ -30,6 +30,12 @@ public:
   ParticlePerformanceHistos();
   //! @brief Destructor.
   virtual ~ParticlePerformanceHistos() {}
+  //!
+  //! @brief Add the default histogram settings (keys \<taskName\>:HISTOGRAM:pt_nbins, pt_min, pt_max, dpt_nbins, dpt_min, dpt_max, phi_nbins, phi_min, phi_max, Dphi_nbins, Dphi_min, Dphi_max, eta_nbins, eta_min, eta_max, Deta_nbins, Deta_min, Deta_max, rapidity_nbins, rapidity_min, rapidity_max, Drapidity_nbins, Drapidity_min, Drapidity_max) to a configuration: those of
+  //! every task working on these histograms (PerformanceAnalyzer). @param configuration configuration
+  //! @param taskName name of the task
+  //!
+  static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
   //! @brief Configure the object from keys \<taskName\>:\<objectType\>:... (binning, options).
   //! @param taskName name of the task @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String& taskName,

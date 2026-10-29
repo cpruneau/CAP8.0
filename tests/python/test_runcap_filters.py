@@ -22,6 +22,7 @@ import RunCAP                                   # noqa: E402
 import RunCAPFilters as F                       # noqa: E402
 
 TEMPLATES = RunCAP.load_templates(os.path.join(CAP_DIR, "DB", "Templates"))
+TEMPLATES.update(RunCAP.load_templates(os.path.join(CAP_DIR, "tests", "python", "templates")))   # legacy designs
 
 
 def task(cls, name=None):
@@ -50,11 +51,12 @@ def library():
 
 
 def workflow():
-    """EventIterator with a generator and two analyzers (single and pair)."""
+    """EventIterator with a generator and two analyzers of the design with numbered lists of folders (single:
+    LegacySingleAnalyzer, lists 1 and 2; pair: LegacyPairAnalyzer, lists 1 to 4 (test templates))."""
     it = task("EventIterator")
     gen = task("BasicEventGen")
-    single = task("ParticleSingleAnalyzer", "Single")
-    pair = task("ParticlePairAnalyzer", "Pair")
+    single = task("LegacySingleAnalyzer", "Single")
+    pair = task("LegacyPairAnalyzer", "Pair")
     it.children = [gen, single, pair]
     for t in (it, gen, single, pair):
         F.default_event_settings(t, TEMPLATES)                      # the generator creates the events
@@ -77,12 +79,12 @@ def workflow():
 class TestTemplates(unittest.TestCase):
 
     def test_kinds_and_layouts(self):
-        self.assertIn("PARTICLE_FILTER", F.task_kinds(task("ParticleSingleAnalyzer"), TEMPLATES))
+        self.assertIn("PARTICLE_FILTER", F.task_kinds(task("LegacySingleAnalyzer"), TEMPLATES))
         self.assertEqual(F.task_kinds(task("GlauberGenerator"), TEMPLATES), ["EVENT_FILTER", "EVENT"])
-        self.assertEqual(F.histogram_layout(task("ParticleSingleAnalyzer"), TEMPLATES), "single")
-        self.assertEqual(F.histogram_layout(task("ParticlePairAnalyzer"), TEMPLATES), "pair")
+        self.assertEqual(F.histogram_layout(task("LegacySingleAnalyzer"), TEMPLATES), "single")
+        self.assertEqual(F.histogram_layout(task("LegacyPairAnalyzer"), TEMPLATES), "pair")
         self.assertIsNone(F.histogram_layout(task("BasicEventGen"), TEMPLATES))
-        self.assertIn("pt_nbins", F.binning_keys(task("ParticleSingleAnalyzer"), TEMPLATES))
+        self.assertIn("pt_nbins", F.binning_keys(task("LegacySingleAnalyzer"), TEMPLATES))
         self.assertTrue(F.is_glauber(task("GlauberGenerator")))
 
 
@@ -182,12 +184,12 @@ class TestKeys(unittest.TestCase):
 
     def test_default_choices(self):
         lib = library()
-        analyzer, glauber = task("ParticleSingleAnalyzer"), task("GlauberGenerator")
+        analyzer, glauber = task("LegacySingleAnalyzer"), task("GlauberGenerator")
         F.default_choices(analyzer, lib, TEMPLATES)
         F.default_choices(glauber, lib, TEMPLATES)
         self.assertEqual(analyzer.filters, {"EVENT": ["Event"], "PARTICLE_DB": ["ParticleDb"]})
         self.assertEqual(glauber.filters, {"EVENT": ["Event"]})
-        empty = task("ParticleSingleAnalyzer")
+        empty = task("LegacySingleAnalyzer")
         F.default_choices(empty, F.FilterLibrary(), TEMPLATES)
         self.assertEqual(F.choices(empty), {})
 
@@ -269,7 +271,7 @@ class TestKeys(unittest.TestCase):
         self.assertNotIn("HISTOGRAM_2_0:NAME", s)
 
     def test_default_histogram_settings(self):
-        pair = task("ParticlePairAnalyzer", "Pair")
+        pair = task("LegacyPairAnalyzer", "Pair")
         F.default_histogram_settings(pair, TEMPLATES)
         v = values(pair)
         self.assertEqual([v["HISTOGRAM_%d:USE" % l] for l in (1, 2, 3, 4)], ["true", "false", "true", "false"])
@@ -278,7 +280,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(F.list_label(pair, TEMPLATES, 4), "Derived single histograms")
 
     def test_histogram_modes(self):
-        a = task("ParticleSingleAnalyzer", "PSA")
+        a = task("LegacySingleAnalyzer", "PSA")
         F.set_histogram_mode(a, TEMPLATES, F.FILL)
         self.assertEqual(F.histogram_mode(a, TEMPLATES), F.FILL)
         F.set_histogram_mode(a, TEMPLATES, F.DERIVED)
@@ -319,9 +321,99 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(single.param("EVENT:USE").value, "false")              # no event loop
         self.assertEqual(F.check_choices(derived, library(), TEMPLATES), [])
 
+    def test_folders_layout(self):
+        """An analyzer whose folders hold all its histograms: one list (HISTOGRAM), one folder per combination."""
+        a = task("ParticleSingleAnalyzer", "Single")
+        F.default_histogram_settings(a, TEMPLATES)
+        a.filters = {"EVENT_FILTER": ["MB", "Central"], "PARTICLE_FILTER": ["PiP", "PiM"], "EVENT": ["Event"],
+                     "PARTICLE_DB": ["ParticleDb"]}
+        self.assertEqual(F.histogram_layout(a, TEMPLATES), "folders")
+        self.assertEqual(F.folder_lists(a, TEMPLATES), [0])
+        self.assertEqual(F.histogram_mode(a, TEMPLATES), F.FILL)
+        self.assertEqual([f.name for f in F.folders(a, TEMPLATES)],
+                         ["Single_MB_PiP", "Single_MB_PiM", "Single_Central_PiP", "Single_Central_PiM"])
+        tasks = [a]
+        F.apply_choices(tasks, library(), TEMPLATES, RunCAP.Param)
+        v = values(a)
+        self.assertEqual((v["HISTOGRAM:N"], v["HISTOGRAM:USE"], v["HISTOGRAM:CREATE"], v["HISTOGRAM:IMPORT"]),
+                         ("4", "true", "true", "false"))
+        self.assertEqual((v["HISTOGRAM_0:NAME"], v["HISTOGRAM_3:NAME"]), ("Single_MB_PiP", "Single_Central_PiM"))
+        self.assertNotIn("HISTOGRAM_1:N", v)
+        lib, warnings = F.extract_choices(tasks, TEMPLATES, library())     # read back: the keys are managed again
+        self.assertEqual(warnings, [])
+        self.assertEqual(a.filters["PARTICLE_FILTER"], ["PiP", "PiM"])
+        self.assertFalse(any(F.MANAGED_KEY.match(p.key) for p in a.params))
+        self.assertEqual(a.param("HISTOGRAM:USE").value, "true")          # list settings stay parameters
+
+    def test_derived_calculator(self):
+        """The derived phase of an analyzer of the folders design: its calculator, outside of any iterator, with the
+        filters and histogram settings of the analyzer and SOURCE_TASK the analyzer."""
+        tasks = workflow()
+        it = tasks[0]
+        a = task("ParticleSingleAnalyzer", "Single2")
+        F.default_histogram_settings(a, TEMPLATES)
+        F.default_event_settings(a, TEMPLATES)
+        a.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP", "PiM"], "EVENT": ["Event"],
+                     "PARTICLE_DB": ["ParticleDb"]}
+        a.param("HISTOGRAM:pt_nbins").value = "17"
+        it.children.append(a)
+        self.assertEqual(F.check_choices(tasks, library(), TEMPLATES), [])
+        derived = F.derived_workflow(tasks, TEMPLATES, RunCAP.TaskConfig)
+        self.assertEqual([(t.name, t.cls) for t in derived],
+                         [("Single2Derived", "CAP::ParticleSingleDerivedCalculator"), ("EventIterator", "CAP::FileIterator")])
+        c = derived[0]
+        self.assertEqual(c.param("SOURCE_TASK").value, "Single2")
+        self.assertEqual(c.param("HISTOGRAM:pt_nbins").value, "17")
+        self.assertEqual(c.filters, {k: v for k, v in a.filters.items() if k != "EVENT"})
+        self.assertEqual(F.histogram_mode(c, TEMPLATES), F.DERIVED)
+        self.assertEqual(c.param("EVENT:USE").value, "false")
+        self.assertTrue(F.is_calculator(c, TEMPLATES) and not F.is_calculator(a, TEMPLATES))
+        self.assertEqual(F.check_choices(derived, library(), TEMPLATES), [])
+        it.children.append(c)                                               # a calculator in the event loop
+        self.assertIn("Task Single2Derived computes histograms from the output of an earlier job: put it outside",
+                      "\n".join(F.check_choices(tasks, library(), TEMPLATES)))
+
+    def test_pair_analysis(self):
+        """A pair analysis of the folders design: n event filters, m particle filters, a pair folder per event filter
+        and ordered pair of particle filters (the single-particle folders are made by the task)."""
+        a = task("ParticlePairAnalyzer", "Pair2")
+        F.default_histogram_settings(a, TEMPLATES)
+        F.default_event_settings(a, TEMPLATES)
+        a.filters = {"EVENT_FILTER": ["MB", "Central"], "PARTICLE_FILTER": ["PiP", "PiM", "Unused"], "EVENT": ["Event"],
+                     "PARTICLE_DB": ["ParticleDb"]}
+        self.assertEqual((F.histogram_layout(a, TEMPLATES), F.folder_rank(a, TEMPLATES)), ("folders", 2))
+        names = [f.name for f in F.folders(a, TEMPLATES)]
+        self.assertEqual(len(names), 2 * 3 * 3)
+        self.assertEqual(names[:4], ["Pair2_MB_PiP_PiP", "Pair2_MB_PiP_PiM", "Pair2_MB_PiP_Unused", "Pair2_MB_PiM_PiP"])
+        self.assertEqual(names[-1], "Pair2_Central_Unused_Unused")
+        self.assertNotIn("FOLDER_RANK", F.binning_keys(a, TEMPLATES))
+        tasks = workflow()
+        tasks[0].children.append(a)
+        self.assertEqual(F.check_choices(tasks, library(), TEMPLATES), [])
+        derived = F.derived_workflow(tasks, TEMPLATES, RunCAP.TaskConfig)
+        c = derived[0]
+        self.assertEqual((c.name, c.cls, c.param("SOURCE_TASK").value),
+                         ("Pair2Derived", "CAP::ParticlePairDerivedCalculator", "Pair2"))
+        self.assertEqual(len(F.folders(c, TEMPLATES)), 2 * 3 * 3)
+        self.assertEqual(F.check_choices(derived, library(), TEMPLATES), [])
+
+    def test_analyses_of_folders_design(self):
+        """The analyzers of the folders design and their calculators of the derived histograms (none for analyses
+        without derived histograms)."""
+        for cls, rank, calculator in (("ParticleSingleAnalyzer", 1, True), ("ParticlePairAnalyzer", 2, True),
+                                      ("GlobalAnalyzer", 1, True), ("NuDynAnalyzer", 2, True), ("PtPtAnalyzer", 1, True),
+                                      ("ParticlePair3DAnalyzer", 2, True), ("SpherocityAnalyzer", 1, False),
+                                      ("PerformanceAnalyzer", 1, False)):
+            a = task(cls, "A")
+            self.assertEqual((cls, F.histogram_layout(a, TEMPLATES), F.folder_rank(a, TEMPLATES)), (cls, "folders", rank))
+            c = F.derived_calculator(a, TEMPLATES)
+            self.assertEqual((cls, c is not None), (cls, calculator))
+            if c is not None:
+                self.assertEqual((c.name, c.param("SOURCE_TASK").value), ("ADerived", "A"))
+
     def test_event_settings(self):
         """A generator creates its events, an analyzer uses them; the settings are written as set."""
-        gen, ana, it = task("BasicEventGen"), task("ParticleSingleAnalyzer", "PSA"), task("EventIterator")
+        gen, ana, it = task("BasicEventGen"), task("LegacySingleAnalyzer", "PSA"), task("EventIterator")
         for t in (gen, ana, it):
             F.default_event_settings(t, TEMPLATES)
         self.assertEqual((values(gen)["EVENT:CREATE"], values(gen)["EVENT:USE"]), ("true", "false"))
@@ -383,7 +475,7 @@ class TestKeys(unittest.TestCase):
     def test_obsolete_keys(self):
         """Keys of earlier versions (files of the lists of folders) are dropped when a workflow is read."""
         it = task("EventIterator")
-        a = task("ParticleSingleAnalyzer", "PSA")
+        a = task("LegacySingleAnalyzer", "PSA")
         it.children = [a]
         a.params += [RunCAP.Param("HISTOGRAM_1:EXPORT", "bool", "true"),
                      RunCAP.Param("HISTOGRAM_1:EXPORT:FILE_NAME", "string", "x.cap")]
@@ -455,7 +547,7 @@ class TestKeys(unittest.TestCase):
 
     def test_use_migrates(self):
         """A workflow whose folders were written without USE (CAP did not read it): the lists are used."""
-        a = task("ParticleSingleAnalyzer", "PSA")
+        a = task("LegacySingleAnalyzer", "PSA")
         a.params += [RunCAP.Param("HISTOGRAM_1:N", "int", "1"), RunCAP.Param("HISTOGRAM_1_0:NAME", "string", "X")]
         F.extract_choices([a], TEMPLATES)
         self.assertTrue(F.list_used(a, 1))
@@ -549,7 +641,7 @@ class TestReading(unittest.TestCase):
     def test_old_format(self):
         """A workflow without RUNCAP element, with the keys written by hand."""
         it = task("EventIterator")
-        a = task("ParticleSingleAnalyzer", "PSA")
+        a = task("LegacySingleAnalyzer", "PSA")
         it.children = [a]
         P = RunCAP.Param
         a.params += [P("EVENT_FILTER:N", "int", "1"), P("EVENT_FILTER_0:NAME", "string", "All"),
@@ -580,7 +672,7 @@ class TestReading(unittest.TestCase):
 
     def test_renamed_folders_warn(self):
         it = task("EventIterator")
-        a = task("ParticleSingleAnalyzer", "PSA")
+        a = task("LegacySingleAnalyzer", "PSA")
         it.children = [a]
         a.params += [RunCAP.Param("HISTOGRAM_1:N", "int", "3")]
         _, warnings = F.extract_choices([it], TEMPLATES)

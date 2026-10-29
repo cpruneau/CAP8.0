@@ -9,17 +9,17 @@
  * *********************************************************************/
 #ifndef CAP__ParticleSingleAnalyzer
 #define CAP__ParticleSingleAnalyzer
-#include "EventProcessorSingle.hpp"
+#include "EventProcessorHistos.hpp"
 #include "ParticleSingleHistos.hpp"
-#include "ParticleSingleDerivedHistos.hpp"
 
 namespace CAP
 {
 
 //!
-//! @brief Single-particle analyzer: fills, for each accepted (event filter, particle filter) combination, the
-//! multiplicity, energy, pT, (eta, phi), (y, phi) and (y, pT) distributions of the accepted particles
-//! (ParticleSingleHistos), and computes their projections and pT averages at the end (ParticleSingleDerivedHistos).
+//! @brief Single-particle analyzer (event processing): fills, for each accepted (event filter, particle filter)
+//! combination, the multiplicity, energy, pT, (eta, phi), (y, phi) and (y, pT) distributions of the accepted particles
+//! (the base histograms of ParticleSingleHistos), and scales them per accepted event at the end of the event loop.
+//! The derived histograms are computed in a later job by ParticleSingleDerivedCalculator.
 //!
 //! Particles are weighted by the inverse of their efficiency when particle efficiencies are configured (one for all
 //! particle filters or one per filter). The histogram binning is set by the keys \<name\>:HISTOGRAM:n1_nbins, n1_min,
@@ -27,7 +27,7 @@ namespace CAP
 //!
 class ParticleSingleAnalyzer
 :
-public EventProcessorSingle<ParticleSingleHistos,ParticleSingleDerivedHistos>
+public EventProcessorHistos<ParticleSingleHistos,1>
 {
 public:
   
@@ -39,12 +39,18 @@ public:
   ParticleSingleAnalyzer & operator=(const ParticleSingleAnalyzer & analyzer);
   //! @brief Destructor.
   virtual ~ParticleSingleAnalyzer() {}
-  //! @brief Add the default configuration: that of EventProcessorSingle and the histogram binning (see the class description).
-  virtual void setDefaultConfiguration();
+  //! @brief Add the default configuration: that of EventProcessorHistos and the histogram binning (see the class description).
+  virtual void setDefaultConfiguration() override;
   //! @brief Analyze the current event: apply the filters and fill the histograms of each accepted combination.
   //! @throws Exception if there are no histograms or if the number of particle efficiencies is neither 1 nor the number
   //! of particle filters
-  virtual void execute();
+  virtual void execute() override;
+  //!
+  //! @brief Finalize the task. After an event loop that filled the histograms (created by this task, not imported),
+  //! they are first scaled by 1/(number of events accepted) of their event filter, so that they hold per-event
+  //! quantities; the derived histograms are computed from them in a later job, without scaling.
+  //!
+  virtual void finalize() override;
 
 protected:
 

@@ -19,7 +19,7 @@ namespace CAP
 
 PtPtAnalyzer::PtPtAnalyzer()
 :
-EventProcessorSingle<PtPtHistos,PtPtDerivedHistos>()
+EventProcessorHistos<PtPtHistos,1>()
 {
   appendClassName("PtPtAnalyzer");
   setMinimumReportLevel(Object::kInfo);
@@ -29,19 +29,14 @@ EventProcessorSingle<PtPtHistos,PtPtDerivedHistos>()
 
 PtPtAnalyzer::PtPtAnalyzer(const PtPtAnalyzer & source)
 :
-EventProcessorSingle<PtPtHistos,PtPtDerivedHistos>(source)
+EventProcessorHistos<PtPtHistos,1>(source)
 {   }
 
 
 void PtPtAnalyzer::setDefaultConfiguration()
 {
-  EventProcessorSingle<PtPtHistos,PtPtDerivedHistos>::setDefaultConfiguration();
-  const String & taskName = name();
-  String objectType = "HISTOGRAM";
-  _configuration.addProperty(createKey(taskName,objectType,"evtName"),   String("ALL"));
-  _configuration.addProperty(createKey(taskName,objectType,"evt_nbins"), 200);
-  _configuration.addProperty(createKey(taskName,objectType,"evt_min"),   0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"evt_max"),   200.0);
+  EventProcessorHistos<PtPtHistos,1>::setDefaultConfiguration();
+  PtPtHistos::addDefaultConfiguration(_configuration,name());
 }
 
 void PtPtAnalyzer::execute()

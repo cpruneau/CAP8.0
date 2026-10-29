@@ -383,14 +383,21 @@ class TaskDialog(tk.Toplevel):
         for r, l in enumerate(F.folder_lists(self.task, self.templates)):
             n = len([f for f in all_folders if f.list == l])
             used = F.list_used(self.task, l)
-            ttk.Label(box, text="%s (HISTOGRAM_%d)" % (F.list_label(self.task, self.templates, l), l),
+            ttk.Label(box, text="%s (%s)" % (F.list_label(self.task, self.templates, l), F.list_key(l)),
                       style="Overridden.TLabel" if used else "TLabel").grid(row=r, column=0, sticky="w", pady=2)
             line = ttk.Frame(box)
             line.grid(row=r, column=1, sticky="w", padx=(8, 0), pady=2)
             self._list_flag(line, l, "USE", "Use")
             nE = len(F.choices(self.task).get("EVENT_FILTER", []))
             nP = len(F.choices(self.task).get("PARTICLE_FILTER", []))
-            product = "%d \u00d7 %d%s" % (nE, nP, " \u00d7 %d" % nP if n == nE * nP * nP and nP > 1 else "")
+            if self.layout == "folders":
+                rank = F.folder_rank(self.task, self.templates)
+                product = " \u00d7 ".join(["%d" % nE] + ["%d" % nP] * rank)
+                if rank == 2 and used:
+                    product = "%d \u00d7 %d single + %s pair" % (nE, nP, product)
+                    n = nE * nP + n
+            else:
+                product = "%d \u00d7 %d%s" % (nE, nP, " \u00d7 %d" % nP if n == nE * nP * nP and nP > 1 else "")
             ttk.Label(line, text=("%s = %d folders" % (product, n)) if used else "no folder",
                       foreground="gray40").pack(side=tk.LEFT, padx=(4, 16))
             self._list_flag(line, l, "CREATE", "Create (filled by this run)", used)
@@ -402,7 +409,7 @@ class TaskDialog(tk.Toplevel):
         self._changed()
 
     def _list_flag(self, parent, list_index, name, label, enabled=True):
-        p = self.task.param("HISTOGRAM_%d:%s" % (list_index, name))
+        p = self.task.param("%s:%s" % (F.list_key(list_index), name))
         if p is None:
             return
         var = tk.BooleanVar(self, value=p.value == "true")

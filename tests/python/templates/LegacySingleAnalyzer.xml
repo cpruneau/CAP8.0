@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CAP version="1" type="template">
+  <!-- Test fixture: a task of the design with numbered lists of folders (HISTOGRAM_1, ...), as the analyzers had
+       before they moved to EventProcessorHistos (template of PerformanceAnalyzer). -->
+  <TASK name="LegacySingleAnalyzer" class="CAP::LegacySingleAnalyzer" severity="INFO">
+    <GROUP name="EVENT">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+      <PARAMETER name="EXPORT" type="bool">false</PARAMETER>
+      <GROUP name="IMPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+      </GROUP>
+      <GROUP name="EXPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
+      </GROUP>
+    </GROUP>
+    <GROUP name="EVENT_FILTER">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+      <PARAMETER name="EXPORT" type="bool">false</PARAMETER>
+      <GROUP name="IMPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+      </GROUP>
+      <GROUP name="EXPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
+      </GROUP>
+    </GROUP>
+    <GROUP name="EVENT_EFFICIENCY">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+      <PARAMETER name="EXPORT" type="bool">false</PARAMETER>
+      <GROUP name="IMPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+      </GROUP>
+      <GROUP name="EXPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
+      </GROUP>
+    </GROUP>
+    <GROUP name="EVENT_SMEARER">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+      <PARAMETER name="EXPORT" type="bool">false</PARAMETER>
+      <GROUP name="IMPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+      </GROUP>
+      <GROUP name="EXPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
+      </GROUP>
+    </GROUP>
+    <GROUP name="PARTICLE_DB">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+      <PARAMETER name="EXPORT" type="bool">false</PARAMETER>
+      <GROUP name="IMPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+      </GROUP>
+      <GROUP name="EXPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
+      </GROUP>
+    </GROUP>
+    <GROUP name="PARTICLE_FILTER">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+      <PARAMETER name="EXPORT" type="bool">false</PARAMETER>
+      <GROUP name="IMPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+      </GROUP>
+      <GROUP name="EXPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
+      </GROUP>
+    </GROUP>
+    <GROUP name="PARTICLE_EFFICIENCY">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+      <PARAMETER name="EXPORT" type="bool">false</PARAMETER>
+      <GROUP name="IMPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+      </GROUP>
+      <GROUP name="EXPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
+      </GROUP>
+    </GROUP>
+    <GROUP name="PARTICLE_SMEARER">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+      <PARAMETER name="EXPORT" type="bool">false</PARAMETER>
+      <GROUP name="IMPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+      </GROUP>
+      <GROUP name="EXPORT">
+        <PARAMETER name="BASE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="PATH" type="string">DEFAULT</PARAMETER>
+        <PARAMETER name="FILE_NAME" type="string">NONE</PARAMETER>
+        <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
+      </GROUP>
+    </GROUP>
+    <GROUP name="HISTOGRAM_1">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+    </GROUP>
+    <GROUP name="HISTOGRAM_2">
+      <PARAMETER name="USE" type="bool">false</PARAMETER>
+      <PARAMETER name="N" type="int">0</PARAMETER>
+      <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
+      <PARAMETER name="CREATE" type="bool">false</PARAMETER>
+    </GROUP>
+    <GROUP name="HISTOGRAM">
+      <PARAMETER name="pt_nbins" type="int">100</PARAMETER>
+      <PARAMETER name="pt_min" type="double">0</PARAMETER>
+      <PARAMETER name="pt_max" type="double">5</PARAMETER>
+      <PARAMETER name="dpt_nbins" type="int">100</PARAMETER>
+      <PARAMETER name="dpt_min" type="double">-1</PARAMETER>
+      <PARAMETER name="dpt_max" type="double">1</PARAMETER>
+      <PARAMETER name="phi_nbins" type="int">100</PARAMETER>
+      <PARAMETER name="phi_min" type="double">-1</PARAMETER>
+      <PARAMETER name="phi_max" type="double">1</PARAMETER>
+      <PARAMETER name="Dphi_nbins" type="int">100</PARAMETER>
+      <PARAMETER name="Dphi_min" type="double">-1</PARAMETER>
+      <PARAMETER name="Dphi_max" type="double">1</PARAMETER>
+      <PARAMETER name="eta_nbins" type="int">100</PARAMETER>
+      <PARAMETER name="eta_min" type="double">-1</PARAMETER>
+      <PARAMETER name="eta_max" type="double">1</PARAMETER>
+      <PARAMETER name="Deta_nbins" type="int">100</PARAMETER>
+      <PARAMETER name="Deta_min" type="double">-1</PARAMETER>
+      <PARAMETER name="Deta_max" type="double">1</PARAMETER>
+      <PARAMETER name="rapidity_nbins" type="int">100</PARAMETER>
+      <PARAMETER name="rapidity_min" type="double">-1</PARAMETER>
+      <PARAMETER name="rapidity_max" type="double">-1</PARAMETER>
+      <PARAMETER name="Drapidity_nbins" type="int">100</PARAMETER>
+      <PARAMETER name="Drapidity_min" type="double">-1</PARAMETER>
+      <PARAMETER name="Drapidity_max" type="double">1</PARAMETER>
+    </GROUP>
+  </TASK>
+</CAP>

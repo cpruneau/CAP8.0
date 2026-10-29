@@ -10,9 +10,11 @@
 //! @file NuDynTasks.cpp
 //! @brief Task classes of the NuDyn library, registered for Task::instantiateTask() (see TaskRegistration.hpp).
 #include "NuDynAnalyzer.hpp"
+#include "NuDynDerivedCalculator.hpp"
 #include "TaskRegistration.hpp"
 
 CAP_REFLECTION(NuDynTasks)
 {
   CAP::registerTask<CAP::NuDynAnalyzer>("CAP::NuDynAnalyzer");
+  CAP::registerTask<CAP::NuDynDerivedCalculator>("CAP::NuDynDerivedCalculator");
 }

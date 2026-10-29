@@ -15,8 +15,8 @@ add_library(ParticlePair SHARED
 ParticlePairTasks.cpp
 ParticlePairAnalyzer.cpp
 ParticlePairBfHistos.cpp
-ParticlePairDerivedHistos.cpp
-ParticlePairHistos.cpp)
+ParticlePairHistos.cpp
+ParticlePairDerivedCalculator.cpp)
 
 target_link_libraries(ParticlePair Base   Particles ParticleSingle ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(ParticlePair  PUBLIC Base Particles ParticleSingle ParticlePair ${EXTRA_INCLUDES} )

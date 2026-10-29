@@ -8,6 +8,7 @@
  *
  * *********************************************************************/
 #include "ParticlePerformanceHistos.hpp"
+#include "Exceptions.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
@@ -62,6 +63,35 @@ namespace CAP
   setName("ParticlePerformanceHistos");
   setTitle("ParticlePerformanceHistos");
   }
+  void ParticlePerformanceHistos::addDefaultConfiguration(Configuration & configuration, const String & taskName)
+  {
+  const String type = "HISTOGRAM";
+  configuration.addProperty(createKey(taskName,type,"pt_nbins"),      100);
+  configuration.addProperty(createKey(taskName,type,"pt_min"),        0.0);
+  configuration.addProperty(createKey(taskName,type,"pt_max"),        5.0);
+  configuration.addProperty(createKey(taskName,type,"dpt_nbins"),     100);
+  configuration.addProperty(createKey(taskName,type,"dpt_min"),       -1.0);
+  configuration.addProperty(createKey(taskName,type,"dpt_max"),       1.0);
+  configuration.addProperty(createKey(taskName,type,"phi_nbins"),     100);
+  configuration.addProperty(createKey(taskName,type,"phi_min"),       -1.0);
+  configuration.addProperty(createKey(taskName,type,"phi_max"),       1.0);
+  configuration.addProperty(createKey(taskName,type,"Dphi_nbins"),    100);
+  configuration.addProperty(createKey(taskName,type,"Dphi_min"),      -1.0);
+  configuration.addProperty(createKey(taskName,type,"Dphi_max"),      1.0);
+  configuration.addProperty(createKey(taskName,type,"eta_nbins"),     100);
+  configuration.addProperty(createKey(taskName,type,"eta_min"),       -1.0);
+  configuration.addProperty(createKey(taskName,type,"eta_max"),       1.0);
+  configuration.addProperty(createKey(taskName,type,"Deta_nbins"),    100);
+  configuration.addProperty(createKey(taskName,type,"Deta_min"),      -1.0);
+  configuration.addProperty(createKey(taskName,type,"Deta_max"),      1.0);
+  configuration.addProperty(createKey(taskName,type,"rapidity_nbins"), 100);
+  configuration.addProperty(createKey(taskName,type,"rapidity_min"),  -1.0);
+  configuration.addProperty(createKey(taskName,type,"rapidity_max"),  1.0);
+  configuration.addProperty(createKey(taskName,type,"Drapidity_nbins"), 100);
+  configuration.addProperty(createKey(taskName,type,"Drapidity_min"), -1.0);
+  configuration.addProperty(createKey(taskName,type,"Drapidity_max"), 1.0);
+  }
+
 
   void ParticlePerformanceHistos::configure(const String & taskName,
                                             const String & type,
@@ -137,6 +167,8 @@ namespace CAP
   //!
   void ParticlePerformanceHistos::fill(Particle & recoParticle, double weight)
   {
+  if (!recoParticle.hasTruth())
+    throw Exception("A particle has no truth particle: the performance histograms need reconstructed (smeared) particles",__FUNCTION__);
   Particle & genParticle  = *recoParticle.truth();
   VectorLorentz & recoMomentum = recoParticle.momentum();
   VectorLorentz & genMomentum  = genParticle.momentum();

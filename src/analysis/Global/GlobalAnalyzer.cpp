@@ -19,7 +19,7 @@ namespace CAP
 
 GlobalAnalyzer::GlobalAnalyzer()
 :
-  EventProcessorSingle<GlobalHistos,GlobalDerivedHistos>()
+  EventProcessorHistos<GlobalHistos,1>()
 {
   appendClassName("GlobalAnalyzer");
   setMinimumReportLevel(Object::kInfo);
@@ -29,45 +29,22 @@ GlobalAnalyzer::GlobalAnalyzer()
 
 GlobalAnalyzer::GlobalAnalyzer(const GlobalAnalyzer & source)
 :
-  EventProcessorSingle<GlobalHistos,GlobalDerivedHistos>(source)
+  EventProcessorHistos<GlobalHistos,1>(source)
 {   }
 
 GlobalAnalyzer & GlobalAnalyzer::operator=(const GlobalAnalyzer & rhs)
 {
   if (this!=&rhs)
     {
-    EventProcessorSingle<GlobalHistos,GlobalDerivedHistos>::operator=(rhs);
+    EventProcessorHistos<GlobalHistos,1>::operator=(rhs);
     }
   return *this;
 }
 
 void GlobalAnalyzer::setDefaultConfiguration()
 {
-  EventProcessorSingle<GlobalHistos,GlobalDerivedHistos>::setDefaultConfiguration();
-  const String & taskName = name();
-  String objectType = "HISTOGRAM";
-  _configuration.addProperty(createKey(taskName,objectType,"Fill2D"),     false);
-  _configuration.addProperty(createKey(taskName,objectType,"n_nbins"),     500);
-  _configuration.addProperty(createKey(taskName,objectType,"n_min"),       0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"n_max"),       5000.0);
-  _configuration.addProperty(createKey(taskName,objectType,"e_nbins"),     500);
-  _configuration.addProperty(createKey(taskName,objectType,"e_min"),       0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"e_max"),       10000.0);
-  _configuration.addProperty(createKey(taskName,objectType,"q_nbins"),     200);
-  _configuration.addProperty(createKey(taskName,objectType,"q_min"),       -100.0);
-  _configuration.addProperty(createKey(taskName,objectType,"q_max"),       100.0);
-  _configuration.addProperty(createKey(taskName,objectType,"s_nbins"),     200);
-  _configuration.addProperty(createKey(taskName,objectType,"s_min"),       -100.0);
-  _configuration.addProperty(createKey(taskName,objectType,"s_max"),       100.0);
-  _configuration.addProperty(createKey(taskName,objectType,"b_nbins"),     200);
-  _configuration.addProperty(createKey(taskName,objectType,"b_min"),       -100.0);
-  _configuration.addProperty(createKey(taskName,objectType,"b_max"),       100.0);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_nbinsSum"), 100);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_minSum"),   0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_maxSum"),   10000.0);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_nbinsAvg"), 100);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_minAvg"),   0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_maxAvg"),   10.0);
+  EventProcessorHistos<GlobalHistos,1>::setDefaultConfiguration();
+  GlobalHistos::addDefaultConfiguration(_configuration,name());
 }
 
 void GlobalAnalyzer::execute()
@@ -85,7 +62,10 @@ void GlobalAnalyzer::execute()
   theEvent.resetStrangeness();
   theEvent.resetBaryon();
   theEvent.resetPtSum();
-  std::vector<GlobalHistos*> histograms = histograms_1();
+  std::vector<GlobalHistos*> & folders = histograms();
+  const bool fillHistograms = !folders.empty();
+  if (fillHistograms && folders.size()<nEventFilters()*nParticleFilters())
+    throw Exception("Fewer histogram folders than combinations of filters",__FUNCTION__);
   //printValue("GlobalAnalyzer::execute()",4);
   for (unsigned int iEventFilter = 0;iEventFilter<nEventFilters();iEventFilter++)
     {
@@ -124,8 +104,7 @@ void GlobalAnalyzer::execute()
           theEvent.setStrangeness(iEventFilter,s);
           theEvent.setBaryon(iEventFilter,b);
           theEvent.setPtSum(iEventFilter,ptSum);
-          GlobalHistos * histos =  histograms[index];
-          histos->fill(n,ptSum,e,q,s,b,1.0);
+          if (fillHistograms) folders[index]->fill(n,ptSum,e,q,s,b,1.0);
           }
         }
       }

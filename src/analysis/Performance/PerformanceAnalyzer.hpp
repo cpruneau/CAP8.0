@@ -9,9 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__PerformanceAnalyzer
 #define CAP__PerformanceAnalyzer
-#include "EventProcessorSingle.hpp"
+#include "EventProcessorHistos.hpp"
 #include "ParticlePerformanceHistos.hpp"
-#include "ParticlePerformanceDerivedHistos.hpp"
 
 namespace CAP
 {
@@ -22,7 +21,7 @@ namespace CAP
 //!
 class PerformanceAnalyzer
 :
-public EventProcessorSingle<ParticlePerformanceHistos,ParticlePerformanceDerivedHistos>
+public EventProcessorHistos<ParticlePerformanceHistos,1>
 {
 public:
   
@@ -35,9 +34,9 @@ public:
   //! @brief Destructor.
   virtual ~PerformanceAnalyzer() {}
   //! @brief Add the default configuration of the task.
-  virtual void setDefaultConfiguration();
+  virtual void setDefaultConfiguration() override;
   //! @brief Execute the task (process the current event).
-  virtual void execute();
+  virtual void execute() override;
 
 protected:
 

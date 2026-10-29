@@ -29,6 +29,12 @@ public:
   SpherocityHistos & operator=(const SpherocityHistos & group);
   //! @brief Destructor.
   virtual ~SpherocityHistos() {}
+  //!
+  //! @brief Add the default histogram settings (keys \<taskName\>:HISTOGRAM:SetEvent, FillS0, FillS1, FillS1VsS0, nSteps, spherocity_nbins, spherocity_min, spherocity_max) to a configuration: those of
+  //! every task working on these histograms (SpherocityAnalyzer). @param configuration configuration
+  //! @param taskName name of the task
+  //!
+  static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
   //! @brief Read the fill options and binning. @param taskName name of the task @param objectType object type
   //! @param configuration configuration @param index index
   virtual void configure(const String & taskName,

@@ -19,7 +19,7 @@ namespace CAP
 
 ParticleSingleAnalyzer::ParticleSingleAnalyzer()
 :
-EventProcessorSingle<ParticleSingleHistos,ParticleSingleDerivedHistos>()
+EventProcessorHistos<ParticleSingleHistos,1>()
 {
   appendClassName("ParticleSingleAnalyzer");
   setMinimumReportLevel(Object::kInfo);
@@ -29,14 +29,14 @@ EventProcessorSingle<ParticleSingleHistos,ParticleSingleDerivedHistos>()
 
 ParticleSingleAnalyzer::ParticleSingleAnalyzer(const ParticleSingleAnalyzer & source)
 :
-EventProcessorSingle<ParticleSingleHistos,ParticleSingleDerivedHistos>(source)
+EventProcessorHistos<ParticleSingleHistos,1>(source)
 {   }
 
 ParticleSingleAnalyzer & ParticleSingleAnalyzer::operator=(const ParticleSingleAnalyzer & rhs)
 {
   if (this!=&rhs)
     {
-    EventProcessorSingle<ParticleSingleHistos,ParticleSingleDerivedHistos>::operator=(rhs);
+    EventProcessorHistos<ParticleSingleHistos,1>::operator=(rhs);
     }
   return *this;
 }
@@ -44,52 +44,8 @@ ParticleSingleAnalyzer & ParticleSingleAnalyzer::operator=(const ParticleSingleA
 void ParticleSingleAnalyzer::setDefaultConfiguration()
 {
   if (reportDebug(__FUNCTION__)) { printCR();}
-  EventProcessorSingle<ParticleSingleHistos,ParticleSingleDerivedHistos>::setDefaultConfiguration();
-  String taskName = name();
-  String objectType = "HISTOGRAM";
-  if (reportInfo(__FUNCTION__))
-    {
-    printCR();
-    printValue("taskName",taskName);
-    printValue("objectType",objectType);
-    }
-  _configuration.addProperty(createKey(taskName,objectType,"n1_nbins"),  100);
-  _configuration.addProperty(createKey(taskName,objectType,"n1_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"n1_max"),  100.0);
-
-  _configuration.addProperty(createKey(taskName,objectType,"etot_nbins"),  100);
-  _configuration.addProperty(createKey(taskName,objectType,"etot_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"etot_max"),  100.0);
-
-  _configuration.addProperty(createKey(taskName,objectType,"pt_nbins"),  100);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_max"),  100.0);
-
-  _configuration.addProperty(createKey(taskName,objectType,"eta_nbins"),  20);
-  _configuration.addProperty(createKey(taskName,objectType,"eta_min"),   -1.0);
-  _configuration.addProperty(createKey(taskName,objectType,"eta_max"),    1.0);
-
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_nbins"),  20);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_min"),   -1.0);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_max"),    1.0);
-
-  _configuration.addProperty(createKey(taskName,objectType,"phi_nbins"),  36);
-  _configuration.addProperty(createKey(taskName,objectType,"phi_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"phi_max"),    CAP::MATH::twoPi());
-
-  _configuration.addProperty(createKey(taskName,objectType,"phiEta_nbins"),    720);
-  _configuration.addProperty(createKey(taskName,objectType,"phiEtaPt_nbins"),  7200);
-  _configuration.addProperty(createKey(taskName,objectType,"phiY_nbins"),      720);
-  _configuration.addProperty(createKey(taskName,objectType,"phiYPt_nbins"),    7200);
-  _configuration.addProperty(createKey(taskName,objectType,"eta_fill"),        true);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_fill"),   false);
-  _configuration.addProperty(createKey(taskName,objectType,"p2_fill"),         false);
-  if (reportEnd(__FUNCTION__))
-    {
-    printCR();
-    printValue("TRACE OK",1);
-    }
-
+  EventProcessorHistos<ParticleSingleHistos,1>::setDefaultConfiguration();
+  ParticleSingleHistos::addDefaultConfiguration(_configuration,name());
 }
 
 void ParticleSingleAnalyzer::execute()
@@ -104,8 +60,8 @@ void ParticleSingleAnalyzer::execute()
   bool usePartEff = particleEfficiencies().size()>0;
   const std::vector<bool> & acceptedEF = acceptedEventFilters();
   const std::vector<bool> & acceptedPF = acceptedParticleFilters();
-  std::vector<ParticleSingleHistos*> & histograms = histograms_1();
-  if (histograms.size() < 1)
+  std::vector<ParticleSingleHistos*> & folders = histograms();
+  if (folders.size() < 1)
     throw Exception("no histograms",__FUNCTION__);
   std::vector<ParticleEfficiency*> & particleEff = particleEfficiencies();
   unsigned int nef = acceptedEF.size();
@@ -121,7 +77,7 @@ void ParticleSingleAnalyzer::execute()
       {
       if (!acceptedPF[iParticleFilter]) continue;
       index = baseSingle + iParticleFilter;
-      ParticleSingleHistos * histos = histograms[index];
+      ParticleSingleHistos * histos = folders[index];
       std::vector<Particle*> & accParticles = acceptedParticles(iParticleFilter);
       ParticleEfficiency * efficiency = usePartEff ? particleEff[particleEff.size()==1 ? 0 : iParticleFilter] : nullptr;
       double multiplicityAccepted = 0.0;
@@ -138,6 +94,14 @@ void ParticleSingleAnalyzer::execute()
       histos->fillMultiplicity(multiplicityAccepted,energyAccepted,1.0);
       }
     }
+}
+
+void ParticleSingleAnalyzer::finalize()
+{
+  // before EventProcessor::finalize(), which clears the counts of accepted events
+  const auto & folderList = _managedHistograms;
+  if (folderList.create() && !folderList.imports()) EventProcessor::scaleHistograms();
+  EventProcessorHistos<ParticleSingleHistos,1>::finalize();
 }
 
 } // namespace CAP

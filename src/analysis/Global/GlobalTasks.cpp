@@ -10,9 +10,11 @@
 //! @file GlobalTasks.cpp
 //! @brief Task classes of the Global library, registered for Task::instantiateTask() (see TaskRegistration.hpp).
 #include "GlobalAnalyzer.hpp"
+#include "GlobalDerivedCalculator.hpp"
 #include "TaskRegistration.hpp"
 
 CAP_REFLECTION(GlobalTasks)
 {
   CAP::registerTask<CAP::GlobalAnalyzer>("CAP::GlobalAnalyzer");
+  CAP::registerTask<CAP::GlobalDerivedCalculator>("CAP::GlobalDerivedCalculator");
 }

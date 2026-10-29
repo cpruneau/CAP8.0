@@ -21,7 +21,7 @@ namespace CAP
 {
 SpherocityAnalyzer::SpherocityAnalyzer()
 :
-EventProcessorSingle<SpherocityHistos,SpherocityDerivedHistos>(),
+EventProcessorHistos<SpherocityHistos,1>(),
 setEvent(true),
 fillS0(true),
 fillS1(false),
@@ -36,7 +36,7 @@ stepSize(CAP::MATH::twoPi()/360.0)
 
 SpherocityAnalyzer::SpherocityAnalyzer(const SpherocityAnalyzer & source)
 :
-EventProcessorSingle<SpherocityHistos,SpherocityDerivedHistos>(source),
+EventProcessorHistos<SpherocityHistos,1>(source),
 setEvent(source.setEvent),
 fillS0(source.fillS0),
 fillS1(source.fillS1),
@@ -48,7 +48,7 @@ SpherocityAnalyzer & SpherocityAnalyzer::operator=(const SpherocityAnalyzer & rh
 {
   if (this!=&rhs)
     {
-    EventProcessorSingle<SpherocityHistos,SpherocityDerivedHistos>::operator=(rhs);
+    EventProcessorHistos<SpherocityHistos,1>::operator=(rhs);
     setEvent   = rhs.setEvent;
     fillS0     = rhs.fillS0;
     fillS1     = rhs.fillS1;
@@ -60,26 +60,16 @@ SpherocityAnalyzer & SpherocityAnalyzer::operator=(const SpherocityAnalyzer & rh
 
 void SpherocityAnalyzer::setDefaultConfiguration()
 {
-  EventProcessorSingle<SpherocityHistos,SpherocityDerivedHistos>::setDefaultConfiguration();
-  const String & taskName = name();
-  String objectType = "HISTOGRAM";
-  _configuration.addProperty(createKey(taskName,objectType,"SetEvent"),true);
-  _configuration.addProperty(createKey(taskName,objectType,"FillS0"),true);
-  _configuration.addProperty(createKey(taskName,objectType,"FillS1"),false);
-  _configuration.addProperty(createKey(taskName,objectType,"FillS1VsS0"),false);
-  _configuration.addProperty(createKey(taskName,objectType,"nSteps"),1000);
-  _configuration.addProperty(createKey(taskName,objectType,"spherocity_nbins"),100);
-  _configuration.addProperty(createKey(taskName,objectType,"spherocity_min"),0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"spherocity_max"),1.0);
-  stepSize = MATH::twoPi()/1000.0;
+  EventProcessorHistos<SpherocityHistos,1>::setDefaultConfiguration();
+  SpherocityHistos::addDefaultConfiguration(_configuration,name());
 }
 
 void SpherocityAnalyzer::configure(const Configuration & configuration)
 {
-  EventProcessorSingle<SpherocityHistos,SpherocityDerivedHistos>::configure(configuration);
+  EventProcessorHistos<SpherocityHistos,1>::configure(configuration);
   const String & taskName = name();
   String objectType = "HISTOGRAM";
-  setEvent   = _configuration.valueBool(createKey(taskName,"SetEvent"));
+  setEvent   = _configuration.valueBool(createKey(taskName,objectType,"SetEvent"));
   fillS0     = _configuration.valueBool(createKey(taskName,objectType,"FillS0"));
   fillS1     = _configuration.valueBool(createKey(taskName,objectType,"FillS1"));
   fillS1VsS0 = _configuration.valueBool(createKey(taskName,objectType,"FillS1VsS0"));
@@ -89,7 +79,7 @@ void SpherocityAnalyzer::configure(const Configuration & configuration)
   if (reportDebug(__FUNCTION__))
     {
     printCR();
-    printValue(createKey(taskName,"SetEvent"),setEvent);
+    printValue(createKey(taskName,objectType,"SetEvent"),setEvent);
     printValue(createKey(taskName,objectType,"FillS0"),fillS0);
     printValue(createKey(taskName,objectType,"FillS1"),fillS1);
     printValue(createKey(taskName,objectType,"FillS1VsS0"),fillS1VsS0);
@@ -108,7 +98,8 @@ void SpherocityAnalyzer::execute()
   double factor = 1.0;
   unsigned int nef = nEventFilters();
   unsigned int npf = nParticleFilters();
-  std::vector<SpherocityHistos*> & histograms = histograms_1();
+  std::vector<SpherocityHistos*> & folders = histograms();
+  if (folders.size()<nCombinations()) throw Exception("Fewer histogram folders than combinations of filters",__FUNCTION__);
   for (unsigned int iEventFilter = 0; iEventFilter < nef; iEventFilter++)
     {
     if (!_acceptedEventFilters[iEventFilter]) continue;
@@ -165,7 +156,7 @@ void SpherocityAnalyzer::execute()
         refPhi += stepSize;
         }
       unsigned int index = baseSingle+iParticleFilter;
-      SpherocityHistos * histos = histograms[index];
+      SpherocityHistos * histos = folders[index];
       histos->fill(s0*factor,s1*factor,1.0);
       }
     }

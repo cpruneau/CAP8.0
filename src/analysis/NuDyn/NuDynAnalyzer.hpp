@@ -9,9 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__NuDynAnalyzer
 #define CAP__NuDynAnalyzer
-#include "EventProcessorSingle.hpp"
+#include "EventProcessorHistos.hpp"
 #include "NuDynHistos.hpp"
-#include "NuDynDerivedHistos.hpp"
 
 namespace CAP
 {
@@ -29,13 +28,16 @@ namespace CAP
 //!property used as independent variable to compute (and eventually plot) the moments, cumulants, etc, is selected based on the  inputType
 //!parameter selected at construction of an instance of this class.
 //!
-//! For each accepted event filter and each pair of particle filters (i, j) with j < i, execute() fills a NuDynHistos
-//! (group index e*nPF*nPF + i*nPF + j) with the multiplicities n_i, n_j and the factorial moments n_i(n_i-1), n_i n_j,
-//! n_j(n_j-1), as a function of the event class variable (see EventProcessor::getEvtClassValue()).
+//! The task has a folder (NuDynHistos) per event filter e and ordered pair of particle filters (i, j), at index
+//! e*nPF*nPF + i*nPF + j (named \<event\>_\<particle i\>_\<particle j\>). For each accepted event filter and each pair
+//! with j < i, execute() fills the folder (e, i, j) with the multiplicities n_i, n_j and the factorial moments
+//! n_i(n_i-1), n_i n_j, n_j(n_j-1), as a function of the event class variable (see EventProcessor::getEvtClassValue());
+//! the folders with j >= i stay empty. The histograms are profiles: they are not scaled. The derived histograms (F2,
+//! R2, nu_dyn) are computed in a later job by NuDynDerivedCalculator.
 //!
 class NuDynAnalyzer
 :
-public EventProcessorSingle<NuDynHistos,NuDynDerivedHistos>
+public EventProcessorHistos<NuDynHistos,2>
 {
 public:
   
@@ -47,10 +49,11 @@ public:
   virtual ~NuDynAnalyzer() {}
   //! @brief Copy assignment. @param task task to copy @return this task
   NuDynAnalyzer & operator=(const NuDynAnalyzer & task);
-  //! @brief Add the default configuration: that of EventProcessorSingle and the histogram binning.
-  virtual void setDefaultConfiguration();
+  //! @brief Add the default configuration: that of EventProcessorHistos and the histogram binning.
+  virtual void setDefaultConfiguration() override;
   //! @brief Analyze the current event (see the class description).
-  virtual void execute();
+  //! @throws Exception if there are fewer folders than combinations of filters
+  virtual void execute() override;
  
 };
 

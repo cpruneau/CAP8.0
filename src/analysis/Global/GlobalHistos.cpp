@@ -13,6 +13,7 @@
 #include "Task.hpp"
 #include "NameHelpers.hpp"
 #include "Configuration.hpp"
+#include "Exceptions.hpp"
 
 
 namespace CAP
@@ -34,6 +35,7 @@ namespace CAP
   p_bVsN(nullptr),
   p_ptSumVsN(nullptr),
   p_ptAvgVsN(nullptr),
+  h_ptAvgIncVsN(nullptr),
   n_nbins(0),
   e_nbins(0),
   q_nbins(0),
@@ -73,6 +75,7 @@ namespace CAP
   p_bVsN(nullptr),
   p_ptSumVsN(nullptr),
   p_ptAvgVsN(nullptr),
+  h_ptAvgIncVsN(nullptr),
   n_nbins(source.n_nbins),
   e_nbins(source.e_nbins),
   q_nbins(source.q_nbins),
@@ -145,6 +148,33 @@ namespace CAP
   p_bVsN   = histogramLike(group.p_bVsN);
   p_ptSumVsN  = histogramLike(group.p_ptSumVsN);
   p_ptAvgVsN  = histogramLike(group.p_ptAvgVsN);
+  h_ptAvgIncVsN = histogramLike(group.h_ptAvgIncVsN);
+  }
+
+  void GlobalHistos::addDefaultConfiguration(Configuration & configuration, const String & taskName)
+  {
+  const String type = "HISTOGRAM";
+  configuration.addProperty(createKey(taskName,type,"n_nbins"),     500);
+  configuration.addProperty(createKey(taskName,type,"n_min"),       0.0);
+  configuration.addProperty(createKey(taskName,type,"n_max"),       5000.0);
+  configuration.addProperty(createKey(taskName,type,"e_nbins"),     500);
+  configuration.addProperty(createKey(taskName,type,"e_min"),       0.0);
+  configuration.addProperty(createKey(taskName,type,"e_max"),       10000.0);
+  configuration.addProperty(createKey(taskName,type,"q_nbins"),     200);
+  configuration.addProperty(createKey(taskName,type,"q_min"),       -100.0);
+  configuration.addProperty(createKey(taskName,type,"q_max"),       100.0);
+  configuration.addProperty(createKey(taskName,type,"s_nbins"),     200);
+  configuration.addProperty(createKey(taskName,type,"s_min"),       -100.0);
+  configuration.addProperty(createKey(taskName,type,"s_max"),       100.0);
+  configuration.addProperty(createKey(taskName,type,"b_nbins"),     200);
+  configuration.addProperty(createKey(taskName,type,"b_min"),       -100.0);
+  configuration.addProperty(createKey(taskName,type,"b_max"),       100.0);
+  configuration.addProperty(createKey(taskName,type,"ptSum_nbins"), 100);
+  configuration.addProperty(createKey(taskName,type,"ptSum_min"),   0.0);
+  configuration.addProperty(createKey(taskName,type,"ptSum_max"),   10000.0);
+  configuration.addProperty(createKey(taskName,type,"ptAvg_nbins"), 100);
+  configuration.addProperty(createKey(taskName,type,"ptAvg_min"),   0.0);
+  configuration.addProperty(createKey(taskName,type,"ptAvg_max"),   10.0);
   }
   
   void GlobalHistos::configure(const String & taskName,
@@ -153,27 +183,29 @@ namespace CAP
                                unsigned int index)
   {
   HistogramFolder::configure(taskName,objectType,configuration,index);
-  n_nbins     = configuration.valueInt(   createKey(taskName,objectType,index,"n_nbins"));
-  n_min       = configuration.valueDouble(createKey(taskName,objectType,index,"n_min"));
-  n_max       = configuration.valueDouble(createKey(taskName,objectType,index,"n_max"));
-  e_nbins     = configuration.valueInt(   createKey(taskName,objectType,index,"e_nbins"));
-  e_min       = configuration.valueDouble(createKey(taskName,objectType,index,"e_min"));
-  e_max       = configuration.valueDouble(createKey(taskName,objectType,index,"e_max"));
-  q_nbins     = configuration.valueInt(   createKey(taskName,objectType,index,"q_nbins"));
-  q_min       = configuration.valueDouble(createKey(taskName,objectType,index,"q_min"));
-  q_max       = configuration.valueDouble(createKey(taskName,objectType,index,"q_max"));
-  b_nbins     = configuration.valueInt(   createKey(taskName,objectType,index,"b_Bins"));
-  b_min       = configuration.valueDouble(createKey(taskName,objectType,index,"b_min"));
-  b_max       = configuration.valueDouble(createKey(taskName,objectType,index,"b_max"));
-  s_nbins     = configuration.valueInt(   createKey(taskName,objectType,index,"s_nbins"));
-  s_min       = configuration.valueDouble(createKey(taskName,objectType,index,"s_min"));
-  s_max       = configuration.valueDouble(createKey(taskName,objectType,index,"s_max"));
-  ptSum_nbins = configuration.valueInt(   createKey(taskName,objectType,index,"ptSum_nbins"));
-  ptSum_min   = configuration.valueDouble(createKey(taskName,objectType,index,"ptSum_min"));
-  ptSum_max   = configuration.valueDouble(createKey(taskName,objectType,index,"ptSum_max"));
-  ptAvg_nbins = configuration.valueInt(   createKey(taskName,objectType,index,"ptAvg_nbins"));
-  ptAvg_min   = configuration.valueDouble(createKey(taskName,objectType,index,"ptAvg_min"));
-  ptAvg_max   = configuration.valueDouble(createKey(taskName,objectType,index,"ptAvg_max"));
+  // the binning is in the HISTOGRAM group of the task
+  const String type = "HISTOGRAM";
+  n_nbins     = configuration.valueInt(   createKey(taskName,type,"n_nbins"));
+  n_min       = configuration.valueDouble(createKey(taskName,type,"n_min"));
+  n_max       = configuration.valueDouble(createKey(taskName,type,"n_max"));
+  e_nbins     = configuration.valueInt(   createKey(taskName,type,"e_nbins"));
+  e_min       = configuration.valueDouble(createKey(taskName,type,"e_min"));
+  e_max       = configuration.valueDouble(createKey(taskName,type,"e_max"));
+  q_nbins     = configuration.valueInt(   createKey(taskName,type,"q_nbins"));
+  q_min       = configuration.valueDouble(createKey(taskName,type,"q_min"));
+  q_max       = configuration.valueDouble(createKey(taskName,type,"q_max"));
+  b_nbins     = configuration.valueInt(   createKey(taskName,type,"b_nbins"));
+  b_min       = configuration.valueDouble(createKey(taskName,type,"b_min"));
+  b_max       = configuration.valueDouble(createKey(taskName,type,"b_max"));
+  s_nbins     = configuration.valueInt(   createKey(taskName,type,"s_nbins"));
+  s_min       = configuration.valueDouble(createKey(taskName,type,"s_min"));
+  s_max       = configuration.valueDouble(createKey(taskName,type,"s_max"));
+  ptSum_nbins = configuration.valueInt(   createKey(taskName,type,"ptSum_nbins"));
+  ptSum_min   = configuration.valueDouble(createKey(taskName,type,"ptSum_min"));
+  ptSum_max   = configuration.valueDouble(createKey(taskName,type,"ptSum_max"));
+  ptAvg_nbins = configuration.valueInt(   createKey(taskName,type,"ptAvg_nbins"));
+  ptAvg_min   = configuration.valueDouble(createKey(taskName,type,"ptAvg_min"));
+  ptAvg_max   = configuration.valueDouble(createKey(taskName,type,"ptAvg_max"));
   if (reportDebug(__FUNCTION__))
     {
     printCR();
@@ -238,6 +270,37 @@ namespace CAP
   p_bVsN   = importProfile(inputFile, createName(_histogramBaseName,"n","bProf"));
   p_ptSumVsN  = importProfile(inputFile, createName(_histogramBaseName,"n","ptSumProf"));
   p_ptAvgVsN  = importProfile(inputFile, createName(_histogramBaseName,"n","ptAvgProf"));
+  // derived histograms: present once GlobalDerivedCalculator has run
+  if (inputFile.contains(createName(_histogramBaseName,"n","ptAvgIncl"))) loadDerivedFrom(inputFile);
+  }
+
+  void GlobalHistos::createDerived()
+  {
+  h_ptAvgIncVsN = createHistogram(createName(_histogramBaseName,"n","ptAvgIncl"),n_nbins,n_min,n_max,"n","ptAvgIncl");
+  }
+
+  void GlobalHistos::loadDerivedFrom(const Folder & inputFile)
+  {
+  h_ptAvgIncVsN = importHistogram(inputFile, createName(_histogramBaseName,"n","ptAvgIncl"));
+  }
+
+  //!
+  //! Inclusive average pT vs multiplicity: in each multiplicity bin, the average pT sum divided by the multiplicity
+  //! (bin center); bins with a zero multiplicity are left empty.
+  //!
+  void GlobalHistos::calculateDerived()
+  {
+  if (!hasDerived()) throw Exception("The derived histograms were not created (createDerived())",__FUNCTION__);
+  if (!p_ptSumVsN) throw Exception("!p_ptSumVsN",__FUNCTION__);
+  h_ptAvgIncVsN->reset();
+  unsigned int nBins = p_ptSumVsN->nBins(0);
+  for (unsigned int iBin=0; iBin<nBins; iBin++)
+    {
+    double n = p_ptSumVsN->binCenter(iBin,0);
+    if (n<=0.0) continue;
+    h_ptAvgIncVsN->setBinValueAt(iBin,p_ptSumVsN->binValueAt(iBin)/n);
+    h_ptAvgIncVsN->setBinUncertaintyAt(iBin,p_ptSumVsN->binUncertaintyAt(iBin)/n);
+    }
   }
   
   void GlobalHistos::fill(double n,

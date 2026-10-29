@@ -14,8 +14,6 @@
 
 namespace CAP
 {
-class GlobalDerivedHistos;
-class GlobalCalculator;
 //!
 //! @brief Histograms of global event observables for one (event filter, particle filter) combination.
 //!
@@ -34,12 +32,12 @@ class GlobalCalculator;
 //! The fill method of this class must be called at most once per event
 //! otherwise weird multiple counting will happen..
 //!
+//! The folder also holds the derived histogram (createDerived(), calculateDerived(); computed by
+//! GlobalDerivedCalculator): n_ptAvgIncl, the inclusive average pT vs multiplicity (average pT sum / multiplicity).
+//!
 class GlobalHistos : public HistogramFolder
 {
 public:
-
-  friend GlobalDerivedHistos;
-  friend GlobalCalculator;
 
   //! @brief Default constructor.
   GlobalHistos();
@@ -53,6 +51,12 @@ public:
   //! @brief Destructor.
   virtual ~GlobalHistos() {}
 
+  //!
+  //! @brief Add the default binning (keys \<taskName\>:HISTOGRAM:n_nbins, n_min, n_max, e_*, q_*, s_*, b_*, ptSum_*,
+  //! ptAvg_*) to a configuration: that of every task working on these histograms (GlobalAnalyzer,
+  //! GlobalDerivedCalculator). @param configuration configuration @param taskName name of the task
+  //!
+  static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
   //! @brief Read the binning of the observables (n, e, q, s, b, ptSum, ptAvg). @param taskName name of the task
   //! @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
@@ -64,9 +68,18 @@ public:
   //!
   virtual void create();
 
-  //!
-  //!Load histograms corresponding to the selected event and particle filters from the given file.
- virtual void loadFrom(const Folder & inputFile);
+  //! @brief Create the derived histograms, empty; see calculateDerived().
+  virtual void createDerived();
+  //! @brief Whether the derived histograms exist (created or loaded). @return true if they do
+  bool hasDerived() const { return h_ptAvgIncVsN!=nullptr; }
+  //! @brief Load the base histograms from a folder of a file, and the derived histograms if the folder has them.
+  //! @param inputFile folder
+  virtual void loadFrom(const Folder & inputFile);
+  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  virtual void loadDerivedFrom(const Folder & inputFile);
+  //! @brief Compute the derived histograms from the base histograms (createDerived() first).
+  //! @throws Exception if the derived histograms were not created
+  virtual void calculateDerived();
 
   //!
   //!Fill eventswise observables for the selected filters
@@ -124,6 +137,10 @@ protected:
   Profile * p_ptSumVsN;
   //! Average event-wise average pT vs multiplicity.
   Profile * p_ptAvgVsN;
+
+  // Derived histograms
+  //! Inclusive average pT vs multiplicity: average pT sum (p_ptSumVsN) divided by the multiplicity.
+  Histogram * h_ptAvgIncVsN;
 
   int n_nbins;  ///< number of bins of the multiplicity axis
   int e_nbins;  ///< number of bins of the energy axis

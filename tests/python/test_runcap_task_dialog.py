@@ -17,6 +17,7 @@ import RunCAP                                   # noqa: E402
 import RunCAPFilters as F                       # noqa: E402
 
 TEMPLATES = RunCAP.load_templates(os.path.join(CAP_DIR, "DB", "Templates"))
+TEMPLATES.update(RunCAP.load_templates(os.path.join(CAP_DIR, "tests", "python", "templates")))   # legacy designs
 HELPERS = {"valid_value": RunCAP.valid_value, "partial_value": RunCAP.partial_value, "severities": RunCAP.SEVERITIES}
 
 try:
@@ -41,7 +42,7 @@ def library():
 class TestDialog(unittest.TestCase):
 
     def setUp(self):
-        self.task = TEMPLATES["CAP::ParticleSingleAnalyzer"].clone()
+        self.task = TEMPLATES["CAP::LegacySingleAnalyzer"].clone()     # numbered lists of folders (1 and 2)
         self.task.name = "PSA"
         F.default_histogram_settings(self.task, TEMPLATES)
         self.library = library()
@@ -156,6 +157,25 @@ class TestDialog(unittest.TestCase):
         self.assertEqual(F.histogram_mode(self.task, TEMPLATES), F.DERIVED)
         self.assertEqual(self.task.param("HISTOGRAM_1:IMPORT").value, "true")
         self.assertTrue(self.changes)
+
+    def test_single_list(self):
+        """An analyzer whose folders hold all its histograms: one list, HISTOGRAM, one folder per combination."""
+        self.dialog.destroy()
+        self.task = TEMPLATES["CAP::ParticleSingleAnalyzer"].clone()
+        self.task.name = "PSA"
+        F.default_histogram_settings(self.task, TEMPLATES)
+        self.dialog = D.TaskDialog(_root, self.task, TEMPLATES, self.library, HELPERS, rename=self.rename,
+                                   changed=lambda: self.changes.append(1), show_filters=self.filters_shown.append)
+        self.dialog.withdraw()
+        self.dialog._set_count("EVENT_FILTER", 2)
+        self.dialog._set_count("PARTICLE_FILTER", 3)
+        self.dialog._set_same(False)
+        self.assertEqual(len(self.dialog._list_entries), 1 + 6)         # 2 x 3 folders
+        self.dialog._set_list(self.task.param("HISTOGRAM:USE"), "false", True)
+        self.assertEqual(len(self.dialog._list_entries), 1)
+        self.dialog._set_mode(F.DERIVED)
+        self.assertEqual((self.task.param("HISTOGRAM:IMPORT").value, self.task.param("HISTOGRAM:CREATE").value),
+                         ("true", "false"))
 
     def test_event_settings(self):
         F.default_event_settings(self.task, TEMPLATES)
