@@ -8,6 +8,7 @@
  *
  * *********************************************************************/
 #include "NuDynHistos.hpp"
+#include "Exceptions.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
@@ -32,7 +33,14 @@ namespace CAP
   evtName(),
   evt_nbins(0),
   evt_min(0),
-  evt_max(0)
+  evt_max(0),
+  h_F2_11_evt(nullptr),
+  h_F2_12_evt(nullptr),
+  h_F2_22_evt(nullptr),
+  h_R2_11_evt(nullptr),
+  h_R2_12_evt(nullptr),
+  h_R2_22_evt(nullptr),
+  h_nudyn_evt(nullptr)
   {
   appendClassName("NuDynHistos");
   setName("NuDynHistos");
@@ -51,7 +59,14 @@ namespace CAP
   evtName(source.evtName),
   evt_nbins(source.evt_nbins),
   evt_min(source.evt_min),
-  evt_max(source.evt_max)
+  evt_max(source.evt_max),
+  h_F2_11_evt(nullptr),
+  h_F2_12_evt(nullptr),
+  h_F2_22_evt(nullptr),
+  h_R2_11_evt(nullptr),
+  h_R2_12_evt(nullptr),
+  h_R2_22_evt(nullptr),
+  h_nudyn_evt(nullptr)
   {
   cloneB(source);
   }
@@ -79,8 +94,24 @@ namespace CAP
   h_f2_11_evt   = histogramLike(source.h_f2_11_evt);
   h_f2_12_evt   = histogramLike(source.h_f2_12_evt);
   h_f2_22_evt   = histogramLike(source.h_f2_22_evt);
+  h_F2_11_evt = histogramLike(source.h_F2_11_evt);
+  h_F2_12_evt = histogramLike(source.h_F2_12_evt);
+  h_F2_22_evt = histogramLike(source.h_F2_22_evt);
+  h_R2_11_evt = histogramLike(source.h_R2_11_evt);
+  h_R2_12_evt = histogramLike(source.h_R2_12_evt);
+  h_R2_22_evt = histogramLike(source.h_R2_22_evt);
+  h_nudyn_evt = histogramLike(source.h_nudyn_evt);
   }
 
+
+  void NuDynHistos::addDefaultConfiguration(Configuration & configuration, const String & taskName)
+  {
+  const String type = "HISTOGRAM";
+  configuration.addProperty(createKey(taskName,type,"evtName"),  String("Mult0"));
+  configuration.addProperty(createKey(taskName,type,"evt_nbins"),200);
+  configuration.addProperty(createKey(taskName,type,"evt_min"),  0.0);
+  configuration.addProperty(createKey(taskName,type,"evt_max"),  200.0);
+  }
 
   void NuDynHistos::configure(const String & taskName,
                               const String & type,
@@ -116,6 +147,8 @@ namespace CAP
   h_f2_11_evt = importProfile(inputFile,createName(_histogramBaseName,"f2_11"));
   h_f2_12_evt = importProfile(inputFile,createName(_histogramBaseName,"f2_12"));
   h_f2_22_evt = importProfile(inputFile,createName(_histogramBaseName,"f2_22"));
+  // derived histograms: present once NuDynDerivedCalculator has run
+  if (inputFile.contains(createName(_histogramBaseName,"F2_11"))) loadDerivedFrom(inputFile);
   }
 
   void NuDynHistos::fill(double mult, double n1_1, double n1_2, double n2_11, double n2_12, double n2_22)
@@ -132,6 +165,41 @@ namespace CAP
   {
   h_evt->scale(factor);
   }
+
+
+  void NuDynHistos::createDerived()
+  {
+  if (reportDebug(__FUNCTION__)) { printCR();}
+  h_F2_11_evt = createHistogram(createName(_histogramBaseName,"F2_11"), evt_nbins,evt_min,evt_max,"evtClass","F2_{11}");
+  h_F2_12_evt = createHistogram(createName(_histogramBaseName,"F2_12"), evt_nbins,evt_min,evt_max,"evtClass","F2_{12}");
+  h_F2_22_evt = createHistogram(createName(_histogramBaseName,"F2_22"), evt_nbins,evt_min,evt_max,"evtClass","F2_{22}");
+  h_R2_11_evt = createHistogram(createName(_histogramBaseName,"R2_11"), evt_nbins,evt_min,evt_max,"evtClass","R2_{11}");
+  h_R2_12_evt = createHistogram(createName(_histogramBaseName,"R2_12"), evt_nbins,evt_min,evt_max,"evtClass","R2_{12}");
+  h_R2_22_evt = createHistogram(createName(_histogramBaseName,"R2_22"), evt_nbins,evt_min,evt_max,"evtClass","R2_{22}");
+  h_nudyn_evt = createHistogram(createName(_histogramBaseName,"Nu_dyn"),evt_nbins,evt_min,evt_max,"evtClass","#nu_{Dyn}");
+}
+
+  void NuDynHistos::loadDerivedFrom(const Folder & inputFile)
+  {
+  if (reportDebug(__FUNCTION__)) { printCR(); }
+  h_F2_11_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_11"));
+  h_F2_12_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_12"));
+  h_F2_22_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_22"));
+  h_R2_11_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_11"));
+  h_R2_12_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_12"));
+  h_R2_22_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_22"));
+  h_nudyn_evt = importHistogram(inputFile,createName(_histogramBaseName,"Nu_dyn"));
+}
+
+  void NuDynHistos::calculateDerived()
+  {
+  if (!hasDerived()) throw Exception("The derived histograms were not created (createDerived())",__FUNCTION__);
+  if (reportDebug(__FUNCTION__)) { printCR(); }
+  calculateF2R2(h_f1_1_evt,h_f1_1_evt,h_f2_11_evt,h_F2_11_evt,h_R2_11_evt);
+  calculateF2R2(h_f1_1_evt,h_f1_2_evt,h_f2_12_evt,h_F2_12_evt,h_R2_12_evt);
+  calculateF2R2(h_f1_2_evt,h_f1_2_evt,h_f2_22_evt,h_F2_22_evt,h_R2_22_evt);
+  calculateNudyn(h_R2_11_evt,h_R2_12_evt,h_R2_12_evt,h_R2_22_evt,h_nudyn_evt);
+}
 
 } // namespace CAP
 

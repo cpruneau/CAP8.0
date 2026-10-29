@@ -9,7 +9,7 @@ add_compile_options(-Wall -Wextra -pedantic)
 add_library(PtPt SHARED
 PtPtTasks.cpp
 PtPtAnalyzer.cpp
-PtPtDerivedHistos.cpp
+PtPtDerivedCalculator.cpp
 PtPtHistos.cpp)
 
 target_link_libraries(PtPt Base  Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )

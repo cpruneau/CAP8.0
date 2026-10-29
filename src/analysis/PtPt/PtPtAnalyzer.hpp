@@ -9,9 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__PtPtAnalyzer
 #define CAP__PtPtAnalyzer
-#include "EventProcessorSingle.hpp"
+#include "EventProcessorHistos.hpp"
 #include "PtPtHistos.hpp"
-#include "PtPtDerivedHistos.hpp"
 
 namespace CAP
 {
@@ -30,7 +29,7 @@ namespace CAP
 //!
 class PtPtAnalyzer
 :
-public EventProcessorSingle<PtPtHistos,PtPtDerivedHistos>
+public EventProcessorHistos<PtPtHistos,1>
 {
 public:
   
@@ -42,10 +41,10 @@ public:
   virtual ~PtPtAnalyzer() {}
   //! @brief Copy assignment. @param task task to copy @return this task
   PtPtAnalyzer & operator=(const PtPtAnalyzer & task);
-  //! @brief Add the default configuration: that of EventProcessorSingle and the histogram binning.
-  virtual void setDefaultConfiguration();
+  //! @brief Add the default configuration: that of EventProcessorHistos and the histogram binning.
+  virtual void setDefaultConfiguration() override;
   //! @brief Analyze the current event (applies the filters only, see the class description).
-  virtual void execute();
+  virtual void execute() override;
 
 };
 

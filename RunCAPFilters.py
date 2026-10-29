@@ -167,7 +167,8 @@ NAME_FULL = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*")
 #: Kinds whose list settings (USE, CREATE, IMPORT, EXPORT and files) belong to each task: what the task does with its
 #: events (a generator or reader creates them, an analyzer uses them). Those of the other kinds are FilterCreator's.
 TASK_SETTING_KINDS = ("EVENT",)
-MANAGED_KEY = re.compile(r"^(?:(?:%s)(?::N|_\d+:.*)|(?:%s):USE|HISTOGRAM_[1-4](?::N|_\d+:.*))$"
+MANAGED_KEY = re.compile(r"^(?:(?:%s)(?::N|_\d+:.*)|(?:%s):USE|HISTOGRAM_[1-4](?::N|_\d+:.*)"
+                         r"|HISTOGRAM:N|HISTOGRAM_\d+:(?!(?:USE|CREATE|IMPORT|EXPORT|N)(?::|$)).*)$"
                          % ("|".join(KINDS), "|".join(k for k in KINDS if k not in TASK_SETTING_KINDS)))
 #: Settings of the events of a task shown in its window.
 EVENT_SETTINGS = ("USE", "CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_NAME", "EXPORT", "EXPORT:PATH",
@@ -259,6 +260,10 @@ _CONDITION_KEY = re.compile(r"^CONDITION_(\d+):(.+)$")
 _FOLDER_KEY = re.compile(r"^HISTOGRAM_([1-4])_(\d+):(.+)$")
 _FOLDER_ATTRIBUTES = ("NAME", "TITLE", "OWNER", "BASE_NAME")
 _LIST_ATTRIBUTES = ("USE", "N", "IMPORT", "CREATE", "EXPORT")
+#: Facts about the folders stated by the templates of the tasks of the folders design (not settings): the number of
+#: particle filters per folder (FOLDER_RANK: 1, one folder per event and particle filter; 2, per event filter and pair of
+#: particle filters, e.g. a pair analysis, which also has a single-particle folder per event and particle filter).
+_FOLDER_FACTS = ("FOLDER_RANK",)
 
 
 def number_text(value):
@@ -421,7 +426,7 @@ class Folder:
         self.folder = "_".join(combination)     # folder in the folder of the task, in the files of the job
 
     def __repr__(self):
-        return "Folder(HISTOGRAM_%d_%d, %s)" % (self.list, self.index, self.name)
+        return "Folder(%s %s)" % (folder_key(self.list, self.index), self.name)
 
 
 def _template_keys(task, templates):
@@ -441,13 +446,43 @@ def is_glauber(task):
 
 
 def histogram_layout(task, templates):
-    """Folders of histograms of a task: "pair" (lists 1 to 4), "single" (lists 1 and 2) or None."""
+    """Folders of histograms of a task: "folders" (one list, HISTOGRAM: the tasks of an analysis in the design where
+    each folder holds all its histograms, see EventProcessorHistos), "pair" (lists 1 to 4), "single" (lists 1 and 2),
+    or None."""
     keys = _template_keys(task, templates)
     if "HISTOGRAM_3:N" in keys and "HISTOGRAM_1:N" in keys:
         return "pair"
     if "HISTOGRAM_1:N" in keys:
         return "single"
+    if "HISTOGRAM:N" in keys:
+        return "folders"
     return None
+
+
+def _template_value(task, templates, key, default=None):
+    template = templates.get(task.cls)
+    p = template.param(key) if template is not None else task.param(key)
+    return p.value if p is not None else default
+
+
+def folder_rank(task, templates):
+    """Number of particle filters per folder of a task of the folders design (HISTOGRAM:FOLDER_RANK of its template):
+    1 (default), one folder per event and particle filter; 2, per event filter and ordered pair of particle filters (a
+    pair analysis: n x m x m pair folders, listed here, and n x m single-particle folders, made by the task)."""
+    try:
+        return int(_template_value(task, templates, "HISTOGRAM:FOLDER_RANK", "1"))
+    except ValueError:
+        return 1
+
+
+def list_key(list_index):
+    """Key of a list of folders: HISTOGRAM_<l> for a numbered list, HISTOGRAM for the single list (0)."""
+    return "HISTOGRAM" if list_index == 0 else "HISTOGRAM_%d" % list_index
+
+
+def folder_key(list_index, index):
+    """Key prefix of a folder: HISTOGRAM_<l>_<k>: in a numbered list, HISTOGRAM_<k>: in the single list (0)."""
+    return "HISTOGRAM_%d:" % index if list_index == 0 else "HISTOGRAM_%d_%d:" % (list_index, index)
 
 
 def binning_keys(task, templates):
@@ -457,7 +492,7 @@ def binning_keys(task, templates):
     names = []
     for p in params:
         parts = p.key.split(":")
-        if len(parts) == 2 and parts[0] == "HISTOGRAM" and parts[1] not in _LIST_ATTRIBUTES + ("BASE_NAME",):
+        if len(parts) == 2 and parts[0] == "HISTOGRAM" and parts[1] not in _LIST_ATTRIBUTES + _FOLDER_FACTS + ("BASE_NAME",):
             names.append(parts[1])
     return names
 
@@ -483,6 +518,8 @@ def combinations(task, templates):
     events = choices(task).get("EVENT_FILTER", [])
     particles = choices(task).get("PARTICLE_FILTER", [])
     singles = [(e, p) for e in events for p in particles]
+    if layout == "folders":
+        return _rank_combinations(events, particles, folder_rank(task, templates))
     if layout == "pair":
         return [(e, p1, p2) for e in events for p1 in particles for p2 in particles] + singles
     if layout == "single":
@@ -490,15 +527,25 @@ def combinations(task, templates):
     return []
 
 
+def _rank_combinations(events, particles, rank):
+    """Combinations of an event filter and rank particle filters, in the order of the C++ folders."""
+    combos = [(e,) for e in events]
+    for _ in range(rank):
+        combos = [c + (p,) for c in combos for p in particles]
+    return combos
+
+
 def folder_lists(task, templates):
-    """Lists of folders of a task: [1, 2] (histograms, derived histograms) or, for a pair analyzer, [1, 2, 3, 4]
-    (pairs, derived pairs, singles, derived singles); [] if it has no histograms."""
+    """Lists of folders of a task: [0] (the single list HISTOGRAM), [1, 2] (histograms, derived histograms) or, for a
+    pair analyzer, [1, 2, 3, 4] (pairs, derived pairs, singles, derived singles); [] if it has no histograms."""
     layout = histogram_layout(task, templates)
-    return [1, 2, 3, 4] if layout == "pair" else [1, 2] if layout == "single" else []
+    return [1, 2, 3, 4] if layout == "pair" else [1, 2] if layout == "single" else [0] if layout == "folders" else []
 
 
 def list_label(task, templates, list_index):
     """Name of a list of folders, e.g. "Derived histograms"."""
+    if list_index == 0:
+        return "Histograms"
     if histogram_layout(task, templates) == "pair":
         return {1: "Pair histograms", 2: "Derived pair histograms", 3: "Single histograms",
                 4: "Derived single histograms"}[list_index]
@@ -508,7 +555,7 @@ def list_label(task, templates, list_index):
 def list_used(task, list_index):
     """Whether a task uses a list of folders (HISTOGRAM_<l>:USE): it then has one folder per combination of its
     filters, none otherwise."""
-    return _param_value(task, "HISTOGRAM_%d:USE" % list_index, "false") == "true"
+    return _param_value(task, list_key(list_index) + ":USE", "false") == "true"
 
 
 #: Settings of a list of folders shown in the task windows, and those set for the lists of a new analyzer.
@@ -532,13 +579,13 @@ ITERATOR_OF_MODE = {FILL: "CAP::EventIterator", DERIVED: "CAP::FileIterator"}
 
 
 def _set_list(task, list_index, name, value):
-    p = task.param("HISTOGRAM_%d:%s" % (list_index, name))
+    p = task.param("%s:%s" % (list_key(list_index), name))
     if p is not None:
         p.value = value
 
 
 def _flag(task, list_index, name):
-    return _param_value(task, "HISTOGRAM_%d:%s" % (list_index, name), "false") == "true"
+    return _param_value(task, "%s:%s" % (list_key(list_index), name), "false") == "true"
 
 
 def set_histogram_mode(task, templates, mode):
@@ -546,7 +593,7 @@ def set_histogram_mode(task, templates, mode):
     used) or DERIVED (its histograms used and imported from the input file of the job, the output file of the fill
     run; derived histograms used and created). The job writes them all to its output file."""
     for l in folder_lists(task, templates):
-        base = l in (1, 3)
+        base = l in (0, 1, 3)
         if mode == FILL:
             settings = {"USE": base, "CREATE": base, "IMPORT": False}
         else:
@@ -560,7 +607,7 @@ def histogram_mode(task, templates):
     lists = folder_lists(task, templates)
     if not lists:
         return None
-    base = [l for l in lists if l in (1, 3)]
+    base = [l for l in lists if l in (0, 1, 3)]
     derived = [l for l in lists if l in (2, 4)]
     if all(list_used(task, l) and _flag(task, l, "CREATE") and not _flag(task, l, "IMPORT") for l in base) \
             and not any(list_used(task, l) for l in derived):
@@ -586,21 +633,67 @@ def _copy_task(task):
     return c
 
 
+def derived_calculator_class(cls):
+    """Class of the task computing the derived histograms of an analyzer (CAP::XAnalyzer -> CAP::XDerivedCalculator)."""
+    return cls[:-len("Analyzer")] + "DerivedCalculator" if cls.endswith("Analyzer") else None
+
+
+def derived_calculator(analyzer, templates):
+    """Task computing the derived histograms of an analyzer whose folders hold all its histograms (layout "folders"):
+    its calculator class (derived_calculator_class()), named <analyzer>Derived, with the filters and histogram settings
+    of the analyzer, SOURCE_TASK the analyzer (it reads and writes the folders of the analyzer in the files of the jobs)
+    and its folders imported; no events. @return the calculator, or None if the class has no calculator"""
+    template = templates.get(derived_calculator_class(analyzer.cls) or "")
+    if template is None:
+        return None
+    calculator = template.clone()
+    calculator.name = analyzer.name + "Derived"
+    values = {p.key: p.value for p in analyzer.params}
+    for p in calculator.params:
+        if p.key in values and p.key != "SOURCE_TASK":
+            p.value = values[p.key]
+    source = calculator.param("SOURCE_TASK")
+    if source is not None:
+        source.value = analyzer.name
+    calculator.filters = {k: list(v) for k, v in choices(analyzer).items() if k != "EVENT"}
+    if getattr(analyzer, "histograms", None) is not None:
+        calculator.histograms = copy.deepcopy(analyzer.histograms)
+    set_histogram_mode(calculator, templates, DERIVED)
+    if calculator.param("EVENT:USE") is not None:
+        calculator.param("EVENT:USE").value = "false"
+    return calculator
+
+
+def is_calculator(task, templates):
+    """Whether a task computes histograms from those of an analyzer (a calculator: SOURCE_TASK, folders imported)."""
+    return histogram_layout(task, templates) == "folders" and task.param("SOURCE_TASK") is not None
+
+
 def derived_workflow(tasks, templates, TaskConfig):
-    """Workflow computing the derived histograms of the analyzers of a workflow from the histograms it exports: each
-    task holding analyzers becomes a FileIterator of the same name holding them (set to DERIVED, same names and
-    filters, so their folders and files match), the other tasks (generators, ...) are left out.
-    @return top-level tasks (copies)"""
+    """Workflow computing the derived histograms of the analyzers of a workflow from the histograms it exports.
+    An analyzer whose folders hold all its histograms (layout "folders") gets its calculator (derived_calculator()),
+    a top-level task: no event loop. The other analyzers: each task holding them becomes a FileIterator of the same
+    name holding them (set to DERIVED, same names and filters, so their folders and files match). The other tasks
+    (generators, ...) are left out. @return top-level tasks (copies)"""
     def convert(task):
-        analyzers = [_copy_task(c) for c in task.children if histogram_layout(c, templates) is not None]
-        if histogram_layout(task, templates) is not None:
+        layout = histogram_layout(task, templates)
+        if layout == "folders":
+            calculator = derived_calculator(task, templates)
+            return [calculator] if calculator is not None else []
+        calculators = [derived_calculator(c, templates) for c in task.children
+                       if histogram_layout(c, templates) == "folders"]
+        calculators = [c for c in calculators if c is not None]
+        analyzers = [_copy_task(c) for c in task.children if histogram_layout(c, templates) in ("single", "pair")]
+        if layout is not None:
             analyzers = [_copy_task(task)]
             set_histogram_mode(analyzers[0], templates, DERIVED)
             if analyzers[0].param("EVENT:USE") is not None:
                 analyzers[0].param("EVENT:USE").value = "false"
             return analyzers
-        if not analyzers:
+        if not analyzers and not calculators:
             return [t for c in task.children for t in convert(c)]
+        if not analyzers:
+            return calculators
         template = templates.get(ITERATOR_OF_MODE[DERIVED])
         iterator = template.clone() if template is not None else TaskConfig(task.name, ITERATOR_OF_MODE[DERIVED])
         iterator.name = task.name
@@ -610,8 +703,39 @@ def derived_workflow(tasks, templates, TaskConfig):
             if use is not None:
                 use.value = "false"         # no event loop: histograms read from the input file of the job
         iterator.children = analyzers
-        return [iterator]
+        return calculators + [iterator]
     return [t for task in tasks for t in convert(task)]
+
+
+#: Keys of the numbered lists of folders in workflows written before an analysis moved to one list (HISTOGRAM).
+_NUMBERED_LIST_KEY = re.compile(r"^HISTOGRAM_[1-4]:(?:USE|CREATE|IMPORT)$")
+
+
+def update_histogram_lists(tasks, templates):
+    """Analyzers whose folders now hold all their histograms (one list, HISTOGRAM) read from workflows written for the
+    numbered lists: the settings of list 1 (their histograms) become those of HISTOGRAM; those of the derived lists
+    are dropped (the derived histograms are now computed by the calculator of the analysis, see derived_workflow()).
+    @return warnings"""
+    warnings = []
+    for task in _preorder(tasks):
+        if histogram_layout(task, templates) != "folders":
+            continue
+        old = [p for p in task.params if _NUMBERED_LIST_KEY.match(p.key)]
+        if not old:
+            continue
+        for name in FOLDER_LIST_SETTINGS:
+            value = _param_value(task, "HISTOGRAM_1:" + name)
+            if value is not None:
+                _set_list(task, 0, name, value)
+        task.params = [p for p in task.params if p not in old]
+        warnings.append("Task %s: its histograms are now in one list (HISTOGRAM), set as its list HISTOGRAM_1; the "
+                        "derived histograms are computed by its calculator (derived run)." % task.name)
+    return warnings
+
+
+def is_numbered_list_warning(warning):
+    """Whether a warning of RunCAP.load_workflow() is about a key of the numbered lists (see update_histogram_lists())."""
+    return re.search(r"parameter HISTOGRAM_[1-4]:(?:USE|CREATE|IMPORT) is not defined by class", warning) is not None
 
 
 def default_histogram_settings(task, templates):
@@ -639,7 +763,10 @@ def folders(task, templates):
             result.append(Folder(list_base + 1, k, name, combo, True))
 
     singles = [(e, p) for e in events for p in particles]
-    if layout == "pair":
+    if layout == "folders":
+        for k, combo in enumerate(_rank_combinations(events, particles, folder_rank(task, templates))):
+            result.append(Folder(0, k, "_".join([prefix] + list(combo)), combo, False))
+    elif layout == "pair":
         add(1, [(e, p1, p2) for e in events for p1 in particles for p2 in particles])
         add(3, singles)
     else:
@@ -786,10 +913,10 @@ def apply_choices(tasks, library, templates, Param):
         counts = {}
         for f in all_folders:
             counts[f.list] = counts.get(f.list, 0) + 1
-        for list_index in ([1, 2, 3, 4] if layout == "pair" else [1, 2]):
-            _set(task, "HISTOGRAM_%d:N" % list_index, "int", str(counts.get(list_index, 0)), Param)
+        for list_index in folder_lists(task, templates):
+            _set(task, list_key(list_index) + ":N", "int", str(counts.get(list_index, 0)), Param)
         for f in all_folders:
-            prefix = "HISTOGRAM_%d_%d:" % (f.list, f.index)
+            prefix = folder_key(f.list, f.index)
             _set(task, prefix + "NAME", "string", f.name, Param)
             _set(task, prefix + "TITLE", "string", f.name, Param)
             _set(task, prefix + "OWNER", "bool", "true", Param)
@@ -842,8 +969,8 @@ def extract_choices(tasks, templates, library=None):
                 task.filters[kind] = names
         layout = histogram_layout(task, templates)
         for l in folder_lists(task, templates):           # folders without USE (USE was not read by CAP): used
-            n = values.get("HISTOGRAM_%d:N" % l, "0") or "0"
-            p = task.param("HISTOGRAM_%d:USE" % l)
+            n = values.get(list_key(l) + ":N", "0") or "0"
+            p = task.param(list_key(l) + ":USE")
             if n.isdigit() and int(n) > 0 and p is not None and p.value != "true":
                 p.value = "true"
         if layout is not None:
@@ -913,8 +1040,8 @@ def _histograms_from_keys(task, templates, values, warnings):
     options = task.histograms
     found = [f for f in folders(task, templates) if list_used(task, f.list)]
     stated = 0
-    for l in (1, 2, 3, 4):
-        n = values.get("HISTOGRAM_%d:N" % l, "0") or "0"
+    for l in folder_lists(task, templates):
+        n = values.get(list_key(l) + ":N", "0") or "0"
         stated += int(n) if n.isdigit() else 0
     if stated and stated != len(found):
         warnings.append("Task %s: its histogram folders (%d) are not those of its filters (%d, one per combination): "
@@ -924,7 +1051,7 @@ def _histograms_from_keys(task, templates, values, warnings):
     for f in found:
         if f.derived:
             continue
-        prefix = "HISTOGRAM_%d_%d:" % (f.list, f.index)
+        prefix = folder_key(f.list, f.index)
         overrides = {n: values[prefix + n] for n in names if prefix + n in values}
         if overrides:
             per_folder[f.combination] = overrides
@@ -1047,10 +1174,16 @@ def check_choices(tasks, library, templates):
                 and _param_value(task, "EVENT:EXPORT:FILE_NAME", "NONE") in ("", "NONE"):
             errors.append("Task %s exports events but the file is not named." % task.name)
         mode = histogram_mode(task, templates)
-        fills = any(list_used(task, l) and _flag(task, l, "CREATE") for l in folder_lists(task, templates) if l in (1, 3))
+        fills = any(list_used(task, l) and _flag(task, l, "CREATE") for l in folder_lists(task, templates) if l in (0, 1, 3))
         if fills and "EVENT" in kinds and not choices(task).get("EVENT"):
             errors.append("Task %s uses no event: choose one (Events)." % task.name)
-        if mode in (FILL, DERIVED) and parent is not None and parent.cls != ITERATOR_OF_MODE[mode] \
+        if is_calculator(task, templates):
+            if parent is not None and parent.cls in ITERATOR_OF_MODE.values():
+                errors.append("Task %s computes histograms from the output of an earlier job: put it outside of %s (a %s)."
+                              % (task.name, parent.name, short_class(parent.cls)))
+            if not _param_value(task, "SOURCE_TASK", ""):
+                errors.append("Task %s: name the analyzer whose histograms it completes (SOURCE_TASK)." % task.name)
+        elif mode in (FILL, DERIVED) and parent is not None and parent.cls != ITERATOR_OF_MODE[mode] \
                 and parent.cls != "CAP::Task":
             errors.append("Task %s %s: put it in a%s (it is in %s, a %s)." % (
                 task.name, "fills its histograms event by event" if mode == FILL
@@ -1068,10 +1201,10 @@ def check_choices(tasks, library, templates):
                               % task.name)
             for l in used:
                 label = list_label(task, templates, l).lower()
-                flag = lambda name: _param_value(task, "HISTOGRAM_%d:%s" % (l, name), "false") == "true"
+                flag = lambda name: _param_value(task, "%s:%s" % (list_key(l), name), "false") == "true"
                 if not flag("CREATE") and not flag("IMPORT"):
-                    errors.append("Task %s: its %s are used but neither created nor imported (HISTOGRAM_%d)."
-                                  % (task.name, label, l))
+                    errors.append("Task %s: its %s are used but neither created nor imported (%s)."
+                                  % (task.name, label, list_key(l)))
             names = [f.name for f in folders(task, templates) if f.list in used]
             for name in sorted(set(n for n in names if names.count(n) > 1)):
                 errors.append("Task %s: several histogram folders are named %s (a filter chosen twice?)." % (task.name, name))

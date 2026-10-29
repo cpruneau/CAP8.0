@@ -18,7 +18,6 @@ EventPlaneRandomizerTask.cpp
 EventVertexRandomizerTask.cpp
 MeasurementSimulator.cpp
 ParticlePerformanceHistos.cpp
-ParticlePerformanceDerivedHistos.cpp
 PerformanceAnalyzer.cpp
 RunClosureAnalysis.cpp)
 

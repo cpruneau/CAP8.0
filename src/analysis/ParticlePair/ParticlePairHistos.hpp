@@ -11,6 +11,7 @@
 #define CAP__ParticlePairHistos
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
+#include "ParticleSingleHistos.hpp"
 
 
 namespace CAP
@@ -28,7 +29,6 @@ class ParticlePairHistos : public HistogramFolder
 {
 public:
 
-  friend class ParticlePairDerivedHistos;
 
   //! @brief Default constructor.
   ParticlePairHistos();
@@ -38,6 +38,13 @@ public:
   ParticlePairHistos & operator=(const ParticlePairHistos & group);
   //! @brief Destructor.
   virtual ~ParticlePairHistos() {}
+  //!
+  //! @brief Add the default binning and fill options of a pair analysis to a configuration: those of its particles
+  //! (ParticleSingleHistos::addDefaultConfiguration()) and of its pairs (keys \<taskName\>:HISTOGRAM:n2_nbins, ...), for
+  //! every task working on these histograms (ParticlePairAnalyzer, ParticlePairDerivedCalculator).
+  //! @param configuration configuration @param taskName name of the task
+  //!
+  static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
   //! @brief Read the binning and fill options. @param taskName name of the task @param objectType object type
   //! @param configuration configuration @param index index
   virtual void configure(const String & taskName,
@@ -96,7 +103,29 @@ public:
   return index;
   }
 
-protected:
+  //! @brief Create the derived histograms (according to the fill options), empty; see calculateDerived().
+  virtual void createDerived();
+  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  virtual void loadDerivedFrom(const Folder & inputFile);
+  //!
+  //! @brief Compute the derived histograms of this pair group (n1n1, C2, C2N, C2O, R2, G2, P2 and the shifted
+  //! Delta phi versions) from its base histograms and the base and derived histograms of its two particles.
+  //! @param single1 histograms of particle 1 (derived computed) @param single2 histograms of particle 2 (derived computed)
+  //!
+  virtual void calculateDerived(const ParticleSingleHistos & single1, const ParticleSingleHistos & single2);
+  //! @brief Omega factor of each Delta y bin (fraction of the acceptance). @param h_DyDphi histogram @param omegaFactor [out] factors
+  void calculateOmegaFactor(Histogram * h_DyDphi, std::vector<double> & omegaFactor);
+  //! @brief Divide each Delta y column by its omega factor. @param h_DyDphi source @param h_DyDphi_Avg target @param omegaFactor factors
+  void calculateAverageYbar(Histogram * h_DyDphi, Histogram * h_DyDphi_Avg, std::vector<double> & omegaFactor);
+  //!
+  //! @brief <pT1><pT2> vs (Delta eta or y, Delta phi): the pT sums of the two particles reduced as n1n1 is, divided by
+  //! n1n1 (so that G2 = S_pp/n1n1 - pt1pt1 = (S_pp - S_p S_p)/n1n1).
+  //! @param spt1 pT sum of particle 1 vs (eta or y, phi) @param spt2 same for particle 2 @param n1n1 n1n1 reduced
+  //! @param target [out] <pT1><pT2>
+  //!
+  void calculatePt1Pt1(const Histogram * spt1, const Histogram * spt2, const Histogram * n1n1, Histogram * target);
+
+public:
 
   //! @brief Copy the content of another group. @param source group to copy
   virtual void cloneB(const ParticlePairHistos & source);
@@ -141,15 +170,79 @@ protected:
   Histogram * h_n2;
   Histogram * h_n2_ptpt;  ///< pair density vs (pT1, pT2)
   Histogram * h_n2_etaeta;  ///< pair density vs (eta1, eta2)
-  Histogram * h_DptDpt_etaeta;  ///< pair density weighted by pT1 pT2 vs (eta1, eta2)
+  Histogram * h_ptpt_etaeta;  ///< pair density weighted by pT1 pT2 vs (eta1, eta2)
   Histogram * h_n2_phiphi;  ///< pair density vs (phi1, phi2)
-  Histogram * h_DptDpt_phiphi;  ///< pair density weighted by pT1 pT2 vs (phi1, phi2)
+  Histogram * h_ptpt_phiphi;  ///< pair density weighted by pT1 pT2 vs (phi1, phi2)
   Histogram * h_n2_yY;  ///< pair density vs (y1, y2)
-  Histogram * h_DptDpt_yY;  ///< pair density weighted by pT1 pT2 vs (y1, y2)
+  Histogram * h_ptpt_yY;  ///< pair density weighted by pT1 pT2 vs (y1, y2)
   Histogram * h_n2_DetaDphi;  ///< pair density vs (Delta eta, Delta phi)
-  Histogram * h_DptDpt_DetaDphi;  ///< pair density weighted by pT1 pT2 vs (Delta eta, Delta phi)
+  Histogram * h_ptpt_DetaDphi;  ///< pair density weighted by pT1 pT2 vs (Delta eta, Delta phi)
   Histogram * h_n2_DyDphi;  ///< pair density vs (Delta y, Delta phi)
-  Histogram * h_DptDpt_DyDphi;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi)
+  Histogram * h_ptpt_DyDphi;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi)
+
+  // Derived histograms (createDerived(), calculateDerived())
+  Histogram* h_n1n1_ptpt;  ///< product of the single-particle densities n1(1) n1(2) vs (pT1, pT2)
+  Histogram* h_C2_ptpt;  ///< pair correlation (cumulant) C2 = n2 - n1n1 vs (pT1, pT2)
+  Histogram* h_C2N_ptpt;  ///< normalized cumulant A2 vs (pT1, pT2)
+  Histogram* h_R2_ptpt;  ///< normalized cumulant R2 = n2/(n1n1) - 1 vs (pT1, pT2)
+  Histogram* h_n1n1_phiphi;  ///< product of the single-particle densities n1(1) n1(2) vs (phi1, phi2)
+  Histogram* h_C2_phiphi;  ///< pair correlation (cumulant) C2 = n2 - n1n1 vs (phi1, phi2)
+  Histogram* h_C2N_phiphi;  ///< normalized cumulant A2 vs (phi1, phi2)
+  Histogram* h_R2_phiphi;  ///< normalized cumulant R2 = n2/(n1n1) - 1 vs (phi1, phi2)
+  Histogram* h_P2_phiphi;  ///< transverse momentum correlator P2 vs (phi1, phi2)
+  Histogram* h_G2_phiphi;  ///< transverse momentum correlator G2 vs (phi1, phi2)
+  Histogram* h_DptDpt_phiphi;  ///< pair density weighted by pT1 pT2 vs (phi1, phi2)
+  Histogram* h_pt1pt1_phiphi;  ///< product of the single-particle pT densities vs (phi1, phi2)
+  Histogram* h_n1n1_etaeta;  ///< product of the single-particle densities n1(1) n1(2) vs (eta1, eta2)
+  Histogram* h_C2_etaeta;  ///< pair correlation (cumulant) C2 = n2 - n1n1 vs (eta1, eta2)
+  Histogram* h_C2N_etaeta;  ///< normalized cumulant A2 vs (eta1, eta2)
+  Histogram* h_R2_etaeta;  ///< normalized cumulant R2 = n2/(n1n1) - 1 vs (eta1, eta2)
+  Histogram* h_G2_etaeta;  ///< transverse momentum correlator G2 vs (eta1, eta2)
+  Histogram* h_P2_etaeta;  ///< transverse momentum correlator P2 vs (eta1, eta2)
+  Histogram* h_DptDpt_etaeta;  ///< pair density weighted by pT1 pT2 vs (eta1, eta2)
+  Histogram* h_pt1pt1_etaeta;  ///< product of the single-particle pT densities vs (eta1, eta2)
+  Histogram* h_n1n1_yY;  ///< product of the single-particle densities n1(1) n1(2) vs (y1, y2)
+  Histogram* h_C2_yY;  ///< pair correlation (cumulant) C2 = n2 - n1n1 vs (y1, y2)
+  Histogram* h_C2N_yY;  ///< normalized cumulant A2 vs (y1, y2)
+  Histogram* h_R2_yY;  ///< normalized cumulant R2 = n2/(n1n1) - 1 vs (y1, y2)
+  Histogram* h_G2_yY;  ///< transverse momentum correlator G2 vs (y1, y2)
+  Histogram* h_P2_yY;  ///< transverse momentum correlator P2 vs (y1, y2)
+  Histogram* h_DptDpt_yY;  ///< pair density weighted by pT1 pT2 vs (y1, y2)
+  Histogram* h_pt1pt1_yY;  ///< product of the single-particle pT densities vs (y1, y2)
+  Histogram* h_n1n1_DetaDphi;  ///< product of the single-particle densities n1(1) n1(2) vs (Delta eta, Delta phi)
+  Histogram* h_C2_DetaDphi;  ///< pair correlation (cumulant) C2 = n2 - n1n1 vs (Delta eta, Delta phi)
+  Histogram* h_C2N_DetaDphi;  ///< normalized cumulant A2 vs (Delta eta, Delta phi)
+  Histogram* h_C2O_DetaDphi;  ///< cumulant D2 (A2 averaged over the mean (pseudo)rapidity, see calculateAverageYbar()) vs (Delta eta, Delta phi)
+  Histogram* h_R2_DetaDphi;  ///< normalized cumulant R2 = n2/(n1n1) - 1 vs (Delta eta, Delta phi)
+  Histogram* h_P2_DetaDphi;  ///< transverse momentum correlator P2 vs (Delta eta, Delta phi)
+  Histogram* h_G2_DetaDphi;  ///< transverse momentum correlator G2 vs (Delta eta, Delta phi)
+  Histogram* h_DptDpt_DetaDphi;  ///< pair density weighted by pT1 pT2 vs (Delta eta, Delta phi)
+  Histogram* h_pt1pt1_DetaDphi;  ///< product of the single-particle pT densities vs (Delta eta, Delta phi)
+  Histogram* h_n1n1_DetaDphi_shft;  ///< product of the single-particle densities n1(1) n1(2) vs (Delta eta, Delta phi), Delta phi range shifted
+  Histogram* h_C2_DetaDphi_shft;  ///< pair correlation (cumulant) C2 = n2 - n1n1 vs (Delta eta, Delta phi), Delta phi range shifted
+  Histogram* h_C2N_DetaDphi_shft;  ///< normalized cumulant A2 vs (Delta eta, Delta phi), Delta phi range shifted
+  Histogram* h_C2O_DetaDphi_shft;  ///< cumulant D2 (A2 averaged over the mean (pseudo)rapidity, see calculateAverageYbar()) vs (Delta eta, Delta phi), Delta phi range shifted
+  Histogram* h_R2_DetaDphi_shft;  ///< normalized cumulant R2 = n2/(n1n1) - 1 vs (Delta eta, Delta phi), Delta phi range shifted
+  Histogram* h_P2_DetaDphi_shft;  ///< transverse momentum correlator P2 vs (Delta eta, Delta phi), Delta phi range shifted
+  Histogram* h_G2_DetaDphi_shft;  ///< transverse momentum correlator G2 vs (Delta eta, Delta phi), Delta phi range shifted
+  Histogram* h_DptDpt_DetaDphi_shft;  ///< pair density weighted by pT1 pT2 vs (Delta eta, Delta phi), Delta phi range shifted
+  Histogram* h_n1n1_DyDphi;  ///< product of the single-particle densities n1(1) n1(2) vs (Delta y, Delta phi)
+  Histogram* h_C2_DyDphi;  ///< pair correlation (cumulant) C2 = n2 - n1n1 vs (Delta y, Delta phi)
+  Histogram* h_C2N_DyDphi;  ///< normalized cumulant A2 vs (Delta y, Delta phi)
+  Histogram* h_C2O_DyDphi;  ///< cumulant D2 (A2 averaged over the mean (pseudo)rapidity, see calculateAverageYbar()) vs (Delta y, Delta phi)
+  Histogram* h_R2_DyDphi;  ///< normalized cumulant R2 = n2/(n1n1) - 1 vs (Delta y, Delta phi)
+  Histogram* h_P2_DyDphi;  ///< transverse momentum correlator P2 vs (Delta y, Delta phi)
+  Histogram* h_G2_DyDphi;  ///< transverse momentum correlator G2 vs (Delta y, Delta phi)
+  Histogram* h_DptDpt_DyDphi;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi)
+  Histogram* h_pt1pt1_DyDphi;  ///< product of the single-particle pT densities vs (Delta y, Delta phi)
+  Histogram* h_n1n1_DyDphi_shft;  ///< product of the single-particle densities n1(1) n1(2) vs (Delta y, Delta phi), Delta phi range shifted
+  Histogram* h_C2_DyDphi_shft;  ///< pair correlation (cumulant) C2 = n2 - n1n1 vs (Delta y, Delta phi), Delta phi range shifted
+  Histogram* h_C2N_DyDphi_shft;  ///< normalized cumulant A2 vs (Delta y, Delta phi), Delta phi range shifted
+  Histogram* h_C2O_DyDphi_shft;  ///< cumulant D2 (A2 averaged over the mean (pseudo)rapidity, see calculateAverageYbar()) vs (Delta y, Delta phi), Delta phi range shifted
+  Histogram* h_R2_DyDphi_shft;  ///< normalized cumulant R2 = n2/(n1n1) - 1 vs (Delta y, Delta phi), Delta phi range shifted
+  Histogram* h_P2_DyDphi_shft;  ///< transverse momentum correlator P2 vs (Delta y, Delta phi), Delta phi range shifted
+  Histogram* h_G2_DyDphi_shft;  ///< transverse momentum correlator G2 vs (Delta y, Delta phi), Delta phi range shifted
+  Histogram* h_DptDpt_DyDphi_shft;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi), Delta phi range shifted
 
 };
 

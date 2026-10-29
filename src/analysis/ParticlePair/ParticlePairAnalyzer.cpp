@@ -10,21 +10,16 @@
 #include "ParticlePairAnalyzer.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "PrintHelpers.hpp"
-#include "Histogram.hpp"
-#include "Profile.hpp"
-#include "MathConstants.hpp"
-
+#include "Exceptions.hpp"
 
 namespace CAP
 {
 
 ParticlePairAnalyzer::ParticlePairAnalyzer()
 :
-EventProcessorPair<ParticlePairHistos,ParticlePairDerivedHistos,ParticlePairBfHistos,ParticleSingleDerivedHistos>()
+EventProcessorHistos<ParticlePairHistos,2,ParticleSingleHistos>()
 {
   appendClassName("ParticlePairAnalyzer");
-  setName("ParticlePairAnalyzer");
   setMinimumReportLevel(Object::kInfo);
   setName("ParticlePairAnalyzer");
   setTitle("ParticlePairAnalyzer");
@@ -32,124 +27,88 @@ EventProcessorPair<ParticlePairHistos,ParticlePairDerivedHistos,ParticlePairBfHi
 
 ParticlePairAnalyzer::ParticlePairAnalyzer(const ParticlePairAnalyzer & source)
 :
-EventProcessorPair<ParticlePairHistos,ParticlePairDerivedHistos,ParticlePairBfHistos,ParticleSingleDerivedHistos>(source)
+EventProcessorHistos<ParticlePairHistos,2,ParticleSingleHistos>(source)
 {   }
 
 ParticlePairAnalyzer & ParticlePairAnalyzer::operator=(const ParticlePairAnalyzer & rhs)
 {
   if (this!=&rhs)
     {
-    EventProcessorPair<ParticlePairHistos,ParticlePairDerivedHistos,ParticlePairBfHistos,ParticleSingleDerivedHistos>::operator=(rhs);
+    EventProcessorHistos<ParticlePairHistos,2,ParticleSingleHistos>::operator=(rhs);
     }
   return *this;
 }
 
 void ParticlePairAnalyzer::setDefaultConfiguration()
 {
-  EventProcessorPair<ParticlePairHistos,ParticlePairDerivedHistos,ParticlePairBfHistos,ParticleSingleDerivedHistos>::setDefaultConfiguration();
-  const String & taskName = name();
-  String objectType = "HISTOGRAM";
-  _configuration.addProperty(createKey(taskName,objectType,"eta_fill"),       false);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_fill"),  true);
-  _configuration.addProperty(createKey(taskName,objectType,"p2_fill"),        false);
-  _configuration.addProperty(createKey(taskName,objectType,"FillPid"),        false);
-  _configuration.addProperty(createKey(taskName,objectType,"n1_nbins"),       100);
-  _configuration.addProperty(createKey(taskName,objectType,"n1_min"),         0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"n1_max"),         100.0);
-  _configuration.addProperty(createKey(taskName,objectType,"etot_nbins"),     100);
-  _configuration.addProperty(createKey(taskName,objectType,"etot_min"),       0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"etot_max"),       100.0);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_nbins"),       18);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_min"),         0.20);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_max"),         2.00);
-  _configuration.addProperty(createKey(taskName,objectType,"phi_nbins"),      72);
-  _configuration.addProperty(createKey(taskName,objectType,"phi_min"),        0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"phi_max"),        CAP::MATH::twoPi());
-  _configuration.addProperty(createKey(taskName,objectType,"eta_nbins"),      20);
-  _configuration.addProperty(createKey(taskName,objectType,"eta_min"),        -1.0);
-  _configuration.addProperty(createKey(taskName,objectType,"eta_max"),        1.0);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_nbins"), 20);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_min"),    -1.0);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_max"),     1.0);
-  _configuration.addProperty(createKey(taskName,objectType,"n2_nbins"),         100);
-  _configuration.addProperty(createKey(taskName,objectType,"n2_min"),           0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"n2_max"),          1000.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Dphi_nbins"),      36);
-  _configuration.addProperty(createKey(taskName,objectType,"Dphi_min"),        0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Dphi_max"),        CAP::MATH::twoPi());
-  _configuration.addProperty(createKey(taskName,objectType,"Dphi_width"),      CAP::MATH::twoPi());
-  _configuration.addProperty(createKey(taskName,objectType,"Dphi_nbins_shft"),  36);
-  _configuration.addProperty(createKey(taskName,objectType,"Dphi_min_shft"),   0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Dphi_max_shft"),   0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Deta_nbins"),       39);
-  _configuration.addProperty(createKey(taskName,objectType,"Deta_min"),       -2.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Deta_max"),        2.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Deta_width"),       4.0/39.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Drapidity_nbins"), 39);
-  _configuration.addProperty(createKey(taskName,objectType,"Drapidity_min"),   -2.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Drapidity_max"),    2.0);
-  _configuration.addProperty(createKey(taskName,objectType,"Drapidity_width"), 4.0/39.0);
-  _configuration.addProperty(createKey(taskName,objectType,"DeltaP_nbins"),     10);
-  _configuration.addProperty(createKey(taskName,objectType,"DeltaP_min"),       -4.0);
-  _configuration.addProperty(createKey(taskName,objectType,"DeltaP_max"),      4.0);
+  EventProcessorHistos<ParticlePairHistos,2,ParticleSingleHistos>::setDefaultConfiguration();
+  ParticlePairHistos::addDefaultConfiguration(_configuration,name());
 }
 
+//!
+//! For each accepted event filter e: the particles of each particle filter i (folder e*m + i): n1, energy, pT,
+//! (eta or y, phi), ... (ParticleSingleHistos::fill()) and their number per event (if the filter accepted particles); the pairs of each ordered pair of
+//! particle filters (i, j) (folder e*m*m + i*m + j): all pairs of a particle of i and a particle of j, distinct when
+//! i = j, and their number per event.
+//!
 void ParticlePairAnalyzer::execute()
 {
-  //if (reportInfo(__FUNCTION__)) { printCR(); }
   _taskExecuted.increment();
-  //printValue("CALLED COUNT",taskExecuted.valueAt());
   Event & theEvent = event();
-  if (reportDebug0(__FUNCTION__))
-    {
-    printCR();
-    printValue("event.particles().size()",theEvent.particles().size());
-    }
   if (!filterEvent(theEvent)) return;
   if (!filterParticles(theEvent.particles()))  return;
-  unsigned int nPFs  = nParticleFilters();
-  unsigned int nPFsq = nPFs*nPFs;
-  std::vector<ParticlePairHistos*> & pairHistograms = histograms_1();
+  const unsigned int nPF   = nParticleFilters();
+  const unsigned int nPFsq = nPF*nPF;
+  std::vector<ParticlePairHistos*>   & pairFolders   = histograms();
+  std::vector<ParticleSingleHistos*> & singleFolders = singleHistograms();
   const std::vector<bool> & acceptedEF = acceptedEventFilters();
-  if (pairHistograms.size()<acceptedEF.size()*nPFsq)
-    throw Exception("histograms_1().size()<nEventFilters()*nParticleFilters()^2",__FUNCTION__);
-  double weight = 1.0;
-  // The pair groups of event filter e are at e*nPF*nPF + p1*nPF + p2. The event filter index must count all the event
-  // filters (it was only incremented for the accepted ones, which shifted the groups when a filter rejected the event).
+  const std::vector<bool> & acceptedPF = acceptedParticleFilters();
+  if (pairFolders.size()<acceptedEF.size()*nPFsq)
+    throw Exception("Fewer pair folders than nEventFilters()*nParticleFilters()^2",__FUNCTION__);
+  if (singleFolders.size()<acceptedEF.size()*nPF)
+    throw Exception("Fewer single folders than nEventFilters()*nParticleFilters()",__FUNCTION__);
+  const double weight = 1.0;
   for (unsigned int iEventFilter=0; iEventFilter<acceptedEF.size(); iEventFilter++)
     {
     if (!acceptedEF[iEventFilter]) continue;
-    for (unsigned int iParticleFilter1=0; iParticleFilter1<nPFs;iParticleFilter1++)
+    for (unsigned int iParticleFilter=0; iParticleFilter<nPF; iParticleFilter++)
       {
-      unsigned int basePair = iEventFilter*nPFsq + iParticleFilter1*nPFs;
-      std::vector<Particle*> & particlesSelected1 = acceptedParticles(iParticleFilter1);
-      for (unsigned int iParticleFilter2=0; iParticleFilter2<nPFs;iParticleFilter2++)
+      if (!acceptedPF[iParticleFilter]) continue;   // as ParticleSingleAnalyzer
+      std::vector<Particle*> & particles = acceptedParticles(iParticleFilter);
+      ParticleSingleHistos & single = *singleFolders[iEventFilter*nPF+iParticleFilter];
+      double energy = 0.0;
+      for (Particle * particle : particles)
         {
-        bool same = iParticleFilter1==iParticleFilter2;
-        std::vector<Particle*> & particlesSelected2 = acceptedParticles(iParticleFilter2);
-        ParticlePairHistos * histosPair = pairHistograms[basePair+iParticleFilter2];
-        if (!histosPair) throw Exception("!histosPair",__FUNCTION__);
-        int n1 = particlesSelected1.size();
-        int n2 = particlesSelected2.size();
-        for (int i1=0; i1<n1; i1++)
-          {
-          Particle & particle1 = *(particlesSelected1[i1]);
-          for (int i2=0; i2<n2; i2++)
-            {
-            if (!same || i1!=i2)
-              {
-              Particle & particle2 = *(particlesSelected2[i2]);
-              histosPair->fill(particle1,particle2,weight);
-              }
-            }
-          }
-        if (same)
-          histosPair->fillMultiplicity(double(n1*(n1-1)));
-        else
-          histosPair->fillMultiplicity(double(n1*n2));
+        energy += particle->momentum().t();
+        single.fill(*particle,weight);
+        }
+      single.fillMultiplicity(double(particles.size()),energy,1.0);
+      }
+    for (unsigned int iParticleFilter1=0; iParticleFilter1<nPF; iParticleFilter1++)
+      {
+      std::vector<Particle*> & list1 = acceptedParticles(iParticleFilter1);
+      const unsigned int n1 = list1.size();
+      for (unsigned int iParticleFilter2=0; iParticleFilter2<nPF; iParticleFilter2++)
+        {
+        std::vector<Particle*> & list2 = acceptedParticles(iParticleFilter2);
+        const unsigned int n2 = list2.size();
+        const bool same = iParticleFilter1==iParticleFilter2;
+        ParticlePairHistos & pair = *pairFolders[iEventFilter*nPFsq + iParticleFilter1*nPF + iParticleFilter2];
+        for (unsigned int i1=0; i1<n1; i1++)
+          for (unsigned int i2=0; i2<n2; i2++)
+            if (!same || i1!=i2) pair.fill(*list1[i1],*list2[i2],weight);
+        pair.fillMultiplicity(same ? double(n1)*double(n1>0 ? n1-1 : 0) : double(n1)*double(n2));
         }
       }
     }
+}
+
+void ParticlePairAnalyzer::finalize()
+{
+  // before EventProcessor::finalize(), which clears the counts of accepted events
+  const auto & folderList = _managedHistograms;
+  if (folderList.create() && !folderList.imports()) EventProcessor::scaleHistograms();
+  EventProcessorHistos<ParticlePairHistos,2,ParticleSingleHistos>::finalize();
 }
 
 } // namespace CAP

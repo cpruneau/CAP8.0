@@ -8,6 +8,7 @@
  *
  * *********************************************************************/
 #include "NuDynAnalyzer.hpp"
+#include "Exceptions.hpp"
 #include "NuDynHistos.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
@@ -18,7 +19,7 @@ namespace CAP
 
 NuDynAnalyzer::NuDynAnalyzer()
 :
-EventProcessorSingle<NuDynHistos,NuDynDerivedHistos>()
+EventProcessorHistos<NuDynHistos,2>()
 {
   appendClassName("NuDynAnalyzer");
   setMinimumReportLevel(Object::kInfo);
@@ -28,14 +29,14 @@ EventProcessorSingle<NuDynHistos,NuDynDerivedHistos>()
 
 NuDynAnalyzer::NuDynAnalyzer(const NuDynAnalyzer & source)
 :
-EventProcessorSingle<NuDynHistos,NuDynDerivedHistos>(source)
+EventProcessorHistos<NuDynHistos,2>(source)
 {   }
 
 NuDynAnalyzer & NuDynAnalyzer::operator=(const NuDynAnalyzer & rhs)
 {
   if (this!=&rhs)
     {
-    EventProcessorSingle<NuDynHistos,NuDynDerivedHistos>::operator=(rhs);
+    EventProcessorHistos<NuDynHistos,2>::operator=(rhs);
     }
   return *this;
 }
@@ -43,13 +44,8 @@ NuDynAnalyzer & NuDynAnalyzer::operator=(const NuDynAnalyzer & rhs)
 void NuDynAnalyzer::setDefaultConfiguration()
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  EventProcessorSingle<NuDynHistos,NuDynDerivedHistos>::setDefaultConfiguration();
-  const String & taskName = name();
-  String objectType = "HISTOGRAM";
-  _configuration.addProperty(createKey(taskName,objectType,"evtName"), String("Mult0"));
-  _configuration.addProperty(createKey(taskName,objectType,"evt_nbins"),200);
-  _configuration.addProperty(createKey(taskName,objectType,"evt_min"),0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"evt_max"),200.0);
+  EventProcessorHistos<NuDynHistos,2>::setDefaultConfiguration();
+  NuDynHistos::addDefaultConfiguration(_configuration,name());
 }
 
 void NuDynAnalyzer::execute()
@@ -64,7 +60,8 @@ void NuDynAnalyzer::execute()
   unsigned int npf = nParticleFilters();
   unsigned int eventFilterBaseIndex;
   unsigned int particleFilterBaseIndex;
-  std::vector<NuDynHistos*> & histograms = histograms_1();
+  std::vector<NuDynHistos*> & folders = histograms();
+  if (folders.size()<nCombinations()) throw Exception("Fewer histogram folders than combinations of filters",__FUNCTION__);
 
   for (unsigned int iEventFilter=0; iEventFilter<nef;iEventFilter++)
     {
@@ -83,7 +80,7 @@ void NuDynAnalyzer::execute()
         double n1_2 = moments2[0];
         double n2_12 = n1_1*n1_2;
         double n2_22 = n1_2*(n1_2-1);
-        histograms[particleFilterBaseIndex+iParticleFilter2]->fill(mult,n1_1,n1_2,n2_11,n2_12,n2_22);
+        folders[particleFilterBaseIndex+iParticleFilter2]->fill(mult,n1_1,n1_2,n2_11,n2_12,n2_22);
         }
       }
     }

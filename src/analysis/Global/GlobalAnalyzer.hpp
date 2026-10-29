@@ -9,9 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__GlobalAnalyzer
 #define CAP__GlobalAnalyzer
-#include "EventProcessorSingle.hpp"
+#include "EventProcessorHistos.hpp"
 #include "GlobalHistos.hpp"
-#include "GlobalDerivedHistos.hpp"
 
 namespace CAP
 {
@@ -33,9 +32,12 @@ namespace CAP
 //! This means that an instance of this class can be used to analyze the multiplicity (energy, etc) of events with or without filling corresponding histograms. It is
 //! then possible to set the event property record only (base on event filter index 0), fill histograms only, or both set the record and fill histograms.
 //!
+//! The histograms (one folder per event filter and particle filter, GlobalHistos) hold event-wise distributions and
+//! profiles; they are not scaled. The derived histograms are computed in a later job by GlobalDerivedCalculator.
+//!
 class GlobalAnalyzer
 :
-public EventProcessorSingle<GlobalHistos,GlobalDerivedHistos>
+public EventProcessorHistos<GlobalHistos,1>
 {
 public:
 
@@ -47,10 +49,11 @@ public:
   GlobalAnalyzer & operator=(const GlobalAnalyzer & analyzer);
   //! @brief Destructor.
   virtual ~GlobalAnalyzer() {}
-  //! @brief Add the default configuration: that of EventProcessorSingle and the histogram binning.
-  virtual void setDefaultConfiguration();
-  //! @brief Compute the global quantities of the current event, store them in the event record and fill the histograms.
-  virtual void execute();
+  //! @brief Add the default configuration: that of EventProcessorHistos and the histogram binning.
+  virtual void setDefaultConfiguration() override;
+  //! @brief Compute the global quantities of the current event, store them in the event record and fill the histograms
+  //! (if the task has histograms).
+  virtual void execute() override;
 
 };
 

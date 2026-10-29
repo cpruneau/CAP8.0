@@ -10,6 +10,7 @@
 #ifndef CAP__ParticlePair3DHistos
 #define CAP__ParticlePair3DHistos
 #include "HistogramFolder.hpp"
+#include "ParticleSingleHistos.hpp"
 #include "Particle.hpp"
 #include "ParticleDigit.hpp"
 
@@ -26,7 +27,6 @@ class ParticlePair3DHistos : public HistogramFolder
 {
 public:
 
-  friend class ParticlePair3DDerivedHistos;
 
   //! @brief Default constructor.
   ParticlePair3DHistos();
@@ -36,7 +36,15 @@ public:
   ParticlePair3DHistos & operator=(const ParticlePair3DHistos & group);
   //! @brief Destructor.
   virtual ~ParticlePair3DHistos() {}
-  //! @brief Read the binning (n2, Qinv, DeltaPs, DeltaPo, DeltaPl, pt, rapidity). @param taskName name of the task
+  //!
+  //! @brief Add the default settings (keys \<taskName\>:HISTOGRAM:...) to a configuration: those of the
+  //! single-particle histograms (ParticleSingleHistos::addDefaultConfiguration(), with rapidity_fill and FillPtvsY on),
+  //! the binning of the pairs (n2, Qinv, DeltaPs, DeltaPo, DeltaPl) and nMcSimEvents (number of Monte Carlo events of
+  //! the n1n1 calculation): those of every task working on these histograms (ParticlePair3DAnalyzer,
+  //! ParticlePair3DDerivedCalculator). @param configuration configuration @param taskName name of the task
+  //!
+  static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
+  //! @brief Read the binning (n2, Qinv, DeltaPs, DeltaPo, DeltaPl, pt, rapidity) and nMcSimEvents. @param taskName name of the task
   //! @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
                                const String & objectType,
@@ -44,8 +52,28 @@ public:
                                unsigned int index);
   //! @brief Create the histograms.
   virtual void create();
-  //! @brief Load the histograms from a file. @param inputFile file
+  //! @brief Load the base histograms from a folder of a file, and the derived histograms if the folder has them.
+  //! @param inputFile folder
   virtual void loadFrom(const Folder & inputFile);
+  //! @brief Create the derived histograms, empty; see calculateDerived().
+  virtual void createDerived();
+  //! @brief Whether the derived histograms exist (created or loaded). @return true if they do
+  bool hasDerived() const { return h_n1n1_Qinv!=nullptr; }
+  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  virtual void loadDerivedFrom(const Folder & inputFile);
+  //!
+  //! @brief Compute the derived histograms (n1n1 by Monte Carlo folding of the (y, pT) densities of the two particles,
+  //! C2, R2, associated yields, projections) from the pair histograms of this folder and the single-particle histograms
+  //! of the two particle filters (createDerived() first). The histograms must hold per-event quantities.
+  //! @param part1Histos single-particle histograms of particle filter 1 @param part2Histos same for particle filter 2
+  //! @param same whether the two particle filters are the same
+  //! @throws Exception if the derived histograms were not created or the single-particle histograms have no (y, pT)
+  //! histogram
+  //!
+  virtual void calculateDerived(const ParticleSingleHistos & part1Histos, const ParticleSingleHistos & part2Histos, bool same);
+  //! @brief Set the masses of the two particles (Qinv of the Monte Carlo pairs). @param m1 mass of particle 1
+  //! @param m2 mass of particle 2
+  virtual void setMasses(double m1, double m2);
   //! @brief Fill the histograms with a pair: compute Qinv and (q_side, q_out, q_long).
   //! @param particle1 first particle @param particle2 second particle @param weight weight
   virtual void fill(Particle & particle1, Particle & particle2, double weight);
@@ -53,8 +81,6 @@ public:
   virtual void fillMultiplicity(double nPairs, double weigh=1.0);
   //! @brief Copy the content of another group. @param source group to copy
   virtual void cloneB(const ParticlePair3DHistos & source);
-  friend class ParticlePair3DDerivedHistos;
-  friend class ParticlePair3DBFHistos;
 
 protected:
 
@@ -83,6 +109,77 @@ protected:
   Histogram * h_n2;  ///< number of pairs per event
   Histogram * h_n2_Qinv;  ///< pair density vs Qinv
   Histogram * h_n2_DeltaP;  ///< pair density vs (q_side, q_out, q_long)
+
+
+public:
+
+  // Derived histograms (createDerived(), calculateDerived(); computed by ParticlePair3DDerivedCalculator)
+  Histogram * h_n1n1_Qinv;  ///< product of the single-particle densities vs Qinv
+  Histogram * h_n1n1_DeltaP;  ///< product of the single-particle densities vs (q_side, q_out, q_long)
+  Histogram * h_n1n1_DeltaPs;  ///< product of the single-particle densities vs q_side
+  Histogram * h_n1n1_DeltaPo;  ///< product of the single-particle densities vs q_out
+  Histogram * h_n1n1_DeltaPl;  ///< product of the single-particle densities vs q_long
+
+  Histogram * h_n2_DeltaPs;  ///< pair density vs q_side
+  Histogram * h_n2_DeltaPo;  ///< pair density vs q_out
+  Histogram * h_n2_DeltaPl;  ///< pair density vs q_long
+
+  
+  Histogram * h_c2_Qinv;  ///< cumulant C2 = n2 - n1n1 vs Qinv
+  Histogram * h_c2_DeltaP;  ///< cumulant C2 = n2 - n1n1 vs (q_side, q_out, q_long)
+  Histogram * h_c2_DeltaPs;  ///< cumulant C2 = n2 - n1n1 vs q_side
+  Histogram * h_c2_DeltaPo;  ///< cumulant C2 = n2 - n1n1 vs q_out
+  Histogram * h_c2_DeltaPl;  ///< cumulant C2 = n2 - n1n1 vs q_long
+
+  
+  Histogram * h_r2_Qinv;  ///< normalized cumulant R2 = n2/n1n1 - 1 vs Qinv
+  Histogram * h_r2_DeltaP;  ///< normalized cumulant R2 = n2/n1n1 - 1 vs (q_side, q_out, q_long)
+  Histogram * h_r2_DeltaPs;  ///< normalized cumulant R2 = n2/n1n1 - 1 vs q_side
+  Histogram * h_r2_DeltaPo;  ///< normalized cumulant R2 = n2/n1n1 - 1 vs q_out
+  Histogram * h_r2_DeltaPl;  ///< normalized cumulant R2 = n2/n1n1 - 1 vs q_long
+
+  Histogram * h_a12_Qinv;  ///< associated yield A(1|2) vs Qinv
+  Histogram * h_a12_DeltaPs;  ///< associated yield A(1|2) vs q_side
+  Histogram * h_a12_DeltaPo;  ///< associated yield A(1|2) vs q_out
+  Histogram * h_a12_DeltaPl;  ///< associated yield A(1|2) vs q_long
+
+  Histogram * h_a21_Qinv;  ///< associated yield A(2|1) vs Qinv
+  Histogram * h_a21_DeltaPs;  ///< associated yield A(2|1) vs q_side
+  Histogram * h_a21_DeltaPo;  ///< associated yield A(2|1) vs q_out
+  Histogram * h_a21_DeltaPl;  ///< associated yield A(2|1) vs q_long
+
+  Histogram * h_n1_1_pt;  ///< pT density of particle 1
+  Histogram * h_n1_2_pt;  ///< pT density of particle 2
+  Histogram * h_n1_1_y;  ///< rapidity density of particle 1
+  Histogram * h_n1_2_y;  ///< rapidity density of particle 2
+
+  Histogram * h_n1_1_pt_mc;  ///< density of particle 1 vs pT, Monte Carlo correction
+  Histogram * h_n1_2_pt_mc;  ///< density of particle 2 vs pT, Monte Carlo correction
+  Histogram * h_n1_1_y_mc;  ///< density of particle 1 vs y, Monte Carlo correction
+  Histogram * h_n1_2_y_mc;  ///< density of particle 2 vs y, Monte Carlo correction
+
+  Histogram * h_n1r_1_pt_mc;  ///< reweighted density of particle 1 vs pT, Monte Carlo correction
+  Histogram * h_n1r_2_pt_mc;  ///< reweighted density of particle 2 vs pT, Monte Carlo correction
+  Histogram * h_n1r_1_y_mc;  ///< reweighted density of particle 1 vs y, Monte Carlo correction
+  Histogram * h_n1r_2_y_mc;  ///< reweighted density of particle 2 vs y, Monte Carlo correction
+
+  Histogram * h_n1_1_ptY_mc;  ///< density of particle 1 vs (y, pT), Monte Carlo correction
+  Histogram * h_n1_2_ptY_mc;  ///< density of particle 2 vs (y, pT), Monte Carlo correction
+  Histogram * h_n1r_1_ptY_mc;  ///< reweighted density of particle 1 vs (y, pT), Monte Carlo correction
+  Histogram * h_n1r_2_ptY_mc;  ///< reweighted density of particle 2 vs (y, pT), Monte Carlo correction
+
+  //! Mass of particle 1.
+  double mass1;
+  //! Mass of particle 2.
+  double mass2;
+
+protected:
+
+  //! Number of Monte Carlo events of the n1n1 calculation (key \<taskName\>:HISTOGRAM:nMcSimEvents).
+  long nMcSimEvents;
+  //! @brief Project a rank 3 histogram onto an axis into the histogram of this group named targetName.
+  //! @param source rank 3 histogram @param axis axis kept (0, 1 or 2) @param targetName name of the target histogram
+  void projectInto(const Histogram * source, unsigned int axis, const String & targetName);
 
 };
 

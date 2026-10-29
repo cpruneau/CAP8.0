@@ -52,7 +52,18 @@ namespace CAP
   h_n1_phiY(nullptr),
   h_spt_phiY(nullptr),
   h_n1_ptY(nullptr),
-  h_pdgId(nullptr)
+  h_pdgId(nullptr),
+  h_n1_phi(nullptr),
+  h_n1_eta(nullptr),
+  h_n1_y(nullptr),
+  h_spt_phi(nullptr),
+  h_spt_eta(nullptr),
+  h_spt_y(nullptr),
+  h_avg_pt_phi(nullptr),
+  h_avg_pt_eta(nullptr),
+  h_avg_pt_phiEta(nullptr),
+  h_avg_pt_y(nullptr),
+  h_avg_pt_phiY(nullptr)
   {
   appendClassName("ParticleSingleHistos");
   setName("ParticleSingleHistos");
@@ -91,7 +102,18 @@ namespace CAP
   h_n1_phiY(nullptr),
   h_spt_phiY(nullptr),
   h_n1_ptY(nullptr),
-  h_pdgId(nullptr)
+  h_pdgId(nullptr),
+  h_n1_phi(nullptr),
+  h_n1_eta(nullptr),
+  h_n1_y(nullptr),
+  h_spt_phi(nullptr),
+  h_spt_eta(nullptr),
+  h_spt_y(nullptr),
+  h_avg_pt_phi(nullptr),
+  h_avg_pt_eta(nullptr),
+  h_avg_pt_phiEta(nullptr),
+  h_avg_pt_y(nullptr),
+  h_avg_pt_phiY(nullptr)
   {
   cloneB(source );
   }
@@ -139,7 +161,50 @@ namespace CAP
   h_spt_phiY   = histogramLike(source.h_spt_phiY);
   h_n1_ptY     = histogramLike(source.h_n1_ptY);
   h_pdgId      = histogramLike(source.h_pdgId);
+  h_n1_phi        = histogramLike(source.h_n1_phi);
+  h_n1_eta        = histogramLike(source.h_n1_eta);
+  h_n1_y          = histogramLike(source.h_n1_y);
+  h_spt_phi       = histogramLike(source.h_spt_phi);
+  h_spt_eta       = histogramLike(source.h_spt_eta);
+  h_spt_y         = histogramLike(source.h_spt_y);
+  h_avg_pt_phi    = histogramLike(source.h_avg_pt_phi);
+  h_avg_pt_eta    = histogramLike(source.h_avg_pt_eta);
+  h_avg_pt_phiEta = histogramLike(source.h_avg_pt_phiEta);
+  h_avg_pt_y      = histogramLike(source.h_avg_pt_y);
+  h_avg_pt_phiY   = histogramLike(source.h_avg_pt_phiY);
   if (reportEnd(__FUNCTION__)) { printCR(); }
+  }
+
+  void ParticleSingleHistos::addDefaultConfiguration(Configuration & configuration, const String & taskName)
+  {
+  const String type = "HISTOGRAM";
+  configuration.addProperty(createKey(taskName,type,"n1_nbins"),       100);
+  configuration.addProperty(createKey(taskName,type,"n1_min"),         0.0);
+  configuration.addProperty(createKey(taskName,type,"n1_max"),       100.0);
+  configuration.addProperty(createKey(taskName,type,"etot_nbins"),     100);
+  configuration.addProperty(createKey(taskName,type,"etot_min"),       0.0);
+  configuration.addProperty(createKey(taskName,type,"etot_max"),     100.0);
+  configuration.addProperty(createKey(taskName,type,"pt_nbins"),       100);
+  configuration.addProperty(createKey(taskName,type,"pt_min"),         0.0);
+  configuration.addProperty(createKey(taskName,type,"pt_max"),       100.0);
+  configuration.addProperty(createKey(taskName,type,"eta_nbins"),       20);
+  configuration.addProperty(createKey(taskName,type,"eta_min"),       -1.0);
+  configuration.addProperty(createKey(taskName,type,"eta_max"),        1.0);
+  configuration.addProperty(createKey(taskName,type,"rapidity_nbins"),  20);
+  configuration.addProperty(createKey(taskName,type,"rapidity_min"),  -1.0);
+  configuration.addProperty(createKey(taskName,type,"rapidity_max"),   1.0);
+  configuration.addProperty(createKey(taskName,type,"phi_nbins"),       36);
+  configuration.addProperty(createKey(taskName,type,"phi_min"),        0.0);
+  configuration.addProperty(createKey(taskName,type,"phi_max"),        CAP::MATH::twoPi());
+  configuration.addProperty(createKey(taskName,type,"phiEta_nbins"),   720);
+  configuration.addProperty(createKey(taskName,type,"phiEtaPt_nbins"), 7200);
+  configuration.addProperty(createKey(taskName,type,"phiY_nbins"),     720);
+  configuration.addProperty(createKey(taskName,type,"phiYPt_nbins"),   7200);
+  configuration.addProperty(createKey(taskName,type,"eta_fill"),       true);
+  configuration.addProperty(createKey(taskName,type,"rapidity_fill"),  false);
+  configuration.addProperty(createKey(taskName,type,"p2_fill"),        false);
+  configuration.addProperty(createKey(taskName,type,"FillPtvsY"),      false);
+  configuration.addProperty(createKey(taskName,type,"FillPid"),        false);
   }
 
   void ParticleSingleHistos::configure(const String & taskName,
@@ -268,6 +333,112 @@ namespace CAP
 
   if (pid_fill)
     h_pdgId  = importHistogram(inputFile,  createName(_histogramBaseName,"n1_indexId"));
+  // derived histograms: present once ParticleSingleDerivedCalculator has run
+  if (inputFile.contains(createName(_histogramBaseName,"n1_phi"))) loadDerivedFrom(inputFile);
+  }
+
+  void ParticleSingleHistos::loadDerivedFrom(const Folder & inputFile)
+  {
+  if (reportDebug(__FUNCTION__)) { printCR();}
+  h_n1_phi = importHistogram(inputFile, createName(_histogramBaseName,"n1_phi"));
+  if (p2_fill)
+    {
+    h_spt_phi    = importHistogram(inputFile, createName(_histogramBaseName,"sum_pt_phi"));
+    h_avg_pt_phi = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_phi"));
+    }
+  if (eta_fill)
+    {
+    h_n1_eta = importHistogram(inputFile, createName(_histogramBaseName,"n1_eta"));
+    if (p2_fill)
+      {
+      h_spt_eta       = importHistogram(inputFile, createName(_histogramBaseName,"sum_pt_eta"));
+      h_avg_pt_eta    = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_eta"));
+      h_avg_pt_phiEta = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_phiEta"));
+      }
+    }
+  if (rapidity_fill)
+    {
+    h_n1_y = importHistogram(inputFile, createName(_histogramBaseName,"n1_y"));
+    if (p2_fill)
+      {
+      h_spt_y       = importHistogram(inputFile, createName(_histogramBaseName,"sum_pt_y"));
+      h_avg_pt_y    = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_y"));
+      h_avg_pt_phiY = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_phiY"));
+      }
+    }
+  }
+
+  void ParticleSingleHistos::createDerived()
+  {
+  if (reportDebug(__FUNCTION__)) { printCR();}
+  h_n1_phi = createHistogram(createName(_histogramBaseName,"n1_phi"), phi_nbins, phi_min, phi_max, "#varphi","#rho_{1}(#varphi)");
+  if (p2_fill)
+    {
+    h_spt_phi    = createHistogram(createName(_histogramBaseName,"sum_pt_phi"), phi_nbins, phi_min, phi_max, "#varphi","#sum p_{T}");
+    h_avg_pt_phi = createHistogram(createName(_histogramBaseName,"avg_pt_phi"), phi_nbins, phi_min, phi_max, "#varphi","<p_{T}>");
+    }
+  if (eta_fill)
+    {
+    h_n1_eta = createHistogram(createName(_histogramBaseName,"n1_eta"), eta_nbins, eta_min, eta_max, "#eta", "#rho_{1}(#eta)");
+    if (p2_fill)
+      {
+      h_spt_eta       = createHistogram(createName(_histogramBaseName,"sum_pt_eta"),    eta_nbins, eta_min, eta_max, "#eta", "#sum p_{T}");
+      h_avg_pt_eta    = createHistogram(createName(_histogramBaseName,"avg_pt_eta"),    eta_nbins, eta_min, eta_max, "#eta", "<p_{T}>");
+      h_avg_pt_phiEta = createHistogram(createName(_histogramBaseName,"avg_pt_phiEta"), eta_nbins, eta_min, eta_max, phi_nbins, phi_min, phi_max, "#eta", "#varphi", "<p_{T}>");
+      }
+    }
+  if (rapidity_fill)
+    {
+    h_n1_y = createHistogram(createName(_histogramBaseName,"n1_y"), rapidity_nbins, rapidity_minimum, rapidity_maximum, "y", "#rho_{1}(y)");
+    if (p2_fill)
+      {
+      h_spt_y       = createHistogram(createName(_histogramBaseName,"sum_pt_y"),    rapidity_nbins, rapidity_minimum, rapidity_maximum, "y", "#sum p_{T}");
+      h_avg_pt_y    = createHistogram(createName(_histogramBaseName,"avg_pt_y"),    rapidity_nbins, rapidity_minimum, rapidity_maximum, "y", "<p_{T}>");
+      h_avg_pt_phiY = createHistogram(createName(_histogramBaseName,"avg_pt_phiY"), rapidity_nbins, rapidity_minimum, rapidity_maximum, phi_nbins, phi_min, phi_max, "y", "#varphi", "<p_{T}>");
+      }
+    }
+  }
+
+  //!
+  //! Projections of the (eta, phi) and (y, phi) densities and pT sums, and pT averages. The phi projections are taken
+  //! from the (y, phi) histograms when both are filled (as before). The derived histograms are recomputed from scratch,
+  //! so calling this function twice gives the same result.
+  //!
+  void ParticleSingleHistos::calculateDerived()
+  {
+  if (reportDebug(__FUNCTION__)) { printCR(); }
+  if (!h_n1_phi) throw Exception("The derived histograms were not created (createDerived())",__FUNCTION__);
+  auto projectOnto = [](const Histogram * source, unsigned int axis, Histogram * target)
+    {
+    target->reset();
+    target->add(source->project2DOnto1D(axis));
+    };
+  if (eta_fill && h_n1_phiEta)
+    {
+    projectOnto(h_n1_phiEta,1,h_n1_phi);
+    projectOnto(h_n1_phiEta,0,h_n1_eta);
+    if (p2_fill && h_spt_phiEta)
+      {
+      projectOnto(h_spt_phiEta,1,h_spt_phi);
+      projectOnto(h_spt_phiEta,0,h_spt_eta);
+      calculateInclusiveAvg(h_spt_phi,h_n1_phi,h_avg_pt_phi);
+      calculateInclusiveAvg(h_spt_eta,h_n1_eta,h_avg_pt_eta);
+      calculateInclusiveAvgH2(h_spt_phiEta,h_n1_phiEta,h_avg_pt_phiEta);
+      }
+    }
+  if (rapidity_fill && h_n1_phiY)
+    {
+    projectOnto(h_n1_phiY,1,h_n1_phi);
+    projectOnto(h_n1_phiY,0,h_n1_y);
+    if (p2_fill && h_spt_phiY)
+      {
+      projectOnto(h_spt_phiY,1,h_spt_phi);
+      projectOnto(h_spt_phiY,0,h_spt_y);
+      calculateInclusiveAvg(h_spt_phi,h_n1_phi,h_avg_pt_phi);
+      calculateInclusiveAvg(h_spt_y,h_n1_y,h_avg_pt_y);
+      calculateInclusiveAvgH2(h_spt_phiY,h_n1_phiY,h_avg_pt_phiY);
+      }
+    }
   }
 
   //!

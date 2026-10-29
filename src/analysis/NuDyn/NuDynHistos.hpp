@@ -41,7 +41,6 @@ namespace CAP
 
 
 
-class NuDynDerivedHistos;
 
 class NuDynHistos : public HistogramFolder
 {
@@ -56,6 +55,12 @@ public:
   //! @brief Destructor.
   virtual ~NuDynHistos(){ }
 
+  //!
+  //! @brief Add the default event variable and binning (keys \<taskName\>:HISTOGRAM:evtName, evt_nbins, evt_min,
+  //! evt_max) to a configuration: that of every task working on these histograms (NuDynAnalyzer,
+  //! NuDynDerivedCalculator). @param configuration configuration @param taskName name of the task
+  //!
+  static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
   //! @brief Read the event variable name and binning (\<taskName\>:\<objectType\>:evtName, evt_nbins, evt_min, evt_max).
   //! @param taskName name of the task @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
@@ -66,13 +71,21 @@ public:
   virtual void create();
   //! @brief Load the histograms from a file. @param inputFile file
   virtual void loadFrom(const Folder & inputFile);
+  //! @brief Create the derived histograms, empty; see calculateDerived().
+  virtual void createDerived();
+  //! @brief Whether the derived histograms exist (created or loaded). @return true if they do
+  bool hasDerived() const { return h_F2_11_evt!=nullptr; }
+  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  virtual void loadDerivedFrom(const Folder & inputFile);
+  //! @brief Compute the derived histograms from the base histograms (createDerived() first).
+  //! @throws Exception if the derived histograms were not created
+  virtual void calculateDerived();
   //! @brief Fill the moments of an event. @param mult event variable @param n1_1 multiplicity of selection 1
   //! @param n1_2 multiplicity of selection 2 @param n2_11 n1(n1-1) @param n2_12 n1 n2 @param n2_22 n2(n2-1)
   virtual void fill(double mult, double n1_1, double n1_2, double n2_11, double n2_12, double n2_22);
   //! @brief Scale the histograms. @param factor factor
   virtual void scaleObject(double factor);
 
-  friend NuDynDerivedHistos;
 
 protected:
 
@@ -99,6 +112,23 @@ protected:
   double evt_min;  ///< lower edge of the event variable axis
   double evt_max;  ///< upper edge of the event variable axis
 
+
+
+  // Derived histograms (createDerived(), calculateDerived(); computed by NuDynDerivedCalculator)
+  //! Factorial cumulant F2 of selection 1 vs event variable.
+  Histogram * h_F2_11_evt;
+  //! Factorial cumulant F2 of selections 1 and 2 vs event variable.
+  Histogram * h_F2_12_evt;
+  //! Factorial cumulant F2 of selection 2 vs event variable.
+  Histogram * h_F2_22_evt;
+  //! R2 of selection 1 vs event variable.
+  Histogram * h_R2_11_evt;
+  //! R2 of selections 1 and 2 vs event variable.
+  Histogram * h_R2_12_evt;
+  //! R2 of selection 2 vs event variable.
+  Histogram * h_R2_22_evt;
+  //! nu_dyn vs event variable.
+  Histogram * h_nudyn_evt;
 
 };
 

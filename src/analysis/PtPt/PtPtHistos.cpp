@@ -8,6 +8,8 @@
  *
  * *********************************************************************/
 #include "PtPtHistos.hpp"
+#include "Exceptions.hpp"
+#include "Configuration.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
@@ -41,7 +43,21 @@ namespace CAP
   evtName("MULT"),
   evt_nbins(100),
   evt_min(0.0),
-  evt_max(100.0)
+  evt_max(100.0),
+  h_F1_evt(nullptr),
+  h_F2_evt(nullptr),
+  h_F3_evt(nullptr),
+  h_F4_evt(nullptr),
+  h_R2_evt(nullptr),
+  h_R3_evt(nullptr),
+  h_R4_evt(nullptr),
+  h_q1_evt(nullptr),
+  h_q1q1_evt(nullptr),
+  h_q1q1q1_evt(nullptr),
+  h_q1q1q1q1_evt(nullptr),
+  h_dq1dq1_evt(nullptr),
+  h_dq1dq1dq1_evt(nullptr),
+  h_dq1dq1dq1dq1_evt(nullptr)
   {
   appendClassName("PtPtHistos");
   setName("PtPtHistos");
@@ -70,7 +86,21 @@ namespace CAP
   evtName(source.evtName),
   evt_nbins(source.evt_nbins),
   evt_min(source.evt_min),
-  evt_max(source.evt_max)
+  evt_max(source.evt_max),
+  h_F1_evt(nullptr),
+  h_F2_evt(nullptr),
+  h_F3_evt(nullptr),
+  h_F4_evt(nullptr),
+  h_R2_evt(nullptr),
+  h_R3_evt(nullptr),
+  h_R4_evt(nullptr),
+  h_q1_evt(nullptr),
+  h_q1q1_evt(nullptr),
+  h_q1q1q1_evt(nullptr),
+  h_q1q1q1q1_evt(nullptr),
+  h_dq1dq1_evt(nullptr),
+  h_dq1dq1dq1_evt(nullptr),
+  h_dq1dq1dq1dq1_evt(nullptr)
   {
   cloneB(source);
   }
@@ -104,7 +134,30 @@ namespace CAP
   h_Q3_evt       = histogramLike(source.h_Q3_evt);
   h_Q3Q1_evt     = histogramLike(source.h_Q3Q1_evt);
   h_Q4_evt       = histogramLike(source.h_Q4_evt);
+  h_F1_evt = histogramLike(source.h_F1_evt);
+  h_F2_evt = histogramLike(source.h_F2_evt);
+  h_F3_evt = histogramLike(source.h_F3_evt);
+  h_F4_evt = histogramLike(source.h_F4_evt);
+  h_R2_evt = histogramLike(source.h_R2_evt);
+  h_R3_evt = histogramLike(source.h_R3_evt);
+  h_R4_evt = histogramLike(source.h_R4_evt);
+  h_q1_evt = histogramLike(source.h_q1_evt);
+  h_q1q1_evt = histogramLike(source.h_q1q1_evt);
+  h_q1q1q1_evt = histogramLike(source.h_q1q1q1_evt);
+  h_q1q1q1q1_evt = histogramLike(source.h_q1q1q1q1_evt);
+  h_dq1dq1_evt = histogramLike(source.h_dq1dq1_evt);
+  h_dq1dq1dq1_evt = histogramLike(source.h_dq1dq1dq1_evt);
+  h_dq1dq1dq1dq1_evt = histogramLike(source.h_dq1dq1dq1dq1_evt);
   }
+  void PtPtHistos::addDefaultConfiguration(Configuration & configuration, const String & taskName)
+  {
+  const String type = "HISTOGRAM";
+  configuration.addProperty(createKey(taskName,type,"evtName"),       String("ALL"));
+  configuration.addProperty(createKey(taskName,type,"evt_nbins"),     200);
+  configuration.addProperty(createKey(taskName,type,"evt_min"),       0.0);
+  configuration.addProperty(createKey(taskName,type,"evt_max"),       200.0);
+  }
+
 
   void PtPtHistos::configure(const String & taskName,
                              const String & type,
@@ -169,6 +222,8 @@ namespace CAP
   h_Q3_evt = importProfile(inputFile,createName(_histogramBaseName,"Q3"));
   h_Q3Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q3Q1"));
   h_Q4_evt = importProfile(inputFile,createName(_histogramBaseName,"Q4"));
+  // derived histograms: present once PtPtDerivedCalculator has run
+  if (inputFile.contains(createName(_histogramBaseName,"F1"))) loadDerivedFrom(inputFile);
   }
 
   /// Implement Eqs. D4 - D7
@@ -215,6 +270,60 @@ namespace CAP
   //    h_Q3Q1_evt[i1]->fill(mult,Q3Q1);
   //    h_Q4_evt[i1]->fill(mult,Q4);
   //    }
+
+
+  void PtPtHistos::createDerived()
+  {
+  if (reportStart(__FUNCTION__)) { printCR(); }
+  String xTitle = "EvtClass";
+  h_F1_evt = createHistogram(createName(_histogramBaseName,"F1"),evt_nbins,evt_min,evt_max,xTitle,"F_{1}");
+  h_F2_evt = createHistogram(createName(_histogramBaseName,"F2"),evt_nbins,evt_min,evt_max,xTitle,"F_{2}");
+  h_F3_evt = createHistogram(createName(_histogramBaseName,"F3"),evt_nbins,evt_min,evt_max,xTitle,"F_{3}");
+  h_F4_evt = createHistogram(createName(_histogramBaseName,"F4"),evt_nbins,evt_min,evt_max,xTitle,"F_{4}");
+  h_R2_evt = createHistogram(createName(_histogramBaseName,"R2"),evt_nbins,evt_min,evt_max,xTitle,"R_{2}");
+  h_R3_evt = createHistogram(createName(_histogramBaseName,"R3"),evt_nbins,evt_min,evt_max,xTitle,"R_{3}");
+  h_R4_evt = createHistogram(createName(_histogramBaseName,"R4"),evt_nbins,evt_min,evt_max,xTitle,"R_{4}");
+
+  h_q1_evt =           createHistogram(createName(_histogramBaseName,"q1"),          evt_nbins,evt_min,evt_max,xTitle,"q_{1}");
+  h_q1q1_evt =         createHistogram(createName(_histogramBaseName,"q1q1"),        evt_nbins,evt_min,evt_max,xTitle,"q_{1}q_{1}");
+  h_q1q1q1_evt =       createHistogram(createName(_histogramBaseName,"q1q1q1"),      evt_nbins,evt_min,evt_max,xTitle,"q_{1}q_{1}q_{1}");
+  h_q1q1q1q1_evt =     createHistogram(createName(_histogramBaseName,"q1q1q1q1"),    evt_nbins,evt_min,evt_max,xTitle,"q_{1}q_{1}q_{1}q_{1}");
+  h_dq1dq1_evt =       createHistogram(createName(_histogramBaseName,"dq1dq1"),      evt_nbins,evt_min,evt_max,xTitle,"#Delta q_{1}#Delta q_{1}");
+  h_dq1dq1dq1_evt =    createHistogram(createName(_histogramBaseName,"dq1dq1dq1"),   evt_nbins,evt_min,evt_max,xTitle,"#Delta q_{1}#Delta q_{1}#Delta q_{1}");
+  h_dq1dq1dq1dq1_evt = createHistogram(createName(_histogramBaseName,"dq1dq1dq1dq1"),evt_nbins,evt_min,evt_max,xTitle,"#Delta q_{1}#Delta q_{1}#Delta q_{1}#Delta q_{1}");
+}
+
+  void PtPtHistos::loadDerivedFrom(const Folder & inputFile)
+  {
+  if (reportDebug(__FUNCTION__)) { printCR();}
+  h_F1_evt           = importProfile(inputFile,createName(_histogramBaseName,"F1"));
+  h_F2_evt           = importProfile(inputFile,createName(_histogramBaseName,"F2"));
+  h_F3_evt           = importProfile(inputFile,createName(_histogramBaseName,"F3"));
+  h_F4_evt           = importProfile(inputFile,createName(_histogramBaseName,"F4"));
+  h_q1_evt           = importProfile(inputFile,createName(_histogramBaseName,"q1"));
+  h_q1q1_evt         = importProfile(inputFile,createName(_histogramBaseName,"q1q1"));
+  h_q1q1q1_evt       = importProfile(inputFile,createName(_histogramBaseName,"q1q1q1"));
+  h_q1q1q1q1_evt     = importProfile(inputFile,createName(_histogramBaseName,"q1q1q1q1"));
+  h_dq1dq1_evt       = importProfile(inputFile,createName(_histogramBaseName,"dq1dq1"));
+  h_dq1dq1dq1_evt    = importProfile(inputFile,createName(_histogramBaseName,"dq1dq1dq1"));
+  h_dq1dq1dq1dq1_evt = importProfile(inputFile,createName(_histogramBaseName,"dq1dq1dq1dq1"));
+}
+
+  void PtPtHistos::calculateDerived()
+  {
+  if (!hasDerived()) throw Exception("The derived histograms were not created (createDerived())",__FUNCTION__);
+  calculateF1(h_f1_evt, h_F1_evt);
+  calculateF2R2(h_f1_evt, h_f1_evt,
+                h_f2_evt,h_F2_evt,h_R2_evt);
+  calculateF3R3(h_f1_evt,h_f1_evt,h_f1_evt,
+                h_f2_evt,h_f2_evt,h_f2_evt,
+                h_f3_evt,h_F3_evt,h_R3_evt);
+  calculateF4R4(h_f1_evt,h_f1_evt,h_f1_evt,h_f1_evt,
+                h_f2_evt,h_f2_evt,h_f2_evt,
+                h_f2_evt,h_f2_evt,h_f2_evt,
+                h_f3_evt,h_f3_evt,h_f3_evt,h_f3_evt,
+                h_f4_evt,h_F4_evt,h_R4_evt);
+}
 
 } // namespace CAP
 

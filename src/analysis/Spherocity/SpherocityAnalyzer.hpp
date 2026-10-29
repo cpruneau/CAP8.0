@@ -9,9 +9,8 @@
  * *********************************************************************/
 #ifndef CAP__SpherocityAnalyzer
 #define CAP__SpherocityAnalyzer
-#include "EventProcessorSingle.hpp"
+#include "EventProcessorHistos.hpp"
 #include "SpherocityHistos.hpp"
-#include "SpherocityDerivedHistos.hpp"
 
 namespace CAP
 {
@@ -26,7 +25,7 @@ namespace CAP
 //!
 class SpherocityAnalyzer
 :
-public EventProcessorSingle<SpherocityHistos,SpherocityDerivedHistos>
+public EventProcessorHistos<SpherocityHistos,1>
 {
 public:
   
@@ -39,11 +38,11 @@ public:
   //! @brief Destructor.
   virtual ~SpherocityAnalyzer() {}
   //! @brief Add the default configuration: fill options (S0, S1, S1 vs S0), number of steps, binning.
-  virtual void setDefaultConfiguration();
+  virtual void setDefaultConfiguration() override;
   //! @brief Configure the task. @param configuration configuration
-  virtual void configure(const Configuration & configuration);
+  virtual void configure(const Configuration & configuration) override;
   //! @brief Compute S0 and S1 for each accepted combination and fill the histograms.
-  virtual void execute();
+  virtual void execute() override;
 
 protected:
 

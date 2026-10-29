@@ -10,9 +10,11 @@
 //! @file ParticleSingleTasks.cpp
 //! @brief Task classes of the ParticleSingle library, registered for Task::instantiateTask() (see TaskRegistration.hpp).
 #include "ParticleSingleAnalyzer.hpp"
+#include "ParticleSingleDerivedCalculator.hpp"
 #include "TaskRegistration.hpp"
 
 CAP_REFLECTION(ParticleSingleTasks)
 {
   CAP::registerTask<CAP::ParticleSingleAnalyzer>("CAP::ParticleSingleAnalyzer");
+  CAP::registerTask<CAP::ParticleSingleDerivedCalculator>("CAP::ParticleSingleDerivedCalculator");
 }

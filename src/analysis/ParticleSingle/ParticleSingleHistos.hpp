@@ -17,12 +17,17 @@ namespace CAP
 {
 
 //!
-//! @brief Single-particle histograms of one (event filter, particle filter) combination.
+//! @brief Single-particle histograms of one (event filter, particle filter) combination: the base histograms filled
+//! event by event (ParticleSingleAnalyzer) and the histograms derived from them (ParticleSingleDerivedCalculator), in one
+//! folder.
 //!
-//! Always filled: n1 (multiplicity of accepted particles per event), n1_eTotal (their total energy), n1_pt and
-//! n1_ptXS (1/pT dN/dpT). Optional: n1_phiEta and spt_phiEta (pT-weighted) if eta_fill (spt_ if p2_fill),
+//! Base histograms, always filled: n1 (multiplicity of accepted particles per event), n1_eTotal (their total energy),
+//! n1_pt and n1_ptXS (1/pT dN/dpT). Optional: n1_phiEta and spt_phiEta (pT-weighted) if eta_fill (spt_ if p2_fill),
 //! n1_phiY and spt_phiY if rapidity_fill, n1_ptY if FillPtvsY, n1_indexId (PDG codes) if FillPid.
-//! Histogram names begin with the base name of the group.
+//!
+//! Derived histograms (createDerived(), calculateDerived()): projections n1_phi, n1_eta, n1_y and, if p2_fill, the
+//! pT sums sum_pt_phi, sum_pt_eta, sum_pt_y and the average pT avg_pt_phi, avg_pt_eta, avg_pt_phiEta, avg_pt_y,
+//! avg_pt_phiY. Histogram names begin with the base name of the group.
 //!
 class ParticleSingleHistos : public HistogramFolder
 {
@@ -37,16 +42,32 @@ public:
   virtual ~ParticleSingleHistos(){ }
   //! @brief Copy the content of another group. @param source group to copy
   virtual void cloneB(const ParticleSingleHistos & source);
+  //!
+  //! @brief Add the default binning and fill options (keys \<taskName\>:HISTOGRAM:n1_nbins, ..., eta_fill,
+  //! rapidity_fill, p2_fill, FillPtvsY, FillPid) to a configuration: those of every task working on these histograms
+  //! (ParticleSingleAnalyzer, ParticleSingleDerivedCalculator), so that they read the same settings.
+  //! @param configuration configuration @param taskName name of the task
+  //!
+  static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
   //! @brief Read the binning and fill options from keys \<taskName\>:HISTOGRAM:... (see the class description).
   //! @param taskName name of the task @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
                                const String & objectType,
                                const Configuration & configuration,
                                unsigned int index);
-  //! @brief Create the histograms (according to the fill options).
+  //! @brief Create the base histograms (according to the fill options).
   virtual void create();
-  //! @brief Load the histograms from a file. @param inputFile file
+  //! @brief Create the derived histograms (according to the fill options), empty; see calculateDerived().
+  virtual void createDerived();
+  //! @brief Load the base histograms from a folder of a file, and the derived histograms if the folder has them.
+  //! @param inputFile folder @throws FileException if a base histogram is missing
   virtual void loadFrom(const Folder & inputFile);
+  //! @brief Compute the derived histograms from the base histograms of this group (createDerived() first).
+  //! @throws Exception if the derived histograms were not created
+  virtual void calculateDerived();
+  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  //! @throws FileException if one is missing
+  virtual void loadDerivedFrom(const Folder & inputFile);
   //! @brief Fill the particle histograms. @param particle particle @param weight weight (e.g., inverse efficiency)
   virtual void fill(Particle & particle, double weight);
   //! @brief Fill the event histograms. @param nAccepted number of accepted particles @param totalEnergy their total energy
@@ -111,6 +132,29 @@ public:
   //! Distribution of the PDG codes.
   Histogram * h_pdgId;
 
+  // Derived histograms
+  //! dN/dphi.
+  Histogram * h_n1_phi;
+  //! dN/deta.
+  Histogram * h_n1_eta;
+  //! dN/dy.
+  Histogram * h_n1_y;
+  //! Sum of pT vs phi.
+  Histogram * h_spt_phi;
+  //! Sum of pT vs eta.
+  Histogram * h_spt_eta;
+  //! Sum of pT vs y.
+  Histogram * h_spt_y;
+  //! Average pT vs phi.
+  Histogram * h_avg_pt_phi;
+  //! Average pT vs eta.
+  Histogram * h_avg_pt_eta;
+  //! Average pT vs (eta, phi).
+  Histogram * h_avg_pt_phiEta;
+  //! Average pT vs y.
+  Histogram * h_avg_pt_y;
+  //! Average pT vs (y, phi).
+  Histogram * h_avg_pt_phiY;
 
 };
 

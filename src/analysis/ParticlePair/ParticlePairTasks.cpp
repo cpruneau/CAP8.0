@@ -10,9 +10,11 @@
 //! @file ParticlePairTasks.cpp
 //! @brief Task classes of the ParticlePair library, registered for Task::instantiateTask() (see TaskRegistration.hpp).
 #include "ParticlePairAnalyzer.hpp"
+#include "ParticlePairDerivedCalculator.hpp"
 #include "TaskRegistration.hpp"
 
 CAP_REFLECTION(ParticlePairTasks)
 {
   CAP::registerTask<CAP::ParticlePairAnalyzer>("CAP::ParticlePairAnalyzer");
+  CAP::registerTask<CAP::ParticlePairDerivedCalculator>("CAP::ParticlePairDerivedCalculator");
 }
