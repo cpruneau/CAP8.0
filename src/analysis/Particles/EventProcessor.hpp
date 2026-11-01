@@ -10,7 +10,7 @@
 #ifndef CAP__EventProcessor
 #define CAP__EventProcessor
 #include "TObject.h"
-#include "Task.hpp"
+#include "AnalysisTask.hpp"
 #include "Exceptions.hpp"
 #include "ManagedObjects.hpp"
 #include "Event.hpp"
@@ -32,8 +32,9 @@ namespace CAP
   //! An EventProcessor manages the objects it works with, each kind as a ManagedObjects list configured by keys
   //! \<name\>:\<TYPE\>_\<k\>:... (see setDefaultConfiguration()):
   //! - EVENT: the events (event() is the first one);
-  //! - EVENT_FILTER, PARTICLE_FILTER: event and particle selections; histograms are filled separately for each
-  //!   accepted event filter and each particle filter;
+  //! - EVENT_FILTER, PARTICLE_FILTER: event and particle selections (held by the base class AnalysisTask, which it
+  //!   shares with the calculators of the later phases); histograms are filled separately for each accepted event filter
+  //!   and each particle filter;
   //! - EVENT_EFFICIENCY, PARTICLE_EFFICIENCY, EVENT_SMEARER, PARTICLE_SMEARER: detector simulation;
   //! - PARTICLE_DB: particle databases (db() is the first one).
   //!
@@ -43,22 +44,18 @@ namespace CAP
   //!
   class EventProcessor
   :
-  public Task
+  public AnalysisTask
   {
   protected:
 
   //! Events.
   ManagedObjects<Event>              _managedEvents;
-  //! Event filters.
-  ManagedObjects<EventFilter>        _managedEventFilters;
   //! Event efficiencies.
   ManagedObjects<EventEfficiency>    _managedEventEfficiencies;
   //! Event smearers.
   ManagedObjects<EventSmearer>       _managedEventSmearers;
   //! Particle databases.
   ManagedObjects<ParticleDb>         _managedParticleDbs;
-  //! Particle filters.
-  ManagedObjects<ParticleFilter>     _managedParticleFilters;
   //! Particle efficiencies.
   ManagedObjects<ParticleEfficiency> _managedParticleEfficiencies;
   //! Particle smearers.
@@ -89,10 +86,6 @@ namespace CAP
 
   //! Highest order of the pT moments computed by filterParticles().
   unsigned int _ptMomentOrder;
-  //! Names of the event and particle filters, kept from the configuration for the folders of the histograms in the
-  //! files of the job (written after the filter lists are finalized, see combinationName()).
-  std::vector<String> _eventFilterNames;      //!
-  std::vector<String> _particleFilterNames;   //!
   //! Number of events accepted by each event filter.
   Accountant _eventAccepted;
   //! Quantity used to classify the events (an EventFilter::EventFilterType, see getEvtClassValue()).
@@ -134,16 +127,12 @@ namespace CAP
   //! @brief Whether this task makes its events (creates or imports them: a generator, a reader, a model).
   //! Their reset before each event is the event iterator's (see EventIterator). @return true if so
   bool makesEvents() const { return _managedEvents.create() || _managedEvents.imports(); }
-  //! @brief Number of event filters. @return number
-  unsigned int nEventFilters() const  { return _managedEventFilters.size();  }
   //! @brief Number of event efficiencies. @return number
   unsigned int nEventEfficiencies() const  { return _managedEventEfficiencies.size();  }
   //! @brief Number of event smearers. @return number
   unsigned int nEventSmearers() const  { return _managedEventSmearers.size();  }
   //! @brief Number of particle databases. @return number
   unsigned int nParticleDbs() const  { return _managedParticleDbs.size();  }
-  //! @brief Number of particle filters. @return number
-  unsigned int nParticleFilters() const  { return _managedParticleFilters.size();  }
   //! @brief Number of particle efficiencies. @return number
   unsigned int nParticleEfficiencies() const  { return _managedParticleEfficiencies.size();  }
   //! @brief Number of particle smearers. @return number
@@ -154,16 +143,12 @@ namespace CAP
   const Event & event() const                                           { return *_managedEvents.objectAt(0); }
   //! @brief Events. @return events
   const std::vector<Event*>             & events() const               { return _managedEvents.getObjects(); }
-  //! @brief Event filters. @return filters
-  const std::vector<EventFilter*>       & eventFilters() const         { return _managedEventFilters.getObjects(); }
   //! @brief Event efficiencies. @return efficiencies
   const std::vector<EventEfficiency*>   & eventEfficiencies() const    { return _managedEventEfficiencies.getObjects(); }
   //! @brief Event smearers. @return smearers
   const std::vector<EventSmearer*>      & eventSmearers() const        { return _managedEventSmearers.getObjects(); }
   //! @brief Particle databases. @return databases
   const std::vector<ParticleDb*>        & particleDbs() const          { return _managedParticleDbs.getObjects(); }
-  //! @brief Particle filters. @return filters
-  const std::vector<ParticleFilter*>    & particleFilters() const      { return _managedParticleFilters.getObjects(); }
   //! @brief Particle efficiencies. @return efficiencies
   const std::vector<ParticleEfficiency*> & particleEfficiencies() const { return _managedParticleEfficiencies.getObjects(); }
   //! @brief Particle smearers. @return smearers
@@ -175,16 +160,12 @@ namespace CAP
   Event & event()                                                       { return *_managedEvents.objectAt(0); }
   //! @brief Events. @return events
   std::vector<Event*> & events()                                        { return _managedEvents.getObjects(); }
-  //! @brief Event filters. @return filters
-  std::vector<EventFilter*>       & eventFilters()                     { return _managedEventFilters.getObjects(); }
   //! @brief Event efficiencies. @return efficiencies
   std::vector<EventEfficiency*>   & eventEfficiencies()                { return _managedEventEfficiencies.getObjects(); }
   //! @brief Event smearers. @return smearers
   std::vector<EventSmearer*>      & eventSmearers()                    { return _managedEventSmearers.getObjects(); }
   //! @brief Particle databases. @return databases
   std::vector<ParticleDb*>        & particleDbs()                      { return _managedParticleDbs.getObjects(); }
-  //! @brief Particle filters. @return filters
-  std::vector<ParticleFilter*>    & particleFilters()                  { return _managedParticleFilters.getObjects(); }
   //! @brief Particle efficiencies. @return efficiencies
   std::vector<ParticleEfficiency*> & particleEfficiencies()             { return _managedParticleEfficiencies.getObjects(); }
   //! @brief Particle smearers. @return smearers
@@ -217,23 +198,12 @@ namespace CAP
   double getEvtClassValue() const;
   //! @brief Divide the histograms of each event filter by the number of events it accepted (see eventAccepted()).
   virtual void scaleHistograms();
-  //! @brief Scale the histograms by a factor. @param factor factor
-  virtual void scaleHistograms(double factor);
-  //! @brief Scale the histograms of each event filter by its factor. @param factors factors
-  virtual void scaleHistograms(const std::vector<double> & factors);
+  using AnalysisTask::scaleHistograms;
 
   //! @brief Post-processing after the run: calculateDerived().
   virtual void postProcess();
   //! @brief Compute the derived histograms (implemented by derived classes). @throws NoImplementationException here
   virtual void calculateDerived();
-  //!
-  //! @brief Name of the folder of the histograms of a combination of filters, in the files of the job:
-  //! \<event filter\>_\<particle filter\> (or \<event filter\>_\<particle filter 1\>_\<particle filter 2\> for pairs), the
-  //! combinations being indexed e*nP + p (or e*nP*nP + p1*nP + p2).
-  //! @param index index of the combination @param nParticles number of particle filters of a combination (1 or 2)
-  //! @return name (Folder_\<index\> beyond the combinations of the filters)
-  //!
-  String combinationName(unsigned int index, unsigned int nParticles) const;
   //! @brief Compute the balance functions (implemented by derived classes). @throws NoImplementationException here
   virtual void calculateBf();
   //! @brief Apply the event filters to an event: update acceptedEventFilters() and eventAccepted().

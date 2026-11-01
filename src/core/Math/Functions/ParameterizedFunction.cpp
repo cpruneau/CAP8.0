@@ -4,7 +4,12 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include "MathExceptions.hpp"
+#include "BinaryIO.hpp"
+#include "Exceptions.hpp"
+#include "FunctionRegistry.hpp"
+#include "ParameterizedComposite.hpp"
 
 
 namespace CAP
@@ -353,6 +358,87 @@ namespace CAP
   {
   checkRank(3,__FUNCTION__);
   return gradientAt(std::vector<double>{x1,x2,x3});
+  }
+
+
+  // ---------------------------------------------------------------- binary files
+
+  namespace
+  {
+  //! Name of the class of a composite in the records (its components are recorded, so it needs no registration).
+  const char * kCompositeClass = "ParameterizedComposite";
+  } // namespace
+
+  void ParameterizedFunction::encodeBinary(BinaryWriter & w) const
+  {
+  String type;
+  if (dynamic_cast<const ParameterizedComposite *>(this)) type = kCompositeClass;
+  else
+    {
+    if (!FunctionRegistry::isRegistered(*this))
+      throw MathException(String("The class of function ") + name() + " (" + FunctionRegistry::typeName(*this)
+                          + ") is not registered in FunctionRegistry: it cannot be saved", __FUNCTION__);
+    type = FunctionRegistry::typeName(*this);
+    }
+  w.writeString(type);
+  w.writeVarUInt(nParameters());
+  w.writeVarUInt(rank());
+  w.writeString(String(title()));
+  for (const Parameter & p : parameters()) { w.writeString(p.name()); p.encodeBinary(w); }
+  BinaryWriter state;
+  encodeState(state);
+  w.writeVarUInt(state.buffer().size());
+  w.writeBytes(state.buffer().data(), state.buffer().size());
+  _fits.encodeBinary(w);
+  }
+
+  ParameterizedFunction * ParameterizedFunction::decodeNewBinary(BinaryReader & r, const String & name, unsigned int version)
+  {
+  if (version == 0 || version > binaryVersion()) throw Exception("Function record of an unsupported format version", __FUNCTION__);
+  String type = r.readString();
+  uint64_t nParameters = r.readVarUInt();
+  uint64_t rank = r.readVarUInt();
+  if (nParameters > r.remaining() || rank == 0 || rank > 64) throw Exception("Invalid function record", __FUNCTION__);
+  std::unique_ptr<ParameterizedFunction> f(type == kCompositeClass ? new ParameterizedComposite()
+                                                                   : FunctionRegistry::create(type, (unsigned int)nParameters));
+  if (!f) throw Exception(String("Functions of class ") + type + " with " + String(std::to_string(nParameters).c_str())
+                          + " parameters cannot be made: is the class registered in FunctionRegistry?", __FUNCTION__);
+  String title = r.readString();
+  std::vector<Parameter> parameters;
+  for (uint64_t k=0; k<nParameters; k++)
+    {
+    Parameter p;
+    String parameterName = r.readString();
+    p.decodeBinary(r, parameterName, Parameter::binaryVersion());
+    parameters.push_back(p);
+    }
+  uint64_t stateLength = r.readVarUInt();
+  if (stateLength > r.remaining()) throw Exception("Function state larger than the record", __FUNCTION__);
+  BinaryReader state(r.readSpan(std::size_t(stateLength)), std::size_t(stateLength));
+  f->decodeState(state, version);
+  if (f->nParameters() != nParameters || f->rank() != rank)
+    throw Exception(String("Function ") + name + " of class " + type + ": the parameters or the rank differ from those recorded", __FUNCTION__);
+  for (unsigned int k=0; k<parameters.size(); k++) f->setParameter(k, parameters[k]);
+  f->setName(name);
+  f->setTitle(title);
+  f->_fits.decodeBinary(r);
+  return f.release();
+  }
+
+  ParameterizedFunction * ParameterizedFunction::readBinary(std::istream & in)
+  {
+  std::string tag, payload;
+  unsigned int version;
+  while (readBinaryRecord(in, tag, version, payload, "functions"))
+    {
+    if (tag != binaryTag()) continue;
+    BinaryReader r(payload.data(), payload.size());
+    String functionName = r.readString();
+    std::unique_ptr<ParameterizedFunction> f(decodeNewBinary(r, functionName, version));
+    if (r.remaining() != 0) throw Exception("Unexpected data at the end of a function record", __FUNCTION__);
+    return f.release();
+    }
+  return nullptr;
   }
 
   } // namespace MATH

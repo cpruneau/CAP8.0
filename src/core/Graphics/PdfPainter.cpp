@@ -422,9 +422,13 @@ namespace CAP
     return;
     }
   int font = fontIndex(attributes.font());
-  _fontsUsed[font] = true;
-  std::string bytes = winAnsi(LatexRenderer::plainText(text));
-  float width = standardTextWidth(bytes, font, size);
+  std::vector<TextRun> parts = textRuns(LatexRenderer::plainText(text), font);
+  float width = 0;
+  for (const TextRun & part : parts)
+    {
+    _fontsUsed[part.font] = true;
+    width += standardTextWidth(part.bytes, part.font, size);
+    }
   float dx = attributes.justification() == TextAttributes::kCenter ? -0.5f*width
            : attributes.justification() == TextAttributes::kRight  ? -width : 0.0f;
   float dy = -0.35f*size;                              // baseline below the center (cap height ~ 0.7 size)
@@ -432,14 +436,69 @@ namespace CAP
   double X = x, Y = flip(y);
   double ox = X + dx*cosine - dy*sine, oy = Y + dx*sine + dy*cosine;
   setColor(attributes.color(), attributes.alpha(), false);
-  _content << "BT /F" << font << " " << num(size) << " Tf " << num(cosine) << " " << num(sine) << " " << num(-sine) << " "
-           << num(cosine) << " " << num(ox) << " " << num(oy) << " Tm (";
-  for (char ch : bytes)
+  _content << "BT " << num(cosine) << " " << num(sine) << " " << num(-sine) << " " << num(cosine) << " " << num(ox) << " "
+           << num(oy) << " Tm";
+  for (const TextRun & part : parts)
     {
-    if (ch == '(' || ch == ')' || ch == '\\') _content << '\\';
-    _content << ch;
+    _content << " /F" << part.font << " " << num(size) << " Tf (";
+    for (char ch : part.bytes)
+      {
+      if (ch == '(' || ch == ')' || ch == '\\') _content << '\\';
+      _content << ch;
+      }
+    _content << ") Tj";
     }
-  _content << ") Tj ET\n";
+  _content << " ET\n";
+  }
+
+  float PdfPainter::textWidth(const String & text, const TextAttributes & attributes) const
+  {
+  const LatexImage * image = latexImage(text);
+  if (image && image->ok) return Painter::textWidth(text, attributes);
+  float size = attributes.size()*_regionHeight, width = 0;
+  for (const TextRun & part : textRuns(LatexRenderer::plainText(text), fontIndex(attributes.font()))) width += standardTextWidth(part.bytes, part.font, size);
+  return width;
+  }
+
+  std::vector<PdfPainter::TextRun> PdfPainter::textRuns(const String & text, int font)
+  {
+  // letters of the Symbol font for the Greek letters U+0391 to U+03C9 (0: none)
+  static const char kUpper[] = "ABGDEZHQIKLMNXOPR\0STUFCYW";      // U+0391 Alpha ... U+03A9 Omega (U+03A2 unused)
+  static const char kLower[] = "abgdezhqiklmnxoprVstufcyw";        // U+03B1 alpha ... U+03C9 omega (U+03C2: final sigma)
+  std::vector<TextRun> runs;
+  const unsigned char * s = reinterpret_cast<const unsigned char *>(text.data());
+  const unsigned char * end = s + text.length();
+  std::string pending;                                  // UTF-8 bytes of the current part in font
+  auto flushText = [&]()
+    {
+    if (pending.empty()) return;
+    runs.push_back(TextRun{ font, winAnsi(String(pending)) });
+    pending.clear();
+    };
+  while (s < end && *s)
+    {
+    const unsigned char * start = s;
+    unsigned int code;
+    int extra;
+    if (*s < 0x80)      { code = *s; extra = 0; }
+    else if (*s < 0xE0) { code = *s & 0x1F; extra = 1; }
+    else if (*s < 0xF0) { code = *s & 0x0F; extra = 2; }
+    else                { code = *s & 0x07; extra = 3; }
+    s++;
+    for (int k=0; k<extra && s < end && (*s & 0xC0) == 0x80; k++, s++) code = (code << 6) | (*s & 0x3F);
+    char symbol = 0;
+    if (code >= 0x391 && code <= 0x3A9) symbol = kUpper[code - 0x391];
+    else if (code >= 0x3B1 && code <= 0x3C9) symbol = kLower[code - 0x3B1];
+    if (symbol && font != 12)
+      {
+      flushText();
+      if (runs.empty() || runs.back().font != 12) runs.push_back(TextRun{ 12, std::string() });
+      runs.back().bytes += symbol;
+      }
+    else pending.append(reinterpret_cast<const char *>(start), size_t(s - start));
+    }
+  flushText();
+  return runs;
   }
 
   int PdfPainter::fontIndex(int font)
@@ -457,6 +516,7 @@ namespace CAP
     {
     int w;
     if (font >= 8 && font <= 11) w = 600;                                       // Courier: fixed width
+    else if (font == 12) w = 600;                                               // Symbol: about the Greek letters
     else if (ch < 32 || ch > 126) w = (font >= 4 && font <= 7) ? 500 : 556;
     else if (font >= 4 && font <= 7) w = kTimes[ch - 32];
     else if (font == 1 || font == 3) w = kHelveticaBold[ch - 32];

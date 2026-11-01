@@ -1,0 +1,83 @@
+% **********************************************************************
+% CAP 9 design and use of the Correlation Analysis Package
+% Build: latexmk -pdf main.tex   (or: pdflatex main; bibtex main; pdflatex main; pdflatex main)
+% For a submission to Computer Physics Communications, replace the article class by elsarticle
+% (\documentclass[preprint,12pt]{elsarticle}) and move the title block into a frontmatter environment.
+% **********************************************************************
+
+\documentclass[letterpaper,aps,prc,superscriptaddress,nofootinbib,showpacs,floatfix,reprint]{revtex4-1}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{bm}
+%\usepackage{hyperref}
+%\usepackage{caption}
+%\usepackage{subcaption}
+\usepackage[english]{babel}
+\usepackage{fontenc}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumerate}
+\usepackage{color}
+
+
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\graphicspath{{figures/}}
+\emergencystretch=3em   % long \code{...} names: stretch the lines rather than overflow them
+
+% ---- notation
+\newcommand{\CAP}{\textsc{CAP}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\pT}{p_{\mathrm{T}}}
+\newcommand{\avg}[1]{\left\langle #1 \right\rangle}
+\newcommand{\nudyn}{\nu_{\mathrm{dyn}}}
+
+% ---- working notes (switch off for submission: \renewcommand{\todo}[1]{})
+\newcommand{\todo}[1]{\par\noindent{\color{red!70!black}\small\textsf{[To write: #1]}}\par}
+
+
+\begin{document}
+\title{\CAP{} 9: a C++ framework for simulating and analysing\\ correlation and fluctuation observables in high-energy collisions}
+\author{ Claude~Pruneau }
+\email{claude.pruneau@wayne.edu}
+\author{ Victor~Gonzalez }
+\email{victor.gonzalez@cern.ch}
+\author{ Oveis Sheibani}
+\email{sheibani.oveis@gmail.com}
+\affiliation{Department of Physics and Astronomy, Wayne State University, Detroit, 48201, USA}
+
+\begin{abstract}
+\todo{a paragraph: what \CAP{} 9 is, the observables it computes, the generators it works with, its ROOT-independent object model and file format, the graphical interface, and where the code is available.}
+\end{abstract}
+
+\maketitle
+\tableofcontents
+\clearpage
+
+\input{sections/01_introduction}
+\input{sections/02_overview}
+\input{sections/03_base}
+\input{sections/04_math}
+\input{sections/05_graphics}
+\input{sections/06_analysis}
+\input{sections/07_observables}
+\input{sections/08_generators}
+\input{sections/09_capgui}
+\input{sections/10_examples}
+\input{sections/11_validation}
+\input{sections/12_summary}
+
+\appendix
+\input{sections/A_xml}
+\input{sections/B_binary}
+\input{sections/C_install}
+
+\bibliographystyle{unsrtnat}
+\bibliography{refs}
+
+\end{document}

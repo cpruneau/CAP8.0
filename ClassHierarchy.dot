@@ -1,0 +1,78 @@
+// Class hierarchy of the functions and histograms of CAP8.0 (dot -Tpdf ClassHierarchy.dot -o ClassHierarchy.pdf)
+digraph CAP {
+  graph [rankdir=RL, fontname="Helvetica", fontsize=11, nodesep=0.08, ranksep=0.35, newrank=true, compound=true,
+         label="CAP8.0: class hierarchy of functions and histograms (open arrows point to the base class; dashed boxes: views or optional modules)", labelloc=t, fontsize=14];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, height=0.3, margin="0.10,0.04",
+         fillcolor="#ffffff", color="#555555"];
+  edge  [arrowhead=empty, arrowsize=0.7, color="#555555"];
+
+  subgraph cluster_base {
+    label="core/Base"; fontsize=12; style="rounded"; color="#777777"; fontcolor="#777777";
+    Object [label="Object\n(name, title)", fillcolor="#e8e8e8", style="rounded,filled,bold"];
+  }
+
+  subgraph cluster_functions {
+    label="(a) Functions — core/Math/Functions"; fontsize=12; style="rounded"; color="#3b6fb6"; fontcolor="#3b6fb6";
+    node [fillcolor="#e6eefa"];
+    Function [style="rounded,filled,bold", label="Function\n(rank 1, 2, ... ; fits attached)"];
+    ParameterizedFunction [style="rounded,filled,bold", label="ParameterizedFunction\n(parameters, bounds, gradient, integral)"];
+    CompositeFunction; ScalarField; Bessel; Legendre; Laguerre; SphericalHarmonics;
+    Polynomial; Constant; Linear; Parabolic; Cubic; Quartic;
+    Normal; LogNormal; Exponential; Normal2D; Polynomial2D;
+    OrthogonalSeries; LegendreSeries; ChebyshevSeries; HermiteSeries; LaguerreSeries;
+    BesselFunction; BesselJFunction; BesselYFunction; BesselIFunction; BesselKFunction;
+    ParameterizedComposite [label="ParameterizedComposite\n(sums, products f(x) g(y))"];
+    ProjectedFunction [label="ProjectedFunction\n(Fitting: 2D fit projected)", style="rounded,filled,dashed"];
+    Viscosity [label="Viscosity\n(models/Therminator3)", fillcolor="#fdf0dc"];
+
+    Function -> Object [lhead=""];
+    CompositeFunction -> Function; ScalarField -> Function; Bessel -> Function; Legendre -> Function;
+    Laguerre -> Function; SphericalHarmonics -> Function; ParameterizedFunction -> Function;
+    Viscosity -> ScalarField;
+    Polynomial -> ParameterizedFunction; Normal -> ParameterizedFunction; LogNormal -> ParameterizedFunction;
+    Exponential -> ParameterizedFunction; Normal2D -> ParameterizedFunction; Polynomial2D -> ParameterizedFunction;
+    OrthogonalSeries -> ParameterizedFunction; BesselFunction -> ParameterizedFunction;
+    ParameterizedComposite -> ParameterizedFunction; ProjectedFunction -> ParameterizedFunction;
+    Constant -> Polynomial; Linear -> Polynomial; Parabolic -> Polynomial; Cubic -> Polynomial; Quartic -> Polynomial;
+    LegendreSeries -> OrthogonalSeries; ChebyshevSeries -> OrthogonalSeries; HermiteSeries -> OrthogonalSeries; LaguerreSeries -> OrthogonalSeries;
+    BesselJFunction -> BesselFunction; BesselYFunction -> BesselFunction; BesselIFunction -> BesselFunction; BesselKFunction -> BesselFunction;
+  }
+
+  subgraph cluster_data {
+    label="(b) Data and histograms — core/Math/Data"; fontsize=12; style="rounded"; color="#2e8b57"; fontcolor="#2e8b57";
+    node [fillcolor="#e5f4ea"];
+    DataPoints [style="rounded,filled,bold", label="DataPoints\n(points of any rank; fits attached)"];
+    Partition [style="rounded,filled,bold", label="Partition\n(binning of each axis)"];
+    DataPointsVector; DataPointColumns;
+    Histogram [style="rounded,filled,bold", label="Histogram\n(any rank; values, uncertainties, entries)"];
+    Profile;
+    DataPoint [label="DataPoint", fillcolor="#f4f4f4"];
+    DataPoint2D [fillcolor="#f4f4f4"]; DataPoint3D [fillcolor="#f4f4f4"]; DataPointND [fillcolor="#f4f4f4"];
+    DataPoints -> Object;
+    DataPointsVector -> DataPoints; DataPointColumns -> DataPoints;
+    Histogram -> DataPoints; Histogram -> Partition;
+    Profile -> Histogram;
+    DataPoint2D -> DataPoint; DataPoint3D -> DataPoint; DataPointND -> DataPoint;
+  }
+
+  subgraph cluster_folders {
+    label="(c) Histogram folders of the analyses — analysis/*"; fontsize=12; style="rounded"; color="#b5651d"; fontcolor="#b5651d";
+    node [fillcolor="#fbeee2"];
+    Folder [style="rounded,filled,bold", label="Folder\n(core/Base: named, streamable items)"];
+    HistogramFolder [style="rounded,filled,bold", label="HistogramFolder\n(create, fill, scale, save, load)"];
+    ParticleSingleHistos; ParticlePairHistos [label="ParticlePairHistos\n(base + derived: R2, C2, G2, P2)"];
+    ParticlePair3DHistos; PtPtHistos; NuDynHistos; GlobalHistos; SpherocityHistos;
+    ParticlePerformanceHistos; EventCountHistos; ParticleSmearer; EventSmearer;
+    BaseHistos [fillcolor="#f4f4f4"]; BaseDerivedHistos [fillcolor="#f4f4f4"];
+    JetHistos [label="JetHistos, JetSingleHistos,\nJetPairHistos, JetPairMassHistos\n(optional: Jets)", style="rounded,filled,dashed"];
+    Folder -> Object; HistogramFolder -> Folder;
+    ParticleSingleHistos -> HistogramFolder; ParticlePairHistos -> HistogramFolder; ParticlePair3DHistos -> HistogramFolder;
+    PtPtHistos -> HistogramFolder; NuDynHistos -> HistogramFolder; GlobalHistos -> HistogramFolder;
+    SpherocityHistos -> HistogramFolder; ParticlePerformanceHistos -> HistogramFolder; EventCountHistos -> HistogramFolder;
+    ParticleSmearer -> HistogramFolder; EventSmearer -> HistogramFolder; JetHistos -> HistogramFolder;
+    BaseHistos -> HistogramFolder; BaseDerivedHistos -> BaseHistos;
+  }
+
+  // a folder holds histograms (composition, not inheritance)
+  HistogramFolder -> Histogram [arrowhead=diamond, style=dotted, color="#888888", label=" holds", fontsize=9, fontcolor="#888888", constraint=false];
+}

@@ -9,6 +9,7 @@
  * *********************************************************************/
 #ifndef CAP__HistogramFolder
 #define CAP__HistogramFolder
+#include <utility>
 #include <vector>
 #include "String.hpp"
 #include "CapFile.hpp"
@@ -222,6 +223,17 @@ namespace CAP
   //! @throws FileException if the file has no histogram with that name
   //!
   Histogram * importHistogram(const Folder & file, const String & name);
+
+  //! @brief List of histograms of the group: the member pointing to each and the name of the histogram.
+  typedef std::vector<std::pair<Histogram**,String>> HistogramList;
+
+  //!
+  //! @brief Copy a list of histograms from the current folder of a file into the group, if the file has all of them:
+  //! each member of the list is then set to its copy. If one is missing, nothing is copied and nothing is thrown (the
+  //! derived histograms of an analysis, for instance, are in a file only once they were computed).
+  //! @param file file @param list members and names of the histograms @return true if they were copied
+  //!
+  bool importAllOrNone(const Folder & file, const HistogramList & list);
 
   //!
   //! @brief Copy a profile from the current folder of a file into the group (replacing one with the same name).

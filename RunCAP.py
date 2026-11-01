@@ -110,7 +110,7 @@ STAGE_TITLES = {EVENTS: "Event Processing", DERIVED: "Derived Histos", BF: "Bala
 #: single-stage files, Workflow).
 STAGE_ROOTS = {EVENTS: WRAPPER_NAME, DERIVED: DERIVED, BF: BF}
 #: Classes of the tasks computing balance functions (they belong to the stage BF).
-BF_CLASS = re.compile(r"(?:Bf|BalanceFunction)Calculator$")
+BF_CLASS = re.compile(r"(?:Bf|BF)Calculator$")
 
 INT_PARTIAL = re.compile(r"[+-]?\d*")
 FLOAT_PARTIAL = re.compile(r"[+-]?\d*\.?\d*([eE][+-]?\d*)?")

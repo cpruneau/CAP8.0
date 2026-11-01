@@ -8,15 +8,14 @@
 
 
 ################################################################################################
-# Create a shared library with geneated dictionary
+# Create a shared library with generated dictionary
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(ParticlePair SHARED
 ParticlePairTasks.cpp
 ParticlePairAnalyzer.cpp
-ParticlePairBfHistos.cpp
 ParticlePairHistos.cpp
-ParticlePairDerivedCalculator.cpp)
+ParticlePairBFHistos.cpp)
 
 target_link_libraries(ParticlePair Base   Particles ParticleSingle ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(ParticlePair  PUBLIC Base Particles ParticleSingle ParticlePair ${EXTRA_INCLUDES} )

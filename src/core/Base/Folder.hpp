@@ -88,6 +88,12 @@ namespace CAP
   struct isBinarySavable<T, std::void_t<decltype(T::binaryTag()),
                                         decltype(std::declval<const T &>().encodeBinary(std::declval<BinaryWriter &>()))>> : std::true_type {};
 
+  //! @brief Whether T has a polymorphic copy, T * clone() const (e.g. the functions of the Math library).
+  template <typename T, typename = void>
+  struct hasCloneMethod : std::false_type {};
+  template <typename T>
+  struct hasCloneMethod<T, std::void_t<decltype(static_cast<T *>(std::declval<const T &>().clone()))>> : std::true_type {};
+
   //! @brief Readable (demangled) name of a type. @param type type information @return name
   std::string demangledTypeName(const std::type_info & type);
 
@@ -118,9 +124,11 @@ namespace CAP
   //! <b>Binary files.</b> A folder is saved as a "CAPO" record holding the records of its entries, sub-folders included
   //! (see BinaryIO.hpp). Objects are rebuilt with their types when loading, through a registry of types. Folder is
   //! registered here; the Math library registers its classes (Histogram, DataPointsVector, DataPointColumns, DataPoint2D,
-  //! ScalarField, Matrix, VectorND, Vector2D, Vector3D, VectorLorentz, Parameter) when it is loaded (Math/FolderTypes.cpp),
+  //! ScalarField, Matrix, VectorND, Vector2D, Vector3D, VectorLorentz, Parameter, the parameterized functions) when it is
+  //! loaded (Math/FolderTypes.cpp),
   //! and the Graphics library its own; other classes with binary support are added with registerType<T>().
-  //! Objects without binary support (e.g. functions) cannot be saved: saveBinary() throws unless skipUnsavable is true.
+  //! Objects without binary support cannot be saved: saveBinary() throws unless skipUnsavable is true. Parameterized
+  //! functions of every class registered in MATH::FunctionRegistry are saved (registerPolymorphicType()).
   //!
   //! Example:
   //! @code
@@ -372,6 +380,16 @@ namespace CAP
   //!
   template <typename T>
   static void registerType();
+  //!
+  //! @brief Register a family of classes saved under one tag, read back as objects of their own classes: the records
+  //! of T and of its derived classes (e.g. ParameterizedFunction: Normal, Polynomial, composites, ...). T provides
+  //! binaryTag(), binaryVersion() and a factory reading the payload past the name,
+  //! static T * decodeNewBinary(BinaryReader &, const String & name, unsigned int version), which makes an object of
+  //! the right class. The entries read hold the objects as T (get<Normal>() still finds a Normal), and are copied
+  //! with clone().
+  //!
+  template <typename T>
+  static void registerPolymorphicType();
   //! @brief Type registered for a binary tag. @param tag 4-character tag @return type, or null if none
   static const std::type_info * registeredType(const std::string & tag);
 
@@ -456,6 +474,8 @@ namespace CAP
   {
     if constexpr (std::is_copy_constructible<T>::value && !std::is_abstract<T>::value)
       return new FolderItemOf<T>(new T(*_object));
+    else if constexpr (hasCloneMethod<T>::value)   // an object of a derived class held by its base, e.g. a function read back
+      return new FolderItemOf<T>(static_cast<T *>(_object->clone()));
     else
       throw Exception(String("Cannot copy an object of type ")+demangledTypeName(typeid(T)).c_str(),"Folder");
   }
@@ -636,6 +656,23 @@ namespace CAP
       String objectName = r.readString();
       std::unique_ptr<T> object(new T());
       object->decodeBinary(r,objectName,version);
+      if (r.remaining()!=0) throw Exception("Unexpected data at the end of a record","Folder");
+      return new FolderItemOf<T>(object.release());
+      };
+  }
+
+  template <typename T>
+  void Folder::registerPolymorphicType()
+  {
+    typeRegistry()[T::binaryTag()] = &typeid(T);
+    registry()[T::binaryTag()] = [](const std::string & payload, unsigned int version, const String & where) -> FolderItem *
+      {
+      if (version==0 || version>T::binaryVersion())
+        throw FileException(where,"Binary record of an unsupported format version","Folder");
+      BinaryReader r(payload.data(),payload.size());
+      String objectName = r.readString();
+      std::unique_ptr<T> object(T::decodeNewBinary(r,objectName,version));
+      if (!object) throw Exception("No object read from a record","Folder");
       if (r.remaining()!=0) throw Exception("Unexpected data at the end of a record","Folder");
       return new FolderItemOf<T>(object.release());
       };

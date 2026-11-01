@@ -14,7 +14,7 @@ namespace CAP
 
 PtPtDerivedCalculator::PtPtDerivedCalculator()
 :
-EventProcessorHistos<PtPtHistos,1>(),
+CalculatorHistos<PtPtHistos,1>(),
 _sourceTask("PtPtAnalyzer")
 {
   appendClassName("PtPtDerivedCalculator");
@@ -25,7 +25,7 @@ _sourceTask("PtPtAnalyzer")
 
 PtPtDerivedCalculator::PtPtDerivedCalculator(const PtPtDerivedCalculator & source)
 :
-EventProcessorHistos<PtPtHistos,1>(source),
+CalculatorHistos<PtPtHistos,1>(source),
 _sourceTask(source._sourceTask)
 {   }
 
@@ -33,7 +33,7 @@ PtPtDerivedCalculator & PtPtDerivedCalculator::operator=(const PtPtDerivedCalcul
 {
   if (this!=&rhs)
     {
-    EventProcessorHistos<PtPtHistos,1>::operator=(rhs);
+    CalculatorHistos<PtPtHistos,1>::operator=(rhs);
     _sourceTask = rhs._sourceTask;
     }
   return *this;
@@ -41,14 +41,14 @@ PtPtDerivedCalculator & PtPtDerivedCalculator::operator=(const PtPtDerivedCalcul
 
 void PtPtDerivedCalculator::setDefaultConfiguration()
 {
-  EventProcessorHistos<PtPtHistos,1>::setDefaultConfiguration();
+  CalculatorHistos<PtPtHistos,1>::setDefaultConfiguration();
   PtPtHistos::addDefaultConfiguration(_configuration,name());
   _configuration.addProperty(createKey(name(),"SOURCE_TASK"),String("PtPtAnalyzer"));
 }
 
 void PtPtDerivedCalculator::configure(const Configuration & configuration)
 {
-  EventProcessorHistos<PtPtHistos,1>::configure(configuration);
+  CalculatorHistos<PtPtHistos,1>::configure(configuration);
   _sourceTask = configuration.valueString(createKey(name(),"SOURCE_TASK"));
   if (reportInfo(__FUNCTION__)) printValue(createKey(name(),"SOURCE_TASK"),_sourceTask);
 }

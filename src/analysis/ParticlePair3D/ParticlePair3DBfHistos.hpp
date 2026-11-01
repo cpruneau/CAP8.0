@@ -4,81 +4,113 @@
  *
  * For the licensing terms see LICENSE.
  *
- * Author: Claude Pruneau,   04/01/2024
+ * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__ParticlePair3DBfHistos
-#define CAP__ParticlePair3DBfHistos
-#include "Profile.hpp"
+//! @file ParticlePair3DBFHistos.hpp
+//! @brief ParticlePair3DBFHistos: balance functions in relative momentum variables of two species and their
+//! antiparticles.
+#ifndef CAP__ParticlePair3DBFHistos
+#define CAP__ParticlePair3DBFHistos
+#include "HistogramFolder.hpp"
+#include "PairBFCalculator.hpp"
 #include "ParticleSingleHistos.hpp"
-#include "ParticleSingleDerivedHistos.hpp"
 #include "ParticlePair3DHistos.hpp"
-#include "ParticlePair3DDerivedHistos.hpp"
 
 namespace CAP
 {
+
 //!
-//! @brief Balance functions in relative momentum variables (Qinv, q_side, q_out, q_long), computed from the correlation
-//! functions of the four combinations of a species and its antiparticle (1 2, 1 2bar, 1bar 2, 1bar 2bar).
+//! @brief Balance functions of a species a and a species b (and of their antiparticles ā and b̄) in relative momentum
+//! variables, with the charge independent and charge dependent combinations of R2, computed from the 3D pair folders of
+//! the four combinations (a,b), (a,b̄), (ā,b), (ā,b̄) and the single-particle folders of a and ā (see PairBFCalculator).
+//! It is the counterpart of ParticlePairBFHistos for ParticlePair3DHistos: same quantities, other variables.
 //!
-class ParticlePair3DBfHistos : public  ParticlePair3DDerivedHistos
+//! For each variable v (Qinv, the 3D (q_side, q_out, q_long), and the projections q_side, q_out, q_long), with R^{xy}
+//! the normalized cumulant r2 and n^{xy} the pair density per event of the pairs (x, y):
+//!  - R2CI_v  = (R^{ab} + R^{ab̄} + R^{āb} + R^{āb̄})/4, the charge independent combination;
+//!  - R2CD_v  = (R^{ab̄} + R^{āb} - R^{ab} - R^{āb̄})/2, the charge dependent combination;
+//!  - B_a_bB_v = n^{ab̄}/N̄_a - n^{āb̄}/N̄_ā, the balance function B^{a|b̄} per trigger particle a (resp. ā);
+//!  - B_aB_b_v = n^{āb}/N̄_ā - n^{ab}/N̄_a, the balance function B^{ā|b};
+//!  - B_v = (B_a_bB_v + B_aB_b_v)/2;
+//! with N̄ the mean number of trigger particles per event (integral of their (y, pT) density, as in
+//! ParticlePair3DHistos::calculateDerived()). Statistical uncertainties are propagated assuming the histograms
+//! combined are uncorrelated.
+//!
+//! The histograms have the binning of the r2 histograms of the pair folders (createFrom()); their names are short (e.g.
+//! B_Qinv): the folder of the job names the species and the event filter (e.g. ALL_PiP_KP_BF).
+//!
+class ParticlePair3DBFHistos : public HistogramFolder
 {
 public:
 
-  //! @brief Default constructor.
-  ParticlePair3DBfHistos();
-  //! @brief Copy constructor. @param group group to copy
-  ParticlePair3DBfHistos(const ParticlePair3DBfHistos & group);
-  //! @brief Copy assignment. @param group group to copy @return this group
-  ParticlePair3DBfHistos & operator=(const ParticlePair3DBfHistos & group);
+  //! @brief Variables of the pair histograms.
+  enum Variables { kQinv, kDeltaP, kDeltaPs, kDeltaPo, kDeltaPl, kNVariables };
+  //! @brief Quantities computed for each variable (see the class description).
+  enum Quantities { kR2CI, kR2CD, kBabB, kBaBb, kB, kNQuantities };
+
+  //! @brief Constructor. @param name name of the folder
+  ParticlePair3DBFHistos(const String & name="ParticlePair3DBFHistos");
+  //! @brief Copy constructor: copies the histograms. @param source folder to copy
+  ParticlePair3DBFHistos(const ParticlePair3DBFHistos & source);
+  //! @brief Assignment: replaces the histograms by copies of those of rhs. @param rhs folder to copy @return this folder
+  ParticlePair3DBFHistos & operator=(const ParticlePair3DBFHistos & rhs);
   //! @brief Destructor.
-  virtual ~ParticlePair3DBfHistos() {}
-  //! @brief Read the binning. @param taskName name of the task @param objectType object type
-  //! @param configuration configuration @param index index
-  virtual void configure(const String & taskName,
-                               const String & objectType,
-                               const Configuration & configuration,
-                               unsigned int index);
-  //! @brief Load the histograms from a file. @param inputFile file
-  virtual void loadFrom(const Folder & inputFile);
-  //! @brief Create the balance function histograms.
-  virtual void create();
-  //! @brief Compute the balance functions. @param pair12B pairs (1, 2bar) @param pair1B2B pairs (1bar, 2bar)
-  //! @param pair1B2 pairs (1bar, 2) @param pair12 pairs (1, 2)
-  virtual void calculateBfHistograms(ParticlePair3DDerivedHistos & pair12B,
-                                     ParticlePair3DDerivedHistos & pair1B2B,
-                                     ParticlePair3DDerivedHistos & pair1B2,
-                                     ParticlePair3DDerivedHistos & pair12);
-  //! @brief Set the masses of the two particles. @param m1 mass of particle 1 @param m2 mass of particle 2
-  virtual void setMasses(double m1, double m2);
-  //! @brief Copy the content of another group. @param source group to copy
-  virtual void cloneBF(const ParticlePair3DBfHistos & source);
+  virtual ~ParticlePair3DBFHistos() {}
+  //! @brief Name of the task computing these folders (see PairBFCalculator). @return name
+  static const char * calculatorName() { return "ParticlePair3DBFCalculator"; }
+  //! @brief Default name of the analyzer task whose folders the calculator reads. @return name
+  static const char * defaultSourceTask() { return "ParticlePair3DAnalyzer"; }
+  //! @brief Copy of this folder. @return new folder, owned by the caller
+  virtual HistogramFolder * clone() const override { return new ParticlePair3DBFHistos(*this); }
+
+  //! @brief Name of a variable, as in the names of the histograms (Qinv, DeltaP, DeltaPs, DeltaPo, DeltaPl).
+  //! @param v variable @return name
+  static const char * variableName(Variables v);
+  //! @brief Name of a quantity, as in the names of the histograms (R2CI, R2CD, B_a_bB, B_aB_b, B). @param q quantity
+  //! @return name
+  static const char * quantityName(Quantities q);
+
+  //!
+  //! @brief Create the histograms (empty) with the binning of the r2 histograms of a pair folder (derived histograms
+  //! computed). Existing histograms are deleted first. @param pair pair folder of the analysis
+  //!
+  void createFrom(const ParticlePair3DHistos & pair);
+  //!
+  //! @brief Compute the histograms from the pair folders of the four combinations of a, ā, b, b̄ and the single-particle
+  //! folders, all with their derived histograms computed (see ParticlePair3DHistos::calculateDerived()).
+  //! @param ab pairs (a,b) @param abB pairs (a,b̄) @param aBb pairs (ā,b) @param aBbB pairs (ā,b̄)
+  //! @param a singles of a @param aB singles of ā @param b singles of b (not used) @param bB singles of b̄ (not used)
+  //! @throws HistogramException if a histogram is missing or the binnings differ
+  //!
+  void calculate(const ParticlePair3DHistos & ab,  const ParticlePair3DHistos & abB,
+                 const ParticlePair3DHistos & aBb, const ParticlePair3DHistos & aBbB,
+                 const ParticleSingleHistos & a, const ParticleSingleHistos & aB,
+                 const ParticleSingleHistos & b, const ParticleSingleHistos & bB);
+  //! @brief Histogram of a quantity for a variable. @param q quantity @param v variable @return histogram, or nullptr
+  Histogram * histogram(Quantities q, Variables v) const { return _h[v][q]; }
+
+  using HistogramFolder::histogram;
 
 protected:
 
-  Histogram * h_B12_Qinv;  ///< balance function B(1|2) vs Qinv
-  Histogram * h_B12_DeltaPs;  ///< balance function B(1|2) vs q_side
-  Histogram * h_B12_DeltaPo;  ///< balance function B(1|2) vs q_out
-  Histogram * h_B12_DeltaPl;  ///< balance function B(1|2) vs q_long
+  //! @brief Set the pointers to the histograms from their names (after a copy).
+  void relink();
+  //! @brief Histogram of a pair folder for a variable: r2 (prefix "r2") or n2 (prefix "n2"), or nullptr.
+  //! @param pair folder @param prefix "r2" or "n2" @param v variable
+  static const Histogram * of(const ParticlePair3DHistos & pair, const char * prefix, Variables v);
 
-  Histogram * h_B21_Qinv;  ///< balance function B(2|1) vs Qinv
-  Histogram * h_B21_DeltaPs;  ///< balance function B(2|1) vs q_side
-  Histogram * h_B21_DeltaPo;  ///< balance function B(2|1) vs q_out
-  Histogram * h_B21_DeltaPl;  ///< balance function B(2|1) vs q_long
-
-  Histogram * h_Bs_Qinv;  ///< sum of the balance functions vs Qinv
-  Histogram * h_Bs_DeltaPs;  ///< sum of the balance functions vs q_side
-  Histogram * h_Bs_DeltaPo;  ///< sum of the balance functions vs q_out
-  Histogram * h_Bs_DeltaPl;  ///< sum of the balance functions vs q_long
-
-  //! Mass of particle 1.
-  double mass1;
-  //! Mass of particle 2.
-  double mass2;
-
+  //! Histograms, by variable and quantity (nullptr if not made; owned by the folder).
+  Histogram * _h[kNVariables][kNQuantities];
 
 };
 
+//!
+//! @brief Balance functions of the 3D pair analysis (third phase): PairBFCalculator with the pair folders ParticlePair3DHistos and
+//! the balance-function folders ParticlePair3DBFHistos, registered as the task class CAP::ParticlePair3DBFCalculator.
+//!
+using ParticlePair3DBFCalculator = PairBFCalculator<ParticlePair3DHistos,ParticlePair3DBFHistos>;
+
 } // namespace CAP
 
-#endif /* CAP__ParticlePair3DDerivedHistos */
+#endif /* CAP__ParticlePair3DBFHistos */

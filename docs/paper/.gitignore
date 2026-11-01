@@ -1,0 +1,12 @@
+# LaTeX build products
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.synctex.gz
+main.pdf
+# the figures are kept (the top-level .gitignore ignores *.pdf)
+!figures/*.pdf

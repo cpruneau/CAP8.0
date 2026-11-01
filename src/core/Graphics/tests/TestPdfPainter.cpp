@@ -67,6 +67,12 @@ int main(int argc, char ** argv)
     CHECK(PdfPainter::winAnsi("abc") == "abc");
     CHECK(PdfPainter::winAnsi("\xC3\xA9t\xC3\xA9") == "\xE9t\xE9");               // UTF-8 -> Latin-1
     CHECK(PdfPainter::winAnsi("\xCE\xB1") == "?");                                // alpha: not in WinAnsi
+    std::vector<PdfPainter::TextRun> runs = PdfPainter::textRuns("\xCF\x87\xC2\xB2/ndf = 1.2", 0);   // chi2/ndf
+    CHECK(runs.size() == 2 && runs[0].font == 12 && runs[0].bytes == "c" && runs[1].font == 0 && runs[1].bytes == "\xB2/ndf = 1.2");
+    runs = PdfPainter::textRuns("#Delta: \xCE\x94\xCF\x86, \xCE\xA9", 4);                // Delta phi, Omega
+    CHECK(runs.size() == 4 && runs[0].bytes == "#Delta: " && runs[1].font == 12 && runs[1].bytes == "Df"
+          && runs[2].bytes == ", " && runs[2].font == 4 && runs[3].bytes == "W");
+    CHECK(PdfPainter::textRuns("plain", 1).size() == 1);
     CHECK(std::fabs(PdfPainter::standardTextWidth("A", 0, 10) - 6.67f) < 1e-3);   // Helvetica A: 667
     CHECK(std::fabs(PdfPainter::standardTextWidth("ii", 8, 10) - 12.0f) < 1e-3);  // Courier: 600
     CHECK(PdfPainter::fontIndex(42) == 0 && PdfPainter::fontIndex(62) == 1 && PdfPainter::fontIndex(132) == 4);

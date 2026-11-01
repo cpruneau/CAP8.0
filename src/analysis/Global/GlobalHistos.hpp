@@ -75,8 +75,12 @@ public:
   //! @brief Load the base histograms from a folder of a file, and the derived histograms if the folder has them.
   //! @param inputFile folder
   virtual void loadFrom(const Folder & inputFile);
-  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  //! @brief Load the derived histograms from a folder of a file, if it has all of them (they are there once a derived
+  //! calculator computed them); otherwise none is loaded, and no exception is thrown. @param inputFile folder
   virtual void loadDerivedFrom(const Folder & inputFile);
+  //! @brief The derived histograms (according to the fill options): the members pointing to them and their names,
+  //! as createDerived() makes them. @return list
+  HistogramList derivedHistograms();
   //! @brief Compute the derived histograms from the base histograms (createDerived() first).
   //! @throws Exception if the derived histograms were not created
   virtual void calculateDerived();

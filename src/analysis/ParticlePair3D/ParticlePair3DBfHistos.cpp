@@ -4,179 +4,121 @@
  *
  * For the licensing terms see LICENSE.
  *
- * Author: Claude Pruneau,   04/01/2024
+ * Author: Claude Pruneau
  *
  * *********************************************************************/
-
-#include "ParticleSingleHistos.hpp"
-#include "ParticleSingleDerivedHistos.hpp"
-#include "ParticlePairHistos.hpp"
-#include "HistogramFolder.hpp"
-
-#include "ParticlePair3DBfHistos.hpp"
-#include "Histogram.hpp"
-#include "Profile.hpp"
+#include "ParticlePair3DBFHistos.hpp"
+#include "Exceptions.hpp"
 #include "NameHelpers.hpp"
-#include "PrintHelpers.hpp"
-#include "TRandom.h"
-#include "Task.hpp"
-#include "Configuration.hpp"
-
 
 namespace CAP
 {
 
-ParticlePair3DBfHistos::ParticlePair3DBfHistos()
-:
-ParticlePair3DDerivedHistos(),
-h_B12_Qinv(nullptr),
-h_B12_DeltaPs(nullptr),
-h_B12_DeltaPo(nullptr),
-h_B12_DeltaPl(nullptr),
-h_B21_Qinv(nullptr),
-h_B21_DeltaPs(nullptr),
-h_B21_DeltaPo(nullptr),
-h_B21_DeltaPl(nullptr),
-h_Bs_Qinv(nullptr),
-h_Bs_DeltaPs(nullptr),
-h_Bs_DeltaPo(nullptr),
-h_Bs_DeltaPl(nullptr),
-mass1(0.13957039),
-mass2(0.13957039)
-{ }
+  ParticlePair3DBFHistos::ParticlePair3DBFHistos(const String & name)
+  :
+  HistogramFolder(name)
+  {
+  appendClassName("ParticlePair3DBFHistos");
+  for (int v=0; v<kNVariables; v++)
+    for (int q=0; q<kNQuantities; q++) _h[v][q] = nullptr;
+  }
 
-ParticlePair3DBfHistos::ParticlePair3DBfHistos(const ParticlePair3DBfHistos & source)
-:
-ParticlePair3DDerivedHistos(source),
-h_B12_Qinv(nullptr),
-h_B12_DeltaPs(nullptr),
-h_B12_DeltaPo(nullptr),
-h_B12_DeltaPl(nullptr),
-h_B21_Qinv(nullptr),
-h_B21_DeltaPs(nullptr),
-h_B21_DeltaPo(nullptr),
-h_B21_DeltaPl(nullptr),
-h_Bs_Qinv(nullptr),
-h_Bs_DeltaPs(nullptr),
-h_Bs_DeltaPo(nullptr),
-h_Bs_DeltaPl(nullptr),
-mass1(source.mass1),
-mass2(source.mass2)
-{
-  cloneBF(source);
-}
+  ParticlePair3DBFHistos::ParticlePair3DBFHistos(const ParticlePair3DBFHistos & source)
+  :
+  HistogramFolder(source)
+  {
+  relink();
+  }
 
-ParticlePair3DBfHistos & ParticlePair3DBfHistos::operator=(const ParticlePair3DBfHistos & rhs)
-{
+  ParticlePair3DBFHistos & ParticlePair3DBFHistos::operator=(const ParticlePair3DBFHistos & rhs)
+  {
   if (this!=&rhs)
     {
-    ParticlePair3DDerivedHistos::operator=(rhs);
-    cloneBF(rhs);
-    mass1 = rhs.mass1;
-    mass2 = rhs.mass2;
+    HistogramFolder::operator=(rhs);
+    relink();
     }
   return *this;
-}
+  }
 
-void ParticlePair3DBfHistos::cloneBF(const ParticlePair3DBfHistos & source)
-{
+  const char * ParticlePair3DBFHistos::variableName(Variables v)
+  {
+  static const char * names[kNVariables] = { "Qinv", "DeltaP", "DeltaPs", "DeltaPo", "DeltaPl" };
+  return names[v];
+  }
+
+  const char * ParticlePair3DBFHistos::quantityName(Quantities q)
+  {
+  static const char * names[kNQuantities] = { "R2CI", "R2CD", "B_a_bB", "B_aB_b", "B" };
+  return names[q];
+  }
+
+  void ParticlePair3DBFHistos::relink()
+  {
+  for (int v=0; v<kNVariables; v++)
+    for (int q=0; q<kNQuantities; q++)
+      _h[v][q] = histogram(String(quantityName(Quantities(q))) + "_" + variableName(Variables(v)));
+  }
+
+  const Histogram * ParticlePair3DBFHistos::of(const ParticlePair3DHistos & pair, const char * prefix, Variables v)
+  {
+  return pair.histogram(createName(pair.histogramBaseName(), String(prefix) + "_" + variableName(v)));
+  }
+
+  void ParticlePair3DBFHistos::createFrom(const ParticlePair3DHistos & pair)
+  {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_B12_Qinv     = histogramLike(source.h_B12_Qinv);
-  h_B12_DeltaPs  = histogramLike(source.h_B12_DeltaPs);
-  h_B12_DeltaPo  = histogramLike(source.h_B12_DeltaPo);
-  h_B12_DeltaPl  = histogramLike(source.h_B12_DeltaPl);
-  h_B21_Qinv     = histogramLike(source.h_B21_Qinv);
-  h_B21_DeltaPs  = histogramLike(source.h_B21_DeltaPs);
-  h_B21_DeltaPo  = histogramLike(source.h_B21_DeltaPo);
-  h_B21_DeltaPl  = histogramLike(source.h_B21_DeltaPl);
-  h_Bs_Qinv      = histogramLike(source.h_Bs_Qinv);
-  h_Bs_DeltaPs   = histogramLike(source.h_Bs_DeltaPs);
-  h_Bs_DeltaPo   = histogramLike(source.h_Bs_DeltaPo);
-  h_Bs_DeltaPl   = histogramLike(source.h_Bs_DeltaPl);
-}
+  clear();
+  for (int v=0; v<kNVariables; v++)
+    for (int q=0; q<kNQuantities; q++)
+      {
+      _h[v][q] = nullptr;
+      const Histogram * r2 = of(pair,"r2",Variables(v));
+      if (!r2) continue;
+      String name = String(quantityName(Quantities(q))) + "_" + variableName(Variables(v));
+      Histogram * h = new Histogram(*r2);
+      h->reset();
+      h->setName(name);
+      h->setTitle(name);
+      _h[v][q] = append(h);
+      }
+  }
 
-void ParticlePair3DBfHistos::configure(const String & taskName,
-                            const String & objectType,
-                            const Configuration & configuration,
-                            unsigned int index)
-{
-  ParticlePair3DHistos::configure(taskName,objectType,configuration,index);
-}
-
-
-void ParticlePair3DBfHistos::create()
-{
-  if (reportDebug(__FUNCTION__)) { printCR();}
-  h_B12_Qinv      = createHistogram(createName(_histogramBaseName,"B12_Qinv"),    Qinv_nbins,   Qinv_min,    Qinv_max,    "Q_{inv}","B_{12}", 2);
-  h_B12_DeltaPs   = createHistogram(createName(_histogramBaseName,"B12_DeltaPs"), DeltaPs_nbins,DeltaPs_min, DeltaPs_max, "p_{s}","B_{12}");
-  h_B12_DeltaPo   = createHistogram(createName(_histogramBaseName,"B12_DeltaPo"), DeltaPo_nbins,DeltaPo_min, DeltaPo_max, "p_{o}","B_{12}");
-  h_B12_DeltaPl   = createHistogram(createName(_histogramBaseName,"B12_DeltaPl"), DeltaPl_nbins,DeltaPl_min, DeltaPl_max, "p_{l}","B_{12}");
-  h_B21_Qinv      = createHistogram(createName(_histogramBaseName,"B21_Qinv"),    Qinv_nbins,   Qinv_min,    Qinv_max,    "Q_{inv}","B_{21}", 2);
-  h_B21_DeltaPs   = createHistogram(createName(_histogramBaseName,"B21_DeltaPs"), DeltaPs_nbins,DeltaPs_min, DeltaPs_max, "p_{s}","B_{21}");
-  h_B21_DeltaPo   = createHistogram(createName(_histogramBaseName,"B21_DeltaPo"), DeltaPo_nbins,DeltaPo_min, DeltaPo_max, "p_{o}","B_{21}");
-  h_B21_DeltaPl   = createHistogram(createName(_histogramBaseName,"B21_DeltaPl"), DeltaPl_nbins,DeltaPl_min, DeltaPl_max, "p_{l}","B_{21}");
-  h_Bs_Qinv       = createHistogram(createName(_histogramBaseName,"Bs_Qinv"),     Qinv_nbins,   Qinv_min,    Qinv_max,    "Q_{inv}","B_{s}", 2);
-  h_Bs_DeltaPs    = createHistogram(createName(_histogramBaseName,"Bs_DeltaPs"),  DeltaPs_nbins,DeltaPs_min, DeltaPs_max, "p_{s}","B_{s}");
-  h_Bs_DeltaPo    = createHistogram(createName(_histogramBaseName,"Bs_DeltaPo"),  DeltaPo_nbins,DeltaPo_min, DeltaPo_max, "p_{o}","B_{s}");
-  h_Bs_DeltaPl    = createHistogram(createName(_histogramBaseName,"Bs_DeltaPl"),  DeltaPl_nbins,DeltaPl_min, DeltaPl_max, "p_{l}","B_{s1}");
-}
-
-void ParticlePair3DBfHistos::loadFrom(const Folder & inputFile)
-{
-  if (reportDebug(__FUNCTION__)) { printCR();}
-  h_B12_Qinv    = importHistogram(inputFile,createName(_histogramBaseName,"B12_Qinv"));
-  h_B12_DeltaPs = importHistogram(inputFile,createName(_histogramBaseName,"B12_DeltaPs"));
-  h_B12_DeltaPo = importHistogram(inputFile,createName(_histogramBaseName,"B12_DeltaPo"));
-  h_B12_DeltaPl = importHistogram(inputFile,createName(_histogramBaseName,"B12_DeltaPl"));
-  h_B21_Qinv    = importHistogram(inputFile,createName(_histogramBaseName,"B21_Qinv"));
-  h_B21_DeltaPs = importHistogram(inputFile,createName(_histogramBaseName,"B21_DeltaPs"));
-  h_B21_DeltaPo = importHistogram(inputFile,createName(_histogramBaseName,"B21_DeltaPo"));
-  h_B21_DeltaPl = importHistogram(inputFile,createName(_histogramBaseName,"B21_DeltaPl"));
-  h_Bs_Qinv     = importHistogram(inputFile,createName(_histogramBaseName,"Bs_Qinv"));
-  h_Bs_DeltaPs  = importHistogram(inputFile,createName(_histogramBaseName,"Bs_DeltaPs"));
-  h_Bs_DeltaPo  = importHistogram(inputFile,createName(_histogramBaseName,"Bs_DeltaPo"));
-  h_Bs_DeltaPl  = importHistogram(inputFile,createName(_histogramBaseName,"Bs_DeltaPl"));
-}
-
-//!
-//! HistogramFolder from ParticlePair3DBfHistos must be normalized "per event" before calling this function
-//!
-//!  calculateBfHistograms(pair12, pair12B,pair1B2,pair1B2B);  // ++, +-, -+, --
-//!
-void ParticlePair3DBfHistos::calculateBfHistograms(ParticlePair3DDerivedHistos & pair12B,
-                                                   ParticlePair3DDerivedHistos & pair1B2B,
-                                                   ParticlePair3DDerivedHistos & pair1B2,
-                                                   ParticlePair3DDerivedHistos & pair12)
-{
+  void ParticlePair3DBFHistos::calculate(const ParticlePair3DHistos & ab,  const ParticlePair3DHistos & abB,
+                                         const ParticlePair3DHistos & aBb, const ParticlePair3DHistos & aBbB,
+                                         const ParticleSingleHistos & a, const ParticleSingleHistos & aB,
+                                         const ParticleSingleHistos & /*b*/, const ParticleSingleHistos & /*bB*/)
+  {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  // (-+) - (++)
-  h_B12_Qinv   ->setAsSumOf(*pair1B2.h_a12_Qinv,*pair12.h_a12_Qinv,1.0,-1.0);
-  h_B12_DeltaPs->setAsSumOf(*pair1B2.h_a12_DeltaPs,*pair12.h_a12_DeltaPs,1.0,-1.0);
-  h_B12_DeltaPo->setAsSumOf(*pair1B2.h_a12_DeltaPo,*pair12.h_a12_DeltaPo,1.0,-1.0);
-  h_B12_DeltaPl->setAsSumOf(*pair1B2.h_a12_DeltaPl,*pair12.h_a12_DeltaPl,1.0,-1.0);
+  if (!a.h_n1_ptY || !aB.h_n1_ptY)
+    throw HistogramException("n1_ptY","missing in a single folder (FillPtvsY)",__FUNCTION__);
+  double nA = a.h_n1_ptY->integral(), nAB = aB.h_n1_ptY->integral();
+  double invA = nA>0.0 ? 1.0/nA : 0.0, invAB = nAB>0.0 ? 1.0/nAB : 0.0;
+  for (int iv=0; iv<kNVariables; iv++)
+    {
+    Variables v = Variables(iv);
+    if (!_h[v][kB]) continue;
+    const Histogram * r_ab   = of(ab,"r2",v);
+    const Histogram * r_abB  = of(abB,"r2",v);
+    const Histogram * r_aBb  = of(aBb,"r2",v);
+    const Histogram * r_aBbB = of(aBbB,"r2",v);
+    const Histogram * n_ab   = of(ab,"n2",v);
+    const Histogram * n_abB  = of(abB,"n2",v);
+    const Histogram * n_aBb  = of(aBb,"n2",v);
+    const Histogram * n_aBbB = of(aBbB,"n2",v);
+    if (!r_ab || !r_abB || !r_aBb || !r_aBbB)
+      throw HistogramException(String("r2_")+variableName(v),"missing in a pair folder (derived histograms not computed?)",__FUNCTION__);
+    if (!n_ab || !n_abB || !n_aBb || !n_aBbB)
+      throw HistogramException(String("n2_")+variableName(v),"missing in a pair folder",__FUNCTION__);
 
-  // (+-) - (--)
-  h_B21_Qinv   ->setAsSumOf(*pair12B.h_a21_Qinv,*pair1B2B.h_a21_Qinv,1.0,-1.0);
-  h_B21_DeltaPs->setAsSumOf(*pair12B.h_a21_DeltaPs,*pair1B2B.h_a21_DeltaPs,1.0,-1.0);
-  h_B21_DeltaPo->setAsSumOf(*pair12B.h_a21_DeltaPo,*pair1B2B.h_a21_DeltaPo,1.0,-1.0);
-  h_B21_DeltaPl->setAsSumOf(*pair12B.h_a21_DeltaPl,*pair1B2B.h_a21_DeltaPl,1.0,-1.0);
+    // charge independent and charge dependent combinations
+    _h[v][kR2CI]->setAsSumOf({ r_ab, r_abB, r_aBb, r_aBbB }, { 0.25, 0.25, 0.25, 0.25 });
+    _h[v][kR2CD]->setAsSumOf({ r_abB, r_aBb, r_ab, r_aBbB }, { 0.5, 0.5, -0.5, -0.5 });
 
-  // 0.5( (-+) - (++) ) + 0.5 (  (+-) - (--) )
-  h_Bs_Qinv    ->setAsSumOf(*h_B12_Qinv,*h_B21_Qinv,0.5,0.5);
-  h_Bs_DeltaPs ->setAsSumOf(*h_B12_DeltaPs,*h_B12_DeltaPs,0.5,0.5);
-  h_Bs_DeltaPo ->setAsSumOf(*h_B12_DeltaPo,*h_B12_DeltaPo,0.5,0.5);
-  h_Bs_DeltaPl ->setAsSumOf(*h_B12_DeltaPl,*h_B12_DeltaPl,0.5,0.5);
-}
+    // balance functions per trigger particle
+    _h[v][kBabB]->setAsSumOf(*n_abB, *n_aBbB, invA,  -invAB);
+    _h[v][kBaBb]->setAsSumOf(*n_aBb, *n_ab,   invAB, -invA);
+    _h[v][kB]   ->setAsSumOf(*_h[v][kBabB], *_h[v][kBaBb], 0.5, 0.5);
+    }
+  }
 
-
-//! set the masses to be used in the calculation of q_inv
-//! The default value set at construction are the pion+ mass.
-//!
-void ParticlePair3DBfHistos::setMasses(double m1, double m2)
-{
-  mass1 = m1;
-  mass2 = m2;
-}
-
-
-} //  namespace CAP
+} // namespace CAP

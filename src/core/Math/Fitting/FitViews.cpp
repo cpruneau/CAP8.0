@@ -90,15 +90,31 @@ namespace CAP
     r.label = fit.label + String(axis == 0 ? " (x projection)" : " (y projection)");
     r.function = std::make_shared<ProjectedFunction>(*fit.function, axis, lowEdges, highEdges);
     if (fit.low.size() == 2) { r.low = { fit.low[axis] }; r.high = { fit.high[axis] }; }
+    // regions along the axis kept only (as variable 0 of the projection); those along the other axis cannot apply
+    bool dropped = false;
+    auto project = [axis, &dropped](const std::vector<Region> & regions)
+      {
+      std::vector<Region> kept;
+      for (const Region & region : regions)
+        {
+        double a, b;
+        if (region.restricts(1 - axis)) { dropped = true; continue; }
+        if (region.intervalOf(axis, a, b)) kept.push_back(Region::interval(0, a, b));
+        }
+      return kept;
+      };
+    r.included = project(fit.included);
+    r.excluded = project(fit.excluded);
     r.result = fit.result;
     r.result.statistic = "chi square of the projection";
     r.result.method = String("projection of: ") + fit.result.method;
+    if (dropped) r.result.status += " (regions of the fit along the other axis not applied to the projection)";
     double chi2 = 0;
     int used = 0;
     for (unsigned int i=0; i<p.nBinsTotal(); i++)
       {
       double sigma = p.statErrorAt(i), x = p.coordinatesAt(i)[0];
-      if (!(sigma > 0) || (!r.low.empty() && (x < r.low[0] || x > r.high[0]))) continue;
+      if (!(sigma > 0) || (!r.low.empty() && !r.inRange(x))) continue;
       double g = r.function->evaluateAt(x);
       if (!std::isfinite(g)) continue;
       chi2 += (p.valueAt(i) - g)*(p.valueAt(i) - g)/(sigma*sigma);

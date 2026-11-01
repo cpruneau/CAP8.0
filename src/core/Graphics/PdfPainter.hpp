@@ -74,6 +74,9 @@ namespace CAP
   //! @brief Text (see Painter::drawText()): the glyph paths of a text typeset by LaTeX, otherwise a text in the standard
   //! font of its ROOT font code.
   virtual void drawText(const Point2D & position, const String & text, const TextAttributes & attributes, float angle=0.0);
+  //! @brief Width of a text in points: that of its LaTeX image (see Painter::textWidth()), otherwise from the metrics
+  //! of the standard fonts it is drawn with. @param text text @param attributes font and size @return width
+  virtual float textWidth(const String & text, const TextAttributes & attributes) const override;
 
   //! @brief The PDF document. @return bytes of the file
   std::string document() const;
@@ -88,6 +91,18 @@ namespace CAP
   static int fontIndex(int font);
   //! @brief Text converted from UTF-8 to WinAnsi bytes, '?' for the characters it lacks. @param text text @return bytes
   static std::string winAnsi(const String & text);
+  //! @brief A part of a text drawn in one font (see textRuns()).
+  struct TextRun
+  {
+    int font;            //!< index of the standard font (see fontIndex())
+    std::string bytes;   //!< bytes in the encoding of the font
+  };
+  //!
+  //! @brief Text split into the parts drawn in each font: the Greek letters (e.g. the chi of "χ²/ndf") in the Symbol
+  //! font, which has them, and the other characters in font, converted to WinAnsi ('?' for those it lacks).
+  //! @param text text (UTF-8) @param font index of the standard font of the text @return parts, in order
+  //!
+  static std::vector<TextRun> textRuns(const String & text, int font);
 
   protected:
 

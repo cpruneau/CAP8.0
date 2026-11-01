@@ -48,11 +48,28 @@ namespace CAP
   }
   } // namespace
 
-  bool FitRecord::inRange(const std::vector<double> & x) const
+  bool FitRecord::inBox(const std::vector<double> & x) const
   {
   if (low.empty() || low.size() != x.size()) return false;
   for (std::size_t k=0; k<x.size(); k++) if (x[k] < low[k] || x[k] > high[k]) return false;
   return true;
+  }
+
+  bool FitRecord::inRange(const std::vector<double> & x) const
+  {
+  if (!inBox(x)) return false;
+  if (!hasRegions()) return true;
+  FitSelection s;
+  s.setRegions(included, excluded);
+  return s.contains(x);
+  }
+
+  FitSelection FitRecord::selection() const
+  {
+  FitSelection s;
+  if (low.size() == high.size()) s.setBox(low, high);
+  s.setRegions(included, excluded);
+  return s;
   }
 
   bool FitRecord::chiSquareLike() const { return !result.statistic.contains("unbinned"); }
@@ -95,6 +112,17 @@ namespace CAP
     std::string range;
     for (std::size_t i=0; i<low.size(); i++) range += (i ? " x " : "") + std::string("[") + number(low[i]) + ", " + number(high[i]) + "]";
     add("range", range);
+    }
+  if (hasRegions())
+    {
+    auto list = [](const std::vector<Region> & regions)
+      {
+      std::string t;
+      for (std::size_t i=0; i<regions.size(); i++) t += (i ? "; " : "") + regions[i].toString();
+      return t;
+      };
+    if (!included.empty()) add("only", list(included));
+    if (!excluded.empty()) add("excluding", list(excluded));
     }
   return rows;
   }
@@ -216,6 +244,50 @@ namespace CAP
   return result;
   }
 
+  void writeRegions(BinaryWriter & w, const std::vector<Region> & regions)
+  {
+  w.writeVarUInt(regions.size());
+  for (const Region & region : regions)
+    {
+    w.writeVarUInt(region.intervals().size());
+    for (const auto & interval : region.intervals())
+      {
+      w.writeVarUInt(interval.first);
+      w.writeFloat64(interval.second.first);
+      w.writeFloat64(interval.second.second);
+      }
+    }
+  }
+
+  std::vector<Region> readRegions(BinaryReader & r)
+  {
+  std::vector<Region> regions;
+  uint64_t n = r.readVarUInt();
+  if (n > r.remaining()) throw Exception("More regions than data", "FitList::decodeBinary()");
+  for (uint64_t i=0; i<n; i++)
+    {
+    Region region;
+    uint64_t m = r.readVarUInt();
+    if (m > r.remaining()) throw Exception("More intervals than data", "FitList::decodeBinary()");
+    for (uint64_t j=0; j<m; j++)
+      {
+      uint64_t dimension = r.readVarUInt();
+      double a = r.readFloat64(), b = r.readFloat64();
+      if (dimension > 64) throw Exception("Invalid region of a fit", "FitList::decodeBinary()");
+      region.add((unsigned int)dimension, a, b);
+      }
+    regions.push_back(region);
+    }
+  return regions;
+  }
+
+  //! Byte that starts the extensions of a fit, after its range (not a valid start of the first version of the regions).
+  const uint8_t kExtensionsMarker = 0xFE;
+  //! Extension holding the regions of the fit.
+  const uint64_t kRegionsExtension = 1;
+  //! Extension holding the whole fitted function, as a "CAPU" payload (see ParameterizedFunction::encodeBinary()).
+  const uint64_t kFunctionExtension = 2;
+
   void writeRecord(BinaryWriter & w, const FitRecord & record)
   {
   const ParameterizedFunction & f = *record.function;
@@ -229,6 +301,33 @@ namespace CAP
   writeResult(w, record.result);
   writeDoubles(w, record.low);
   writeDoubles(w, record.high);
+  // extensions, at the end of the block (readers written before them skip them): the regions of the fit, and the
+  // whole function (a "CAPU" payload: any function, an unregistered composite included, is read back from it)
+  std::vector<std::pair<uint64_t,std::string>> extensions;
+  if (record.hasRegions())
+    {
+    BinaryWriter regions;
+    writeRegions(regions, record.included);
+    writeRegions(regions, record.excluded);
+    extensions.push_back({ kRegionsExtension, regions.buffer() });
+    }
+  try
+    {
+    BinaryWriter function;
+    function.writeString(String(f.name()));
+    f.encodeBinary(function);
+    extensions.push_back({ kFunctionExtension, function.buffer() });
+    }
+  catch (const std::exception &) { }   // a class that cannot be saved (e.g. a projection, a view): the head above only
+  if (extensions.empty()) return;
+  w.writeUInt8(kExtensionsMarker);
+  w.writeVarUInt(extensions.size());
+  for (const auto & extension : extensions)
+    {
+    w.writeVarUInt(extension.first);
+    w.writeVarUInt(extension.second.size());
+    w.writeBytes(extension.second.data(), extension.second.size());
+    }
   }
 
   //! The record of a block, or null if the class of its function is not registered.
@@ -238,16 +337,15 @@ namespace CAP
   uint64_t nParameters = r.readVarUInt();
   uint64_t rank = r.readVarUInt();
   if (nParameters > r.remaining() || rank == 0 || rank > 64) throw Exception("Invalid fit function", "FitList::decodeBinary()");
-  std::unique_ptr<ParameterizedFunction> f(FunctionRegistry::create(type, (unsigned int)nParameters));
-  if (!f || f->rank() != rank) return nullptr;
-  f->setName(r.readString());
-  f->setTitle(r.readString());
+  String functionName = r.readString();
+  String functionTitle = r.readString();
+  std::vector<Parameter> parameters;
   for (unsigned int k=0; k<nParameters; k++)
     {
     Parameter p;
     String name = r.readString();
     p.decodeBinary(r, name, Parameter::binaryVersion());
-    f->setParameter(k, p);
+    parameters.push_back(p);
     }
   auto record = std::make_shared<FitRecord>();
   record->label  = r.readString();
@@ -255,6 +353,47 @@ namespace CAP
   record->low  = readDoubles(r);
   record->high = readDoubles(r);
   if (record->low.size() != record->high.size()) throw Exception("Invalid fit range", "FitList::decodeBinary()");
+  std::unique_ptr<ParameterizedFunction> f;
+  if (r.remaining() > 0 && r.peekUInt8() == kExtensionsMarker)
+    {
+    r.readUInt8();
+    uint64_t n = r.readVarUInt();
+    if (n > r.remaining()) throw Exception("More extensions than data", "FitList::decodeBinary()");
+    for (uint64_t k=0; k<n; k++)
+      {
+      uint64_t id = r.readVarUInt(), length = r.readVarUInt();
+      if (length > r.remaining()) throw Exception("Extension larger than the fit", "FitList::decodeBinary()");
+      BinaryReader e(r.readSpan(std::size_t(length)), std::size_t(length));
+      if (id == kRegionsExtension)
+        {
+        record->included = readRegions(e);
+        record->excluded = readRegions(e);
+        }
+      else if (id == kFunctionExtension)
+        {
+        try
+          {
+          String name = e.readString();
+          f.reset(ParameterizedFunction::decodeNewBinary(e, name, ParameterizedFunction::binaryVersion()));
+          if (f && (f->rank() != rank || f->nParameters() != nParameters)) f.reset();
+          }
+        catch (const std::exception &) { f.reset(); }   // e.g. a component of a class not registered here: the head
+        }
+      }                                                   // unknown extensions are skipped
+    }
+  else if (r.remaining() > 0)                             // regions alone, as written by a first version of the regions
+    {
+    record->included = readRegions(r);
+    record->excluded = readRegions(r);
+    }
+  if (!f)                                                 // the class named in the head, if it is registered here
+    {
+    f.reset(FunctionRegistry::create(type, (unsigned int)nParameters));
+    if (!f || f->rank() != rank) return nullptr;
+    f->setName(functionName);
+    f->setTitle(functionTitle);
+    for (unsigned int k=0; k<parameters.size(); k++) f->setParameter(k, parameters[k]);
+    }
   record->function.reset(f.release());
   return record;
   }

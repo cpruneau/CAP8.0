@@ -10,6 +10,7 @@
 #ifndef CAP__ParticlePairHistos
 #define CAP__ParticlePairHistos
 #include "HistogramFolder.hpp"
+#include "PairDerivedCalculator.hpp"
 #include "Particle.hpp"
 #include "ParticleSingleHistos.hpp"
 
@@ -45,6 +46,10 @@ public:
   //! @param configuration configuration @param taskName name of the task
   //!
   static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
+  //! @brief Name of the task computing the derived histograms of these folders (see PairDerivedCalculator). @return name
+  static const char * derivedCalculatorName() { return "ParticlePairDerivedCalculator"; }
+  //! @brief Default name of the analyzer task filling these folders. @return name
+  static const char * analyzerName() { return "ParticlePairAnalyzer"; }
   //! @brief Read the binning and fill options. @param taskName name of the task @param objectType object type
   //! @param configuration configuration @param index index
   virtual void configure(const String & taskName,
@@ -53,7 +58,8 @@ public:
                                unsigned int index);
   //! @brief Create the histograms (according to the fill options).
   virtual void create();
-  //! @brief Load the histograms from a file. @param inputFile file
+  //! @brief Load the base histograms from a folder of a file, and the derived histograms if the folder has them.
+  //! @param inputFile folder @throws FileException if a base histogram is missing
   virtual void loadFrom(const Folder & inputFile);
   //! @brief Fill the histograms with a pair. @param particle1 first particle @param particle2 second particle
   //! @param weight weight
@@ -105,14 +111,25 @@ public:
 
   //! @brief Create the derived histograms (according to the fill options), empty; see calculateDerived().
   virtual void createDerived();
-  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  //! @brief Load the derived histograms from a folder of a file, if it has all of them (they are there once a derived
+  //! calculator computed them); otherwise none is loaded, and no exception is thrown. @param inputFile folder
   virtual void loadDerivedFrom(const Folder & inputFile);
+  //! @brief The derived histograms (according to the fill options): the members pointing to them and their names,
+  //! as createDerived() makes them. @return list
+  HistogramList derivedHistograms();
   //!
   //! @brief Compute the derived histograms of this pair group (n1n1, C2, C2N, C2O, R2, G2, P2 and the shifted
   //! Delta phi versions) from its base histograms and the base and derived histograms of its two particles.
   //! @param single1 histograms of particle 1 (derived computed) @param single2 histograms of particle 2 (derived computed)
   //!
   virtual void calculateDerived(const ParticleSingleHistos & single1, const ParticleSingleHistos & single2);
+  //! @brief Same as calculateDerived(single1, single2), with the signature of ParticlePair3DHistos::calculateDerived()
+  //! (used by the calculators common to both, see PairBFCalculator). @param single1 histograms of particle 1
+  //! @param single2 histograms of particle 2 @param same whether the two particle filters are the same (not used)
+  void calculateDerived(const ParticleSingleHistos & single1, const ParticleSingleHistos & single2, bool same)
+  { (void) same; calculateDerived(single1,single2); }
+  //! @brief Whether the derived histograms exist (created or loaded). @return true if they do
+  bool hasDerived() const { return h_n1n1_phiphi!=nullptr; }
   //! @brief Omega factor of each Delta y bin (fraction of the acceptance). @param h_DyDphi histogram @param omegaFactor [out] factors
   void calculateOmegaFactor(Histogram * h_DyDphi, std::vector<double> & omegaFactor);
   //! @brief Divide each Delta y column by its omega factor. @param h_DyDphi source @param h_DyDphi_Avg target @param omegaFactor factors
@@ -124,6 +141,18 @@ public:
   //! @param target [out] <pT1><pT2>
   //!
   void calculatePt1Pt1(const Histogram * spt1, const Histogram * spt2, const Histogram * n1n1, Histogram * target);
+  //!
+  //! @brief <Delta pT1 Delta pT2> of the pairs in each bin, with Delta pT = pT - <pT>:
+  //! (S_pp - <pT2> S_pn - <pT1> S_np + <pT1><pT2> n2)/n2, where S_pp, S_pn and S_np are the pair densities weighted by
+  //! pT1 pT2, pT1 and pT2; 0 in bins without pairs.
+  //! @param spp pairs weighted by pT1 pT2 @param spn pairs weighted by pT1 @param snp pairs weighted by pT2
+  //! @param n2 pair density @param avgPt1 <pT> of particle 1 @param avgPt2 <pT> of particle 2 @param target [out] <Delta pT Delta pT>
+  //!
+  void calculateDptDpt(const Histogram * spp, const Histogram * spn, const Histogram * snp, const Histogram * n2,
+                       double avgPt1, double avgPt2, Histogram * target);
+  //! @brief Inclusive <pT> of a particle: pT sum over number of particles. @param spt pT sum vs a variable
+  //! @param n1 density vs the same variable @return <pT> (0 if no particles)
+  static double inclusiveAvgPt(const Histogram * spt, const Histogram * n1);
 
 public:
 
@@ -179,6 +208,16 @@ public:
   Histogram * h_ptpt_DetaDphi;  ///< pair density weighted by pT1 pT2 vs (Delta eta, Delta phi)
   Histogram * h_n2_DyDphi;  ///< pair density vs (Delta y, Delta phi)
   Histogram * h_ptpt_DyDphi;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi)
+  Histogram * h_ptn_phiphi;  ///< pair density weighted by pT1 vs (phi1, phi2) (p2_fill)
+  Histogram * h_npt_phiphi;  ///< pair density weighted by pT2 vs (phi1, phi2) (p2_fill)
+  Histogram * h_ptn_etaeta;  ///< pair density weighted by pT1 vs (eta1, eta2) (p2_fill)
+  Histogram * h_npt_etaeta;  ///< pair density weighted by pT2 vs (eta1, eta2) (p2_fill)
+  Histogram * h_ptn_yY;  ///< pair density weighted by pT1 vs (y1, y2) (p2_fill)
+  Histogram * h_npt_yY;  ///< pair density weighted by pT2 vs (y1, y2) (p2_fill)
+  Histogram * h_ptn_DetaDphi;  ///< pair density weighted by pT1 vs (Delta eta, Delta phi) (p2_fill)
+  Histogram * h_npt_DetaDphi;  ///< pair density weighted by pT2 vs (Delta eta, Delta phi) (p2_fill)
+  Histogram * h_ptn_DyDphi;  ///< pair density weighted by pT1 vs (Delta y, Delta phi) (p2_fill)
+  Histogram * h_npt_DyDphi;  ///< pair density weighted by pT2 vs (Delta y, Delta phi) (p2_fill)
 
   // Derived histograms (createDerived(), calculateDerived())
   Histogram* h_n1n1_ptpt;  ///< product of the single-particle densities n1(1) n1(2) vs (pT1, pT2)
@@ -245,6 +284,12 @@ public:
   Histogram* h_DptDpt_DyDphi_shft;  ///< pair density weighted by pT1 pT2 vs (Delta y, Delta phi), Delta phi range shifted
 
 };
+
+//!
+//! @brief Derived histograms of the pair analysis (second phase): PairDerivedCalculator with the pair folders
+//! ParticlePairHistos, registered as the task class CAP::ParticlePairDerivedCalculator.
+//!
+using ParticlePairDerivedCalculator = PairDerivedCalculator<ParticlePairHistos>;
 
 } // namespace CAP
 

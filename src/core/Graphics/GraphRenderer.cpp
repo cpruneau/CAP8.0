@@ -134,6 +134,28 @@ namespace CAP
   return x1 > x0 && y1 > y0;
   }
 
+  //! Outlines of the regions of a fit of rank 2 within [x0,x1] x [y0,y1] (a region not restricting a variable spans
+  //! its whole range): regions excluded dashed, regions included solid, in the line of the fit.
+  void drawMapFitRegions(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view,
+                         const MATH::FitRecord & fit, double x0, double x1, double y0, double y1, const LineAttributes & line)
+  {
+  auto outline = [&](const MATH::Region & region, const LineAttributes & attributes)
+    {
+    double a = x0, b = x1, c = y0, d = y1;
+    region.intervalOf(0, a, b);
+    region.intervalOf(1, c, d);
+    a = std::max(a, x0); b = std::min(b, x1); c = std::max(c, y0); d = std::min(d, y1);
+    if (!(b > a) || !(d > c) || (view.logX && a <= 0) || (view.logY && c <= 0)) return;
+    std::vector<Point2D> points = { graph.toCanvas(view, a, c), graph.toCanvas(view, b, c), graph.toCanvas(view, b, d),
+                                    graph.toCanvas(view, a, d), graph.toCanvas(view, a, c) };
+    drawClipped(painter, box, points, std::vector<bool>(points.size(), true), attributes);
+    };
+  LineAttributes dashed = line;
+  dashed.setStyle(2);
+  for (const MATH::Region & region : fit.excluded) outline(region, dashed);
+  for (const MATH::Region & region : fit.included) outline(region, line);
+  }
+
   //! Contour lines of the fits of rank 2 of a map, at its contour levels, in the lines of the fits.
   void drawMapFits(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item)
   {
@@ -147,6 +169,7 @@ namespace CAP
     if (levels.empty()) levels = graph.contourLevels(view, item);
     Grid2D grid = Grid2D::fromFunction(*fit->function, x0, x1, 120, y0, y1, 120, view.logX, view.logY);
     LineAttributes line = item.fitLineAttributes(k);
+    if (fit->hasRegions()) drawMapFitRegions(painter, box, graph, view, *fit, x0, x1, y0, y1, line);
     for (double level : levels)
       for (const auto & polyline : grid.contour(level, view.logZ))
         {
@@ -172,8 +195,59 @@ namespace CAP
     if (!fit) continue;
     double a = view.xMinimum, b = view.xMaximum;
     if (!item.extendFits() && !fit->low.empty()) { a = fit->low[0]; b = fit->high[0]; }
-    drawCurve(painter, box, graph, view, [fit](double x) { return fit->function->evaluateAt(x); },
-              a, b, std::max(item.nSamples(), 200), item.fitLineAttributes(k));
+    const int n = std::max(item.nSamples(), 200);
+    auto f = [fit](double x) { return fit->function->evaluateAt(x); };
+    LineAttributes line = item.fitLineAttributes(k);
+    if (!fit->hasRegions() || fit->function->rank() != 1 || !(b > a))
+      {
+      drawCurve(painter, box, graph, view, f, a, b, n, line);
+      continue;
+      }
+    // regions of the fit: solid where points were fitted, dashed over the parts left out
+    std::vector<double> ends = { a, b };
+    for (const auto * regions : { &fit->included, &fit->excluded })
+      for (const MATH::Region & region : *regions)
+        {
+        double u, v;
+        if (!region.intervalOf(0, u, v)) continue;
+        if (u > a && u < b) ends.push_back(u);
+        if (v > a && v < b) ends.push_back(v);
+        }
+    std::sort(ends.begin(), ends.end());
+    ends.erase(std::unique(ends.begin(), ends.end()), ends.end());
+    LineAttributes dashed = line;
+    dashed.setStyle(2);
+    MATH::FitSelection regions;
+    regions.setRegions(fit->included, fit->excluded);
+    for (std::size_t s=0; s+1<ends.size(); s++)
+      {
+      double u = ends[s], v = ends[s+1];
+      int m = std::max(2, int(std::ceil(n*(v - u)/(b - a))) + 1);
+      drawCurve(painter, box, graph, view, f, u, v, m, regions.contains(0.5*(u + v)) ? line : dashed);
+      }
+    }
+  }
+  //! Light bands over the intervals of x left out of the fits of rank 1 of an item (drawn behind the data).
+  void shadeFitRegions(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item)
+  {
+  const Color shade(0.5f, 0.5f, 0.5f, 0.12f);
+  const double y = view.logY ? view.yMinimum : 0.5*(view.yMinimum + view.yMaximum);
+  for (unsigned int k=0; k<item.nFits(); k++)
+    {
+    const MATH::FitRecord * fit = drawnFit(graph, item, k);
+    if (!fit || !fit->function || fit->function->rank() != 1) continue;
+    for (const MATH::Region & region : fit->excluded)
+      {
+      double u, v;
+      if (!region.intervalOf(0, u, v)) continue;
+      u = std::max<double>(u, view.xMinimum);
+      v = std::min<double>(v, view.xMaximum);
+      if (!(v > u) || (view.logX && u <= 0)) continue;
+      float x0 = graph.toCanvas(view, u, y).x(), x1 = graph.toCanvas(view, v, y).x();
+      if (x0 > x1) std::swap(x0, x1);
+      x0 = std::max(x0, box.x0); x1 = std::min(x1, box.x1);
+      if (x1 > x0) painter.fillRectangle(x0, box.y0, x1, box.y1, shade);
+      }
     }
   }
   } // namespace
@@ -589,6 +663,7 @@ namespace CAP
     else if (item.kind() == GraphItem::kFunction && item.function() && item.function()->rank() == 1)
       {
       const MATH::Function * function = item.function();
+      shadeFitRegions(painter, box, *graph, view, item);
       if (item.showLine())
         drawCurve(painter, box, *graph, view, [function](double x) { return function->evaluateAt(x); },
                   item.xMinimum(), item.xMaximum(), item.nSamples(), item.lineAttributes());
@@ -597,6 +672,7 @@ namespace CAP
     else if (item.kind() == GraphItem::kData && item.data())
       {
       const MATH::DataPoints & d = *item.data();
+      shadeFitRegions(painter, box, *graph, view, item);
       if (item.showSysErrors()) drawSysErrors(painter, box, *graph, view, item);
       std::vector<Point2D> points;
       std::vector<bool> valid;

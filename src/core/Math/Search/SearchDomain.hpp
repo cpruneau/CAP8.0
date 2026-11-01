@@ -8,53 +8,25 @@
  *
  * *********************************************************************/
 //! @file SearchDomain.hpp
-//! @brief SearchDomain and ExclusionRegion: where an extremum search may look.
+//! @brief SearchDomain: where an extremum search may look.
 #ifndef CAP__MATH__SearchDomain
 #define CAP__MATH__SearchDomain
 #include <limits>
 #include <utility>
 #include <vector>
+#include "Region.hpp"
 
 namespace CAP
 {
   namespace MATH
   {
 
-  //!
-  //! @brief A region left out of a search: intervals in one or more dimensions (the other dimensions are not
-  //! restricted). A point is in the region if it is in all its intervals (bounds included).
-  //!
-  //! @code
-  //!   ExclusionRegion band = ExclusionRegion::interval(0, 1.2, 1.4);               // 1.2 <= x <= 1.4, any y
-  //!   ExclusionRegion box = ExclusionRegion().add(0, 0.0, 1.0).add(1, 2.0, 3.0);   // the box [0,1] x [2,3]
-  //! @endcode
-  //!
-  class ExclusionRegion
-  {
-  public:
-
-  //! @brief Region without intervals (it contains every point; add intervals to restrict it).
-  ExclusionRegion() { }
-  //! @brief Add (or replace) the interval of a dimension. @param dimension dimension (0 for x)
-  //! @param low lower end @param high upper end @return this region
-  ExclusionRegion & add(unsigned int dimension, double low, double high);
-  //! @brief Region of one interval. @param dimension dimension @param low lower end @param high upper end @return region
-  static ExclusionRegion interval(unsigned int dimension, double low, double high) { return ExclusionRegion().add(dimension, low, high); }
-  //! @brief Box over all the dimensions. @param low lower ends @param high upper ends @return region
-  static ExclusionRegion box(const std::vector<double> & low, const std::vector<double> & high);
-  //! @brief Intervals of the region: (dimension, (low, high)). @return intervals
-  const std::vector<std::pair<unsigned int,std::pair<double,double>>> & intervals() const { return _intervals; }
-  //! @brief Whether the point is in the region. @param x point @return true if it is in all the intervals
-  bool contains(const std::vector<double> & x) const;
-
-  protected:
-
-  std::vector<std::pair<unsigned int,std::pair<double,double>>> _intervals;   //!< (dimension, (low, high))
-  };
+  //! @brief Former name of Region (a region left out of a search).
+  using ExclusionRegion = Region;
 
   //!
   //! @brief Where an extremum search may look: bounds in each dimension (infinite by default), regions left out
-  //! (ExclusionRegion), and an optional start point.
+  //! (Region), and an optional start point.
   //!
   //! Global engines need finite bounds; local engines can start from a point in an unbounded domain. A point is
   //! allowed if it is within the bounds and in no exclusion region.
@@ -91,12 +63,12 @@ namespace CAP
   double width(unsigned int k) const;
 
   //! @brief Leave a region out of the search. @param region region
-  void exclude(const ExclusionRegion & region) { _exclusions.push_back(region); }
+  void exclude(const Region & region) { _exclusions.push_back(region); }
   //! @brief Leave an interval of one dimension out of the search. @param k dimension @param low lower end
   //! @param high upper end
-  void exclude(unsigned int k, double low, double high) { exclude(ExclusionRegion::interval(k, low, high)); }
+  void exclude(unsigned int k, double low, double high) { exclude(Region::interval(k, low, high)); }
   //! @brief Regions left out. @return regions
-  const std::vector<ExclusionRegion> & exclusions() const { return _exclusions; }
+  const std::vector<Region> & exclusions() const { return _exclusions; }
   //! @brief Remove all the exclusion regions.
   void clearExclusions() { _exclusions.clear(); }
 
@@ -122,7 +94,7 @@ namespace CAP
 
   std::vector<double> _lower;   //!< lower bounds
   std::vector<double> _upper;   //!< upper bounds
-  std::vector<ExclusionRegion> _exclusions;   //!< regions left out
+  std::vector<Region> _exclusions;   //!< regions left out
   std::vector<double> _start;   //!< start point (empty if none)
   };
 

@@ -117,8 +117,29 @@ namespace CAP
   //! @brief Fit only the points inside a box: low[k] <= x[k] <= high[k] for each variable (any rank).
   //! @param low lower ends @param high upper ends @throws MathException if the sizes differ from the rank
   void setRange(const std::vector<double> & low, const std::vector<double> & high) { _likelihood->setRange(low, high); }
-  //! @brief Fit all the points (no range; an unbinned likelihood keeps its own range).
+  //! @brief Fit all the points (no range; an unbinned likelihood keeps its own range). Regions are kept.
   void clearRange() { _likelihood->setRange({}, {}); }
+  //!
+  //! @brief Fit only the points of a selection: a box, regions included and regions excluded (see FitSelection).
+  //! A point (the center of a bin, an event) is used if it is in the box, in an included region (if any), and in no
+  //! excluded region. @param selection selection @throws MathException if it does not fit the rank of the function
+  //!
+  void setSelection(const FitSelection & selection) { _likelihood->setSelection(selection); }
+  //! @brief The points fitted: box and regions. @return selection
+  const FitSelection & selection() const { return _likelihood->selection(); }
+  //! @brief Add a region to fit (the points used are in at least one included region). @param region region
+  //! @throws MathException if it does not fit the rank of the function
+  void include(const Region & region) { FitSelection s = selection(); s.include(region); setSelection(s); }
+  //! @brief Fit only the points with low <= x[k] <= high, among others included. @param k variable @param low lower end
+  //! @param high upper end
+  void include(unsigned int k, double low, double high) { include(Region::interval(k, low, high)); }
+  //! @brief Leave a region out of the fit. @param region region @throws MathException if it does not fit the rank
+  void exclude(const Region & region) { FitSelection s = selection(); s.exclude(region); setSelection(s); }
+  //! @brief Leave the points with low <= x[k] <= high out of the fit. @param k variable @param low lower end
+  //! @param high upper end
+  void exclude(unsigned int k, double low, double high) { exclude(Region::interval(k, low, high)); }
+  //! @brief Remove the regions (the range is kept).
+  void clearRegions() { FitSelection s = selection(); s.clearRegions(); setSelection(s); }
   //!
   //! @brief Compare the data of a histogram to the average of the function over each bin (3-point Gauss-Legendre
   //! rule along each axis) rather than to its value at the center of the bin: this removes the bias of fits of narrow
@@ -144,6 +165,12 @@ namespace CAP
   //! @param low lower ends @param high upper ends @return false if the class is not known or the data do not allow it
   //!
   static bool estimate(ParameterizedFunction & function, const DataPoints & data, const std::vector<double> & low, const std::vector<double> & high);
+  //!
+  //! @brief Starting values from the points of a selection (its box, or the extent of the data if it has none, sets
+  //! the mapping of a series or a Polynomial2D; only the points in the selection are used), as the other estimate().
+  //! @param function function @param data data @param selection points used @return false if not possible
+  //!
+  static bool estimate(ParameterizedFunction & function, const DataPoints & data, const FitSelection & selection);
 
   //! @brief Options of fitAndAttach() (as chosen in the Fit window of CapGui).
   struct FitOptions
@@ -158,9 +185,12 @@ namespace CAP
     std::vector<double> rangeLow;   //!< lower ends of a range of any rank (used instead of low and high if not empty)
     std::vector<double> rangeHigh;   //!< upper ends of a range of any rank
     bool binAveraging = false;   //!< average the function over the bins of a histogram (see setBinAveraging())
+    std::vector<Region> included;   //!< regions fitted (none: the whole range; see FitSelection)
+    std::vector<Region> excluded;   //!< regions left out of the fit
   };
   //!
-  //! @brief Fit a function to data points and attach the fit to them (DataPoints::addFit()), in one call.
+  //! @brief Fit a function to data points and attach the fit to them (DataPoints::addFit()), in one call; the range
+  //! and the regions included and excluded choose the points fitted.
   //! @param function function, with its starting values, fixed parameters and bounds (left at the best parameters)
   //! @param data data points @param options statistic, range, method, label @return the record attached
   //! @throws MathException if the fit cannot be made (nothing is attached then)
@@ -249,6 +279,11 @@ namespace CAP
   bool gradient(const std::vector<double> & p, std::vector<double> & gradient);
   //! @brief Fill the covariance, errors and quality of the result at the current values. @param result result
   void finish(FitResult & result);
+  //! @brief Starting values from data of rank 1 in [low, high] and in the regions. @return false if not possible
+  static bool estimateRank1(ParameterizedFunction & function, const DataPoints & data, double low, double high, const FitSelection & regions);
+  //! @brief Starting values from data of rank 1 or 2 in the box and in the regions. @return false if not possible
+  static bool estimateRank2(ParameterizedFunction & function, const DataPoints & data, const std::vector<double> & low,
+                            const std::vector<double> & high, const FitSelection & regions);
 
   ParameterizedFunction & _function;   //!< function fitted
   std::unique_ptr<Likelihood> _owned;   //!< statistic made by the fitter (DataPoints constructor)

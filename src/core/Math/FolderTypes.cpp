@@ -25,6 +25,7 @@
 #include "VectorLorentz.hpp"
 #include "Parameter.hpp"
 #include "Table2D.hpp"
+#include "ParameterizedFunction.hpp"
 
 namespace CAP
 {
@@ -48,6 +49,7 @@ namespace CAP
   Folder::registerType<VectorLorentz>();
   Folder::registerType<Parameter>();
   Folder::registerType<Table2D>();
+  Folder::registerPolymorphicType<ParameterizedFunction>();   // every registered class of function, composites too
   return true;
   }
 

@@ -84,6 +84,7 @@ Search/GradientSearch.cpp
 Search/GreedySearch.cpp
 Search/HillClimbingSearch.cpp
 Search/ScanSearch.cpp
+Search/Region.cpp
 Search/SearchDomain.cpp
 Search/SearchEngine.cpp
 Search/SearchProblem.cpp
@@ -91,6 +92,7 @@ Search/SearchProblem.cpp
 Fitting/BayesianFitter.cpp
 Fitting/ChiSquare.cpp
 Fitting/FitRecord.cpp
+Fitting/FitSelection.cpp
 Fitting/FitViews.cpp
 Fitting/Fitter.cpp
 Fitting/Likelihood.cpp
@@ -143,6 +145,12 @@ add_test(NAME StatisticalTests COMMAND TestStatisticalTests)
 add_executable(TestFits2D Fitting/tests/TestFits2D.cpp)
 target_link_libraries(TestFits2D Math Base ${ROOT_LIBRARIES})
 add_test(NAME Fits2D COMMAND TestFits2D)
+add_executable(TestFitRegions Fitting/tests/TestFitRegions.cpp)
+target_link_libraries(TestFitRegions Math Base ${ROOT_LIBRARIES})
+add_test(NAME FitRegions COMMAND TestFitRegions)
+add_executable(TestFunctionStorage Functions/tests/TestFunctionStorage.cpp)
+target_link_libraries(TestFunctionStorage Math Base ${ROOT_LIBRARIES})
+add_test(NAME FunctionStorage COMMAND TestFunctionStorage)
 
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

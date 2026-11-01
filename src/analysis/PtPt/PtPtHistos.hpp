@@ -48,14 +48,19 @@ public:
                                unsigned int index);
   //! @brief Create the histograms.
   virtual void create();
-  //! @brief Load the histograms from a file. @param inputFile file
+  //! @brief Load the base histograms from a folder of a file, and the derived histograms if the folder has them.
+  //! @param inputFile folder @throws FileException if a base histogram is missing
   virtual void loadFrom(const Folder & inputFile);
   //! @brief Create the derived histograms, empty; see calculateDerived().
   virtual void createDerived();
   //! @brief Whether the derived histograms exist (created or loaded). @return true if they do
   bool hasDerived() const { return h_F1_evt!=nullptr; }
-  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  //! @brief Load the derived histograms from a folder of a file, if it has all of them (they are there once a derived
+  //! calculator computed them); otherwise none is loaded, and no exception is thrown. @param inputFile folder
   virtual void loadDerivedFrom(const Folder & inputFile);
+  //! @brief The derived histograms (according to the fill options): the members pointing to them and their names,
+  //! as createDerived() makes them. @return list
+  HistogramList derivedHistograms();
   //! @brief Compute the derived histograms from the base histograms (createDerived() first).
   //! @throws Exception if the derived histograms were not created
   virtual void calculateDerived();

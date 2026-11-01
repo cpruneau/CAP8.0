@@ -271,7 +271,7 @@ namespace CAP
   p_ptSumVsN  = importProfile(inputFile, createName(_histogramBaseName,"n","ptSumProf"));
   p_ptAvgVsN  = importProfile(inputFile, createName(_histogramBaseName,"n","ptAvgProf"));
   // derived histograms: present once GlobalDerivedCalculator has run
-  if (inputFile.contains(createName(_histogramBaseName,"n","ptAvgIncl"))) loadDerivedFrom(inputFile);
+  loadDerivedFrom(inputFile);   // the derived histograms, if the file has them (all)
   }
 
   void GlobalHistos::createDerived()
@@ -281,7 +281,15 @@ namespace CAP
 
   void GlobalHistos::loadDerivedFrom(const Folder & inputFile)
   {
-  h_ptAvgIncVsN = importHistogram(inputFile, createName(_histogramBaseName,"n","ptAvgIncl"));
+  if (reportDebug(__FUNCTION__)) { printCR(); }
+  importAllOrNone(inputFile,derivedHistograms());
+  }
+
+  HistogramFolder::HistogramList GlobalHistos::derivedHistograms()
+  {
+  HistogramList list;
+  list.push_back({&h_ptAvgIncVsN, createName(_histogramBaseName,"n","ptAvgIncl")});
+  return list;
   }
 
   //!

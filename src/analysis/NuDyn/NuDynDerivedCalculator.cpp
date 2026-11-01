@@ -14,7 +14,7 @@ namespace CAP
 
 NuDynDerivedCalculator::NuDynDerivedCalculator()
 :
-EventProcessorHistos<NuDynHistos,2>(),
+CalculatorHistos<NuDynHistos,2>(),
 _sourceTask("NuDynAnalyzer")
 {
   appendClassName("NuDynDerivedCalculator");
@@ -25,7 +25,7 @@ _sourceTask("NuDynAnalyzer")
 
 NuDynDerivedCalculator::NuDynDerivedCalculator(const NuDynDerivedCalculator & source)
 :
-EventProcessorHistos<NuDynHistos,2>(source),
+CalculatorHistos<NuDynHistos,2>(source),
 _sourceTask(source._sourceTask)
 {   }
 
@@ -33,7 +33,7 @@ NuDynDerivedCalculator & NuDynDerivedCalculator::operator=(const NuDynDerivedCal
 {
   if (this!=&rhs)
     {
-    EventProcessorHistos<NuDynHistos,2>::operator=(rhs);
+    CalculatorHistos<NuDynHistos,2>::operator=(rhs);
     _sourceTask = rhs._sourceTask;
     }
   return *this;
@@ -41,14 +41,14 @@ NuDynDerivedCalculator & NuDynDerivedCalculator::operator=(const NuDynDerivedCal
 
 void NuDynDerivedCalculator::setDefaultConfiguration()
 {
-  EventProcessorHistos<NuDynHistos,2>::setDefaultConfiguration();
+  CalculatorHistos<NuDynHistos,2>::setDefaultConfiguration();
   NuDynHistos::addDefaultConfiguration(_configuration,name());
   _configuration.addProperty(createKey(name(),"SOURCE_TASK"),String("NuDynAnalyzer"));
 }
 
 void NuDynDerivedCalculator::configure(const Configuration & configuration)
 {
-  EventProcessorHistos<NuDynHistos,2>::configure(configuration);
+  CalculatorHistos<NuDynHistos,2>::configure(configuration);
   _sourceTask = configuration.valueString(createKey(name(),"SOURCE_TASK"));
   if (reportInfo(__FUNCTION__)) printValue(createKey(name(),"SOURCE_TASK"),_sourceTask);
 }

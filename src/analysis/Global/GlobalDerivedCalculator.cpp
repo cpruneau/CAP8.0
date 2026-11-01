@@ -14,7 +14,7 @@ namespace CAP
 
 GlobalDerivedCalculator::GlobalDerivedCalculator()
 :
-EventProcessorHistos<GlobalHistos,1>(),
+CalculatorHistos<GlobalHistos,1>(),
 _sourceTask("GlobalAnalyzer")
 {
   appendClassName("GlobalDerivedCalculator");
@@ -25,7 +25,7 @@ _sourceTask("GlobalAnalyzer")
 
 GlobalDerivedCalculator::GlobalDerivedCalculator(const GlobalDerivedCalculator & source)
 :
-EventProcessorHistos<GlobalHistos,1>(source),
+CalculatorHistos<GlobalHistos,1>(source),
 _sourceTask(source._sourceTask)
 {   }
 
@@ -33,7 +33,7 @@ GlobalDerivedCalculator & GlobalDerivedCalculator::operator=(const GlobalDerived
 {
   if (this!=&rhs)
     {
-    EventProcessorHistos<GlobalHistos,1>::operator=(rhs);
+    CalculatorHistos<GlobalHistos,1>::operator=(rhs);
     _sourceTask = rhs._sourceTask;
     }
   return *this;
@@ -41,14 +41,14 @@ GlobalDerivedCalculator & GlobalDerivedCalculator::operator=(const GlobalDerived
 
 void GlobalDerivedCalculator::setDefaultConfiguration()
 {
-  EventProcessorHistos<GlobalHistos,1>::setDefaultConfiguration();
+  CalculatorHistos<GlobalHistos,1>::setDefaultConfiguration();
   GlobalHistos::addDefaultConfiguration(_configuration,name());
   _configuration.addProperty(createKey(name(),"SOURCE_TASK"),String("GlobalAnalyzer"));
 }
 
 void GlobalDerivedCalculator::configure(const Configuration & configuration)
 {
-  EventProcessorHistos<GlobalHistos,1>::configure(configuration);
+  CalculatorHistos<GlobalHistos,1>::configure(configuration);
   _sourceTask = configuration.valueString(createKey(name(),"SOURCE_TASK"));
   if (reportInfo(__FUNCTION__)) printValue(createKey(name(),"SOURCE_TASK"),_sourceTask);
 }

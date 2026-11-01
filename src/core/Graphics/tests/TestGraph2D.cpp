@@ -514,6 +514,33 @@ int main(int argc, char ** argv)
     CHECK(!graph.hasResidualPanel() && near(graph.frameYLow(), frameBottom));
   }
 
+  // ---- a fit with regions: dashed over the parts left out, a light band over them, no residuals there
+  {
+    MATH::DataPointsVector data;
+    for (int k=0; k<=20; k++) data.addPoint(MATH::DataPoint2D(0.5*k, 1.0 + 2.0*0.5*k + (k >= 8 && k <= 12 ? 5.0 : 0.0), 0.1));
+    MATH::Linear line(0.0, 1.0);
+    MATH::Fitter fitter(line, data);
+    fitter.fit();
+    data.addFit(fitter.record("plain"));
+    Graph plain;
+    plain.add(GraphItem(&data));
+    std::string before = svgOf(plain);
+    data.clearFits();
+    line = MATH::Linear(0.0, 1.0);
+    fitter.exclude(0, 3.9, 6.1);
+    fitter.fit();
+    data.addFit(fitter.record("background"));
+    Graph graph;
+    graph.add(GraphItem(&data));
+    std::string svg = svgOf(graph);
+    CHECK(count(svg, "stroke-dasharray") > count(before, "stroke-dasharray"));   // the curve over [3.9, 6.1]
+    CHECK(count(svg, "fill-opacity=\"0.12\"") == count(before, "fill-opacity=\"0.12\"") + 1);   // the band
+    const GraphItem & item = graph.items()[0];
+    double x, r, e;
+    CHECK(!Graph::residualAt(item, *item.fit(0), 10, Graph::kDifference, x, r, e));   // x = 5: left out
+    CHECK(Graph::residualAt(item, *item.fit(0), 2, Graph::kDifference, x, r, e) && near(r, 0.0, 1E-5));
+  }
+
   // ---- what the GUI does, in one call: show, styles, titles, text positions, zoom, readouts, SVG files
   {
     MATH::Histogram h("h", "a histogram", 10, 0.0, 10.0);

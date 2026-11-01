@@ -223,7 +223,7 @@ namespace CAP
   h_Q3Q1_evt = importProfile(inputFile,createName(_histogramBaseName,"Q3Q1"));
   h_Q4_evt = importProfile(inputFile,createName(_histogramBaseName,"Q4"));
   // derived histograms: present once PtPtDerivedCalculator has run
-  if (inputFile.contains(createName(_histogramBaseName,"F1"))) loadDerivedFrom(inputFile);
+  loadDerivedFrom(inputFile);   // the derived histograms, if the file has them (all)
   }
 
   /// Implement Eqs. D4 - D7
@@ -295,19 +295,30 @@ namespace CAP
 
   void PtPtHistos::loadDerivedFrom(const Folder & inputFile)
   {
-  if (reportDebug(__FUNCTION__)) { printCR();}
-  h_F1_evt           = importProfile(inputFile,createName(_histogramBaseName,"F1"));
-  h_F2_evt           = importProfile(inputFile,createName(_histogramBaseName,"F2"));
-  h_F3_evt           = importProfile(inputFile,createName(_histogramBaseName,"F3"));
-  h_F4_evt           = importProfile(inputFile,createName(_histogramBaseName,"F4"));
-  h_q1_evt           = importProfile(inputFile,createName(_histogramBaseName,"q1"));
-  h_q1q1_evt         = importProfile(inputFile,createName(_histogramBaseName,"q1q1"));
-  h_q1q1q1_evt       = importProfile(inputFile,createName(_histogramBaseName,"q1q1q1"));
-  h_q1q1q1q1_evt     = importProfile(inputFile,createName(_histogramBaseName,"q1q1q1q1"));
-  h_dq1dq1_evt       = importProfile(inputFile,createName(_histogramBaseName,"dq1dq1"));
-  h_dq1dq1dq1_evt    = importProfile(inputFile,createName(_histogramBaseName,"dq1dq1dq1"));
-  h_dq1dq1dq1dq1_evt = importProfile(inputFile,createName(_histogramBaseName,"dq1dq1dq1dq1"));
-}
+  if (reportDebug(__FUNCTION__)) { printCR(); }
+  importAllOrNone(inputFile,derivedHistograms());
+  }
+
+  HistogramFolder::HistogramList PtPtHistos::derivedHistograms()
+  {
+  HistogramList list;
+  list.push_back({&h_F1_evt, createName(_histogramBaseName,"F1")});
+  list.push_back({&h_F2_evt, createName(_histogramBaseName,"F2")});
+  list.push_back({&h_F3_evt, createName(_histogramBaseName,"F3")});
+  list.push_back({&h_F4_evt, createName(_histogramBaseName,"F4")});
+  list.push_back({&h_R2_evt, createName(_histogramBaseName,"R2")});
+  list.push_back({&h_R3_evt, createName(_histogramBaseName,"R3")});
+  list.push_back({&h_R4_evt, createName(_histogramBaseName,"R4")});
+
+  list.push_back({&h_q1_evt, createName(_histogramBaseName,"q1")});
+  list.push_back({&h_q1q1_evt, createName(_histogramBaseName,"q1q1")});
+  list.push_back({&h_q1q1q1_evt, createName(_histogramBaseName,"q1q1q1")});
+  list.push_back({&h_q1q1q1q1_evt, createName(_histogramBaseName,"q1q1q1q1")});
+  list.push_back({&h_dq1dq1_evt, createName(_histogramBaseName,"dq1dq1")});
+  list.push_back({&h_dq1dq1dq1_evt, createName(_histogramBaseName,"dq1dq1dq1")});
+  list.push_back({&h_dq1dq1dq1dq1_evt, createName(_histogramBaseName,"dq1dq1dq1dq1")});
+  return list;
+  }
 
   void PtPtHistos::calculateDerived()
   {

@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //! @file SearchDomain.cpp
-//! @brief Implementation of SearchDomain and ExclusionRegion.
+//! @brief Implementation of SearchDomain.
 #include <algorithm>
 #include <cmath>
 #include "SearchDomain.hpp"
@@ -18,33 +18,6 @@ namespace CAP
 {
   namespace MATH
   {
-
-  ExclusionRegion & ExclusionRegion::add(unsigned int dimension, double low, double high)
-  {
-  if (high < low) std::swap(low, high);
-  for (auto & interval : _intervals)
-    if (interval.first == dimension) { interval.second = std::make_pair(low, high); return *this; }
-  _intervals.push_back(std::make_pair(dimension, std::make_pair(low, high)));
-  return *this;
-  }
-
-  ExclusionRegion ExclusionRegion::box(const std::vector<double> & low, const std::vector<double> & high)
-  {
-  ExclusionRegion region;
-  for (unsigned int k=0; k<low.size() && k<high.size(); k++) region.add(k, low[k], high[k]);
-  return region;
-  }
-
-  bool ExclusionRegion::contains(const std::vector<double> & x) const
-  {
-  for (const auto & interval : _intervals)
-    {
-    if (interval.first >= x.size()) return false;
-    double v = x[interval.first];
-    if (v < interval.second.first || v > interval.second.second) return false;
-    }
-  return true;
-  }
 
   SearchDomain::SearchDomain(unsigned int dimension)
   :

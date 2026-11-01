@@ -16,6 +16,7 @@
 #include <vector>
 #include "String.hpp"
 #include "FitResult.hpp"
+#include "FitSelection.hpp"
 
 namespace CAP
 {
@@ -29,7 +30,8 @@ namespace CAP
 
   //!
   //! @brief A fit attached to the object it was made to (DataPoints::addFit(), Function::addFit()): its own copy of the
-  //! fitted function at the best parameters, the FitResult, a label, and the range of the fit.
+  //! fitted function at the best parameters, the FitResult, a label, and the range of the fit: the box covered by the
+  //! points used (low, high) and the regions of the selection of the fit, included and excluded (see FitSelection).
   //!
   //! The function is a copy (see ParameterizedFunction::clone()): changing or fitting the model again leaves the
   //! record unchanged. Records are made by Fitter::record() and shared (std::shared_ptr) by the copies of the object
@@ -42,15 +44,25 @@ namespace CAP
     FitResult result;   //!< parameters, uncertainties, covariance, chi square, degrees of freedom, p-value
     std::vector<double> low;   //!< lower ends of the range of the fit, one per variable
     std::vector<double> high;   //!< upper ends of the range of the fit, one per variable
+    std::vector<Region> included;   //!< regions of the fit included (none: the whole range)
+    std::vector<Region> excluded;   //!< regions of the fit excluded
 
     //! @brief Value of the fitted function at a point of rank 1. @param x x @return value (NaN if it cannot be computed)
     double valueAt(double x) const;
     //! @brief Value of the fitted function at a point. @param x coordinates @return value (NaN if it cannot be computed)
     double valueAt(const std::vector<double> & x) const;
-    //! @brief Whether a point of rank 1 is within the range of the fit. @param x x @return true if so
-    bool inRange(double x) const { return !low.empty() && x >= low[0] && x <= high[0]; }
-    //! @brief Whether a point of any rank is within the range of the fit. @param x coordinates @return true if so
+    //! @brief Whether a point of rank 1 was used by the fit: within its range, in an included region (if any), in no
+    //! excluded region. @param x x @return true if so
+    bool inRange(double x) const { return inRange(std::vector<double>{ x }); }
+    //! @brief Whether a point of any rank was used by the fit (see inRange(double)). @param x coordinates @return true if so
     bool inRange(const std::vector<double> & x) const;
+    //! @brief Whether a point of any rank is within the box of the range of the fit (regions ignored).
+    //! @param x coordinates @return true if so
+    bool inBox(const std::vector<double> & x) const;
+    //! @brief Whether the fit has regions (included or excluded). @return true if so
+    bool hasRegions() const { return !included.empty() || !excluded.empty(); }
+    //! @brief The selection of the fit: its range and regions. @return selection
+    FitSelection selection() const;
     //! @brief Whether the statistic is a chi square, or behaves as one (binned likelihood): not an unbinned
     //! likelihood. @return true if so
     bool chiSquareLike() const;
@@ -100,8 +112,11 @@ namespace CAP
   //! The fits are written as a format version (1 byte), the number of fits, and each fit as a block preceded by its
   //! length: the name of the class of its function (see FunctionRegistry), the number of parameters, the rank, the
   //! name and title of the function, its parameters (names, values, types and bounds), the label, the FitResult and
-  //! the range. A fit whose class is not registered (or cannot be made with that number of parameters and rank) is
-  //! skipped when read; the other fits are still read.
+  //! the range; then extensions, which readers written before them skip: the regions of the fit (if it has some), and
+  //! the whole fitted function as a "CAPU" payload (ParameterizedFunction::encodeBinary()), from which any function is
+  //! read back, a composite that was never registered included. A fit whose function can be made neither from that
+  //! payload nor from the class named in the head (not registered here, or not with that number of parameters and
+  //! rank) is skipped when read; the other fits are still read.
   //! @{
 
   //! @brief Write the fits. @param w writer

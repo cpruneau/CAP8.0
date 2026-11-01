@@ -65,27 +65,36 @@ namespace CAP
   {
   if (low.size() != high.size()) throw MathException("The ends of the range differ in size", __FUNCTION__);
   if (!low.empty() && low.size() != _function.rank()) throw MathException("The range must have the rank of the function", __FUNCTION__);
-  for (std::size_t k=0; k<low.size(); k++)
-    if (!(low[k] <= high[k])) throw MathException("A lower end of the range is above its upper end", __FUNCTION__);
-  _rangeLow = low;
-  _rangeHigh = high;
+  _selection.setBox(low, high);
+  }
+
+  void Likelihood::setSelection(const FitSelection & selection)
+  {
+  selection.validate(_function.rank());
+  _selection = selection;
   }
 
   bool Likelihood::inRange(const DataPoints & data, unsigned int i) const
   {
-  if (_rangeLow.empty()) return true;
+  if (_selection.everything()) return true;
   std::vector<double> c = data.rank() == 1 ? std::vector<double>{ double(data.point(i).x()) } : data.coordinatesAt(i);
-  if (c.size() != _rangeLow.size()) return false;
-  for (std::size_t k=0; k<c.size(); k++) if (c[k] < _rangeLow[k] || c[k] > _rangeHigh[k]) return false;
-  return true;
+  return _selection.contains(c);
   }
 
   void UnbinnedLikelihood::setRange(const std::vector<double> & low, const std::vector<double> & high)
   {
-  Likelihood::setRange(low, high);
-  if (low.empty()) return;
-  _low = low;
-  _high = high;
+  if (low.empty() && high.empty()) return;
+  if (low.size() != _function.rank() || high.size() != _function.rank())
+    throw MathException("The range must have the rank of the function", __FUNCTION__);
+  _selection.setBox(low, high);
+  }
+
+  void UnbinnedLikelihood::setSelection(const FitSelection & selection)
+  {
+  FitSelection s = selection;
+  if (!s.hasBox()) s.setBox(_selection.low(), _selection.high());
+  s.validate(_function.rank());
+  _selection = s;
   }
 
   // ------------------------------------------------------------------------------------------------ chi square
@@ -179,12 +188,12 @@ namespace CAP
   :
   Likelihood(function),
   _events(),
-  _low{ low },
-  _high{ high },
   _extended(extended),
-  _used()
+  _used(),
+  _cells()
   {
   if (function.rank() != 1) throw MathException("Events of rank 1 need a function of rank 1", __FUNCTION__);
+  _selection.setBox({ low }, { high });
   for (double x : events) _events.push_back({ x });
   }
 
@@ -193,39 +202,42 @@ namespace CAP
   :
   Likelihood(function),
   _events(events),
-  _low(low),
-  _high(high),
   _extended(extended),
-  _used()
+  _used(),
+  _cells()
   {
   if (low.size() != function.rank() || high.size() != function.rank())
     throw MathException("The range must have the rank of the function", __FUNCTION__);
+  _selection.setBox(low, high);
   }
 
   void UnbinnedLikelihood::prepare()
   {
   _used.clear();
   for (unsigned int i=0; i<_events.size(); i++)
-    {
-    const std::vector<double> & x = _events[i];
-    bool inside = x.size() == _low.size();
-    for (unsigned int k=0; k<x.size() && inside; k++) inside = x[k] >= _low[k] && x[k] <= _high[k];
-    if (inside) _used.push_back(i);
-    }
+    if (_events[i].size() == _function.rank() && _selection.contains(_events[i])) _used.push_back(i);
   if (_used.empty()) throw MathException("No event inside the range", __FUNCTION__);
+  _cells = _selection.cells();
+  if (_cells.empty()) throw MathException("The selection of the fit is empty", __FUNCTION__);
   }
 
   double UnbinnedLikelihood::statistic() const
   {
-  double integral;
-  try { integral = _function.integralInRange(_low, _high); }
+  double integral = 0;
+  try
+    {
+    std::vector<std::pair<std::vector<double>,std::vector<double>>> computed;
+    const auto * cells = &_cells;                                       // kept by prepare()
+    if (cells->empty()) { computed = _selection.cells(); cells = &computed; }
+    for (const auto & cell : *cells) integral += _function.integralInRange(cell.first, cell.second);
+    }
   catch (...) { return kInfinity; }
   if (!(integral > 0) || !std::isfinite(integral)) return kInfinity;
   double sum = 0;
   for (unsigned int i : _used)
     {
     double f;
-    try { f = _low.size() == 1 ? _function.evaluateAt(_events[i][0]) : _function.evaluateAt(_events[i]); }
+    try { f = _function.rank() == 1 ? _function.evaluateAt(_events[i][0]) : _function.evaluateAt(_events[i]); }
     catch (...) { return kInfinity; }
     if (!(f > 0)) return kInfinity;
     sum += std::log(f);

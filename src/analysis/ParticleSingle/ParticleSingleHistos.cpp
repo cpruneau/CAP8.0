@@ -334,38 +334,45 @@ namespace CAP
   if (pid_fill)
     h_pdgId  = importHistogram(inputFile,  createName(_histogramBaseName,"n1_indexId"));
   // derived histograms: present once ParticleSingleDerivedCalculator has run
-  if (inputFile.contains(createName(_histogramBaseName,"n1_phi"))) loadDerivedFrom(inputFile);
+  loadDerivedFrom(inputFile);   // the derived histograms, if the file has them (all)
   }
 
   void ParticleSingleHistos::loadDerivedFrom(const Folder & inputFile)
   {
-  if (reportDebug(__FUNCTION__)) { printCR();}
-  h_n1_phi = importHistogram(inputFile, createName(_histogramBaseName,"n1_phi"));
+  if (reportDebug(__FUNCTION__)) { printCR(); }
+  importAllOrNone(inputFile,derivedHistograms());
+  }
+
+  HistogramFolder::HistogramList ParticleSingleHistos::derivedHistograms()
+  {
+  HistogramList list;
+  list.push_back({&h_n1_phi, createName(_histogramBaseName,"n1_phi")});
   if (p2_fill)
     {
-    h_spt_phi    = importHistogram(inputFile, createName(_histogramBaseName,"sum_pt_phi"));
-    h_avg_pt_phi = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_phi"));
+    list.push_back({&h_spt_phi, createName(_histogramBaseName,"sum_pt_phi")});
+    list.push_back({&h_avg_pt_phi, createName(_histogramBaseName,"avg_pt_phi")});
     }
   if (eta_fill)
     {
-    h_n1_eta = importHistogram(inputFile, createName(_histogramBaseName,"n1_eta"));
+    list.push_back({&h_n1_eta, createName(_histogramBaseName,"n1_eta")});
     if (p2_fill)
       {
-      h_spt_eta       = importHistogram(inputFile, createName(_histogramBaseName,"sum_pt_eta"));
-      h_avg_pt_eta    = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_eta"));
-      h_avg_pt_phiEta = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_phiEta"));
+      list.push_back({&h_spt_eta, createName(_histogramBaseName,"sum_pt_eta")});
+      list.push_back({&h_avg_pt_eta, createName(_histogramBaseName,"avg_pt_eta")});
+      list.push_back({&h_avg_pt_phiEta, createName(_histogramBaseName,"avg_pt_phiEta")});
       }
     }
   if (rapidity_fill)
     {
-    h_n1_y = importHistogram(inputFile, createName(_histogramBaseName,"n1_y"));
+    list.push_back({&h_n1_y, createName(_histogramBaseName,"n1_y")});
     if (p2_fill)
       {
-      h_spt_y       = importHistogram(inputFile, createName(_histogramBaseName,"sum_pt_y"));
-      h_avg_pt_y    = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_y"));
-      h_avg_pt_phiY = importHistogram(inputFile, createName(_histogramBaseName,"avg_pt_phiY"));
+      list.push_back({&h_spt_y, createName(_histogramBaseName,"sum_pt_y")});
+      list.push_back({&h_avg_pt_y, createName(_histogramBaseName,"avg_pt_y")});
+      list.push_back({&h_avg_pt_phiY, createName(_histogramBaseName,"avg_pt_phiY")});
       }
     }
+  return list;
   }
 
   void ParticleSingleHistos::createDerived()

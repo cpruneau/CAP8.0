@@ -7,7 +7,7 @@
  * *********************************************************************/
 #ifndef CAP__PtPtDerivedCalculator
 #define CAP__PtPtDerivedCalculator
-#include "EventProcessorHistos.hpp"
+#include "AnalysisHistos.hpp"
 #include "PtPtHistos.hpp"
 
 namespace CAP
@@ -23,7 +23,7 @@ namespace CAP
 //!
 class PtPtDerivedCalculator
 :
-public EventProcessorHistos<PtPtHistos,1>
+public CalculatorHistos<PtPtHistos,1>
 {
 public:
 
@@ -35,7 +35,7 @@ public:
   PtPtDerivedCalculator & operator=(const PtPtDerivedCalculator & rhs);
   //! @brief Destructor.
   virtual ~PtPtDerivedCalculator() {}
-  //! @brief Add the default configuration: that of EventProcessorHistos, the histogram settings and SOURCE_TASK.
+  //! @brief Add the default configuration: that of CalculatorHistos, the histogram settings and SOURCE_TASK.
   virtual void setDefaultConfiguration() override;
   //! @brief Configure the task (and read SOURCE_TASK). @param configuration configuration
   virtual void configure(const Configuration & configuration) override;

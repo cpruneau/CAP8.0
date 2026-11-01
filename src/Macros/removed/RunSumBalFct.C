@@ -181,8 +181,7 @@ void loadPair(const TString & includeBasePath)
   TString includePath = includeBasePath + "/Pair/";
   gSystem->Load(includePath+"ParticlePairAnalyzer.hpp");
   gSystem->Load(includePath+"ParticlePairHistos.hpp");
-  gSystem->Load(includePath+"ParticlePairDerivedHistos.hpp");
-  gSystem->Load(includePath+"BalanceFunctionCalculator.hpp");
+  gSystem->Load(includePath+"ParticlePairBFCalculator.hpp");
   gSystem->Load("libPair.dylib");
 }
 
