@@ -1,0 +1,71 @@
+% Section: Introduction
+\section{Introduction}
+\label{sec:introduction}
+
+Correlation and fluctuation observables are among the most sensitive probes of particle production in
+proton--proton, proton--nucleus and nucleus--nucleus collisions. Two-particle number and transverse-momentum
+correlations, balance functions and fluctuations of conserved quantities carry information on the production,
+transport and hadronisation of charge, strangeness and baryon number, and on the collective behaviour of the matter
+formed in these collisions~\cite{Pruneau:2002yf,Sharma:2008qr,Gavin:2006xd,Bass:2000az}. Interpreting a measurement
+of such observables requires predictions computed under the same conditions as the measurement: the same kinematic
+acceptance, particle species, event classes, efficiencies and detector resolution. These predictions must often be
+obtained from several models, each with its own event generator, and recomputed whenever the conditions of the
+measurement change.
+
+The Correlation Analysis Package (\CAP{}) was developed to provide such predictions, and to analyse data, with one
+set of tools. This paper describes its ninth version, \CAP{}~9, a redesign of the package with two goals. Ealier versions were never published.
+
+\paragraph{A modern object and class model.}
+Earlier versions of \CAP{} were built on ROOT~\cite{Brun:1997pa}, whose object model, dictionaries and global state
+shaped the code of every analysis. \CAP{}~9 is written in C++17 around its own object and class model, with as little
+legacy code as possible. It defines its own objects, histograms of any number of dimensions, data points, parameterised
+functions, fits, graphics and binary file format, none of which depends on ROOT (Fig.~\ref{fig:hierarchy}). Functions
+and histograms are stored in a versioned binary format that later versions of the package can still read, and
+analyses are configured with XML files. {\color{red}ROOT is still needed to build \CAP{}~9: a few files of the core, of the
+helpers and of two generators use it for random numbers, system utilities and the conversion of \code{.root} files,
+and these uses are being removed.}
+
+\paragraph{Tools to simulate common observables.}
+\CAP{}~9 features a modular design enabling the  computation of a wide range of observables selected by users at run-time.  Many of the observables  featured  require a single pass through  events of a model or of data. Those are known within the context of CAP as basic observbles. There are also several observables that either require a second pass through the data or that can be combined  based on basic observables. Those are referred to as derived observables. In general, all observables whether integral or differential are internally represented in the form of histograms.  Observables featured in CAP include 
+\begin{itemize}
+  \item single-particle spectra, as functions of transverse momentum $\pT$, rapidity $y$, or pseudorapidity $\eta$,
+    and azimuth $\varphi$;
+  \item differential and integral pair spectra, as well as  pair cumulants $C_2$ and normalised cumulants $R_2$ obtained  as
+    functions of the kinematics of the two particles, e.g., $(p_{\rm T,1}, p_{\rm T,1})$, $(y_1,y_2)$  or of their differences $(\Delta\eta,\Delta\varphi)$ and     $(\Delta y,\Delta\varphi)$~\cite{Pruneau:2002yf,Pruneau:2017book};
+  \item transverse-momentum correlators, $\avg{\Delta\pT\Delta\pT}$, and its normalised version $P_2=\avg{\Delta\pT\Delta\pT}/\avg{p_{\rm T}^2}$, as well as the  correlator $G_2$~\cite{Sharma:2008qr,Gavin:2006xd};
+  \item balance functions of charge and of other conserved quantities~\cite{Bass:2000az,pruneau2020};
+  \item global observables computed in a chosen kinematic range for particles of selected types, including the multiplicity of particles, their total energy,  their total or  net charge, strangeness and baryon number;
+  \item fluctuations measured of particle production, such as $\nudyn$, and higher moments of multiplicity
+    distributions~\cite{Pruneau:2002yf};
+  \item event-shape observables such as anisotropic flow coefficients, spherocity and flatenivity.
+\end{itemize}
+
+Analyses may be run on events from several generators including  a simple generator of particles with uniform azimuth and
+rapidity distributions and exponential $\pT$ spectra (BasicEventGen), a thermal-model generator derived from Therminator~2~\cite{Chojnacki:2011hb}
+(Therminator3), PYTHIA~8~\cite{Bierlich:2022pfr} and Herwig~\cite{Bellm:2015jjp}, and readers of events produced by
+other codes such as EPOS and PHSD~\cite{Cassing:2009vt}. A Glauber model~\cite{Miller:2007ri} of the collision geometry
+is also included. Events can be selected by class, in ranges of multiplicity, energy, or an event-shape
+variable such as spherocity, and particles by species and kinematics; an analysis is carried out for every combination of event and
+particle filters in the same pass.
+
+\CAP{}~9 can also be used for fast performance studies. Simple smearers reproduce the experimental resolution in
+$\pT$, rapidity and azimuth, and efficiencies that depend on the kinematics of single particles or of pairs can be
+applied to study the corrections they require. Comparing an analysis of generated particles with the same analysis
+of smeared and filtered particles shows the effect of the detector on each observable.
+
+Analyses are run as workflows of tasks described in XML files, built and launched with two Python front ends graphical user interfaces,
+\code{BuildCAP.py} and \code{RunCAP.py}. Each analysis runs in up to three phases: event processing fills the base
+histograms event by event; a later job computes the derived histograms (densities, cumulants, correlators) with the same filters
+and settings; a third computes the balance functions. Results can be examined, combined and fitted in a graphical
+interface, CapGui, which can show several windows, canvases and graphs side by side with a browser of the data, and
+fits functions of one or two variables, simple or composite, over chosen possibly dis-joined ranges and regions.
+
+The paper is organised as follows. Section~\ref{sec:overview} gives an overview of the project: its folders, its
+external dependencies, and how it is built and run. Sections~\ref{sec:base} and~\ref{sec:math} describe the core
+of the package, the object model, binary data model and XML configuration of Base, and the data, functions and fits
+of Math. Section~\ref{sec:graphics} covers graphics, document output and the command-line interpreter.
+Section~\ref{sec:analysis} presents the analysis framework, and Section~\ref{sec:observables} the observables it
+computes. The event generators and readers are described in Section~\ref{sec:generators}, and the graphical
+interface in Section~\ref{sec:capgui}. Section~\ref{sec:examples} shows example applications,
+Section~\ref{sec:validation} the performance and validation of the package, and Section~\ref{sec:summary} concludes.
+The appendices list the configuration keys of an analysis task, the binary file format, and installation recipes.

@@ -180,7 +180,6 @@ void loadSingle(const TString & includeBasePath)
 {
   TString includePath = includeBasePath + "/ParticleSingle/";
   gSystem->Load(includePath+"ParticleSingleHistos.hpp");
-  gSystem->Load(includePath+"ParticleSingleDerivedHistos.hpp");
   gSystem->Load(includePath+"ParticleSingleAnalyzer.hpp");
   gSystem->Load(includePath+"ParticleSingleCalculator.hpp");
   gSystem->Load("libParticleSingle.dylib");
@@ -192,8 +191,7 @@ void loadPair(const TString & includeBasePath)
   gSystem->Load(includePath+"ParticlePairAnalyzer.hpp");
   gSystem->Load(includePath+"ParticlePairCalculator.hpp");
   gSystem->Load(includePath+"ParticlePairHistos.hpp");
-  gSystem->Load(includePath+"ParticlePairDerivedHistos.hpp");
-  gSystem->Load(includePath+"BalanceFunctionCalculator.hpp");
+  gSystem->Load(includePath+"ParticlePairBFCalculator.hpp");
   gSystem->Load("libParticlePair.dylib");
 }
 

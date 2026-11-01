@@ -328,7 +328,7 @@ namespace CAP
   h_n2_Qinv   = importHistogram(inputFile, createName(_histogramBaseName,"n2_Qinv"));
   h_n2_DeltaP = importHistogram(inputFile, createName(_histogramBaseName,"n2_DeltaP"));
   // derived histograms: present once ParticlePair3DDerivedCalculator has run
-  if (inputFile.contains(createName(_histogramBaseName,"n1n1_Qinv"))) loadDerivedFrom(inputFile);
+  loadDerivedFrom(inputFile);   // the derived histograms, if the file has them (all)
   }
 
   void ParticlePair3DHistos::cloneB(const ParticlePair3DHistos & source)
@@ -519,49 +519,66 @@ namespace CAP
   void ParticlePair3DHistos::loadDerivedFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_n2_DeltaPs = importHistogram(inputFile,createName(_histogramBaseName,"n2_DeltaPs"));
-  h_n2_DeltaPo = importHistogram(inputFile,createName(_histogramBaseName,"n2_DeltaPo"));
-  h_n2_DeltaPl = importHistogram(inputFile,createName(_histogramBaseName,"n2_DeltaPl"));
-  
-  h_n1n1_Qinv   = importHistogram(inputFile,createName(_histogramBaseName,"n1n1_Qinv"));
-  h_n1n1_DeltaP = importHistogram(inputFile,createName(_histogramBaseName,"n1n1_DeltaP"));
-  h_n1n1_DeltaPs= importHistogram(inputFile,createName(_histogramBaseName,"n1n1_DeltaPs"));
-  h_n1n1_DeltaPo= importHistogram(inputFile,createName(_histogramBaseName,"n1n1_DeltaPo"));
-  h_n1n1_DeltaPl= importHistogram(inputFile,createName(_histogramBaseName,"n1n1_DeltaPl"));
-  
-  h_c2_Qinv   = importHistogram(inputFile,createName(_histogramBaseName,"c2_Qinv"));
-  h_c2_DeltaP = importHistogram(inputFile,createName(_histogramBaseName,"c2_DeltaP"));
-  h_c2_DeltaPs= importHistogram(inputFile,createName(_histogramBaseName,"c2_DeltaPs"));
-  h_c2_DeltaPo= importHistogram(inputFile,createName(_histogramBaseName,"c2_DeltaPo"));
-  h_c2_DeltaPl= importHistogram(inputFile,createName(_histogramBaseName,"c2_DeltaPl"));
-  
-  h_r2_Qinv   = importHistogram(inputFile,createName(_histogramBaseName,"r2_Qinv"));
-  h_r2_DeltaP = importHistogram(inputFile,createName(_histogramBaseName,"r2_DeltaP"));
-  h_r2_DeltaPs= importHistogram(inputFile,createName(_histogramBaseName,"r2_DeltaPs"));
-  h_r2_DeltaPo= importHistogram(inputFile,createName(_histogramBaseName,"r2_DeltaPo"));
-  h_r2_DeltaPl= importHistogram(inputFile,createName(_histogramBaseName,"r2_DeltaPl"));
-  
-  h_a12_Qinv      = importHistogram(inputFile,createName(_histogramBaseName,"A12_Qinv"));
-  h_a12_DeltaPs   = importHistogram(inputFile,createName(_histogramBaseName,"A12_DeltaPs"));
-  h_a12_DeltaPo   = importHistogram(inputFile,createName(_histogramBaseName,"A12_DeltaPo"));
-  h_a12_DeltaPl   = importHistogram(inputFile,createName(_histogramBaseName,"A12_DeltaPl"));
-  h_a21_Qinv      = importHistogram(inputFile,createName(_histogramBaseName,"A21_Qinv"));
-  h_a21_DeltaPs   = importHistogram(inputFile,createName(_histogramBaseName,"A21_DeltaPs"));
-  h_a21_DeltaPo   = importHistogram(inputFile,createName(_histogramBaseName,"A21_DeltaPo"));
-  h_a21_DeltaPl   = importHistogram(inputFile,createName(_histogramBaseName,"A21_DeltaPl"));
+  importAllOrNone(inputFile,derivedHistograms());
+  }
 
-  h_n1_1_pt_mc  = importHistogram(inputFile,createName(_histogramBaseName,"n1_1_pt_mc"));
-  h_n1_2_pt_mc  = importHistogram(inputFile,createName(_histogramBaseName,"n1_2_pt_mc"));
-  h_n1_1_y_mc   = importHistogram(inputFile,createName(_histogramBaseName,"n1_1_y_mc"));
-  h_n1_2_y_mc   = importHistogram(inputFile,createName(_histogramBaseName,"n1_2_y_mc"));
+  HistogramFolder::HistogramList ParticlePair3DHistos::derivedHistograms()
+  {
+  HistogramList list;
+  list.push_back({&h_n2_DeltaPs, createName(_histogramBaseName,"n2_DeltaPs")});
+  list.push_back({&h_n2_DeltaPo, createName(_histogramBaseName,"n2_DeltaPo")});
+  list.push_back({&h_n2_DeltaPl, createName(_histogramBaseName,"n2_DeltaPl")});
 
+  list.push_back({&h_n1n1_Qinv, createName(_histogramBaseName,"n1n1_Qinv")});
+  list.push_back({&h_n1n1_DeltaP, createName(_histogramBaseName,"n1n1_DeltaP")});
 
-  h_n1_1_ptY_mc  = importHistogram(inputFile,createName(_histogramBaseName,"n1_1_ptY_mc"));
-  h_n1_2_ptY_mc  = importHistogram(inputFile,createName(_histogramBaseName,"n1_2_ptY_mc"));
-  h_n1r_1_ptY_mc = importHistogram(inputFile,createName(_histogramBaseName,"n1r_1_ptY_mc"));
-  h_n1r_2_ptY_mc = importHistogram(inputFile,createName(_histogramBaseName,"n1r_2_ptY_mc"));
+  list.push_back({&h_n1n1_DeltaPs, createName(_histogramBaseName,"n1n1_DeltaPs")});
+  list.push_back({&h_n1n1_DeltaPo, createName(_histogramBaseName,"n1n1_DeltaPo")});
+  list.push_back({&h_n1n1_DeltaPl, createName(_histogramBaseName,"n1n1_DeltaPl")});
+
+  list.push_back({&h_c2_Qinv, createName(_histogramBaseName,"c2_Qinv")});
+  list.push_back({&h_c2_DeltaP, createName(_histogramBaseName,"c2_DeltaP")});
+  list.push_back({&h_c2_DeltaPs, createName(_histogramBaseName,"c2_DeltaPs")});
+  list.push_back({&h_c2_DeltaPo, createName(_histogramBaseName,"c2_DeltaPo")});
+  list.push_back({&h_c2_DeltaPl, createName(_histogramBaseName,"c2_DeltaPl")});
+
   
-}
+  list.push_back({&h_r2_Qinv, createName(_histogramBaseName,"r2_Qinv")});
+  list.push_back({&h_r2_DeltaP, createName(_histogramBaseName,"r2_DeltaP")});
+
+  list.push_back({&h_r2_DeltaPs, createName(_histogramBaseName,"r2_DeltaPs")});
+  list.push_back({&h_r2_DeltaPo, createName(_histogramBaseName,"r2_DeltaPo")});
+  list.push_back({&h_r2_DeltaPl, createName(_histogramBaseName,"r2_DeltaPl")});
+
+  list.push_back({&h_a12_Qinv, createName(_histogramBaseName,"A12_Qinv")});
+  list.push_back({&h_a12_DeltaPs, createName(_histogramBaseName,"A12_DeltaPs")});
+  list.push_back({&h_a12_DeltaPo, createName(_histogramBaseName,"A12_DeltaPo")});
+  list.push_back({&h_a12_DeltaPl, createName(_histogramBaseName,"A12_DeltaPl")});
+  list.push_back({&h_a21_Qinv, createName(_histogramBaseName,"A21_Qinv")});
+  list.push_back({&h_a21_DeltaPs, createName(_histogramBaseName,"A21_DeltaPs")});
+  list.push_back({&h_a21_DeltaPo, createName(_histogramBaseName,"A21_DeltaPo")});
+  list.push_back({&h_a21_DeltaPl, createName(_histogramBaseName,"A21_DeltaPl")});
+
+  list.push_back({&h_n1_1_pt, createName(_histogramBaseName,"n1_1_pt")});
+  list.push_back({&h_n1_2_pt, createName(_histogramBaseName,"n1_2_pt")});
+  list.push_back({&h_n1_1_y, createName(_histogramBaseName,"n1_1_y")});
+  list.push_back({&h_n1_2_y, createName(_histogramBaseName,"n1_2_y")});
+
+  list.push_back({&h_n1_1_pt_mc, createName(_histogramBaseName,"n1_1_pt_mc")});
+  list.push_back({&h_n1_2_pt_mc, createName(_histogramBaseName,"n1_2_pt_mc")});
+  list.push_back({&h_n1_1_y_mc, createName(_histogramBaseName,"n1_1_y_mc")});
+  list.push_back({&h_n1_2_y_mc, createName(_histogramBaseName,"n1_2_y_mc")});
+  list.push_back({&h_n1_1_ptY_mc, createName(_histogramBaseName,"n1_1_ptY_mc")});
+  list.push_back({&h_n1_2_ptY_mc, createName(_histogramBaseName,"n1_2_ptY_mc")});
+
+  list.push_back({&h_n1r_1_pt_mc, createName(_histogramBaseName,"n1r_1_pt_mc")});
+  list.push_back({&h_n1r_2_pt_mc, createName(_histogramBaseName,"n1r_2_pt_mc")});
+  list.push_back({&h_n1r_1_y_mc, createName(_histogramBaseName,"n1r_1_y_mc")});
+  list.push_back({&h_n1r_2_y_mc, createName(_histogramBaseName,"n1r_2_y_mc")});
+  list.push_back({&h_n1r_1_ptY_mc, createName(_histogramBaseName,"n1r_1_ptY_mc")});
+  list.push_back({&h_n1r_2_ptY_mc, createName(_histogramBaseName,"n1r_2_ptY_mc")});
+  return list;
+  }
 
   //! The histograms must be normalized "per event" before calling this function.
   void ParticlePair3DHistos::calculateDerived(const ParticleSingleHistos & part1Histos, const ParticleSingleHistos & part2Histos, bool same)
@@ -570,6 +587,50 @@ namespace CAP
   if (!part1Histos.h_n1_ptY || !part2Histos.h_n1_ptY)
     throw Exception("The single-particle histograms have no (y, pT) histogram (FillPtvsY)",__FUNCTION__);
   if (reportDebug(__FUNCTION__)) { printCR(); }
+  // start from empty derived histograms: some are accumulated below (Monte Carlo folding, associated yields), and they
+  // may hold values already (loaded from a file, or computed before)
+  h_n2_DeltaPs->reset();
+  h_n2_DeltaPo->reset();
+  h_n2_DeltaPl->reset();
+  h_n1n1_Qinv->reset();
+  h_n1n1_DeltaP->reset();
+  h_n1n1_DeltaPs->reset();
+  h_n1n1_DeltaPo->reset();
+  h_n1n1_DeltaPl->reset();
+  h_c2_Qinv->reset();
+  h_c2_DeltaP->reset();
+  h_c2_DeltaPs->reset();
+  h_c2_DeltaPo->reset();
+  h_c2_DeltaPl->reset();
+  h_r2_Qinv->reset();
+  h_r2_DeltaP->reset();
+  h_r2_DeltaPs->reset();
+  h_r2_DeltaPo->reset();
+  h_r2_DeltaPl->reset();
+  h_a12_Qinv->reset();
+  h_a12_DeltaPs->reset();
+  h_a12_DeltaPo->reset();
+  h_a12_DeltaPl->reset();
+  h_a21_Qinv->reset();
+  h_a21_DeltaPs->reset();
+  h_a21_DeltaPo->reset();
+  h_a21_DeltaPl->reset();
+  h_n1_1_pt->reset();
+  h_n1_2_pt->reset();
+  h_n1_1_y->reset();
+  h_n1_2_y->reset();
+  h_n1_1_pt_mc->reset();
+  h_n1_2_pt_mc->reset();
+  h_n1_1_y_mc->reset();
+  h_n1_2_y_mc->reset();
+  h_n1_1_ptY_mc->reset();
+  h_n1_2_ptY_mc->reset();
+  h_n1r_1_pt_mc->reset();
+  h_n1r_2_pt_mc->reset();
+  h_n1r_1_y_mc->reset();
+  h_n1r_2_y_mc->reset();
+  h_n1r_1_ptY_mc->reset();
+  h_n1r_2_ptY_mc->reset();
 
   // to calculate n1n1, we fold n1 by n1 using an MC technique.
   double y1, pt1, mt1, phi1;

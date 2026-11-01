@@ -65,9 +65,12 @@ public:
   //! @brief Compute the derived histograms from the base histograms of this group (createDerived() first).
   //! @throws Exception if the derived histograms were not created
   virtual void calculateDerived();
-  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
-  //! @throws FileException if one is missing
+  //! @brief Load the derived histograms from a folder of a file, if it has all of them (they are there once a derived
+  //! calculator computed them); otherwise none is loaded, and no exception is thrown. @param inputFile folder
   virtual void loadDerivedFrom(const Folder & inputFile);
+  //! @brief The derived histograms (according to the fill options): the members pointing to them and their names,
+  //! as createDerived() makes them. @return list
+  HistogramList derivedHistograms();
   //! @brief Fill the particle histograms. @param particle particle @param weight weight (e.g., inverse efficiency)
   virtual void fill(Particle & particle, double weight);
   //! @brief Fill the event histograms. @param nAccepted number of accepted particles @param totalEnergy their total energy

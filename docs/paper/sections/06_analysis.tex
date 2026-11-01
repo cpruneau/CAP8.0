@@ -1,0 +1,221 @@
+% Section: The analysis framework
+\section{The analysis framework}
+\label{sec:analysis}
+
+The analysis libraries (\code{src/analysis}) build on the core to process events and fill histograms. The
+\code{Particles} library holds what all analyses share (events, particles, particle databases, filters,
+efficiencies, smearers, the base classes of the analysis tasks and of their histogram folders), and each other library
+holds one family of observables (Section~\ref{sec:observables}). This section describes how an analysis is run.
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Tasks and event processing}
+\label{sec:tasks}
+
+\paragraph{Jobs.}
+A job is one run of the \code{CAP} program on one task tree, read from a workflow file (Section~\ref{sec:xml}):
+{\footnotesize
+\begin{verbatim}
+CAP <task> <configuration directory>/
+    <workflow file> <output directory>/
+\end{verbatim}}
+The program creates the tree of tasks named on the command line, configures, initialises and executes it, and
+finalises it (Section~\ref{sec:objects}). Histograms are read and written once per job, not by each task: if the
+main task names an input file (\code{JOB:INPUT\_FILE}), the histograms that its tasks import are read from it after
+initialisation, and the histograms of all the tasks are written at the end to one output file
+(\code{JOB:OUTPUT\_FILE}), in a folder per task (Section~\ref{sec:folders-analysis}).
+
+\paragraph{Analysis tasks and event processors.}
+The tasks of an analysis manage lists of the objects they work with, each configured with the keys of its type. An
+object of a list is either owned by the task, which creates or imports it and may export it to a file, or shared: it
+is then taken by name from a store common to all the tasks of the job, so that, for instance, all the analyses of a
+job use the same filters (Section~\ref{sec:filters}). The objects are split between two base classes, so that a task
+holds only what it uses. \code{AnalysisTask} holds what every task of an analysis needs: the event filters and the
+particle filters, their names, and the naming of the combinations of filters by which the folders of histograms are
+found in the files of the jobs (Section~\ref{sec:filters}). \code{EventProcessor}, derived from it, adds what is needed
+to process events: the events, the event and particle efficiencies, the event and particle smearers, the particle
+databases, and the filtering of each event and of its particles. Event generators and readers, decayers and the
+analyzers are event processors; the calculators of the later phases of an analysis (Section~\ref{sec:phases}), which
+only read and complete histograms, derive from \code{AnalysisTask} alone, and their configurations accordingly
+contain only their filters and histogram settings.
+
+\paragraph{Event loop.}
+\code{EventIterator} is the task that runs the event loop: for each of the events requested, it executes its subtasks
+in order, typically one or several generators followed by the analyzers, and reports its progress periodically. It
+checks when it is initialised that it uses the events that its subtasks make, so that a generator and the analyzers
+that follow it work on the same event. The iterator resets the event before each pass, and the generators add their
+particles to it, so that several generators can fill one event: a hard process embedded in a soft background, for
+example. \code{EventMerger} goes further and fills one event with the particles of several events of each of its input
+streams, to simulate pile-up. An \code{Event} holds its particles, created by a particle factory and reused from
+event to event to avoid allocations, the two colliding projectiles, and global quantities (multiplicity, energy, net
+charge, strangeness and baryon number, spherocity) computed for several particle selections.
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Event and particle filters}
+\label{sec:filters}
+
+\paragraph{Filters.}
+A filter is a list of conditions, all of which must be satisfied; a filter without conditions accepts everything. A
+condition sets a range, two ranges, or a value of one quantity. Event filters select events by their multiplicity, their
+energy or their spherocity, each computed for one of several particle selections, and thereby define event classes
+such as classes of centrality. Particle filters select particles by their kinematics ($\pT$, the components of the
+momentum, the energy, the pseudorapidity, the rapidity and the azimuth), by the properties of their type (PDG code,
+charge, strangeness, baryon number, charm and beauty), and by their state. A filter is configured by keys
+\code{<owner>:PARTICLE\_FILTER\_<index>:\dots}, for instance
+{\footnotesize
+\begin{verbatim}
+...:CONDITION:N = 2
+...:CONDITION_0:TYPE = DOUBLE_RANGE
+...:CONDITION_0:SUBTYPE = PT
+...:CONDITION_0:MINIMUM = 0.2
+...:CONDITION_0:MAXIMUM = 2.0
+\end{verbatim}}
+Filters are usually not written by hand: they are defined in the filter editor of RunCAP.py (Section~\ref{sec:run}),
+stored in the \code{RUNCAP} element of the workflow file, and created at the start of a job by creator tasks
+(\code{EventFilterCreator}, \code{ParticleFilterCreator}), which put them in the store from which the other tasks take
+them by name. Creators also exist for the efficiencies and the smearers.
+
+\paragraph{Combinations of filters.}
+An analysis runs for every combination of its filters. For each event, an event processor records which event filters
+accept the event, and, for each particle filter, the list of the particles it accepts and the moments
+$\sum_i p_{\mathrm{T},i}^k$ of their transverse momenta, which the analyses of transverse-momentum correlations use.
+A single-particle analysis with $n_E$ event filters and $n_P$ particle filters then fills $n_E n_P$ folders of
+histograms, one per pair (event filter, particle filter), and a pair analysis fills $n_E n_P^2$ folders of pair
+histograms, one per ordered pair of particle filters for each event filter, in addition to its $n_E n_P$ folders of
+single-particle histograms. The folder of event filter $e$ and particle filters $p_1, \dots, p_r$ has index
+\begin{equation}
+  k = e\, n_P^{\,r} + p_1\, n_P^{\,r-1} + \dots + p_r ,
+\end{equation}
+and is named after the filters, \code{ALL\_PiP} for the positive pions of all events, \code{ALL\_PiP\_PiM} for the pairs of a
+positive and a negative pion. When the two filters of a pair are the same, a particle is not paired with itself. The
+histograms of each folder are normalised to the number of events accepted by its event filter at the end of the event
+loop. One job thus computes, in one pass over the events, the observables of all the species and all the event classes of
+an analysis. A task accepts up to eight particle filters.
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Efficiencies and Signal Smearing}
+\label{sec:efficiency}
+
+\paragraph{Efficiencies.}
+A particle efficiency (\code{ParticleEfficiency}) is a histogram of the detection efficiency as a function of
+pseudorapidity and $\pT$. It is used in two ways: to simulate detection losses, by accepting each particle with the
+probability given by the efficiency, and to correct for them, by weighting each particle by the inverse of the
+efficiency. The single-particle analyzer weights the particles it counts in this way, with either one efficiency for all
+particle filters or one per filter. An event efficiency (\code{EventEfficiency}) has the same role for events, as a
+function of their multiplicity.
+\todo{the pair analyzers do not weight pairs by the product of the particle efficiencies, and \code{EventEfficiency}
+always accepts events (efficiency 1): implement both, or describe them as planned.}
+
+\paragraph{Smearing.}
+A particle smearer (\code{ParticleSmearer}) simulates the resolution of a detector: it draws the $\pT$, the
+pseudorapidity and the azimuth of a particle from Gaussian distributions centred on the true values plus a bias, with
+a width; the bias and the width of each variable are histograms as functions of pseudorapidity and $\pT$. The task
+\code{MeasurementSimulator} uses the smearers to produce, from each generated event, a detector-level event: the
+particles accepted by the filters are smeared, separately for each combination of filters, and added to a second
+event. The same analysis can then run on both events: \code{PerformanceAnalyzer} fills histograms comparing them, and
+\code{ClosureCalculator} compares the results of an analysis at the two levels, histogram by histogram, as differences
+or ratios (closure tests, Section~\ref{sec:performance}). These tools are meant for fast studies of the performance of
+a measurement: of the effect of an acceptance, an efficiency or a resolution on an observable, before a full simulation
+of the detector.
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Three phases: analyzers, derived calculators, balance functions}
+\label{sec:phases}
+
+Each analysis is split into tasks that run in separate jobs, one after the other, each reading the output file of the
+previous one.
+
+\paragraph{Analyzers.}
+The analyzer of an analysis (\code{ParticleSingleAnalyzer}, \code{ParticlePairAnalyzer}, \code{PtPtAnalyzer},
+\code{NuDynAnalyzer}, \dots) runs in the event loop and fills the base histograms event by event: the single-particle
+densities, the pair densities, and the sums weighted by the transverse momenta from which the correlators are computed.
+It does nothing else, so that the event loop, where the time of a job is spent, is as short as possible, and so that
+the base histograms of several jobs can be added before anything is computed from them.
+
+\paragraph{Derived calculators.}
+The derived calculator of an analysis (\code{ParticleSingleDerivedCalculator}, \code{ParticlePairDerivedCalculator},
+\code{ParticlePair3DDerivedCalculator}, \code{PtPtDerivedCalculator}, \dots) runs in a later job, as a task of its
+own without event loop: it reads the base histograms from the output file of the analyzers and computes the
+derived histograms: the normalised densities, the products of single-particle densities, the cumulants $C_2$ and
+$R_2$, the transverse-momentum correlators, and the projections on $(\Delta\eta,\Delta\varphi)$ and
+$(\Delta y,\Delta\varphi)$ (Section~\ref{sec:observables}). For a pair analysis, the derived histograms of each pair folder $(e, i, j)$ are computed from it and from the single-particle folders $(e, i)$ and $(e, j)$. The calculator uses
+the same filters and histogram settings as its analyzer, and reads and writes the folders of the analyzer, named by
+the key \code{SOURCE\_TASK}: it completes them rather than writing folders of its own, so that the base and derived
+histograms of a combination of filters stay together. The base and derived histograms of a combination of filters are
+held by one folder class, but the derived histograms are created only by the calculator, so that the analyzer neither
+allocates nor writes them. When a folder is read from a file, its derived histograms are read with it if the file has
+them, and are otherwise left to be computed: the same folders thus read the output of an analyzer and that of a
+calculator. The derived histograms can be recomputed, with other settings or a correction, without running the events
+again.
+
+\paragraph{Balance functions.}
+A third phase computes the balance functions of a pair analysis (\code{ParticlePairBFCalculator},
+\code{ParticlePair3DBFCalculator}, Section~\ref{sec:bf}). Like the derived calculator, it reads the folders of the
+analyzer named by \code{SOURCE\_TASK}, with the same filters and histogram settings, and computes their derived
+histograms; its input can thus be the output of the analyzer or of the derived calculator. A species is a particle
+filter $a$ and the filter $\bar a$ of its antiparticle, named by the key \code{SPECIES}
+(e.g.\ \code{PiP/PiM, KP/KM}). For each event filter $e$ and ordered pair of species $(a,b)$, the balance functions
+combine the four pair folders $(e,a,b)$, $(e,a,\bar b)$, $(e,\bar a,b)$, $(e,\bar a,\bar b)$ and the four single
+folders $(e,a)$, $(e,\bar a)$, $(e,b)$, $(e,\bar b)$, and are written in a folder of their own,
+\code{<e>\_<a>\_<b>\_BF}, next to the folders of the analyzer. Since a balance-function folder combines several
+combinations of filters, its class (\code{ParticlePairBFHistos}, \code{ParticlePair3DBFHistos}) derives directly from
+\code{HistogramFolder}, not from the pair folders.
+
+\paragraph{One template for all phases.}
+The tasks of the three phases derive from one template, \code{AnalysisHistos<HISTOS, RANK, SINGLES, BASE>}, which
+manages a list of histogram folders of type \code{HISTOS}, one per combination of an event filter and \code{RANK}
+particle filters, optionally with a list of single-particle folders of type \code{SINGLES} (for the pair analyses).
+The template configures, creates or imports, scales, resets, saves and loads the folders, so that an analyzer
+implements only the filling of an event and a calculator only the computation of its histograms. The base class
+\code{BASE} is \code{EventProcessor} for the analyzers and \code{AnalysisTask} for the calculators, through two
+aliases:
+{\footnotesize
+\begin{verbatim}
+template <class H, unsigned R, class S=void>
+using EventProcessorHistos
+  = AnalysisHistos<H,R,S,EventProcessor>;
+template <class H, unsigned R, class S=void>
+using CalculatorHistos
+  = AnalysisHistos<H,R,S,AnalysisTask>;
+\end{verbatim}}
+The calculators of the pair analyses are not classes of their own but instances of two templates,
+\code{PairDerivedCalculator<PAIR>} and \code{PairBFCalculator<PAIR, BF>}, registered under the names of the tasks; for instance,
+{\footnotesize
+\begin{verbatim}
+ParticlePairDerivedCalculator
+  = PairDerivedCalculator<ParticlePairHistos>
+ParticlePair3DBFCalculator
+  = PairBFCalculator<ParticlePair3DHistos,
+                     ParticlePair3DBFHistos>
+\end{verbatim}}
+\noindent The pair analyses thus differ only by their histograms, not by how they are called. RunCAP.py (Section~\ref{sec:run}) shows
+the three phases as the stages of a workflow; it makes the derived-histogram stage from the analyzers of the first
+stage, with the same filters and settings, and runs the stages as successive jobs.
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Histogram folders}
+\label{sec:folders-analysis}
+
+The histograms of an analysis are grouped in histogram folders, objects of classes derived from
+\code{HistogramFolder}, itself a \code{Folder} (Section~\ref{sec:objects}) that owns its histograms;
+Fig.~\ref{fig:hierarchy}(c) shows these classes. A folder creates its histograms from the histogram settings of its
+task (binnings, ranges, and which histograms to fill) and keeps pointers to them for fast filling; it can also import
+them from a file, scale them and reset them. Histograms have short names, \code{n1\_pt} or \code{n2\_DetaDphi} for
+instance, since the folders tell the combinations apart. In the output file of a job, the folders of a task are the
+sub-folders of a folder named after the task, so that a histogram is reached by a path such as
+\code{PairAnalysis/ALL\_PiP\_PiM/R2\_DetaDphi}, both by programs and in the data browser of CapGui. Since folders of the same structure can be added
+(Section~\ref{sec:objects}), the outputs of several jobs are added folder by folder.
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Merging jobs and sub-samples}
+\label{sec:subsample}
+
+Large productions are split into many jobs, run independently, for instance on a computing cluster, each writing its
+own output file. Since the histograms of each job are normalised per accepted event, the jobs are combined by averaging
+them, weighted by their numbers of events. The task \code{SubSampleStatCalculator} does this for a set of jobs, one per
+sub-directory of a path: it computes the weighted average of each histogram, bin by bin, and takes the spread of the
+jobs as the statistical uncertainty of the average, the jobs being treated as independent sub-samples. This estimates
+the uncertainties of quantities, such as the derived histograms, whose uncertainties are not simply propagated from
+those of the bins. It also sums the counts of events and of executed tasks of the jobs, which are written with the
+average.
+\todo{state the order of operations recommended for the derived histograms: computed per sub-sample and then averaged
+(the spread then gives their uncertainty), or computed from the average of the base histograms.}

@@ -111,6 +111,15 @@ namespace CAP
   String registryName() const override { return _registryName; }
   //! @brief Set the name under which the composite is registered. @param name name
   void setRegistryName(const String & name) { _registryName = name; }
+  //! @brief Set the operation of an empty composite. @param operation sum or product
+  //! @throws MathException if the composite has components
+  void setOperation(Operation operation);
+  //! @brief Write the operation, the registry name and the components (each a whole function record payload).
+  //! @param w writer
+  void encodeState(BinaryWriter & w) const override;
+  //! @brief Rebuild the components written by encodeState() (the composite must be empty). @param r reader
+  //! @param version format version
+  void decodeState(BinaryReader & r, unsigned int version) override;
 
   protected:
 

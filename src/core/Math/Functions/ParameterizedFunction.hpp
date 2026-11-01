@@ -1,5 +1,6 @@
 #ifndef CAP_MATH_ParameterizedFunction
 #define CAP_MATH_ParameterizedFunction
+#include <istream>
 #include <vector>
 #include "String.hpp"
 #include "Parameter.hpp"
@@ -8,6 +9,9 @@
 
 namespace CAP
 {
+  class BinaryWriter;
+  class BinaryReader;
+
   namespace MATH
   {
 
@@ -140,6 +144,51 @@ namespace CAP
   //! FunctionRegistry::registerComposite()), or empty when its class is what identifies it. @return name
   //!
   virtual String registryName() const { return String(); }
+  //! @}
+
+  //! @name Binary files
+  //!
+  //! A parameterized function, of any class derived from ParameterizedFunction, is saved as one "CAPU" record of the
+  //! CAP binary format (see BinaryIO.hpp), on its own or in a Folder: add(new Normal(...)) to a folder and save it.
+  //! Payload, after the name of the function:
+  //!  - the name of its class in FunctionRegistry (a composite: "ParameterizedComposite"), its number of parameters and
+  //!    its rank (varints), its title;
+  //!  - each parameter: name, then Parameter::encodeBinary() (value, type, bounds);
+  //!  - the state of the class beyond its parameters (encodeState(): the components of a composite, for instance),
+  //!    as a block preceded by its length, so that a reader can skip it;
+  //!  - the fits attached to the function (FitList::encodeBinary()).
+  //! When it is read, the function is made by its class name through FunctionRegistry (a composite is rebuilt from its
+  //! components), given its state and its parameters, and checked: the class must be registered by the program that
+  //! reads the record (those of CAP always are), and have the number of parameters and the rank recorded.
+  //! A class of a user with state beyond its parameters overrides encodeState() and decodeState().
+  //! @{
+  //! @brief Tag of the records of parameterized functions. @return "CAPU"
+  static const char * binaryTag() { return "CAPU"; }
+  //! @brief Format version written (and highest version read). @return version
+  static unsigned int binaryVersion() { return 1; }
+  //! @brief Name stored in binary records. @return name()
+  String binaryName() const { return String(name()); }
+  //! @brief Write the payload after the name. @param w writer
+  //! @throws MathException if the class of the function is not registered in FunctionRegistry
+  void encodeBinary(BinaryWriter & w) const;
+  //!
+  //! @brief A new function of the class recorded in a payload (the reader past the name). @param r reader
+  //! @param name name of the function @param version format version @return function (owned by the caller)
+  //! @throws Exception if the class is not registered, or the data is invalid
+  //!
+  static ParameterizedFunction * decodeNewBinary(BinaryReader & r, const String & name, unsigned int version);
+  //!
+  //! @brief Read the next function record ("CAPU") from a stream, skipping records of other classes. Functions are
+  //! written with writeBinaryObject(out, f) (see BinaryIO.hpp), or saved in a Folder.
+  //! @param in stream (binary mode) @return function (owned by the caller), or null at the end of the stream
+  //! @throws Exception if the record is invalid or its class is not registered
+  //!
+  static ParameterizedFunction * readBinary(std::istream & in);
+  //! @brief Write the state of the function beyond its parameters (nothing here). @param w writer
+  virtual void encodeState(BinaryWriter & w) const { (void) w; }
+  //! @brief Read the state written by encodeState() (nothing here), before the parameters are set. @param r reader
+  //! over the state block alone @param version format version of the record
+  virtual void decodeState(BinaryReader & r, unsigned int version) { (void) r; (void) version; }
   //! @}
 
   //!

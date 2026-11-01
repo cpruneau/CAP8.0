@@ -7,7 +7,7 @@
  * *********************************************************************/
 #ifndef CAP__NuDynDerivedCalculator
 #define CAP__NuDynDerivedCalculator
-#include "EventProcessorHistos.hpp"
+#include "AnalysisHistos.hpp"
 #include "NuDynHistos.hpp"
 
 namespace CAP
@@ -23,7 +23,7 @@ namespace CAP
 //!
 class NuDynDerivedCalculator
 :
-public EventProcessorHistos<NuDynHistos,2>
+public CalculatorHistos<NuDynHistos,2>
 {
 public:
 
@@ -35,7 +35,7 @@ public:
   NuDynDerivedCalculator & operator=(const NuDynDerivedCalculator & rhs);
   //! @brief Destructor.
   virtual ~NuDynDerivedCalculator() {}
-  //! @brief Add the default configuration: that of EventProcessorHistos, the histogram settings and SOURCE_TASK.
+  //! @brief Add the default configuration: that of CalculatorHistos, the histogram settings and SOURCE_TASK.
   virtual void setDefaultConfiguration() override;
   //! @brief Configure the task (and read SOURCE_TASK). @param configuration configuration
   virtual void configure(const Configuration & configuration) override;

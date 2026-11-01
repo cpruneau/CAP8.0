@@ -72,6 +72,16 @@ namespace CAP
   h_ptpt_DetaDphi(nullptr),
   h_n2_DyDphi(nullptr),
   h_ptpt_DyDphi(nullptr),
+  h_ptn_phiphi(nullptr),
+  h_npt_phiphi(nullptr),
+  h_ptn_etaeta(nullptr),
+  h_npt_etaeta(nullptr),
+  h_ptn_yY(nullptr),
+  h_npt_yY(nullptr),
+  h_ptn_DetaDphi(nullptr),
+  h_npt_DetaDphi(nullptr),
+  h_ptn_DyDphi(nullptr),
+  h_npt_DyDphi(nullptr),
   h_n1n1_ptpt(nullptr),
   h_C2_ptpt(nullptr),
   h_C2N_ptpt(nullptr),
@@ -191,6 +201,16 @@ namespace CAP
   h_ptpt_DetaDphi(nullptr),
   h_n2_DyDphi(nullptr),
   h_ptpt_DyDphi(nullptr),
+  h_ptn_phiphi(nullptr),
+  h_npt_phiphi(nullptr),
+  h_ptn_etaeta(nullptr),
+  h_npt_etaeta(nullptr),
+  h_ptn_yY(nullptr),
+  h_npt_yY(nullptr),
+  h_ptn_DetaDphi(nullptr),
+  h_npt_DetaDphi(nullptr),
+  h_ptn_DyDphi(nullptr),
+  h_npt_DyDphi(nullptr),
   h_n1n1_ptpt(nullptr),
   h_C2_ptpt(nullptr),
   h_C2N_ptpt(nullptr),
@@ -319,6 +339,16 @@ namespace CAP
   h_ptpt_DetaDphi = histogramLike(source.h_ptpt_DetaDphi);
   h_n2_DyDphi       = histogramLike(source.h_n2_DyDphi);
   h_ptpt_DyDphi   = histogramLike(source.h_ptpt_DyDphi);
+  h_ptn_phiphi = histogramLike(source.h_ptn_phiphi);
+  h_npt_phiphi = histogramLike(source.h_npt_phiphi);
+  h_ptn_etaeta = histogramLike(source.h_ptn_etaeta);
+  h_npt_etaeta = histogramLike(source.h_npt_etaeta);
+  h_ptn_yY = histogramLike(source.h_ptn_yY);
+  h_npt_yY = histogramLike(source.h_npt_yY);
+  h_ptn_DetaDphi = histogramLike(source.h_ptn_DetaDphi);
+  h_npt_DetaDphi = histogramLike(source.h_npt_DetaDphi);
+  h_ptn_DyDphi = histogramLike(source.h_ptn_DyDphi);
+  h_npt_DyDphi = histogramLike(source.h_npt_DyDphi);
 
   if (reportDebug(__FUNCTION__)) { printCR(); }
   h_n1n1_ptpt  = histogramLike(source.h_n1n1_ptpt);
@@ -536,6 +566,8 @@ namespace CAP
   if (p2_fill)
     {
     h_ptpt_phiphi = createHistogram(createName(_histogramBaseName,"ptpt_phiphi"),   phi_nbins, phi_min, phi_max, phi_nbins, phi_min, phi_max, "#varphi_{1}", "#varphi_{2}", "p_{T}xp_{T}");
+    h_ptn_phiphi = createHistogram(createName(_histogramBaseName,"ptn_phiphi"), phi_nbins, phi_min, phi_max, phi_nbins, phi_min, phi_max, "#varphi_{1}", "#varphi_{2}", "p_{T,1}");
+    h_npt_phiphi = createHistogram(createName(_histogramBaseName,"npt_phiphi"), phi_nbins, phi_min, phi_max, phi_nbins, phi_min, phi_max, "#varphi_{1}", "#varphi_{2}", "p_{T,2}");
     }
 
   if (eta_fill)
@@ -546,6 +578,10 @@ namespace CAP
       {
       h_ptpt_etaeta = createHistogram(createName(_histogramBaseName,"ptpt_etaeta"), eta_nbins, eta_min, eta_max, eta_nbins, eta_min, eta_max, "#eta_{1}", "#eta_{2}", "p_{T}xp_{T}");
       h_ptpt_DetaDphi = createHistogram(createName(_histogramBaseName,"ptpt_DetaDphi"),Deta_nbins, Deta_min, Deta_max, Dphi_nbins, Dphi_min, Dphi_max, "#Delta#eta", "#Delta#phi", "ptpt");
+      h_ptn_etaeta = createHistogram(createName(_histogramBaseName,"ptn_etaeta"), eta_nbins, eta_min, eta_max, eta_nbins, eta_min, eta_max, "#eta_{1}", "#eta_{2}", "p_{T,1}");
+      h_npt_etaeta = createHistogram(createName(_histogramBaseName,"npt_etaeta"), eta_nbins, eta_min, eta_max, eta_nbins, eta_min, eta_max, "#eta_{1}", "#eta_{2}", "p_{T,2}");
+      h_ptn_DetaDphi = createHistogram(createName(_histogramBaseName,"ptn_DetaDphi"), Deta_nbins, Deta_min, Deta_max, Dphi_nbins, Dphi_min, Dphi_max, "#Delta#eta", "#Delta#phi", "p_{T,1}");
+      h_npt_DetaDphi = createHistogram(createName(_histogramBaseName,"npt_DetaDphi"), Deta_nbins, Deta_min, Deta_max, Dphi_nbins, Dphi_min, Dphi_max, "#Delta#eta", "#Delta#phi", "p_{T,2}");
       }
     }
 
@@ -557,6 +593,10 @@ namespace CAP
       {
       h_ptpt_yY    = createHistogram(createName(_histogramBaseName,"ptpt_yY"),  rapidity_nbins,  rapidity_minimum, rapidity_maximum, rapidity_nbins, rapidity_minimum, rapidity_maximum, "y_{1}","y_{2}", "p_{T}xp_{T}");
       h_ptpt_DyDphi = createHistogram(createName(_histogramBaseName,"ptpt_DyDphi"),Drapidity_nbins, Drapidity_min, Drapidity_max, Dphi_nbins, Dphi_min, Dphi_max, "#Delta y", "#Delta#phi", "ptpt");
+      h_ptn_yY = createHistogram(createName(_histogramBaseName,"ptn_yY"), rapidity_nbins, rapidity_minimum, rapidity_maximum, rapidity_nbins, rapidity_minimum, rapidity_maximum, "y_{1}", "y_{2}", "p_{T,1}");
+      h_npt_yY = createHistogram(createName(_histogramBaseName,"npt_yY"), rapidity_nbins, rapidity_minimum, rapidity_maximum, rapidity_nbins, rapidity_minimum, rapidity_maximum, "y_{1}", "y_{2}", "p_{T,2}");
+      h_ptn_DyDphi = createHistogram(createName(_histogramBaseName,"ptn_DyDphi"), Drapidity_nbins, Drapidity_min, Drapidity_max, Dphi_nbins, Dphi_min, Dphi_max, "#Delta y", "#Delta#phi", "p_{T,1}");
+      h_npt_DyDphi = createHistogram(createName(_histogramBaseName,"npt_DyDphi"), Drapidity_nbins, Drapidity_min, Drapidity_max, Dphi_nbins, Dphi_min, Dphi_max, "#Delta y", "#Delta#phi", "p_{T,2}");
       }
     }
   }
@@ -571,6 +611,8 @@ namespace CAP
   if (p2_fill)
     {
     h_ptpt_phiphi = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_phiphi"));
+    h_ptn_phiphi = importHistogram(inputFile,createName(_histogramBaseName,"ptn_phiphi"));
+    h_npt_phiphi = importHistogram(inputFile,createName(_histogramBaseName,"npt_phiphi"));
     }
 
   if (eta_fill)
@@ -581,6 +623,10 @@ namespace CAP
       {
       h_ptpt_etaeta   = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_etaeta"));
       h_ptpt_DetaDphi = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_DetaDphi"));
+      h_ptn_etaeta = importHistogram(inputFile,createName(_histogramBaseName,"ptn_etaeta"));
+      h_npt_etaeta = importHistogram(inputFile,createName(_histogramBaseName,"npt_etaeta"));
+      h_ptn_DetaDphi = importHistogram(inputFile,createName(_histogramBaseName,"ptn_DetaDphi"));
+      h_npt_DetaDphi = importHistogram(inputFile,createName(_histogramBaseName,"npt_DetaDphi"));
       }
     }
   if (rapidity_fill)
@@ -591,10 +637,14 @@ namespace CAP
       {
       h_ptpt_yY     = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_yY"));
       h_ptpt_DyDphi = importHistogram(inputFile,createName(_histogramBaseName,"ptpt_DyDphi"));
+      h_ptn_yY = importHistogram(inputFile,createName(_histogramBaseName,"ptn_yY"));
+      h_npt_yY = importHistogram(inputFile,createName(_histogramBaseName,"npt_yY"));
+      h_ptn_DyDphi = importHistogram(inputFile,createName(_histogramBaseName,"ptn_DyDphi"));
+      h_npt_DyDphi = importHistogram(inputFile,createName(_histogramBaseName,"npt_DyDphi"));
       }
     }
     // derived histograms: present once the derived histograms were computed
-  if (inputFile.contains(createName(_histogramBaseName,"n1n1_phiphi"))) loadDerivedFrom(inputFile);
+  loadDerivedFrom(inputFile);   // the derived histograms, if the file has them (all)
   }
 
 
@@ -636,9 +686,16 @@ namespace CAP
   if (!h_n2_ptpt) throw Exception("!h_n2_ptpt",__FUNCTION__);
   if (!h_n2_phiphi) throw Exception("!h_n2_phiphi",__FUNCTION__);
   double ptpt = weight*pt1*pt2;
+  double ptn  = weight*pt1;
+  double npt  = weight*pt2;
   h_n2_ptpt  ->fillBin(iPt1-1,  iPt2-1,  weight);
   h_n2_phiphi->fillBin(iPhi1-1, iPhi2-1, weight);
-  if (p2_fill) h_ptpt_phiphi->fillBin(iPhi1-1,iPhi2-1,ptpt);
+  if (p2_fill)
+    {
+    h_ptpt_phiphi->fillBin(iPhi1-1,iPhi2-1,ptpt);
+    h_ptn_phiphi ->fillBin(iPhi1-1,iPhi2-1,ptn);
+    h_npt_phiphi ->fillBin(iPhi1-1,iPhi2-1,npt);
+    }
 
   if (eta_fill  &&  iEta1!=0  &&  iEta2!=0 )
     {
@@ -648,6 +705,10 @@ namespace CAP
       {
       h_ptpt_etaeta  ->fillBin(iEta1-1,  iEta2-1,   ptpt);
       h_ptpt_DetaDphi->fillBin(iDeltaEta,iDeltaPhi, ptpt);
+      h_ptn_etaeta   ->fillBin(iEta1-1,  iEta2-1,   ptn);
+      h_npt_etaeta   ->fillBin(iEta1-1,  iEta2-1,   npt);
+      h_ptn_DetaDphi ->fillBin(iDeltaEta,iDeltaPhi, ptn);
+      h_npt_DetaDphi ->fillBin(iDeltaEta,iDeltaPhi, npt);
       }
     }
 
@@ -659,6 +720,10 @@ namespace CAP
       {
       h_ptpt_yY    ->fillBin(iY1-1,  iY2-1,   ptpt);
       h_ptpt_DyDphi->fillBin(iDeltaY,iDeltaPhi, ptpt);
+      h_ptn_yY     ->fillBin(iY1-1,  iY2-1,   ptn);
+      h_npt_yY     ->fillBin(iY1-1,  iY2-1,   npt);
+      h_ptn_DyDphi ->fillBin(iDeltaY,iDeltaPhi, ptn);
+      h_npt_DyDphi ->fillBin(iDeltaY,iDeltaPhi, npt);
       }
     }
   }
@@ -673,7 +738,12 @@ namespace CAP
   h_n2->scale(factor);
   h_n2_ptpt->scale(factor);
   h_n2_phiphi->scale(factor);
-  if (p2_fill) h_ptpt_phiphi->scale(factor);
+  if (p2_fill)
+    {
+    h_ptpt_phiphi->scale(factor);
+    h_ptn_phiphi->scale(factor);
+    h_npt_phiphi->scale(factor);
+    }
   if (eta_fill)
     {
     h_n2_etaeta->scale(factor);
@@ -682,6 +752,10 @@ namespace CAP
       {
       h_ptpt_etaeta->scale(factor);
       h_ptpt_DetaDphi->scale(factor);
+      h_ptn_etaeta->scale(factor);
+      h_npt_etaeta->scale(factor);
+      h_ptn_DetaDphi->scale(factor);
+      h_npt_DetaDphi->scale(factor);
       }
     }
   if (rapidity_fill)
@@ -692,6 +766,10 @@ namespace CAP
       {
       h_ptpt_yY->scale(factor);
       h_ptpt_DyDphi->scale(factor);
+      h_ptn_yY->scale(factor);
+      h_npt_yY->scale(factor);
+      h_ptn_DyDphi->scale(factor);
+      h_npt_DyDphi->scale(factor);
       }
     }
   }
@@ -793,93 +871,102 @@ namespace CAP
   void ParticlePairHistos::loadDerivedFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_n1n1_phiphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_phiphi"));
-  h_C2_phiphi            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_phiphi"));
-  h_C2N_phiphi           = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_phiphi"));
-  h_R2_phiphi            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_phiphi"));
+  importAllOrNone(inputFile,derivedHistograms());
+  }
+
+  HistogramFolder::HistogramList ParticlePairHistos::derivedHistograms()
+  {
+  HistogramList list;
+  list.push_back({&h_n1n1_ptpt, createName(_histogramBaseName,"n1n1_ptpt")});
+  list.push_back({&h_C2N_ptpt, createName(_histogramBaseName,"C2N_ptpt")});
+  list.push_back({&h_C2_ptpt, createName(_histogramBaseName,"C2_ptpt")});
+  list.push_back({&h_R2_ptpt, createName(_histogramBaseName,"R2_ptpt")});
   
-  h_n1n1_ptpt            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_ptpt"));
-  h_C2_ptpt              = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_ptpt"));
-  h_C2N_ptpt             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_ptpt"));
-  h_R2_ptpt              = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_ptpt"));
+  list.push_back({&h_n1n1_phiphi, createName(_histogramBaseName,"n1n1_phiphi")});
+  list.push_back({&h_C2N_phiphi, createName(_histogramBaseName,"C2N_phiphi")});
+  list.push_back({&h_C2_phiphi, createName(_histogramBaseName,"C2_phiphi")});
+  list.push_back({&h_R2_phiphi, createName(_histogramBaseName,"R2_phiphi")});
   
   if (p2_fill)
   {
-    h_pt1pt1_phiphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_phiphi"));
-    h_DptDpt_phiphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_phiphi"));
-    h_P2_phiphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_phiphi"));
-    h_G2_phiphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_phiphi"));
+    list.push_back({&h_pt1pt1_phiphi, createName(_histogramBaseName,"pt1pt1_phiphi")});
+    list.push_back({&h_DptDpt_phiphi, createName(_histogramBaseName,"DptDpt_phiphi")});
+    list.push_back({&h_P2_phiphi, createName(_histogramBaseName,"P2_phiphi")});
+    list.push_back({&h_G2_phiphi, createName(_histogramBaseName,"G2_phiphi")});
   }
   
   if (eta_fill)
   {
-    h_n1n1_etaeta        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_etaeta"));
-    h_C2_etaeta          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_etaeta"));
-    h_C2N_etaeta         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_etaeta"));
-    h_R2_etaeta          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_etaeta"));
+    list.push_back({&h_n1n1_etaeta, createName(_histogramBaseName,"n1n1_etaeta")});
+    list.push_back({&h_C2N_etaeta, createName(_histogramBaseName,"C2N_etaeta")});
+    list.push_back({&h_C2_etaeta, createName(_histogramBaseName,"C2_etaeta")});
+    list.push_back({&h_R2_etaeta, createName(_histogramBaseName,"R2_etaeta")});
     
-    h_n1n1_DetaDphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_DetaDphi_shft"));
-    h_C2_DetaDphi        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DetaDphi_shft"));
-    h_C2N_DetaDphi       = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_DetaDphi_shft"));
-    h_R2_DetaDphi        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_DetaDphi_shft"));
+    list.push_back({&h_n1n1_DetaDphi, createName(_histogramBaseName,"n1n1_DetaDphi")});
+    list.push_back({&h_C2_DetaDphi, createName(_histogramBaseName,"C2_DetaDphi")});
+    list.push_back({&h_C2N_DetaDphi, createName(_histogramBaseName,"C2N_DetaDphi")});
+    list.push_back({&h_C2O_DetaDphi, createName(_histogramBaseName,"C2O_DetaDphi")});
+    list.push_back({&h_R2_DetaDphi, createName(_histogramBaseName,"R2_DetaDphi")});
     
-    h_C2_DetaDphi_shft   = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DetaDphi_shft"));
-    h_C2N_DetaDphi_shft  = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_DetaDphi_shft"));
-    h_R2_DetaDphi_shft   = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_DetaDphi_shft"));
+    list.push_back({&h_C2_DetaDphi_shft, createName(_histogramBaseName,"C2_DetaDphi_shft")});
+    list.push_back({&h_C2N_DetaDphi_shft, createName(_histogramBaseName,"C2N_DetaDphi_shft")});
+    list.push_back({&h_C2O_DetaDphi_shft, createName(_histogramBaseName,"C2O_DetaDphi_shft")});
+    list.push_back({&h_R2_DetaDphi_shft, createName(_histogramBaseName,"R2_DetaDphi_shft")});
     
     if (p2_fill)
     {
-      h_pt1pt1_etaeta        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_etaeta"));
-      h_DptDpt_etaeta        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_etaeta"));
-      h_P2_etaeta            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_etaeta"));
-      h_G2_etaeta            = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_etaeta"));
+      list.push_back({&h_pt1pt1_etaeta, createName(_histogramBaseName,"pt1pt1_etaeta")});
+      list.push_back({&h_DptDpt_etaeta, createName(_histogramBaseName,"DptDpt_etaeta")});
+      list.push_back({&h_P2_etaeta, createName(_histogramBaseName,"P2_etaeta")});
+      list.push_back({&h_G2_etaeta, createName(_histogramBaseName,"G2_etaeta")});
       
-      h_pt1pt1_DetaDphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_DetaDphi_shft"));
-      h_DptDpt_DetaDphi      = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DetaDphi_shft"));
-      h_P2_DetaDphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_DetaDphi_shft"));
-      h_G2_DetaDphi          = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_DetaDphi_shft"));
-      h_DptDpt_DetaDphi_shft = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DetaDphi_shft"));
-      h_P2_DetaDphi_shft     = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_DetaDphi_shft"));
-      h_G2_DetaDphi_shft     = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_DetaDphi_shft"));
+      list.push_back({&h_pt1pt1_DetaDphi, createName(_histogramBaseName,"pt1pt1_DetaDphi")});
+      list.push_back({&h_DptDpt_DetaDphi, createName(_histogramBaseName,"DptDpt_DetaDphi")});
+      list.push_back({&h_P2_DetaDphi, createName(_histogramBaseName,"P2_DetaDphi")});
+      list.push_back({&h_G2_DetaDphi, createName(_histogramBaseName,"G2_DetaDphi")});
+      list.push_back({&h_DptDpt_DetaDphi_shft, createName(_histogramBaseName,"DptDpt_DetaDphi_shft")});
+      list.push_back({&h_P2_DetaDphi_shft, createName(_histogramBaseName,"P2_DetaDphi_shft")});
+      list.push_back({&h_G2_DetaDphi_shft, createName(_histogramBaseName,"G2_DetaDphi_shft")});
     }
   }
   
   if (rapidity_fill)
   {
-    h_n1n1_yY           = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_yY"));
-    h_C2_yY             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_yY"));
-    h_C2N_yY            = importHistogram(inputFile,CAP::createName(_histogramBaseName,"C2N_yY"));
-    h_R2_yY             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_yY"));
+    list.push_back({&h_n1n1_yY, createName(_histogramBaseName,"n1n1_yY")});
+    list.push_back({&h_C2_yY, createName(_histogramBaseName,"C2_yY")});
+    list.push_back({&h_C2N_yY, createName(_histogramBaseName,"C2N_yY")});
+    list.push_back({&h_R2_yY, createName(_histogramBaseName,"R2_yY")});
     
-    h_n1n1_DyDphi       = importHistogram(inputFile, CAP::createName(_histogramBaseName,"n1n1_DyDphi"));
-    h_C2_DyDphi         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi"));
-    h_C2N_DyDphi        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_DyDphi"));
-    h_C2O_DyDphi        = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2O_DyDphi"));
-    h_R2_DyDphi         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_DyDphi"));
+    list.push_back({&h_n1n1_DyDphi, createName(_histogramBaseName,"n1n1_DyDphi")});
+    list.push_back({&h_C2_DyDphi, createName(_histogramBaseName,"C2_DyDphi")});
+    list.push_back({&h_C2N_DyDphi, createName(_histogramBaseName,"C2N_DyDphi")});
+    list.push_back({&h_C2O_DyDphi, createName(_histogramBaseName,"C2O_DyDphi")});
+    list.push_back({&h_R2_DyDphi, createName(_histogramBaseName,"R2_DyDphi")});
     
-    h_C2_DyDphi_shft    = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi_shft"));
-    h_C2N_DyDphi_shft   = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2N_DyDphi_shft"));
-    h_C2O_DyDphi_shft   = importHistogram(inputFile, CAP::createName(_histogramBaseName,"C2_DyDphi_shft"));
-    h_R2_DyDphi_shft    = importHistogram(inputFile, CAP::createName(_histogramBaseName,"R2_DyDphi_shft"));
+    list.push_back({&h_C2_DyDphi_shft, createName(_histogramBaseName,"C2_DyDphi_shft")});
+    list.push_back({&h_C2N_DyDphi_shft, createName(_histogramBaseName,"C2N_DyDphi_shft")});
+    list.push_back({&h_C2O_DyDphi_shft, createName(_histogramBaseName,"C2O_DyDphi_shft")});
+    list.push_back({&h_R2_DyDphi_shft, createName(_histogramBaseName,"R2_DyDphi_shft")});
     
     if (p2_fill)
     {
-      h_pt1pt1_yY         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_yY"));
-      h_DptDpt_yY         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_yY"));
-      h_P2_yY             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_yY"));
-      h_G2_yY             = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_yY"));
+      list.push_back({&h_pt1pt1_yY, createName(_histogramBaseName,"pt1pt1_yY")});
+      list.push_back({&h_DptDpt_yY, createName(_histogramBaseName,"DptDpt_yY")});
+      list.push_back({&h_P2_yY, createName(_histogramBaseName,"P2_yY")});
+      list.push_back({&h_G2_yY, createName(_histogramBaseName,"G2_yY")});
       
-      h_pt1pt1_DyDphi     = importHistogram(inputFile, CAP::createName(_histogramBaseName,"pt1pt1_DyDphi_shft"));
-      h_DptDpt_DyDphi     = importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DyDphi_shft"));
-      h_P2_DyDphi         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_DyDphi_shft"));
-      h_G2_DyDphi         = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_DyDphi_shft"));
+      list.push_back({&h_pt1pt1_DyDphi, createName(_histogramBaseName,"pt1pt1_DyDphi")});
+      list.push_back({&h_DptDpt_DyDphi, createName(_histogramBaseName,"DptDpt_DyDphi")});
+      list.push_back({&h_P2_DyDphi, createName(_histogramBaseName,"P2_DyDphi")});
+      list.push_back({&h_G2_DyDphi, createName(_histogramBaseName,"G2_DyDphi")});
       
-      h_DptDpt_DyDphi_shft= importHistogram(inputFile, CAP::createName(_histogramBaseName,"DptDpt_DyDphi_shft"));
-      h_P2_DyDphi_shft    = importHistogram(inputFile, CAP::createName(_histogramBaseName,"P2_DyDphi_shft"));
-      h_G2_DyDphi_shft    = importHistogram(inputFile, CAP::createName(_histogramBaseName,"G2_DyDphi_shft"));
+      list.push_back({&h_DptDpt_DyDphi_shft, createName(_histogramBaseName,"DptDpt_DyDphi_shft")});
+      list.push_back({&h_P2_DyDphi_shft, createName(_histogramBaseName,"P2_DyDphi_shft")});
+      list.push_back({&h_G2_DyDphi_shft, createName(_histogramBaseName,"G2_DyDphi_shft")});
     }
   }
-}
+  return list;
+  }
 
   //!
   //! The derived histograms are recomputed from scratch from the base histograms of this group (pair densities n2 and
@@ -902,11 +989,11 @@ namespace CAP
   
   if (!single1.h_n1_pt )     throw HistogramException("LOGIC","!single1.h_n1_pt",__FUNCTION__);
   if (!single2.h_n1_pt )     throw HistogramException("LOGIC","!single2.h_n1_pt",__FUNCTION__);
-  if (!h_n2_ptpt )    throw HistogramException("LOGIC","!h_n2_ptpt",__FUNCTION__);
-  if (!h_n1n1_ptpt )             throw HistogramException("LOGIC","!h_n1n1_ptpt",__FUNCTION__);
-  if (!h_C2_ptpt )               throw HistogramException("LOGIC","!h_C2_ptpt",__FUNCTION__);
-  if (!h_C2N_ptpt )              throw HistogramException("LOGIC","!h_C2N_ptpt",__FUNCTION__);
-  if (!h_R2_ptpt )               throw HistogramException("LOGIC","!h_R2_ptpt",__FUNCTION__);
+  if (!h_n2_ptpt )           throw HistogramException("LOGIC","!h_n2_ptpt",__FUNCTION__);
+  if (!h_n1n1_ptpt )         throw HistogramException("LOGIC","!h_n1n1_ptpt",__FUNCTION__);
+  if (!h_C2_ptpt )           throw HistogramException("LOGIC","!h_C2_ptpt",__FUNCTION__);
+  if (!h_C2N_ptpt )          throw HistogramException("LOGIC","!h_C2N_ptpt",__FUNCTION__);
+  if (!h_R2_ptpt )           throw HistogramException("LOGIC","!h_R2_ptpt",__FUNCTION__);
   
   yield2 = single2.h_n1_pt->integral();
   calculateN1N1_H1H1H2( single1.h_n1_pt,   single2.h_n1_pt,  h_n1n1_ptpt,1.0, 1.0);
@@ -927,16 +1014,17 @@ namespace CAP
   
   if (p2_fill)
   {
-    avgPt1Phi = avgValue(single1.h_avg_pt_phi);
-    avgPt2Phi = avgValue(single2.h_avg_pt_phi);
-    scalingFactorPhi = 1.0/avgPt1Phi/avgPt2Phi;
+    avgPt1Phi = inclusiveAvgPt(single1.h_spt_phi,single1.h_n1_phi);
+    avgPt2Phi = inclusiveAvgPt(single2.h_spt_phi,single2.h_n1_phi);
+    scalingFactorPhi = (avgPt1Phi>0.0 && avgPt2Phi>0.0) ? 1.0/avgPt1Phi/avgPt2Phi : 0.0;
+    calculateDptDpt(h_ptpt_phiphi,h_ptn_phiphi,h_npt_phiphi,h_n2_phiphi,avgPt1Phi,avgPt2Phi,h_DptDpt_phiphi);
     h_P2_phiphi->setAsSumOf(*h_DptDpt_phiphi,*h_DptDpt_phiphi,1.0,0.0);
     h_P2_phiphi->scale(scalingFactorPhi);
   }
   
   
   if (eta_fill)
-  {
+    {
     
     //
     // eta vs eta
@@ -962,10 +1050,12 @@ namespace CAP
     shiftY(*h_R2_DetaDphi,*h_R2_DetaDphi_shft,Dphi_nbins_shft);
     
     if (p2_fill)
-    {
-      avgPt1Eta = avgValue(single1.h_avg_pt_eta);
-      avgPt2Eta = avgValue(single2.h_avg_pt_eta);
-      scalingFactorEta = 1.0/avgPt1Eta/avgPt2Eta;
+      {
+      avgPt1Eta = inclusiveAvgPt(single1.h_spt_eta,single1.h_n1_eta);
+      avgPt2Eta = inclusiveAvgPt(single2.h_spt_eta,single2.h_n1_eta);
+      scalingFactorEta = (avgPt1Eta>0.0 && avgPt2Eta>0.0) ? 1.0/avgPt1Eta/avgPt2Eta : 0.0;
+      calculateDptDpt(h_ptpt_etaeta,  h_ptn_etaeta,  h_npt_etaeta,  h_n2_etaeta,  avgPt1Eta,avgPt2Eta,h_DptDpt_etaeta);
+      calculateDptDpt(h_ptpt_DetaDphi,h_ptn_DetaDphi,h_npt_DetaDphi,h_n2_DetaDphi,avgPt1Eta,avgPt2Eta,h_DptDpt_DetaDphi);
       h_P2_etaeta->setAsSumOf(*h_DptDpt_etaeta,*h_DptDpt_etaeta,1.0,0.0);
       h_P2_etaeta->scale(scalingFactorEta);
       shiftY(*h_DptDpt_DetaDphi, *h_DptDpt_DetaDphi_shft,Dphi_nbins_shft);
@@ -975,7 +1065,7 @@ namespace CAP
       h_P2_DetaDphi->scale(scalingFactorEta);
       //symmetrizeDeltaEtaDeltaPhi(h_P2_DetaDphi,ijNormalization);
       shiftY(*h_P2_DetaDphi,*h_P2_DetaDphi_shft, Dphi_nbins_shft);
-
+      
       calculateN1N1_H1H1H2(single1.h_avg_pt_phi, single2.h_avg_pt_phi, h_pt1pt1_phiphi, 1.0, 1.0);
       calculateN1N1_H1H1H2(single1.h_avg_pt_eta, single2.h_avg_pt_eta, h_pt1pt1_etaeta, 1.0, 1.0);
       calculatePt1Pt1(single1.h_spt_phiEta, single2.h_spt_phiEta, h_n1n1_DetaDphi, h_pt1pt1_DetaDphi);
@@ -983,11 +1073,11 @@ namespace CAP
       calculateG2_H2H2H2H2( h_ptpt_phiphi,   h_n1n1_phiphi,   h_pt1pt1_phiphi,   h_G2_phiphi,   ijNormalization, bincorrection, 1.0);
       calculateG2_H2H2H2H2( h_ptpt_DetaDphi, h_n1n1_DetaDphi, h_pt1pt1_DetaDphi, h_G2_DetaDphi, ijNormalization, bincorrection, 1.0);
       shiftY(*h_G2_DetaDphi,*h_G2_DetaDphi_shft,Dphi_nbins_shft);
+      }
     }
-  }
   
   if (rapidity_fill)
-  {
+    {
     //
     // y vs y
     //
@@ -1020,10 +1110,12 @@ namespace CAP
     shiftY(*h_R2_DyDphi,  *h_R2_DyDphi_shft,    Dphi_nbins_shft);
     
     if (p2_fill)
-    {
-      avgPt1Y = avgValue(single1.h_avg_pt_y);
-      avgPt2Y = avgValue(single2.h_avg_pt_y);
-      scalingFactorY = 1.0/avgPt1Y/avgPt2Y;
+      {
+      avgPt1Y = inclusiveAvgPt(single1.h_spt_y,single1.h_n1_y);
+      avgPt2Y = inclusiveAvgPt(single2.h_spt_y,single2.h_n1_y);
+      scalingFactorY = (avgPt1Y>0.0 && avgPt2Y>0.0) ? 1.0/avgPt1Y/avgPt2Y : 0.0;
+      calculateDptDpt(h_ptpt_yY,    h_ptn_yY,    h_npt_yY,    h_n2_yY,    avgPt1Y,avgPt2Y,h_DptDpt_yY);
+      calculateDptDpt(h_ptpt_DyDphi,h_ptn_DyDphi,h_npt_DyDphi,h_n2_DyDphi,avgPt1Y,avgPt2Y,h_DptDpt_DyDphi);
       h_P2_yY->setAsSumOf(*h_DptDpt_yY,*h_DptDpt_yY,1.0,0.0);
       h_P2_yY->scale(scalingFactorY);
       //if (reportDebug(__FUNCTION__))  cout <<  " shiftY(*h_R2_DyDphi,*h_R2_DyDphi_shft,Dphi_nbins_shft)" << endl;
@@ -1041,9 +1133,9 @@ namespace CAP
       calculateG2_H2H2H2H2( h_ptpt_phiphi,   h_n1n1_phiphi,   h_pt1pt1_phiphi,   h_G2_phiphi,   ijNormalization, bincorrection, 1.0);
       calculateG2_H2H2H2H2( h_ptpt_DyDphi,   h_n1n1_DyDphi,   h_pt1pt1_DyDphi,   h_G2_DyDphi,   ijNormalization, bincorrection, 1.0);
       shiftY(*h_G2_DyDphi,*h_G2_DyDphi_shft,Dphi_nbins_shft);
+      }
     }
   }
-}
 
   void ParticlePairHistos::calculatePt1Pt1(const Histogram * spt1, const Histogram * spt2, const Histogram * n1n1, Histogram * target)
   {
@@ -1056,6 +1148,31 @@ namespace CAP
       target->setBinValueAt(i,j, n>0 ? target->binValueAt(i,j)/n : 0.0);
       target->setBinUncertaintyAt(i,j,0.0);
       }
+  }
+
+  void ParticlePairHistos::calculateDptDpt(const Histogram * spp, const Histogram * spn, const Histogram * snp,
+                                           const Histogram * n2, double avgPt1, double avgPt2, Histogram * target)
+  {
+  if (!spp || !spn || !snp || !n2 || !target) throw HistogramException("LOGIC","calculateDptDpt: missing histogram",__FUNCTION__);
+  const unsigned int nX = target->nBins(0);
+  const unsigned int nY = target->nBins(1);
+  for (unsigned int i=0; i<nX; i++)
+    for (unsigned int j=0; j<nY; j++)
+      {
+      double n = n2->binValueAt(i,j);
+      double v = 0.0;
+      if (n!=0.0)
+        v = (spp->binValueAt(i,j) - avgPt2*spn->binValueAt(i,j) - avgPt1*snp->binValueAt(i,j) + avgPt1*avgPt2*n)/n;
+      target->setBinValueAt(i,j,v);
+      target->setBinUncertaintyAt(i,j,0.0);   // estimate the uncertainties with sub-samples
+      }
+  }
+
+  double ParticlePairHistos::inclusiveAvgPt(const Histogram * spt, const Histogram * n1)
+  {
+  if (!spt || !n1) throw HistogramException("LOGIC","inclusiveAvgPt: missing histogram",__FUNCTION__);
+  double n = n1->integral();
+  return n>0.0 ? spt->integral()/n : 0.0;
   }
 
 void ParticlePairHistos::calculateOmegaFactor(Histogram * source, std::vector<double> & omegaFactor)

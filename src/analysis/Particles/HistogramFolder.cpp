@@ -253,6 +253,15 @@ namespace CAP
   return append(copy.release());
   }
 
+  bool HistogramFolder::importAllOrNone(const Folder & file, const HistogramList & list)
+  {
+  for (const auto & entry : list)
+    if (!file.get<Histogram>(entry.second)) return false;
+  for (const auto & entry : list)
+    *entry.first = importHistogram(file,entry.second);
+  return true;
+  }
+
   HistogramFolder::Profile * HistogramFolder::importProfile(const Folder & file, const String & name)
   {
   const Profile * source = file.get<Profile>(name);

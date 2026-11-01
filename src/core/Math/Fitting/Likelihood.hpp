@@ -14,6 +14,7 @@
 #include <vector>
 #include "String.hpp"
 #include "ChiSquare.hpp"
+#include "FitSelection.hpp"
 
 namespace CAP
 {
@@ -68,11 +69,20 @@ namespace CAP
   virtual bool range(std::vector<double> & low, std::vector<double> & high) const = 0;
   //!
   //! @brief Use only the points (bins, events) inside a box: low[k] <= x[k] <= high[k] for each variable k (empty
-  //! vectors: all the points). The range of an unbinned likelihood is replaced.
+  //! vectors: no box). The regions of the selection are kept. The range of an unbinned likelihood is replaced (empty
+  //! vectors: unchanged).
   //! @param low lower ends @param high upper ends
   //! @throws MathException if the sizes differ from each other or from the rank, or a lower end is above an upper end
   //!
   virtual void setRange(const std::vector<double> & low, const std::vector<double> & high);
+  //!
+  //! @brief Use only the points of a selection: a box, and regions included and excluded (see FitSelection). An
+  //! unbinned likelihood keeps its range if the selection has no box.
+  //! @param selection selection @throws MathException if it does not fit the rank of the function
+  //!
+  virtual void setSelection(const FitSelection & selection);
+  //! @brief The points used: box and regions. @return selection
+  const FitSelection & selection() const { return _selection; }
   //!
   //! @brief Compare the data of a histogram to the average of the function over each bin rather than to its value at
   //! the center of the bin (see binAverage()); no effect on other data. @param v average
@@ -80,20 +90,19 @@ namespace CAP
   virtual void setBinAveraging(bool v) { _binAveraging = v; }
   //! @brief Whether the function is averaged over the bins of a histogram. @return true if so
   bool binAveraging() const { return _binAveraging; }
-  //! @brief Lower ends of the range set by setRange() (empty: none). @return lower ends
-  const std::vector<double> & rangeLow() const { return _rangeLow; }
-  //! @brief Upper ends of the range set by setRange() (empty: none). @return upper ends
-  const std::vector<double> & rangeHigh() const { return _rangeHigh; }
+  //! @brief Lower ends of the box of the selection (empty: none). @return lower ends
+  const std::vector<double> & rangeLow() const { return _selection.low(); }
+  //! @brief Upper ends of the box of the selection (empty: none). @return upper ends
+  const std::vector<double> & rangeHigh() const { return _selection.high(); }
 
   protected:
 
-  //! @brief Whether point i of the data is inside the range set by setRange() (always, if none). @param data data
+  //! @brief Whether point i of the data is in the selection (its box and regions; always, if none). @param data data
   //! @param i index @return true if so
   bool inRange(const DataPoints & data, unsigned int i) const;
 
   ParameterizedFunction & _function;   //!< function fitted
-  std::vector<double> _rangeLow;   //!< lower ends of the points used (empty: no limit)
-  std::vector<double> _rangeHigh;   //!< upper ends of the points used (empty: no limit)
+  FitSelection _selection;   //!< points used: box and regions (none: all)
   bool _binAveraging = false;   //!< the function is averaged over the bins of a histogram
   };
 
@@ -181,13 +190,14 @@ namespace CAP
 
   //!
   //! @brief Unbinned likelihood of individual events: the function is their density, up to its normalization, over a
-  //! range (a box in any number of dimensions).
+  //! range (a box in any number of dimensions), possibly with regions included or excluded (see FitSelection).
   //!
   //! Without extension, statistic() = -2 sum ln[f(x_i)/N], N being the integral of f over the range: the amplitude of
   //! f does not matter (fix it, or the fit has no uncertainty for it). Extended (setExtended(true)), the integral N is
   //! the expected number of events: statistic() = 2 N - 2 sum ln f(x_i), and the amplitude is fitted too. Events
-  //! outside the range are left out. The integral is ParameterizedFunction::integralInRange() (analytic for some
-  //! functions, e.g. Normal, Exponential; numerical otherwise).
+  //! outside the selection are left out. The integral is that of the function over the selection: the sum of
+  //! ParameterizedFunction::integralInRange() over its cells (FitSelection::cells(); analytic for some functions, e.g.
+  //! Normal, Exponential; numerical otherwise).
   //!
   class UnbinnedLikelihood : public Likelihood
   {
@@ -215,18 +225,20 @@ namespace CAP
   //! @param v extended
   void setExtended(bool v) { _extended = v; }
   //! @brief The range of the events. @param low lower ends @param high upper ends @return true
-  bool range(std::vector<double> & low, std::vector<double> & high) const override { low = _low; high = _high; return true; }
+  bool range(std::vector<double> & low, std::vector<double> & high) const override { low = _selection.low(); high = _selection.high(); return true; }
   //! @brief Replace the range of the events (empty vectors: unchanged). @param low lower ends @param high upper ends
   //! @throws MathException as Likelihood::setRange()
   void setRange(const std::vector<double> & low, const std::vector<double> & high) override;
+  //! @brief Replace the selection (its box, if it has one, replaces the range). @param selection selection
+  //! @throws MathException if it does not fit the rank of the function
+  void setSelection(const FitSelection & selection) override;
 
   protected:
 
   std::vector<std::vector<double>> _events;   //!< events
-  std::vector<double> _low;   //!< lower ends of the range
-  std::vector<double> _high;   //!< upper ends of the range
   bool _extended;   //!< extended likelihood
-  std::vector<unsigned int> _used;   //!< events inside the range
+  std::vector<unsigned int> _used;   //!< events inside the selection
+  std::vector<std::pair<std::vector<double>,std::vector<double>>> _cells;   //!< cells of the selection (integral)
   };
 
   } // namespace MATH

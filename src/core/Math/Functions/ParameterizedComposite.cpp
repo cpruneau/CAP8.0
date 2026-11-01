@@ -10,6 +10,9 @@
 //! @file ParameterizedComposite.cpp
 //! @brief Implementation of ParameterizedComposite.
 #include "ParameterizedComposite.hpp"
+#include <memory>
+#include "BinaryIO.hpp"
+#include "Exceptions.hpp"
 #include "MathExceptions.hpp"
 
 namespace CAP
@@ -28,6 +31,12 @@ namespace CAP
   _registryName(),
   _synchronized()
   { }
+
+  void ParameterizedComposite::setOperation(Operation operation)
+  {
+  if (!_components.empty()) throw MathException("The operation of a composite is set before its components are added", __FUNCTION__);
+  _operation = operation;
+  }
 
   ParameterizedComposite::ParameterizedComposite(const ParameterizedComposite & source)
   :
@@ -224,6 +233,46 @@ namespace CAP
   c.add(labelX, f);
   c.add(labelY, g);
   return c;
+  }
+
+  // ---- the state of a composite: its operation, its name in the registry, and its components
+
+  void ParameterizedComposite::encodeState(BinaryWriter & w) const
+  {
+  w.writeUInt8(uint8_t(_operation == kProduct ? 1 : 0));
+  w.writeString(_registryName);
+  w.writeVarUInt(nComponents());
+  for (unsigned int k=0; k<nComponents(); k++)
+    {
+    const ParameterizedFunction & f = component(k);
+    w.writeString(label(k));
+    BinaryWriter block;                       // each component as a whole function payload, preceded by its length
+    block.writeString(String(f.name()));
+    f.encodeBinary(block);
+    w.writeVarUInt(block.buffer().size());
+    w.writeBytes(block.buffer().data(), block.buffer().size());
+    }
+  }
+
+  void ParameterizedComposite::decodeState(BinaryReader & r, unsigned int version)
+  {
+  if (nComponents() != 0) throw Exception("A composite is read into an empty composite only", __FUNCTION__);
+  uint8_t operation = r.readUInt8();
+  if (operation > 1) throw Exception("Invalid operation of a composite", __FUNCTION__);
+  setOperation(operation == 1 ? kProduct : kSum);
+  _registryName = r.readString();
+  uint64_t n = r.readVarUInt();
+  if (n > r.remaining()) throw Exception("More components than data", __FUNCTION__);
+  for (uint64_t k=0; k<n; k++)
+    {
+    String componentLabel = r.readString();
+    uint64_t length = r.readVarUInt();
+    if (length > r.remaining()) throw Exception("Component larger than the record", __FUNCTION__);
+    BinaryReader block(r.readSpan(std::size_t(length)), std::size_t(length));
+    String componentName = block.readString();
+    std::unique_ptr<ParameterizedFunction> f(decodeNewBinary(block, componentName, version));
+    add(componentLabel, *f);
+    }
   }
 
   } // namespace MATH

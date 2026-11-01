@@ -1,0 +1,57 @@
+// Layers of CAP: each layer uses only the layers below it (see the section "Layers and dependencies" of the paper).
+// dot -Tpdf Layers.dot -o Layers.pdf
+digraph Layers {
+  graph [fontname="Helvetica", margin=0];
+  node  [shape=plaintext, fontname="Helvetica", fontsize=10];
+  stack [label=<
+  <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="3" CELLPADDING="5">
+    <TR>
+      <TD BGCOLOR="#ffffff" BORDER="0" ALIGN="RIGHT"><I>Front ends</I></TD>
+      <TD COLSPAN="3" BGCOLOR="#fff8e6">BuildCAP.py (build)</TD>
+      <TD COLSPAN="3" BGCOLOR="#fff8e6">RunCAP.py (workflows, jobs)</TD>
+      <TD COLSPAN="2" BGCOLOR="#fff8e6">ParticleDbEditor.py</TD>
+    </TR>
+    <TR>
+      <TD BORDER="0" ALIGN="RIGHT"><I>Applications</I></TD>
+      <TD COLSPAN="4" BGCOLOR="#f3e9f7"><B>CAP</B> (jobs: task trees read from XML)</TD>
+      <TD BGCOLOR="#f3e9f7">CapShell</TD>
+      <TD COLSPAN="2" BGCOLOR="#f3e9f7">CapGui</TD>
+      <TD BGCOLOR="#f3e9f7">CapRootConvert</TD>
+    </TR>
+    <TR>
+      <TD BORDER="0" ALIGN="RIGHT"><I>Models</I><BR/><FONT POINT-SIZE="8">src/models</FONT></TD>
+      <TD COLSPAN="4" BGCOLOR="#e9f3ea">BasicEventGen, Glauber, Therminator3,<BR/>Epos, PHSD, <I>Pythia</I></TD>
+      <TD ROWSPAN="3" BGCOLOR="#f4f4f4">Interpreter</TD>
+      <TD ROWSPAN="3" BGCOLOR="#f4f4f4">Latex</TD>
+      <TD ROWSPAN="3" BGCOLOR="#f4f4f4">Graphics</TD>
+      <TD ROWSPAN="3" BGCOLOR="#f4f4f4">Helpers<BR/><FONT POINT-SIZE="8">(ROOT files)</FONT></TD>
+    </TR>
+    <TR>
+      <TD BORDER="0" ALIGN="RIGHT"><I>Analyses</I><BR/><FONT POINT-SIZE="8">src/analysis</FONT></TD>
+      <TD BGCOLOR="#e8f0fa">ParticleSingle<BR/>ParticlePair<BR/>ParticlePair3D</TD>
+      <TD BGCOLOR="#e8f0fa">PtPt<BR/>NuDyn</TD>
+      <TD BGCOLOR="#e8f0fa">Global<BR/>Spherocity</TD>
+      <TD BGCOLOR="#e8f0fa">Performance<BR/>SubSample<BR/><I>Jets</I></TD>
+    </TR>
+    <TR>
+      <TD BORDER="0" ALIGN="RIGHT"><I>Framework</I></TD>
+      <TD COLSPAN="4" BGCOLOR="#d6e4f5"><B>Particles</B>: events, particles, filters, efficiencies,<BR/>smearers, event processors, histogram folders</TD>
+    </TR>
+    <TR>
+      <TD BORDER="0" ALIGN="RIGHT"><I>Core</I><BR/><FONT POINT-SIZE="8">src/core</FONT></TD>
+      <TD COLSPAN="8" BGCOLOR="#e6e6e6"><B>Math</B>: data points, histograms, functions, fits, searches, random numbers, statistical tests</TD>
+    </TR>
+    <TR>
+      <TD BORDER="0"></TD>
+      <TD COLSPAN="8" BGCOLOR="#d9d9d9"><B>Base</B>: objects, folders, reflection, tasks, configuration, XML, binary files</TD>
+    </TR>
+    <TR>
+      <TD BORDER="0" ALIGN="RIGHT"><I>External</I></TD>
+      <TD COLSPAN="2" BGCOLOR="#fde8e8">ROOT <FONT POINT-SIZE="8">(being removed)</FONT></TD>
+      <TD BGCOLOR="#ffffff" STYLE="dashed">Pythia8</TD>
+      <TD BGCOLOR="#ffffff" STYLE="dashed">FastJet</TD>
+      <TD COLSPAN="3" BGCOLOR="#ffffff">Dear ImGui, GLFW, OpenGL</TD>
+      <TD BGCOLOR="#ffffff">LaTeX</TD>
+    </TR>
+  </TABLE>>];
+}

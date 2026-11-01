@@ -148,7 +148,7 @@ namespace CAP
   h_f2_12_evt = importProfile(inputFile,createName(_histogramBaseName,"f2_12"));
   h_f2_22_evt = importProfile(inputFile,createName(_histogramBaseName,"f2_22"));
   // derived histograms: present once NuDynDerivedCalculator has run
-  if (inputFile.contains(createName(_histogramBaseName,"F2_11"))) loadDerivedFrom(inputFile);
+  loadDerivedFrom(inputFile);   // the derived histograms, if the file has them (all)
   }
 
   void NuDynHistos::fill(double mult, double n1_1, double n1_2, double n2_11, double n2_12, double n2_22)
@@ -182,14 +182,21 @@ namespace CAP
   void NuDynHistos::loadDerivedFrom(const Folder & inputFile)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
-  h_F2_11_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_11"));
-  h_F2_12_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_12"));
-  h_F2_22_evt = importHistogram(inputFile,createName(_histogramBaseName,"F2_22"));
-  h_R2_11_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_11"));
-  h_R2_12_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_12"));
-  h_R2_22_evt = importHistogram(inputFile,createName(_histogramBaseName,"R2_22"));
-  h_nudyn_evt = importHistogram(inputFile,createName(_histogramBaseName,"Nu_dyn"));
-}
+  importAllOrNone(inputFile,derivedHistograms());
+  }
+
+  HistogramFolder::HistogramList NuDynHistos::derivedHistograms()
+  {
+  HistogramList list;
+  list.push_back({&h_F2_11_evt, createName(_histogramBaseName,"F2_11")});
+  list.push_back({&h_F2_12_evt, createName(_histogramBaseName,"F2_12")});
+  list.push_back({&h_F2_22_evt, createName(_histogramBaseName,"F2_22")});
+  list.push_back({&h_R2_11_evt, createName(_histogramBaseName,"R2_11")});
+  list.push_back({&h_R2_12_evt, createName(_histogramBaseName,"R2_12")});
+  list.push_back({&h_R2_22_evt, createName(_histogramBaseName,"R2_22")});
+  list.push_back({&h_nudyn_evt, createName(_histogramBaseName,"Nu_dyn")});
+  return list;
+  }
 
   void NuDynHistos::calculateDerived()
   {

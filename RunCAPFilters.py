@@ -642,7 +642,8 @@ def derived_calculator(analyzer, templates):
     """Task computing the derived histograms of an analyzer whose folders hold all its histograms (layout "folders"):
     its calculator class (derived_calculator_class()), named <analyzer>Derived, with the filters and histogram settings
     of the analyzer, SOURCE_TASK the analyzer (it reads and writes the folders of the analyzer in the files of the jobs)
-    and its folders imported; no events. @return the calculator, or None if the class has no calculator"""
+    and its folders imported; no events (a calculator, a CAP::AnalysisTask, has the event and particle filters only).
+    @return the calculator, or None if the class has no calculator"""
     template = templates.get(derived_calculator_class(analyzer.cls) or "")
     if template is None:
         return None
@@ -655,7 +656,8 @@ def derived_calculator(analyzer, templates):
     source = calculator.param("SOURCE_TASK")
     if source is not None:
         source.value = analyzer.name
-    calculator.filters = {k: list(v) for k, v in choices(analyzer).items() if k != "EVENT"}
+    kinds = task_kinds(calculator, templates)   # a calculator has the filters of the analyzer, and no events
+    calculator.filters = {k: list(v) for k, v in choices(analyzer).items() if k in kinds}
     if getattr(analyzer, "histograms", None) is not None:
         calculator.histograms = copy.deepcopy(analyzer.histograms)
     set_histogram_mode(calculator, templates, DERIVED)

@@ -83,6 +83,16 @@ namespace CAP
   //! The function offered first for a rank.
   String defaultFunction(unsigned int rank) { return rank == 2 ? "Normal2D" : "Normal"; }
 
+  //! One line on a composite: its components.
+  String describeComposite(const MATH::ParameterizedComposite & c)
+  {
+  bool product = c.operation() == MATH::ParameterizedComposite::kProduct;
+  String text = product ? "product: " : "composite: ";
+  for (unsigned int k=0; k<c.nComponents(); k++)
+    text += String(k ? (product ? " x " : " + ") : "") + c.label(k) + String(" (") + MATH::FunctionRegistry::typeName(c.component(k)) + String(")");
+  return text;
+  }
+
   //! One line on the functions of a registered name.
   String describe(const String & name)
   {
@@ -102,14 +112,7 @@ namespace CAP
     { "Normal2D", "A exp(-(u^2 - 2 rho u v + v^2)/(2 (1 - rho^2))), u = (x - meanX)/widthX, v = (y - meanY)/widthY" },
     { "Polynomial2D", "sum of cij t^i s^j, i + j <= N; t, s: x, y of the range mapped onto [-1, 1]" } };
   for (const auto & text : texts) if (name == text.first) return String(text.second);
-  if (std::shared_ptr<const MATH::ParameterizedComposite> c = MATH::FunctionRegistry::composite(name))
-    {
-    bool product = c->operation() == MATH::ParameterizedComposite::kProduct;
-    String text = product ? "product: " : "composite: ";
-    for (unsigned int k=0; k<c->nComponents(); k++)
-      text += String(k ? (product ? " x " : " + ") : "") + c->label(k) + String(" (") + MATH::FunctionRegistry::typeName(c->component(k)) + String(")");
-    return text;
-    }
+  if (std::shared_ptr<const MATH::ParameterizedComposite> c = MATH::FunctionRegistry::composite(name)) return describeComposite(*c);
   return "function registered by a program";
   }
   } // namespace
@@ -147,8 +150,38 @@ namespace CAP
   ImGui::SetWindowFocus(windowName());
   }
 
+  const MATH::ParameterizedComposite * FitDialog::sessionComposite(const String & name) const
+  {
+  for (const auto & entry : _sessionComposites) if (entry.first == name) return entry.second.get();
+  return nullptr;
+  }
+
+  void FitDialog::registerSessionComposite(const String & name)
+  {
+  for (auto it=_sessionComposites.begin(); it!=_sessionComposites.end(); ++it)
+    {
+    if (!(it->first == name)) continue;
+    MATH::FunctionRegistry::registerComposite(name, *it->second);
+    _sessionComposites.erase(it);
+    saveComposites();
+    _message = name + String(" registered: offered in later sessions and to programs");
+    _error = false;
+    return;
+    }
+  }
+
   void FitDialog::makeFunction()
   {
+  if (const MATH::ParameterizedComposite * c = sessionComposite(_functionName))   // a composite of this session
+    {
+    if (c->rank() == _rank)
+      {
+      _function.reset(c->clone());
+      _function->adaptToRange(_low, _high);
+      return;
+      }
+    _functionName = defaultFunction(_rank);
+    }
   if (!MATH::FunctionRegistry::isRegistered(_functionName) || rankOf(_functionName) != _rank) _functionName = defaultFunction(_rank);
   try { _function.reset(makeNamed(_functionName, _degree)); }
   catch (...) { _function.reset(); }
@@ -167,8 +200,8 @@ namespace CAP
   ImGui::SetNextWindowSize(ImVec2(560, 0), ImGuiCond_Appearing);
   if (!ImGui::BeginPopupModal("Composite", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
   ImGui::TextWrapped("A sum of registered functions of the same variables, or a product of functions of one variable "
-                     "each (f(x) g(y)), fitted with all their parameters (named label.parameter). It is saved in %s, "
-                     "read when CapGui starts.", MATH::FunctionRegistry::defaultCompositesFile().data());
+                     "each (f(x) g(y)), fitted with all their parameters (named label.parameter). Its fits are saved with "
+                     "the objects fitted, whether it is registered or not.");
   ImGui::SetNextItemWidth(240);
   ImGui::InputText("name", &_compositeName.str());
   ImGui::RadioButton("sum", &_operation, 0);
@@ -225,6 +258,10 @@ namespace CAP
     draft.label = _drafts.empty() ? "signal" : (_drafts.size() == 1 ? "background" : String(("f" + std::to_string(_drafts.size() + 1)).c_str()));
     _drafts.push_back(draft);
     }
+  ImGui::Checkbox("register", &_registerComposite);
+  ImGui::SetItemTooltip("Registered: added to the function registry and saved in %s, offered in later sessions and to "
+                        "programs. Not registered: offered in this session only (it can be registered later).",
+                        MATH::FunctionRegistry::defaultCompositesFile().data());
   if (!_builderMessage.isNull()) ImGui::TextColored(ImVec4(0.85f, 0.2f, 0.1f, 1.0f), "%s", _builderMessage.data());
   ImGui::Separator();
   if (ImGui::Button("Create"))
@@ -234,6 +271,9 @@ namespace CAP
       if (_compositeName.isNull()) throw MATH::MathException("Give the composite a name", "FitDialog");
       if (MATH::FunctionRegistry::isRegistered(_compositeName) && !MATH::FunctionRegistry::isComposite(_compositeName))
         throw MATH::MathException(String("The name ") + _compositeName + String(" is that of a class of functions"), "FitDialog");
+      if (!_registerComposite && MATH::FunctionRegistry::isComposite(_compositeName))
+        throw MATH::MathException(String("A registered composite is named ") + _compositeName
+                                  + String(": choose another name, or check register to replace it"), "FitDialog");
       MATH::ParameterizedComposite composite(_operation == 1 ? MATH::ParameterizedComposite::kProduct : MATH::ParameterizedComposite::kSum);
       for (const auto & draft : _drafts)
         {
@@ -241,15 +281,23 @@ namespace CAP
         if (!f) throw MATH::MathException(String("Cannot make ") + draft.type, "FitDialog");
         composite.add(draft.label, *f);
         }
-      MATH::FunctionRegistry::registerComposite(_compositeName, composite);
-      saveComposites();
-      if (composite.rank() == _rank) { _functionName = _compositeName; makeFunction(); }
+      for (auto it=_sessionComposites.begin(); it!=_sessionComposites.end(); ++it)   // a new version replaces the old
+        if (it->first == _compositeName) { _sessionComposites.erase(it); break; }
+      if (_registerComposite)
+        {
+        MATH::FunctionRegistry::registerComposite(_compositeName, composite);
+        saveComposites();
+        }
       else
         {
-        _message = _compositeName + String(" registered: of ") + String(std::to_string(composite.rank()).c_str())
-                   + String(" variables, it is offered for objects of as many");
-        _error = false;
+        composite.setName(_compositeName);
+        _sessionComposites.push_back({ _compositeName, std::make_shared<MATH::ParameterizedComposite>(composite) });
         }
+      String status = _registerComposite ? String(" registered") : String(" made for this session");
+      if (composite.rank() == _rank) { _functionName = _compositeName; makeFunction(); _message = _compositeName + status; }
+      else _message = _compositeName + status + String(": of ") + String(std::to_string(composite.rank()).c_str())
+                      + String(" variables, it is offered for objects of as many");
+      _error = false;
       _builderMessage = "";
       ImGui::CloseCurrentPopup();
       }
@@ -272,6 +320,7 @@ namespace CAP
   const GraphItem & item = graph.items()[std::size_t(k)];
   _item = k;
   _object = item.object();
+  if (item.rank() != _rank) _regions.clear();   // regions of another number of variables
   _rank = item.rank();
   _low.assign(_rank, 0.0);
   _high.assign(_rank, 1.0);
@@ -295,6 +344,126 @@ namespace CAP
   else if (_function) _function->adaptToRange(_low, _high);
   }
 
+  std::vector<MATH::Region> FitDialog::regions(bool excluded) const
+  {
+  std::vector<MATH::Region> list;
+  for (const RegionDraft & draft : _regions)
+    {
+    if (draft.exclude != excluded) continue;
+    MATH::Region region;
+    for (unsigned int a=0; a<_rank && a<2; a++) if (draft.restricts[a]) region.add(a, draft.low[a], draft.high[a]);
+    if (!region.unrestricted()) list.push_back(region);
+    }
+  return list;
+  }
+
+  MATH::FitSelection FitDialog::selection() const
+  {
+  MATH::FitSelection s;
+  if (_low.size() == _rank && _high.size() == _rank) s.setBox(_low, _high);
+  s.setRegions(regions(false), regions(true));
+  return s;
+  }
+
+  namespace
+  {
+  //! The edge of the bins of a histogram along an axis nearest to a value. @return edge (the value if none)
+  double nearestEdge(const MATH::Histogram & h, unsigned int axis, double v)
+  {
+  unsigned int n = h.nBins(axis);
+  if (n == 0) return v;
+  double best = h.binLowEdge(0, axis);
+  for (unsigned int i=0; i<n; i++)
+    {
+    double e = h.binHighEdge(i, axis);
+    if (std::fabs(e - v) < std::fabs(best - v)) best = e;
+    }
+  return best;
+  }
+  } // namespace
+
+  void FitDialog::renderRegions(const GraphItem & item, bool histogram)
+  {
+  static const char * axisNames[2] = { "x", "y" };
+  const MATH::Histogram * h = histogram ? dynamic_cast<const MATH::Histogram*>(item.data()) : nullptr;
+  ImGui::Text("Regions");
+  ImGui::SameLine();
+  ImGui::TextDisabled("(?)");
+  ImGui::SetItemTooltip("Points fitted: in the range, in at least one included region (if any), and in no excluded region.\n"
+                        "A region is an interval along x, y or both (a band or a box); bounds included. For a histogram, "
+                        "a bin counts by its center.");
+  int removed = -1;
+  for (std::size_t i=0; i<_regions.size(); i++)
+    {
+    RegionDraft & draft = _regions[i];
+    ImGui::PushID(int(i));
+    int mode = draft.exclude ? 1 : 0;
+    ImGui::SetNextItemWidth(90);
+    if (ImGui::Combo("##mode", &mode, "include\0exclude\0")) draft.exclude = mode == 1;
+    for (unsigned int a=0; a<_rank && a<2; a++)
+      {
+      ImGui::SameLine();
+      ImGui::PushID(int(a));
+      if (_rank > 1) ImGui::Checkbox(axisNames[a], &draft.restricts[a]);
+      else { ImGui::TextUnformatted(axisNames[a]); draft.restricts[a] = true; }
+      ImGui::SameLine();
+      if (draft.restricts[a])
+        {
+        double range[2] = { draft.low[a], draft.high[a] };
+        ImGui::SetNextItemWidth(_rank > 1 ? 150 : 220);
+        if (ImGui::InputScalarN("##range", ImGuiDataType_Double, range, 2, nullptr, nullptr, "%.6g") && range[0] <= range[1])
+          { draft.low[a] = range[0]; draft.high[a] = range[1]; }
+        if (ImGui::IsItemDeactivatedAfterEdit() && h && _snapToBins)   // snapped once the editing is done
+          { draft.low[a] = nearestEdge(*h, a, draft.low[a]); draft.high[a] = nearestEdge(*h, a, draft.high[a]); }
+        }
+      else ImGui::TextDisabled("any");
+      ImGui::PopID();
+      }
+    ImGui::SameLine();
+    if (ImGui::SmallButton("x")) removed = int(i);
+    ImGui::SetItemTooltip("Remove this region");
+    ImGui::PopID();
+    }
+  if (removed >= 0) _regions.erase(_regions.begin() + removed);
+  auto add = [&](bool exclude)
+    {
+    RegionDraft draft;
+    draft.exclude = exclude;
+    for (unsigned int a=0; a<_rank && a<2; a++)   // the middle third of the range
+      {
+      double w = _high[a] - _low[a];
+      draft.low[a] = _low[a] + w/3.0;
+      draft.high[a] = _high[a] - w/3.0;
+      if (h && _snapToBins) { draft.low[a] = nearestEdge(*h, a, draft.low[a]); draft.high[a] = nearestEdge(*h, a, draft.high[a]); }
+      }
+    _regions.push_back(draft);
+    };
+  if (ImGui::SmallButton("+ exclude")) add(true);
+  ImGui::SetItemTooltip("Leave a band or a box out of the fit (e.g. a peak, a dead area)");
+  ImGui::SameLine();
+  if (ImGui::SmallButton("+ include")) add(false);
+  ImGui::SetItemTooltip("Fit only within the included regions (e.g. two sidebands)");
+  if (h)
+    {
+    ImGui::SameLine();
+    ImGui::Checkbox("snap to bin edges", &_snapToBins);
+    ImGui::SetItemTooltip("Put the ends of the regions on the edges of the bins, so that each bin is clearly in or out");
+    }
+  // points used
+  if (item.kind() == GraphItem::kData && item.data())
+    {
+    const MATH::DataPoints & d = *item.data();
+    MATH::FitSelection s = selection();
+    unsigned int used = 0, total = d.size();
+    for (unsigned int k=0; k<total; k++)
+      {
+      std::vector<double> c = d.rank() == 1 ? std::vector<double>{ double(d.point(k).x()) } : d.coordinatesAt(k);
+      if (s.contains(c)) used++;
+      }
+    ImGui::TextDisabled("%u of %u %s in the range and regions", used, total, h ? "bins" : "points");
+    }
+  }
+
   void FitDialog::estimate(Graph & graph)
   {
   if (!_function || _item < 0) return;
@@ -302,12 +471,12 @@ namespace CAP
   bool done = false;
   try
     {
-    if (item.kind() == GraphItem::kData) done = MATH::Fitter::estimate(*_function, *item.data(), _low, _high);
+    if (item.kind() == GraphItem::kData) done = MATH::Fitter::estimate(*_function, *item.data(), selection());
     else
       {
       MATH::DataPointsVector samples = _rank == 1 ? MATH::Fitter::samples(*item.function(), _low[0], _high[0], (unsigned int)_samples)
         : MATH::Fitter::samples(*item.function(), _low[0], _high[0], (unsigned int)_samples, _low[1], _high[1], (unsigned int)_samples);
-      done = MATH::Fitter::estimate(*_function, samples, _low, _high);
+      done = MATH::Fitter::estimate(*_function, samples, selection());
       }
     }
   catch (const Exception & e) { _message = e.what(); _error = true; return; }
@@ -330,6 +499,8 @@ namespace CAP
     options.rangeLow = _low;
     options.rangeHigh = _high;
     options.binAveraging = _binAveraging;
+    options.included = regions(false);
+    options.excluded = regions(true);
     options.samples = (unsigned int)_samples;
     options.label = _label;
     MATH::FitRecord record = item.kind() == GraphItem::kData
@@ -469,7 +640,9 @@ namespace CAP
 
   // the function: those of CAP and of programs, then the composites
   std::vector<String> names = MATH::FunctionRegistry::names(), composites = MATH::FunctionRegistry::compositeNames();
-  if (!MATH::FunctionRegistry::isRegistered(_functionName) || rankOf(_functionName) != _rank) makeFunction();
+  const MATH::ParameterizedComposite * session = sessionComposite(_functionName);
+  if (session ? session->rank() != _rank : (!MATH::FunctionRegistry::isRegistered(_functionName) || rankOf(_functionName) != _rank))
+    makeFunction();
   ImGui::SetNextItemWidth(180);
   if (ImGui::BeginCombo("function", _functionName.data(), ImGuiComboFlags_HeightLarge))
     {
@@ -489,6 +662,14 @@ namespace CAP
         if (ImGui::Selectable(name.data(), name == _functionName)) { _functionName = name; makeFunction(); }
         ImGui::SetItemTooltip("%s", describe(name).data());
         }
+      }
+    bool header = false;
+    for (const auto & entry : _sessionComposites)
+      {
+      if (entry.second->rank() != _rank) continue;
+      if (!header) { ImGui::SeparatorText("Composites of this session (not registered)"); header = true; }
+      if (ImGui::Selectable(entry.first.data(), entry.first == _functionName)) { _functionName = entry.first; makeFunction(); }
+      ImGui::SetItemTooltip("%s", describeComposite(*entry.second).data());
       }
     ImGui::EndCombo();
     }
@@ -516,7 +697,40 @@ namespace CAP
     _builderRequested = true;
     }
   ImGui::SetItemTooltip("Make a composite: a sum of registered functions (e.g. a signal over a background), or a product f(x) g(y)");
-  bool composite = MATH::FunctionRegistry::isComposite(_functionName);
+  session = sessionComposite(_functionName);
+  if (session)
+    {
+    ImGui::SameLine();
+    if (ImGui::Button("Register"))
+      {
+      if (const MATH::ParameterizedComposite * c = dynamic_cast<const MATH::ParameterizedComposite*>(_function.get()))
+        for (auto & entry : _sessionComposites) if (entry.first == _functionName) entry.second = std::make_shared<MATH::ParameterizedComposite>(*c);
+      registerSessionComposite(_functionName);
+      }
+    ImGui::SetItemTooltip("Register this composite, with its current parameters as starting values: it is saved in %s, "
+                          "offered in later sessions and to programs", MATH::FunctionRegistry::defaultCompositesFile().data());
+    ImGui::SameLine();
+    if (ImGui::Button("Keep values") && _function)
+      {
+      if (const MATH::ParameterizedComposite * c = dynamic_cast<const MATH::ParameterizedComposite*>(_function.get()))
+        for (auto & entry : _sessionComposites) if (entry.first == _functionName) entry.second = std::make_shared<MATH::ParameterizedComposite>(*c);
+      _message = String("The parameters of ") + _functionName + String(" are now its starting values (this session)");
+      _error = false;
+      }
+    ImGui::SetItemTooltip("Keep the current parameters (values, fixed, bounds) as the starting values of this composite");
+    ImGui::SameLine();
+    if (ImGui::Button("Remove"))
+      {
+      for (auto it=_sessionComposites.begin(); it!=_sessionComposites.end(); ++it)
+        if (it->first == _functionName) { _sessionComposites.erase(it); break; }
+      _message = String("Composite ") + _functionName + String(" removed");
+      _error = false;
+      _functionName = defaultFunction(_rank);
+      makeFunction();
+      }
+    ImGui::SetItemTooltip("Remove this composite (its fits already made are kept)");
+    }
+  bool composite = !session && MATH::FunctionRegistry::isComposite(_functionName);
   if (composite)
     {
     ImGui::SameLine();
@@ -543,7 +757,9 @@ namespace CAP
       }
     ImGui::SetItemTooltip("Remove this composite (its fits already made are kept)");
     }
-  ImGui::TextDisabled("%s", describe(_functionName).data());
+  session = sessionComposite(_functionName);   // (the buttons above may have removed or registered it)
+  ImGui::TextDisabled("%s", session ? (describeComposite(*session) + String(" (this session, not registered)")).data()
+                                    : describe(_functionName).data());
   if (!_function) ImGui::TextColored(ImVec4(0.85f, 0.2f, 0.1f, 1.0f), "This function cannot be made");
   renderCompositeBuilder();
 
@@ -576,6 +792,7 @@ namespace CAP
     ImGui::SetItemTooltip(_rank == 2 ? "Points of the function fitted along each axis, on a grid over the range (each with an uncertainty of 1)"
                                      : "Points of the function fitted, equally spaced over the range (each with an uncertainty of 1)");
     }
+  renderRegions(item, histogram);
   ImGui::RadioButton("chi square", &_statistic, 0);
   ImGui::SetItemTooltip("Least squares weighted by the statistical uncertainties (points without one are left out)");
   ImGui::SameLine();

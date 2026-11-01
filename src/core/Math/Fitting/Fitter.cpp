@@ -488,6 +488,8 @@ namespace CAP
   record.result = _result;
   record.label = label.isNull() ? String(typeName(_function) + " fit") : label;
   _likelihood->range(record.low, record.high);
+  record.included = _likelihood->selection().included();
+  record.excluded = _likelihood->selection().excluded();
   return record;
   }
 
@@ -568,12 +570,18 @@ namespace CAP
 
   bool Fitter::estimate(ParameterizedFunction & function, const DataPoints & data, double low, double high)
   {
+  return estimateRank1(function, data, low, high, FitSelection());
+  }
+
+  bool Fitter::estimateRank1(ParameterizedFunction & function, const DataPoints & data, double low, double high, const FitSelection & regions)
+  {
   if (function.rank() != 1 || data.rank() != 1) return false;
   std::vector<double> x, y, w;
   for (unsigned int k=0; k<data.size(); k++)
     {
     DataPoint2D p = data.point(k);
     if (!std::isfinite(p.x()) || !std::isfinite(p.y()) || p.x() < low || p.x() > high) continue;
+    if (!regions.contains(double(p.x()))) continue;
     x.push_back(p.x());
     y.push_back(p.y());
     double e = p.yStatError();
@@ -640,6 +648,12 @@ namespace CAP
   Fitter fitter(function, data, options.statistic);
   if (!options.rangeLow.empty()) fitter.setRange(options.rangeLow, options.rangeHigh);
   else if (options.hasRange) fitter.setRange(options.low, options.high);
+  if (!options.included.empty() || !options.excluded.empty())
+    {
+    FitSelection selection = fitter.selection();
+    selection.setRegions(options.included, options.excluded);
+    fitter.setSelection(selection);
+    }
   fitter.setBinAveraging(options.binAveraging);
   if (options.search)
     {
@@ -661,6 +675,12 @@ namespace CAP
   {
   DataPointsVector points = samples(target, low, high, options.samples);
   Fitter fitter(function, points, kChiSquare);
+  if (!options.included.empty() || !options.excluded.empty())
+    {
+    FitSelection selection;
+    selection.setRegions(options.included, options.excluded);
+    fitter.setSelection(selection);
+    }
   if (options.search)
     {
     fitter.setMethod(kSearch);
@@ -696,8 +716,37 @@ namespace CAP
 
   bool Fitter::estimate(ParameterizedFunction & function, const DataPoints & data, const std::vector<double> & low, const std::vector<double> & high)
   {
+  return estimateRank2(function, data, low, high, FitSelection());
+  }
+
+  bool Fitter::estimate(ParameterizedFunction & function, const DataPoints & data, const FitSelection & selection)
+  {
+  if (data.rank() != function.rank()) return false;
+  std::vector<double> low = selection.low(), high = selection.high();
+  if (low.empty())   // extent of the data
+    {
+    for (unsigned int k=0; k<data.size(); k++)
+      {
+      std::vector<double> c = data.rank() == 1 ? std::vector<double>{ double(data.point(k).x()) } : data.coordinatesAt(k);
+      bool finite = true;
+      for (double v : c) finite = finite && std::isfinite(v);
+      if (!finite) continue;
+      if (low.empty()) { low = c; high = c; continue; }
+      for (std::size_t i=0; i<c.size(); i++) { low[i] = std::min(low[i], c[i]); high[i] = std::max(high[i], c[i]); }
+      }
+    if (low.empty()) return false;
+    }
+  FitSelection regions;
+  regions.setRegions(selection.included(), selection.excluded());
+  if (function.rank() == 1) return estimateRank1(function, data, low[0], high[0], regions);
+  return estimateRank2(function, data, low, high, regions);
+  }
+
+  bool Fitter::estimateRank2(ParameterizedFunction & function, const DataPoints & data, const std::vector<double> & low,
+                             const std::vector<double> & high, const FitSelection & regions)
+  {
   if (low.size() != function.rank() || high.size() != function.rank() || data.rank() != function.rank()) return false;
-  if (function.rank() == 1) return estimate(function, data, low[0], high[0]);
+  if (function.rank() == 1) return estimateRank1(function, data, low[0], high[0], regions);
   if (function.rank() != 2) return false;
   std::vector<double> x, y, z, w;
   for (unsigned int k=0; k<data.size(); k++)
@@ -706,6 +755,7 @@ namespace CAP
     double v = data.valueAt(k);
     if (!std::isfinite(c[0]) || !std::isfinite(c[1]) || !std::isfinite(v)) continue;
     if (c[0] < low[0] || c[0] > high[0] || c[1] < low[1] || c[1] > high[1]) continue;
+    if (!regions.contains(c)) continue;
     x.push_back(c[0]); y.push_back(c[1]); z.push_back(v);
     double e = data.statErrorAt(k);
     w.push_back(e > 0 ? 1.0/(e*e) : 1.0);
@@ -749,6 +799,12 @@ namespace CAP
   if (target.rank() != 2) throw MathException("Functions of rank above 2 cannot be fitted to each other (for now)", __FUNCTION__);
   DataPointsVector points = samples(target, low[0], high[0], options.samples, low[1], high[1], options.samples);
   Fitter fitter(function, points, kChiSquare);
+  if (!options.included.empty() || !options.excluded.empty())
+    {
+    FitSelection selection;
+    selection.setRegions(options.included, options.excluded);
+    fitter.setSelection(selection);
+    }
   if (options.search)
     {
     fitter.setMethod(kSearch);

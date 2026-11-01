@@ -14,13 +14,11 @@ namespace CAP
 {
   EventProcessor::EventProcessor()
   :
-  Task(),
+  AnalysisTask(),
   _managedEvents(),
-  _managedEventFilters(),
   _managedEventEfficiencies(),
   _managedEventSmearers(),
   _managedParticleDbs(),
-  _managedParticleFilters(),
   _managedParticleEfficiencies(),
   _managedParticleSmearers(),
   _acceptedEventFilters(),
@@ -42,8 +40,6 @@ namespace CAP
   _allAcceptedParticlesFilter6(),
   _allAcceptedParticlesFilter7(),
   _ptMomentOrder(2),
-  _eventFilterNames(),
-  _particleFilterNames(),
   _eventAccepted(),
   _evtType()
   {
@@ -55,13 +51,11 @@ namespace CAP
 
   EventProcessor::EventProcessor(const EventProcessor & source)
   :
-  Task(source),
+  AnalysisTask(source),
   _managedEvents(source._managedEvents),
-  _managedEventFilters(source._managedEventFilters),
   _managedEventEfficiencies(source._managedEventEfficiencies),
   _managedEventSmearers(source._managedEventSmearers),
   _managedParticleDbs(source._managedParticleDbs),
-  _managedParticleFilters(source._managedParticleFilters),
   _managedParticleEfficiencies(source._managedParticleEfficiencies),
   _managedParticleSmearers(source._managedParticleSmearers),
   _acceptedEventFilters(source._acceptedEventFilters),
@@ -83,8 +77,6 @@ namespace CAP
   _allAcceptedParticlesFilter6(source._allAcceptedParticlesFilter6),
   _allAcceptedParticlesFilter7(source._allAcceptedParticlesFilter7),
   _ptMomentOrder(source._ptMomentOrder),
-  _eventFilterNames(source._eventFilterNames),
-  _particleFilterNames(source._particleFilterNames),
   _eventAccepted(source._eventAccepted),
   _evtType(source._evtType)
   {   }
@@ -93,13 +85,11 @@ namespace CAP
   {
   if (this!=&rhs)
     {
-    Task::operator=(rhs);
+    AnalysisTask::operator=(rhs);
     _managedEvents               = rhs._managedEvents;
-    _managedEventFilters         = rhs._managedEventFilters;
     _managedEventEfficiencies    = rhs._managedEventEfficiencies;
     _managedEventSmearers        = rhs._managedEventSmearers;
     _managedParticleDbs          = rhs._managedParticleDbs;
-    _managedParticleFilters      = rhs._managedParticleFilters;
     _managedParticleEfficiencies = rhs._managedParticleEfficiencies;
     _managedParticleSmearers     = rhs._managedParticleSmearers;
     _acceptedEventFilters        = rhs._acceptedEventFilters;
@@ -121,8 +111,6 @@ namespace CAP
     _allAcceptedParticlesFilter6 = rhs._allAcceptedParticlesFilter6;
     _allAcceptedParticlesFilter7 = rhs._allAcceptedParticlesFilter7;
     _ptMomentOrder = rhs._ptMomentOrder;
-    _eventFilterNames = rhs._eventFilterNames;
-    _particleFilterNames = rhs._particleFilterNames;
     _eventAccepted = rhs._eventAccepted;
     _evtType = rhs._evtType;
     }
@@ -155,10 +143,7 @@ namespace CAP
   _managedParticleFilters.configureObjects(configuration);
   _managedParticleEfficiencies.configureObjects(configuration);
   _managedParticleSmearers.configureObjects(configuration);
-  _eventFilterNames.clear();
-  _particleFilterNames.clear();
-  for (auto filter : eventFilters())    _eventFilterNames.push_back(filter->name());
-  for (auto filter : particleFilters()) _particleFilterNames.push_back(filter->name());
+  recordFilterNames();
   }
 
   void EventProcessor::initialize()
@@ -357,16 +342,6 @@ namespace CAP
   scaleHistograms(factors);
   }
 
-  void EventProcessor::scaleHistograms(double factor __attribute__((unused)))
-  {
-  throw NoImplementationException("EventProcessor",__FUNCTION__);
-  }
-
-  void EventProcessor::scaleHistograms(const std::vector<double> & factors __attribute__((unused)))
-  {
-  throw NoImplementationException("EventProcessor",__FUNCTION__);
-  }
-
   void EventProcessor::execute()
   {
   throw NoImplementationException("EventProcessor",__FUNCTION__);
@@ -376,19 +351,6 @@ namespace CAP
   {
   if (reportDebug(__FUNCTION__))  { printCR(); };
   calculateDerived();
-  }
-
-  String EventProcessor::combinationName(unsigned int index, unsigned int nParticles) const
-  {
-  unsigned int nE = _eventFilterNames.size(), nP = _particleFilterNames.size(), nCombinations = 1;
-  for (unsigned int i=0; i<nParticles; i++) nCombinations *= nP;
-  if (nE==0 || nP==0 || index>=nE*nCombinations) return String("Folder_")+String(std::to_string(index).c_str());
-  String name = _eventFilterNames[index/nCombinations];
-  unsigned int rest = index%nCombinations;
-  std::vector<unsigned int> particles(nParticles);
-  for (unsigned int i=nParticles; i>0; i--) { particles[i-1] = rest%nP; rest /= nP; }
-  for (unsigned int p : particles) { name += "_"; name += _particleFilterNames[p]; }
-  return name;
   }
 
   void EventProcessor::calculateDerived()

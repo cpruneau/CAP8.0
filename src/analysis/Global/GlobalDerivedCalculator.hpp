@@ -7,7 +7,7 @@
  * *********************************************************************/
 #ifndef CAP__GlobalDerivedCalculator
 #define CAP__GlobalDerivedCalculator
-#include "EventProcessorHistos.hpp"
+#include "AnalysisHistos.hpp"
 #include "GlobalHistos.hpp"
 
 namespace CAP
@@ -23,7 +23,7 @@ namespace CAP
 //!
 class GlobalDerivedCalculator
 :
-public EventProcessorHistos<GlobalHistos,1>
+public CalculatorHistos<GlobalHistos,1>
 {
 public:
 
@@ -35,7 +35,7 @@ public:
   GlobalDerivedCalculator & operator=(const GlobalDerivedCalculator & rhs);
   //! @brief Destructor.
   virtual ~GlobalDerivedCalculator() {}
-  //! @brief Add the default configuration: that of EventProcessorHistos, the histogram settings and SOURCE_TASK.
+  //! @brief Add the default configuration: that of CalculatorHistos, the histogram settings and SOURCE_TASK.
   virtual void setDefaultConfiguration() override;
   //! @brief Configure the task (and read SOURCE_TASK). @param configuration configuration
   virtual void configure(const Configuration & configuration) override;

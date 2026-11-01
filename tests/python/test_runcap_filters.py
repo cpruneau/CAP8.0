@@ -364,9 +364,10 @@ class TestKeys(unittest.TestCase):
         c = derived[0]
         self.assertEqual(c.param("SOURCE_TASK").value, "Single2")
         self.assertEqual(c.param("HISTOGRAM:pt_nbins").value, "17")
-        self.assertEqual(c.filters, {k: v for k, v in a.filters.items() if k != "EVENT"})
+        self.assertEqual(c.filters, {k: v for k, v in a.filters.items() if k in ("EVENT_FILTER", "PARTICLE_FILTER")})
         self.assertEqual(F.histogram_mode(c, TEMPLATES), F.DERIVED)
-        self.assertEqual(c.param("EVENT:USE").value, "false")
+        self.assertEqual(F.task_kinds(c, TEMPLATES), ["EVENT_FILTER", "PARTICLE_FILTER"])   # no events, efficiencies...
+        self.assertIsNone(c.param("EVENT:USE"))
         self.assertTrue(F.is_calculator(c, TEMPLATES) and not F.is_calculator(a, TEMPLATES))
         self.assertEqual(F.check_choices(derived, library(), TEMPLATES), [])
         it.children.append(c)                                               # a calculator in the event loop

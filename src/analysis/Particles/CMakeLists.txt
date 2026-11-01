@@ -20,6 +20,7 @@ EventEfficiency.cpp
 EventFilter.cpp
 EventIterator.cpp
 EventMerger.cpp
+AnalysisTask.cpp
 EventProcessor.cpp
 EventSmearer.cpp
 FileIterator.cpp

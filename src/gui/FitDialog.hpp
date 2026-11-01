@@ -12,19 +12,23 @@
 #ifndef CAP__GUI__FitDialog
 #define CAP__GUI__FitDialog
 #include <memory>
+#include <utility>
 #include <vector>
 #include "String.hpp"
+#include "FitSelection.hpp"
 
 namespace CAP
 {
   namespace MATH
   {
   class ParameterizedFunction;
+  class ParameterizedComposite;
   }
 
   namespace GRAPHICS
   {
   class Graph;
+  class GraphItem;
   }
 
   namespace GUI
@@ -42,14 +46,20 @@ namespace CAP
   //!    classes registered by programs, and composites (sums of registered functions, MATH::ParameterizedComposite),
   //!    with the degree of a Polynomial, a Polynomial2D or a series; only the functions of the rank of the object are
   //!    offered; a series or a Polynomial2D is mapped onto the range of the fit;
-  //!  - new composites, sums or products f(x) g(y), made in the window ("Composite..."): they are registered and written to
+  //!  - new composites, sums or products f(x) g(y), made in the window ("Composite..."). The user decides whether to
+  //!    register one: registered, it is added to MATH::FunctionRegistry and written to
   //!    MATH::FunctionRegistry::defaultCompositesFile(), read again when CapGui starts (and where programs can put
-  //!    theirs); a composite can be removed, or its current parameters kept as its starting values;
+  //!    theirs); otherwise it is offered for this session only, and can be registered later ("Register"). Either way
+  //!    its fits are saved with the objects fitted and read back (the fit holds the whole function). A composite can
+  //!    be removed, or its current parameters kept as its starting values;
   //!  - the starting value of each parameter, whether it is fixed, and its bounds; Estimate sets the starting values
   //!    from the data (MATH::Fitter::estimate());
   //!  - the statistic: chi square, or the Poisson likelihood for counts (histograms);
   //!  - the range in x (and y), by default that of the object ("View" takes the range shown), and for a function the
   //!    number of samples along each axis; for a histogram, whether the function is averaged over each bin;
+  //!  - regions of the range included or excluded (MATH::FitSelection): each an interval along x, y or both (a band
+  //!    or a box); the points fitted are in an included region (if any) and in no excluded region; for a histogram,
+  //!    the ends of the intervals can be snapped to the edges of the bins; the number of points used is shown;
   //!  - the method: Levenberg-Marquardt from the starting values, or a global search (differential evolution, needs
   //!    bounds on the free parameters) refined by Levenberg-Marquardt;
   //!  - the label of the fit.
@@ -93,10 +103,31 @@ namespace CAP
   bool fit(GRAPHICS::Graph & graph);
   //! @brief Draw the table of the parameters (value, fixed, bounds).
   void renderParameters();
+  //! @brief Draw the list of the regions included and excluded. @param item item fitted @param histogram it is a histogram
+  void renderRegions(const GRAPHICS::GraphItem & item, bool histogram);
+  //! @brief The points to fit: the range and the regions. @return selection
+  MATH::FitSelection selection() const;
+  //! @brief The regions of the list, included or excluded, without those that restrict no variable.
+  //! @param excluded the excluded ones (else the included ones) @return regions
+  std::vector<MATH::Region> regions(bool excluded) const;
   //! @brief Draw the window that makes a composite, if open.
   void renderCompositeBuilder();
   //! @brief Write the composites to the file shared with programs; report a failure.
   void saveComposites();
+  //! @brief The composite of this session (not registered) of a name. @param name name @return composite, or null
+  const MATH::ParameterizedComposite * sessionComposite(const String & name) const;
+  //! @brief Register a composite of this session (FunctionRegistry and the composites file), and drop it from the
+  //! session list. @param name name
+  void registerSessionComposite(const String & name);
+
+  //! A region of the fit being edited: an interval along x, y or both.
+  struct RegionDraft
+  {
+    bool exclude = true;   //!< excluded (else included)
+    bool restricts[2] = { true, false };   //!< restricts x, y
+    double low[2] = { 0.0, 0.0 };   //!< lower ends
+    double high[2] = { 1.0, 1.0 };   //!< upper ends
+  };
 
   //! A component of the composite being made.
   struct ComponentDraft
@@ -120,6 +151,8 @@ namespace CAP
   std::vector<double> _low;   //!< range of the fit, one lower end per variable
   std::vector<double> _high;   //!< range of the fit, one upper end per variable
   bool _binAveraging = false;   //!< average the function over the bins of a histogram
+  std::vector<RegionDraft> _regions;   //!< regions included and excluded
+  bool _snapToBins = true;   //!< ends of the regions of a histogram on the edges of its bins
   int  _samples;   //!< samples of a function fitted
   String _label;   //!< label of the fit
   String _message;   //!< outcome of the last action
@@ -129,6 +162,9 @@ namespace CAP
   std::vector<ComponentDraft> _drafts;   //!< components of the composite being made
   int _operation = 0;   //!< the composite being made is a sum (0) or a product (1)
   String _builderMessage;   //!< problem of the composite being made
+  bool _registerComposite = false;   //!< register the composite being made (else: for this session only)
+  //! Composites made in the window and not registered: offered in this session only (their fits are saved anyway)
+  std::vector<std::pair<String, std::shared_ptr<MATH::ParameterizedComposite>>> _sessionComposites;
   };
 
   } // namespace GUI

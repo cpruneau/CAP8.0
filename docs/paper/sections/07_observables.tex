@@ -1,0 +1,426 @@
+% Section: Observables
+\section{Observables}
+\label{sec:observables}
+
+This section defines the observables computed by the analysis tasks of \CAP{} and lists, for each task, the histograms
+it produces. Three conventions apply to all of them.
+
+\paragraph{Acceptance.}
+The kinematic range and the species of the particles entering an observable are those of the particle filters of the
+task (Section~\ref{sec:filters}); single-particle and pair histograms are incremented only for the particles accepted
+by their filters. The binning of each histogram is set by the histogram settings of the task (keys
+\code{<task>:HISTOGRAM:...}), and its range should cover the range accepted by the filters.
+
+\paragraph{Normalisation.}
+At the end of the event loop, the histograms of the single-particle and pair analyses are divided by the number of
+events accepted by their event filter: they hold yields \emph{per event}. Bin contents are integrals over the bins, not
+densities: a histogram of $\pT$ holds $\avg{\Delta N}$, the mean number of particles per event in each $\pT$ bin, and
+the density $dN/d\pT$ is obtained by dividing by the bin width. Cross sections follow from the yields per event by
+multiplication with the cross section of the events selected, $d\sigma = \sigma_{\mathrm{ev}}\, dN$. Distributions of
+event-wise quantities (multiplicity, energy, spherocity) and profiles are not scaled.
+
+\paragraph{Base and derived histograms.}
+Each table distinguishes the \emph{base} histograms, filled event by event by the analyzer, from the \emph{derived}
+histograms, computed from them by the derived calculator in a later job (Section~\ref{sec:phases}). The last column
+gives the option of the histogram settings that turns a histogram on: \code{eta\_fill}, \code{rapidity\_fill},
+\code{p2\_fill}, \code{FillPtvsY}, \code{FillPid}; histograms without option are always produced. The histograms of a
+combination of filters are in its folder of the output file (e.g. \code{ALL\_PiP} for singles, \code{ALL\_PiP\_PiM}
+for pairs).
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Single-particle spectra}
+\label{sec:single}
+
+The task \code{ParticleSingleAnalyzer} measures the single-particle densities of each species selected by a particle
+filter,
+\begin{equation}
+  \rho_1(\pT,\eta,\varphi) = \frac{d^3N}{\pT\,d\pT\,d\eta\,d\varphi},
+\end{equation}
+and its projections, and the event-by-event distributions of the multiplicity $N$ and total energy $E$ of the accepted
+particles. The invariant yield, and the invariant cross section $E\,d^3\sigma/dp^3 = \sigma_{\mathrm{ev}}\,E\,d^3N/dp^3$,
+\begin{equation}
+  E\frac{d^3N}{dp^3} = \frac{1}{2\pi\pT}\frac{d^2N}{d\pT\,dy},
+  \label{eq:invariant}
+\end{equation}
+is obtained from \code{n1\_ptXS}, filled with weight $1/\pT$, as $\code{n1\_ptXS}/(2\pi\,\Delta\pT\,\Delta y)$, with
+$\Delta\pT$ the width of the bin and $\Delta y$ the rapidity range accepted by the particle filter; the double
+differential $d^2N/d\pT\,dy$ is available from \code{n1\_ptY}. The azimuthal and (pseudo)rapidity densities are
+\begin{equation}
+  \rho_1(\eta,\varphi) = \frac{d^2N}{d\eta\,d\varphi}, \;\;
+  \frac{dN}{d\eta} = \int\! \rho_1\, d\varphi, \;\;
+  \frac{dN}{d\varphi} = \int\! \rho_1\, d\eta ,
+\end{equation}
+and likewise in rapidity. When \code{p2\_fill} is set, the same histograms are also filled with weight $\pT$, which
+gives the inclusive mean transverse momentum in each bin, $\avg{\pT}(\eta,\varphi) = \sum\pT/N$. Table~\ref{tab:single}
+lists the histograms.
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of a single-particle folder (\code{ParticleSingleHistos}), per event.}
+  \label{tab:single}
+  \small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Name & Content & Option \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Base}} \\
+    \code{n1}           & distribution of $N$             & \\
+    \code{n1\_eTotal}   & distribution of $E=\sum E_i$    & \\
+    \code{n1\_pt}       & $dN/d\pT$                        & \\
+    \code{n1\_ptXS}     & $(1/\pT)\,dN/d\pT$               & \\
+    \code{n1\_phiEta}   & $d^2N/d\eta\,d\varphi$           & \code{eta\_fill} \\
+    \code{spt\_phiEta}  & $\sum\pT$ vs $(\eta,\varphi)$    & \code{eta\_fill}, \code{p2\_fill} \\
+    \code{n1\_phiY}     & $d^2N/dy\,d\varphi$              & \code{rapidity\_fill} \\
+    \code{spt\_phiY}    & $\sum\pT$ vs $(y,\varphi)$       & \code{rapidity\_fill}, \code{p2\_fill} \\
+    \code{n1\_ptY}      & $d^2N/dy\,d\pT$                  & \code{FillPtvsY} \\
+    \code{n1\_indexId}  & PDG codes of the particles       & \code{FillPid} \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Derived}} \\
+    \code{n1\_phi}      & $dN/d\varphi$                    & \\
+    \code{n1\_eta}      & $dN/d\eta$                       & \code{eta\_fill} \\
+    \code{n1\_y}        & $dN/dy$                          & \code{rapidity\_fill} \\
+    \code{sum\_pt\_}$X$ & $\sum\pT$ vs $X=\varphi,\eta,y$  & \code{p2\_fill} \\
+    \code{avg\_pt\_}$X$ & $\avg{\pT}$ vs $X=\varphi,\eta,y,(\eta,\varphi),(y,\varphi)$ & \code{p2\_fill} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Pair densities and cumulants}
+\label{sec:pairs}
+
+The task \code{ParticlePairAnalyzer} measures, for each ordered pair of particle filters $(\alpha,\beta)$, the pair
+density $\rho_2^{\alpha\beta}(x_1,x_2)$ as a function of the kinematic variables of the two particles, $x=\pT$,
+$\varphi$, $\eta$ or $y$, and of their differences $(\Delta\eta,\Delta\varphi)$ and $(\Delta y,\Delta\varphi)$, together with
+the single-particle densities of the two species (Section~\ref{sec:single}). When $\alpha=\beta$, a particle is not
+paired with itself. The derived histograms are the product of the single-particle densities $\rho_1^\alpha\otimes\rho_1^\beta$,
+the cumulant, and the normalised cumulant~\cite{Pruneau:2002yf,Pruneau:2017book},
+\begin{align}
+  C_2^{\alpha\beta}(x_1,x_2) & = \rho_2^{\alpha\beta}(x_1,x_2) - \rho_1^{\alpha}(x_1)\,\rho_1^{\beta}(x_2), \label{eq:C2} \\
+  R_2^{\alpha\beta}(x_1,x_2) & = \frac{C_2^{\alpha\beta}(x_1,x_2)}{\rho_1^{\alpha}(x_1)\,\rho_1^{\beta}(x_2)}, \label{eq:R2}
+\end{align}
+and the cumulant per associated particle,
+\begin{equation}
+  A_2^{\alpha\beta}(x_1,x_2) = \frac{C_2^{\alpha\beta}(x_1,x_2)}{\avg{N_\beta}},
+  \label{eq:A2}
+\end{equation}
+with $\avg{N_\beta}$ the mean number of particles $\beta$ per event in the acceptance. For the differences of
+pseudorapidity and azimuth, $\rho_1^{\alpha}\otimes \rho_1^{\beta}(\Delta \eta, \Delta \varphi)$ is the ``tensor
+product'' of the single-particle densities $\rho_1^{\alpha}(\eta_1,\varphi_1)$ and $\rho_1^{\beta}(\eta_2,\varphi_2)$
+averaged at $\Delta \eta= \eta_1-\eta_2$ and $\Delta \varphi= \varphi_1-\varphi_2$ according to the technique described
+in Ref.~\cite{Adam:2017ucq}, and
+\begin{equation}
+  R_2^{\alpha\beta}(\Delta \eta, \Delta \varphi) = \frac{C_2^{\alpha\beta}(\Delta \eta, \Delta \varphi)}{\rho_1^{\alpha}\otimes \rho_1^{\beta}(\Delta \eta, \Delta \varphi)},
+\end{equation}
+with $C_2^{\alpha\beta}(\Delta \eta, \Delta \varphi) = \rho_2^{\alpha\beta}(\Delta \eta, \Delta \varphi) - \rho_1^{\alpha}\otimes \rho_1^{\beta}(\Delta \eta, \Delta \varphi)$,
+and likewise for $(\Delta y,\Delta\varphi)$. $R_2$ is thereby averaged over the mean pseudorapidity
+$\bar\eta=(\eta_1+\eta_2)/2$ of the pairs, and corrected for the acceptance, since the pair density and the product of
+the single densities are reduced the same way. $D_2(\Delta y,\Delta\varphi)$ is $A_2$ divided, in each $\Delta y$ bin,
+by the fraction $\Omega(\Delta y)$ of the acceptance in $\bar y$ available at that $\Delta y$ (for a uniform acceptance
+$|y|<Y$, $\Omega = 1-|\Delta y|/2Y$), that is, $A_2$ averaged over $\bar y$. The $\Delta\varphi$ axis covers
+$[0,2\pi)$; the versions \code{\_shft} of the histograms are shifted to $[-\pi/2,3\pi/2)$, where the near side
+($\Delta\varphi\approx 0$) and the away side ($\Delta\varphi\approx\pi$) appear whole. Table~\ref{tab:pairs} lists the
+histograms.
+\todo{\code{C2O\_DetaDphi} ($D_2$ vs $\Delta\eta$) is created but not computed today; only $D_2(\Delta y,\Delta\varphi)$ is.}
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of a pair folder (\code{ParticlePairHistos}), per event, for the variables
+  $X$ = \code{ptpt} $(p_{\mathrm{T},1},p_{\mathrm{T},2})$ and \code{phiphi} $(\varphi_1,\varphi_2)$, always;
+  \code{etaeta} $(\eta_1,\eta_2)$ and \code{DetaDphi} $(\Delta\eta,\Delta\varphi)$ with \code{eta\_fill};
+  \code{yY} $(y_1,y_2)$ and \code{DyDphi} $(\Delta y,\Delta\varphi)$ with \code{rapidity\_fill}.
+  The column $X$ lists the variables for which a histogram is made.}
+  \label{tab:pairs}
+  \small
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    Name & Content & $X$ & Option \\
+    \midrule
+    \multicolumn{4}{@{}l}{\emph{Base}} \\
+    \code{n2}             & distribution of the number of pairs                     & ---         & \\
+    \code{n2\_}$X$        & $\rho_2$, pair yield                                     & all         & \\
+    \code{ptpt\_}$X$      & $\rho_2$ weighted by $p_{\mathrm{T},1}p_{\mathrm{T},2}$, $S_{pp}$ & all but \code{ptpt} & \code{p2\_fill} \\
+    \code{ptn\_}$X$, \code{npt\_}$X$ & $\rho_2$ weighted by $p_{\mathrm{T},1}$ ($S_{pn}$) and by $p_{\mathrm{T},2}$ ($S_{np}$) & all but \code{ptpt} & \code{p2\_fill} \\
+    \midrule
+    \multicolumn{4}{@{}l}{\emph{Derived}} \\
+    \code{n1n1\_}$X$      & $\rho_1^\alpha\otimes\rho_1^\beta$                        & all         & \\
+    \code{C2\_}$X$        & $C_2$, Eq.~(\ref{eq:C2})                                  & all         & \\
+    \code{R2\_}$X$        & $R_2$, Eq.~(\ref{eq:R2})                                  & all         & \\
+    \code{C2N\_}$X$       & $A_2$, Eq.~(\ref{eq:A2})                                  & all         & \\
+    \code{C2O\_}$X$       & $D_2$, $A_2$ averaged over $\bar y$                       & \code{DetaDphi}, \code{DyDphi} & \\
+    \code{DptDpt\_}$X$    & $\avg{\Delta p_{\mathrm{T},1}\Delta p_{\mathrm{T},2}}$, Eq.~(\ref{eq:DptDpt}) & all but \code{ptpt} & \code{p2\_fill} \\
+    \code{P2\_}$X$        & $P_2$, Eq.~(\ref{eq:P2})                                  & all but \code{ptpt} & \code{p2\_fill} \\
+    \code{pt1pt1\_}$X$    & $\avg{p_{\mathrm{T},1}}\avg{p_{\mathrm{T},2}}$             & all but \code{ptpt} & \code{p2\_fill} \\
+    \code{G2\_}$X$        & $G_2$, Eq.~(\ref{eq:G2})                                  & all but \code{ptpt} & \code{p2\_fill} \\
+    $Q$\code{\_}$X$\code{\_shft} & $Q$ = \code{C2}, \code{C2N}, \code{C2O}, \code{R2}, \code{DptDpt}, \code{P2}, \code{G2}, $\Delta\varphi$ shifted & \code{DetaDphi}, \code{DyDphi} & \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Transverse-momentum correlators}
+\label{sec:ptcorr}
+
+With the option \code{p2\_fill}, the pair analysis also measures the correlations of the transverse momenta of the
+particles of a pair. With $S_{pp}$, $S_{pn}$ and $S_{np}$ the pair densities weighted by $p_{\mathrm{T},1}p_{\mathrm{T},2}$,
+$p_{\mathrm{T},1}$ and $p_{\mathrm{T},2}$, and $\avg{\pT}_\alpha$ the inclusive mean transverse momentum of species
+$\alpha$ in the acceptance, the transverse-momentum covariance of the pairs in a bin is
+\begin{align}
+  \avg{\Delta p_{\mathrm{T},1}\Delta p_{\mathrm{T},2}} = {} & \frac{1}{\rho_2}\Big( S_{pp} - \avg{\pT}_\beta S_{pn} \nonumber \\
+   & - \avg{\pT}_\alpha S_{np} + \avg{\pT}_\alpha\avg{\pT}_\beta\,\rho_2 \Big),
+  \label{eq:DptDpt}
+\end{align}
+with $\Delta\pT = \pT-\avg{\pT}$, and its dimensionless version is~\cite{Sharma:2008qr}
+\begin{equation}
+  P_2 = \frac{\avg{\Delta p_{\mathrm{T},1}\Delta p_{\mathrm{T},2}}}{\avg{\pT}_\alpha\avg{\pT}_\beta}.
+  \label{eq:P2}
+\end{equation}
+The correlator $G_2$~\cite{Gavin:2006xd} compares the $\pT$-weighted pair density with the product of the
+$\pT$-weighted single densities,
+\begin{equation}
+  G_2 = \frac{S_{pp} - S^{\alpha}_{p}\otimes S^{\beta}_{p}}{\rho_1^\alpha\otimes\rho_1^\beta},
+  \label{eq:G2}
+\end{equation}
+with $S_p$ the single-particle densities weighted by $\pT$ (\code{spt\_phiEta}, \code{spt\_phiY}).
+
+The task \code{PtPtAnalyzer} is meant for the event-wise version of these correlators: the moments
+$Q_n=\sum_i p_{\mathrm{T},i}^n$ of the accepted particles of each event and the factorial moments of their multiplicity,
+accumulated as profiles versus an event variable, from which the cumulants of $\pT$ of orders 2 to 4 are derived.
+\todo{\code{PtPtAnalyzer} applies the filters but does not fill its histograms yet: describe it once it does, or leave
+it out of this version.}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Balance functions}
+\label{sec:bf}
+
+Balance functions~\cite{Bass:2000az} measure the density of particles $\bar\beta$ associated with a particle $\alpha$,
+minus that associated with its antiparticle $\bar\alpha$,
+\begin{equation}
+  B^{\alpha\bar\beta}(x_1,x_2) = \frac{\rho_2^{\alpha\bar\beta}(x_1,x_2)}{\rho_1^{\alpha}(x_1)}
+                                - \frac{\rho_2^{\bar\alpha\bar\beta}(x_1,x_2)}{\rho_1^{\bar\alpha}(x_1)} ,
+  \label{eq:BFdef}
+\end{equation}
+so that its integral over $x_2$ is the number of particles $\bar\beta$ that balance, in the acceptance, the
+conserved charge carried by a particle $\alpha$. Since $\rho_2^{\alpha\beta}/\rho_1^\alpha = \rho_1^\beta(1+R_2^{\alpha\beta})$ by Eq.~(\ref{eq:R2}), it is computed from the normalised cumulants of
+the pairs and the density of the associated species,
+\begin{equation}
+  B^{\alpha\bar\beta} = \rho_1^{\bar\beta}(x_2)\left[R_2^{\alpha\bar\beta}(x_1,x_2) - R_2^{\bar\alpha\bar\beta}(x_1,x_2)\right],
+\end{equation}
+and, for the differences of pseudorapidity (or rapidity) and azimuth, as defined in Ref.~\cite{Pruneau:2023zhl},
+\begin{widetext}
+\begin{equation}
+  \label{eq:BF}
+  B^{\alpha \bar{\beta}}(\Delta \eta, \Delta \varphi) = \bar\rho_1^{\bar{\beta}}  \left[ R_2^{\alpha\bar{\beta}}(\Delta \eta, \Delta \varphi) - R_2^{\bar{\alpha}\bar{\beta}}(\Delta \eta, \Delta \varphi) \right],
+\end{equation}
+\end{widetext}
+with $\bar\rho_1^{\bar\beta}$ the mean density of $\bar\beta$ over the acceptance. The labels $\alpha, \beta$ denote the
+particle species of interest, whereas $\bar\alpha$ and $\bar\beta$ denote their respective antiparticles. The balance
+function $B^{\bar\alpha\beta}$ is obtained by exchanging particles and antiparticles, and the combination
+$B^{s} = (B^{\alpha\bar\beta}+B^{\bar\alpha\beta})/2$ is reported as well. The charge-independent and
+charge-dependent combinations of the normalised cumulants are
+\begin{align}
+  R_2^{\mathrm{CI}} & = \tfrac14\left(R_2^{\alpha\beta}+R_2^{\alpha\bar\beta}+R_2^{\bar\alpha\beta}+R_2^{\bar\alpha\bar\beta}\right), \\
+  R_2^{\mathrm{CD}} & = \tfrac12\left(R_2^{\alpha\bar\beta}+R_2^{\bar\alpha\beta}-R_2^{\alpha\beta}-R_2^{\bar\alpha\bar\beta}\right).
+\end{align}
+
+The task \code{ParticlePairBFCalculator} computes them in the third phase of a pair analysis, from the folders of a
+\code{ParticlePairAnalyzer}, for every event filter and ordered pair of species $(\alpha,\beta)$. A species is a pair of
+particle filters, a particle and its antiparticle, named by the key \code{SPECIES} (e.g.\
+\code{PiP/PiM, KP/KM, PP/PM}); by default, the first half of the particle filters are the particles and the second half
+their antiparticles. The results are written in a folder per event filter and pair of species, named after the
+particles with the suffix \code{\_BF} (e.g.\ \code{ALL\_PiP\_KP\_BF}); Table~\ref{tab:bf} lists its histograms. As for
+the other histograms, bin contents are integrals over the bins: the sum of $B^{\alpha\bar\beta}$ over the bins of $x_2$
+is the number of balancing partners.
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of a balance-function folder (\code{ParticlePairBFHistos}), for the variables $X$ of
+  Table~\ref{tab:pairs} filled by the pair analysis; $(\Delta\eta,\Delta\varphi)$ and $(\Delta y,\Delta\varphi)$ have
+  \code{\_shft} versions.}
+  \label{tab:bf}
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Name & Content \\
+    \midrule
+    \code{R2CI\_}$X$    & $R_2^{\mathrm{CI}}$ \\
+    \code{R2CD\_}$X$    & $R_2^{\mathrm{CD}}$ \\
+    \code{B\_a\_bB\_}$X$ & $B^{\alpha\bar\beta}$, Eq.~(\ref{eq:BF}) \\
+    \code{B\_aB\_b\_}$X$ & $B^{\bar\alpha\beta}$ \\
+    \code{B\_}$X$       & $B^{s}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Three-dimensional pair analysis}
+\label{sec:pair3d}
+
+The tasks \code{ParticlePair3DAnalyzer}, \code{ParticlePair3DDerivedCalculator} and \code{ParticlePair3DBFCalculator} are
+called exactly as their counterparts of the pair analysis; only their histograms differ. They measure the pair
+densities as functions of the relative momentum of the pairs, the Lorentz-invariant
+$Q_{\mathrm{inv}} = \sqrt{-(p_1-p_2)^2}$ and the three components $(q_{\mathrm{side}}, q_{\mathrm{out}}, q_{\mathrm{long}})$
+of $\mathbf{p}_1-\mathbf{p}_2$ in the longitudinally comoving frame of the pair, along the beam (long), along the
+transverse momentum of the pair (out), and perpendicular to both (side). The product of the single-particle densities
+in these variables has no closed form: it is computed by Monte Carlo, drawing pairs of particles from the measured
+densities $d^2N/dy\,d\pT$ of the two species (\code{n1\_ptY}, option \code{FillPtvsY}) with uniform azimuths
+(key \code{nMcSimEvents}). $C_2$ and $R_2$ follow from Eqs.~(\ref{eq:C2}) and~(\ref{eq:R2}), and the associated yields
+are $A^{\alpha|\beta} = C_2/\avg{N_\beta}$ and $A^{\beta|\alpha}=C_2/\avg{N_\alpha}$. The balance functions are
+computed per trigger particle, from Eq.~(\ref{eq:BFdef}) integrated over the variables of the trigger,
+\begin{equation}
+  B^{\alpha\bar\beta}(q) = \frac{\rho_2^{\alpha\bar\beta}(q)}{\avg{N_\alpha}} - \frac{\rho_2^{\bar\alpha\bar\beta}(q)}{\avg{N_{\bar\alpha}}},
+\end{equation}
+with $q = Q_{\mathrm{inv}}$, $(q_{\mathrm{side}},q_{\mathrm{out}},q_{\mathrm{long}})$ or one of its components.
+Table~\ref{tab:pair3d} lists the histograms.
+\todo{references for the Bertsch--Pratt variables and for balance functions in relative momentum.}
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of a 3D pair folder (\code{ParticlePair3DHistos}) and of its balance-function folder
+  (\code{ParticlePair3DBFHistos}), for $q$ = \code{Qinv}, \code{DeltaP} $(q_{\mathrm{side}},q_{\mathrm{out}},q_{\mathrm{long}})$,
+  and the projections \code{DeltaPs}, \code{DeltaPo}, \code{DeltaPl}.}
+  \label{tab:pair3d}
+  \small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Name & Content & $q$ \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Base}} \\
+    \code{n2}            & distribution of the number of pairs   & --- \\
+    \code{n2\_}$q$        & $\rho_2$                              & \code{Qinv}, \code{DeltaP} \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Derived}} \\
+    \code{n2\_}$q$        & $\rho_2$, projections                  & \code{DeltaPs,o,l} \\
+    \code{n1n1\_}$q$      & $\rho_1\otimes\rho_1$ (Monte Carlo)    & all \\
+    \code{c2\_}$q$, \code{r2\_}$q$ & $C_2$, $R_2$                  & all \\
+    \code{A12\_}$q$, \code{A21\_}$q$ & $A^{\alpha|\beta}$, $A^{\beta|\alpha}$ & all but \code{DeltaP} \\
+    \code{n1\_}$i$\code{\_pt}, \code{n1\_}$i$\code{\_y}, \dots & densities of the Monte Carlo pairs & --- \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Balance functions}} \\
+    \code{R2CI\_}$q$, \code{R2CD\_}$q$ & $R_2^{\mathrm{CI}}$, $R_2^{\mathrm{CD}}$ & all \\
+    \code{B\_a\_bB\_}$q$, \code{B\_aB\_b\_}$q$, \code{B\_}$q$ & $B^{\alpha\bar\beta}$, $B^{\bar\alpha\beta}$, $B^s$ & all \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Fluctuations: $\nu_{\rm dyn}$ and higher moments}
+\label{sec:nudyn}
+
+The task \code{NuDynAnalyzer} measures the fluctuations of the multiplicities $N_1$ and $N_2$ of two particle
+selections, as functions of an event variable $m$ (the multiplicity or another global quantity of the event, see
+Section~\ref{sec:global}), from the factorial moments
+\begin{equation}
+  f_1^{i} = \avg{N_i}, \;\;
+  f_2^{ii} = \avg{N_i(N_i-1)}, \;\;
+  f_2^{12} = \avg{N_1N_2},
+\end{equation}
+accumulated as profiles versus $m$. The derived calculator computes the factorial cumulants and their normalised
+versions,
+\begin{equation}
+  F_2^{ij} = f_2^{ij} - f_1^{i}f_1^{j}, \qquad R_2^{ij} = \frac{F_2^{ij}}{f_1^{i}f_1^{j}},
+\end{equation}
+and the dynamical fluctuations of the relative multiplicities~\cite{Pruneau:2002yf},
+\begin{equation}
+  \nudyn = R_2^{11} + R_2^{22} - 2R_2^{12},
+\end{equation}
+which vanishes for independently produced particles. The task has a folder per event filter and ordered pair of
+particle filters $(i,j)$; the folders with $j<i$ are filled. Table~\ref{tab:nudyn} lists the histograms.
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of a fluctuation folder (\code{NuDynHistos}), as functions of the event variable $m$.}
+  \label{tab:nudyn}
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Name & Content \\
+    \midrule
+    \multicolumn{2}{@{}l}{\emph{Base}} \\
+    \code{mult}                  & distribution of $m$ \\
+    \code{f1\_1}, \code{f1\_2}     & $f_1^1$, $f_1^2$ (profiles) \\
+    \code{f2\_11}, \code{f2\_12}, \code{f2\_22} & $f_2^{11}$, $f_2^{12}$, $f_2^{22}$ (profiles) \\
+    \midrule
+    \multicolumn{2}{@{}l}{\emph{Derived}} \\
+    \code{F2\_11}, \code{F2\_12}, \code{F2\_22} & $F_2^{ij}$ \\
+    \code{R2\_11}, \code{R2\_12}, \code{R2\_22} & $R_2^{ij}$ \\
+    \code{Nu\_dyn}               & $\nudyn$ \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+\todo{the code computes moments up to second order; higher moments (orders 3 and 4) are announced in the documentation
+of the class but not implemented.}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Global observables and event shapes}
+\label{sec:global}
+
+The task \code{GlobalAnalyzer} computes, for each event and each particle filter, the multiplicity $n$, the total energy
+$e=\sum_i E_i$, the net electric charge $q=\sum_i q_i$, the net strangeness $s$ and the net baryon number $b$ of the
+accepted particles, their total transverse momentum $\sum\pT$ and its mean $\sum\pT/n$. These values are also stored in
+the event record, where the event filters of the other tasks use them to define event classes (multiplicity classes, for
+instance), and \code{NuDynAnalyzer} uses one of them as its event variable. The histograms hold their event-by-event
+distributions and their averages versus $n$ (Table~\ref{tab:global}); the derived calculator adds the inclusive mean
+transverse momentum versus multiplicity, $\avg{\sum\pT}/n$.
+
+The task \code{SpherocityAnalyzer} computes the transverse spherocity of the accepted particles of each event,
+\begin{equation}
+  S_0 = \min_{\hat{\mathbf n}} \left(\frac{\sum_i |\mathbf p_{\mathrm{T},i}\times\hat{\mathbf n}|}{\sum_i p_{\mathrm{T},i}}\right)^2 ,
+\end{equation}
+where the minimum is searched over \code{nSteps} directions $\hat{\mathbf n}$ of the transverse plane, and its unweighted
+version $S_1$, computed with unit transverse vectors. $S_0$ ranges from 0 for pencil-like events to $\pi^2/4$ for
+isotropic ones (\CAP{} does not apply the usual factor $\pi^2/4$, which would bring it to 1).
+\todo{reference for spherocity.}
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of the folders of global observables (\code{GlobalHistos}) and of spherocity
+  (\code{SpherocityHistos}). Distributions and profiles are not scaled.}
+  \label{tab:global}
+  \small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Name & Content & Option \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Global, base}} \\
+    \code{n}, \code{e}, \code{q}, \code{s}, \code{b} & distributions of $n$, $e$, $q$, $s$, $b$ & \\
+    \code{ptSum}, \code{ptAvg}   & distributions of $\sum\pT$, $\sum\pT/n$ & \\
+    \code{n\_}$v$\code{Prof}       & $\avg{v}$ vs $n$, $v$ = \code{e}, \code{q}, \code{s}, \code{b}, \code{ptSum}, \code{ptAvg} & \\
+    \multicolumn{3}{@{}l}{\emph{Global, derived}} \\
+    \code{n\_ptAvgIncl}          & $\avg{\sum\pT}/n$ vs $n$ & \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Spherocity}} \\
+    \code{S0}, \code{S1}         & distributions of $S_0$, $S_1$ & \code{FillS0}, \code{FillS1} \\
+    \code{S1VsS0}                & $S_1$ vs $S_0$                & \code{FillS1VsS0} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Performance analysis}
+\label{sec:performance}
+
+For performance studies, \code{MeasurementSimulator} produces from each generated event a detector-level event, with
+the efficiencies and smearers of Section~\ref{sec:efficiency}, and \code{PerformanceAnalyzer} compares the two: for each
+particle, the differences between its smeared and generated kinematics, $\Delta\pT$, $\Delta\eta$, $\Delta y$ and
+$\Delta\varphi$, are histogrammed, and their averages are recorded as profiles versus $\pT$ and $\eta$
+(Table~\ref{tab:performance}). The same analyses, run on the generated and on the detector-level events, give the
+generator-level and the measured observables; \code{ClosureCalculator} takes their differences or ratios, histogram by
+histogram, to assess the effect of the detector on each observable.
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of a performance folder (\code{ParticlePerformanceHistos}); $\Delta$ is detector level minus
+  generator level.}
+  \label{tab:performance}
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Name & Content \\
+    \midrule
+    \code{n1\_dpt}, \code{n1\_deta}, \code{n1\_dy}, \code{n1\_dphi} & distributions of $\Delta\pT$, $\Delta\eta$, $\Delta y$, $\Delta\varphi$ \\
+    \code{d}$v$\code{VsPt}   & $\avg{\Delta v}$ vs $\pT$, $v$ = \code{pt}, \code{eta}, \code{y}, \code{phi} \\
+    \code{d}$v$\code{VsEta}  & $\avg{\Delta v}$ vs $\eta$ \\
+    \bottomrule
+  \end{tabular}
+\end{table*}

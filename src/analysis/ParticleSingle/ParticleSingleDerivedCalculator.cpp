@@ -14,7 +14,7 @@ namespace CAP
 
 ParticleSingleDerivedCalculator::ParticleSingleDerivedCalculator()
 :
-EventProcessorHistos<ParticleSingleHistos,1>(),
+CalculatorHistos<ParticleSingleHistos,1>(),
 _sourceTask("ParticleSingleAnalyzer")
 {
   appendClassName("ParticleSingleDerivedCalculator");
@@ -25,7 +25,7 @@ _sourceTask("ParticleSingleAnalyzer")
 
 ParticleSingleDerivedCalculator::ParticleSingleDerivedCalculator(const ParticleSingleDerivedCalculator & source)
 :
-EventProcessorHistos<ParticleSingleHistos,1>(source),
+CalculatorHistos<ParticleSingleHistos,1>(source),
 _sourceTask(source._sourceTask)
 {   }
 
@@ -33,7 +33,7 @@ ParticleSingleDerivedCalculator & ParticleSingleDerivedCalculator::operator=(con
 {
   if (this!=&rhs)
     {
-    EventProcessorHistos<ParticleSingleHistos,1>::operator=(rhs);
+    CalculatorHistos<ParticleSingleHistos,1>::operator=(rhs);
     _sourceTask = rhs._sourceTask;
     }
   return *this;
@@ -41,14 +41,14 @@ ParticleSingleDerivedCalculator & ParticleSingleDerivedCalculator::operator=(con
 
 void ParticleSingleDerivedCalculator::setDefaultConfiguration()
 {
-  EventProcessorHistos<ParticleSingleHistos,1>::setDefaultConfiguration();
+  CalculatorHistos<ParticleSingleHistos,1>::setDefaultConfiguration();
   ParticleSingleHistos::addDefaultConfiguration(_configuration,name());
   _configuration.addProperty(createKey(name(),"SOURCE_TASK"),String("ParticleSingleAnalyzer"));
 }
 
 void ParticleSingleDerivedCalculator::configure(const Configuration & configuration)
 {
-  EventProcessorHistos<ParticleSingleHistos,1>::configure(configuration);
+  CalculatorHistos<ParticleSingleHistos,1>::configure(configuration);
   _sourceTask = configuration.valueString(createKey(name(),"SOURCE_TASK"));
   if (reportInfo(__FUNCTION__)) printValue(createKey(name(),"SOURCE_TASK"),_sourceTask);
 }
@@ -57,13 +57,13 @@ void ParticleSingleDerivedCalculator::execute()
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   _taskExecuted.increment();
-  std::vector<ParticleSingleHistos*> & folders = histograms();
-  if (folders.size()<nCombinations())
+  std::vector<ParticleSingleHistos*> & histos = histograms();
+  if (histos.size()<nCombinations())
     throw Exception("Fewer histogram folders than combinations of filters",__FUNCTION__);
-  for (ParticleSingleHistos * folder : folders)
+  for (ParticleSingleHistos * histo : histos)
     {
-    if (!folder->h_n1_phi) folder->createDerived();   // (already there if the input file has them)
-    folder->calculateDerived();
+    if (!histo->h_n1_phi) histo->createDerived();   // (already there if the input file has them)
+    histo->calculateDerived();
     }
 }
 

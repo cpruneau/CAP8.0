@@ -77,6 +77,8 @@ public:
   std::size_t remaining() const { return _size-_position; }
   //! @brief Read one byte. @return value @throws Exception at the end of the buffer
   uint8_t readUInt8() { need(1); return uint8_t(_data[_position++]); }
+  //! @brief The next byte, not read. @return value @throws Exception at the end of the buffer
+  uint8_t peekUInt8() const { if (remaining()<1) throw Exception("Unexpected end of binary data","BinaryReader"); return uint8_t(_data[_position]); }
   //! @brief Read 4 bytes, little-endian. @return value
   uint32_t readUInt32() { need(4); uint32_t v=0; for (int i=0; i<4; i++) v |= uint32_t(uint8_t(_data[_position++]))<<(8*i); return v; }
   //! @brief Read 8 bytes, little-endian. @return value

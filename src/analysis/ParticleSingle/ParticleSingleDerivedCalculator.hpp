@@ -7,7 +7,7 @@
  * *********************************************************************/
 #ifndef CAP__ParticleSingleDerivedCalculator
 #define CAP__ParticleSingleDerivedCalculator
-#include "EventProcessorHistos.hpp"
+#include "AnalysisHistos.hpp"
 #include "ParticleSingleHistos.hpp"
 
 namespace CAP
@@ -24,7 +24,7 @@ namespace CAP
 //!
 class ParticleSingleDerivedCalculator
 :
-public EventProcessorHistos<ParticleSingleHistos,1>
+public CalculatorHistos<ParticleSingleHistos,1>
 {
 public:
 
@@ -36,7 +36,7 @@ public:
   ParticleSingleDerivedCalculator & operator=(const ParticleSingleDerivedCalculator & rhs);
   //! @brief Destructor.
   virtual ~ParticleSingleDerivedCalculator() {}
-  //! @brief Add the default configuration: that of EventProcessorHistos, the histogram settings and SOURCE_TASK.
+  //! @brief Add the default configuration: that of CalculatorHistos, the histogram settings and SOURCE_TASK.
   virtual void setDefaultConfiguration() override;
   //! @brief Configure the task (and read SOURCE_TASK). @param configuration configuration
   virtual void configure(const Configuration & configuration) override;

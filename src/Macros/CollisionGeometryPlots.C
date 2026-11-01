@@ -46,9 +46,8 @@ int CollisionGeometryPlots()
   gSystem->Load(includesPath+"ParticleFilter.hpp");
   gSystem->Load(includesPath+"ParticleHistos.hpp");
   gSystem->Load(includesPath+"ParticlePairCombinedHistos.hpp");
-  gSystem->Load(includesPath+"ParticlePairDerivedHistos.hpp");
-  gSystem->Load(includesPath+"ParticlePairFilter.hpp");
   gSystem->Load(includesPath+"ParticlePairHistos.hpp");
+  gSystem->Load(includesPath+"ParticlePairFilter.hpp");
   gSystem->Load(includesPath+"TrackAndPairConfiguration.hpp");
   gSystem->Load(includesPath+"NuDynTask.hpp");
   gSystem->Load(includesPath+"NuDynHistos.hpp");

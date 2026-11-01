@@ -10,6 +10,7 @@
 #ifndef CAP__ParticlePair3DHistos
 #define CAP__ParticlePair3DHistos
 #include "HistogramFolder.hpp"
+#include "PairDerivedCalculator.hpp"
 #include "ParticleSingleHistos.hpp"
 #include "Particle.hpp"
 #include "ParticleDigit.hpp"
@@ -44,6 +45,10 @@ public:
   //! ParticlePair3DDerivedCalculator). @param configuration configuration @param taskName name of the task
   //!
   static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
+  //! @brief Name of the task computing the derived histograms of these folders (see PairDerivedCalculator). @return name
+  static const char * derivedCalculatorName() { return "ParticlePair3DDerivedCalculator"; }
+  //! @brief Default name of the analyzer task filling these folders. @return name
+  static const char * analyzerName() { return "ParticlePair3DAnalyzer"; }
   //! @brief Read the binning (n2, Qinv, DeltaPs, DeltaPo, DeltaPl, pt, rapidity) and nMcSimEvents. @param taskName name of the task
   //! @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
@@ -59,8 +64,12 @@ public:
   virtual void createDerived();
   //! @brief Whether the derived histograms exist (created or loaded). @return true if they do
   bool hasDerived() const { return h_n1n1_Qinv!=nullptr; }
-  //! @brief Load the derived histograms from a folder of a file. @param inputFile folder
+  //! @brief Load the derived histograms from a folder of a file, if it has all of them (they are there once a derived
+  //! calculator computed them); otherwise none is loaded, and no exception is thrown. @param inputFile folder
   virtual void loadDerivedFrom(const Folder & inputFile);
+  //! @brief The derived histograms (according to the fill options): the members pointing to them and their names,
+  //! as createDerived() makes them. @return list
+  HistogramList derivedHistograms();
   //!
   //! @brief Compute the derived histograms (n1n1 by Monte Carlo folding of the (y, pT) densities of the two particles,
   //! C2, R2, associated yields, projections) from the pair histograms of this folder and the single-particle histograms
@@ -182,6 +191,12 @@ protected:
   void projectInto(const Histogram * source, unsigned int axis, const String & targetName);
 
 };
+
+//!
+//! @brief Derived histograms of the 3D pair analysis (second phase): PairDerivedCalculator with the pair folders
+//! ParticlePair3DHistos, registered as the task class CAP::ParticlePair3DDerivedCalculator.
+//!
+using ParticlePair3DDerivedCalculator = PairDerivedCalculator<ParticlePair3DHistos>;
 
 } // namespace CAP
 
