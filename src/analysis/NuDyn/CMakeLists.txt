@@ -9,7 +9,6 @@ add_compile_options(-Wall -Wextra -pedantic)
 add_library(NuDyn SHARED
 NuDynTasks.cpp
 NuDynAnalyzer.cpp
-NuDynDerivedCalculator.cpp
 NuDynHistos.cpp)
 
 target_link_libraries(NuDyn Base  Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )

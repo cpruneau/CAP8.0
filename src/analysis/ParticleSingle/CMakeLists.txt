@@ -13,7 +13,7 @@
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(ParticleSingle SHARED
-ParticleSingleTasks.cpp   ParticleSingleHistos.cpp  ParticleSingleAnalyzer.cpp  ParticleSingleDerivedCalculator.cpp)
+ParticleSingleTasks.cpp   ParticleSingleHistos.cpp  ParticleSingleAnalyzer.cpp )
 
 message(STATUS "ROOT_LIBRARIES: ${ROOT_LIBRARIES}")
 message(STATUS "EXTRA_LIBS: ${EXTRA_LIBS}")

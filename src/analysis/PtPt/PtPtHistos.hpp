@@ -10,6 +10,7 @@
 #ifndef CAP__PtPtHistos
 #define CAP__PtPtHistos
 #include "HistogramFolder.hpp"
+#include "DerivedCalculator.hpp"
 #include "ParticleFilter.hpp"
 #include "Configuration.hpp"
 
@@ -40,6 +41,10 @@ public:
   //! @param taskName name of the task
   //!
   static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
+  //! @brief Name of the task computing the derived histograms of these folders (see DerivedCalculator). @return name
+  static const char * derivedCalculatorName() { return "PtPtDerivedCalculator"; }
+  //! @brief Default name of the analyzer task filling these folders. @return name
+  static const char * analyzerName() { return "PtPtAnalyzer"; }
   //! @brief Read the event variable name and binning. @param taskName name of the task @param objectType object type
   //! @param configuration configuration @param index index
   virtual void configure(const String & taskName,
@@ -117,6 +122,13 @@ protected:
   Histogram * h_dq1dq1dq1dq1_evt;
 
 };
+
+
+//!
+//! @brief Derived histograms of the pT-pT analysis (second phase): DerivedCalculator with the folders PtPtHistos,
+//! registered as the task class CAP::PtPtDerivedCalculator.
+//!
+using PtPtDerivedCalculator = DerivedCalculator<PtPtHistos,1>;
 
 } // namespace CAP
 

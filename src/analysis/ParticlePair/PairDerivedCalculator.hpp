@@ -80,8 +80,7 @@ public:
   //! (PAIR::derivedCalculatorName(), PAIR::analyzerName()).
   PairDerivedCalculator()
   :
-  Base(),
-  _sourceTask(PAIR::analyzerName())
+  Base(PAIR::analyzerName())
   {
   this->appendClassName(PAIR::derivedCalculatorName());
   this->setMinimumReportLevel(Object::kInfo);
@@ -98,20 +97,11 @@ public:
   //! @brief Copy of this task. @return new task, owned by the caller
   virtual Task * clone() override { return new PairDerivedCalculator(*this); }
 
-  //! @brief Add the default configuration: that of CalculatorHistos, the histogram settings and SOURCE_TASK.
+  //! @brief Add the default configuration: that of CalculatorHistos (SOURCE_TASK, folders imported), and the histogram settings.
   virtual void setDefaultConfiguration() override
   {
   Base::setDefaultConfiguration();
   PAIR::addDefaultConfiguration(this->_configuration,this->name());
-  this->_configuration.addProperty(createKey(this->name(),"SOURCE_TASK"),String(PAIR::analyzerName()));
-  }
-
-  //! @brief Configure the task (and read SOURCE_TASK). @param configuration configuration
-  virtual void configure(const Configuration & configuration) override
-  {
-  Base::configure(configuration);
-  _sourceTask = configuration.valueString(createKey(this->name(),"SOURCE_TASK"));
-  if (this->reportInfo(__FUNCTION__)) printValue(createKey(this->name(),"SOURCE_TASK"),_sourceTask);
   }
 
   //!
@@ -131,15 +121,6 @@ public:
     throw Exception("Fewer single folders than nEventFilters()*nParticleFilters()",__FUNCTION__);
   calculatePairDerived(pairFolders,singleFolders,nPF);
   }
-
-  //! @brief Name of the folder of the job files holding the histograms: that of the analyzer (SOURCE_TASK). @return name
-  virtual String histogramTaskName() const override { return _sourceTask; }
-
-protected:
-
-  //! Name of the analyzer task whose histograms are completed.
-  String _sourceTask;
-
 };
 
 } // namespace CAP

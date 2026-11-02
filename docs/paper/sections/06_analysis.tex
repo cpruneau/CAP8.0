@@ -166,28 +166,26 @@ manages a list of histogram folders of type \code{HISTOS}, one per combination o
 particle filters, optionally with a list of single-particle folders of type \code{SINGLES} (for the pair analyses).
 The template configures, creates or imports, scales, resets, saves and loads the folders, so that an analyzer
 implements only the filling of an event and a calculator only the computation of its histograms. The base class
-\code{BASE} is \code{EventProcessor} for the analyzers and \code{AnalysisTask} for the calculators, through two
-aliases:
+\code{BASE} is \code{EventProcessor} for the analyzers, through the alias
+\code{EventProcessorHistos<HISTOS, RANK, SINGLES>}, and \code{AnalysisTask} for the calculators, through
+\code{CalculatorHistos<HISTOS, RANK, SINGLES>}, which adds what all calculators share: the key \code{SOURCE\_TASK},
+naming the analyzer whose folders they complete, and folders read from the input file of the job rather than created.
+The calculators are not classes of their own but instances of three templates: \code{DerivedCalculator<HISTOS, RANK>},
+for the analyses whose folders are each computed from their own base histograms (single-particle, global,
+$\nudyn$, $\pT$--$\pT$); \code{PairDerivedCalculator<PAIR>}, for the pair analyses, whose pair folders also need
+the single-particle folders; and \code{PairBFCalculator<PAIR, BF>}. Each is registered under the name of its task;
+for instance,
 {\footnotesize
 \begin{verbatim}
-template <class H, unsigned R, class S=void>
-using EventProcessorHistos
-  = AnalysisHistos<H,R,S,EventProcessor>;
-template <class H, unsigned R, class S=void>
-using CalculatorHistos
-  = AnalysisHistos<H,R,S,AnalysisTask>;
-\end{verbatim}}
-The calculators of the pair analyses are not classes of their own but instances of two templates,
-\code{PairDerivedCalculator<PAIR>} and \code{PairBFCalculator<PAIR, BF>}, registered under the names of the tasks; for instance,
-{\footnotesize
-\begin{verbatim}
+GlobalDerivedCalculator
+  = DerivedCalculator<GlobalHistos,1>
 ParticlePairDerivedCalculator
   = PairDerivedCalculator<ParticlePairHistos>
 ParticlePair3DBFCalculator
   = PairBFCalculator<ParticlePair3DHistos,
                      ParticlePair3DBFHistos>
 \end{verbatim}}
-\noindent The pair analyses thus differ only by their histograms, not by how they are called. RunCAP.py (Section~\ref{sec:run}) shows
+\noindent The analyses thus differ only by their histograms, not by how they are called. RunCAP.py (Section~\ref{sec:run}) shows
 the three phases as the stages of a workflow; it makes the derived-histogram stage from the analyzers of the first
 stage, with the same filters and settings, and runs the stages as successive jobs.
 
