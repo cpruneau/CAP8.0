@@ -10,6 +10,7 @@
 #ifndef CAP__GlobalHistos
 #define CAP__GlobalHistos
 #include "HistogramFolder.hpp"
+#include "DerivedCalculator.hpp"
 #include "ParticleFilter.hpp"
 
 namespace CAP
@@ -57,6 +58,10 @@ public:
   //! GlobalDerivedCalculator). @param configuration configuration @param taskName name of the task
   //!
   static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
+  //! @brief Name of the task computing the derived histograms of these folders (see DerivedCalculator). @return name
+  static const char * derivedCalculatorName() { return "GlobalDerivedCalculator"; }
+  //! @brief Default name of the analyzer task filling these folders. @return name
+  static const char * analyzerName() { return "GlobalAnalyzer"; }
   //! @brief Read the binning of the observables (n, e, q, s, b, ptSum, ptAvg). @param taskName name of the task
   //! @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
@@ -170,6 +175,13 @@ protected:
 
 
 };
+
+
+//!
+//! @brief Derived histograms of the global analysis (second phase): DerivedCalculator with the folders GlobalHistos,
+//! registered as the task class CAP::GlobalDerivedCalculator.
+//!
+using GlobalDerivedCalculator = DerivedCalculator<GlobalHistos,1>;
 
 } // namespace CAP
 

@@ -14,6 +14,7 @@
 #include "AnalysisTask.hpp"
 #include "EventProcessor.hpp"
 #include "HistogramFolder.hpp"
+#include "PrintHelpers.hpp"
 
 namespace CAP
 {
@@ -21,9 +22,9 @@ namespace CAP
   //! @brief Base class of the tasks of an analysis that work on its histogram folders: the analyzer (event processing),
   //! and the calculators of the later phases (derived histograms, balance functions).
   //!
-  //! The template is used through two aliases, which differ only by the base class: EventProcessorHistos, for the
-  //! analyzers (BASE = EventProcessor: events, filters, efficiencies, smearers, particle databases), and
-  //! CalculatorHistos, for the calculators (BASE = AnalysisTask: the filters only, no events).
+  //! The template is used through EventProcessorHistos, for the analyzers (BASE = EventProcessor: events, filters,
+  //! efficiencies, smearers, particle databases), and CalculatorHistos, for the calculators (BASE = AnalysisTask: the
+  //! filters only, no events; plus SOURCE_TASK, the analyzer whose folders they complete).
   //!
   //! The task manages one list of histogram folders (managed objects of type HISTOGRAM, configuration keys
   //! \<name\>:HISTOGRAM:USE, N, CREATE, IMPORT and \<name\>:HISTOGRAM_\<k\>:NAME, ...), one folder per combination of an
@@ -275,10 +276,77 @@ namespace CAP
   template <class HISTOS, unsigned int RANK, class SINGLES = void>
   using EventProcessorHistos = AnalysisHistos<HISTOS,RANK,SINGLES,EventProcessor>;
 
+  //!
   //! @brief Histogram folders of a calculator of the later phases of an analysis (no events: the filters only).
+  //!
+  //! A calculator completes the folders of the analyzer of its analysis: it reads (by default, HISTOGRAM:USE and IMPORT
+  //! true, CREATE false) and writes the folders of the folder named by the key \<name\>:SOURCE_TASK (the name of the
+  //! analyzer task) in the files of the jobs.
+  //!
   //! @tparam HISTOS folder @tparam RANK particle filters per combination @tparam SINGLES single-particle folder, or void
+  //!
   template <class HISTOS, unsigned int RANK, class SINGLES = void>
-  using CalculatorHistos = AnalysisHistos<HISTOS,RANK,SINGLES,AnalysisTask>;
+  class CalculatorHistos
+  :
+  public AnalysisHistos<HISTOS,RANK,SINGLES,AnalysisTask>
+  {
+  public:
+
+  //! Base class.
+  typedef AnalysisHistos<HISTOS,RANK,SINGLES,AnalysisTask> Base;
+
+  //! @brief Constructor. @param defaultSourceTask default name of the analyzer task (SOURCE_TASK)
+  CalculatorHistos(const String & defaultSourceTask = String(""))
+  :
+  Base(),
+  _defaultSourceTask(defaultSourceTask),
+  _sourceTask(defaultSourceTask)
+  {
+  this->appendClassName("CalculatorHistos");
+  }
+
+  //! @brief Copy constructor. @param source task to copy
+  CalculatorHistos(const CalculatorHistos & source) = default;
+  //! @brief Copy assignment. @param rhs task to copy @return this task
+  CalculatorHistos & operator=(const CalculatorHistos & rhs) = default;
+  //! @brief Destructor.
+  virtual ~CalculatorHistos() {}
+
+  //! @brief Add the default configuration: that of the histogram folders, read (USE, IMPORT) rather than created
+  //! (CREATE), and SOURCE_TASK.
+  virtual void setDefaultConfiguration() override
+  {
+  Base::setDefaultConfiguration();
+  Configuration & configuration = this->configuration();
+  const String & taskName = this->name();
+  configuration.addProperty(createKey(taskName,"HISTOGRAM","USE"),    true);
+  configuration.addProperty(createKey(taskName,"HISTOGRAM","IMPORT"), true);
+  configuration.addProperty(createKey(taskName,"HISTOGRAM","CREATE"), false);
+  configuration.addProperty(createKey(taskName,"SOURCE_TASK"),_defaultSourceTask);
+  }
+
+  //! @brief Configure the task, its histogram folders, and read SOURCE_TASK. @param configuration configuration
+  virtual void configure(const Configuration & configuration) override
+  {
+  Base::configure(configuration);
+  _sourceTask = configuration.valueString(createKey(this->name(),"SOURCE_TASK"));
+  if (this->reportInfo(__FUNCTION__)) printValue(createKey(this->name(),"SOURCE_TASK"),_sourceTask);
+  }
+
+  //! @brief Name of the folder of the job files holding the histograms: that of the analyzer (SOURCE_TASK). @return name
+  virtual String histogramTaskName() const override { return _sourceTask; }
+
+  //! @brief Name of the analyzer task whose folders are completed (SOURCE_TASK). @return name
+  const String & sourceTask() const { return _sourceTask; }
+
+  protected:
+
+  //! Default name of the analyzer task (SOURCE_TASK).
+  String _defaultSourceTask;
+  //! Name of the analyzer task whose folders are completed.
+  String _sourceTask;
+
+  };
 
 } // namespace CAP
 

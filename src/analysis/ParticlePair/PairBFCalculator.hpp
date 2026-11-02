@@ -69,9 +69,7 @@ public:
   //! BF::defaultSourceTask()).
   PairBFCalculator()
   :
-  Base(),
-  _defaultSourceTask(BF::defaultSourceTask()),
-  _sourceTask(BF::defaultSourceTask()),
+  Base(BF::defaultSourceTask()),
   _species(),
   _bfHistograms()
   {
@@ -85,8 +83,6 @@ public:
   PairBFCalculator(const PairBFCalculator & source)
   :
   Base(source),
-  _defaultSourceTask(source._defaultSourceTask),
-  _sourceTask(source._sourceTask),
   _species(source._species),
   _bfHistograms()
   {
@@ -99,9 +95,7 @@ public:
   if (this!=&rhs)
     {
     Base::operator=(rhs);
-    _defaultSourceTask = rhs._defaultSourceTask;
-    _sourceTask        = rhs._sourceTask;
-    _species           = rhs._species;
+    _species = rhs._species;
     copyBfHistograms(rhs);
     }
   return *this;
@@ -113,24 +107,20 @@ public:
   //! @brief Copy of this task. @return new task, owned by the caller
   virtual Task * clone() override { return new PairBFCalculator(*this); }
 
-  //! @brief Add the default configuration: that of CalculatorHistos (folders imported), the histogram settings of
-  //! the pair analysis, SOURCE_TASK and SPECIES.
+  //! @brief Add the default configuration: that of CalculatorHistos (SOURCE_TASK, folders imported), the histogram
+  //! settings of the pair analysis, and SPECIES.
   virtual void setDefaultConfiguration() override
   {
   Base::setDefaultConfiguration();
   const String & taskName = this->name();
   Configuration & configuration = this->_configuration;
   PAIR::addDefaultConfiguration(configuration,taskName);
-  configuration.addProperty(createKey(taskName,"SOURCE_TASK"),_defaultSourceTask);
   configuration.addProperty(createKey(taskName,"SPECIES"),String(""));
-  // the folders of the analyzer are read, not created
-  configuration.addProperty(createKey(taskName,"HISTOGRAM","USE"),    true);
-  configuration.addProperty(createKey(taskName,"HISTOGRAM","IMPORT"), true);
-  configuration.addProperty(createKey(taskName,"HISTOGRAM","CREATE"), false);
   }
 
   //!
-  //! @brief Configure the task: SOURCE_TASK, and the species from SPECIES and the particle filters.
+  //! @brief Configure the task (and SOURCE_TASK, see CalculatorHistos), and the species from SPECIES and the particle
+  //! filters.
   //! @param configuration configuration
   //! @throws ConfigurationException if a species names an unknown filter, or SPECIES is empty and the number of
   //! particle filters is odd
@@ -139,14 +129,9 @@ public:
   {
   Base::configure(configuration);
   const String & taskName = this->name();
-  _sourceTask = configuration.valueString(createKey(taskName,"SOURCE_TASK"));
   String speciesList = configuration.valueString(createKey(taskName,"SPECIES"),true,"");
   if (speciesList=="NONE") speciesList = "";
-  if (this->reportInfo(__FUNCTION__))
-    {
-    printValue(createKey(taskName,"SOURCE_TASK"),_sourceTask);
-    printValue(createKey(taskName,"SPECIES"),speciesList);
-    }
+  if (this->reportInfo(__FUNCTION__)) printValue(createKey(taskName,"SPECIES"),speciesList);
   _species.clear();
   const std::vector<String> & filters = this->_particleFilterNames;
   const unsigned int nPF = filters.size();
@@ -216,16 +201,13 @@ public:
   Base::clear();
   }
 
-  //! @brief Name of the folder of the job files holding the histograms: that of the analyzer (SOURCE_TASK). @return name
-  virtual String histogramTaskName() const override { return _sourceTask; }
-
   //! @brief Write the folders of the analyzer and the BF folders. @param top folder of the job
   virtual void saveHistograms(Folder & top) override
   {
   Base::saveHistograms(top);
   if (_bfHistograms.empty()) return;
-  Folder * folder = top.folder(histogramTaskName());
-  if (!folder) folder = top.addFolder(histogramTaskName());
+  Folder * folder = top.folder(this->histogramTaskName());
+  if (!folder) folder = top.addFolder(this->histogramTaskName());
   for (const BF * bf : _bfHistograms)
     {
     Folder * target = folder->folder(bf->name());
@@ -291,10 +273,6 @@ protected:
   for (const BF * folder : source._bfHistograms) _bfHistograms.push_back(new BF(*folder));
   }
 
-  //! Default name of the analyzer task (SOURCE_TASK).
-  String _defaultSourceTask;
-  //! Name of the analyzer task whose histograms are read and completed.
-  String _sourceTask;
   //! Species: (particle, antiparticle) indices of particle filters.
   std::vector<std::pair<unsigned int,unsigned int>> _species;
   //! BF folders (owned), at index (e*nSpecies + s1)*nSpecies + s2.

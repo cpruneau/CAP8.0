@@ -10,6 +10,7 @@
 #ifndef CAP__ParticleSingleHistos
 #define CAP__ParticleSingleHistos
 #include "HistogramFolder.hpp"
+#include "DerivedCalculator.hpp"
 #include "Particle.hpp"
 #include "MathConstants.hpp"
 
@@ -49,6 +50,12 @@ public:
   //! @param configuration configuration @param taskName name of the task
   //!
   static void addDefaultConfiguration(Configuration & configuration, const String & taskName);
+  //! @brief Name of the task computing the derived histograms of these folders (see DerivedCalculator). @return name
+  static const char * derivedCalculatorName() { return "ParticleSingleDerivedCalculator"; }
+  //! @brief Default name of the analyzer task filling these folders. @return name
+  static const char * analyzerName() { return "ParticleSingleAnalyzer"; }
+  //! @brief Whether the derived histograms exist (createDerived(), or read from a file). @return true if they do
+  bool hasDerived() const { return h_n1_phi!=nullptr; }
   //! @brief Read the binning and fill options from keys \<taskName\>:HISTOGRAM:... (see the class description).
   //! @param taskName name of the task @param objectType object type @param configuration configuration @param index index
   virtual void configure(const String & taskName,
@@ -160,6 +167,13 @@ public:
   Histogram * h_avg_pt_phiY;
 
 };
+
+
+//!
+//! @brief Derived histograms of the single-particle analysis (second phase): DerivedCalculator with the folders ParticleSingleHistos,
+//! registered as the task class CAP::ParticleSingleDerivedCalculator.
+//!
+using ParticleSingleDerivedCalculator = DerivedCalculator<ParticleSingleHistos,1>;
 
 } // namespace CAP
 
