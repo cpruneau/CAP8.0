@@ -2,12 +2,111 @@
 \section{CapGui}
 \label{sec:capgui}
 
+CapGui is the graphical interface of \CAP{}: it opens the files written by the jobs, draws their histograms, data
+points and functions, fits them, and exports the figures. It is built on Dear ImGui~\cite{DearImGui} with its GLFW
+and OpenGL back ends, and uses no ROOT class; it reads ROOT files only when \CAP{} is built with ROOT-file support, to
+import their histograms. The program is started with the files or folders to open,
+{\footnotesize
+\begin{verbatim}
+CapGui [--config file.xml] [file or folder ...]
+\end{verbatim}}
+\noindent and its settings (theme, layout, fonts, the folders shown at start) are kept in an XML file, read from the
+home directory of the user or from the configuration directory of \CAP{}, and written back by the Preferences
+dialog.
+
+CapGui draws with the graphics library of \CAP{} (Section~\ref{sec:graphics}): \code{ImGuiPainter} implements the
+abstract \code{Painter} for the screen, so that a canvas is drawn by the same code on the screen and, through the SVG
+and PDF painters, in the files it exports, and what is seen is what is saved. Labels containing \LaTeX{} (or the
+TLatex notation of ROOT, translated first) are typeset by the system \code{latex} and \code{dvisvgm} in a background
+thread, cached in memory and on disk, and drawn as textures; plain text is shown until the image is ready, so that
+typesetting never blocks the interface.
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Windows, canvases and graphs}
 \label{sec:windows}
 
-\todo{several windows, several canvases per window, several graphs per canvas; the data browser next to the display.}
+\paragraph{Panes and windows.}
+The main window holds a menu bar, the data browser, the canvases and a status bar, as panes that can be docked side
+by side, stacked as tabs, or dragged out into windows of their own. Canvases are arranged in a grid of $n\times m$
+panes, and new ones are added at any time; a canvas holds one or several graphs, arranged in a grid of its own, and
+a graph holds any number of objects, overlaid. The Canvases window lists all the canvases, grouped by window.
 
+\paragraph{The data browser.}
+The browser shows the files opened (CAP files, Section~\ref{sec:binary}, read lazily, and ROOT files) and the
+folders of the file system as trees, in which a CAP file opens when it is expanded; a filter selects objects by name,
+and each entry shows the type of the object (one- or two-dimensional histogram, profile, data points) with its title,
+binning and number of entries. An object is drawn by clicking on it, which shows it in the selected graph, or by
+dragging it onto any graph, either overlaid on what the graph holds or replacing it; a folder can be drawn one object
+per graph. Objects can also be copied, by dragging, into trees made in the session, organised in folders, and saved
+as a new CAP file; a folder or a file can be exported to a ROOT file. The data table pane lists the points of the
+selected object with their coordinates, values and statistical and systematic uncertainties and, when the object has
+fits, the values of the fitted functions and the pulls.
+
+\paragraph{Interacting with graphs.}
+Dragging a rectangle in a graph zooms on it, dragging along an axis zooms on that axis only, and a double click
+returns to the automatic ranges; in the three-dimensional view of a map, dragging rotates it. The title, the axis
+titles and the legend are moved by dragging, and a right click on any of them, or on an object, opens its editor:
+range, scale, ticks and labels of an axis; text, font, size and colour of a title, with a preview of its \LaTeX{};
+position and frame of the legend; markers, lines and the display of the statistical and systematic uncertainties of
+an object, or the palette, contours and surface of a map. Shapes and text boxes are added from a tool palette.
+Changes can be undone and redone, and the contents of a graph can be cut, copied and pasted into another. The status
+bar shows the coordinates under the mouse.
+
+\paragraph{Export.}
+A graph, a canvas or the whole window, as it is laid out, is saved as an SVG or PDF file; all the canvases can be
+saved at once, or as the pages of one PDF book. With the \LaTeX{} library (Section~\ref{sec:latex}), the canvases
+are also written as a Beamer presentation, one frame per canvas or per graph, which can be compiled and opened from
+CapGui.
+
+\paragraph{Comparisons.}
+Two histograms with the same binning are compared in a graph that overlays them above a panel showing their
+difference, together with the statistical tests of Section~\ref{sec:mathother}: the $\chi^2$ test of their
+compatibility (of the counts, of the values, or of the shapes) and, in one dimension, the Kolmogorov--Smirnov test.
+A two-dimensional histogram is projected onto either axis, with its fits.
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Fits}
 \label{sec:guifits}
 
-\todo{fits in one and two variables; simple and composite parameterised functions; ranges and regions; the residual panel and the Fits pane.}
+The Fit window gives access, without programming, to the fitting library of \CAP{} described in
+Section~\ref{sec:fitting}; it is a front end to the same classes that programs use, and a fit made in either is
+seen in the other.
+
+\paragraph{Objects and functions.}
+Data points, histograms and functions of one or two variables are fitted; a function is sampled on a set of points
+or a grid first. The functions offered are those of the registry (Section~\ref{sec:functions}) of the rank of the
+object: constant, linear and polynomial functions, Gaussian, log-normal and exponential functions, orthogonal series
+(Legendre, Chebyshev, Hermite, Laguerre), Bessel functions, the two-dimensional Gaussian and polynomials, and any
+class registered by a program. Composite functions are built in a dialog, either as a sum of registered functions or,
+in two variables, as a product $f(x)\,g(y)$ of functions of one variable; their components are labelled, and the
+parameters named after them (\code{signal.mean}, \code{background.a1}). A composite is either used for the session or
+registered under a name, which keeps it in the file of composites shared by CapGui and the programs. Each parameter
+has a starting value and can be fixed or bounded; the starting values can be estimated from the data in the
+selection (Section~\ref{sec:fitting}), and after a fit the fitted values become the starting values of the next.
+
+\paragraph{Statistic and method.}
+The statistic is the $\chi^2$ or, for histograms, the Poisson likelihood ratio, compared to the function at the centre
+of each bin or to its average over the bin. The minimisation is Levenberg--Marquardt, optionally preceded by a global
+search by differential evolution over the bounds of the free parameters, for poor starting values or several minima.
+The fitting library offers more than the Fit window uses: unbinned and extended likelihoods, the other global
+searches of \code{ExtremumSearch} (simulated annealing, genetic algorithm, divide and conquer, explore--exploit), and
+Bayesian fits with an adaptive Metropolis--Hastings sampler (Section~\ref{sec:fitting}); these are, for now,
+available to programs only.
+
+\paragraph{Ranges and regions.}
+The range of each variable is typed in, or taken from the range shown in the graph or from the whole object. Regions
+are added as rows that include or exclude an interval of $x$, of $y$, or of both: a band or a box, which leaves out a
+peak or a dead area, or selects two sidebands (Section~\ref{sec:fitting}). For a histogram, the limits can snap to
+the edges of the bins, and the number of points used is shown as the regions are edited.
+
+\paragraph{Results.}
+A fit is attached to the object as a fit record (Section~\ref{sec:fitting}), drawn with it, and saved with it when
+the object is written to a CAP file; the fits of a file are thus found again, in CapGui or in a program, with the
+object they were made to. The Fits pane, below the canvases, shows one tab per fit of the selected graph: the
+quality of the fit (the statistic, the number of degrees of freedom, $\chi^2/\nu$ and the $p$-value, the number of
+points used, the convergence and the method), the parameters with their uncertainties and bounds, flagged when one
+is at a bound, and the correlation matrix of the free parameters, with the strong correlations ($|\rho|>0.9$)
+highlighted. The pane also sets how each fit is drawn (line, colour, over the selection or the whole range), whether
+its quality is shown in the legend, and whether a residual panel is drawn below the graph, with the differences
+between the data and the fit, or the pulls. For a fit in two variables, the map of the pulls is drawn in a new
+canvas.

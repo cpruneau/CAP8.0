@@ -2,26 +2,163 @@
 \section{Event generators and readers}
 \label{sec:generators}
 
+Events are produced by generators, which simulate collisions, and by readers, which take them from files written by
+other programs. Both are event processors (Section~\ref{sec:tasks}) that add particles to the events of the job; they
+are placed in the event loop, as subtasks of an \code{EventIterator}, before the tasks that use their events. The
+iterator resets the events before each pass and the generators only add to them, so that several generators can fill
+one event, and \code{EventMerger} fills one event with several events of each of its input streams, to simulate
+pile-up or to embed a hard process in a soft background. A reader ends the event loop when its input is exhausted.
+The particles are created by the particle factory of the job and typed by the particle database of the task
+(\code{PARTICLE\_DB}), so that the analyses see the same particle types whatever the source of the events; the
+unstable particles that a generator emits are decayed, when they are, by the generator itself or by
+\code{ParticleDecayerTask}, which follows the decay modes and branching ratios of the database through two-, three-
+and four-body decays and decays the products in turn.
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{BasicEventGen}
 \label{sec:basicgen}
 
-\todo{what it generates and how it is configured.}
+\code{BasicEventGen} is a fast generator of simple events, meant for tests and demonstrations of the analyses rather
+than for physics: its particles are independent, without correlations, and emitted at the origin. The particle types
+are given by their PDG codes (\code{PdgSelected}, e.g.\ \code{211, -211, 321, -321}), and the number of particles of
+each type in an event is drawn uniformly between \code{MultMin} and \code{MultMax}. The momenta are generated in one
+of two styles (\code{EventGenType}):
+\begin{itemize}
+  \item cylindrical (0): the rapidity is uniform between \code{RapidityMin} and \code{RapidityMax}, the azimuth uniform
+  between \code{PhiMin} and \code{PhiMax}, and the transverse momentum is drawn from the momentum distribution,
+  either within a range of transverse momentum, \code{PtMin} to \code{PtMax}, or within a range of momentum,
+  \code{PMin} to \code{PMax} (\code{MomentumRange} = \code{PT} or \code{P});
+  \item spherical (1): the momentum is drawn from the momentum distribution between \code{PMin} and \code{PMax}, the
+  polar angle isotropically (uniform $\cos\theta$) between \code{ThetaMin} and \code{ThetaMax}, and the azimuth
+  uniformly.
+\end{itemize}
+The momentum distribution, $dN/dx$ with $x = \pT$ or $p$ (\code{Distribution}), is an exponential,
+$e^{-x/\lambda}$ (slope $\lambda$ = \code{Slope}, 0.5~GeV/$c$ by default), a Gaussian centred at zero,
+$e^{-x^2/2\sigma^2}$ (\code{Sigma}), or any function of one variable of the function registry
+(Section~\ref{sec:functions}), named by \code{Function:Name} with its parameters in \code{Function:Parameters}: a
+registered class, such as \code{Exponential} or \code{Polynomial}, or a composite built in CapGui. The Gaussian and
+the functions are tabulated on the range when the task is initialised and sampled by inverting their cumulative.
+New styles of generation are added as new values of \code{EventGenType}. The random numbers are drawn by a
+Mersenne Twister, with the seed \code{Random:Seed}.
 
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Therminator3}
 \label{sec:therminator}
 
-\todo{the thermal model, freeze-out hypersurfaces, viscosity, the particle database; differences from Therminator 2.}
+\paragraph{Origin.}
+Therminator3 is the thermal generator of \CAP{}. It is based on THERMINATOR~2~\cite{Chojnacki:2011hb} (release 2.0.3),
+itself an extension of THERMINATOR~\cite{Kisiel:2005hn}, by M.~Chojnacki, A.~Kisiel, W.~Broniowski and W.~Florkowski,
+from which it takes its physics: the statistical emission of hadrons from a freeze-out hypersurface, the freeze-out
+models, the format of the hydrodynamic hypersurfaces, and the method of generation. The code was redesigned for
+\CAP{}: the class structure is simplified, the configuration files of THERMINATOR~2 are replaced by the configuration
+keys of a task, its ROOT data structures by the scalar fields, particles and events of \CAP{}, and its particle tables
+by the particle database of \CAP{}; the decays of the resonances and the analysis of the events are left to the
+other tasks of the job.
 
-\subsection{Pythia8 and Herwig}
+\paragraph{Class structure.}
+The task \code{Therminator3} owns a freeze-out model, a class derived from \code{Model}. \code{Model} gathers the
+settings of a model (\code{ModelSettings}), the thermodynamic fields of the freeze-out (\code{Thermodynamics}: the
+temperature and, through \code{Chemistry}, the chemical potentials, uniform or varying across the hypersurface), the
+geometry of the hypersurface (\code{Hypersurface}), and the hadron gas to emit (\code{ThermalHadronGas}). A model
+implements one function, the integrand of the Cooper--Frye formula for a hadron at a point of the hypersurface and a
+momentum, both drawn at random; everything else, the integration of the multiplicities and the generation of the
+events, is done by \code{Model}. The fields read from hypersurface files are \code{ScalarField} objects of the Math
+library (Section~\ref{sec:functions}).
+
+\paragraph{Emission.}
+Hadrons are emitted according to the Cooper--Frye formula,
+\begin{align}
+  E\frac{dN}{d^3p} & = \frac{g}{(2\pi)^3}\int_\Sigma d\Sigma_\mu(x)\,p^\mu f(x,p), \\
+  f(x,p) & = \frac{1}{\exp\!\bigl[(p\cdot u(x) - \mu(x))/T(x)\bigr] \pm 1},
+\end{align}
+with Fermi--Dirac or Bose--Einstein statistics, where $u$ is the velocity of the fluid on the hypersurface $\Sigma$, $T$
+its temperature, and $\mu = B\mu_B + I_3\mu_I + S\mu_S + C\mu_C$ the chemical potential of the hadron, of baryon number
+$B$, isospin $I_3$, strangeness $S$ and charm $C$. The hadrons emitted are those of the particle database, except the
+quarks, leptons and gauge bosons and the hadrons heavier than 2.5~GeV; photons are not emitted.
+
+\paragraph{Generation.}
+As in THERMINATOR~2, the generation has two steps. First, the mean multiplicity $\avg{N}$ of each hadron is the
+integral of the Cooper--Frye formula over the hypersurface and the momenta, computed by Monte Carlo
+(\code{NSamples} points, $10^5$ by default), which also gives the maximum of the integrand. Then, for each event, the
+number of each hadron is drawn from a Poisson distribution of mean $\avg{N}$ (or a Gaussian, \code{FluctuationType}),
+and each hadron is generated by accepting or rejecting points of the integrand, drawn at random, against its maximum
+times a safety factor (\code{MaxIntegrandSafety}, 1.2): the accepted point gives both the momentum of the hadron and
+its position of emission, in fm. The multiplicities can be written to a file and read back, so that the integration
+is done once for a set of parameters. The hadrons are emitted as they are produced, resonances included; a
+\code{ParticleDecayerTask} placed after Therminator3 decays them.
+
+\paragraph{Freeze-out models.}
+The model is chosen by the key \code{HYDRO\_MODEL:TYPE}:
+\begin{itemize}
+  \item \code{HG}: a static fireball;
+  \item \code{BW}: the blast wave, emission at a constant proper time with a transverse velocity \code{tVelocity};
+  \item \code{BWA}: the variants of the blast wave of THERMINATOR~2, with $\tau = \tau_i + A\rho$, a constant or linear
+  profile of the transverse velocity, and an emission delay drawn from an exponential distribution; a further
+  variant, in which the particles stream freely during the delay, is new;
+  \item \code{SFO}: the Krak\'ow single freeze-out model, on the hypersurface $\tau^2 - \rho^2 = \tau_f^2$;
+  \item \code{HYDRO2D} and \code{HYDRO3D}: hypersurfaces of boost-invariant (2+1)-dimensional and of
+  (3+1)-dimensional hydrodynamics.
+\end{itemize}
+The parameters of the analytic models (temperature, chemical potentials, radius, proper times, velocity, ranges of
+rapidity) are keys of the task, whose defaults are those of the blast wave of THERMINATOR~2. The hydrodynamic
+hypersurfaces are read from the XML files of THERMINATOR~2: the distance of the hypersurface from the origin of the
+$(\tau,\rho)$ plane, and the fluid velocity, as functions of the angles that parametrise the hypersurface, together
+with the temperature, chemical potentials and initial proper time of the calculation, which override those of the
+configuration. The derivatives of the distance are read when the file provides them, and computed otherwise.
+\todo{the shear and bulk viscous corrections ($\delta f$, class \code{Viscosity}) and the negative-binomial
+fluctuations of the multiplicities are not finished; describe them when they are.}
+
+\paragraph{Validation and the thermal model.}
+The tests of Therminator3 compare its mean multiplicities of pions, kaons, protons and $\Lambda$ for the blast wave
+with those of THERMINATOR~2 (agreement within 2.5\%), and the multiplicities and mean $\pT$ of generated events
+with their expected values; they check that hydrodynamic hypersurfaces built to equal the blast wave reproduce its
+multiplicities, in 2+1 and 3+1 dimensions, and, when THERMINATOR~2 is installed, run a hypersurface of its library.
+A second task, \code{ThermalModel}, computes the densities, energy densities, pressures and entropy densities of a
+static ideal hadron-resonance gas at a given temperature and chemical potentials, with the feed-down of the
+resonances to the stable hadrons through their decays, and fills histograms of them; it generates no events.
+\todo{in \code{ThermalHadron::calculateAllProperties}, the series alternates in sign for all species (the
+boson/fermion sign is commented out) and $\mu_Q$ is not used: check before describing the results.}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Pythia8}
 \label{sec:pythia}
 
-\todo{the generator interfaces and their options.}
+\code{PythiaEventGenerator} generates events with Pythia~8~\cite{Bierlich:2022pfr}, linked to \CAP{} when it is built
+with Pythia (Section~\ref{sec:build}). The beams are set by their PDG codes and either the energy in the centre of mass
+or the energies of the two beams (proton--proton at 2.7~TeV by default), and the seed by \code{SeedValue}. Three
+presets set the many Pythia parameters of models of collective effects in small systems: QCD-based colour
+reconnection (\code{UseQCDCR}, on by default), rope hadronisation (\code{UseRopes}) and string shoving
+(\code{UseShoving}). Any other Pythia setting is passed verbatim, as a string, by the keys \code{Option0} to
+\code{Option29}, applied after the presets so that they can modify them. The particles of each Pythia event are
+copied into the event of the task with their momenta and production vertices: by default the final-state particles
+only, without photons, neutrinos, quarks, gluons and gauge bosons, each of which can be kept on request. Decays are
+those of Pythia, set by its own options. The particles whose PDG code is not in the particle database of \CAP{} are
+skipped and counted.
 
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Event readers}
 \label{sec:readers}
 
-\todo{EPOS and PHSD.}
+Readers take the events produced by other generators from their files, found from the key \code{DataImportPath}
+(the environment variable \code{CAP\_DATA\_IMPORT\_PATH} by default) and the name or pattern \code{DataImportFile}.
+Particles whose PDG code is not in the particle database are skipped, and counted in the report of the task at the
+end of the job.
+\begin{itemize}
+  \item \code{PythiaEventReader} reads Pythia events stored in ROOT trees of \code{TParticle} objects (key
+  \code{TreeName}), a set of files being read as one chain; the particles kept are selected as by the generator.
+  \item \code{EposEventReader} reads the ROOT trees written by EPOS~\cite{Werner:2010aa} (key \code{TreeName}), a set
+  of files being read as one chain: per event, the number of particles, the impact parameter, and the PDG codes and
+  momenta of the particles, whose energies are computed from the masses of the database.
+  \item \code{PHSDEventReader} reads the text files of PHSD~\cite{Cassing:2009vt}: a file, or the files matching
+  \code{DataImportFile} (\code{*.dat} by default) in a directory and its sub-directories, read in order. Each event
+  has a header with the impact parameter, the colliding nuclei, the energy, the number of participants and the
+  event-plane angles and eccentricities of orders 2 to 5, followed by the PDG codes, charges, momenta and energies of
+  the particles; the particles keep the energies of the file, since PHSD particles may be off their mass shell.
+\end{itemize}
+\todo{the program writing the Pythia ROOT trees read by \code{PythiaEventReader} is not part of \CAP{}: say where
+it comes from.}
 
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Glauber model}
 \label{sec:glauber}
 

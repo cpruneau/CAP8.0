@@ -67,8 +67,8 @@ OPTIONAL_MODULES = [
     ("CAP_WITH_GUI",          "CapGui",       "Graphical interface bin/CapGui (Dear ImGui; needs Graphics)", True),
     ("CAP_WITH_ROOT_FILES",   "ROOT files",   "Read and write ROOT histograms (.root files in the CapGui browser, CapRootConvert)", True),
     ("CAP_WITH_JETS",         "Jets",         "Jet analysis (needs FastJet; in progress)", False),
-    ("CAP_WITH_EPOS",         "Epos",         "EPOS event reader", False),
-    ("CAP_WITH_PHSD",         "PHSD",         "PHSD event reader (in progress)", False),
+    ("CAP_WITH_EPOS",         "Epos",         "EPOS event reader", True),
+    ("CAP_WITH_PHSD",         "PHSD",         "PHSD event reader", True),
     ("CAP_WITH_PYTHIA8",      "Pythia",       "Pythia8 event generator interface (needs Pythia8)", False),
 ]
 
