@@ -44,6 +44,10 @@ PolygonRenderer.hpp
 Renderer.hpp
 SvgPainter.hpp
 PdfPainter.hpp
+PlotSpec.hpp
+PlotTemplate.hpp
+PlotDocument.hpp
+PptxPainter.hpp
 TextAttributes.hpp
 TextRenderer.hpp)
 
@@ -82,6 +86,10 @@ PolygonRenderer.cpp
 Renderer.cpp
 SvgPainter.cpp
 PdfPainter.cpp
+PlotSpec.cpp
+PlotTemplate.cpp
+PlotDocument.cpp
+PptxPainter.cpp
 TextAttributes.cpp
 TextRenderer.cpp)
 
@@ -139,3 +147,12 @@ if(APPLE)
   target_link_libraries(MacOsCanvasDemo Graphics Math Base ${ROOT_LIBRARIES})
   install(TARGETS MacOsCanvasDemo RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
 endif()
+add_executable(TestPlotSpec tests/TestPlotSpec.cpp)
+target_link_libraries(TestPlotSpec Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME PlotSpec COMMAND TestPlotSpec)
+add_executable(TestPlotTemplate tests/TestPlotTemplate.cpp)
+target_link_libraries(TestPlotTemplate Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME PlotTemplate COMMAND TestPlotTemplate)
+add_executable(TestPlotDocument tests/TestPlotDocument.cpp)
+target_link_libraries(TestPlotDocument Graphics Math Base ${ROOT_LIBRARIES})
+add_test(NAME PlotDocument COMMAND TestPlotDocument)

@@ -270,6 +270,15 @@ add_executable(CAP CAP.cxx)
 target_link_libraries(CAP PUBLIC ${CAP_LINKED_MODULES})
 install(TARGETS CAP RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
 
+# CapGui (File > New from Data), PlotEditor and PlotHistos (--template) configure the tasks of workflows (without
+# running them): they need all the task classes
+if(TARGET CapGui)
+  cmake_policy(SET CMP0079 NEW)   # the programs are made in gui/
+  foreach(program CapGui PlotEditor PlotHistos)
+    target_link_libraries(${program} PRIVATE ${CAP_LINKED_MODULES})
+  endforeach()
+endif()
+
 # The task classes in the reflection registry (run with ctest; not installed)
 add_executable(TestTaskRegistry tests/TestTaskRegistry.cpp)
 target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})

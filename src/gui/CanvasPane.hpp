@@ -86,6 +86,10 @@ namespace CAP
   //! @brief Remove the selected shape (undo recorded).
   void deleteSelectedShape();
 
+  //! @brief Window holding the pane: -1 for the main window, otherwise a window of canvases (CapGui::addPaneWindow()).
+  int  host() const { return _host; }
+  //! @brief Set the window holding the pane. @param host -1 for the main window, or the index of a window of canvases
+  void setHost(int host) { _host = host; }
   bool showToolbar() const { return _showToolbar; }   //!< Whether the toolbar is shown
   void setShowToolbar(bool v) { _showToolbar = v; }   //!< Show or hide the toolbar
 
@@ -171,6 +175,7 @@ namespace CAP
   GRAPHICS::Graph _editBefore;         //!< graph when the dialog was opened (for undo)
   Tool _tool;                          //!< tool of the shape palette in use
   GRAPHICS::Shape _shapeStyle;         //!< attributes given to new shapes (those of the shape edited last)
+  int  _host = -1;                     //!< window holding the pane (-1: the main window)
   int  _shapeGraph;                    //!< graph of the selected shape (-1: no shape selected)
   int  _shapeIndex;                    //!< index of the selected shape in its graph
   bool _drafting;                      //!< a shape is being drawn

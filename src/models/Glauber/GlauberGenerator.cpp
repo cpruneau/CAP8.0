@@ -122,6 +122,10 @@ namespace CAP
   Task::setDefaultConfiguration();
   String taskName = name();
   String objectType;
+  // the defaults of the lists first: the values below (EVENT:USE, EVENT:N, DB:USE, DB:N, ...) replace theirs
+  _managedDb.setDefaultObjectConfiguration(taskName,"DB", _configuration);
+  _managedEvents.setDefaultObjectConfiguration(taskName,"EVENT", _configuration);
+  _managedEventFilters.setDefaultObjectConfiguration(taskName,"EVENT_FILTER", _configuration);
 
   _configuration.addProperty(createKey(taskName,"SEVERITY"),         "TRACE");
   _configuration.addProperty(createKey(taskName,"SUBTASK:N"),        0);
@@ -143,6 +147,7 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,"DB_0:NAME"),"DefaultDb");
   _configuration.addProperty(createKey(taskName,"DB_0:TITLE"),"DefaultDb");
   _configuration.addProperty(createKey(taskName,"DB_0:OWNER"),true);
+  _configuration.addProperty(createKey(taskName,"DB_0:FILE"),"Glauber/NucleusDb.xml");   // nuclei (in $CAP_DATABASE_PATH)
 
   objectType = "GENERATION";
   _configuration.addProperty(createKey(taskName,objectType,"NUCLEUS_A:NAME"),          "Pb");
@@ -178,9 +183,6 @@ namespace CAP
 //  _configuration.addProperty(createKey(taskName,objectType,"PTOTPROFILE:NNXSECTOMEGA"),    1.0);
 //  _configuration.addProperty(createKey(taskName,objectType,"PTOTPROFILE:NNXSECTLAMBDA"),   1.0);
 
-  _managedDb.setDefaultObjectConfiguration(taskName,"DB", _configuration);
-  _managedEvents.setDefaultObjectConfiguration(taskName,"EVENT", _configuration);
-  _managedEventFilters.setDefaultObjectConfiguration(taskName,"EVENT_FILTER", _configuration);
   }
 
 

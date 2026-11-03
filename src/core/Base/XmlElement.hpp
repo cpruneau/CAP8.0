@@ -206,6 +206,9 @@ public:
   //! @brief Remove (and delete) the child at an index. @param index index
   //! @throws IndexOutOfBoundException if index>=nChildren()
   void removeChild(unsigned int index);
+  //! @brief Insert a copy of an element as the child at an index (at the end if index>=nChildren()).
+  //! @param index index @param element element copied @return the child added
+  XmlElement & insertChild(unsigned int index, const XmlElement & element);
   //! @brief Remove all children, attributes and text (the name is kept).
   void clear();
   //! @}

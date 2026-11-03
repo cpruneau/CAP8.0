@@ -3,44 +3,54 @@
 \label{sec:capgui}
 
 CapGui is the graphical interface of \CAP{}: it opens the files written by the jobs, draws their histograms, data
-points and functions, fits them, and exports the figures. It is built on Dear ImGui~\cite{DearImGui} with its GLFW
-and OpenGL back ends, and uses no ROOT class; it reads ROOT files only when \CAP{} is built with ROOT-file support, to
-import their histograms. The program is started with the files or folders to open,
+points and functions, fits them, and makes figures and documents of them. It is built on Dear ImGui~\cite{DearImGui}
+with its GLFW and OpenGL back ends, and uses no ROOT class; it reads ROOT files only when \CAP{} is built with
+ROOT-file support, to import their histograms.
+
+What CapGui shows is described by a \emph{plot file}: an XML file listing the input files, the windows of canvases,
+the canvases of graphs, and the histograms and functions of each graph, with their styles
+(Section~\ref{sec:plotfiles}). Every session is a plot file, an untitled one at first, and the canvases on the screen
+are its windows: what is done on them is written to the file, and the file, once saved, draws the same canvases again,
+in CapGui or in batch. The program is started with plot files, CAP files and folders,
 {\footnotesize
 \begin{verbatim}
-CapGui [--config file.xml] [file or folder ...]
+CapGui [--basic|--edit] [plots.xml] [data ...]
 \end{verbatim}}
-\noindent and its settings (theme, layout, fonts, the folders shown at start) are kept in an XML file, read from the
-home directory of the user or from the configuration directory of \CAP{}, and written back by the Preferences
-dialog.
+\noindent where the data are CAP files and folders, shown in the browser; the BASIC mode starts from a new plot file,
+with the current folder in the browser, and the EDIT mode from the plot files given; the tools are the same. \code{PlotEditor} is another name of the program, and
+\code{PlotHistos} draws a plot file without a window (Section~\ref{sec:plotbatch}). The settings of the interface
+(theme, layout, fonts, the folders shown at start) are kept in an XML file, read from the home directory of the user
+or from the configuration directory of \CAP{}, and written back by the Preferences dialog.
 
 CapGui draws with the graphics library of \CAP{} (Section~\ref{sec:graphics}): \code{ImGuiPainter} implements the
-abstract \code{Painter} for the screen, so that a canvas is drawn by the same code on the screen and, through the SVG
-and PDF painters, in the files it exports, and what is seen is what is saved. Labels containing \LaTeX{} (or the
-TLatex notation of ROOT, translated first) are typeset by the system \code{latex} and \code{dvisvgm} in a background
-thread, cached in memory and on disk, and drawn as textures; plain text is shown until the image is ready, so that
-typesetting never blocks the interface.
+abstract \code{Painter} for the screen, so that a canvas is drawn by the same code on the screen and, through the SVG,
+PDF and PowerPoint painters, in the files it exports, and what is seen is what is saved. Labels containing \LaTeX{}
+(or the TLatex notation of ROOT, translated first) are typeset by the system \code{latex} and \code{dvisvgm} in a
+background thread, cached in memory and on disk, and drawn as textures; plain text is shown until the image is ready,
+so that typesetting never blocks the interface.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Windows, canvases and graphs}
 \label{sec:windows}
 
 \paragraph{Panes and windows.}
-The main window holds a menu bar, the data browser, the canvases and a status bar, as panes that can be docked side
-by side, stacked as tabs, or dragged out into windows of their own. Canvases are arranged in a grid of $n\times m$
-panes, and new ones are added at any time; a canvas holds one or several graphs, arranged in a grid of its own, and
-a graph holds any number of objects, overlaid. The Canvases window lists all the canvases, grouped by window.
+The main window holds a menu bar, the data browser, the plot tree, the canvases and a status bar, as panes that can be
+docked side by side, stacked as tabs, or dragged out into windows of their own. The canvases are those of a window of
+the plot file, arranged in its grid of $n\times m$ (Window $>$ Canvases); a canvas holds one or several graphs,
+arranged in a grid of its own (Window $>$ Graphs in Canvas), and a graph holds any number of objects, overlaid. The
+main window shows the window of the plot file holding the selection or, with View $>$ All Windows, the first window,
+each other window of the file being shown in a window of its own.
 
 \paragraph{The data browser.}
-The browser shows the files opened (CAP files, Section~\ref{sec:binary}, read lazily, and ROOT files) and the
+The browser shows the data files opened (CAP files, Section~\ref{sec:binary}, read lazily, and ROOT files) and the
 folders of the file system as trees, in which a CAP file opens when it is expanded; a filter selects objects by name,
 and each entry shows the type of the object (one- or two-dimensional histogram, profile, data points) with its title,
-binning and number of entries. An object is drawn by clicking on it, which shows it in the selected graph, or by
-dragging it onto any graph, either overlaid on what the graph holds or replacing it; a folder can be drawn one object
-per graph. Objects can also be copied, by dragging, into trees made in the session, organised in folders, and saved
-as a new CAP file; a folder or a file can be exported to a ROOT file. The data table pane lists the points of the
-selected object with their coordinates, values and statistical and systematic uncertainties and, when the object has
-fits, the values of the fitted functions and the pulls.
+binning and number of entries. An object is added to the plot by clicking on it, which puts it in the selected graph,
+or by dragging it onto a graph of a canvas or onto the plot tree; a folder adds all its objects, one graph each.
+Objects can also be copied, by dragging, into trees made in the session, organised in folders, and saved as a new CAP
+file; a folder or a file can be exported to a ROOT file. The data table pane lists the points of the selected object
+with their coordinates, values and statistical and systematic uncertainties and, when the object has fits, the values
+of the fitted functions and the pulls.
 
 \paragraph{Interacting with graphs.}
 Dragging a rectangle in a graph zooms on it, dragging along an axis zooms on that axis only, and a double click
@@ -48,21 +58,97 @@ returns to the automatic ranges; in the three-dimensional view of a map, draggin
 titles and the legend are moved by dragging, and a right click on any of them, or on an object, opens its editor:
 range, scale, ticks and labels of an axis; text, font, size and colour of a title, with a preview of its \LaTeX{};
 position and frame of the legend; markers, lines and the display of the statistical and systematic uncertainties of
-an object, or the palette, contours and surface of a map. Shapes and text boxes are added from a tool palette.
-Changes can be undone and redone, and the contents of a graph can be cut, copied and pasted into another. The status
-bar shows the coordinates under the mouse.
-
-\paragraph{Export.}
-A graph, a canvas or the whole window, as it is laid out, is saved as an SVG or PDF file; all the canvases can be
-saved at once, or as the pages of one PDF book. With the \LaTeX{} library (Section~\ref{sec:latex}), the canvases
-are also written as a Beamer presentation, one frame per canvas or per graph, which can be compiled and opened from
-CapGui.
+an object, or the palette, contours and surface of a map. Each of these changes is recorded in the plot file. Shapes
+and text boxes, added from a tool palette, stay on the screen only, as do fits (which are kept with their objects,
+Section~\ref{sec:guifits}). The status bar shows the coordinates under the mouse.
 
 \paragraph{Comparisons.}
 Two histograms with the same binning are compared in a graph that overlays them above a panel showing their
 difference, together with the statistical tests of Section~\ref{sec:mathother}: the $\chi^2$ test of their
 compatibility (of the counts, of the values, or of the shapes) and, in one dimension, the Kolmogorov--Smirnov test.
 A two-dimensional histogram is projected onto either axis, with its fits.
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Plot files}
+\label{sec:plotfiles}
+
+\paragraph{Structure.}
+A plot file names its inputs, the CAP files the histograms are taken from (by paths relative to the file), and its
+outputs: a folder, the names of a PDF book, of a PowerPoint presentation and of a \LaTeX{} document, and a title and
+authors. Its windows hold canvases, which hold graphs, which hold the histograms (an input and a path in it) and the
+functions (a class of the registry with its parameters and range) they draw:
+\begin{widetext}
+{\footnotesize
+\begin{verbatim}
+<PlotHistos version="1">
+  <Input id="pairs" file="derived.cap"/>
+  <Output directory="figures" pdf="plots.pdf" pptx="plots.pptx" latex="presentation.tex"/>
+  <Window title="Single particles" columns="2" rows="1">
+    <Canvas name="spectra" title="Transverse momentum spectra" file="spectra.pdf">
+      <Graph title="p_{T} spectra">
+        <Axis which="y" log="true"/>
+        <Histogram input="pairs" path="Pair/MB_PiP/n1_pt" label="#pi^{+}"><Marker color="kRed+1"/></Histogram>
+        <Function class="Exponential" parameters="30, -2" xMin="0.2" xMax="2"/>
+      </Graph>
+    </Canvas>
+  </Window>
+</PlotHistos>
+\end{verbatim}}
+\end{widetext}
+\noindent Every element and attribute is optional except the paths of the histograms: a setting not given takes the
+default of the graphics library, the colours and markers of the items coming from the palettes of their graph. The
+file therefore holds what differs from the defaults only, and stays short enough to be read and edited by hand.
+
+\paragraph{The plot tree.}
+The plot tree shows the plot files open, one tab each, grouped as the file is: inputs and outputs, then windows,
+canvases, graphs, and their histograms and functions; the elements of style (margins, axes, markers, lines) are
+hidden unless asked for. A histogram dropped on the tree goes where it is dropped: on a graph it is overlaid, on a
+histogram it is placed after it, on a canvas it gets a new graph, on a window a new canvas; its input is added to the
+file if needed. The rows are dragged to move elements, and each row has the pull-downs of its element: the grid of a
+window or of a canvas, picked with the mouse; the background of a canvas; the logarithmic axes and the colour and
+marker palettes of a graph; the colour and marker of a histogram, the colour and line of a function. The inspector,
+below the tree, holds all the settings of the selected element, the editors of the canvases included, and its XML.
+
+\paragraph{Canvases and file in step.}
+The canvases and the plot file are kept in step both ways. A change made in the tree draws the canvases again; a
+change made on a canvas is written to the file once it is done, compared to the canvas as drawn, so that only what
+changed is written: a zoom adds the range of an axis, a colour picked the colour of a marker. The selection is shared:
+a graph clicked on a canvas selects its element in the tree, and an element selected in the tree makes its canvas
+current. The commands of the Edit menu act on the plot file: Undo and Redo go back and forth through the changes made
+on the canvases and in the tree, and Cut, Copy, Paste, Duplicate and Delete act on the selection, an element of the
+file (a graph copied is its XML, also put on the clipboard, and is pasted where it belongs, near the selection). The
+File menu opens, closes, duplicates and saves plot files; the data files are opened apart (Open Data, Open Data
+Folder), for the browser.
+
+\paragraph{New plot files from the data.}
+A plot file can be made from the content of a CAP file, or from a workflow of RunCAP before it is run (File $>$ New
+from Data). For a workflow, each stage is configured as the job would be, in a process of its own, without generating
+an event or reading a file, and its analysis tasks make their folders of histograms empty: the event and particle
+filters decide which folders and histograms exist, and the plot file is ready when the jobs have run. The histograms
+found are listed by task, name and combination of filters, chosen with check boxes or patterns, and laid out either as
+one canvas per histogram with a graph per combination of filters (the combinations of one-dimensional histograms
+optionally overlaid in one graph) or as one canvas per combination with a graph per histogram, in windows of a given
+number of canvases.
+
+\paragraph{Outputs.}
+File $>$ Export writes the window, a canvas or a graph as shown, as an SVG or PDF file, and the outputs of the plot
+file, each canvas at the size the file gives it: the canvases and graphs that have file names, printed to them; the
+PDF book, one canvas per page; the PowerPoint presentation, one canvas per slide, drawn as native shapes so that it
+can be edited; and the \LaTeX{} document, a Beamer presentation with one frame per canvas or an article with one
+section per window and one figure per canvas, compiled if asked for.
+
+\label{sec:plotbatch}
+The same outputs are made without a window by \code{PlotHistos}, which also makes plot files from the data:
+{\footnotesize
+\begin{verbatim}
+PlotHistos --all plots.xml [data.cap ...]
+PlotHistos --template plots.xml \
+           --select "*R2*" workflow.xml
+\end{verbatim}}
+\noindent writes the named figures, the PDF book, the PowerPoint presentation and the \LaTeX{} document of a plot file,
+or writes a plot file listing the histograms of a workflow whose names match a pattern.
+\noindent The CAP files given after a plot file replace its inputs, so that one plot file serves the outputs of
+several jobs. Without an output option, \code{PlotHistos} opens CapGui on the plot file, every window shown.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Fits}
@@ -102,7 +188,7 @@ the edges of the bins, and the number of points used is shown as the regions are
 \paragraph{Results.}
 A fit is attached to the object as a fit record (Section~\ref{sec:fitting}), drawn with it, and saved with it when
 the object is written to a CAP file; the fits of a file are thus found again, in CapGui or in a program, with the
-object they were made to. The Fits pane, below the canvases, shows one tab per fit of the selected graph: the
+object they were made to (they are not part of the plot file). The Fits pane, below the canvases, shows one tab per fit of the selected graph: the
 quality of the fit (the statistic, the number of degrees of freedom, $\chi^2/\nu$ and the $p$-value, the number of
 points used, the convergence and the method), the parameters with their uncertainties and bounds, flagged when one
 is at a bound, and the correlation matrix of the free parameters, with the strong correlations ($|\rho|>0.9$)

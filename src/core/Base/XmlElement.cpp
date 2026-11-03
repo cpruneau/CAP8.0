@@ -278,6 +278,13 @@ namespace CAP
   return *_children.back();
   }
 
+  XmlElement & XmlElement::insertChild(unsigned int index, const XmlElement & element)
+  {
+  if (index>=_children.size()) return addChild(element);
+  auto it = _children.emplace(_children.begin()+index, new XmlElement(element));
+  return **it;
+  }
+
   void XmlElement::removeChild(unsigned int index)
   {
   if (index>=_children.size()) throw IndexOutOfBoundException(index,_children.size(),"Invalid child index",__FUNCTION__);

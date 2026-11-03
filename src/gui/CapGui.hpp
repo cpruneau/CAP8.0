@@ -131,10 +131,51 @@ namespace CAP
   CanvasPane & pane(int k) { return *_panes.at(k); }   //!< Canvas pane k
   CanvasPane & currentPane() { return *_panes.at(_currentPane); }   //!< The current canvas pane (target of Show, Copy, ...)
   int  currentPaneIndex() const { return _currentPane; }   //!< Index of the current canvas pane
-  void setCurrentPane(int k) { if (k >= 0 && k < nPanes()) { _currentPane = k; _focusRequested = true; } }   //!< Make canvas pane k current (and give its window the focus)
+  //! @brief Make canvas pane k current. @param k index @param focus give its window the keyboard focus
+  void setCurrentPane(int k, bool focus=true) { if (k >= 0 && k < nPanes()) { _currentPane = k; if (focus) _focusRequested = true; } }
   //! @brief Show or hide the toolbars of all the canvas panes. @param v true to show them
   void setShowToolbars(bool v);
   bool showToolbars() const { return _settings.toolbars; }   //!< Whether the toolbars of the canvas panes are shown
+  //! @name Windows of canvases
+  //! Separate windows (OS windows when viewports are enabled), each holding canvas panes in a grid of its own, as
+  //! the main window does (e.g. the windows of PlotHistos). Their canvases are listed in the registry of the session
+  //! under the title of their window.
+  //! @{
+  //! @brief Open a window of canvases. @param title title @param columns columns of the grid @param rows rows
+  //! @param width width (points) @param height height (points) @return index of the window
+  int  addPaneWindow(const String & title, int columns, int rows, int width, int height);
+  //! @brief Add a canvas pane to a window of canvases (laid out in its grid). @param window index of the window
+  //! @return the pane
+  CanvasPane & addPaneTo(int window);
+  int  nPaneWindows() const { return int(_paneWindows.size()); }   //!< Number of windows of canvases
+  //! @brief Set window of canvases k, made if needed (then the windows before it too): title and grid (its size is
+  //! used when it is made or shown again). @param k index @param title title @param columns columns @param rows rows
+  //! @param width width @param height height
+  void setPaneWindow(int k, const String & title, int columns, int rows, int width, int height);
+  //! @brief Set the number of canvas panes of window of canvases k (panes added or removed at the end; the window is
+  //! laid out again if it changed). @param k index @param n number
+  void setPaneWindowPaneCount(int k, int n);
+  //! @brief Close the windows of canvases from index k on (their panes are removed). @param k first index
+  void closePaneWindowsFrom(int k);
+  //! @brief The panes of a window, in order. @param window index of a window of canvases, or -1 for the main window
+  //! @return panes
+  std::vector<CanvasPane *> panesOf(int window);
+  //! @brief Title of window of canvases k. @param k index @return title
+  const String & paneWindowTitle(int k) const { return _paneWindows.at(std::size_t(k)).title; }
+  //! @brief Size and grid of window of canvases k as last shown. @param k index @param width width
+  //! @param height height @param columns columns @param rows rows
+  void paneWindowLayout(int k, int & width, int & height, int & columns, int & rows) const;
+  //! @brief Dock a window of the program (e.g. the editor of PlotEditor) between the file browser and the canvases,
+  //! taking a fraction of the width beside the browser; kept docked when the canvases are laid out again.
+  //! @param windowName name of the ImGui window @param fraction fraction of the width of the canvas area
+  void setSideWindow(const String & windowName, float fraction) { _sideWindow = windowName.str(); _sideFraction = fraction; _layoutRequested = true; }
+  //! @brief Set the title of the main window (the window of the operating system). @param title title
+  void setWindowTitle(const String & title);
+  //! @brief Size of the main window. @param width width @param height height
+  void windowSize(int & width, int & height) const;
+  //! @brief Resize the main window. @param width width (points) @param height height (points)
+  void setWindowSize(int width, int height);
+  //! @}
   //! @brief Add a data pane (a table of data points), docked beside the current canvas pane. @return the new pane
   DataPane & addDataPane();
   int  nDataPanes() const { return (int)_dataPanes.size(); }   //!< Number of data panes
@@ -251,6 +292,25 @@ namespace CAP
   void buildDockLayout(unsigned int dockId);
   //! @brief Dock the canvas panes in a grid of the given dock node (_gridColumns columns). @param nodeId dock node
   void buildPaneGrid(unsigned int nodeId);
+  //! A window of canvases (see addPaneWindow())
+  struct PaneWindow
+  {
+  String title;           //!< title
+  std::string label;      //!< ImGui label: "title###CapPaneWindow<k>"
+  int columns = 1;        //!< grid of the panes
+  int rows = 1;           //!< grid of the panes
+  int width = 1000;       //!< size (points)
+  int height = 700;       //!< size (points)
+  bool placed = false;    //!< placed and sized on screen
+  bool layoutPending = true;   //!< the panes are to be docked in its grid
+  };
+  std::vector<PaneWindow> _paneWindows;   //!< windows of canvases
+  std::string _sideWindow;   //!< window docked between the browser and the canvases ("" for none)
+  float _sideFraction = 0.4f;   //!< its fraction of the width of the canvas area
+  //! @brief Dock panes in a grid of a dock node. @param nodeId dock node @param panes panes @param columns columns
+  void dockGrid(unsigned int nodeId, const std::vector<CanvasPane *> & panes, int columns);
+  //! @brief Draw the windows of canvases (their dock spaces; the panes are drawn by renderCanvases()).
+  void renderPaneWindows();
   //! @brief Draw the fit pane, if shown (opened by itself the first time the selected graph has fits).
   void renderFitPane();
   //! @brief The Canvases window, if shown.

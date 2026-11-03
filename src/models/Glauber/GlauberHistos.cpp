@@ -382,6 +382,7 @@ namespace CAP
   _fillBasics    = configuration.valueBool(   createKey(taskName,type,"fillBasics"));
   _fillMoments   = configuration.valueBool(   createKey(taskName,type,"fillMoments"));
   _fillSmeared   = configuration.valueBool(   createKey(taskName,type,"fillSmeared"));
+  _fillArea      = configuration.valueBool(   createKey(taskName,type,"fillArea"));
   _drawEvents    = configuration.valueBool(   createKey(taskName,type,"drawEvents"));
   _drawEventsN   = configuration.valueInt(    createKey(taskName,type,"drawEvents:N"));
   _drawEventsIndex = 0;

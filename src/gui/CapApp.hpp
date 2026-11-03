@@ -291,8 +291,15 @@ namespace CAP
 
   //! @brief First configuration file found: $HOME/.CapGui.xml, $CAP_ROOT_PATH/config/CapGui.xml, the one of the sources. @return path, or ""
   String findConfigurationFile() const;
-  //! @brief Create the menus of the menu bar.
-  void buildMenus();
+  //! @brief Create the menus of the menu bar (a program built on the application can make its own).
+  virtual void buildMenus();
+  //! @brief Add menus of a program built on the application, before the Help menu (nothing here). @param bar menu bar
+  virtual void addMenus(MenuBar & bar) { (void)bar; }
+  //! @brief Called once the window is open, the menus made and the files of the command line opened, before the
+  //! event loop: a program built on the application makes its canvases there (nothing here).
+  virtual void onStartup() { }
+  //! @brief The open file of a path, if it is open (shared with the browser). @param path path @return file, or null
+  BrowserFile * fileOfPath(const String & path);
   //! @brief Prepare a new canvas pane: graphs, mode, callbacks (undo, drop, show data). @param pane pane
   void setupPane(CanvasPane & pane);
   //! @brief Show the demonstration objects (a Gaussian with pseudo-data, an exponential).
@@ -308,7 +315,7 @@ namespace CAP
   //! @brief Go back to a state of the canvases. @param state state
   void restore(const Snapshot & state);
   //! @brief Enable, disable and check the menu items according to the state.
-  void updateMenuStates();
+  virtual void updateMenuStates();
   //! @brief Draw the application windows (preferences, about, shortcuts, dialogs) every frame.
   void renderWindows();
   //! @brief Draw the Preferences window, if shown.

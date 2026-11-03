@@ -299,8 +299,15 @@ namespace CAP
     {
     if (FileSystem::isDirectory(argument)) openFolder(argument); else openFile(argument);
     }
+  onStartup();
   _gui.run();
   return 0;
+  }
+
+  BrowserFile * CapApp::fileOfPath(const String & path)
+  {
+  for (auto & f : _files) if (!f.editable && f.path == path) return &f;
+  return nullptr;
   }
 
   void CapApp::setupPane(CanvasPane & pane)
@@ -437,6 +444,7 @@ namespace CAP
   window.addItem("Next Canvas",     "window.next",     "Ctrl+]", "Make the next canvas current");
   window.addItem("Previous Canvas", "window.previous", "Ctrl+[", "Make the previous canvas current");
 
+  addMenus(bar);
   Menu & help = bar.addMenu("Help");
   help.addItem("About CAP GUI", "help.about", "", "Version and components");
   help.addItem("Keyboard Shortcuts", "help.shortcuts", "F1", "List of the keyboard shortcuts");
