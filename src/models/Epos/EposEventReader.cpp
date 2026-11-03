@@ -90,17 +90,11 @@ void EposEventReader::execute()
     throw Exception("More particles in the event than the reader can hold (arraySize)",__FUNCTION__);
 
   Event & theEvent = event();
-  ParticleDb & particleDb = db();
   ParticleFilter * particleFilter = particleFilters().empty() ? nullptr : particleFilters()[0];
   for (int iParticle=0; iParticle<nParticles; iParticle++)
     {
-    int pdgCode = pid[iParticle];
-    ParticleType * type = particleDb.findPdgCode(pdgCode);
-    if (type==nullptr)
-      {
-      if (reportWarning(__FUNCTION__)) printValue("PDG code not in the particle database (skipped)",pdgCode);
-      continue;
-      }
+    ParticleType * type = particleType(pid[iParticle]);
+    if (!type) continue;                         // not in the particle database (reported by finalize())
     double p_x  = px[iParticle];
     double p_y  = py[iParticle];
     double p_z  = pz[iParticle];
@@ -116,6 +110,35 @@ void EposEventReader::execute()
     }
   _eventAccepted.increment();
   _taskExecuted.increment();
+}
+
+ParticleType * EposEventReader::particleType(int pdg)
+{
+  auto found = _typeOfCode.find(pdg);
+  if (found!=_typeOfCode.end())
+    {
+    if (!found->second) _skippedCodes[pdg]++;
+    return found->second;
+    }
+  ParticleDb & particleDb = db();
+  ParticleType * type = (particleDb.findIndexForPdgCode(pdg)>=0) ? particleDb.findPdgCode(pdg) : nullptr;
+  _typeOfCode[pdg] = type;
+  if (!type) _skippedCodes[pdg]++;
+  return type;
+}
+
+void EposEventReader::finalize()
+{
+  if (!_skippedCodes.empty() && reportWarning(__FUNCTION__))
+    {
+    printValue("Particles skipped: PDG codes not in the particle database",long(_skippedCodes.size()));
+    for (auto & entry : _skippedCodes)
+      {
+      String label = "PDG code "; label += entry.first;
+      printValue(label.data(),entry.second);
+      }
+    }
+  EventProcessor::finalize();
 }
 
 } // namespace CAP

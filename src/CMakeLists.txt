@@ -17,8 +17,8 @@ option(CAP_WITH_GRAPHICS     "Build the Graphics module (2D drawing; macOS windo
 option(CAP_WITH_GUI          "Build bin/CapGui, the graphical interface (Dear ImGui; requires Graphics)" ON)
 option(CAP_WITH_ROOT_FILES   "Read and write ROOT histograms: .root files in the CapGui browser, bin/CapRootConvert" ON)
 option(CAP_WITH_JETS         "Build the Jets module (requires FastJet)"                       OFF)
-option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader)"                      OFF)
-option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      OFF)
+option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader)"                      ON)
+option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      ON)
 option(CAP_WITH_PYTHIA8      "Build the interface to the Pythia8 event generator (library Pythia)" OFF)
 option(CAP_WITH_HERWIG       "Build the interface to the Herwig event generator"              OFF)
 # Installation prefixes of the external packages. When empty, a copy distributed with CAP is used if present

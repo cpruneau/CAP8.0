@@ -19,6 +19,7 @@
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmearer.hpp"
+#include <map>
 
 namespace CAP
 {
@@ -26,6 +27,14 @@ namespace CAP
 //!
 //! @brief Task reading EPOS events from ROOT trees (event number, multiplicity, impact parameter, PDG codes and
 //! momenta) and copying their particles into the current CAP event.
+//!
+//! Keys: \<name\>:DataImportPath (default $CAP_DATA_IMPORT_PATH), DataImportFile (a file name or a pattern, e.g.
+//! "epos_*.root", relative to DataImportPath unless absolute; the files are read as one chain), TreeName (name of the
+//! tree). The tree holds, per event, the branches Events (int), Mult (int), Impact (float), and the arrays of Mult
+//! values PID (int, PDG code), Px, Py, Pz, E (float, GeV). The energy of a particle is computed from its momentum and
+//! the mass of its type in the particle database; particles whose PDG code is not in the database are skipped and
+//! counted (reported by finalize()). A particle is added to the event if it passes the first particle filter of the
+//! task, or always if the task has no particle filter.
 //!
 class EposEventReader
 :
@@ -45,6 +54,14 @@ public:
   //! @brief Read the next event and add its particles to the current event.
   //! @throws EndOfDataException at the end of the input
   virtual void execute();
+  //! @brief Report the PDG codes skipped (not in the particle database), and finalize the task.
+  virtual void finalize();
+
+protected:
+
+  //! @brief Particle type of a PDG code, or null if it is not in the particle database (counted as skipped).
+  //! @param pdg PDG code @return type, or null
+  ParticleType * particleType(int pdg);
 
 protected:
 
@@ -81,6 +98,10 @@ protected:
   //! @}
   //! Input file(s) (DataImportPath/DataImportFile).
   String          _inputFiles;
+  //! Particle types of the PDG codes met (null: not in the particle database).
+  std::map<int,ParticleType*> _typeOfCode;
+  //! Number of particles skipped, per PDG code not in the particle database.
+  std::map<int,long> _skippedCodes;
 
 };
 
