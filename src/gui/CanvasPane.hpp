@@ -111,6 +111,8 @@ namespace CAP
   std::function<void(int graph, const ObjectReference & object)> onDrop;
   //! Called by the + button of the toolbar (new canvas pane).
   std::function<void()> onAddPane;
+  //! Called by the close button of the toolbar (x): close this pane.
+  std::function<void()> onClosePane;
   //! Called to show the values of data points shown in a graph as a table (graph menu, Show Data).
   std::function<void(const MATH::DataPoints * data, const String & label)> onShowData;
   //! Called by "Fit..." in the context menu of a graph (made the selected graph), with the index of the item to fit (-1: any).

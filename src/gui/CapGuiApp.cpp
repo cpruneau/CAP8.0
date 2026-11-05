@@ -498,6 +498,7 @@ namespace CAP
   for (const auto & b : _gui.browsers()) connectToPlot(*b);
   std::function<void(FileBrowser &)> previousBrowser = _gui.onNewBrowser;
   _gui.onNewBrowser = [this, previousBrowser](FileBrowser & b) { if (previousBrowser) previousBrowser(b); connectToPlot(b); };
+  _gui.onClosePanes = [this](const std::vector<int> & panes) { return closeCanvases(panes); };
   _gui.onCloseRequest = [this]() -> bool
     {
     _closing.clear();
@@ -875,7 +876,10 @@ namespace CAP
 
   ImGui::SetNextWindowSize(ImVec2(620, 700), ImGuiCond_FirstUseEver);
   _treeFocused = false;
-  if (_showTree && ImGui::Begin(kEditorWindow, &_showTree, ImGuiWindowFlags_NoCollapse))
+  // Begin() and End() are paired on the visibility at the start of the frame: closing the window (its close button,
+  // which Begin() reports by clearing _showTree) must not skip End(), which ImGui reports as missing EndChild/End.
+  const bool treeShown = _showTree;
+  if (treeShown && ImGui::Begin(kEditorWindow, &_showTree, ImGuiWindowFlags_NoCollapse))
     {
     _treeFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
     if (ImGui::BeginTabBar("##documents", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs
@@ -912,7 +916,7 @@ namespace CAP
       if (ImGui::Button("Open...")) actionPerformed(ActionEvent{"plot.open", nullptr});
       }
     }
-  if (_showTree) ImGui::End();
+  if (treeShown) ImGui::End();
   renderDialogs();
   renderTemplate();
   layoutCanvases();
@@ -1226,9 +1230,16 @@ namespace CAP
   e = d.element(t.selected);
   if (e && ImGui::CollapsingHeader("XML"))
     {
+    // shown as plain text in a child of its own, with a Copy button (not a read-only text field, whose state ImGui keeps
+    // from frame to frame while the element shown changes)
     std::string text = e->toString().str();
-    ImGui::InputTextMultiline("##xml", &text, ImVec2(-1, std::min(300.0f, 20.0f + 15.0f*float(std::count(text.begin(), text.end(), '\n')))),
-                              ImGuiInputTextFlags_ReadOnly);
+    if (ImGui::SmallButton("Copy")) ImGui::SetClipboardText(text.c_str());
+    ImGui::SetItemTooltip("Copy the XML of the element to the clipboard");
+    float lines = float(std::count(text.begin(), text.end(), '\n') + 1);
+    float height = std::min(300.0f, ImGui::GetStyle().WindowPadding.y*2.0f + lines*ImGui::GetTextLineHeightWithSpacing());
+    if (ImGui::BeginChild("##xml", ImVec2(-1, height), ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar))
+      ImGui::TextUnformatted(text.c_str(), text.c_str() + text.size());
+    ImGui::EndChild();
     }
   }
 
@@ -1556,6 +1567,37 @@ namespace CAP
   {
   for (int k=0; k<_gui.nPanes(); k++) if (&_gui.pane(k) == pane) return k;
   return -1;
+  }
+
+  std::vector<int> CapGuiApp::closeCanvases(const std::vector<int> & panes)
+  {
+  std::vector<int> rest;
+  std::vector<Path> canvases;
+  Tab * t = tab();
+  for (int k : panes)
+    {
+    const PaneLink * found = nullptr;
+    for (const auto & link : _links)
+      if (paneIndexOf(link.pane) == k && !link.canvas.empty()) { found = &link; break; }
+    if (t && found && t->document->element(found->canvas)) canvases.push_back(found->canvas);
+    else rest.push_back(k);
+    }
+  if (canvases.empty()) return rest;
+  // removed last first, so that the paths of the others stay valid
+  std::sort(canvases.begin(), canvases.end());
+  canvases.erase(std::unique(canvases.begin(), canvases.end()), canvases.end());
+  PlotDocument & d = *t->document;
+  d.beginEdit();
+  for (auto p = canvases.rbegin(); p != canvases.rend(); ++p)
+    {
+    if (t->hasSelection && t->selected.size() >= p->size() && std::equal(p->begin(), p->end(), t->selected.begin()))
+      t->selected = PlotDocument::parent(*p);   // the selection was in the canvas: its window
+    d.remove(*p);
+    }
+  d.endEdit();
+  _gui.setStatus(canvases.size() == 1 ? String("Canvas removed from the plot file (Undo to restore it)")
+                                      : String("Canvases removed from the plot file (Undo to restore them)"));
+  return rest;
   }
 
   PlotDocument::Path CapGuiApp::dropTarget()

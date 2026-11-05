@@ -97,6 +97,19 @@ namespace CAP
   void CanvasPane::renderToolbar()
   {
   ImGui::PushID("toolbar");
+  // first, so that they stay visible however narrow the pane: + (new pane) and x (close this pane)
+  if (onAddPane)
+    {
+    if (ImGui::Button("+")) onAddPane();
+    ImGui::SetItemTooltip("New canvas pane, beside this one");
+    ImGui::SameLine();
+    }
+  if (onClosePane)
+    {
+    if (ImGui::Button("x")) onClosePane();
+    ImGui::SetItemTooltip("Close this canvas (in a plot file: remove the canvas from it; Edit > Undo brings it back)");
+    ImGui::SameLine(0, 18);
+    }
   renderPalette();
   ImGui::SameLine(0, 18);
   ImGui::Checkbox("Keep shapes", &_keepShapes);
@@ -172,15 +185,6 @@ namespace CAP
     {
     ImGui::SameLine(0, 18);
     ImGui::TextDisabled("graph %d of %d", _selectedGraph+1, _canvas.nGraphs());
-    }
-  if (onAddPane)
-    {
-    float buttonWidth = ImGui::CalcTextSize("+").x + 2*ImGui::GetStyle().FramePadding.x;
-    ImGui::SameLine(0, 18);
-    float available = ImGui::GetContentRegionAvail().x;   // right-aligned
-    if (available > buttonWidth) ImGui::SetCursorPosX(ImGui::GetCursorPosX() + available - buttonWidth);
-    if (ImGui::Button("+")) onAddPane();
-    ImGui::SetItemTooltip("New canvas pane, beside this one (close a pane with the x of its tab)");
     }
   ImGui::PopID();
   }

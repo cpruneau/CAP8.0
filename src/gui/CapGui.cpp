@@ -228,6 +228,11 @@ namespace CAP
   CanvasPane & pane = *_panes.back();
   pane.setShowToolbar(_settings.toolbars);
   pane.onAddPane = [this]() { _addRequested = true; };
+  CanvasPane * added = &pane;
+  pane.onClosePane = [this, added]()
+    {
+    for (int k=0; k<nPanes(); k++) if (_panes[std::size_t(k)].get() == added) { requestClosePane(k); break; }
+    };
   if (onNewPane) onNewPane(pane);
   return pane;
   }
@@ -442,7 +447,15 @@ namespace CAP
     {
     // the last canvas (moved out of the main window): an empty one takes its place in the main window
     ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->windowId()) : nullptr;
-    if (!window || !window->Viewport || window->Viewport == ImGui::GetMainViewport()) return;
+    if (!window || !window->Viewport || window->Viewport == ImGui::GetMainViewport())
+      {
+      // the last canvas of the main window stays, emptied
+      CanvasPane & pane = *_panes[k];
+      pane.canvas() = GRAPHICS::Canvas();
+      pane.divide(1, 1);
+      pane.setSelectedGraph(0);
+      return;
+      }
     newPane();
     _gridColumns = 1;
     _layoutRequested = true;
@@ -846,8 +859,7 @@ namespace CAP
     CanvasPane & pane = *_panes[k];
     bool open = true;
     if (_focusRequested && k == _currentPane) ImGui::SetNextWindowFocus();
-    // a close button when there are other canvases, or when the canvas was moved out of the main window (closing the
-    // last canvas then puts an empty one in the main window, see closePane())
+    // a close button on every canvas (closing the last canvas of the main window clears it, see closePane())
     ImGuiWindow * window = ImGui::FindWindowByName(pane.windowId());
     bool outside = window && window->Viewport && window->Viewport != ImGui::GetMainViewport();
     // its group in the registry of the canvases: the main window, or the separate window holding it
@@ -867,7 +879,7 @@ namespace CAP
       if (k >= 0 && !(registry.group(k) == group)) registry.setGroup(pane.canvas(), group);
       }
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
-    bool visible = ImGui::Begin(pane.windowLabel(), (nPanes() > 1 || outside) ? &open : nullptr,
+    bool visible = ImGui::Begin(pane.windowLabel(), &open,
                                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
     ImGui::PopStyleVar();
     if (visible)
@@ -918,7 +930,9 @@ namespace CAP
     {
     if (beforePanesChange) beforePanesChange();
     std::sort(_closeRequests.rbegin(), _closeRequests.rend());
-    for (int k : _closeRequests) closePane(k);
+    _closeRequests.erase(std::unique(_closeRequests.begin(), _closeRequests.end()), _closeRequests.end());
+    std::vector<int> rest = onClosePanes ? onClosePanes(_closeRequests) : _closeRequests;
+    for (int k : rest) closePane(k);
     _closeRequests.clear();
     }
   }

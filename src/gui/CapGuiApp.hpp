@@ -210,6 +210,9 @@ namespace CAP
   void syncSelection();
   //! @brief Whether a pane still exists. @param pane pane @return its index, or -1
   int paneIndexOf(const CanvasPane * pane);
+  //! @brief Close panes (their x, Window > Close Canvas): the canvases of the plot file they show are removed from it
+  //! (one step of undo). @param panes panes, in decreasing order @return the panes showing no canvas of the plot file
+  std::vector<int> closeCanvases(const std::vector<int> & panes);
   //! @brief Where data shown from the browser go: the selected graph, or else its canvas, or else the top. @return path
   GRAPHICS::PlotDocument::Path dropTarget();
   //! @brief Paths of the objects of a folder of an open file (or the object itself). @param object reference

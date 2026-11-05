@@ -615,7 +615,7 @@ namespace CAP
     _renameText = _gui.currentPane().title().str();
     _renameRequested = true;
     }
-  else if (c == "window.close")    { if (_gui.nPanes() > 1) { recordUndo(); _gui.closePane(_gui.currentPaneIndex()); } }
+  else if (c == "window.close")    _gui.requestClosePane(_gui.currentPaneIndex());   // as the x of the pane
   else if (c == "window.next")     _gui.setCurrentPane((_gui.currentPaneIndex() + 1) % _gui.nPanes());
   else if (c == "window.previous") _gui.setCurrentPane((_gui.currentPaneIndex() + _gui.nPanes() - 1) % _gui.nPanes());
   else if (c == "help.about")      _showAbout = true;

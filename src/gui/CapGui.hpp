@@ -125,6 +125,9 @@ namespace CAP
   //! @brief Close pane k: not the last one, unless it was moved out of the main window (an empty pane then takes its
   //! place in the main window). @param k index of the pane
   void closePane(int k);
+  //! @brief Ask to close a pane at the end of the frame (as its close buttons do: onClosePanes, then closePane()).
+  //! @param k pane
+  void requestClosePane(int k) { if (k >= 0 && k < nPanes()) _closeRequests.push_back(k); }
   int  nColumns() const { return _columns; }   //!< Columns of the last grid layout of the canvases
   int  nRows()    const { return _rows; }   //!< Rows of the last grid layout of the canvases
   int  nPanes()   const { return (int)_panes.size(); }   //!< Number of canvas panes
@@ -198,6 +201,10 @@ namespace CAP
   std::function<void(FileBrowser &)> onCloseBrowser;
   //! Called before a pane is added or closed by the user (undo).
   std::function<void()> beforePanesChange;
+  //! Called with the panes closed by the user (x of their tab or of their toolbar, Window > Close Canvas), in
+  //! decreasing order: the application may handle them (e.g. remove their canvases from a plot file) and returns those
+  //! it leaves to closePane().
+  std::function<std::vector<int>(const std::vector<int> &)> onClosePanes;
   //! @}
 
   //! @name Messages
