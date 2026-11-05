@@ -215,6 +215,26 @@ namespace CAP
   std::vector<int> closeCanvases(const std::vector<int> & panes);
   //! @brief Where data shown from the browser go: the selected graph, or else its canvas, or else the top. @return path
   GRAPHICS::PlotDocument::Path dropTarget();
+  //! @brief The canvas of the plot file shown by the current pane and the Graph element of its selected graph.
+  //! @param canvas set to the canvas @param graph set to the graph (empty if the cell has none) @return false if the
+  //! current pane shows no canvas of the plot file
+  bool currentCanvas(GRAPHICS::PlotDocument::Path & canvas, GRAPHICS::PlotDocument::Path & graph);
+  //! @brief Show an object of the browser (a click on it): in the graph selected on the current canvas, added to its
+  //! contents or replacing them (Add / Replace of the canvas toolbar). @param object object
+  void showObject(const ObjectReference & object);
+  //! @brief Show the objects of a folder of the browser: a graph each, in the canvas of the selection or of the
+  //! current pane (replacing its graphs in Replace mode), or a new canvas. @param object folder
+  void showFolder(const ObjectReference & object);
+  //! @brief Drop an object on a graph of a pane (added, or replacing the contents in Replace mode).
+  //! @param target element dropped on @param object object @param pane pane @param cell its graph
+  void dropOnPane(const GRAPHICS::PlotDocument::Path & target, const ObjectReference & object, CanvasPane & pane, int cell);
+  //! @brief Remove the histograms and functions of a Graph element (and the shapes of the cell drawn, unless the pane
+  //! keeps them). @param graph graph @param pane pane drawing it (or nullptr) @param cell its graph in the pane
+  void clearGraph(const GRAPHICS::PlotDocument::Path & graph, CanvasPane * pane, int cell);
+  //! @brief Replace the contents of a Graph element by an object: cleared, the object added, and the title of the graph
+  //! following when it was the name of what it showed. @param graph graph @param object object @param pane pane
+  //! drawing it (or nullptr) @param cell its graph in the pane
+  void replaceGraph(const GRAPHICS::PlotDocument::Path & graph, const ObjectReference & object, CanvasPane * pane, int cell);
   //! @brief Paths of the objects of a folder of an open file (or the object itself). @param object reference
   //! @param folder whether it is a folder @param file set to the path of the file @return object paths
   std::vector<String> objectsOf(const ObjectReference & object, bool folder, String & file);

@@ -478,16 +478,8 @@ namespace CAP
 
   void CapGuiApp::connectToPlot(FileBrowser & browser)
   {
-  browser.onShowObject = [this](const ObjectReference & object) { drop(dropTarget(), object, false); };
-  browser.onShowFolder = [this](int fileId, const String & folderPath)
-    {
-    // all the objects of a folder: a graph each, in the canvas of the selection (or a new canvas)
-    Tab * t = tab();
-    if (!t) return;
-    bool ok = false;
-    GRAPHICS::PlotDocument::Path canvas = t->hasSelection ? t->document->enclosing(t->selected, PlotDocument::kCanvas, ok) : Path();
-    drop(ok ? canvas : Path(), ObjectReference{fileId, folderPath}, true);
-    };
+  browser.onShowObject = [this](const ObjectReference & object) { showObject(object); };
+  browser.onShowFolder = [this](int fileId, const String & folderPath) { showFolder(ObjectReference{fileId, folderPath}); };
   }
 
   void CapGuiApp::onStartup()
@@ -1600,6 +1592,115 @@ namespace CAP
   return rest;
   }
 
+  bool CapGuiApp::currentCanvas(Path & canvas, Path & graph)
+  {
+  canvas.clear();
+  graph.clear();
+  if (_gui.nPanes() == 0) return false;
+  CanvasPane & pane = _gui.currentPane();
+  for (const auto & link : _links)
+    {
+    if (link.pane != &pane || link.canvas.empty()) continue;
+    canvas = link.canvas;
+    auto found = link.graphs.find(pane.selectedGraph());
+    if (found != link.graphs.end()) graph = found->second;
+    return true;
+    }
+  return false;
+  }
+
+  void CapGuiApp::clearGraph(const Path & graph, CanvasPane * pane, int cell)
+  {
+  Tab * t = tab();
+  if (!t || graph.empty()) return;
+  PlotDocument & d = *t->document;
+  std::vector<Path> items = d.children(graph, PlotDocument::kHistogram);
+  for (const Path & p : d.children(graph, PlotDocument::kFunction)) items.push_back(p);
+  std::sort(items.begin(), items.end());
+  for (auto p = items.rbegin(); p != items.rend(); ++p) d.remove(*p);   // last first: the others keep their paths
+  if (pane && !pane->keepShapes() && cell >= 0 && cell < pane->canvas().nGraphs()) pane->canvas().graph(cell).clearShapes();
+  }
+
+  void CapGuiApp::showObject(const ObjectReference & object)
+  {
+  Tab * t = tab();
+  if (!t) return;
+  String fileName;
+  if (objectsOf(object, false, fileName).empty()) { _gui.setStatus("Nothing to plot there"); return; }
+  Path target = dropTarget(), canvas, graph;
+  bool replace = _gui.nPanes() > 0 && _gui.currentPane().mode() == CanvasPane::kReplace;
+  if (currentCanvas(canvas, graph) && !graph.empty())
+    {
+    // the graph selected on the current canvas, unless an element of it is selected in the tree (Add: added there)
+    bool inGraph = t->hasSelection && t->selected.size() >= graph.size()
+                   && std::equal(graph.begin(), graph.end(), t->selected.begin());
+    if (replace || !inGraph) target = graph;
+    }
+  else replace = false;    // no graph of the plot file shown: a new canvas
+  if (replace) { replaceGraph(graph, object, &_gui.currentPane(), _gui.currentPane().selectedGraph()); return; }
+  drop(target, object, false);
+  }
+
+  void CapGuiApp::replaceGraph(const Path & graph, const ObjectReference & object, CanvasPane * pane, int cell)
+  {
+  Tab * t = tab();
+  if (!t) return;
+  PlotDocument & d = *t->document;
+  auto lastPart = [](const String & path) { std::string s = path.str(); std::size_t k = s.rfind('/'); return String(k == std::string::npos ? s : s.substr(k + 1)); };
+  // the title of the graph follows when it was the name of its first histogram
+  bool follow = false;
+  if (const XmlElement * g = d.element(graph))
+    {
+    std::vector<Path> items = d.children(graph, PlotDocument::kHistogram);
+    const XmlElement * first = items.empty() ? nullptr : d.element(items.front());
+    String title = g->attribute("title");
+    follow = title.isNull() || (first && title == lastPart(first->attribute("path")));
+    }
+  d.beginEdit();
+  clearGraph(graph, pane, cell);
+  if (drop(graph, object, false) && follow) d.setAttribute(graph, "title", lastPart(object.path));
+  d.endEdit();
+  }
+
+  void CapGuiApp::showFolder(const ObjectReference & object)
+  {
+  // all the objects of a folder: a graph each, in the canvas of the selection or of the current pane (or a new canvas)
+  Tab * t = tab();
+  if (!t) return;
+  String fileName;
+  if (objectsOf(object, true, fileName).empty()) { _gui.setStatus("Nothing to plot there"); return; }
+  bool ok = false;
+  Path canvas = t->hasSelection ? t->document->enclosing(t->selected, PlotDocument::kCanvas, ok) : Path();
+  Path paneCanvas, graph;
+  if (!ok && currentCanvas(paneCanvas, graph)) { canvas = paneCanvas; ok = true; }
+  bool replace = ok && _gui.nPanes() > 0 && _gui.currentPane().mode() == CanvasPane::kReplace;
+  PlotDocument & d = *t->document;
+  d.beginEdit();
+  if (replace)
+    {
+    // Replace: the graphs of the canvas go, the folder takes their place
+    std::vector<Path> graphs = d.children(canvas, PlotDocument::kGraph);
+    for (auto p = graphs.rbegin(); p != graphs.rend(); ++p) d.remove(*p);
+    if (!_gui.currentPane().keepShapes())
+      for (int k=0; k<_gui.currentPane().canvas().nGraphs(); k++) _gui.currentPane().canvas().graph(k).clearShapes();
+    }
+  drop(ok ? canvas : Path(), object, true);
+  d.endEdit();
+  }
+
+  void CapGuiApp::dropOnPane(const Path & target, const ObjectReference & object, CanvasPane & pane, int cell)
+  {
+  Tab * t = tab();
+  if (!t) return;
+  String fileName;
+  if (objectsOf(object, false, fileName).empty()) { _gui.setStatus("Nothing to plot there"); return; }
+  PlotDocument & d = *t->document;
+  const XmlElement * e = d.element(target);
+  bool replace = pane.mode() == CanvasPane::kReplace && e && PlotDocument::kind(*e) == PlotDocument::kGraph;
+  if (replace) { replaceGraph(target, object, &pane, cell); return; }
+  drop(target, object, false);
+  }
+
   PlotDocument::Path CapGuiApp::dropTarget()
   {
   Tab * t = tab();
@@ -1744,13 +1845,14 @@ namespace CAP
       link.drawnText = link.drawn.toString().str();
       Path canvasPath = link.canvas;
       int id = t->id;
-      pane.onDrop = [this, id, canvasPath](int graph, const ObjectReference & object)
+      CanvasPane * shown = &pane;
+      pane.onDrop = [this, id, canvasPath, shown](int graph, const ObjectReference & object)
         {
         if (!tab() || tab()->id != id) return;
         Path target = canvasPath;
         for (const auto & l : _links)
           if (l.canvas == canvasPath) { auto f = l.graphs.find(graph); if (f != l.graphs.end()) target = f->second; }
-        drop(target, object, false);
+        dropOnPane(target, object, *shown, graph);
         };
       _links.push_back(link);
       }
