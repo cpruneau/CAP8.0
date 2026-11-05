@@ -19,8 +19,11 @@ namespace CAP
 //! @brief Analyzer of global event quantities: multiplicity, energy, net charge, net strangeness, net baryon number
 //! and pT sum of the accepted particles, per (event filter, particle filter) combination.
 //!
-//! The values are also stored in the event record (Event::setMult(), ...) for use by other tasks and their event
-//! filters; the record is indexed by the event filter index, and the last accepted particle filter determines it.
+//! The quantities are those of the selections of the particle filters, made once per event and shared by all the
+//! tasks (see ParticleSelection): the event filters of any task can test them directly (conditions MULT, ENERGY, ...
+//! with SELECTION, the name of the particle filter, see EventFilter), whatever the order of the tasks. For the event
+//! filters of earlier versions (MULT_k, ...), they are also stored in the event record by particle filter
+//! (Event::setMult(k), ... for the particle filters k = 0..5 of this task).
 //!
 //! This class implements a basic analyzer of the multiplicity, energy, net charge, net strangeness, and net baryon number of the particles composing an event.
 //! A global analyzer task can be used to determine the multiplcity (or other characteristics) of an event and set the event record with these values. The values

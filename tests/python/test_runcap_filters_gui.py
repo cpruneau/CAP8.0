@@ -110,7 +110,9 @@ class TestPanel(unittest.TestCase):
     def test_quantities(self):
         events = G.quantities("EVENT_FILTER")
         self.assertIn("IMPACT", events.values())
-        self.assertIn("MULT_0", events.values())
+        self.assertIn("MULT", events.values())
+        self.assertNotIn("MULT_0", events.values())        # earlier versions: read, not offered
+        self.assertFalse(F.LEGACY_EVENT_SUBTYPES & set(events.values()))
         self.assertEqual(G.forms_of("PARTICLE_FILTER", "LIVE"), (F.FLAG,))
         self.assertEqual(G.forms_of("EVENT_FILTER", "IMPACT"), (F.RANGE, F.DUAL_RANGE))
 

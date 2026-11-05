@@ -69,11 +69,23 @@ TYPE_OF_FORM = {RANGE: "DOUBLE_RANGE", DUAL_RANGE: "DOUBLE_DUAL_RANGE", VALUE: "
 FORM_OF_TYPE = {"DOUBLE_RANGE": RANGE, "DOUBLE_DUAL_RANGE": DUAL_RANGE, "INTEGER": VALUE, "BOOL": FLAG}
 
 #: Quantities of the conditions: {SUBTYPE: (description, forms accepted)}, as read by the configure() functions.
-EVENT_SUBTYPES = {}
+#: Event filters: the global quantities of the selection of a particle filter, named by the condition (SELECTION),
+#: computed once per event and shared by the tasks (CAP::ParticleSelection, CAP::EventFilter).
+SELECTION_SUBTYPES = {"MULT": ("multiplicity of a selection", (RANGE,)),
+                      "ENERGY": ("energy of a selection", (RANGE,)),
+                      "CHARGE": ("net charge of a selection", (RANGE,)),
+                      "STRANGENESS": ("net strangeness of a selection", (RANGE,)),
+                      "BARYON": ("net baryon number of a selection", (RANGE,)),
+                      "PTSUM": ("pT sum of a selection", (RANGE,)),
+                      "SPHERO": ("spherocity of a selection", (RANGE,))}
+EVENT_SUBTYPES = dict(SELECTION_SUBTYPES)
+#: Earlier versions: the quantities set by GlobalAnalyzer for its particle filter k (it must run first).
+LEGACY_EVENT_SUBTYPES = set()
 for _k in range(6):
     EVENT_SUBTYPES["MULT_%d" % _k] = ("multiplicity %d" % _k, (RANGE,))
     EVENT_SUBTYPES["ENERGY_%d" % _k] = ("energy %d" % _k, (RANGE,))
     EVENT_SUBTYPES["SPHERO_%d" % _k] = ("spherocity %d" % _k, (RANGE,))
+    LEGACY_EVENT_SUBTYPES |= {"MULT_%d" % _k, "ENERGY_%d" % _k, "SPHERO_%d" % _k}
 #: Event filters of the Glauber tasks (GlauberEventFilter).
 GLAUBER_SUBTYPES = {"IMPACT": ("impact parameter b", (RANGE, DUAL_RANGE)),
                     "NPARTS": ("participants N_part", (RANGE, DUAL_RANGE)),
@@ -157,8 +169,6 @@ def default_settings(kind):
     settings = {name: value for name, _, value in LIST_SETTINGS}
     settings.update(KIND_SETTINGS.get(kind, {}))
     return settings
-#: The C++ code handles at most this many particle filters per task (EventProcessor::acceptedParticles()).
-MAX_PARTICLE_FILTERS = 8
 #: Suffix of the names of the folders of derived histograms.
 DERIVED_SUFFIX = "_D"
 #: Names of objects: as task names, without spaces or colons (they become parts of keys and histogram names).
@@ -279,10 +289,12 @@ def number_text(value):
 # ------------------------------------------------------------------------------------------------------------------
 
 class Condition:
-    """A condition of a filter on one quantity (SUBTYPE): a range [minimum, maximum), two ranges, a value or a flag."""
+    """A condition of a filter on one quantity (SUBTYPE): a range [minimum, maximum), two ranges, a value or a flag.
+    For the quantities of a selection (SELECTION_SUBTYPES), selection is the name of the particle filter."""
 
-    def __init__(self, subtype, form=RANGE, minimum=0.0, maximum=0.0, minimum2=0.0, maximum2=0.0):
+    def __init__(self, subtype, form=RANGE, minimum=0.0, maximum=0.0, minimum2=0.0, maximum2=0.0, selection=""):
         self.subtype = subtype
+        self.selection = selection or ""
         self.form = form
         self.minimum = float(minimum)
         self.maximum = float(maximum)
@@ -298,7 +310,8 @@ class Condition:
         return isinstance(other, Condition) and vars(self) == vars(other)
 
     def __repr__(self):
-        return "Condition(%s, %s, %g, %g)" % (self.subtype, self.form, self.minimum, self.maximum)
+        return "Condition(%s%s, %s, %g, %g)" % (self.subtype, "(%s)" % self.selection if self.selection else "",
+                                                 self.form, self.minimum, self.maximum)
 
 
 class FilterDef:
@@ -832,6 +845,8 @@ def _write_object(task, kind, k, name, definition, owner, Param):
             cp = prefix + "CONDITION_%d:" % i
             _set(task, cp + "TYPE", "string", c.type, Param)
             _set(task, cp + "SUBTYPE", "string", c.subtype, Param)
+            if c.subtype in SELECTION_SUBTYPES and kind == "EVENT_FILTER":
+                _set(task, cp + "SELECTION", "string", c.selection, Param)
             _set(task, cp + "MINIMUM", "double", number_text(c.minimum), Param)
             _set(task, cp + "MAXIMUM", "double", number_text(c.maximum), Param)
             if c.form == DUAL_RANGE:
@@ -1033,7 +1048,7 @@ def _definition_from_keys(task, kind, k, name, values, warnings):
         ctype = values.get(cp + "TYPE", "")
         form = FORM_OF_TYPE.get(ctype.upper(), ctype)
         conditions.append(Condition(values.get(cp + "SUBTYPE", ""), form, number("MINIMUM"), number("MAXIMUM"),
-                                    number("MINIMUM2"), number("MAXIMUM2")))
+                                    number("MINIMUM2"), number("MAXIMUM2"), values.get(cp + "SELECTION", "")))
     return FilterDef(kind, name, title, conditions)
 
 
@@ -1068,6 +1083,20 @@ def _histograms_from_keys(task, templates, values, warnings):
 # Checks
 # ------------------------------------------------------------------------------------------------------------------
 
+def rename_selection(library, old, new):
+    """A particle filter renamed: the conditions of the event filters on its selection follow."""
+    for o in library.objects["EVENT_FILTER"]:
+        for c in o.conditions:
+            if c.subtype in SELECTION_SUBTYPES and c.selection == old:
+                c.selection = new
+
+
+def selection_users(library, name):
+    """Names of the event filters testing the selection of a particle filter."""
+    return [o.name for o in library.objects["EVENT_FILTER"]
+            if any(c.subtype in SELECTION_SUBTYPES and c.selection == name for c in o.conditions)]
+
+
 def check_library(library):
     """Problems of the objects of the library (names, conditions, parameters, file of the particle databases)."""
     errors = []
@@ -1097,6 +1126,11 @@ def check_library(library):
                 elif c.form == DUAL_RANGE and not c.minimum2 < c.maximum2:
                     errors.append("%s %s, condition %d: the second minimum is not below the second maximum."
                                   % (label.capitalize(), o.name, i + 1))
+                elif kind == "EVENT_FILTER" and c.subtype in SELECTION_SUBTYPES \
+                        and c.selection not in library.names("PARTICLE_FILTER"):
+                    errors.append("%s %s, condition %d: %s needs a particle filter of the library (%s)."
+                                  % (label.capitalize(), o.name, i + 1, accepted[c.subtype][0],
+                                     "'%s' is not one" % c.selection if c.selection else "none chosen"))
             for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
                 value = o.parameters.get(pname, "")
                 if not _valid(ptype, value):
@@ -1166,9 +1200,6 @@ def check_choices(tasks, library, templates):
                                 task.name, dict(EVENT_SUBTYPES, **GLAUBER_SUBTYPES)[c.subtype][0], name,
                                 "only the Glauber tasks can" if c.subtype in GLAUBER_SUBTYPES
                                 else "a Glauber task tests impact parameter, participants, collisions or spectators"))
-            if kind == "PARTICLE_FILTER" and len(names) > MAX_PARTICLE_FILTERS:
-                errors.append("Task %s uses %d particle filters: CAP handles at most %d." % (task.name, len(names),
-                                                                                          MAX_PARTICLE_FILTERS))
         if "EVENT" in kinds and _param_value(task, "EVENT:IMPORT", "false") == "true" \
                 and _param_value(task, "EVENT:IMPORT:FILE_NAME", "NONE") in ("", "NONE"):
             errors.append("Task %s imports events but the file is not named." % task.name)
@@ -1251,6 +1282,8 @@ def runcap_element(library, tasks):
                               "maximum": number_text(c.maximum)}
                 if c.form == DUAL_RANGE:
                     attributes.update(minimum2=number_text(c.minimum2), maximum2=number_text(c.maximum2))
+                if c.selection:
+                    attributes["selection"] = c.selection
                 ET.SubElement(element, "CONDITION", attributes)
             for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
                 ET.SubElement(element, "PARAMETER", {"name": pname, "type": ptype}).text = o.parameters.get(pname, "")
@@ -1288,7 +1321,8 @@ def read_runcap_element(element, tasks):
         for c in o.findall("CONDITION"):
             try:
                 conditions.append(Condition(c.get("subtype", ""), c.get("form", RANGE), c.get("minimum", "0"),
-                                            c.get("maximum", "0"), c.get("minimum2", "0"), c.get("maximum2", "0")))
+                                            c.get("maximum", "0"), c.get("minimum2", "0"), c.get("maximum2", "0"),
+                                            c.get("selection", "")))
             except ValueError:
                 warnings.append("RUNCAP: invalid condition of %s (ignored)." % o.get("name", "?"))
         parameters = {p.get("name", ""): (p.text or "").strip() for p in o.findall("PARAMETER")}

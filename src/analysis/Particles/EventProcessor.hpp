@@ -22,6 +22,8 @@
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmearer.hpp"
+#include "ParticleSelection.hpp"
+#include <memory>
 
 namespace CAP
 {
@@ -38,9 +40,11 @@ namespace CAP
   //! - EVENT_EFFICIENCY, PARTICLE_EFFICIENCY, EVENT_SMEARER, PARTICLE_SMEARER: detector simulation;
   //! - PARTICLE_DB: particle databases (db() is the first one).
   //!
-  //! For each event, filterEvent() records which event filters accept it and filterParticles() builds, for each particle
-  //! filter, the list of accepted particles and their pT moments (sum of pT^k, k=0..ptOrder()). Derived classes
-  //! implement execute() (the base version throws).
+  //! For each event, filterEvent() records which event filters accept it and filterParticles() gives, for each particle
+  //! filter, the list of accepted particles and their pT moments (sum of pT^k, k=0..ptOrder()). Both are shared by the
+  //! tasks: the event keeps the selection of each filter and the result of each event filter, made once per event by
+  //! the first task asking (see Event::selection() and ParticleSelection), so that a filter used by several analyzers is
+  //! applied once. Derived classes implement execute() (the base version throws).
   //!
   class EventProcessor
   :
@@ -65,24 +69,15 @@ namespace CAP
   std::vector<bool>   _acceptedEventFilters;
   //! Whether each particle filter accepted at least one particle of the current event (see filterParticles()).
   std::vector<bool>   _acceptedParticleFilters;
-  //! pT moments (sum of pT^k, k=0..ptOrder()) of the particles accepted by particle filters 0 to 7 (see moments()).
-  std::vector<double> _particleMomentsFilter0;
-  std::vector<double> _particleMomentsFilter1;  ///< pT moments of the particles accepted by particle filter 1
-  std::vector<double> _particleMomentsFilter2;  ///< pT moments of the particles accepted by particle filter 2
-  std::vector<double> _particleMomentsFilter3;  ///< pT moments of the particles accepted by particle filter 3
-  std::vector<double> _particleMomentsFilter4;  ///< pT moments of the particles accepted by particle filter 4
-  std::vector<double> _particleMomentsFilter5;  ///< pT moments of the particles accepted by particle filter 5
-  std::vector<double> _particleMomentsFilter6;  ///< pT moments of the particles accepted by particle filter 6
-  std::vector<double> _particleMomentsFilter7;  ///< pT moments of the particles accepted by particle filter 7
-  //! Particles of the current event accepted by particle filters 0 to 7 (see acceptedParticles()).
-  std::vector<Particle*> _allAcceptedParticlesFilter0;
-  std::vector<Particle*> _allAcceptedParticlesFilter1;  ///< particles accepted by particle filter 1
-  std::vector<Particle*> _allAcceptedParticlesFilter2;  ///< particles accepted by particle filter 2
-  std::vector<Particle*> _allAcceptedParticlesFilter3;  ///< particles accepted by particle filter 3
-  std::vector<Particle*> _allAcceptedParticlesFilter4;  ///< particles accepted by particle filter 4
-  std::vector<Particle*> _allAcceptedParticlesFilter5;  ///< particles accepted by particle filter 5
-  std::vector<Particle*> _allAcceptedParticlesFilter6;  ///< particles accepted by particle filter 6
-  std::vector<Particle*> _allAcceptedParticlesFilter7;  ///< particles accepted by particle filter 7
+  //! Slot of each particle filter in the selections of the events (ParticleSelection::slot()).
+  std::vector<unsigned int> _particleSlots;
+  //! Slot of each event filter in the results kept by the events.
+  std::vector<unsigned int> _eventSlots;
+  //! Selection of each particle filter for the current event: in the event (shared, filterParticles(Event &)) or of
+  //! this task (filterParticles(std::vector<Particle*> &)).
+  std::vector<ParticleSelection*> _selections;
+  //! Selections of this task, for particles that are not those of an event.
+  std::vector<std::unique_ptr<ParticleSelection>> _ownSelections;
 
   //! Highest order of the pT moments computed by filterParticles().
   unsigned int _ptMomentOrder;
@@ -184,15 +179,19 @@ namespace CAP
   const std::vector<bool> & acceptedEventFilters() const { return _acceptedEventFilters; }
   //! @brief Whether each particle filter accepted at least one particle of the current event. @return flags
   const std::vector<bool> & acceptedParticleFilters() const { return _acceptedParticleFilters;}
-  //! @brief Particles of the current event accepted by a particle filter. @param index filter index (0 to 7)
-  //! @return particles @throws MemoryException if index>7
+  //! @brief Particles of the current event accepted by a particle filter (after filterParticles()).
+  //! @param index filter index @return particles @throws MemoryException for an index without selection
   const std::vector<Particle*> & acceptedParticles(unsigned int index) const;
-  //! @brief Particles of the current event accepted by a particle filter. @param index filter index (0 to 7)
-  //! @return particles @throws MemoryException if index>7
+  //! @brief Particles of the current event accepted by a particle filter (shared with the other tasks: not to be
+  //! changed). @param index filter index @return particles @throws MemoryException for an index without selection
   std::vector<Particle*> & acceptedParticles(unsigned int index);
-  //! @brief pT moments (sum of pT^k, k=0..ptOrder()) of the particles accepted by a particle filter.
-  //! @param index filter index (0 to 7) @return moments @throws MemoryException if index>7
+  //! @brief pT moments (sum of pT^k, k=0..ptOrder() at least) of the particles accepted by a particle filter.
+  //! @param index filter index @return moments @throws MemoryException for an index without selection
   std::vector<double> & moments(unsigned int index);
+  //! @brief Selection of a particle filter for the current event (after filterParticles()): its particles, moments
+  //! and global quantities. @param index filter index @return selection @throws MemoryException for an index
+  //! without selection
+  const ParticleSelection & selection(unsigned int index) const;
   //! @brief Value of the quantity used to classify the current event (multiplicity, energy or spherocity, according
   //! to the event class type). @return value @throws Exception for an unknown event class type
   double getEvtClassValue() const;
@@ -209,9 +208,15 @@ namespace CAP
   //! @brief Apply the event filters to an event: update acceptedEventFilters() and eventAccepted().
   //! @param event event @return true if at least one filter accepts the event
   virtual bool filterEvent(Event & event);
-  //! @brief Apply the particle filters to particles: fill acceptedParticles(k) and moments(k) for each filter k, and
-  //! acceptedParticleFilters(). @param particles particles @return true if at least one filter accepts a particle
+  //! @brief The selections of the particle filters in an event (made once per event, shared by the tasks):
+  //! acceptedParticles(k), moments(k), selection(k) for each filter k, and acceptedParticleFilters().
+  //! @param event event @return true if at least one filter accepts a particle
+  virtual bool filterParticles(Event & event);
+  //! @brief Apply the particle filters to particles that are not those of an event (this task only): as
+  //! filterParticles(Event &). @param particles particles @return true if at least one filter accepts a particle
   virtual bool filterParticles(std::vector<Particle*> & particles);
+  //! @brief Give the filters their slots (ParticleSelection::slot()); called by initialize().
+  void assignSlots();
 
   };
 

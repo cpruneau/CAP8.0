@@ -148,7 +148,7 @@ void JetAnalyzer::execute()
 {
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (! filterParticles(theEvent.particles()))  return;
+  if (! filterParticles(theEvent))  return;
   std::vector<PseudoJet> pseudoJetsInput;
   pseudoJetsInput.clear();
 
@@ -162,7 +162,7 @@ void JetAnalyzer::execute()
       std::vector<Particle*> & particlesSelected = acceptedParticles(iParticleFilter);
 
 
-  for (auto & particle : acceptedParticles) // acceptedParticles is set in  filterParticles(theEvent.particles())
+  for (auto & particle : acceptedParticles) // acceptedParticles is set in  filterParticles(theEvent)
     {
     int pid = particle->type().pdgCode();
     VectorLorentz & momentum = particle->momentum();

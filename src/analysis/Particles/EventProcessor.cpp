@@ -23,22 +23,10 @@ namespace CAP
   _managedParticleSmearers(),
   _acceptedEventFilters(),
   _acceptedParticleFilters(),
-  _particleMomentsFilter0(),
-  _particleMomentsFilter1(),
-  _particleMomentsFilter2(),
-  _particleMomentsFilter3(),
-  _particleMomentsFilter4(),
-  _particleMomentsFilter5(),
-  _particleMomentsFilter6(),
-  _particleMomentsFilter7(),
-  _allAcceptedParticlesFilter0(),
-  _allAcceptedParticlesFilter1(),
-  _allAcceptedParticlesFilter2(),
-  _allAcceptedParticlesFilter3(),
-  _allAcceptedParticlesFilter4(),
-  _allAcceptedParticlesFilter5(),
-  _allAcceptedParticlesFilter6(),
-  _allAcceptedParticlesFilter7(),
+  _particleSlots(),
+  _eventSlots(),
+  _selections(),
+  _ownSelections(),
   _ptMomentOrder(2),
   _eventAccepted(),
   _evtType()
@@ -60,22 +48,10 @@ namespace CAP
   _managedParticleSmearers(source._managedParticleSmearers),
   _acceptedEventFilters(source._acceptedEventFilters),
   _acceptedParticleFilters(source._acceptedParticleFilters),
-  _particleMomentsFilter0(source._particleMomentsFilter0),
-  _particleMomentsFilter1(source._particleMomentsFilter1),
-  _particleMomentsFilter2(source._particleMomentsFilter2),
-  _particleMomentsFilter3(source._particleMomentsFilter3),
-  _particleMomentsFilter4(source._particleMomentsFilter4),
-  _particleMomentsFilter5(source._particleMomentsFilter5),
-  _particleMomentsFilter6(source._particleMomentsFilter6),
-  _particleMomentsFilter7(source._particleMomentsFilter7),
-  _allAcceptedParticlesFilter0(source._allAcceptedParticlesFilter0),
-  _allAcceptedParticlesFilter1(source._allAcceptedParticlesFilter1),
-  _allAcceptedParticlesFilter2(source._allAcceptedParticlesFilter2),
-  _allAcceptedParticlesFilter3(source._allAcceptedParticlesFilter3),
-  _allAcceptedParticlesFilter4(source._allAcceptedParticlesFilter4),
-  _allAcceptedParticlesFilter5(source._allAcceptedParticlesFilter5),
-  _allAcceptedParticlesFilter6(source._allAcceptedParticlesFilter6),
-  _allAcceptedParticlesFilter7(source._allAcceptedParticlesFilter7),
+  _particleSlots(source._particleSlots),
+  _eventSlots(source._eventSlots),
+  _selections(),
+  _ownSelections(),
   _ptMomentOrder(source._ptMomentOrder),
   _eventAccepted(source._eventAccepted),
   _evtType(source._evtType)
@@ -94,22 +70,10 @@ namespace CAP
     _managedParticleSmearers     = rhs._managedParticleSmearers;
     _acceptedEventFilters        = rhs._acceptedEventFilters;
     _acceptedParticleFilters= rhs._acceptedParticleFilters;
-    _particleMomentsFilter0 = rhs._particleMomentsFilter0;
-    _particleMomentsFilter1 = rhs._particleMomentsFilter1;
-    _particleMomentsFilter2 = rhs._particleMomentsFilter2;
-    _particleMomentsFilter3 = rhs._particleMomentsFilter3;
-    _particleMomentsFilter4 = rhs._particleMomentsFilter4;
-    _particleMomentsFilter5 = rhs._particleMomentsFilter5;
-    _particleMomentsFilter6 = rhs._particleMomentsFilter6;
-    _particleMomentsFilter7 = rhs._particleMomentsFilter7;
-    _allAcceptedParticlesFilter0 = rhs._allAcceptedParticlesFilter0;
-    _allAcceptedParticlesFilter1 = rhs._allAcceptedParticlesFilter1;
-    _allAcceptedParticlesFilter2 = rhs._allAcceptedParticlesFilter2;
-    _allAcceptedParticlesFilter3 = rhs._allAcceptedParticlesFilter3;
-    _allAcceptedParticlesFilter4 = rhs._allAcceptedParticlesFilter4;
-    _allAcceptedParticlesFilter5 = rhs._allAcceptedParticlesFilter5;
-    _allAcceptedParticlesFilter6 = rhs._allAcceptedParticlesFilter6;
-    _allAcceptedParticlesFilter7 = rhs._allAcceptedParticlesFilter7;
+    _particleSlots = rhs._particleSlots;
+    _eventSlots    = rhs._eventSlots;
+    _selections.clear();
+    _ownSelections.clear();
     _ptMomentOrder = rhs._ptMomentOrder;
     _eventAccepted = rhs._eventAccepted;
     _evtType = rhs._evtType;
@@ -164,23 +128,7 @@ namespace CAP
   _eventAccepted.initialize("EventAccepted",nEventFilters());
   _acceptedEventFilters.assign(nEventFilters(),false);
   _acceptedParticleFilters.assign(nParticleFilters(),false);
-  _particleMomentsFilter0.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
-  _particleMomentsFilter1.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
-  _particleMomentsFilter2.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
-  _particleMomentsFilter3.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
-  _particleMomentsFilter4.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
-  _particleMomentsFilter5.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
-  _particleMomentsFilter6.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
-  _particleMomentsFilter7.assign(_ptMomentOrder+1,0.0);  // orders 0.._ptMomentOrder
-
-  _allAcceptedParticlesFilter0.reserve(4000);
-  _allAcceptedParticlesFilter1.reserve(4000);
-  _allAcceptedParticlesFilter2.reserve(4000);
-  _allAcceptedParticlesFilter3.reserve(4000);
-  _allAcceptedParticlesFilter4.reserve(4000);
-  _allAcceptedParticlesFilter5.reserve(4000);
-  _allAcceptedParticlesFilter6.reserve(4000);
-  _allAcceptedParticlesFilter7.reserve(4000);
+  assignSlots();
   if (hasSubTasks()) initializeSubTasks();
   }
 
@@ -235,56 +183,37 @@ namespace CAP
   _managedParticleSmearers.print();
   }
 
+  const ParticleSelection & EventProcessor::selection(unsigned int index) const
+  {
+  if (index>=_selections.size() || !_selections[index])
+    throw MemoryException("no selection for this particle filter (filterParticles() not called?)",__FUNCTION__);
+  return *_selections[index];
+  }
+
   const std::vector<Particle*> & EventProcessor::acceptedParticles(unsigned int index) const
   {
-  switch (index)
-    {
-      case 0:  return _allAcceptedParticlesFilter0;
-      case 1:  return _allAcceptedParticlesFilter1;
-      case 2:  return _allAcceptedParticlesFilter2;
-      case 3:  return _allAcceptedParticlesFilter3;
-      case 4:  return _allAcceptedParticlesFilter4;
-      case 5:  return _allAcceptedParticlesFilter5;
-      case 6:  return _allAcceptedParticlesFilter6;
-      case 7:  return _allAcceptedParticlesFilter7;
-      default:
-      throw MemoryException("index>=_allAcceptedParticlesFilter.size()",__FUNCTION__);
-    }
+  return selection(index).particles();
   }
 
   std::vector<Particle*> & EventProcessor::acceptedParticles(unsigned int index)
   {
-  switch (index)
-    {
-      case 0:  return _allAcceptedParticlesFilter0;
-      case 1:  return _allAcceptedParticlesFilter1;
-      case 2:  return _allAcceptedParticlesFilter2;
-      case 3:  return _allAcceptedParticlesFilter3;
-      case 4:  return _allAcceptedParticlesFilter4;
-      case 5:  return _allAcceptedParticlesFilter5;
-      case 6:  return _allAcceptedParticlesFilter6;
-      case 7:  return _allAcceptedParticlesFilter7;
-      default:
-      throw MemoryException("index>=_allAcceptedParticlesFilter.size()",__FUNCTION__);
-    }
+  return const_cast<ParticleSelection &>(selection(index)).particles();
   }
-
 
   std::vector<double> & EventProcessor::moments(unsigned int index)
   {
-  switch (index)
-    {
-      case 0:  return _particleMomentsFilter0;
-      case 1:  return _particleMomentsFilter1;
-      case 2:  return _particleMomentsFilter2;
-      case 3:  return _particleMomentsFilter3;
-      case 4:  return _particleMomentsFilter4;
-      case 5:  return _particleMomentsFilter5;
-      case 6:  return _particleMomentsFilter6;
-      case 7:  return _particleMomentsFilter7;
-      default:
-      throw MemoryException("index>=_particleMomentsFilter.size()",__FUNCTION__);
-    }
+  return const_cast<ParticleSelection &>(selection(index)).ptMoments();
+  }
+
+  void EventProcessor::assignSlots()
+  {
+  std::vector<ParticleFilter*> & pf = particleFilters();
+  std::vector<EventFilter*> & ef = eventFilters();
+  _particleSlots.resize(pf.size());
+  for (unsigned int k=0; k<pf.size(); k++) _particleSlots[k] = ParticleSelection::slot(pf[k], _ptMomentOrder);
+  _eventSlots.resize(ef.size());
+  for (unsigned int k=0; k<ef.size(); k++) _eventSlots[k] = ParticleSelection::slot(ef[k]);
+  _selections.assign(pf.size(), nullptr);
   }
 
   double EventProcessor::getEvtClassValue() const
@@ -367,57 +296,58 @@ namespace CAP
   {
   bool analyzeThisEvent = false;
   std::vector<EventFilter*> & ef = eventFilters();
+  if (_eventSlots.size()!=ef.size() || _acceptedEventFilters.size()!=ef.size()) assignSlots();
+  if (_acceptedEventFilters.size()!=ef.size()) _acceptedEventFilters.assign(ef.size(),false);
   for (unsigned int iEventFilter=0; iEventFilter<ef.size();iEventFilter++)
     {
-    if (ef[iEventFilter]->accept(event))
+    bool accepted = event.accepted(*ef[iEventFilter],_eventSlots[iEventFilter]);
+    _acceptedEventFilters[iEventFilter] = accepted;
+    if (accepted)
       {
-      if (iEventFilter>=_acceptedEventFilters.size())
-        throw MemoryException("iEventFilter>=_acceptedEventFilters.size()",__FUNCTION__);
       _eventAccepted.increment(iEventFilter);
-      _acceptedEventFilters[iEventFilter] = true;
       analyzeThisEvent = true;
-      }
-    else
-      {
-      _acceptedEventFilters[iEventFilter] = false;
       }
     }
   return analyzeThisEvent;
   }
 
+  bool EventProcessor::filterParticles(Event & event)
+  {
+  bool analyzeThisEvent = false;
+  unsigned int npf = nParticleFilters();
+  if (_particleSlots.size()!=npf || _selections.size()!=npf) assignSlots();
+  if (_acceptedParticleFilters.size()!=npf) _acceptedParticleFilters.assign(npf,false);
+  for (unsigned int iParticleFilter = 0;iParticleFilter<npf;iParticleFilter++)
+    {
+    ParticleSelection & s = event.selection(_particleSlots[iParticleFilter]);
+    _selections[iParticleFilter] = &s;
+    bool useThisFilter = !s.empty();     // at least one particle accepted
+    _acceptedParticleFilters[iParticleFilter] = useThisFilter;
+    if (useThisFilter) analyzeThisEvent = true;
+    }
+  return analyzeThisEvent;
+  }
 
   bool EventProcessor::filterParticles(std::vector<Particle*> & particles)
   {
   bool analyzeThisEvent = false;
-  bool useThisFilter = false;
   std::vector<ParticleFilter*> & pf = particleFilters();
+  if (_ownSelections.size()!=pf.size())
+    {
+    _ownSelections.clear();
+    for (unsigned int k=0; k<pf.size(); k++) _ownSelections.emplace_back(new ParticleSelection(pf[k],k));
+    }
+  if (_selections.size()!=pf.size()) _selections.assign(pf.size(),nullptr);
+  if (_acceptedParticleFilters.size()!=pf.size()) _acceptedParticleFilters.assign(pf.size(),false);
   for (unsigned int iParticleFilter = 0;iParticleFilter<pf.size();iParticleFilter++)
     {
-    useThisFilter = false;
-    std::vector<Particle*> & ap =  acceptedParticles(iParticleFilter);
-    ap.clear();
-    std::vector<double> & mom = moments(iParticleFilter);
-    for (auto & v : mom) v=0;
-    for (auto  particle : particles)
-      {
-      if (pf[iParticleFilter]->accept(*particle))
-        {
-        useThisFilter = true; // at least one particle accepted
-        ap.push_back(particle);
-        VectorLorentz p = particle->momentum();
-        double pt = p.perp();
-        double ptFac = 1.0;
-        for (unsigned int k=0; k<=_ptMomentOrder; k++)
-          {
-          mom[k] += ptFac;
-          ptFac *= pt;
-          }
-        }
-      }
+    ParticleSelection & s = *_ownSelections[iParticleFilter];
+    s.fill(particles,_ptMomentOrder);
+    _selections[iParticleFilter] = &s;
+    bool useThisFilter = !s.empty();
     _acceptedParticleFilters[iParticleFilter] = useThisFilter;
     if (useThisFilter) analyzeThisEvent = true;
     }
-  ///printValue("Analyzer<HISTOGRAM_2,RANK>::filterParticles()",12);
   return analyzeThisEvent;
   }
 

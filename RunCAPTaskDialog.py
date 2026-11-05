@@ -230,8 +230,6 @@ class TaskDialog(tk.Toplevel):
             chosen = list(choices.get(kind, []))
             ttk.Label(box, text=F.KIND_LABELS[kind] + ":").grid(row=r, column=0, sticky="nw", padx=(0, 6), pady=3)
             limit = len(set(names) | set(chosen))
-            if kind == "PARTICLE_FILTER":
-                limit = min(limit, F.MAX_PARTICLE_FILTERS)
             count = tk.StringVar(self, value=str(len(chosen)))
             menu = ttk.Combobox(box, textvariable=count, values=[str(n) for n in range(max(limit, len(chosen)) + 1)],
                                 width=3, state="readonly")

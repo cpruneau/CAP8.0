@@ -136,8 +136,6 @@ int main(int argc, char* argv[])
   CAP::String configurationFile;
   CAP::String histogramPath;
   parse(argc,argv,mainTaskName,configurationPath,configurationFile,histogramPath);
-  long seed=112133;
-  if (seed!=0)  gRandom->SetSeed(seed);
  try
   {
   CAP::Task * creatorTask = new CAP::Task();
@@ -163,6 +161,13 @@ int main(int argc, char* argv[])
   CAP::String outputName = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:OUTPUT_FILE"),
                                                         true,mainTask->name()+CAP::String(".cap"));
   CAP::String inputName  = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:INPUT_FILE"),true,"NONE");
+  // Seed of gRandom (<main>:JOB:SEED, default 112133): the sub-samples of RunCAP.py are given different seeds.
+  CAP::String seedText = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:SEED"),true,"112133");
+  long seed = 112133;
+  try { seed = std::stol(seedText.str()); }
+  catch (const std::exception &) { throw CAP::ConfigurationException(mainTask->name(),"Invalid JOB:SEED "+seedText,"main()"); }
+  if (seed!=0) gRandom->SetSeed(seed);
+  CAP::printValue("Random seed (gRandom)",seed);
   mainTask->initialize();
   if (!inputName.isEmpty() && inputName!="NONE")
     {

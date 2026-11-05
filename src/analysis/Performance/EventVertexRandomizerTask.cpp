@@ -72,6 +72,7 @@ void EventVertexRandomizerTask::execute()
   double eventZ = gRandom->Gaus(rConversion*zAvg, rConversion*zRms);
   double eventT = gRandom->Gaus(tConversion*tAvg, tConversion*tRms);
   for (auto & particle : event().particles()) particle->shift(eventX,eventY,eventZ,eventT);
+  event().invalidateSelections();    // particles changed in place: the selections are made again
 }
 
 } // namespace CAP

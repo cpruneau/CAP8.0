@@ -53,7 +53,7 @@ void PerformanceAnalyzer::execute()
   _taskExecuted.increment();
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (!filterParticles(theEvent.particles()))  return;
+  if (!filterParticles(theEvent))  return;
   unsigned int npf = nParticleFilters();
   std::vector<ParticlePerformanceHistos*> & folders = histograms();
   if (folders.size()<_acceptedEventFilters.size()*npf)

@@ -53,7 +53,7 @@ void ParticleSingleAnalyzer::execute()
   _taskExecuted.increment();
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (!filterParticles(theEvent.particles()))  return;
+  if (!filterParticles(theEvent))  return;
   unsigned int baseSingle;
   unsigned int index;
   double weight;

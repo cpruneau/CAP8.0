@@ -93,7 +93,7 @@ void SpherocityAnalyzer::execute()
   _taskExecuted.increment();
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (!filterParticles(theEvent.particles()))  return;
+  if (!filterParticles(theEvent))  return;
 
   double factor = 1.0;
   unsigned int nef = nEventFilters();

@@ -49,7 +49,9 @@ def _number(text, integer=False):
 def quantities(kind):
     """{label shown: subtype} of the quantities a filter of a kind can test (Glauber quantities marked)."""
     if kind == "EVENT_FILTER":
-        items = [(s, d) for s, (d, _) in F.EVENT_SUBTYPES.items()]
+        # the quantities of a selection only: MULT_k, ENERGY_k and SPHERO_k (set by GlobalAnalyzer, earlier versions)
+        # are still read from older files, but not offered
+        items = [(s, d) for s, (d, _) in F.EVENT_SUBTYPES.items() if s not in F.LEGACY_EVENT_SUBTYPES]
         items += [(s, d + "  (Glauber tasks)") for s, (d, _) in F.GLAUBER_SUBTYPES.items()]
     else:
         items = [(s, d) for s, (d, _) in F.subtypes_for(kind).items()]
@@ -128,8 +130,8 @@ class FiltersPanel(ttk.Frame):
         box.pack(side=tk.LEFT, padx=6)
         box.bind("<<ComboboxSelected>>", lambda e, k=kind: self.set_count(k, int(self.counts[k].get())))
         hint = {"EVENT_FILTER": "Each filter selects events with all its conditions.",
-                "PARTICLE_FILTER": "Each filter selects particles with all its conditions (at most %d per task)."
-                                   % F.MAX_PARTICLE_FILTERS,
+                "PARTICLE_FILTER": "Each filter selects particles with all its conditions (once per event, shared "
+                                   "by the tasks using it).",
                 "EVENT": "Events, filled by the generators or readers and analyzed by the analyzers.",
                 "PARTICLE_DB": "Particles and their decay modes, imported by FilterCreator from an XML file:"}.get(kind, "Their histograms, created or imported by "
                                                                        "FilterCreator:")
@@ -284,7 +286,9 @@ class FiltersPanel(ttk.Frame):
             remove = ttk.Button(row, text="✕", width=2,
                                 command=lambda c=condition: self._remove_condition(definition, c))
             remove.pack(side=tk.RIGHT)          # first, so that it keeps its place
-            quantity = tk.StringVar(self, value=label_of.get(condition.subtype, condition.subtype))
+            quantity = tk.StringVar(self, value=label_of.get(condition.subtype, condition.subtype
+                                                             + ("  (earlier version: choose a quantity)"
+                                                                if condition.subtype in F.LEGACY_EVENT_SUBTYPES else "")))
             q = ttk.Combobox(row, textvariable=quantity, values=list(labels), width=26, state="readonly")
             q.pack(side=tk.LEFT)
             q.bind("<<ComboboxSelected>>",
@@ -295,6 +299,14 @@ class FiltersPanel(ttk.Frame):
                              state="readonly" if len(forms) > 1 else "disabled")
             f.pack(side=tk.LEFT, padx=6)
             f.bind("<<ComboboxSelected>>", lambda e, c=condition, v=form: self._set_form(definition, c, v.get()))
+            if kind == "EVENT_FILTER" and condition.subtype in F.SELECTION_SUBTYPES:
+                names = self.library.names("PARTICLE_FILTER")
+                ttk.Label(row, text="of").pack(side=tk.LEFT, padx=(2, 2))
+                selection = tk.StringVar(self, value=condition.selection)
+                s = ttk.Combobox(row, textvariable=selection, values=names, width=12, state="readonly")
+                s.pack(side=tk.LEFT, padx=(0, 6))
+                s.bind("<<ComboboxSelected>>",
+                       lambda e, c=condition, v=selection: self._set(c, "selection", v.get()))
             self._make_fields(row, condition)
         if not definition.conditions:
             ttk.Label(box, text="No condition: the filter accepts every %s."
@@ -337,7 +349,9 @@ class FiltersPanel(ttk.Frame):
         form = forms_of(kind, subtype)[0]
         maximum = {"PT": 10.0, "ETA": 1.0, "RAPIDITY": 1.0, "PHI": 6.283185307179586}.get(subtype, 1000.0)
         minimum = -maximum if subtype in ("ETA", "RAPIDITY", "PX", "PY", "PZ") else 0.0
-        definition.conditions.append(F.Condition(subtype, form, minimum, maximum))
+        condition = F.Condition(subtype, form, minimum, maximum)
+        self._default_selection(condition)
+        definition.conditions.append(condition)
         self.refresh([kind])
         self.on_change()
 
@@ -346,8 +360,15 @@ class FiltersPanel(ttk.Frame):
         self.refresh([definition.kind])
         self.on_change()
 
+    def _default_selection(self, condition):
+        """The quantity of a selection: the first particle filter of the library, if none chosen yet."""
+        names = self.library.names("PARTICLE_FILTER")
+        if condition.subtype in F.SELECTION_SUBTYPES and condition.selection not in names:
+            condition.selection = names[0] if names else ""
+
     def _set_quantity(self, definition, condition, subtype):
         condition.subtype = subtype
+        self._default_selection(condition)
         forms = forms_of(definition.kind, subtype)
         if condition.form not in forms:
             condition.form = forms[0]

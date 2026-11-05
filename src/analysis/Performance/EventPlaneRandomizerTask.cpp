@@ -34,6 +34,7 @@ void EventPlaneRandomizerTask::execute()
     particle->position().rotateZ(eventAngle);
     particle->momentum().rotateZ(eventAngle);
     }
+  theEvent.invalidateSelections();    // particles changed in place: the selections are made again
 }
 
 } // namespace CAP

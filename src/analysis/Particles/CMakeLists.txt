@@ -38,6 +38,7 @@ ParticleDecayerTask.cpp
 ParticleDecayMode.cpp
 ParticleEfficiency.cpp
 ParticleFilter.cpp
+ParticleSelection.cpp
 ParticlePairFilter.cpp
 ParticleSmearer.cpp
 ParticleType.cpp)
@@ -47,3 +48,10 @@ target_include_directories(Particles  PUBLIC Base Math Helpers Particles  ${EXTR
 
 install(TARGETS Particles  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 
+
+################################################################################################
+# Tests (run with ctest in the build directory; not installed)
+################################################################################################
+add_executable(TestParticleSelection tests/TestParticleSelection.cpp)
+target_link_libraries(TestParticleSelection Particles Base Math ${ROOT_LIBRARIES})
+add_test(NAME ParticleSelection COMMAND TestParticleSelection)

@@ -53,7 +53,7 @@ void MeasurementSimulator::execute()
   Event & recoEvent = *(theEvents[1]);
   recoEvent.reset();
   if (!filterEvent(genEvent)) return;
-  if (!filterParticles(genEvent.particles()))  return;
+  if (!filterParticles(genEvent))  return;
   unsigned int nef = nEventFilters();
   unsigned int npf = nParticleFilters();
   unsigned int baseSingle;

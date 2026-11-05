@@ -46,8 +46,8 @@ that follow it work on the same event. The iterator resets the event before each
 particles to it, so that several generators can fill one event: a hard process embedded in a soft background, for
 example. \code{EventMerger} goes further and fills one event with the particles of several events of each of its input
 streams, to simulate pile-up. An \code{Event} holds its particles, created by a particle factory and reused from
-event to event to avoid allocations, the two colliding projectiles, and global quantities (multiplicity, energy, net
-charge, strangeness and baryon number, spherocity) computed for several particle selections.
+event to event to avoid allocations, the two colliding projectiles, and the selections of its particles made by the
+particle filters of the tasks, which are shared by all of them (Section~\ref{sec:filters}).
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Event and particle filters}
@@ -55,9 +55,10 @@ charge, strangeness and baryon number, spherocity) computed for several particle
 
 \paragraph{Filters.}
 A filter is a list of conditions, all of which must be satisfied; a filter without conditions accepts everything. A
-condition sets a range, two ranges, or a value of one quantity. Event filters select events by their multiplicity, their
-energy or their spherocity, each computed for one of several particle selections, and thereby define event classes
-such as classes of centrality. Particle filters select particles by their kinematics ($\pT$, the components of the
+condition sets a range, two ranges, or a value of one quantity. Event filters select events by a global quantity of the
+particles accepted by a particle filter, named by the condition: their multiplicity, energy, net charge, net
+strangeness, net baryon number, $\pT$ sum or spherocity; they thereby define event classes such as classes of
+centrality or of multiplicity in a given acceptance. Particle filters select particles by their kinematics ($\pT$, the components of the
 momentum, the energy, the pseudorapidity, the rapidity and the azimuth), by the properties of their type (PDG code,
 charge, strangeness, baryon number, charm and beauty), and by their state. A filter is configured by keys
 \code{<owner>:PARTICLE\_FILTER\_<index>:\dots}, for instance
@@ -69,7 +70,13 @@ charge, strangeness, baryon number, charm and beauty), and by their state. A fil
 ...:CONDITION_0:MINIMUM = 0.2
 ...:CONDITION_0:MAXIMUM = 2.0
 \end{verbatim}}
-Filters are usually not written by hand: they are defined in the filter editor of RunCAP.py (Section~\ref{sec:run}),
+\noindent and a condition of an event filter names the particle filter whose selection it tests:
+{\footnotesize
+\begin{verbatim}
+...:CONDITION_0:SUBTYPE = MULT
+...:CONDITION_0:SELECTION = Charged
+\end{verbatim}}
+\noindent Filters are usually not written by hand: they are defined in the filter editor of RunCAP.py (Section~\ref{sec:run}),
 stored in the \code{RUNCAP} element of the workflow file, and created at the start of a job by creator tasks
 (\code{EventFilterCreator}, \code{ParticleFilterCreator}), which put them in the store from which the other tasks take
 them by name. Creators also exist for the efficiencies and the smearers.
@@ -89,7 +96,20 @@ and is named after the filters, \code{ALL\_PiP} for the positive pions of all ev
 positive and a negative pion. When the two filters of a pair are the same, a particle is not paired with itself. The
 histograms of each folder are normalised to the number of events accepted by its event filter at the end of the event
 loop. One job thus computes, in one pass over the events, the observables of all the species and all the event classes of
-an analysis. A task accepts up to eight particle filters.
+an analysis.
+
+\paragraph{Shared selections.}
+Several analyses of a job often use the same filters. The selection of a particle filter, the particles it accepts in
+an event with their $\pT$ moments and global quantities (\code{ParticleSelection}), and the result of an event filter
+are therefore made once per event and kept by the event, which all the tasks share: the first task that needs them
+makes them, the others reuse them, and the cost of the filtering no longer grows with the number of analyses. Each
+filter receives, when the tasks are initialised, a slot, the index of its selection in the events; a task maps its own
+filters to their slots, so that reaching a selection takes two array lookups. Filters are identified by their object:
+those of the store, shared by the tasks, share a slot, and a filter made by a task for itself has a slot of its own, so
+that analyses can mix shared and private filters freely. The selections are made again whenever the particles of the
+event change: a new event, particles added (the products of decays), or particles changed in place (by the tasks that
+rotate or shift the events). Since an event filter computes the quantity it tests from the selection it names, it no
+longer depends on another task, such as \code{GlobalAnalyzer}, having run before it.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Efficiencies and Signal Smearing}
@@ -209,11 +229,28 @@ sub-folders of a folder named after the task, so that a histogram is reached by 
 
 Large productions are split into many jobs, run independently, for instance on a computing cluster, each writing its
 own output file. Since the histograms of each job are normalised per accepted event, the jobs are combined by averaging
-them, weighted by their numbers of events. The task \code{SubSampleStatCalculator} does this for a set of jobs, one per
-sub-directory of a path: it computes the weighted average of each histogram, bin by bin, and takes the spread of the
-jobs as the statistical uncertainty of the average, the jobs being treated as independent sub-samples. This estimates
-the uncertainties of quantities, such as the derived histograms, whose uncertainties are not simply propagated from
-those of the bins. It also sums the counts of events and of executed tasks of the jobs, which are written with the
-average.
-\todo{state the order of operations recommended for the derived histograms: computed per sub-sample and then averaged
-(the spread then gives their uncertainty), or computed from the average of the base histograms.}
+them, weighted by their numbers of events. The task \code{SubSampleStatCalculator} combines a set of jobs, one per
+sub-directory of a path whose name matches a pattern, the jobs being treated as independent sub-samples. The files may
+hold the histograms of any phase (filled, derived or balance functions), matched by their paths in the folders. With
+$N$ sub-samples of values $x_i$ and weights $w_i$ ($W=\sum_i w_i$), bin by bin, it offers two estimates of the
+statistical uncertainties, which matter for the quantities, such as the derived histograms, whose uncertainties are not
+simply propagated from those of the bins:
+\begin{itemize}
+\item the sub-sample average $m=\sum_i w_i x_i/W$, with the uncertainty of the mean
+  $\sigma^2 = \frac{N}{N-1}\sum_i w_i^2 (x_i-m)^2/W^2$;
+\item the delete-one jackknife. Replica $i$ is the sample without sub-sample $i$. On the results of the jobs, its value
+  is the average of the other sub-samples, $\theta_i=(Wm-w_ix_i)/(W-w_i)$, and $\theta=m$. Through the phases, the
+  later phases of the workflow (derived histograms, balance functions) are run on the whole sample, the average of the
+  filled histograms of the sub-samples, which gives $\theta$, and on each replica, which gives $\theta_i$: nonlinear
+  observables such as correlation functions, ratios and balance functions are thus computed from (nearly) all the
+  statistics, rather than averaged over sub-samples of small statistics. In both cases
+  $\sigma^2=\frac{N-1}{N}\sum_i(\theta_i-\bar\theta)^2$, with $\bar\theta$ the mean of the $\theta_i$, and the
+  bias-corrected values $N\theta-(N-1)\bar\theta$ are written to a file of their own.
+\end{itemize}
+The counts of events and of executed tasks of the jobs are summed and written with the result.
+
+RunCAP.py (Section~\ref{sec:run}) runs a workflow as sub-samples and combines them. Each sub-sample has its own seeds:
+in its workflow file, the seed parameters of the tasks (\code{Seed}, \code{SeedValue}) are increased by its number, and
+so is the seed of the job (\code{JOB:SEED}). The sub-samples run on the computer, several at once, or on a Slurm
+cluster, as a job array submitted over \code{ssh}, whose outputs are copied back and combined; jobs run in any other way
+are combined from their output directories.

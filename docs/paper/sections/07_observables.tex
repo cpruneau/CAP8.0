@@ -357,9 +357,10 @@ of the class but not implemented.}
 
 The task \code{GlobalAnalyzer} computes, for each event and each particle filter, the multiplicity $n$, the total energy
 $e=\sum_i E_i$, the net electric charge $q=\sum_i q_i$, the net strangeness $s$ and the net baryon number $b$ of the
-accepted particles, their total transverse momentum $\sum\pT$ and its mean $\sum\pT/n$. These values are also stored in
-the event record, where the event filters of the other tasks use them to define event classes (multiplicity classes, for
-instance), and \code{NuDynAnalyzer} uses one of them as its event variable. The histograms hold their event-by-event
+accepted particles, their total transverse momentum $\sum\pT$ and its mean $\sum\pT/n$. They are the global quantities
+of the selections of its particle filters, made once per event and shared by the tasks (Section~\ref{sec:filters}), which
+the event filters of any task also test directly to define event classes (multiplicity classes, for instance);
+\code{NuDynAnalyzer} uses one of them as its event variable. The histograms hold their event-by-event
 distributions and their averages versus $n$ (Table~\ref{tab:global}); the derived calculator adds the inclusive mean
 transverse momentum versus multiplicity, $\avg{\sum\pT}/n$.
 
