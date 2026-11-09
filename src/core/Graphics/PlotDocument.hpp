@@ -150,7 +150,8 @@ namespace CAP
   Path addData(const Path & target, const String & file, const std::vector<String> & objects);
   //! @brief Remove an element (not the root). @param path path @return false if it cannot be removed
   bool remove(const Path & path);
-  //! @brief Copy an element after itself (a canvas under a new name). @param path path @return path of the copy
+  //! @brief Copy an element after itself (a canvas under a new name, a window with its canvases under new names).
+  //! @param path path @return path of the copy
   Path duplicate(const Path & path);
   //!
   //! @brief Move an element into another, at an index (or into the parent of the target, after it, when the target

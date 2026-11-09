@@ -32,6 +32,7 @@ Folder.cpp
 Reflection.cpp
 BaseReflection.cpp
 LongParameter.cpp
+StringParameter.cpp
 NameHelpers.cpp
 Object.cpp
 Parser.cpp

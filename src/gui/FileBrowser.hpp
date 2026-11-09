@@ -46,6 +46,7 @@ namespace CAP
   String path;                          //!< path of the file on disk (empty for a tree not saved yet)
   std::shared_ptr<CapFile> file;        //!< contents (the folder tree loaded from the file)
   bool   editable = false;              //!< a tree made in the application (New Tree): folders and copies can be added
+  bool   modified = false;              //!< a tree changed since it was made or saved last (asks to be saved when closed)
   String name;                          //!< name shown for a tree (files show the name of their path)
   };
 
@@ -98,6 +99,14 @@ namespace CAP
   void hideFile(int id);
   //! @brief Whether the browser shows an open file in its Files section. @param id identifier @return true if so
   bool showsFile(int id) const;
+  //! @brief Entry selected last (clicked): an object, a folder, or a file or tree (empty path). @return reference
+  //! (file -1 if none)
+  const ObjectReference & selected() const { return _selected; }
+  //! @brief Whether the entry selected is a folder (or a whole file or tree). @return true if so
+  bool selectedIsFolder() const { return _selectedFolder; }
+  //! @brief Select an entry (e.g. a copy just made). @param file file id @param path path ("" for the file)
+  //! @param folder whether it is a folder
+  void select(int file, const String & path, bool folder) { _selected.file = file; _selected.path = path; _selectedFolder = folder; }
   //! @brief Add a folder of the file system (shown in the Folders section). @param folder path
   void addFolder(const String & folder);
   //! @brief Remove a folder from the Folders section. @param folder path
@@ -124,6 +133,7 @@ namespace CAP
   std::function<void(int file, const String & folderPath, const String & name)> onNewFolder;  //!< add a folder
   std::function<void(int file, const String & path, const String & name)>       onRename;     //!< rename an entry
   std::function<void(int file, const String & path)>                           onRemove;     //!< remove an entry
+  std::function<void(int file, const String & path)>                           onDuplicate;  //!< copy an entry beside itself
   std::function<void(int file)>                                                onSaveTree;   //!< save a tree to a file
   std::function<void(int file, const String & folderPath)>                     onExportRoot; //!< write a folder to a ROOT file (if ROOT files are supported)
   std::function<void(int file, const String & folderPath)>                     onSaveCopy;   //!< write a file or folder to a new CAP file
@@ -153,7 +163,8 @@ namespace CAP
   std::set<std::string> _openFailed;     //!< files whose opening failed (not retried until refresh)
   std::string _reveal;   //!< file to expand and scroll to at the next render
   std::string _filter;   //!< text typed in the filter field (case-insensitive part of the object names)
-  ObjectReference _selected;   //!< object selected (highlighted)
+  ObjectReference _selected;   //!< entry selected (highlighted): object, folder, or file (empty path)
+  bool _selectedFolder = false;   //!< whether the entry selected is a folder or a file
   int _number;   //!< number of the browser
   std::string _windowName;   //!< name of its window
   std::vector<int> _shown;   //!< open files shown in the Files section (identifiers)

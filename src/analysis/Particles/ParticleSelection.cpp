@@ -88,25 +88,61 @@ double ParticleSelection::spherocity() const
 {
 if (_hasSpherocity) return _spherocity;
 _hasSpherocity = true;
-_spherocity = 0.0;
-if (_particles.empty() || !(_ptSum > 0.0)) return _spherocity;
-const int nSteps = 360;
-const double step = 2.0*M_PI/nSteps;
-double s0 = 1.0E10;
-for (int k=0; k<nSteps; k++)
-  {
-  double nx = std::cos(k*step), ny = std::sin(k*step);
-  double sum = 0.0;
-  for (auto particle : _particles)
-    {
-    const VectorLorentz & momentum = particle->momentum();
-    sum += std::fabs(ny*momentum.x() - nx*momentum.y());
-    }
-  double ratio = sum/_ptSum;
-  if (ratio*ratio < s0) s0 = ratio*ratio;
-  }
-_spherocity = s0;
+_spherocity = spherocity(_particles, true);
 return _spherocity;
+}
+
+double ParticleSelection::spherocity(const std::vector<Particle*> & particles, bool weighted, unsigned int maxExact,
+                                     unsigned int nSteps)
+{
+// the transverse vectors (unit vectors for S1)
+std::vector<double> x, y;
+x.reserve(particles.size());
+y.reserve(particles.size());
+double sum = 0.0;
+for (auto particle : particles)
+  {
+  if (!particle) continue;
+  const VectorLorentz & p = particle->momentum();
+  double px = p.x(), py = p.y(), pt = std::sqrt(px*px + py*py);
+  if (!(pt > 0.0)) continue;
+  if (!weighted) { px /= pt; py /= pt; pt = 1.0; }
+  x.push_back(px);
+  y.push_back(py);
+  sum += pt;
+  }
+if (x.empty() || !(sum > 0.0)) return 0.0;
+// sum of |p x n| for the axis n = (nx, ny)
+auto crossSum = [&](double nx, double ny)
+  {
+  double s = 0.0;
+  for (std::size_t j=0; j<x.size(); j++) s += std::fabs(ny*x[j] - nx*y[j]);
+  return s;
+  };
+double best = 1.0E300;
+if (x.size() <= maxExact)
+  {
+  // the minimum is along one of the particles (piecewise concave sum): exact
+  for (std::size_t i=0; i<x.size(); i++)
+    {
+    double norm = std::sqrt(x[i]*x[i] + y[i]*y[i]);
+    double s = crossSum(x[i]/norm, y[i]/norm);
+    if (s < best) best = s;
+    }
+  }
+else
+  {
+  // directions over pi (n and -n give the same sum)
+  if (nSteps < 1) nSteps = 1;
+  for (unsigned int k=0; k<nSteps; k++)
+    {
+    double phi = M_PI*k/nSteps;
+    double s = crossSum(std::cos(phi), std::sin(phi));
+    if (s < best) best = s;
+    }
+  }
+double ratio = best/sum;
+return 0.25*M_PI*M_PI*ratio*ratio;
 }
 
 unsigned int ParticleSelection::slot(const ParticleFilter * filter, unsigned int ptOrder)

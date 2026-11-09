@@ -7,9 +7,11 @@
 """
 RunCAPFiltersGui -- the Filters pane of the main window of RunCAP.py: the library of filters, efficiencies and smearers of a workflow.
 
-One tab per kind (event filters, particle filters, event and particle efficiencies, event and particle smearers). In
+One tab per kind (event filters, particle filters, event efficiencies, event smearers, events, particle databases). In
 each tab, a menu sets how many objects of that kind the library holds, and each object has a frame with its name and
-title, and its conditions (filters) or its binning parameters (efficiencies and smearers). A condition tests one
+title, and its conditions (filters) or its parameters (the others). The particle efficiencies and smearers are not
+defined here: they are made in CapGui (Detector Maps) and saved in a maps file; the tab Detector maps names that file
+and lists its objects (see MapsTab), which the tasks then choose by name. A condition tests one
 quantity: a range [minimum, maximum), two ranges, a value (PDG code, charge, ...) or a flag (live, enabled), only the
 tests the C++ code accepts for that quantity being offered. The problems of the library (RunCAPFilters.check_library())
 are listed at the bottom.
@@ -19,8 +21,11 @@ removing objects removes them from the choices (after a confirmation when tasks 
 to FiltersPanel.
 """
 
+import os
+import re
+import subprocess
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 
 import RunCAPFilters as F
 
@@ -111,8 +116,13 @@ class FiltersPanel(ttk.Frame):
         self.notebook.pack(fill=tk.BOTH, expand=True)
         self.tabs, self.counts, self.scrolls, self.setting_vars = {}, {}, {}, {}
         self._loading = False
+        self.maps_tab = None
         for kind in F.KINDS:
-            self._make_tab(kind)
+            if kind == F.MAPS_KINDS[0]:
+                self.maps_tab = MapsTab(self.notebook, self)
+                self.notebook.add(self.maps_tab, text="Detector maps")
+            if kind not in F.MAPS_KINDS:
+                self._make_tab(kind)
         self.problems = tk.StringVar(self)
         ttk.Label(self, textvariable=self.problems, foreground="firebrick", justify=tk.LEFT,
                   wraplength=760).pack(fill=tk.X, pady=(6, 0))
@@ -185,7 +195,11 @@ class FiltersPanel(ttk.Frame):
                 value = self.library.settings[kind].get(name, "")
                 var.set(value == "true" if isinstance(var, tk.BooleanVar) else value)
         self._loading = False
+        if self.maps_tab is not None and (kinds is None or any(k in F.MAPS_KINDS for k in kinds)):
+            self.maps_tab.refresh()
         for kind in kinds or F.KINDS:
+            if kind in F.MAPS_KINDS:
+                continue
             objects = self.library.objects[kind]
             limit = max(MAX_OBJECTS.get(kind, MAX_OTHERS), len(objects))
             self.counts[kind].box.configure(values=[str(n) for n in range(limit + 1)])
@@ -206,7 +220,7 @@ class FiltersPanel(ttk.Frame):
         self._update_problems()
 
     def select(self, kind):
-        self.notebook.select(self.tabs[kind])
+        self.notebook.select(self.maps_tab if kind in F.MAPS_KINDS else self.tabs[kind])
 
     def set_count(self, kind, n):
         """Keep the first n objects of a kind, or add new ones up to n."""
@@ -409,8 +423,143 @@ class FiltersPanel(ttk.Frame):
                 self.on_change()
             var.trace_add("write", changed)
 
+    def _parameter_changed(self):
+        self._update_problems()
+        self.on_change()
+
     # -------------------------------------------------------------------------------------------------- problems
     def _update_problems(self):
         errors = F.check_library(self.library)
         more = "\n(and %d more)" % (len(errors) - 6) if len(errors) > 6 else ""
         self.problems.set("\n".join(errors[:6]) + more)
+
+
+# ------------------------------------------------------------------------------------------------------------------
+# Particle efficiencies and smearers: a maps file
+# ------------------------------------------------------------------------------------------------------------------
+
+class MapsTab(ttk.Frame):
+    """The tab Detector maps of the Filters pane: the maps file of the workflow (made and edited in CapGui, Edit >
+    Detector Maps) and the particle efficiencies and smearers it holds (listed by bin/CAP --maps-list), which the tasks
+    choose by name. RunCAP does not edit them: Edit in CapGui opens the file there, Reload reads it again.
+    @param panel FiltersPanel (library, callbacks)"""
+
+    def __init__(self, parent, panel):
+        ttk.Frame.__init__(self, parent, padding=6)
+        self.panel = panel
+        self.entries = None                 # [F.MapsEntry] of the file last read
+        self.read_path = None               # file last read, and its modification time
+        self.read_time = None
+        line = ttk.Frame(self)
+        line.pack(fill=tk.X)
+        ttk.Label(line, text="Maps file:").pack(side=tk.LEFT)
+        self.path = tk.StringVar(self)
+        ttk.Entry(line, textvariable=self.path, width=40, state="readonly").pack(side=tk.LEFT, padx=6, fill=tk.X,
+                                                                                 expand=True)
+        ttk.Button(line, text="Choose…", command=self.choose).pack(side=tk.LEFT)
+        ttk.Button(line, text="Reload", command=lambda: self.load(force=True)).pack(side=tk.LEFT, padx=4)
+        ttk.Button(line, text="Edit in CapGui…", command=self.open_capgui).pack(side=tk.LEFT)
+        ttk.Button(line, text="Clear", command=lambda: self.set_file("")).pack(side=tk.LEFT, padx=(4, 0))
+        ttk.Label(self, text="The particle efficiencies and smearers are made and edited in CapGui (Edit > Detector "
+                             "Maps) and saved in a maps file. RunCAP reads them from it: each task chooses them by "
+                             "name in its window (one for all particles, or one per event filter and particle filter).",
+                  foreground="gray40", wraplength=760, justify=tk.LEFT).pack(fill=tk.X, pady=(6, 6))
+        columns = ("kind", "name", "species", "maps", "used")
+        self.table = ttk.Treeview(self, columns=columns, show="headings", height=12)
+        for c, label, width in (("kind", "Kind", 130), ("name", "Name", 160), ("species", "Species", 120),
+                                ("maps", "Maps", 300), ("used", "Used by", 160)):
+            self.table.heading(c, text=label)
+            self.table.column(c, width=width, anchor="w")
+        self.table.pack(fill=tk.BOTH, expand=True)
+        self.status = tk.StringVar(self)
+        ttk.Label(self, textvariable=self.status, foreground="firebrick", wraplength=760,
+                  justify=tk.LEFT).pack(fill=tk.X, pady=(4, 0))
+
+    @property
+    def library(self):
+        return self.panel.library
+
+    def refresh(self):
+        """Show the file and its objects (read again when the file changed since it was read)."""
+        path = F.maps_file(self.library)
+        self.path.set(path)
+        self.load()
+        self.table.delete(*self.table.get_children())
+        listed = {(e.kind, e.name): e for e in self.entries or []}
+        for kind in F.MAPS_KINDS:
+            for name in self.library.names(kind):
+                e = listed.get((kind, name))
+                users = self.panel.users(kind, name)
+                self.table.insert("", tk.END, values=(F.MAPS_LABELS[kind], name, (e.species or "all") if e else "",
+                                                      e.maps if e else "(not in the file)", ", ".join(users)))
+
+    def load(self, force=False):
+        """Read the objects of the maps file (if it changed, or force) and make them those of the library."""
+        path = F.maps_file(self.library)
+        if not path:
+            self.entries, self.read_path, self.read_time = None, None, None
+            self.status.set("" if not any(self.library.objects[k] for k in F.MAPS_KINDS)
+                            else "Choose the maps file of the efficiencies and smearers.")
+            return
+        try:
+            mtime = os.path.getmtime(path)
+        except OSError:
+            mtime = None
+        if not force and path == self.read_path and mtime == self.read_time:
+            return
+        self.read_path, self.read_time = path, mtime
+        try:
+            self.entries = F.list_maps(path)
+        except RuntimeError as error:
+            self.entries = None
+            self.status.set(str(error))
+            return
+        self.status.set("" if self.entries else "No particle efficiency or smearer in %s." % path)
+        removed = F.sync_maps(self.library, self.entries)
+        for kind, names in removed.items():
+            if names:
+                self.panel.on_remove(kind, names)
+        self.panel.on_change()
+
+    def set_file(self, path):
+        """Use another maps file ("" for none: the tasks lose their efficiencies and smearers)."""
+        if not path:
+            used = {(k, n): self.panel.users(k, n) for k in F.MAPS_KINDS for n in self.library.names(k)}
+            used = {key: tasks for key, tasks in used.items() if tasks}
+            if used and not messagebox.askyesno("Detector maps", "Tasks use efficiencies or smearers of the file: "
+                                                "remove them from the tasks?", parent=self):
+                return
+            for kind in F.MAPS_KINDS:
+                names = self.library.names(kind)
+                self.library.objects[kind] = []
+                if names:
+                    self.panel.on_remove(kind, names)
+        F.set_maps_file(self.library, path)
+        self.read_path = None
+        self.panel.refresh(list(F.MAPS_KINDS))
+        self.panel.on_change()
+
+    def choose(self):
+        current = F.maps_file(self.library)
+        root = os.path.dirname(os.path.abspath(__file__))
+        name = filedialog.askopenfilename(parent=self, title="Maps file (efficiencies and smearers)",
+                                          initialdir=os.path.dirname(current) if current else root,
+                                          filetypes=[("CAP files", "*.cap *.root"), ("All files", "*")])
+        if name:
+            self.set_file(name)
+
+    def open_capgui(self):
+        """Open the maps file (or a new one) in the Detector Maps window of CapGui (bin/CapGui --maps)."""
+        root = os.path.dirname(os.path.abspath(__file__))
+        program = os.path.join(root, "bin", "CapGui")
+        if not os.path.isfile(program):
+            messagebox.showerror("CapGui", "bin/CapGui not found: build CAP with the GUI first (BuildCAP).", parent=self)
+            return
+        path = F.maps_file(self.library)
+        command = [program, "--maps", path] if path else [program]
+        if not path:
+            self.status.set("In CapGui: Edit > Detector Maps, then save the maps file and choose it here.")
+        try:
+            subprocess.Popen(command, cwd=root)
+        except OSError as error:
+            messagebox.showerror("CapGui", "Cannot start CapGui: %s" % error, parent=self)

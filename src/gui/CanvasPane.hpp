@@ -13,6 +13,7 @@
 #define CAP__GUI__CanvasPane
 #include <functional>
 #include "Canvas.hpp"
+#include "BezierCurve.hpp"
 #include "FileBrowser.hpp"
 
 struct ImFont;
@@ -86,6 +87,21 @@ namespace CAP
   //! @brief Remove the selected shape (undo recorded).
   void deleteSelectedShape();
 
+  //! @name Curve edited with the mouse
+  //! @{
+  //!
+  //! @brief Edit a curve shown in a graph of the pane (e.g. a map of the Detector Maps window): its knots are drawn,
+  //! dragged with the mouse (kept within the bounds of the curve and between their neighbors), a click on the curve
+  //! adds a knot, a right-click on a knot removes it. The curve is not owned: it must stay alive while edited.
+  //! @param curve curve (null: none) @param changed called after each change
+  //!
+  void editCurve(MATH::BezierCurve * curve, const std::function<void()> & changed);
+  //! @brief Stop editing the curve.
+  void stopEditingCurve() { _curve = nullptr; _curveChanged = nullptr; }
+  //! @brief The curve edited, or null. @return curve
+  MATH::BezierCurve * editedCurve() const { return _curve; }
+  //! @}
+
   //! @brief Window holding the pane: -1 for the main window, otherwise a window of canvases (CapGui::addPaneWindow()).
   int  host() const { return _host; }
   //! @brief Set the window holding the pane. @param host -1 for the main window, or the index of a window of canvases
@@ -153,7 +169,7 @@ namespace CAP
 
   //! What a drag of the left mouse button does.
   enum DragKind { kNoDrag, kZoom, kZoomX, kZoomY, kMoveTitle, kMoveAxisTitle, kMoveLegend, kMoveLabels, kRotate,
-                  kMoveShape, kMoveVertex };
+                  kMoveShape, kMoveVertex, kMoveKnot };
   //! State of a drag of the left mouse button
   struct Drag
   {
@@ -185,6 +201,14 @@ namespace CAP
   GRAPHICS::Shape _draft;              //!< shape being drawn (points: fractions of the cell)
   bool _openShapeEditor;               //!< open the shape dialog at the next opportunity
   bool _openShapeMenu;                 //!< open the context menu of the selected shape at the next opportunity
+  MATH::BezierCurve * _curve = nullptr;   //!< curve edited with the mouse (not owned), or null
+  std::function<void()> _curveChanged;     //!< called after each change of the curve
+  //! @brief Graph showing the edited curve. @return index, or -1
+  int curveGraph() const;
+  //! @brief Mouse on the edited curve (knots dragged, added, removed). @return true if the mouse was used
+  bool handleCurve(ImGuiPainter & painter, int graph);
+  //! @brief Knots of the edited curve. @param painter painter
+  void drawCurveKnots(ImGuiPainter & painter);
 
   void changing() { if (beforeChange) beforeChange(); }   //!< Record the undo state before a change
   //! @brief Draw the toolbar: Add/Replace, Log X/Y, Graphs, Clear, +.

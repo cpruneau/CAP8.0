@@ -36,11 +36,13 @@ ParticleDecayer.cpp
 ParticleDbExceptions.cpp
 ParticleDecayerTask.cpp
 ParticleDecayMode.cpp
+KinematicMap.cpp
+KinematicMapFolder.cpp
 ParticleEfficiency.cpp
 ParticleFilter.cpp
 ParticleSelection.cpp
 ParticlePairFilter.cpp
-ParticleSmearer.cpp
+ParticleSmear.cpp
 ParticleType.cpp)
 
 target_link_libraries(Particles Base Math Helpers   ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
@@ -55,3 +57,9 @@ install(TARGETS Particles  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 add_executable(TestParticleSelection tests/TestParticleSelection.cpp)
 target_link_libraries(TestParticleSelection Particles Base Math ${ROOT_LIBRARIES})
 add_test(NAME ParticleSelection COMMAND TestParticleSelection)
+add_executable(TestParticleEfficiency tests/TestParticleEfficiency.cpp)
+target_link_libraries(TestParticleEfficiency Particles Base Math ${ROOT_LIBRARIES})
+add_test(NAME ParticleEfficiency COMMAND TestParticleEfficiency)
+add_executable(TestParticleSmear tests/TestParticleSmear.cpp)
+target_link_libraries(TestParticleSmear Particles Base Math ${ROOT_LIBRARIES})
+add_test(NAME ParticleSmear COMMAND TestParticleSmear)

@@ -126,6 +126,9 @@ public ManagedObject
   //!
   void setEventIndex(unsigned long index)  { _eventIndex  = index;}
 
+  //! @brief Set the event number (tag given by the production or input stream). @param number event number
+  void setEventNumber(unsigned long number)  { _eventNumber = number;}
+
   //! @name Global quantities, per particle selection (index)
   //! @{
 

@@ -21,7 +21,7 @@
 #include "EventSmearer.hpp"
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
-#include "ParticleSmearer.hpp"
+#include "ParticleSmear.hpp"
 
 namespace CAP
 {
@@ -172,11 +172,11 @@ public:
 };
 
 //! @brief Task creating the particle smearers of a job (PARTICLE_SMEARER). See ObjectCreator.
-class ParticleSmearerCreator : public ObjectCreator<ParticleSmearer>
+class ParticleSmearerCreator : public ObjectCreator<ParticleSmear>
 {
 public:
   //! @brief Constructor.
-  ParticleSmearerCreator() : ObjectCreator<ParticleSmearer>("PARTICLE_SMEARER") { appendClassName("ParticleSmearerCreator"); setName("ParticleSmearerCreator"); }
+  ParticleSmearerCreator() : ObjectCreator<ParticleSmear>("PARTICLE_SMEARER") { appendClassName("ParticleSmearerCreator"); setName("ParticleSmearerCreator"); }
   //! @brief Polymorphic copy. @return copy (owned by the caller)
   Task * clone() override { return new ParticleSmearerCreator(*this); }
 };

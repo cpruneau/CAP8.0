@@ -7,6 +7,7 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
+#include "FunctionRegistry.hpp"
 #include <iostream>
 #include <fstream>
 #include <TStyle.h>
@@ -24,6 +25,8 @@
 #include "MathExceptions.hpp"
 //#include "Histogram.hpp"
 #include "Timer.hpp"
+#include "ParticleEfficiency.hpp"
+#include "ParticleSmear.hpp"
 #include "TH1D.h"
 
 void usage()
@@ -38,7 +41,9 @@ void usage()
   std::cout << "element if taskName is -) is created from its TASK element." << std::endl << std::endl;
   std::cout << "CAP  --xml-templates outputPath [className ...]" << std::endl;
   std::cout << "Write the XML template (all parameters, defaults and types) of the given task classes, or of all" << std::endl;
-  std::cout << "task classes, to outputPath/<ClassName>.xml." << std::endl << std::endl << std::endl;
+  std::cout << "task classes, to outputPath/<ClassName>.xml." << std::endl << std::endl;
+  std::cout << "CAP  --function-catalog outputFile" << std::endl;
+  std::cout << "Write the catalog of the functions of MATH::FunctionRegistry (names, ranks, parameters) to outputFile." << std::endl << std::endl << std::endl;
 }
 
 //!
@@ -115,6 +120,58 @@ void parse(int argc,
 
 int main(int argc, char* argv[])
 {
+  if (argc>=3 && CAP::String(argv[1])=="--function-catalog")
+    {
+    CAP::String composites = CAP::MATH::FunctionRegistry::defaultCompositesFile();
+    std::ifstream registered(composites.data());
+    if (registered) CAP::MATH::FunctionRegistry::readComposites(composites);   // those registered by CapGui
+    if (!CAP::MATH::FunctionRegistry::writeCatalog(argv[2])) { std::cout << "Cannot write " << argv[2] << std::endl; return 1; }
+    CAP::printValue("Function catalog written",CAP::String(argv[2]));
+    return 0;
+    }
+  if (argc>=3 && CAP::String(argv[1])=="--maps-list")
+    {
+    // the particle efficiencies and smearers of a maps file (CapGui, Detector Maps), for RunCAP.py: one line each,
+    // MAP <tab> kind <tab> name <tab> species (PDG codes, comma separated) <tab> maps (key=summary, ...)
+    try
+      {
+      std::unique_ptr<CAP::CapFile> file(CAP::CapFile::openOldCapFile(argv[2]));
+      const CAP::Folder & top = file->folder();
+      auto list = [&](CAP::KinematicMapFolder & object, const std::vector<int> & species)
+        {
+        std::cout << "MAP\t" << object.kindName() << "\t" << object.name() << "\t";
+        for (std::size_t k=0; k<species.size(); k++) std::cout << (k ? "," : "") << species[k];
+        std::cout << "\t";
+        for (unsigned int k=0; k<object.nMaps(); k++)
+          {
+          const CAP::KinematicMap & map = object.map(k);
+          const char * model[] = { "none", "constant", "function", "histogram" };
+          std::cout << (k ? ", " : "") << object.mapKey(k) << "=" << model[int(map.model())];
+          }
+        std::cout << std::endl;
+        };
+      for (const CAP::String & name : CAP::KinematicMapFolder::objectNames(top,"PARTICLE_EFFICIENCY"))
+        {
+        CAP::ParticleEfficiency o;
+        o.setName(name);
+        o.loadFrom(top);
+        list(o,o.species());
+        }
+      for (const CAP::String & name : CAP::KinematicMapFolder::objectNames(top,"PARTICLE_SMEARER"))
+        {
+        CAP::ParticleSmear o;
+        o.setName(name);
+        o.loadFrom(top);
+        list(o,std::vector<int>());
+        }
+      return 0;
+      }
+    catch (CAP::Exception & exception)
+      {
+      exception.print();
+      return 1;
+      }
+    }
   if (argc>=3 && CAP::String(argv[1])=="--xml-templates")
     {
     try

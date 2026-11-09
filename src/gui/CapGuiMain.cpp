@@ -30,12 +30,13 @@ namespace
 void usage()
 {
   std::printf(
-    "Usage: CapGui [--basic | --edit] [plots.xml ...] [file.cap | folder ...] [--config gui.xml]\n"
+    "Usage: CapGui [--basic | --edit] [plots.xml ...] [file.cap | folder ...] [--config gui.xml] [--maps maps.cap]\n"
     "  The canvases are the windows of a plot file (the XML files of PlotHistos): drag histograms from the\n"
     "  browser onto them or onto the Plot Tree, change them, save the plot file; File > Export writes the figures.\n"
     "  --basic   start from a new plot file (the default without plot files)\n"
     "  --edit    start from the plot files given, or ask for one (the default with plot files)\n"
-    "  CAP files and folders given are shown in the file browser.\n");
+    "  CAP files and folders given are shown in the file browser.\n"
+    "  --maps    open a maps file (particle efficiencies and smearers) in the Detector Maps window\n");
 }
 } // namespace
 
@@ -55,6 +56,7 @@ int main(int argc, char ** argv)
     else if (a == "--basic") { mode = GUI::CapGuiApp::kBasic; modeGiven = true; }
     else if (a == "--edit")  { mode = GUI::CapGuiApp::kEdit;  modeGiven = true; }
     else if ((a == "--config" || a == "-c") && k + 1 < argc) { guiArguments.push_back(argv[k]); guiArguments.push_back(argv[++k]); }
+    else if (a == "--maps" && k + 1 < argc) { guiArguments.push_back(argv[k]); guiArguments.push_back(argv[++k]); }
     else if (a.compare(0, 4, "-psn") == 0) continue;   // macOS: a process serial number given by the Finder
     else if (a.size() > 1 && a[0] == '-') { std::fprintf(stderr, "CapGui: unknown option %s\n", a.c_str()); usage(); return 2; }
     else if (FileSystem::hasExtension(String(a), ".xml")) plotFiles.push_back(String(a));

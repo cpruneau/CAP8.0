@@ -21,6 +21,7 @@
 #include "CanvasPane.hpp"
 #include "DataPane.hpp"
 #include "FitDialog.hpp"
+#include "DetectorMapsDialog.hpp"
 #include "FitPane.hpp"
 #include "FileDialog.hpp"
 #include "FileBrowser.hpp"
@@ -106,6 +107,11 @@ namespace CAP
   const std::vector<std::unique_ptr<FileBrowser>> & browsers() const { return _browsers; }
   //! @brief Open another file browser, docked with the first one (see onNewBrowser). @return browser
   FileBrowser & addBrowser();
+  //! @brief Index of the browser used last. @return index (0 for the first browser)
+  int activeBrowserIndex() { activeBrowser(); return _activeBrowser; }
+  //! @brief Close a browser other than the first at the start of the next frame (onCloseBrowser is called then);
+  //! the first one is hidden. @param browser browser
+  void closeBrowser(FileBrowser & browser);
   bool browserVisible() const { return _settings.browserVisible; }   //!< Whether the file browser is shown
   void setBrowserVisible(bool visible) { _settings.browserVisible = visible; }   //!< Show or hide the file browser
   bool browserDocked() const { return _settings.browserDocked; }   //!< Whether the browser is docked in the main window
@@ -193,18 +199,35 @@ namespace CAP
   bool canvasListVisible() const { return _canvasListVisible; }   //!< Whether the Canvases window is shown
   //! @brief Open the Fit window for the selected graph of the current canvas. @param item index of the item to fit (-1: any)
   void openFitDialog(int item=-1) { _fitDialog.open(item); }
+  //! @brief Open the Detector Maps window, and a maps file if one is given. @param fileName file
+  void openMapsDialog(const String & fileName = "") { _mapsDialog.open(fileName); }
+  //! @brief The Detector Maps window. @return window
+  DetectorMapsDialog & mapsDialog() { return _mapsDialog; }
   //! Called for each new pane (to set its graphs and undo hook).
   std::function<void(CanvasPane &)> onNewPane;
   //! Called for each file browser made (the first one included): the application connects it to its files.
   std::function<void(FileBrowser &)> onNewBrowser;
   //! Called when a browser other than the first is closed, before it is deleted.
   std::function<void(FileBrowser &)> onCloseBrowser;
+  //! Called when the user closes a browser other than the first (the x of its window): true to close it now, false
+  //! if the application closes it later (closeBrowser(), e.g. once its changed trees are saved).
+  std::function<bool(FileBrowser &)> onBrowserCloseRequest;
   //! Called before a pane is added or closed by the user (undo).
   std::function<void()> beforePanesChange;
   //! Called with the panes closed by the user (x of their tab or of their toolbar, Window > Close Canvas), in
   //! decreasing order: the application may handle them (e.g. remove their canvases from a plot file) and returns those
   //! it leaves to closePane().
   std::function<std::vector<int>(const std::vector<int> &)> onClosePanes;
+  //! @}
+
+  //! @name Focus
+  //! @{
+  //! Part of the window used last: what File > Save, Duplicate and Close act on.
+  enum Focus { kFocusCanvas, kFocusBrowser, kFocusSide };
+  //! @brief Part of the window focused last (kept while a menu is open). @return part
+  Focus lastFocus() const { return _lastFocus; }
+  //! @brief Record the focus of a window of the application (the side window). @param focus part
+  void setLastFocus(Focus focus) { _lastFocus = focus; }
   //! @}
 
   //! @name Messages
@@ -265,6 +288,8 @@ namespace CAP
   String _hoverText;   //!< data coordinates under the mouse (shown in the status bar on the next frame)
   std::vector<std::unique_ptr<FileBrowser>> _browsers;   //!< file browsers (the first one cannot be closed)
   int _activeBrowser;   //!< index of the browser used last
+  std::vector<FileBrowser *> _browsersToClose;   //!< browsers closed by closeBrowser(), at the next frame
+  Focus _lastFocus = kFocusCanvas;   //!< part of the window focused last
   int _browserCounter;   //!< number of the last browser made
   bool   _firstFrame;   //!< the next frame is the first one (the dock layout is built)
   bool   _layoutRequested;   //!< rebuild the dock layout (browser on the left of the canvases)
@@ -279,6 +304,7 @@ namespace CAP
   bool   _focusRequested;    //!< give the focus to the current pane (changed by the program)
   FitPane _fitPane;          //!< results of the fits of the selected graph
   FitDialog _fitDialog;      //!< the Fit window
+  DetectorMapsDialog _mapsDialog;   //!< the Detector Maps window (efficiencies and smearers)
   bool   _fitsVisible = false;   //!< the fit pane is shown
   bool   _canvasListVisible = false;   //!< the Canvases window is shown
   std::map<unsigned int, int> _windowNumbers;   //!< number of each separate window (viewport id), for the groups

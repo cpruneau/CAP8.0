@@ -8,6 +8,7 @@
  *
  * *********************************************************************/
 #include "SpherocityAnalyzer.hpp"
+#include "ParticleSelection.hpp"
 #include "MathExceptions.hpp"
 #include "MathConstants.hpp"
 #include "MathBasicFunctions.hpp"
@@ -25,8 +26,10 @@ EventProcessorHistos<SpherocityHistos,1>(),
 setEvent(true),
 fillS0(true),
 fillS1(false),
-nSteps(360),
-stepSize(CAP::MATH::twoPi()/360.0)
+fillS1VsS0(false),
+nSteps(1000),
+stepSize(CAP::MATH::twoPi()/1000.0),
+minMultiplicity(3)
 {
   appendClassName("SpherocityAnalyzer");
   setMinimumReportLevel(Object::kInfo);
@@ -40,8 +43,10 @@ EventProcessorHistos<SpherocityHistos,1>(source),
 setEvent(source.setEvent),
 fillS0(source.fillS0),
 fillS1(source.fillS1),
+fillS1VsS0(source.fillS1VsS0),
 nSteps(source.nSteps),
-stepSize(source.stepSize)
+stepSize(source.stepSize),
+minMultiplicity(source.minMultiplicity)
 {    }
 
 SpherocityAnalyzer & SpherocityAnalyzer::operator=(const SpherocityAnalyzer & rhs)
@@ -52,8 +57,10 @@ SpherocityAnalyzer & SpherocityAnalyzer::operator=(const SpherocityAnalyzer & rh
     setEvent   = rhs.setEvent;
     fillS0     = rhs.fillS0;
     fillS1     = rhs.fillS1;
+    fillS1VsS0 = rhs.fillS1VsS0;
     nSteps     = rhs.nSteps;
     stepSize   = rhs.stepSize;
+    minMultiplicity = rhs.minMultiplicity;
     }
   return *this;
 }
@@ -76,6 +83,8 @@ void SpherocityAnalyzer::configure(const Configuration & configuration)
   nSteps     = _configuration.valueInt( createKey(taskName,objectType,"nSteps"));
   if (nSteps<1) throw MathException("DivisionByZero",__FUNCTION__);
   stepSize   = MATH::twoPi()/nSteps;
+  int minimum = _configuration.valueInt(createKey(taskName,objectType,"MinMultiplicity"));
+  minMultiplicity = minimum < 1 ? 1u : (unsigned int) minimum;
   if (reportDebug(__FUNCTION__))
     {
     printCR();
@@ -95,69 +104,21 @@ void SpherocityAnalyzer::execute()
   if (!filterEvent(theEvent)) return;
   if (!filterParticles(theEvent))  return;
 
-  double factor = 1.0;
   unsigned int nef = nEventFilters();
   unsigned int npf = nParticleFilters();
   std::vector<SpherocityHistos*> & folders = histograms();
   if (folders.size()<nCombinations()) throw Exception("Fewer histogram folders than combinations of filters",__FUNCTION__);
-  for (unsigned int iEventFilter = 0; iEventFilter < nef; iEventFilter++)
+  for (unsigned int iParticleFilter=0; iParticleFilter < npf; iParticleFilter++ )
     {
-    if (!_acceptedEventFilters[iEventFilter]) continue;
-    //String evfName = eventFilters[iEventFilter]->name();
-    unsigned int  baseSingle = iEventFilter*npf;
-
-    for (unsigned int iParticleFilter=0; iParticleFilter < npf; iParticleFilter++ )
+    // computed once per selection, for all the event filters
+    const std::vector<Particle*> & particles = acceptedParticles(iParticleFilter);
+    if (particles.size() < minMultiplicity) continue;     // too few particles: no spherocity
+    double s0 = (fillS0 || fillS1VsS0) ? ParticleSelection::spherocity(particles, true,  (unsigned int) nSteps, (unsigned int) nSteps) : 0.0;
+    double s1 = (fillS1 || fillS1VsS0) ? ParticleSelection::spherocity(particles, false, (unsigned int) nSteps, (unsigned int) nSteps) : 0.0;
+    for (unsigned int iEventFilter = 0; iEventFilter < nef; iEventFilter++)
       {
-      std::vector<Particle*> & particlesSelected = acceptedParticles(iParticleFilter);
-      double  s0 = 1.0E10;
-      double  s1 = 1.0E10;
-      double  num0, num1, nx, ny, px, py, pt;
-      double  denom0 = 0;
-      double  denom1 = 0;
-      double  refPhi  = 0.0;
-      for(int k = 0; k < nSteps; k++)
-        {
-        nx = std::cos(refPhi); // x component of a unitary vector n
-        ny = std::sin(refPhi); // y component of a unitary vector n
-        num0 = 0;
-        num1 = 0;
-        for (auto particleSelected : particlesSelected)
-          {
-          if (!particleSelected) continue;
-          VectorLorentz & momentum = particleSelected->momentum();
-          pt = momentum.perp();
-          px = momentum.x();
-          py = momentum.y();
-          if (fillS0)
-            {
-            num0 += absolute(ny*px - nx*py);
-            if(k==0) denom0 += pt;
-            }
-          if (fillS1)
-            {
-            double  ax = px/pt;
-            double  ay = py/pt;
-            num1 += absolute(ny*ax - nx*ay);
-            if(k==0) denom1 += 1;
-            }
-          }
-        if (fillS0)
-          {
-          double ratio = num0/denom0;
-          double r2 = ratio*ratio;
-          if (r2 < s0) s0 = r2;
-          }
-        if (fillS1)
-          {
-          double ratio = num1/denom1;
-          double r2 = ratio*ratio;
-          if (r2 < s1) s1 = r2;
-          }
-        refPhi += stepSize;
-        }
-      unsigned int index = baseSingle+iParticleFilter;
-      SpherocityHistos * histos = folders[index];
-      histos->fill(s0*factor,s1*factor,1.0);
+      if (!_acceptedEventFilters[iEventFilter]) continue;
+      folders[iEventFilter*npf+iParticleFilter]->fill(s0,s1,1.0);
       }
     }
 }

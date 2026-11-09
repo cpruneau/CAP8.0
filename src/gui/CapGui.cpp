@@ -707,6 +707,12 @@ namespace CAP
   return *_browsers[_activeBrowser];
   }
 
+  void CapGui::closeBrowser(FileBrowser & browser)
+  {
+  if (!_browsers.empty() && _browsers.front().get() == &browser) { _settings.browserVisible = false; return; }
+  _browsersToClose.push_back(&browser);
+  }
+
   FileBrowser & CapGui::addBrowser()
   {
   _browsers.emplace_back(new FileBrowser(++_browserCounter));
@@ -787,6 +793,16 @@ namespace CAP
 
   void CapGui::renderBrowser()
   {
+  for (FileBrowser * closing : _browsersToClose)
+    for (std::size_t k=1; k<_browsers.size(); k++)
+      if (_browsers[k].get() == closing)
+        {
+        if (onCloseBrowser) onCloseBrowser(*closing);
+        _browsers.erase(_browsers.begin() + long(k));
+        if (_activeBrowser >= int(k)) _activeBrowser = 0;
+        break;
+        }
+  _browsersToClose.clear();
   if (!_settings.browserVisible) return;
   ImGuiViewport * viewport = ImGui::GetMainViewport();
   if (_undockRequested)
@@ -807,7 +823,7 @@ namespace CAP
     {
     // follow what the user did with the mouse (docking or undocking the window)
     if (!_layoutRequested) _settings.browserDocked = ImGui::IsWindowDocked();
-    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) _activeBrowser = 0;
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) { _activeBrowser = 0; _lastFocus = kFocusBrowser; }
     _browsers.front()->render();
     }
   else if (!_layoutRequested) _settings.browserDocked = ImGui::IsWindowDocked();
@@ -824,11 +840,12 @@ namespace CAP
     bool open = true;
     if (ImGui::Begin(browser.windowName(), &open))
       {
-      if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) _activeBrowser = int(k);
+      if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) { _activeBrowser = int(k); _lastFocus = kFocusBrowser; }
       browser.render();
       }
     ImGui::End();
     if (open) { k++; continue; }
+    if (onBrowserCloseRequest && !onBrowserCloseRequest(browser)) { k++; continue; }
     if (onCloseBrowser) onCloseBrowser(browser);
     _browsers.erase(_browsers.begin() + long(k));
     if (_activeBrowser >= int(k)) _activeBrowser = 0;
@@ -886,6 +903,7 @@ namespace CAP
       {
       // the pane whose window gets the focus (click, tab) becomes current
       bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+      if (focused) _lastFocus = kFocusCanvas;
       if (focused && _focusedPane != k) { _currentPane = k; _focusedPane = k; }
       ImVec2 size = ImGui::GetContentRegionAvail();
       bool clicked = pane.render(size.x, size.y, k == _currentPane, _font);
@@ -917,6 +935,7 @@ namespace CAP
     }
   renderFitPane();
   if (_fitDialog.render(_panes.empty() ? nullptr : &currentPane().currentGraph())) setFitPaneVisible(true);
+  _mapsDialog.render();
   if (areaX1 > areaX0) { _areaX = areaX0; _areaY = areaY0; _areaWidth = areaX1 - areaX0; _areaHeight = areaY1 - areaY0; }
 
   // panes added (+ button) or closed (x of their tab) by the user

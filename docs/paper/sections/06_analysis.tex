@@ -119,8 +119,11 @@ longer depends on another task, such as \code{GlobalAnalyzer}, having run before
 A particle efficiency (\code{ParticleEfficiency}) is a histogram of the detection efficiency as a function of
 pseudorapidity and $\pT$. It is used in two ways: to simulate detection losses, by accepting each particle with the
 probability given by the efficiency, and to correct for them, by weighting each particle by the inverse of the
-efficiency. The single-particle analyzer weights the particles it counts in this way, with either one efficiency for all
-particle filters or one per filter. An event efficiency (\code{EventEfficiency}) has the same role for events, as a
+efficiency. The single-particle analyzer weights the particles it counts in this way. A task uses one efficiency for
+all particles, one per particle filter, or one per event filter and particle filter (the event class and the particle
+type). The particle efficiencies and smearers are made and edited in CapGui (Detector Maps) and saved in a maps file;
+RunCAP does not define them: it names that file, lists its objects (\code{CAP --maps-list}), and lets each task choose
+among them by name. An event efficiency (\code{EventEfficiency}) has the same role for events, as a
 function of their multiplicity.
 \todo{the pair analyzers do not weight pairs by the product of the particle efficiencies, and \code{EventEfficiency}
 always accepts events (efficiency 1): implement both, or describe them as planned.}

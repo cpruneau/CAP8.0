@@ -37,6 +37,7 @@ LinearAlgebra/VectorLorentz.cpp
 LinearAlgebra/VectorND.cpp
 # Functions
 Functions/Bessel.cpp
+Functions/BezierCurve.cpp
 Functions/BesselFunction.cpp
 Functions/BesselFunctions.cpp
 Functions/CompositeFunction.cpp
@@ -148,6 +149,9 @@ add_test(NAME Fits2D COMMAND TestFits2D)
 add_executable(TestFitRegions Fitting/tests/TestFitRegions.cpp)
 target_link_libraries(TestFitRegions Math Base ${ROOT_LIBRARIES})
 add_test(NAME FitRegions COMMAND TestFitRegions)
+add_executable(TestBezierCurve Functions/tests/TestBezierCurve.cpp)
+target_link_libraries(TestBezierCurve Math Base ${ROOT_LIBRARIES})
+add_test(NAME BezierCurve COMMAND TestBezierCurve)
 add_executable(TestFunctionStorage Functions/tests/TestFunctionStorage.cpp)
 target_link_libraries(TestFunctionStorage Math Base ${ROOT_LIBRARIES})
 add_test(NAME FunctionStorage COMMAND TestFunctionStorage)

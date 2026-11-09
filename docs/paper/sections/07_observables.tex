@@ -366,11 +366,16 @@ transverse momentum versus multiplicity, $\avg{\sum\pT}/n$.
 
 The task \code{SpherocityAnalyzer} computes the transverse spherocity of the accepted particles of each event,
 \begin{equation}
-  S_0 = \min_{\hat{\mathbf n}} \left(\frac{\sum_i |\mathbf p_{\mathrm{T},i}\times\hat{\mathbf n}|}{\sum_i p_{\mathrm{T},i}}\right)^2 ,
+  S_0 = \frac{\pi^2}{4}\,\min_{\hat{\mathbf n}} \left(\frac{\sum_i |\mathbf p_{\mathrm{T},i}\times\hat{\mathbf n}|}{\sum_i p_{\mathrm{T},i}}\right)^2 ,
 \end{equation}
-where the minimum is searched over \code{nSteps} directions $\hat{\mathbf n}$ of the transverse plane, and its unweighted
-version $S_1$, computed with unit transverse vectors. $S_0$ ranges from 0 for pencil-like events to $\pi^2/4$ for
-isotropic ones (\CAP{} does not apply the usual factor $\pi^2/4$, which would bring it to 1).
+where $\hat{\mathbf n}$ is a unit vector of the transverse plane, and its unweighted version $S_1$, computed with the
+unit vectors $\mathbf p_{\mathrm{T},i}/p_{\mathrm{T},i}$. Both range from 0 for pencil-like events to 1 for isotropic
+ones. Since the sum is a concave function of the azimuth of $\hat{\mathbf n}$ between the directions of the particles,
+its minimum lies along one of them: these directions are tried, which gives the exact minimum, for up to \code{nSteps}
+particles, and \code{nSteps} directions spread over $\pi$ are tried for more. Selections of fewer than
+\code{MinMultiplicity} particles (by default 3) are not filled, since their spherocity is not meaningful; analyses of
+data usually require at least 10 charged particles. The same quantity is that of the selections tested by the event
+filters (Section~\ref{sec:filters}).
 \todo{reference for spherocity.}
 
 \begin{table*}[t]

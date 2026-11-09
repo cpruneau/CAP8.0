@@ -23,11 +23,14 @@ The window has four parts, from top to bottom:
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
     under the workflow reorder the tasks and nest them: a nested task is a subtask of the task above it (e.g. the
     event generator and the analyzers inside an EventIterator, which executes them for every event);
-  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, defined once, created
-    by the task FilterCreator (written first in the workflow file, with one subtask per kind) and used by the tasks by
-    name. One tab per kind (event and particle filters, event and particle efficiencies and
-    smearers), the number of objects of that kind, and for each its name and title and its conditions (a range, two
-    ranges, a value or a flag of one quantity) or binning parameters;
+  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, created by the task
+    FilterCreator (written first in the workflow file, with one subtask per kind) and used by the tasks by name. One
+    tab per kind (event and particle filters, event efficiencies and smearers, events, particle databases), the number
+    of objects of that kind, and for each its name and title and its conditions (a range, two ranges, a value or a flag
+    of one quantity) or parameters. The particle efficiencies and smearers are not defined here: they are made and
+    edited in CapGui (Detector Maps) and saved in a maps file, which the tab Detector maps names (RunCAP lists its
+    objects with bin/CAP --maps-list); each task then uses none, one for all particles, or one per event filter and
+    particle filter;
   * the tasks: one line per task of the workflow, in run order, with the filters it uses, the number of its
     histogram folders and its first problem. Above it, the buttons of the stages of the workflow (Event Processing,
     Derived Histos, Balance Fct) choose the stage shown in the workflow editor, and the files of its job. Double-clicking
@@ -39,7 +42,10 @@ The window has four parts, from top to bottom:
 
 Available tasks: the XML templates written by "bin/CAP --xml-templates" (one file per task class, listing every
 parameter with its default value and type, see CAP::Task::exportXmlTemplates()). They are kept in <CAP>/DB/Templates
-and regenerated automatically when bin/CAP or the libraries are newer than them (or with the Refresh button).
+and regenerated automatically when bin/CAP or the libraries are newer than them (or with the Refresh button). The folder
+then holds exactly the task classes of the last build: templates of classes no longer built are removed. The base class
+Task is not offered (only the stage wrappers, Workflow, DerivedHistos and BalanceFct, are Tasks). The catalog of the
+functions of CAP (bin/CAP --function-catalog, DB/FunctionCatalog.xml) is written at the same time.
 
 Stages: a workflow has up to three stages, each run by its own CAP job, one after the other: Event Processing
 (generators, analyzers filling their histograms event by event), Derived Histos (the calculators of the derived
@@ -83,6 +89,7 @@ import json
 import os
 import queue
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -99,6 +106,7 @@ BIN_DIR = os.path.join(CAP_DIR, "bin")
 CAP_EXE = os.path.join(BIN_DIR, "CAP")
 TEMPLATES_DIR = os.path.join(CAP_DIR, "DB", "Templates")
 TEMPLATES_STAMP = os.path.join(TEMPLATES_DIR, ".generated")
+TEMPLATES_STAGING = os.path.join(TEMPLATES_DIR, ".new")     # bin/CAP writes the templates here first
 SETTINGS_FILE = os.path.join(CAP_DIR, ".RunCAP.json")
 
 #: Report levels of a task (CAP::Object).
@@ -458,6 +466,7 @@ def load_stages_with_filters(path, templates):
         more += extra
         tasks = filters.remove_creator(tasks, library)
         more += filters.update_event_settings(tasks, templates)
+        more += filters.update_writer_events(tasks, library)
         more += filters.update_iterator_events(tasks, templates)
         lists += filters.update_histogram_lists(tasks, templates)
         stages[stage] = tasks
@@ -584,7 +593,39 @@ def run_command(xml_path, root_name, output_dir):
 
 
 def template_command():
-    return [CAP_EXE, "--xml-templates", TEMPLATES_DIR + "/"]
+    return [CAP_EXE, "--xml-templates", TEMPLATES_STAGING + "/"]
+
+
+def catalog_command():
+    """Command writing the catalog of the functions of CAP (see RunCAPFilters.FUNCTION_CATALOG_FILE)."""
+    return [CAP_EXE, "--function-catalog", filters.FUNCTION_CATALOG_FILE]
+
+
+def prepare_template_staging():
+    """Empty staging directory for bin/CAP --xml-templates."""
+    shutil.rmtree(TEMPLATES_STAGING, ignore_errors=True)
+    os.makedirs(TEMPLATES_STAGING, exist_ok=True)
+
+
+def install_templates():
+    """Make DB/Templates hold exactly the templates just written by bin/CAP: those of the task classes of the last build.
+
+    Templates of classes that are no longer built (a module turned off, a class removed) are deleted. Returns the short
+    names of the removed classes, or None if bin/CAP wrote no template (DB/Templates is then left unchanged).
+    """
+    new = {os.path.basename(f) for f in glob.glob(os.path.join(TEMPLATES_STAGING, "*.xml"))}
+    if not new:
+        return None
+    removed = []
+    for path in glob.glob(os.path.join(TEMPLATES_DIR, "*.xml")):
+        name = os.path.basename(path)
+        if name not in new:
+            os.remove(path)
+            removed.append(name[:-4])
+    for name in new:
+        os.replace(os.path.join(TEMPLATES_STAGING, name), os.path.join(TEMPLATES_DIR, name))
+    shutil.rmtree(TEMPLATES_STAGING, ignore_errors=True)
+    return sorted(removed)
 
 
 def build_time():
@@ -599,6 +640,8 @@ def templates_outdated():
     if not os.path.exists(CAP_EXE):
         return False
     if not glob.glob(os.path.join(TEMPLATES_DIR, "*.xml")) or not os.path.exists(TEMPLATES_STAMP):
+        return True
+    if not os.path.exists(filters.FUNCTION_CATALOG_FILE):
         return True
     return build_time() > os.path.getmtime(TEMPLATES_STAMP)
 
@@ -962,6 +1005,8 @@ def run_gui(initial_file=None, hook=None):
             for cls in sorted(self.templates, key=lambda c: short_class_name(c).lower()):
                 if cls in creators:
                     continue            # FilterCreator is written from the Filters pane
+                if cls == WRAPPER_CLASS:
+                    continue            # the base class Task: only the stage wrappers (Workflow, ...) are Tasks
                 name = short_class_name(cls)
                 if text and text not in name.lower():
                     continue
@@ -1528,14 +1573,15 @@ def run_gui(initial_file=None, hook=None):
 
         # ---------------------------------------------------------------------------------------------- filters
         def _make_filters(self, parent):
-            """The Filters pane: the filters, efficiencies and smearers of the workflow, used by the tasks by name."""
+            """The Filters pane: the filters of the workflow and its maps file (efficiencies and smearers), used by the
+            tasks by name."""
             import RunCAPFiltersGui
             head = ttk.Frame(parent)
             head.pack(fill=tk.X, pady=(6, 0))
             ttk.Label(head, text="Filters", style="Section.TLabel").pack(side=tk.LEFT)
-            ttk.Label(head, text="Filters, corrections, events and particle databases: defined here once, created by "
-                                 "the task FilterCreator (run first), used by name by the tasks (double-click a task "
-                                 "below).",
+            ttk.Label(head, text="Filters, events and particle databases defined here once, efficiencies and smearers "
+                                 "read from a maps file (made in CapGui): created by the task FilterCreator (run "
+                                 "first), used by name by the tasks (double-click a task below).",
                       foreground="gray40").pack(side=tk.LEFT, padx=10)
             self.filters_panel = RunCAPFiltersGui.FiltersPanel(
                 parent, self.library, on_change=self._library_changed, on_rename=self._rename_object,
@@ -1574,8 +1620,12 @@ def run_gui(initial_file=None, hook=None):
 
         def _remove_objects(self, kind, names):
             for t in list(self.items.values()) + [t for s in STAGES if s != self.stage for t in all_tasks(self.stages[s])]:
-                if filters.choices(t).get(kind):
+                if kind in filters.MAPS_KINDS:                  # a grid keeps its size
+                    filters.remove_maps_names(t, kind, names, self.library)
+                elif filters.choices(t).get(kind):
+                    before = filters.filter_grid(t)
                     filters.choices(t)[kind] = [n for n in filters.choices(t)[kind] if n not in names]
+                    filters.regrid_maps(t, before)
                 options = getattr(t, "histograms", None)
                 if options is not None and kind in filters.CONDITION_KINDS:
                     options.binning = {combo: values for combo, values in options.binning.items()
@@ -1759,8 +1809,14 @@ def run_gui(initial_file=None, hook=None):
             if not force and not templates_outdated():
                 return
             os.makedirs(TEMPLATES_DIR, exist_ok=True)
+            try:
+                prepare_template_staging()
+            except OSError as e:
+                self.status.set("Cannot prepare %s: %s" % (TEMPLATES_STAGING, e))
+                return
             self.append("\n=== Task templates (bin/CAP or the libraries changed) ===\n", "command")
-            self._start([("Writing the task templates", template_command(), CAP_DIR)], "templates")
+            self._start([("Writing the task templates", template_command(), CAP_DIR),
+                         ("Writing the function catalog", catalog_command(), CAP_DIR)], "templates")
 
         def _start(self, commands, kind):
             self.kill_requested = False
@@ -1863,13 +1919,23 @@ def run_gui(initial_file=None, hook=None):
             if kind == "templates":
                 if ok:
                     try:
-                        with open(TEMPLATES_STAMP, "w") as f:
-                            f.write(datetime.datetime.now().isoformat() + "\n")
-                    except OSError:
-                        pass
+                        removed = install_templates()
+                        if removed is None:
+                            self.append("bin/CAP wrote no template: the previous templates are kept.\n", "failure")
+                        else:
+                            if removed:
+                                self.append("Not in the last build (removed from the available tasks): %s\n"
+                                            % ", ".join(removed), "warning")
+                            with open(TEMPLATES_STAMP, "w") as f:
+                                f.write(datetime.datetime.now().isoformat() + "\n")
+                    except OSError as e:
+                        self.append("Cannot update %s: %s\n" % (TEMPLATES_DIR, e), "failure")
                 self.reload_templates()
 
         def reload_templates(self):
+            filters.set_function_catalog(None)           # read again (written with the templates)
+            if self.filters_panel is not None:
+                self.filters_panel.refresh()
             self.templates = load_templates()
             self._fill_available()
             if not self.templates:

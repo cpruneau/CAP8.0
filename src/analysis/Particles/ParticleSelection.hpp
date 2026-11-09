@@ -27,8 +27,9 @@ class EventFilter;
 //! lookups. The filters are identified by their object: the filters shared by tasks (created by FilterCreator, taken
 //! from the store of the ManagedObjects) share a slot; a filter made by a task for itself has a slot of its own.
 //!
-//! The spherocity is computed on demand (spherocity()): S0 = min over the axes n of (sum |pT x n| / sum pT)^2, the axes
-//! every degree in azimuth, as SpherocityAnalyzer with nSteps = 360 and no normalization factor.
+//! The spherocity is computed on demand (spherocity(), see the static spherocity()): the transverse spherocity
+//! S0 = (pi^2/4) min over the unit vectors n of (sum |pT x n| / sum pT)^2, from 0 (pencil-like events) to 1 (isotropic
+//! events).
 //!
 class ParticleSelection
 {
@@ -72,6 +73,18 @@ public:
   double ptSum() const { return _ptSum; }
   //! @brief Spherocity S0 (computed at the first call for the event). @return spherocity (0 without particles)
   double spherocity() const;
+
+  //!
+  //! @brief Transverse spherocity of particles: S0 = (pi^2/4) min_n (sum_i |pT_i x n| / sum_i pT_i)^2 (weighted), or
+  //! S1, the same with the unit vectors pT_i/|pT_i| (unweighted). The sum is piecewise concave in the azimuth of n, so
+  //! that its minimum is reached along the direction of one of the particles: for up to maxExact particles these
+  //! directions are tried (exact, N^2 operations), for more, nSteps directions evenly spread over pi (approximate).
+  //! @param particles particles @param weighted true for S0, false for S1 @param maxExact largest number of particles
+  //! for the exact minimum @param nSteps directions tried above it @return spherocity in [0,1] (0 without transverse
+  //! momentum)
+  //!
+  static double spherocity(const std::vector<Particle*> & particles, bool weighted=true, unsigned int maxExact=2000,
+                           unsigned int nSteps=1000);
 
   //! @name Slots (shared by all the events)
   //! @{

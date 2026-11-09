@@ -18,6 +18,7 @@
 #include <string>
 #include <typeindex>
 #include "FunctionRegistry.hpp"
+#include <fstream>
 #include "MathExceptions.hpp"
 #include "Constant.hpp"
 #include "Linear.hpp"
@@ -32,6 +33,7 @@
 #include "BesselFunction.hpp"
 #include "Normal2D.hpp"
 #include "Polynomial2D.hpp"
+#include "BezierCurve.hpp"
 #include "ParameterizedComposite.hpp"
 #include "FileSystem.hpp"
 #include "XmlDocument.hpp"
@@ -89,6 +91,12 @@ namespace CAP
       add<BesselIFunction>("BesselI");
       add<BesselKFunction>("BesselK");
       add<Normal2D>("Normal2D");
+      add("BezierCurve", typeid(BezierCurve), [](unsigned int n) -> ParameterizedFunction *
+          {
+          if (n == 0) return new BezierCurve();
+          if (n < 4 || n%2) return nullptr;
+          return new BezierCurve(n/2);
+          });
       add("Polynomial2D", typeid(Polynomial2D), [](unsigned int n) -> ParameterizedFunction *
           {
           if (n == 0) return new Polynomial2D(2);
@@ -156,6 +164,86 @@ namespace CAP
   std::string name = (status == 0 && demangled) ? demangled : typeid(function).name();
   std::free(demangled);
   return String(name.c_str());
+  }
+
+  namespace
+  {
+    //! Text escaped for an XML attribute.
+    std::string xmlEscaped(const std::string & s)
+    {
+    std::string r;
+    for (char c : s)
+      switch (c)
+        {
+        case '&':  r += "&amp;";  break;
+        case '<':  r += "&lt;";   break;
+        case '>':  r += "&gt;";   break;
+        case '"':  r += "&quot;"; break;
+        default:   r += c;
+        }
+    return r;
+    }
+
+    const char * typeName(Parameter::ParameterType type)
+    {
+    switch (type)
+      {
+      case Parameter::Free:    return "Free";
+      case Parameter::Fixed:   return "Fixed";
+      case Parameter::Low:     return "Low";
+      case Parameter::High:    return "High";
+      case Parameter::LowHigh: return "LowHigh";
+      }
+    return "Free";
+    }
+
+    void writeVariant(std::ostream & out, const ParameterizedFunction & f, bool isDefault)
+    {
+    out << "    <VARIANT nParameters=\"" << f.nParameters() << "\"" << (isDefault ? " default=\"true\"" : "") << ">\n";
+    out.precision(17);
+    for (unsigned int k=0; k<f.nParameters(); k++)
+      {
+      const Parameter & p = f.parameter(k);
+      out << "      <PARAMETER name=\"" << xmlEscaped(p.name().str()) << "\" value=\"" << p.value()
+          << "\" type=\"" << typeName(p.type()) << "\"";
+      if (p.isLowConstrained())  out << " minimum=\"" << p.minimum() << "\"";
+      if (p.isHighConstrained()) out << " maximum=\"" << p.maximum() << "\"";
+      out << "/>\n";
+      }
+    out << "    </VARIANT>\n";
+    }
+  }
+
+  bool FunctionRegistry::writeCatalog(const String & fileName, unsigned int maxParameters)
+  {
+  std::ofstream out(fileName.data());
+  if (!out) return false;
+  out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<CAP type=\"function-catalog\" version=\"1\">\n";
+  std::vector<String> all = names();
+  for (const String & name : compositeNames())
+    if (std::find(all.begin(),all.end(),name)==all.end()) all.push_back(name);
+  for (const String & name : all)
+    {
+    std::unique_ptr<ParameterizedFunction> standard(create(name));
+    if (!standard) continue;
+    bool composite = isComposite(name);
+    out << "  <FUNCTION name=\"" << xmlEscaped(name.str()) << "\" rank=\"" << standard->rank()
+        << "\" composite=\"" << (composite ? "true" : "false") << "\">\n";
+    bool defaultWritten = false;
+    if (!composite)
+      for (unsigned int n=0; n<=maxParameters; n++)
+        {
+        std::unique_ptr<ParameterizedFunction> f(create(name,n));
+        if (!f) continue;
+        bool isDefault = n==standard->nParameters();
+        writeVariant(out,*f,isDefault);
+        defaultWritten = defaultWritten || isDefault;
+        }
+    if (!defaultWritten) writeVariant(out,*standard,true);
+    out << "  </FUNCTION>\n";
+    }
+  out << "</CAP>\n";
+  return bool(out);
   }
 
   ParameterizedFunction * FunctionRegistry::create(const String & name, unsigned int nParameters)

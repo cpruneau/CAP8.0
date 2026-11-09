@@ -32,7 +32,7 @@ namespace CAP
   //! The functions of CAP are registered under their class names, without namespaces: Constant, Linear, Parabolic,
   //! Cubic, Quartic, Polynomial, Normal, LogNormal, Exponential; the series of orthogonal polynomials LegendreSeries,
   //! ChebyshevSeries, HermiteSeries, LaguerreSeries (see OrthogonalSeries); and the Bessel functions BesselJ, BesselY,
-  //! BesselI, BesselK (see BesselFunction); and, of two variables, Normal2D and Polynomial2D. A class of a user is
+  //! BesselI, BesselK (see BesselFunction); BezierCurve (made with 2n parameters: n knots); and, of two variables, Normal2D and Polynomial2D. A class of a user is
   //! registered once, before its fits are written or read:
   //! @code
   //!   CAP::MATH::FunctionRegistry::registerType<MyFunction>("MyFunction");
@@ -99,6 +99,20 @@ namespace CAP
 
   //! @brief Registered names, in alphabetical order. @return names
   static std::vector<String> names();
+  //!
+  //! @brief Write the catalog of the registered functions and composites to an XML file, for programs choosing a
+  //! function by name (RunCAP): for each function, its name, rank, whether it is a composite, and its variants, one per
+  //! number of parameters it can be made with (create(name, n), n up to maxParameters; the default one of create(name)
+  //! is marked), each with the names, starting values, types and bounds of its parameters.
+  //! @code
+  //!   <CAP type="function-catalog" version="1">
+  //!     <FUNCTION name="Polynomial" rank="1" composite="false">
+  //!       <VARIANT nParameters="3" default="true">
+  //!         <PARAMETER name="a0" value="0" type="Free" minimum="..." maximum="..."/> ...
+  //! @endcode
+  //! @param fileName file @param maxParameters largest number of parameters tried @return false if it cannot be written
+  //!
+  static bool writeCatalog(const String & fileName, unsigned int maxParameters=30);
 
   //! @name Composites
   //! @{

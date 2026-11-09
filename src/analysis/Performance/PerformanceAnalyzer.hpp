@@ -19,6 +19,12 @@ namespace CAP
 //! @brief Analyzer filling detector performance histograms (ParticlePerformanceHistos) for each (event filter, particle
 //! filter) combination.
 //!
+//! Events: EVENT_0 is the detector-level event (written by MeasurementSimulator), whose particles each have a truth
+//! particle; the event filters are applied to it. With a second event, EVENT_1, the generator-level event (EVENT_0 of
+//! MeasurementSimulator), its particles accepted by each particle filter are counted too: the efficiency denominator.
+//! Without it, the efficiencies of PerformanceDerivedCalculator are empty. The resolutions and efficiencies are
+//! computed by PerformanceDerivedCalculator (derived histograms stage).
+//!
 class PerformanceAnalyzer
 :
 public EventProcessorHistos<ParticlePerformanceHistos,1>

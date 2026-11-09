@@ -9,7 +9,7 @@
 ################################################################################################
 # Build options (set with -D<option>=ON|OFF, or with the BuildCAP.py GUI).
 # The core modules (Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
-# Spherocity, SubSample, Performance, BasicEventGen, Glauber) are always built.
+# Spherocity, SubSample, Performance, BasicEventGen) are always built.
 ################################################################################################
 option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
@@ -21,12 +21,17 @@ option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader)"        
 option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      ON)
 option(CAP_WITH_PYTHIA8      "Build the interface to the Pythia8 event generator (library Pythia)" OFF)
 option(CAP_WITH_HERWIG       "Build the interface to the Herwig event generator"              OFF)
+option(CAP_WITH_GLAUBER      "Build the Glauber module (Glauber Monte Carlo of nucleus-nucleus collisions)" ON)
+option(CAP_WITH_SHERPA       "Build the interface to the Sherpa event generator (placeholder)" OFF)
+option(CAP_WITH_THERMALFIST  "Build the interface to Thermal-FIST (placeholder)"              OFF)
 # Installation prefixes of the external packages. When empty, a copy distributed with CAP is used if present
 # (a directory <CAP>/pythia8*, <CAP>/external/pythia8*, ...), then the environment (CAP_PYTHIA8_PATH, PYTHIA8, ...),
 # then the package's configuration tool (pythia8-config --prefix, ...).
 set(CAP_PYTHIA8_DIR "" CACHE PATH "Pythia8 installation prefix")
 set(CAP_HERWIG_DIR  "" CACHE PATH "Herwig installation prefix")
 set(CAP_FASTJET_DIR "" CACHE PATH "FastJet installation prefix")
+set(CAP_SHERPA_DIR  "" CACHE PATH "Sherpa installation prefix")
+set(CAP_THERMALFIST_DIR "" CACHE PATH "Thermal-FIST directory (the source tree, holding include/HRGBase.h)")
 
 if(APPLE)
     cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
@@ -152,7 +157,6 @@ add_subdirectory(core/Base)
 add_subdirectory(models/BasicEventGen)
 add_subdirectory(core/Math)
 add_subdirectory(core/Helpers)
-add_subdirectory(models/Glauber)
 add_subdirectory(analysis/Global)
 add_subdirectory(analysis/Particles)
 add_subdirectory(analysis/ParticleSingle)
@@ -163,13 +167,19 @@ add_subdirectory(analysis/PtPt)
 add_subdirectory(analysis/NuDyn)
 add_subdirectory(analysis/Spherocity)
 add_subdirectory(analysis/SubSample)
-set(CAP_LINKED_MODULES Base Math Helpers Glauber Particles SubSample Global Spherocity ParticleSingle ParticlePair
+set(CAP_LINKED_MODULES Base Math Helpers Particles SubSample Global Spherocity ParticleSingle ParticlePair
                        ParticlePair3D NuDyn PtPt Performance BasicEventGen)
 set(CAP_OPTIONAL_BUILT "")
 
 ################################################################################################
 # Optional modules
 ################################################################################################
+if(CAP_WITH_GLAUBER)
+  add_subdirectory(models/Glauber)
+  list(APPEND CAP_LINKED_MODULES Glauber)
+  list(APPEND CAP_OPTIONAL_BUILT Glauber)
+endif()
+
 if(CAP_WITH_THERMINATOR3)
   add_subdirectory(models/Therminator3)
   list(APPEND CAP_LINKED_MODULES Therminator3)
@@ -263,6 +273,21 @@ if(CAP_WITH_HERWIG)
   endif()
 endif()
 
+# Placeholders: the packages are located (so their location can be checked), but CAP has no interface to them yet.
+if(CAP_WITH_SHERPA)
+  cap_resolve_prefix(CAP_SHERPA_DIR "Sherpa" "include/SHERPA-MC/SHERPA/Main/Sherpa.H"
+                     BUNDLED "../Sherpa/install" "Sherpa*" "sherpa*" "external/Sherpa*" "external/sherpa*"
+                     ENV CAP_SHERPA_PATH SHERPA_DIR TOOL Sherpa-config)
+  message(WARNING "Sherpa was found in ${CAP_SHERPA_DIR}, but CAP has no interface to Sherpa yet: nothing is built for it.")
+endif()
+
+if(CAP_WITH_THERMALFIST)
+  cap_resolve_prefix(CAP_THERMALFIST_DIR "Thermal-FIST" "include/HRGBase.h"
+                     BUNDLED "../Thermal-FIST" "Thermal-FIST*" "external/Thermal-FIST*" ENV CAP_THERMALFIST_PATH THERMALFIST_DIR)
+  message(WARNING "Thermal-FIST was found in ${CAP_THERMALFIST_DIR}, but CAP has no interface to Thermal-FIST yet: "
+                  "nothing is built for it.")
+endif()
+
 ################################################################################################
 # CAP executable
 ################################################################################################
@@ -282,6 +307,9 @@ endif()
 # The task classes in the reflection registry (run with ctest; not installed)
 add_executable(TestTaskRegistry tests/TestTaskRegistry.cpp)
 target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})
+if(CAP_WITH_GLAUBER)   # the test expects the Glauber tasks only when they are built
+  target_compile_definitions(TestTaskRegistry PRIVATE CAP_WITH_GLAUBER)
+endif()
 add_test(NAME TaskRegistry COMMAND TestTaskRegistry)
 
 # Sources that must compile without ROOT (no ROOT include path): most of Base (strings, files, folders, CAP files,
@@ -290,7 +318,7 @@ set(CAP_ROOT_FREE_SOURCES
   core/Base/Accountant.cpp core/Base/BinaryFile.cpp core/Base/CapFile.cpp core/Base/CmdlineParser.cpp
   core/Base/Condition.cpp core/Base/Configuration.cpp core/Base/ConfigurationManager.cpp core/Base/Crc32.cpp
   core/Base/Directory.cpp core/Base/Exceptions.cpp core/Base/Factory.cpp core/Base/File.cpp core/Base/FileSystem.cpp
-  core/Base/FileSystemEntry.cpp core/Base/Filter.cpp core/Base/Folder.cpp core/Base/LongParameter.cpp
+  core/Base/FileSystemEntry.cpp core/Base/Filter.cpp core/Base/Folder.cpp core/Base/LongParameter.cpp core/Base/StringParameter.cpp
   core/Base/NameHelpers.cpp core/Base/Object.cpp core/Base/Parser.cpp core/Base/PhysicsConstants.cpp
   core/Base/PrintHelpers.cpp core/Base/Properties.cpp core/Base/PropertiesParser.cpp core/Base/Property.cpp
   core/Base/Reflection.cpp core/Base/String.cpp core/Base/TxtFile.cpp core/Base/XmlDocument.cpp
@@ -325,7 +353,7 @@ if(optional_text STREQUAL "")
   set(optional_text "none")
 endif()
 message(STATUS "CAP core modules: Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, "
-               "PtPt, NuDyn, Spherocity, SubSample, Performance, BasicEventGen, Glauber")
+               "PtPt, NuDyn, Spherocity, SubSample, Performance, BasicEventGen")
 message(STATUS "CAP optional modules: ${optional_text}")
 message(STATUS "CAP libraries install directory: $ENV{CAP_LIB_PATH}")
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Helpers" "Latex" "Glauber" "Particles"  "ParticleSingle" "ParticlePair"  "BasicEventGen" "$ENV{ROOTSYS}/include"

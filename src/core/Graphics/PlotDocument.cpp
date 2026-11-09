@@ -677,9 +677,22 @@ namespace CAP
     }
   record();
   element(parent(path))->insertChild(unsigned(path.back() + 1), copy);
-  changed();
   Path p = path;
   p.back()++;
+  if (XmlElement * w = element(p))
+    if (w->isNamed("Window"))
+      {
+      // the canvases of a copy of a window: names of their own (and files after them)
+      if (w->hasAttribute("title")) w->setAttribute("title", w->attribute("title", "") + String(" (copy)"));
+      for (XmlElement * c : w->children())
+        {
+        if (!c->isNamed("Canvas")) continue;
+        String name = uniqueCanvasName(c->attribute("name", "canvas"));
+        c->setAttribute("name", name);
+        if (c->hasAttribute("file")) c->setAttribute("file", name + String(".pdf"));
+        }
+      }
+  changed();
   return p;
   }
 

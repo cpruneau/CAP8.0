@@ -179,6 +179,18 @@ namespace CAP
   //! @brief Save a tab (asks for a name if it has none). @param k index @param ask always ask for a name
   //! @param after called once saved
   void save(int k, bool ask, const std::function<void()> & after = std::function<void()>());
+  //! @brief Save the changed plot files one after the other (a file is asked for the untitled ones; Cancel stops).
+  //! @param after called once they are all saved
+  void saveChangedDocuments(const std::function<void()> & after = std::function<void()>());
+  //! @brief Window of the plot file shown on the main window (otherwise that of the selection).
+  //! @param window set to its path @return false if the plot file has no window
+  bool currentWindow(GRAPHICS::PlotDocument::Path & window);
+  //! @brief File > Duplicate: the entry selected in the browser if it was used last, otherwise the selection of the
+  //! plot file (canvas, graph, histogram, function, window), otherwise the plot file.
+  void duplicateCurrent();
+  //! @brief Whether File > Save, Duplicate and Close act on the browser (used last, with an entry selected).
+  //! @return true if so
+  bool browserIsCurrent();
   //! @brief Draw the tree and the other windows; keep the canvases and the file in step (every frame).
   void renderFrame();
   //! @brief Draw the tree of a plot file. @param t tab

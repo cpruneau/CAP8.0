@@ -11,7 +11,9 @@ Tabs:
   * General: name, report level, class, and the parameters of the task (the keys of its filters and histogram folders
     are written from the choices below, see RunCAPFilters);
   * Filters (tasks that use filters, efficiencies or smearers): for each kind the task supports, how many objects it
-    uses and which ones, by name, among those of the library of the workflow (Filters pane);
+    uses and which ones, by name, among those of the library of the workflow (Filters pane); the particle efficiencies
+    and smearers (read from the maps file of the workflow): none, one for all particles, or a grid of one per event
+    filter and particle filter (rows and columns: the filters chosen above);
   * Histograms (analyzers): the run (fill the histograms, or compute the derived histograms from those of a fill run);
     for each list of folders (histograms, derived histograms; for pairs and singles of a pair analyzer), whether it is
     used, created by the run or imported from the input file of the job. The job writes the histograms of all its
@@ -226,6 +228,9 @@ class TaskDialog(tk.Toplevel):
         r = -1
         for kind in self.kinds:
             r += 1
+            if kind in F.MAPS_KINDS:
+                self._make_maps_choice(box, r, kind)
+                continue
             names = self.library.names(kind)
             chosen = list(choices.get(kind, []))
             ttk.Label(box, text=F.KIND_LABELS[kind] + ":").grid(row=r, column=0, sticky="nw", padx=(0, 6), pady=3)
@@ -253,6 +258,61 @@ class TaskDialog(tk.Toplevel):
             if kind in F.TASK_SETTING_KINDS:
                 r += 1
                 self._make_event_settings(box, r)
+
+    _MODE_LABELS = {F.NO_MAPS: "None", F.ONE_FOR_ALL: "One for all particles",
+                    F.PER_FILTERS: "Per event filter and particle filter"}
+
+    def _make_maps_choice(self, box, row, kind):
+        """Particle efficiencies or smearers (from the maps file of the Filters pane): none, one for all particles, or
+        a grid of one per event filter (rows) and particle filter (columns)."""
+        names = self.library.names(kind)
+        chosen = list(F.choices(self.task).get(kind, []))
+        ttk.Label(box, text=F.KIND_LABELS[kind] + ":").grid(row=row, column=0, sticky="nw", padx=(0, 6), pady=3)
+        line = ttk.Frame(box)
+        line.grid(row=row, column=1, columnspan=2, sticky="ew", pady=2)
+        if not names and not chosen:
+            ttk.Label(line, text="none: choose the maps file (Detector maps)", foreground="gray40").pack(side=tk.LEFT,
+                                                                                                       pady=3)
+            ttk.Button(line, text="Filters pane…", command=lambda k=kind: self.show_filters(k)).pack(side=tk.LEFT, padx=8)
+            return
+        mode = F.maps_mode(self.task, kind)
+        labels = [self._MODE_LABELS[m] for m in (F.NO_MAPS, F.ONE_FOR_ALL, F.PER_FILTERS)]
+        mode_var = tk.StringVar(self, value=self._MODE_LABELS[mode])
+        menu = ttk.Combobox(line, textvariable=mode_var, values=labels, width=32, state="readonly")
+        menu.pack(side=tk.LEFT, anchor="n")
+        menu.bind("<<ComboboxSelected>>", lambda e, k=kind, v=mode_var: self._set_maps_mode(
+            k, {label: m for m, label in self._MODE_LABELS.items()}[v.get()]))
+
+        def cell(parent, index, name):
+            var = tk.StringVar(self, value=name)
+            combo = ttk.Combobox(parent, textvariable=var, values=names, width=16, state="readonly")
+            if name not in names:
+                combo.configure(style="Invalid.TCombobox")
+            combo.bind("<<ComboboxSelected>>", lambda e, kd=kind, i=index, v=var: self._set_choice(kd, i, v.get()))
+            return combo
+        if mode == F.ONE_FOR_ALL:
+            cell(line, 0, chosen[0]).pack(side=tk.LEFT, padx=(10, 0), anchor="n")
+        elif mode == F.PER_FILTERS:
+            events, particles = F.filter_grid(self.task)
+            rows, columns = events or ["(all events)"], particles or ["(all particles)"]
+            grid = ttk.Frame(line)
+            grid.pack(side=tk.LEFT, padx=(10, 0))
+            if len(chosen) != len(rows) * len(columns):
+                ttk.Label(grid, text="%d chosen for %d pairs of filters: choose the mode again" % (
+                    len(chosen), len(rows) * len(columns)), foreground="firebrick").grid(row=0, column=0)
+                return
+            for j, p in enumerate(columns):
+                ttk.Label(grid, text=p, foreground="gray25").grid(row=0, column=j + 1, sticky="w", padx=2)
+            for i, e in enumerate(rows):
+                ttk.Label(grid, text=e, foreground="gray25").grid(row=i + 1, column=0, sticky="e", padx=(0, 6))
+                for j in range(len(columns)):
+                    k = i * len(columns) + j
+                    cell(grid, k, chosen[k]).grid(row=i + 1, column=j + 1, sticky="w", padx=2, pady=1)
+
+    def _set_maps_mode(self, kind, mode):
+        F.set_maps_mode(self.task, kind, mode, self.library)
+        self.refresh()
+        self._changed()
 
     def _make_event_settings(self, box, row):
         """What the task does with its events: uses them (analyzer), creates them (generator, reader), imports
@@ -288,6 +348,7 @@ class TaskDialog(tk.Toplevel):
             self._changed()
 
     def _set_count(self, kind, n):
+        before = F.filter_grid(self.task)
         choices = F.choices(self.task)
         chosen = list(choices.get(kind, []))
         names = self.library.names(kind)
@@ -301,13 +362,16 @@ class TaskDialog(tk.Toplevel):
             choices[kind] = chosen
         else:
             choices.pop(kind, None)
+        F.regrid_maps(self.task, before)
         self.refresh()
         self._changed()
 
     def _set_choice(self, kind, index, name):
+        before = F.filter_grid(self.task)
         chosen = F.choices(self.task)[kind]
         if chosen[index] != name:
             chosen[index] = name
+            F.regrid_maps(self.task, before)
             self.refresh()
             self._changed()
 

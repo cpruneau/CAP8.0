@@ -40,21 +40,25 @@ void check(bool ok, const char * what, int line)
 
 bool close(double a, double b) { return std::fabs(a-b) <= 1e-12*(1.0+std::fabs(a)+std::fabs(b)); }
 
-//! Spherocity S0 computed directly.
-double spherocity(const std::vector<Particle*> & particles)
+//! Spherocity computed directly: (pi^2/4) times the minimum of the ratio squared over a fine grid of axes.
+double spherocity(const std::vector<Particle*> & particles, bool weighted=true)
 {
-  double sumPt = 0.0;
-  for (auto p : particles) sumPt += p->momentum().perp();
-  if (particles.empty() || sumPt <= 0.0) return 0.0;
+  double sum = 0.0;
+  for (auto p : particles) sum += weighted ? p->momentum().perp() : 1.0;
+  if (particles.empty() || sum <= 0.0) return 0.0;
   double best = 1.0E10;
-  for (int k=0; k<360; k++)
+  for (int k=0; k<200000; k++)
     {
-    double phi = k*2.0*M_PI/360.0, sum = 0.0;
-    for (auto p : particles) sum += std::fabs(std::sin(phi)*p->momentum().x() - std::cos(phi)*p->momentum().y());
-    double r = sum/sumPt;
+    double phi = k*M_PI/200000.0, s = 0.0;
+    for (auto p : particles)
+      {
+      double w = weighted ? 1.0 : 1.0/p->momentum().perp();
+      s += w*std::fabs(std::sin(phi)*p->momentum().x() - std::cos(phi)*p->momentum().y());
+      }
+    double r = s/sum;
     if (r*r < best) best = r*r;
     }
-  return best;
+  return 0.25*M_PI*M_PI*best;
 }
 } // namespace
 
@@ -105,7 +109,38 @@ int main()
   bool momentsOk = true;
   for (int k=0; k<4; k++) momentsOk = momentsOk && close(a.ptMoments()[k], moments[k]);
   CHECK(momentsOk);
-  CHECK(close(a.spherocity(), spherocity(expected)));
+  // the exact minimum: at most the minimum over any grid of axes, and close to that of a fine grid
+  double fine0 = spherocity(expected), fine1 = spherocity(expected, false);
+  CHECK(a.spherocity() <= fine0 + 1e-12 && fine0 - a.spherocity() < 1e-4);
+  double s1 = ParticleSelection::spherocity(expected, false);
+  CHECK(s1 <= fine1 + 1e-12 && fine1 - s1 < 1e-4);
+  if (!(fine0 - a.spherocity() < 1e-4)) std::printf("  S0 exact %.10f fine grid %.10f\n", a.spherocity(), fine0);
+  CHECK(a.spherocity() >= 0.0 && a.spherocity() <= 1.0);
+  // the grid above the exact limit: close to the exact value (and never below it)
+  double exact = ParticleSelection::spherocity(expected, true), grid = ParticleSelection::spherocity(expected, true, 0, 2000);
+  CHECK(grid >= exact - 1e-12 && grid - exact < 5e-3);
+  if (!(grid - exact < 5e-3) || grid < exact - 1e-12) std::printf("  S0 exact %.10f grid %.10f\n", exact, grid);
+  // limits: pencil-like (back to back along one axis) 0, isotropic 1
+  {
+  std::vector<Particle> pencil(6), round(720);
+  std::vector<Particle*> pp, pr;
+  for (unsigned int k=0; k<pencil.size(); k++)
+    {
+    double sign = k%2 ? -1.0 : 1.0, pt = 0.5 + 0.3*k;
+    pencil[k].set(&plus, sign*pt, 0.0, 0.1*k, std::sqrt(pt*pt + 0.01*k*k + 0.0196), 0.0, 0.0, 0.0, 0.0);
+    pp.push_back(&pencil[k]);
+    }
+  for (unsigned int k=0; k<round.size(); k++)
+    {
+    double phi = 2.0*M_PI*k/round.size();
+    round[k].set(&plus, std::cos(phi), std::sin(phi), 0.0, std::sqrt(1.0 + 0.0196), 0.0, 0.0, 0.0, 0.0);
+    pr.push_back(&round[k]);
+    }
+  CHECK(ParticleSelection::spherocity(pp) < 1e-12 && ParticleSelection::spherocity(pp, false) < 1e-12);
+  CHECK(std::fabs(ParticleSelection::spherocity(pr) - 1.0) < 1e-4);
+  CHECK(std::fabs(ParticleSelection::spherocity(pr, false) - 1.0) < 1e-4);
+  CHECK(ParticleSelection::spherocity(std::vector<Particle*>()) == 0.0);
+  }
   CHECK(a.filter() == &low && a.slot() == sLow);
 
   // one selection per filter and event: the same object, not made again

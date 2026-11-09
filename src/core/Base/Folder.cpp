@@ -1,5 +1,6 @@
 #include "Folder.hpp"
 #include "LongParameter.hpp"
+#include "StringParameter.hpp"
 #include "FileSystem.hpp"
 #include <algorithm>
 #include <fstream>
@@ -471,7 +472,7 @@ namespace CAP
 
   const std::type_info * Folder::registeredType(const std::string & tag)
   {
-  registry();   // registers Folder and LongParameter on first use
+  registry();   // registers Folder, LongParameter and StringParameter on first use
   auto found = typeRegistry().find(tag);
   return found==typeRegistry().end() ? nullptr : found->second;
   }
@@ -485,6 +486,7 @@ namespace CAP
     initialized = true;
     registerType<Folder>();
     registerType<LongParameter>();
+    registerType<StringParameter>();
     // Other libraries register their own classes when they are loaded (Math/FolderTypes.cpp, Graphics/Data2DPoints.cpp, ...).
     }
   return types;

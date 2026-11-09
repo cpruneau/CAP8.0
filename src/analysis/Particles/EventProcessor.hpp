@@ -21,7 +21,7 @@
 #include "Particle.hpp"
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
-#include "ParticleSmearer.hpp"
+#include "ParticleSmear.hpp"
 #include "ParticleSelection.hpp"
 #include <memory>
 
@@ -63,7 +63,7 @@ namespace CAP
   //! Particle efficiencies.
   ManagedObjects<ParticleEfficiency> _managedParticleEfficiencies;
   //! Particle smearers.
-  ManagedObjects<ParticleSmearer>    _managedParticleSmearers;
+  ManagedObjects<ParticleSmear>    _managedParticleSmearers;
 
   //! Whether each event filter accepted the current event (see filterEvent()).
   std::vector<bool>   _acceptedEventFilters;
@@ -147,7 +147,7 @@ namespace CAP
   //! @brief Particle efficiencies. @return efficiencies
   const std::vector<ParticleEfficiency*> & particleEfficiencies() const { return _managedParticleEfficiencies.getObjects(); }
   //! @brief Particle smearers. @return smearers
-  const std::vector<ParticleSmearer*>   & particleSmearers() const     { return _managedParticleSmearers.getObjects(); }
+  const std::vector<ParticleSmear*>   & particleSmearers() const     { return _managedParticleSmearers.getObjects(); }
 
   //! @brief First particle database. @return database
   ParticleDb & db()                                                     { return *_managedParticleDbs.objectAt(0); }
@@ -165,7 +165,7 @@ namespace CAP
   std::vector<ParticleEfficiency*> & particleEfficiencies()             { return _managedParticleEfficiencies.getObjects(); }
   //! @brief Particle smearers. @return smearers
   //! @}
-  std::vector<ParticleSmearer*>   & particleSmearers()                 { return _managedParticleSmearers.getObjects(); }
+  std::vector<ParticleSmear*>   & particleSmearers()                 { return _managedParticleSmearers.getObjects(); }
 
   //! @brief Set the highest order of the pT moments computed by filterParticles(). @param order order
   void setPtOrder(unsigned int order) { _ptMomentOrder = order; }
@@ -192,6 +192,28 @@ namespace CAP
   //! and global quantities. @param index filter index @return selection @throws MemoryException for an index
   //! without selection
   const ParticleSelection & selection(unsigned int index) const;
+  //!
+  //! @brief The efficiency or smearer (object of a list) serving event filter e and particle filter p: none if the list
+  //! is empty, the only one (one for all), the p-th (one per particle filter), or the (e*nParticleFilters + p)-th (one
+  //! per event filter and particle filter, in the order of the histogram folders).
+  //! @param objects list @param e event filter @param nEventFilters number of event filters @param p particle filter
+  //! @param nParticleFilters number of particle filters @param what name of the list, for the message
+  //! @return object, or null @throws Exception for a list of another size
+  //!
+  template <class T>
+  static T * objectFor(std::vector<T*> & objects, unsigned int e, unsigned int nEventFilters, unsigned int p,
+                       unsigned int nParticleFilters, const char * what)
+  {
+  std::size_t n = objects.size();
+  if (n==0) return nullptr;
+  if (n==1) return objects[0];
+  if (n==nParticleFilters) return objects[p];
+  if (n==std::size_t(nEventFilters)*nParticleFilters) return objects[std::size_t(e)*nParticleFilters+p];
+  throw Exception(String("Number of ")+what+": "+String(std::to_string(n).c_str())+"; expected 0, 1 (for all), "
+                  +String(std::to_string(nParticleFilters).c_str())+" (one per particle filter) or "
+                  +String(std::to_string(std::size_t(nEventFilters)*nParticleFilters).c_str())
+                  +" (one per event filter and particle filter)","EventProcessor::objectFor()");
+  }
   //! @brief Value of the quantity used to classify the current event (multiplicity, energy or spherocity, according
   //! to the event class type). @return value @throws Exception for an unknown event class type
   double getEvtClassValue() const;

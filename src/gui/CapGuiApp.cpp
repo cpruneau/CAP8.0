@@ -316,15 +316,18 @@ namespace CAP
                      "shown in the Plot Tree; what is changed on them is written to the file, and what is changed in the "
                      "tree draws them again.");
   ImGui::Spacing();
-  ImGui::BulletText("File > New, Open, Close, Duplicate, Save act on plot files (a tab each in the Plot Tree);\n"
-                    "Open Data and Open Data Folder show CAP files in the browser; File > Export writes figures,\n"
-                    "the PDF book, the PowerPoint presentation and the LaTeX document.");
+  ImGui::BulletText("File > New makes plot files (a tab each in the Plot Tree), windows, canvases, browsers and empty\n"
+                    "trees; File > Open opens data files (CAP) in the browser and plot files (XML) in the Plot Tree.");
+  ImGui::BulletText("File > Duplicate, Save and Close act on what was used last: the selection of the plot file (canvas,\n"
+                    "graph, histogram, function), or the tree and object selected in the browser. Closing a changed\n"
+                    "plot file or tree asks to save it. File > Export writes figures, the PDF book, the PowerPoint\n"
+                    "presentation and the LaTeX document.");
   ImGui::BulletText("Drag a histogram from the browser onto a graph of a canvas or onto the tree: on a graph it is\n"
                     "overlaid; on a histogram it goes after it; on a canvas it gets a new graph; on a window a new\n"
                     "canvas. A folder adds all its histograms. Clicking a histogram in the browser adds it to the\n"
                     "selected graph.");
   ImGui::BulletText("The selection is shared: click a graph on a canvas, its row is selected in the tree, and the other\n"
-                    "way around. Edit > Copy, Cut, Paste, Duplicate, Delete act on it; Copy puts its XML on the clipboard.");
+                    "way around. Edit > Copy, Cut, Paste, Delete and File > Duplicate act on it; Copy puts its XML on the clipboard.");
   ImGui::BulletText("Window > Canvases and Graphs in Canvas set the grids of the window and of the canvas in the file.");
   ImGui::BulletText("View > All Windows shows every window of the plot file; otherwise the window of the selection.");
   ImGui::BulletText("Shapes drawn on the canvases and fits are shown, not written to the plot file.");
@@ -351,21 +354,37 @@ namespace CAP
   {
   MenuBar & bar = _gui.menuBar();
   Menu & file = bar.addMenu("File");
-  file.addItem("New Plot File",     "plot.new",       "Ctrl+N",       "A new, untitled plot file (a new tab of the Plot Tree)");
-  file.addItem("Open Plot File...", "plot.open",      "Ctrl+O",       "Open a plot file (PlotHistos XML) in a new tab");
-  file.addItem("New from Data...",  "plot.fromData",  "",             "A new plot file listing the histograms of a CAP file or of a RunCAP workflow: choose them and their layout");
-  file.addItem("Close Plot File",   "plot.close",     "Ctrl+W",       "Close the plot file shown (asks to save its changes)");
-  file.addItem("Duplicate Plot File", "plot.duplicate", "",           "A copy of the plot file shown, in a new tab (not saved yet)");
+  Menu & creating = file.addMenu("New", "Plot files, windows, canvases, browsers and trees");
+  creating.addItem("Plot File",                "plot.new",           "Ctrl+N", "A new, untitled plot file (a new tab of the Plot Tree)");
+  creating.addSeparator();
+  creating.addItem("Window",                   "plot.newWindow",     "",       "A new, empty window of the plot file");
+  creating.addItem("Canvas in Current Window", "plot.newCanvas",     "",       "A new canvas in the window shown");
+  creating.addItem("Canvas in New Window",     "plot.newCanvasWindow", "",     "A new window of the plot file, with one canvas");
+  creating.addSeparator();
+  creating.addItem("From Data File...",        "plot.fromData",      "",       "A new plot file with windows, canvases and graphs of the histograms and functions of a CAP file (or of a RunCAP workflow): choose them and their layout");
+  creating.addSeparator();
+  creating.addItem("File Browser",             "file.newBrowser",    "",       "Another file browser, with files of its own");
+  creating.addItem("Empty Folder Tree",        "file.newTree",       "",       "A new, empty tree of histograms and functions in the browser: drag objects onto it, save it as a CAP file");
+  Menu & opening = file.addMenu("Open", "Data files (CAP) and plot files (XML)");
+  opening.addItem("Data File (CAP/ROOT)...",   "file.open",          "Ctrl+Shift+O", "Open a CAP file (or the histograms of a ROOT file) in the browser");
+  opening.addItem("Data Folder...",            "file.openFolder",    "",             "Show a folder of CAP files in the browser");
+  opening.addItem("Plot File (XML)...",        "plot.open",          "Ctrl+O",       "Open a plot file (PlotHistos XML) in a new tab of the Plot Tree");
+  file.addItem("Duplicate",                    "file.duplicate",     "Ctrl+D",       "A copy of the selection, after it: the canvas, graph, histogram or function selected in the Plot Tree "
+                                                                                      "or on a canvas, or the object or folder selected in a tree of the browser (if the browser was used last); "
+                                                                                      "with nothing selected, the plot file");
   file.addSeparator();
-  file.addItem("Save",              "plot.save",      "Ctrl+S",       "Save the plot file shown");
-  file.addItem("Save As...",        "plot.saveAs",    "Ctrl+Shift+S", "Save the plot file shown under a new name");
-  file.addItem("Save All",          "plot.saveAll",   "",             "Save all the plot files changed");
+  file.addItem("Save",                         "file.saveItem",      "Ctrl+S",       "Save the plot file shown, or the tree selected in the browser (if the browser was used last)");
+  file.addItem("Save As...",                   "file.saveItemAs",    "Ctrl+Shift+S", "Save the plot file shown, or the tree selected in the browser, under a new name");
+  file.addItem("Save All",                     "file.saveEverything", "",            "Save all the changed plot files and trees");
   file.addSeparator();
-  file.addItem("Open Data...",        "file.open",       "Ctrl+Shift+O", "Open a CAP file (or the histograms of a ROOT file) in the browser");
-  file.addItem("Open Data Folder...", "file.openFolder", "",             "Show a folder of CAP files in the browser");
-  file.addItem("Close All Data",      "file.closeAll",   "",             "Close the data files open in the browsers");
-  file.addItem("New Browser",         "file.newBrowser", "",             "Open another file browser, with files of its own");
-  file.addItem("New Tree",            "file.newTree",    "",             "Make a new, empty tree of histograms in the browser: drag objects onto it, save it as a CAP file");
+  Menu & closing = file.addMenu("Close", "Windows, canvases, browsers, trees and plot files");
+  closing.addItem("Window",                    "plot.closeWindow",   "",       "Remove the window shown from the plot file, with its canvases (Undo restores it)");
+  closing.addItem("Canvas",                    "window.close",       "",       "Remove the current canvas from the plot file (Undo restores it)");
+  closing.addItem("File Browser",              "file.closeBrowser",  "",       "Close the browser used last (the first one is hidden), asking to save its changed trees");
+  closing.addItem("Folder Tree",               "file.closeTree",     "",       "Close the tree (or the data file) selected in the browser, asking to save its changes");
+  closing.addItem("Plot File",                 "plot.close",         "Ctrl+W", "Close the plot file shown, asking to save its changes");
+  closing.addSeparator();
+  closing.addItem("All Data Files",            "file.closeAll",      "",       "Close the data files and trees open in the browsers");
   file.addSeparator();
   Menu & exporting = file.addMenu("Export", "Figures and documents made from the canvases");
   exporting.addItem("Window As...",  "file.saveAs",     "", "The canvases of the main window, laid out as on screen, to an SVG or PDF file");
@@ -389,7 +408,6 @@ namespace CAP
   edit.addItem("Cut",    "plot.cut",   "Ctrl+X", "Copy the selection (graph, canvas, histogram, ...), then remove it");
   edit.addItem("Copy",   "plot.copy",  "Ctrl+C", "Copy the selection: its XML also goes to the clipboard");
   edit.addItem("Paste",  "plot.paste", "Ctrl+V", "Paste what was copied where it belongs, at the selection");
-  edit.addItem("Duplicate", "plot.duplicateElement", "Ctrl+D", "A copy of the selection, after it");
   edit.addItem("Delete", "plot.delete", "Delete", "Remove the shape selected on a canvas, otherwise the selection");
   edit.addSeparator();
   edit.addItem("Clear Canvas",       "edit.clearCanvas", "", "Remove the histograms and functions of all the graphs of the current canvas");
@@ -403,6 +421,7 @@ namespace CAP
   edit.addItem("Move Down",    "plot.down",        "", "Move the selection after the next element");
   edit.addSeparator();
   edit.addItem("Fit...", "edit.fit", "", "Fit a function to data points, a histogram or a function of the selected graph (shown on screen only)");
+  edit.addItem("Detector Maps...", "edit.maps", "", "The particle efficiencies and smearers of a maps file (RunCAP: Import)");
   edit.addItem("Preferences...", "edit.preferences", "", "Settings of CapGui: window, fonts, graphs, LaTeX");
 
   Menu & view = bar.addMenu("View");
@@ -461,6 +480,20 @@ namespace CAP
   enable("plot.duplicate", any);
   enable("plot.save", any);
   enable("plot.saveAs", any);
+  enable("file.saveItem", any);
+  enable("file.saveItemAs", any);
+  enable("file.duplicate", any);
+  enable("plot.newWindow", any);
+  enable("plot.newCanvas", any);
+  enable("plot.newCanvasWindow", any);
+  enable("plot.closeWindow", any && !t->document->children(PlotDocument::Path(), PlotDocument::kWindow).empty());
+  enable("window.close", _gui.nPanes() > 0);
+  enable("file.closeBrowser", _gui.browserVisible() || _gui.browsers().size() > 1);
+  {
+  String path;
+  bool folder = false;
+  enable("file.closeTree", selectedEntry(path, folder) != nullptr);
+  }
   enable("plot.undo", any && t->document->canUndo());
   enable("plot.redo", any && t->document->canRedo());
   enable("plot.cut", selected);
@@ -493,6 +526,8 @@ namespace CAP
   _gui.onClosePanes = [this](const std::vector<int> & panes) { return closeCanvases(panes); };
   _gui.onCloseRequest = [this]() -> bool
     {
+    // the trees changed first (Cancel leaves the plot files as they are), then the plot files changed
+    if (!confirmTreesBeforeExit()) return false;
     _closing.clear();
     for (const auto & t : _documents) if (t.document->isDirty()) _closing.push_back(t.id);
     if (_closing.empty()) return true;
@@ -620,6 +655,73 @@ namespace CAP
   _gui.fileDialog().open(FileDialog::kSaveFile, "Save the plot file", start, {".xml"}, name, write);
   }
 
+  void CapGuiApp::saveChangedDocuments(const std::function<void()> & after)
+  {
+  for (std::size_t k=0; k<_documents.size(); k++)
+    if (_documents[k].document->isDirty())
+      {
+      int id = _documents[k].id;
+      save(int(k), false, [this, id, after]()
+        {
+        for (const auto & t : _documents) if (t.id == id && t.document->isDirty()) return;   // not saved: stop
+        saveChangedDocuments(after);
+        });
+      return;
+      }
+  if (after) after();
+  }
+
+  bool CapGuiApp::currentWindow(Path & window)
+  {
+  Tab * t = tab();
+  if (!t) return false;
+  PlotDocument & d = *t->document;
+  std::vector<Path> windows = d.children(Path(), PlotDocument::kWindow);
+  if (windows.empty()) return false;
+  bool ok = false;
+  if (t->hasSelection)
+    {
+    Path w = d.enclosing(t->selected, PlotDocument::kWindow, ok);
+    if (ok) { window = w; return true; }
+    }
+  int k = (_drawnTab == t->id && _drawnWindow >= 0 && _drawnWindow < int(windows.size())) ? _drawnWindow : 0;
+  window = windows[std::size_t(k)];
+  return true;
+  }
+
+  bool CapGuiApp::browserIsCurrent()
+  {
+  if (_gui.lastFocus() != CapGui::kFocusBrowser) return false;
+  String path;
+  bool folder = false;
+  return selectedEntry(path, folder) != nullptr;
+  }
+
+  void CapGuiApp::duplicateCurrent()
+  {
+  if (browserIsCurrent())
+    {
+    actionPerformed(ActionEvent{"file.duplicateEntry", nullptr});
+    return;
+    }
+  Tab * t = tab();
+  if (!t) return;
+  PlotDocument & d = *t->document;
+  if (t->hasSelection && !t->selected.empty() && d.element(t->selected))
+    {
+    PlotDocument::Kind kind = PlotDocument::kind(*d.element(t->selected));
+    Path copy = d.duplicate(t->selected);
+    if (copy.empty()) return;
+    t->selected = copy;
+    const char * what = kind == PlotDocument::kWindow ? "window" : kind == PlotDocument::kCanvas ? "canvas"
+                      : kind == PlotDocument::kGraph ? "graph" : kind == PlotDocument::kHistogram ? "histogram"
+                      : kind == PlotDocument::kFunction ? "function" : "element";
+    _gui.setStatus(String("Duplicated the ") + String(what) + String(" (Undo to remove the copy)"));
+    return;
+    }
+  actionPerformed(ActionEvent{"plot.duplicate", nullptr});
+  }
+
   std::vector<String> CapGuiApp::objectsOf(const ObjectReference & object, bool folder, String & fileName)
   {
   std::vector<String> objects;
@@ -696,10 +798,48 @@ namespace CAP
     }
   else if (c == "plot.save" && d) save(_current, false);
   else if (c == "plot.saveAs" && d) save(_current, true);
-  else if (c == "plot.saveAll")
+  else if (c == "plot.saveAll") saveChangedDocuments();
+  else if (c == "file.saveItem" || c == "file.saveItemAs")
     {
-    for (std::size_t k=0; k<_documents.size(); k++)
-      if (_documents[k].document->isDirty()) save(int(k), false);
+    bool ask = c == "file.saveItemAs";
+    if (browserIsCurrent())
+      {
+      String path;
+      bool folder = false;
+      BrowserFile * entry = selectedEntry(path, folder);
+      if (entry && entry->editable) { saveTree(entry->id, ask); return; }
+      }
+    if (d) save(_current, ask);
+    }
+  else if (c == "file.saveEverything") saveChangedDocuments([this]() { saveChangedTrees([this]() { _gui.setStatus("All saved"); }); });
+  else if (c == "file.duplicate") duplicateCurrent();
+  else if (c == "plot.newWindow" && d)
+    {
+    t->selected = d->addWindow();
+    t->hasSelection = true;
+    _gui.setStatus("New window: File > New > Canvas in Current Window, or drop histograms on it in the Plot Tree");
+    }
+  else if ((c == "plot.newCanvas" || c == "plot.newCanvasWindow") && d)
+    {
+    Path w;
+    d->beginEdit();
+    if (c == "plot.newCanvasWindow" || !currentWindow(w)) w = d->addWindow();
+    t->selected = d->addCanvas(w);
+    d->endEdit();
+    t->hasSelection = true;
+    }
+  else if (c == "plot.closeWindow" && d)
+    {
+    Path w;
+    if (!currentWindow(w)) { _gui.setStatus("No window in the plot file"); return; }
+    std::vector<Path> windows = d->children(Path(), PlotDocument::kWindow);
+    std::size_t k = std::size_t(std::find(windows.begin(), windows.end(), w) - windows.begin());
+    if (!d->remove(w)) return;
+    windows = d->children(Path(), PlotDocument::kWindow);
+    t->hasSelection = !windows.empty();
+    t->selected = windows.empty() ? Path() : windows[std::min(k, windows.size() - 1)];   // the next one shown
+    _drawnWindow = -1;
+    _gui.setStatus("Window removed from the plot file (Undo to restore it)");
     }
   else if (c == "plot.undo" && d) d->undo();
   else if (c == "plot.redo" && d) d->redo();
@@ -874,6 +1014,7 @@ namespace CAP
   if (treeShown && ImGui::Begin(kEditorWindow, &_showTree, ImGuiWindowFlags_NoCollapse))
     {
     _treeFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+    if (_treeFocused) _gui.setLastFocus(CapGui::kFocusSide);
     if (ImGui::BeginTabBar("##documents", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs
                                           | ImGuiTabBarFlags_FittingPolicyScroll))
       {

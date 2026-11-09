@@ -8,6 +8,7 @@
 
 import os
 import sys
+import tempfile
 import unittest
 
 CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -55,7 +56,8 @@ class TestPanel(unittest.TestCase):
         return self.panel.scrolls[kind].inner
 
     def test_tabs(self):
-        self.assertEqual(len(self.panel.notebook.tabs()), 8)
+        self.assertEqual(len(self.panel.notebook.tabs()), 7)      # the efficiencies and smearers: one tab, the maps file
+        self.assertEqual(self.panel.notebook.tab(self.panel.maps_tab, "text"), "Detector maps")
         self.assertEqual(self.panel.counts["PARTICLE_FILTER"].get(), "0")
         self.assertEqual(self.panel.counts["EVENT_FILTER"].box.cget("values")[-1], "20")
 
@@ -130,38 +132,73 @@ class TestPanel(unittest.TestCase):
         self.assertIn("duplicate", self.panel.problems.get())
 
     def test_parameters(self):
-        self.panel.set_count("PARTICLE_EFFICIENCY", 1)
-        d = self.library.objects["PARTICLE_EFFICIENCY"][0]
-        entries = [e for e in widgets(self.inner("PARTICLE_EFFICIENCY"), tk.ttk.Entry)
+        self.panel.set_count("EVENT_EFFICIENCY", 1)
+        d = self.library.objects["EVENT_EFFICIENCY"][0]
+        entries = [e for e in widgets(self.inner("EVENT_EFFICIENCY"), tk.ttk.Entry)
                    if not isinstance(e, tk.ttk.Combobox)]
-        self.assertEqual(len(entries), 2 + len(F.KIND_PARAMETERS["PARTICLE_EFFICIENCY"]))
-        entries[3].delete(0, tk.END)                   # pt_nbins (after name, title, BASE_NAME)
+        self.assertEqual(len(entries), 2 + len(F.KIND_PARAMETERS["EVENT_EFFICIENCY"]))
+        entries[3].delete(0, tk.END)                   # nBins_mult (after name, title, BASE_NAME)
         entries[3].insert(0, "40")
-        self.assertEqual(d.parameters["pt_nbins"], "40")
+        self.assertEqual(d.parameters["nBins_mult"], "40")
         entries[3].delete(0, tk.END)
         self.assertIn("invalid int value", self.panel.problems.get())
 
     def test_all_kinds(self):
-        """Every tab with objects: filters, corrections, events and particle databases."""
+        """Every tab with objects: filters, event corrections, events and particle databases (the particle
+        efficiencies and smearers come from the maps file)."""
         for kind in F.KINDS:
+            if kind in F.MAPS_KINDS:
+                continue
             self.panel.set_count(kind, 1)
             self.assertEqual(len(widgets(self.inner(kind), tk.ttk.Labelframe)), 1)
-        self.assertEqual(sorted(self.panel.setting_vars), sorted(F.SETTINGS_KINDS))
+        self.assertEqual(sorted(self.panel.setting_vars), sorted(k for k in F.SETTINGS_KINDS if k not in F.MAPS_KINDS))
         self.assertEqual(self.library.settings["PARTICLE_DB"]["IMPORT:FILE_NAME"], "ParticleDb.xml")
         self.assertEqual(sorted(self.panel.setting_vars["PARTICLE_DB"]), ["IMPORT:FILE_NAME", "IMPORT:PATH"])
 
     def test_settings(self):
         self.assertNotIn("PARTICLE_FILTER", self.panel.setting_vars)
-        variables = self.panel.setting_vars["PARTICLE_EFFICIENCY"]
+        self.assertNotIn("PARTICLE_EFFICIENCY", self.panel.setting_vars)
+        variables = self.panel.setting_vars["EVENT_EFFICIENCY"]
         variables["IMPORT"].set(True)
         variables["IMPORT:FILE_NAME"].set("Eff.root")
-        self.assertEqual(self.library.settings["PARTICLE_EFFICIENCY"]["IMPORT"], "true")
-        self.assertEqual(self.library.settings["PARTICLE_EFFICIENCY"]["IMPORT:FILE_NAME"], "Eff.root")
+        self.assertEqual(self.library.settings["EVENT_EFFICIENCY"]["IMPORT"], "true")
+        self.assertEqual(self.library.settings["EVENT_EFFICIENCY"]["IMPORT:FILE_NAME"], "Eff.root")
         self.assertTrue(self.changes)
         self.library.settings["EVENT_SMEARER"]["CREATE"] = "true"
         self.panel.refresh()
         self.assertTrue(self.panel.setting_vars["EVENT_SMEARER"]["CREATE"].get())
 
+    def test_maps_file(self):
+        """The maps file names the particle efficiencies and smearers of the library (as listed by bin/CAP); objects
+        gone from the file are removed from the tasks; no file: none."""
+        listed = [F.MapsEntry("PARTICLE_EFFICIENCY", "EffPi", "211", "EFFICIENCY=function"),
+                  F.MapsEntry("PARTICLE_EFFICIENCY", "EffK", "", "EFFICIENCY=histogram"),
+                  F.MapsEntry("PARTICLE_SMEARER", "Smear", "", "PT=function")]
+        original = F.list_maps
+        F.list_maps = lambda path, program=None: list(listed)
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                path = os.path.join(d, "Maps.cap")
+                open(path, "w").close()
+                self.panel.maps_tab.set_file(path)
+                self.assertEqual(F.maps_file(self.library), path)
+                self.assertEqual(self.library.names("PARTICLE_EFFICIENCY"), ["EffPi", "EffK"])
+                self.assertEqual(self.library.names("PARTICLE_SMEARER"), ["Smear"])
+                rows = [self.panel.maps_tab.table.item(i, "values") for i in self.panel.maps_tab.table.get_children()]
+                self.assertEqual([r[1] for r in rows], ["EffPi", "EffK", "Smear"])
+                self.assertEqual(rows[0][2], "211")
+                self.assertEqual(rows[1][2], "all")
+                del listed[1]                                  # EffK gone from the file
+                self.panel.maps_tab.load(force=True)
+                self.assertEqual(self.library.names("PARTICLE_EFFICIENCY"), ["EffPi"])
+                self.assertIn(("PARTICLE_EFFICIENCY", ["EffK"]), self.removed)
+                self.panel.maps_tab.set_file("")
+                self.assertEqual(F.maps_file(self.library), "")
+                self.assertEqual(self.library.names("PARTICLE_SMEARER"), [])
+                self.panel.select("PARTICLE_SMEARER")
+                self.assertEqual(self.panel.notebook.select(), str(self.panel.maps_tab))
+        finally:
+            F.list_maps = original
 
 if __name__ == "__main__":
     unittest.main()

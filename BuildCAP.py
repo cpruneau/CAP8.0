@@ -15,8 +15,9 @@ Usage (from anywhere; the script locates CAP from its own position):
 The window has three parts:
   * a toolbar (top): Build, Stop, Save output, Clear, the build directory name, the build type, the number of parallel
     jobs and whether to install;
-  * the options (upper half): the core modules (always built), the optional modules (Therminator3, Latex, Graphics, Jets,
-    Epos, PHSD, Pythia) and the Herwig generator, with the locations of ROOT and of the external packages;
+  * the options (upper half): the core modules (always built) and the install directory, and the optional modules
+    (Glauber, Therminator3, Epos, PHSD, Pythia, Herwig, Sherpa, Thermal-FIST, Jets, ROOT histograms, Latex, Graphics,
+    CapGui); a module that needs an external package has the location of that package on the line below it;
   * the output of cmake and make (lower half), which can be saved to a file.
 
 Build steps (each command is printed in the output pane before it runs):
@@ -29,12 +30,17 @@ coexist. The libraries are installed in the "Install libraries to" directory ($C
 the CAP executable in <CAP>/bin. The environment of SetupCAP.sh is set for the commands, so the GUI does not need to be
 started from a shell where SetupCAP.sh was sourced.
 
-External packages (Pythia8, Herwig, FastJet): when the location field is empty, CMake uses a copy distributed with CAP
-(<CAP>/pythia8*, <CAP>/Herwig*, <CAP>/fastjet*, or the same names under <CAP>/external), then the environment
-(CAP_PYTHIA8_PATH or PYTHIA8, CAP_HERWIG_PATH or HERWIG_DIR, CAP_FASTJET_PATH or FASTJET), then the package's
-configuration tool (pythia8-config, Herwig-config, fastjet-config). The Detect button shows what would be used.
+External packages (Pythia8, Herwig, Sherpa, Thermal-FIST, FastJet): when the location field is empty, CMake uses a
+copy next to CAP (../Herwig/install, ../Sherpa/install, ../Thermal-FIST, ../Fastjet/install) or distributed with CAP
+(<CAP>/pythia8*, <CAP>/Herwig*, ..., or the same names under <CAP>/external), then the environment (CAP_PYTHIA8_PATH
+or PYTHIA8, CAP_HERWIG_PATH or HERWIG_DIR, CAP_SHERPA_PATH or SHERPA_DIR, CAP_THERMALFIST_PATH or THERMALFIST_DIR,
+CAP_FASTJET_PATH or FASTJET), then the package's configuration tool (pythia8-config, Herwig-config, Sherpa-config,
+fastjet-config). The status line under each location shows what would be used. Sherpa and Thermal-FIST are
+placeholders: CMake checks their location, but CAP has no interface to them yet. ROOT is required by the core modules;
+its location sits under "ROOT histograms", which turns the import and export of .root files on or off.
 
-The settings are saved in <CAP>/.BuildCAP.json. Requires Python 3.7+ with tkinter (on macOS with Homebrew Python:
+The settings are saved in <CAP>/.BuildCAP.json; Save configuration and Load configuration write and read them to and
+from other files, by default in <CAP>/configurations (e.g. one per machine or per set of packages). Requires Python 3.7+ with tkinter (on macOS with Homebrew Python:
 brew install python-tk).
 """
 
@@ -54,45 +60,56 @@ import time
 CAP_DIR = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(CAP_DIR, "src")
 SETTINGS_FILE = os.path.join(CAP_DIR, ".BuildCAP.json")
+#: Default directory of the configuration files (Save configuration, Load configuration), created when needed.
+CONFIGURATIONS_DIR = os.path.join(CAP_DIR, "configurations")
 
-#: Modules always built (see src/CMakeLists.txt).
+#: Modules always built (see src/CMakeLists.txt). Helpers holds the ROOT file and histogram helpers used by Particles,
+#: SubSample, Performance and several models: it stays a core module while the core uses ROOT.
 CORE_MODULES = ["Base", "Math", "Helpers", "Particles", "Global", "ParticleSingle", "ParticlePair", "ParticlePair3D",
-                "PtPt", "NuDyn", "Spherocity", "SubSample", "Performance", "BasicEventGen", "Glauber"]
+                "PtPt", "NuDyn", "Spherocity", "SubSample", "Performance", "BasicEventGen"]
 
-#: Optional modules: CMake option, folder in src (or name of a feature, see FEATURE_OPTIONS), description, default.
+#: Optional modules, in the order of the Optional modules pane: CMake option, label, folder in src (None for a feature
+#: or a placeholder without code), description, default, external package (key of EXTERNALS, "ROOT", or None).
+#: A module with an external package shows, on the line below it, the location of that package.
 OPTIONAL_MODULES = [
-    ("CAP_WITH_THERMINATOR3", "Therminator3", "Thermal model event generator", True),
-    ("CAP_WITH_LATEX",        "Latex",        "LaTeX documents of results", True),
-    ("CAP_WITH_GRAPHICS",     "Graphics",     "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)", True),
-    ("CAP_WITH_GUI",          "CapGui",       "Graphical interface bin/CapGui (Dear ImGui; needs Graphics)", True),
-    ("CAP_WITH_ROOT_FILES",   "ROOT files",   "Read and write ROOT histograms (.root files in the CapGui browser, CapRootConvert)", True),
-    ("CAP_WITH_JETS",         "Jets",         "Jet analysis (needs FastJet; in progress)", False),
-    ("CAP_WITH_EPOS",         "Epos",         "EPOS event reader", True),
-    ("CAP_WITH_PHSD",         "PHSD",         "PHSD event reader", True),
-    ("CAP_WITH_PYTHIA8",      "Pythia",       "Pythia8 event generator interface (needs Pythia8)", False),
+    ("CAP_WITH_GLAUBER",      "Glauber",         "Glauber", "Glauber Monte Carlo of nucleus-nucleus collisions", True, None),
+    ("CAP_WITH_THERMINATOR3", "Therminator3",    "Therminator3", "Thermal model event generator", True, None),
+    ("CAP_WITH_EPOS",         "Epos",            "Epos", "EPOS event reader", True, None),
+    ("CAP_WITH_PHSD",         "PHSD",            "PHSD", "PHSD event reader", True, None),
+    ("CAP_WITH_PYTHIA8",      "Pythia",          "Pythia", "Pythia8 event generator interface", False, "PYTHIA8"),
+    ("CAP_WITH_HERWIG",       "Herwig",          "Herwig", "Herwig 7 event generator interface", False, "HERWIG"),
+    ("CAP_WITH_SHERPA",       "Sherpa",          None, "Sherpa event generator (placeholder: no CAP interface yet)",
+     False, "SHERPA"),
+    ("CAP_WITH_THERMALFIST",  "Thermal-FIST",    None, "Thermal-FIST hadron resonance gas model (placeholder: no CAP "
+     "interface yet)", False, "THERMALFIST"),
+    ("CAP_WITH_JETS",         "Jets",            "Jets", "Jet analysis with FastJet (in progress)", False, "FASTJET"),
+    ("CAP_WITH_ROOT_FILES",   "ROOT histograms", None, "Import and export ROOT histograms (.root files in CapGui, "
+     "bin/CapRootConvert)", True, "ROOT"),
+    ("CAP_WITH_LATEX",        "Latex",           "Latex", "LaTeX documents of results", True, None),
+    ("CAP_WITH_GRAPHICS",     "Graphics",        "Graphics", "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)",
+     True, None),
+    ("CAP_WITH_GUI",          "CapGui",          None, "Graphical interface bin/CapGui (Dear ImGui; needs Graphics)", True, None),
 ]
 
-#: Options of OPTIONAL_MODULES that turn a feature on or off rather than build a folder of src.
-FEATURE_OPTIONS = {"CAP_WITH_ROOT_FILES"}
-
 #: External packages: key, label, CMake prefix variable, file identifying a valid prefix, bundled globs (relative to
-#: the CAP directory), environment variables, configuration tool.
+#: the CAP directory; "../X" is a sibling folder of CAP, e.g. ~/Developer/X), environment variables, configuration tool.
 EXTERNALS = {
     "PYTHIA8": dict(label="Pythia8", var="CAP_PYTHIA8_DIR", file="include/Pythia8/Pythia.h",
                     bundled=["pythia8*", "external/pythia8*"], env=["CAP_PYTHIA8_PATH", "PYTHIA8"],
                     tool="pythia8-config"),
     "HERWIG":  dict(label="Herwig", var="CAP_HERWIG_DIR", file="include/Herwig/API/HerwigAPI.h",
-                    bundled=["Herwig*", "herwig*", "external/Herwig*", "external/herwig*"],
+                    bundled=["../Herwig/install", "Herwig*", "herwig*", "external/Herwig*", "external/herwig*"],
                     env=["CAP_HERWIG_PATH", "HERWIG_DIR"], tool="Herwig-config"),
+    "SHERPA":  dict(label="Sherpa", var="CAP_SHERPA_DIR", file="include/SHERPA-MC/SHERPA/Main/Sherpa.H",
+                    bundled=["../Sherpa/install", "Sherpa*", "sherpa*", "external/Sherpa*", "external/sherpa*"],
+                    env=["CAP_SHERPA_PATH", "SHERPA_DIR"], tool="Sherpa-config"),
+    "THERMALFIST": dict(label="Thermal-FIST", var="CAP_THERMALFIST_DIR", file="include/HRGBase.h",
+                    bundled=["../Thermal-FIST", "Thermal-FIST*", "external/Thermal-FIST*"],
+                    env=["CAP_THERMALFIST_PATH", "THERMALFIST_DIR"], tool=None),
     "FASTJET": dict(label="FastJet", var="CAP_FASTJET_DIR", file="include/fastjet/ClusterSequence.hh",
-                    bundled=["fastjet*", "external/fastjet*"], env=["CAP_FASTJET_PATH", "FASTJET"],
+                    bundled=["../Fastjet/install", "fastjet*", "external/fastjet*"], env=["CAP_FASTJET_PATH", "FASTJET"],
                     tool="fastjet-config"),
 }
-
-#: Event generators: CMake option, external package key, description.
-GENERATORS = [
-    ("CAP_WITH_HERWIG",  "HERWIG",  "Herwig generator (CAP interface not written yet)"),
-]
 
 BUILD_TYPES = ["Release", "RelWithDebInfo", "Debug", "MinSizeRel"]
 
@@ -116,33 +133,44 @@ def default_settings():
         "install_lib_dir": os.path.join(CAP_DIR, "lib"),
         "reconfigure": False,
         "root_dir": "",
-        "options": {opt: default for opt, _, _, default in OPTIONAL_MODULES},
+        "options": {m[0]: m[4] for m in OPTIONAL_MODULES},
         "prefixes": {key: "" for key in EXTERNALS},
     }
-    for opt, _, _ in GENERATORS:
-        s["options"][opt] = False
+    return s
+
+
+def read_settings(filename):
+    """Settings of a configuration file (JSON, as written by save_settings()), completed with the defaults.
+    @raise OSError, ValueError if the file cannot be read or is not a configuration"""
+    s = default_settings()
+    with open(filename) as f:
+        saved = json.load(f)
+    if not isinstance(saved, dict):
+        raise ValueError("not a BuildCAP configuration")
+    for k, v in saved.items():
+        if isinstance(v, dict) and isinstance(s.get(k), dict):
+            s[k].update(v)
+        else:
+            s[k] = v
     return s
 
 
 def load_settings():
-    s = default_settings()
     try:
-        with open(SETTINGS_FILE) as f:
-            saved = json.load(f)
-        for k, v in saved.items():
-            if isinstance(v, dict) and isinstance(s.get(k), dict):
-                s[k].update(v)
-            else:
-                s[k] = v
+        return read_settings(SETTINGS_FILE)
     except (OSError, ValueError):
-        pass
-    return s
+        return default_settings()
+
+
+def write_settings(s, filename):
+    """Write settings to a configuration file (JSON). @raise OSError"""
+    with open(filename, "w") as f:
+        json.dump(s, f, indent=2)
 
 
 def save_settings(s):
     try:
-        with open(SETTINGS_FILE, "w") as f:
-            json.dump(s, f, indent=2)
+        write_settings(s, SETTINGS_FILE)
     except OSError:
         pass
 
@@ -198,12 +226,13 @@ def detect_external(key, prefix=""):
         return "", "%s does not contain %s" % (prefix, ext["file"])
     candidates = []
     for pattern in ext["bundled"]:
-        candidates += [(p, "distributed with CAP") for p in sorted(glob.glob(os.path.join(CAP_DIR, pattern)))
+        where = "next to CAP" if pattern.startswith("../") else "distributed with CAP"
+        candidates += [(os.path.normpath(p), where) for p in sorted(glob.glob(os.path.join(CAP_DIR, pattern)))
                        if os.path.isdir(p)]
     for env in ext["env"]:
         if os.environ.get(env):
             candidates.append((os.environ[env], "$" + env))
-    tool = which(ext["tool"])
+    tool = which(ext["tool"]) if ext["tool"] else None
     if tool:
         p = run_quiet([tool, "--prefix"])
         if p:
@@ -325,7 +354,7 @@ def run_gui():
             self.queue = queue.Queue()
             self.start_time = None
             root.title("CAP Build")
-            root.geometry("1180x860")
+            root.geometry("1180x960")
             root.minsize(900, 600)
             style = ttk.Style()
             if "clam" in style.theme_names() and sys.platform != "darwin":
@@ -336,8 +365,8 @@ def run_gui():
             panes.pack(fill=tk.BOTH, expand=True, padx=6, pady=(0, 6))
             options = ttk.Frame(panes)
             output = ttk.Frame(panes)
-            panes.add(options, weight=1)
-            panes.add(output, weight=1)
+            panes.add(options, weight=3)
+            panes.add(output, weight=2)
             self._make_options(options)
             self._make_output(output)
             self.status = tk.StringVar(value="Ready")
@@ -356,6 +385,8 @@ def run_gui():
             self.build_button.pack(side=tk.LEFT)
             self.stop_button = ttk.Button(bar, text="\u25A0 Stop", command=self.stop_build, state=tk.DISABLED)
             self.stop_button.pack(side=tk.LEFT, padx=(4, 0))
+            ttk.Button(bar, text="Load configuration\u2026", command=self.load_configuration).pack(side=tk.LEFT, padx=(12, 0))
+            ttk.Button(bar, text="Save configuration\u2026", command=self.save_configuration).pack(side=tk.LEFT, padx=(4, 12))
             ttk.Button(bar, text="Save output\u2026", command=self.save_output).pack(side=tk.LEFT, padx=(4, 0))
             ttk.Button(bar, text="Clear", command=self.clear_output).pack(side=tk.LEFT, padx=(4, 12))
             ttk.Label(bar, text="CAP: " + CAP_DIR, foreground="gray40").pack(side=tk.RIGHT)
@@ -388,95 +419,113 @@ def run_gui():
             s = self.settings
             parent.columnconfigure(0, weight=0)
             parent.columnconfigure(1, weight=1)
-            parent.columnconfigure(2, weight=2)
             parent.rowconfigure(0, weight=1)
 
-            core = ttk.LabelFrame(parent, text="Core modules (always built)", padding=8)
-            core.grid(row=0, column=0, sticky="nsew", padx=(0, 6), pady=6)
+            # left column: core modules, install directory, Detect
+            left = ttk.Frame(parent)
+            left.grid(row=0, column=0, sticky="nsew", padx=(0, 6), pady=6)
+            core = ttk.LabelFrame(left, text="Core modules (always built)", padding=8)
+            core.pack(fill=tk.X)
             self.core_vars = []
+            rows = (len(CORE_MODULES) + 1) // 2
             for i, name in enumerate(CORE_MODULES):
                 var = tk.BooleanVar(value=True)
                 self.core_vars.append(var)
                 ttk.Checkbutton(core, text=name, variable=var, state=tk.DISABLED).grid(
-                    row=i % 8, column=i // 8, sticky="w", padx=(0, 10))
+                    row=i % rows, column=i // rows, sticky="w", padx=(0, 10))
+            inst = ttk.LabelFrame(left, text="Install libraries to", padding=8)
+            inst.pack(fill=tk.X, pady=(8, 0))
+            inst.columnconfigure(0, weight=1)
+            self.install_lib_dir = tk.StringVar(value=s["install_lib_dir"])
+            ttk.Entry(inst, textvariable=self.install_lib_dir, width=34).grid(row=0, column=0, sticky="ew", padx=(0, 4))
+            ttk.Button(inst, text="Browse\u2026", width=8,
+                       command=lambda: self._browse(self.install_lib_dir)).grid(row=0, column=1)
+            ttk.Button(left, text="Detect packages again", command=self._detect_all).pack(anchor="e", pady=(8, 0))
 
-            optional = ttk.LabelFrame(parent, text="Optional modules", padding=8)
-            optional.grid(row=0, column=1, sticky="nsew", padx=6, pady=6)
+            # right column: optional modules, each package location indented under its module (scrollable)
+            outer = ttk.LabelFrame(parent, text="Optional modules", padding=(8, 4))
+            outer.grid(row=0, column=1, sticky="nsew", padx=(6, 0), pady=6)
+            canvas = tk.Canvas(outer, highlightthickness=0, borderwidth=0)
+            scroll = ttk.Scrollbar(outer, orient=tk.VERTICAL, command=canvas.yview)
+            canvas.configure(yscrollcommand=scroll.set)
+            scroll.pack(side=tk.RIGHT, fill=tk.Y)
+            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            pane = ttk.Frame(canvas)
+            window = canvas.create_window((0, 0), window=pane, anchor="nw")
+            self.wrap_labels = []          # descriptions and status lines: wrapped to the width of the pane
+            def on_pane_configure(event):
+                canvas.configure(scrollregion=canvas.bbox("all"))
+                for label in self.wrap_labels:
+                    width = max(150, event.width - label.winfo_x() - 8)
+                    if int(str(label.cget("wraplength")) or 0) != width:
+                        label.configure(wraplength=width)
+            pane.bind("<Configure>", on_pane_configure)
+            canvas.bind("<Configure>", lambda e: canvas.itemconfigure(window, width=e.width))
+            def wheel(event):
+                if sys.platform == "darwin":
+                    canvas.yview_scroll(-event.delta, "units")
+                elif event.num in (4, 5):
+                    canvas.yview_scroll(-1 if event.num == 4 else 1, "units")
+                else:
+                    canvas.yview_scroll(-event.delta // 120, "units")
+            def bind_wheel(_):
+                for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                    canvas.bind_all(seq, wheel)
+            def unbind_wheel(_):
+                for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+                    canvas.unbind_all(seq)
+            pane.bind("<Enter>", bind_wheel)
+            pane.bind("<Leave>", unbind_wheel)
+
+            pane.columnconfigure(2, weight=1)
             self.option_vars = {}
-            for i, (opt, folder, desc, _) in enumerate(OPTIONAL_MODULES):
-                var = tk.BooleanVar(value=bool(s["options"].get(opt)))
-                self.option_vars[opt] = var
-                ttk.Checkbutton(optional, text=folder, variable=var,
-                                command=self._update_dependent_rows).grid(row=i, column=0, sticky="w")
-                ttk.Label(optional, text=desc, foreground="gray35").grid(row=i, column=1, sticky="w", padx=(6, 0))
-                if opt not in FEATURE_OPTIONS and not module_dir(folder):
-                    ttk.Label(optional, text="(missing from src)", foreground="red").grid(row=i, column=2, sticky="w")
-
-            ext = ttk.LabelFrame(parent, text="Event generators and external packages", padding=8)
-            ext.grid(row=0, column=2, sticky="nsew", padx=(6, 0), pady=6)
-            ext.columnconfigure(2, weight=1)
             self.prefix_vars = {}
             self.detect_labels = {}
             self.prefix_widgets = {}
+            self.module_external = {}
             row = 0
-            for opt, key, desc in GENERATORS:
+            for opt, label, folder, desc, _, ext_key in OPTIONAL_MODULES:
                 var = tk.BooleanVar(value=bool(s["options"].get(opt)))
                 self.option_vars[opt] = var
-                ttk.Checkbutton(ext, text=EXTERNALS[key]["label"], variable=var,
-                                command=self._update_dependent_rows).grid(row=row, column=0, sticky="w")
-                ttk.Label(ext, text=desc, foreground="gray35").grid(row=row, column=1, columnspan=3, sticky="w")
-                row = self._make_prefix_row(ext, row + 1, key, "location:")
-            ttk.Separator(ext).grid(row=row, column=0, columnspan=4, sticky="ew", pady=6)
-            row += 1
-            ttk.Label(ext, text="Pythia8 (for Pythia)").grid(row=row, column=0, columnspan=2, sticky="w")
-            row = self._make_prefix_row(ext, row + 1, "PYTHIA8", "location:")
-            ttk.Separator(ext).grid(row=row, column=0, columnspan=4, sticky="ew", pady=6)
-            row += 1
-            ttk.Label(ext, text="FastJet (for Jets)").grid(row=row, column=0, columnspan=2, sticky="w")
-            row = self._make_prefix_row(ext, row + 1, "FASTJET", "location:")
-            ttk.Separator(ext).grid(row=row, column=0, columnspan=4, sticky="ew", pady=6)
-            row += 1
-            ttk.Label(ext, text="ROOT").grid(row=row, column=0, sticky="w")
-            self.root_dir = tk.StringVar(value=s.get("root_dir", ""))
-            ttk.Entry(ext, textvariable=self.root_dir).grid(row=row, column=1, columnspan=2, sticky="ew", padx=4)
-            ttk.Button(ext, text="Browse\u2026", width=8,
-                       command=lambda: self._browse(self.root_dir)).grid(row=row, column=3)
-            row += 1
-            self.root_label = ttk.Label(ext, text="", foreground="gray35")
-            self.root_label.grid(row=row, column=1, columnspan=3, sticky="w", padx=4)
-            row += 1
-            ttk.Label(ext, text="Install libraries to").grid(row=row, column=0, columnspan=2, sticky="w", pady=(6, 0))
-            row += 1
-            self.install_lib_dir = tk.StringVar(value=s["install_lib_dir"])
-            ttk.Entry(ext, textvariable=self.install_lib_dir).grid(row=row, column=0, columnspan=3, sticky="ew", padx=(0, 4))
-            ttk.Button(ext, text="Browse\u2026", width=8,
-                       command=lambda: self._browse(self.install_lib_dir)).grid(row=row, column=3)
-            row += 1
-            ttk.Button(ext, text="Detect", command=self._detect_all).grid(row=row, column=3, sticky="e", pady=(6, 0))
+                ttk.Checkbutton(pane, text=label, variable=var,
+                                command=self._update_dependent_rows).grid(row=row, column=0, columnspan=2, sticky="w",
+                                                                          pady=(4, 0))
+                text = desc
+                if folder and not module_dir(folder):
+                    text += "  (CAP interface not written yet)"
+                description = ttk.Label(pane, text=text, foreground="gray35", justify=tk.LEFT)
+                description.grid(row=row, column=2, columnspan=3, sticky="w", padx=(6, 0), pady=(4, 0))
+                self.wrap_labels.append(description)
+                row += 1
+                if ext_key:
+                    self.module_external[opt] = ext_key
+                    if ext_key == "ROOT":
+                        self.root_dir = tk.StringVar(value=s.get("root_dir", ""))
+                        var_loc = self.root_dir
+                    else:
+                        var_loc = tk.StringVar(value=s["prefixes"].get(ext_key, ""))
+                        self.prefix_vars[ext_key] = var_loc
+                    name = "ROOT" if ext_key == "ROOT" else EXTERNALS[ext_key]["label"]
+                    ttk.Label(pane, text=name + " location:").grid(row=row, column=1, sticky="e", padx=(24, 4))
+                    entry = ttk.Entry(pane, textvariable=var_loc)
+                    entry.grid(row=row, column=2, sticky="ew", padx=(6, 4))
+                    button = ttk.Button(pane, text="Browse\u2026", width=8, command=lambda v=var_loc: self._browse(v))
+                    button.grid(row=row, column=3)
+                    detected = ttk.Label(pane, text="", foreground="gray35", justify=tk.LEFT)
+                    self.wrap_labels.append(detected)
+                    detected.grid(row=row + 1, column=2, columnspan=3, sticky="w", padx=(6, 0))
+                    self.detect_labels[ext_key] = detected
+                    self.prefix_widgets[ext_key] = (entry, button)
+                    var_loc.trace_add("write", lambda *a, k=ext_key: self._detect(k))
+                    row += 2
             self._update_dependent_rows()
 
-        def _make_prefix_row(self, parent, row, key, text):
-            var = tk.StringVar(value=self.settings["prefixes"].get(key, ""))
-            self.prefix_vars[key] = var
-            label = ttk.Label(parent, text=text)
-            label.grid(row=row, column=1, sticky="e", padx=(16, 0))
-            entry = ttk.Entry(parent, textvariable=var)
-            entry.grid(row=row, column=2, sticky="ew", padx=4)
-            button = ttk.Button(parent, text="Browse\u2026", width=8, command=lambda: self._browse(var))
-            button.grid(row=row, column=3)
-            detected = ttk.Label(parent, text="", foreground="gray35", wraplength=300, justify=tk.LEFT)
-            detected.grid(row=row + 1, column=2, columnspan=2, sticky="w", padx=4)
-            self.detect_labels[key] = detected
-            self.prefix_widgets[key] = (entry, button)
-            var.trace_add("write", lambda *a: self._detect(key))
-            return row + 2
-
         def _update_dependent_rows(self):
-            needed = {"PYTHIA8": self.option_vars["CAP_WITH_PYTHIA8"].get(),
-                      "HERWIG": self.option_vars["CAP_WITH_HERWIG"].get(),
-                      "FASTJET": self.option_vars["CAP_WITH_JETS"].get()}
-            for key, (entry, button) in self.prefix_widgets.items():
-                state = tk.NORMAL if needed[key] else tk.DISABLED
+            """A package location can be edited when its module is checked; ROOT always (the core modules use it)."""
+            for opt, key in self.module_external.items():
+                needed = key == "ROOT" or self.option_vars[opt].get()
+                entry, button = self.prefix_widgets[key]
+                state = tk.NORMAL if needed else tk.DISABLED
                 entry.configure(state=state)
                 button.configure(state=state)
 
@@ -486,22 +535,23 @@ def run_gui():
                 var.set(path)
 
         def _detect(self, key):
-            prefix, how = detect_external(key, self.prefix_vars[key].get().strip())
+            if key == "ROOT":
+                prefix, how = detect_root(self.root_dir.get().strip())
+                note = "  \u2014 also needed by the core modules" if prefix else ""
+                if not prefix:
+                    how = "not found: enter the ROOT installation directory (required by the core modules)"
+            else:
+                prefix, how = detect_external(key, self.prefix_vars[key].get().strip())
+                note = ""
             if prefix:
-                text, color = "\u2714 %s (%s)" % (prefix, how), "dark green"
+                text, color = "\u2714 %s (%s)%s" % (prefix, how, note), "dark green"
             else:
                 text, color = "\u2716 %s" % how, "firebrick"
             self.detect_labels[key].configure(text=text, foreground=color)
 
         def _detect_all(self):
-            for key in EXTERNALS:
+            for key in self.detect_labels:
                 self._detect(key)
-            root, how = detect_root(self.root_dir.get().strip())
-            if root:
-                self.root_label.configure(text="\u2714 %s (%s)" % (root, how), foreground="dark green")
-            else:
-                self.root_label.configure(text="\u2716 not found: enter the ROOT installation directory",
-                                          foreground="firebrick")
 
         def _refresh_build_dirs(self):
             self.build_dir_box.configure(values=existing_build_dirs())
@@ -585,6 +635,76 @@ def run_gui():
             except OSError as e:
                 messagebox.showerror("Save output", "Cannot write %s:\n%s" % (filename, e))
 
+        # ---------------------------------------------------------------------------------------------- configurations
+        def load_configuration(self):
+            """Read a configuration file (written by Save configuration, or .BuildCAP.json) into the window."""
+            filename = filedialog.askopenfilename(
+                title="Load a build configuration", initialdir=self._configurations_dir(),
+                filetypes=[("BuildCAP configurations", "*.json"), ("All files", "*")])
+            if not filename:
+                return
+            try:
+                s = read_settings(filename)
+            except (OSError, ValueError) as e:
+                messagebox.showerror("Load configuration", "Cannot read %s:\n%s" % (filename, e))
+                return
+            self.apply_settings(s)
+            self.status.set("Configuration loaded from %s" % filename)
+
+        @staticmethod
+        def _configurations_dir():
+            """<CAP>/configurations, created if needed (CAP itself if it cannot be created)."""
+            try:
+                os.makedirs(CONFIGURATIONS_DIR, exist_ok=True)
+                return CONFIGURATIONS_DIR
+            except OSError:
+                return CAP_DIR
+
+        def save_configuration(self):
+            """Write the settings of the window to a configuration file."""
+            filename = filedialog.asksaveasfilename(
+                title="Save the build configuration", initialdir=self._configurations_dir(),
+                initialfile="BuildCAP_%s.json" % (self.build_dir.get().strip() or "build"),
+                defaultextension=".json", filetypes=[("BuildCAP configurations", "*.json"), ("All files", "*")])
+            if not filename:
+                return
+            s = dict(self.current_settings())
+            s["reconfigure"] = False
+            try:
+                write_settings(s, filename)
+                self.status.set("Configuration saved to %s" % filename)
+            except OSError as e:
+                messagebox.showerror("Save configuration", "Cannot write %s:\n%s" % (filename, e))
+
+        def apply_settings(self, s):
+            """Show settings s in the window (the options of the configuration win over those of an existing build
+            directory) and keep them."""
+            self.settings = s
+            self.build_dir.set(s.get("build_dir", "build"))
+            if s.get("build_type") in BUILD_TYPES:
+                self.build_type.set(s["build_type"])
+            try:
+                self.jobs.set(max(1, int(s.get("jobs", 1))))
+            except (ValueError, TypeError):
+                self.jobs.set(1)
+            self.install.set(bool(s.get("install", True)))
+            self.reconfigure.set(bool(s.get("reconfigure", False)))
+            self.install_lib_dir.set(s.get("install_lib_dir", "") or os.path.join(CAP_DIR, "lib"))
+            self.root_dir.set(s.get("root_dir", ""))
+            for opt, var in self.option_vars.items():
+                if opt in s.get("options", {}):
+                    var.set(bool(s["options"][opt]))
+            for key, var in self.prefix_vars.items():
+                var.set(s.get("prefixes", {}).get(key, ""))
+            name = self.build_dir.get().strip()
+            if valid_build_dir_name(name):
+                self.build_dir_note.configure(text="\u2716 invalid", foreground="firebrick")
+            else:
+                self.build_dir_note.configure(text="existing" if read_cmake_cache(name) else "new", foreground="gray40")
+            self._update_dependent_rows()
+            self._detect_all()
+            save_settings(self.current_settings())
+
         # ---------------------------------------------------------------------------------------------- build
         def current_settings(self):
             s = self.settings
@@ -613,8 +733,8 @@ def run_gui():
             if not detect_root(s["root_dir"])[0]:
                 return "ROOT was not found: enter its installation directory (the one containing bin/root-config)."
             missing = []
-            for opt, key in (("CAP_WITH_PYTHIA8", "PYTHIA8"), ("CAP_WITH_HERWIG", "HERWIG"), ("CAP_WITH_JETS", "FASTJET")):
-                if s["options"].get(opt) and not detect_external(key, s["prefixes"].get(key, ""))[0]:
+            for opt, _, _, _, _, key in OPTIONAL_MODULES:
+                if key in EXTERNALS and s["options"].get(opt) and not detect_external(key, s["prefixes"].get(key, ""))[0]:
                     missing.append(EXTERNALS[key]["label"])
             if missing:
                 return ("%s selected but not found. Enter the installation directory, or uncheck the option."

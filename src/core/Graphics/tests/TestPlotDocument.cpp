@@ -9,6 +9,7 @@
 //! @brief Tests of PlotDocument: data dropped where they go, moves, copy and paste, undo and redo, inputs, files
 //! written elsewhere, and the document read by PlotSpec and built.
 #include <cstdio>
+#include <set>
 #include <string>
 #include <unistd.h>
 #include "CapFile.hpp"
@@ -140,6 +141,19 @@ int main()
   Path dup = d.duplicate(canvas);
   CHECK(dup.back() == canvas.back() + 1 && !(d.element(dup)->attribute("name") == d.element(canvas)->attribute("name")));
   CHECK(d.remove(dup));
+  // a window duplicated: its canvases under names of their own
+  Path canvasWindow = PlotDocument::parent(canvas);
+  Path windowCopy = d.duplicate(canvasWindow);
+  CHECK(d.kind(windowCopy) == PlotDocument::kWindow && windowCopy.back() == canvasWindow.back() + 1);
+  {
+  std::vector<Path> before = d.children(canvasWindow, PlotDocument::kCanvas), after = d.children(windowCopy, PlotDocument::kCanvas);
+  CHECK(!before.empty() && before.size() == after.size());
+  std::set<std::string> names;
+  for (const Path & c : before) names.insert(d.element(c)->attribute("name").str());
+  for (const Path & c : after)  names.insert(d.element(c)->attribute("name").str());
+  CHECK(names.size() == before.size() + after.size());
+  }
+  CHECK(d.remove(windowCopy));
 
   // labels
   CHECK(PlotDocument::label(*d.element(canvas)).str().find("(2 x 1)") != std::string::npos);

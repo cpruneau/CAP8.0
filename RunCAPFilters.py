@@ -43,7 +43,10 @@ No tkinter here: usable and testable without a display.
 """
 
 import copy
+import math
+import os
 import re
+import subprocess
 import xml.etree.ElementTree as ET
 
 #: Kinds of objects of the library, in the order of the tabs of the Filters pane.
@@ -107,20 +110,12 @@ PARTICLE_SUBTYPES = {"PT": ("transverse momentum pT", (RANGE, DUAL_RANGE)),
                      "LIVE": ("live (not decayed)", (FLAG,)),
                      "ENABLED": ("enabled", (FLAG,))}
 
-#: Parameters of the efficiencies and smearers: {kind: [(name, type, default)]}, as read by their configure().
-_TWO_PI = "6.283185307179586"
+#: Parameters of the efficiencies and smearers: {kind: [(name, type, default)]}, as read by their configure(). The
+#: particle efficiencies and smearers have none here: they are read from a maps file (see MAPS_KINDS).
 KIND_PARAMETERS = {
     "EVENT_EFFICIENCY": [("BASE_NAME", "string", ""), ("nBins_mult", "int", "100"), ("Min_mult", "double", "0"),
                          ("Max_mult", "double", "100")],
-    "PARTICLE_EFFICIENCY": [("BASE_NAME", "string", ""), ("pt_nbins", "int", "100"), ("pt_min", "double", "0"),
-                            ("pt_max", "double", "10"), ("eta_nbins", "int", "20"), ("eta_min", "double", "-1"),
-                            ("eta_max", "double", "1"), ("phi_nbins", "int", "36"), ("phi_min", "double", "0"),
-                            ("phi_max", "double", _TWO_PI)],
     "EVENT_SMEARER": [("BASE_NAME", "string", "")],
-    "PARTICLE_SMEARER": [("BASE_NAME", "string", ""), ("n_nbins", "int", "100"), ("nSpecies", "bool", "false"),
-                         ("pt_nbins", "int", "100"), ("pt_min", "double", "0"), ("pt_max", "double", "10"),
-                         ("eta_nbins", "int", "20"), ("eta_min", "double", "-1"), ("eta_max", "double", "1"),
-                         ("phi_nbins", "int", "36"), ("phi_min", "double", "0"), ("phi_max", "double", _TWO_PI)],
     # switch read by ParticleDb::configure(): true turns off the weak decays (K0S, K0L, Lambda, Sigma, Xi, Omega)
     "PARTICLE_DB": [("_dbDisableWeakDecays", "bool", "false")],
 }
@@ -188,6 +183,78 @@ EVENT_SOURCES = ("BasicEventGen", "PythiaEventGenerator", "PythiaEventReader", "
                  "Therminator3", "ThermalModel", "GlauberGenerator", "EventMerger")
 
 
+#: Tasks writing an event of their own from the event they read: {class: default name of the written event}. Their
+#: events are [read, written]; the written event is an object of the library like the others, used (and reset before
+#: each event) by the event iterator, and chosen by the analyzers of the detector-level events.
+EVENT_WRITERS = {"MeasurementSimulator": "FastSimEvent"}
+
+
+#: Analyzers of the events written by those tasks: they read the written event first and the event it was made from
+#: second (PerformanceAnalyzer: the detector-level event and, for the efficiencies, the generator-level event).
+WRITTEN_EVENT_READERS = ("PerformanceAnalyzer",)
+
+
+def default_reader_events(task, library):
+    """Events of a new analyzer of written events (WRITTEN_EVENT_READERS): [written, read] when the library has a written
+    event (FastSimEvent)."""
+    if task.cls.replace("CAP::", "") not in WRITTEN_EVENT_READERS:
+        return
+    names = library.names("EVENT")
+    written = [n for n in EVENT_WRITERS.values() if n in names]
+    if not written:
+        return
+    others = [n for n in names if n not in EVENT_WRITERS.values()]
+    choices(task)["EVENT"] = written[:1] + others[:1]
+
+
+def writes_events(task):
+    """Whether a task writes an event of its own (see EVENT_WRITERS)."""
+    return task.cls.replace("CAP::", "") in EVENT_WRITERS
+
+
+def written_event(task):
+    """Name of the event a task writes (its second event), or None."""
+    names = choices(task).get("EVENT", [])
+    return names[1] if writes_events(task) and len(names) >= 2 else None
+
+
+def default_writer_events(task, library):
+    """Events of a task writing one: [the first other event of the library, its written event], the written event
+    (EVENT_WRITERS) added to the library if needed. USE on, CREATE off: it reads the first and fills the second
+    itself. @return True if changed"""
+    if not writes_events(task):
+        return False
+    written = EVENT_WRITERS[task.cls.replace("CAP::", "")]
+    names = choices(task).setdefault("EVENT", [])
+    changed = False
+    if len(names) < 2:
+        if library.get("EVENT", written) is None:
+            library.add(FilterDef("EVENT", written))
+        if not names:
+            names.extend(n for n in library.names("EVENT")[:1] if n != written)
+        if names and names[0] != written:
+            names[1:] = [written]
+            changed = True
+    for name, value in (("USE", "true"), ("CREATE", "false")):
+        p = task.param("EVENT:" + name)
+        if p is not None and p.value != value:
+            p.value = value
+            changed = True
+    return changed
+
+
+def update_writer_events(tasks, library):
+    """Tasks writing events (MeasurementSimulator) of workflows written before they did: their written event is set
+    (FastSimEvent). @return warnings"""
+    warnings = []
+    for task in _preorder(tasks):
+        if default_writer_events(task, library):
+            warnings.append("Task %s reads %s and writes %s (Events)." % (
+                task.name, choices(task)["EVENT"][0] if choices(task).get("EVENT") else "?",
+                written_event(task) or EVENT_WRITERS[task.cls.replace("CAP::", "")]))
+    return warnings
+
+
 def makes_events(task):
     """Whether a task makes events (a generator, a reader or a model)."""
     name = task.cls.replace("CAP::", "")
@@ -224,6 +291,9 @@ def events_made_below(iterator, templates):
             if not is_glauber(child) and "EVENT" in task_kinds(child, templates) and any(
                     _param_value(child, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
                 names.extend(n for n in choices(child).get("EVENT", []) if n not in names)
+            written = written_event(child)
+            if written and written not in names:
+                names.append(written)
             visit(child)
     visit(iterator)
     return names
@@ -257,6 +327,8 @@ def default_event_settings(task, templates):
     """Events of a new task: created by a generator or reader, used by an analyzer, neither by the other tasks."""
     if "EVENT" not in task_kinds(task, templates):
         return
+    if writes_events(task):
+        return                                          # see default_writer_events()
     source = makes_events(task)
     for name, value in (("CREATE", source), ("USE", not source and histogram_layout(task, templates) is not None)):
         p = task.param("EVENT:" + name)
@@ -323,7 +395,8 @@ class FilterDef:
         self.title = title or ""
         self.conditions = list(conditions or [])
         self.parameters = dict(default_parameters(kind))
-        self.parameters.update(parameters or {})
+        if kind not in MAPS_KINDS:                      # those of the maps file: read from it, none here
+            self.parameters.update(parameters or {})
 
     def __eq__(self, other):
         return isinstance(other, FilterDef) and vars(self) == vars(other)
@@ -823,6 +896,8 @@ def default_choices(task, library, templates):
     for kind in DEFAULT_CHOICE_KINDS:
         if kind in task_kinds(task, templates) and library.objects[kind] and not choices(task).get(kind):
             choices(task)[kind] = [library.objects[kind][0].name]
+    default_writer_events(task, library)
+    default_reader_events(task, library)
 
 
 def glauber_only(definition):
@@ -878,6 +953,8 @@ def creator_task(library, templates, TaskConfig, Param):
             _set(sub, kind + ":USE", "bool", "true" if objects else "false", Param)
         for name, ptype, _ in LIST_SETTINGS:
             value = library.settings[kind].get(name, default_settings(kind)[name])
+            if kind in MAPS_KINDS and name == "IMPORT" and not objects:
+                value = "false"                         # nothing to read: the file is not opened
             p = sub.param(kind + ":" + name)
             if p is not None:
                 p.value = value
@@ -971,6 +1048,10 @@ def extract_choices(tasks, templates, library=None):
                 if values.get(prefix + "OWNER", "false").lower() not in ("true", "1", "yes", "on"):
                     continue
                 definition = _definition_from_keys(task, kind, k, name, values, warnings)
+                if kind in MAPS_KINDS and any(key.startswith(prefix) and key[len(prefix):] not in ("NAME", "TITLE", "OWNER")
+                                              for key in values):
+                    warnings.append("%s %s: its maps are read from the maps file now (Filters pane, Detector maps); "
+                                    "the parameters of this file are ignored." % (MAPS_LABELS[kind], name))
                 existing = library.get(kind, name)
                 if existing is None:
                     library.add(definition)
@@ -1021,6 +1102,7 @@ def remove_creator(tasks, library):
                 p = sub.param(kind + ":" + name)
                 if p is not None:
                     library.settings[kind][name] = p.value
+    share_maps_file(library)
     return kept
 
 
@@ -1135,6 +1217,9 @@ def check_library(library):
                 value = o.parameters.get(pname, "")
                 if not _valid(ptype, value):
                     errors.append("%s %s: invalid %s value '%s' for %s." % (label.capitalize(), o.name, ptype, value, pname))
+    if any(library.objects[k] for k in MAPS_KINDS) and not maps_file(library):
+        errors.append("The particle efficiencies and smearers are read from a maps file: choose it (Filters pane, "
+                      "Detector maps).")
     return errors
 
 
@@ -1200,6 +1285,8 @@ def check_choices(tasks, library, templates):
                                 task.name, dict(EVENT_SUBTYPES, **GLAUBER_SUBTYPES)[c.subtype][0], name,
                                 "only the Glauber tasks can" if c.subtype in GLAUBER_SUBTYPES
                                 else "a Glauber task tests impact parameter, participants, collisions or spectators"))
+        if any(k in kinds for k in MAPS_KINDS):
+            errors += check_maps_choices(task)
         if "EVENT" in kinds and _param_value(task, "EVENT:IMPORT", "false") == "true" \
                 and _param_value(task, "EVENT:IMPORT:FILE_NAME", "NONE") in ("", "NONE"):
             errors.append("Task %s imports events but the file is not named." % task.name)
@@ -1254,10 +1341,27 @@ def check_choices(tasks, library, templates):
             if missing:
                 errors.append("Event iterator %s does not use the events %s made by its tasks: it must use them (it "
                               "resets them before each event)." % (task.name, ", ".join(missing)))
-    made = set()                                        # events created or imported by a task
+    made = set()                                        # events created or imported by a task, or written by one
     for task in _preorder(tasks):
         if any(_param_value(task, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
             made.update(choices(task).get("EVENT", []))
+        if written_event(task):
+            made.add(written_event(task))
+    for task in _preorder(tasks):
+        if not writes_events(task):
+            continue
+        names = choices(task).get("EVENT", [])
+        if len(names) != 2 or names[0] == names[1]:
+            errors.append("Task %s reads one event and writes another (by default %s): choose two events, in this "
+                          "order (Events)." % (task.name, EVENT_WRITERS[task.cls.replace("CAP::", "")]))
+        elif _param_value(task, "EVENT:USE", "false") != "true":
+            errors.append("Task %s must use its events (Events: Use)." % task.name)
+        else:
+            for other in _preorder(tasks):
+                if other is not task and names[1] in choices(other).get("EVENT", []) and any(
+                        _param_value(other, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
+                    errors.append("Task %s writes the events %s, which task %s also makes: choose another event."
+                                  % (task.name, names[1], other.name))
     for task in _preorder(tasks):
         if _param_value(task, "EVENT:USE", "false") == "true":
             for name in choices(task).get("EVENT", []):
@@ -1360,3 +1464,239 @@ def prepared_for_writing(tasks, library, templates, Param, TaskConfig):
     copies = [duplicate(t) for t in tasks if t.cls != CREATOR_CLASS]
     apply_choices(copies, library, templates, Param)
     return [creator_task(library, templates, TaskConfig, Param)] + copies
+
+
+# ------------------------------------------------------------------------------------------------------------------
+# Particle efficiencies and smearers: read from a maps file (CapGui, Detector Maps)
+# ------------------------------------------------------------------------------------------------------------------
+
+#: Kinds read from a maps file: RunCAP does not define them, it lists those of the file (bin/CAP --maps-list) and the
+#: tasks choose them by name. FilterCreator imports them (IMPORT from the file, CREATE off), each from the folder of
+#: its name (KinematicMapFolder in CAP: the folders are self-describing).
+MAPS_KINDS = ("PARTICLE_EFFICIENCY", "PARTICLE_SMEARER")
+MAPS_LABELS = {"PARTICLE_EFFICIENCY": "Particle efficiency", "PARTICLE_SMEARER": "Particle smearer"}
+#: Program listing the objects of a maps file.
+CAP_PROGRAM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "CAP")
+#: How a task uses the efficiencies (or smearers) it chooses, by the number of names chosen (see EventProcessor::
+#: objectFor() in CAP): none, one for all the particles, or one per event filter and particle filter.
+NO_MAPS, ONE_FOR_ALL, PER_FILTERS = "none", "one", "per filters"
+
+
+class MapsEntry:
+    """An object of a maps file: kind, name, species (PDG codes, text) and the sources of its maps (text)."""
+
+    def __init__(self, kind, name, species="", maps=""):
+        self.kind, self.name, self.species, self.maps = kind, name, species, maps
+
+    def __repr__(self):
+        return "MapsEntry(%s, %s)" % (self.kind, self.name)
+
+
+def maps_file(library):
+    """The maps file of a workflow (from the import settings of its efficiencies and smearers), or ""."""
+    for kind in MAPS_KINDS:
+        settings = library.settings[kind]
+        name = settings.get("IMPORT:FILE_NAME", "")
+        if settings.get("IMPORT") == "true" and name not in ("", "NONE"):
+            path = settings.get("IMPORT:PATH", "")
+            return name if path in ("", "DEFAULT") else os.path.join(path, name)
+    return ""
+
+
+def set_maps_file(library, path):
+    """Read the efficiencies and smearers from a maps file (imported by FilterCreator, never created nor exported);
+    an empty path: none."""
+    for kind in MAPS_KINDS:
+        settings = library.settings[kind]
+        settings.update({"CREATE": "false", "EXPORT": "false"})
+        if path:
+            settings.update({"IMPORT": "true", "IMPORT:PATH": os.path.dirname(os.path.abspath(path)),
+                             "IMPORT:FILE_NAME": os.path.basename(path)})
+        else:
+            settings.update({"IMPORT": "false", "IMPORT:PATH": "DEFAULT", "IMPORT:FILE_NAME": "NONE"})
+
+
+def share_maps_file(library):
+    """One maps file for both kinds: the import settings of the kind that has one (the other may have been written
+    off, having no object) go to the other."""
+    for kind in MAPS_KINDS:
+        settings = library.settings[kind]
+        if settings.get("IMPORT") == "true" and settings.get("IMPORT:FILE_NAME", "") not in ("", "NONE"):
+            for other in MAPS_KINDS:
+                for name in ("CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_NAME", "EXPORT"):
+                    library.settings[other][name] = settings.get(name, default_settings(other)[name])
+            return
+
+
+def parse_maps_list(text):
+    """Objects of a maps file from the output of bin/CAP --maps-list: [MapsEntry]."""
+    entries = []
+    for line in text.splitlines():
+        fields = line.rstrip("\n").split("\t")
+        if len(fields) >= 3 and fields[0] == "MAP" and fields[1] in MAPS_KINDS:
+            entries.append(MapsEntry(fields[1], fields[2], fields[3] if len(fields) > 3 else "",
+                                     fields[4] if len(fields) > 4 else ""))
+    return entries
+
+
+def list_maps(path, program=None):
+    """Objects of a maps file, read by bin/CAP --maps-list. @return [MapsEntry]
+    @throws RuntimeError if the file cannot be read"""
+    program = program or CAP_PROGRAM
+    if not os.path.isfile(path):
+        raise RuntimeError("No maps file %s." % path)
+    if not os.path.isfile(program):
+        raise RuntimeError("%s not found: build CAP first (BuildCAP)." % program)
+    result = subprocess.run([program, "--maps-list", path], capture_output=True, text=True)
+    entries = parse_maps_list(result.stdout)
+    if result.returncode != 0:
+        raise RuntimeError("Cannot read %s:\n%s" % (path, (result.stdout + result.stderr).strip()[-600:]))
+    return entries
+
+
+def sync_maps(library, entries):
+    """The efficiencies and smearers of the library become those of a maps file (in its order).
+    @param entries [MapsEntry] @return names no longer in the file: {kind: [name]}"""
+    removed = {}
+    for kind in MAPS_KINDS:
+        names = [e.name for e in entries if e.kind == kind]
+        removed[kind] = [n for n in library.names(kind) if n not in names]
+        library.objects[kind] = [library.get(kind, n) or FilterDef(kind, n) for n in names]
+    return removed
+
+
+def maps_mode(task, kind):
+    """How a task uses its objects of a kind: NO_MAPS, ONE_FOR_ALL or PER_FILTERS (several names)."""
+    n = len(choices(task).get(kind, []))
+    return NO_MAPS if n == 0 else ONE_FOR_ALL if n == 1 else PER_FILTERS
+
+
+def filter_grid(task):
+    """Names of the event filters and particle filters a task chooses: (event filters, particle filters)."""
+    return list(choices(task).get("EVENT_FILTER", [])), list(choices(task).get("PARTICLE_FILTER", []))
+
+
+def set_maps_mode(task, kind, mode, library):
+    """Set how a task uses its objects of a kind: none, one for all (the first chosen, or the first of the library),
+    or one per event filter and particle filter (event filter major, as its histogram folders; the cells take the
+    name chosen until then)."""
+    chosen = list(choices(task).get(kind, []))
+    names = library.names(kind)
+    first = chosen[0] if chosen else (names[0] if names else "")
+    if mode == NO_MAPS or not first:
+        choices(task).pop(kind, None)
+        return
+    if mode == ONE_FOR_ALL:
+        choices(task)[kind] = [first]
+        return
+    events, particles = filter_grid(task)
+    n = max(1, len(events)) * max(1, len(particles))
+    choices(task)[kind] = [chosen[k] if len(chosen) == n else first for k in range(n)]
+
+
+def regrid_maps(task, before):
+    """After the filters of a task changed: its grids of efficiencies and smearers (one per event filter and particle
+    filter) take the new size, each cell of a pair of filters still chosen keeping its name (the others take the first
+    name of the grid). @param before filter_grid() of the task before the change"""
+    after = filter_grid(task)
+    if after == before:
+        return
+    old_events, old_particles = before
+    for kind in MAPS_KINDS:
+        chosen = choices(task).get(kind, [])
+        nef, npf = max(1, len(old_events)), max(1, len(old_particles))
+        if len(chosen) <= 1 or len(chosen) not in (nef * npf, npf):
+            continue
+        cells = {}
+        for i, e in enumerate(old_events or [""]):
+            for j, p in enumerate(old_particles or [""]):
+                cells[(e, p)] = chosen[i * npf + j] if len(chosen) == nef * npf else chosen[j]
+        events, particles = after
+        choices(task)[kind] = [cells.get((e, p), chosen[0]) for e in (events or [""]) for p in (particles or [""])]
+
+
+def remove_maps_names(task, kind, names, library):
+    """Objects of a kind no longer in the library: in the choices of a task, replaced by the first one left (a grid
+    keeps its size), or none if none is left."""
+    chosen = choices(task).get(kind, [])
+    if not set(chosen) & set(names):
+        return
+    left = library.names(kind)
+    if not left:
+        choices(task).pop(kind, None)
+    else:
+        choices(task)[kind] = [left[0] if n in names else n for n in chosen]
+
+
+def check_maps_choices(task):
+    """Problems of the numbers of efficiencies and smearers a task chooses: [message]."""
+    events, particles = filter_grid(task)
+    nef, npf = max(1, len(events)), max(1, len(particles))
+    problems = []
+    for kind in MAPS_KINDS:
+        n = len(choices(task).get(kind, []))
+        if n not in (0, 1, npf, nef * npf):
+            problems.append("Task %s: %d %s for %d event filter%s and %d particle filter%s: choose one for all, or one "
+                            "per event filter and particle filter (%d)." % (
+                                task.name, n, KIND_LABELS[kind].lower(), nef, "s" if nef > 1 else "", npf,
+                                "s" if npf > 1 else "", nef * npf))
+    return problems
+
+
+#: Catalog of the functions of CAP (written by bin/CAP --function-catalog; see function_catalog()).
+FUNCTION_CATALOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DB", "FunctionCatalog.xml")
+
+
+class CatalogFunction:
+    """A function of the catalog: name, rank, composite, and its variants {number of parameters: [(name, value)]}."""
+
+    def __init__(self, name, rank, composite=False, variants=None, default=None):
+        self.name = name
+        self.rank = rank
+        self.composite = composite
+        self.variants = dict(variants or {})
+        self.default = default if default is not None else (min(self.variants) if self.variants else 0)
+
+    def parameters(self, n=None):
+        """[(name, starting value)] of the variant with n parameters (default: the default variant)."""
+        return self.variants.get(self.default if n is None else n, [])
+
+
+_catalog = None
+
+
+def load_function_catalog(path=FUNCTION_CATALOG_FILE):
+    """Functions of a catalog file: {name: CatalogFunction} ({} if the file is missing or not a catalog)."""
+    try:
+        root = ET.parse(path).getroot()
+    except (OSError, ET.ParseError):
+        return {}
+    if root.get("type") != "function-catalog":
+        return {}
+    catalog = {}
+    for f in root.iter("FUNCTION"):
+        variants, default = {}, None
+        for v in f.iter("VARIANT"):
+            n = int(v.get("nParameters", "0"))
+            variants[n] = [(p.get("name", "p%d" % k), p.get("value", "0")) for k, p in enumerate(v.iter("PARAMETER"))]
+            if v.get("default") == "true":
+                default = n
+        catalog[f.get("name")] = CatalogFunction(f.get("name"), int(f.get("rank", "1")), f.get("composite") == "true",
+                                                 variants, default)
+    return catalog
+
+
+def function_catalog():
+    """The catalog of the functions of CAP, read once from FUNCTION_CATALOG_FILE ({} if there is none yet)."""
+    global _catalog
+    if _catalog is None:
+        _catalog = load_function_catalog()
+    return _catalog
+
+
+def set_function_catalog(catalog):
+    """Use another catalog (None: read FUNCTION_CATALOG_FILE again when next needed)."""
+    global _catalog
+    _catalog = catalog
+
+
