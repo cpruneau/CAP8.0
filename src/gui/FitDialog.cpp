@@ -54,16 +54,21 @@ namespace CAP
   MATH::ParameterizedFunction * makeNamed(const String & name, int degree)
   {
   if (name == "Polynomial") return MATH::FunctionRegistry::create(name, (unsigned int)(degree + 1));
+  if (name == "FourierDecomposition" || name == "FourierFlow")   // the degree: the highest harmonic
+    return MATH::FunctionRegistry::create(name, (unsigned int)(2*std::max(degree, 1) + 1));
   MATH::ParameterizedFunction * f = MATH::FunctionRegistry::create(name);
   if (MATH::OrthogonalSeries * series = dynamic_cast<MATH::OrthogonalSeries*>(f)) series->setDegree((unsigned int)degree);
   if (MATH::Polynomial2D * polynomial = dynamic_cast<MATH::Polynomial2D*>(f)) polynomial->setDegree((unsigned int)std::min(degree, 9));
   return f;
   }
 
+  //! Whether the functions of a name are Fourier decompositions (their degree: the highest harmonic).
+  bool isFourier(const String & name) { return name == "FourierDecomposition" || name == "FourierFlow"; }
+
   //! Whether the functions of a name have a degree (a Polynomial, a Polynomial2D, a series).
   bool hasDegree(const String & name)
   {
-  return name == "Polynomial" || name == "Polynomial2D" || name.endsWith("Series");
+  return name == "Polynomial" || name == "Polynomial2D" || name.endsWith("Series") || isFourier(name);
   }
 
   //! Number of variables of the functions of a registered name (0 if none can be made).
@@ -110,7 +115,10 @@ namespace CAP
     { "BesselI", "A I_n(scale (x - shift)), modified Bessel of the first kind; order n fixed" },
     { "BesselK", "A K_n(scale (x - shift)), modified Bessel of the second kind; order n fixed" },
     { "Normal2D", "A exp(-(u^2 - 2 rho u v + v^2)/(2 (1 - rho^2))), u = (x - meanX)/widthX, v = (y - meanY)/widthY" },
-    { "Polynomial2D", "sum of cij t^i s^j, i + j <= N; t, s: x, y of the range mapped onto [-1, 1]" } };
+    { "Polynomial2D", "sum of cij t^i s^j, i + j <= N; t, s: x, y of the range mapped onto [-1, 1]" },
+    { "FourierDecomposition", "k + sum_n [c_n cos(n x) + s_n sin(n x)], n = 1 to n max; x in radians" },
+    { "FourierFlow", "k [1 + 2 sum_n v_n cos(n (x - psi_n))], n = 1 to n max; x in radians" },
+    { "FourierHarmonic", "c cos(n x) + s sin(n x), one harmonic (n fixed)" } };
   for (const auto & text : texts) if (name == text.first) return String(text.second);
   if (std::shared_ptr<const MATH::ParameterizedComposite> c = MATH::FunctionRegistry::composite(name)) return describeComposite(*c);
   return "function registered by a program";
@@ -238,7 +246,8 @@ namespace CAP
       if (hasDegree(draft.type))
         {
         ImGui::SetNextItemWidth(80);
-        if (ImGui::InputInt("##degree", &draft.degree)) draft.degree = std::min(std::max(draft.degree, 0), 10);
+        if (ImGui::InputInt("##degree", &draft.degree))
+          draft.degree = std::min(std::max(draft.degree, isFourier(draft.type) ? 1 : 0), isFourier(draft.type) ? 20 : 10);
         }
       else ImGui::TextDisabled("-");
       ImGui::TableNextColumn();
@@ -677,9 +686,10 @@ namespace CAP
     {
     ImGui::SameLine(0, 16);
     ImGui::SetNextItemWidth(90);
-    if (ImGui::InputInt("degree", &_degree))
+    if (ImGui::InputInt(isFourier(_functionName) ? "n max" : "degree", &_degree))
       {
-      _degree = std::min(std::max(_degree, 0), _functionName == "Polynomial2D" ? 9 : 10);
+      _degree = isFourier(_functionName) ? std::min(std::max(_degree, 1), 20)
+                                         : std::min(std::max(_degree, 0), _functionName == "Polynomial2D" ? 9 : 10);
       if (MATH::OrthogonalSeries * series = dynamic_cast<MATH::OrthogonalSeries*>(_function.get())) series->setDegree((unsigned int)_degree);
       else if (MATH::Polynomial2D * polynomial = dynamic_cast<MATH::Polynomial2D*>(_function.get())) polynomial->setDegree((unsigned int)_degree);
       else makeFunction();
@@ -802,10 +812,16 @@ namespace CAP
   ImGui::SetItemTooltip("For counts (histograms): unbiased where bins have few entries, empty bins included");
   if (!histogram) { _statistic = 0; _binAveraging = false; }
   ImGui::BeginDisabled(!histogram);
-  ImGui::Checkbox("average over the bins", &_binAveraging);
+  ImGui::TextUnformatted("function in each bin:");
+  ImGui::SameLine();
+  if (ImGui::RadioButton("value at the center", !_binAveraging)) _binAveraging = false;
+  ImGui::SetItemTooltip("Compare each bin to the value of the function at its center");
+  ImGui::SameLine();
+  if (ImGui::RadioButton("integral over the bin", _binAveraging)) _binAveraging = true;
+  ImGui::SetItemTooltip("Compare each bin to the average of the function over it (its integral over the bin divided by "
+                        "the width: analytical for the functions that have one, e.g. the Fourier decompositions): no bias "
+                        "for narrow peaks or high harmonics in wide bins");
   ImGui::EndDisabled();
-  ImGui::SetItemTooltip("Compare each bin to the average of the function over it, not to its value at the center: no bias "
-                        "for narrow peaks in wide bins (3 or 9 evaluations per bin)");
   ImGui::Checkbox("global search first (differential evolution)", &_search);
   ImGui::SetItemTooltip("When the starting values are poor or the statistic has several minima; needs bounds on the free parameters");
 
@@ -813,7 +829,7 @@ namespace CAP
   ImGui::SeparatorText("Parameters");
   renderParameters();
   if (ImGui::Button("Estimate")) estimate(*graph);
-  ImGui::SetItemTooltip("Starting values from the data in the range (Normal, LogNormal, Exponential, polynomials, series, Normal2D, Polynomial2D)");
+  ImGui::SetItemTooltip("Starting values from the data in the range (Normal, LogNormal, Exponential, polynomials, series, Fourier decompositions, Normal2D, Polynomial2D)");
 
   // label and actions
   ImGui::SeparatorText("Result");

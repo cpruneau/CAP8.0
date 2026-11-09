@@ -34,6 +34,7 @@
 #include "Normal2D.hpp"
 #include "Polynomial2D.hpp"
 #include "BezierCurve.hpp"
+#include "FourierDecomposition.hpp"
 #include "ParameterizedComposite.hpp"
 #include "FileSystem.hpp"
 #include "XmlDocument.hpp"
@@ -96,6 +97,20 @@ namespace CAP
           if (n == 0) return new BezierCurve();
           if (n < 4 || n%2) return nullptr;
           return new BezierCurve(n/2);
+          });
+      add("FourierHarmonic", typeid(FourierHarmonic), [](unsigned int n) -> ParameterizedFunction *
+          { return n == 0 || n == 2 ? new FourierHarmonic() : nullptr; });
+      add("FourierDecomposition", typeid(FourierDecomposition), [](unsigned int n) -> ParameterizedFunction *
+          {
+          if (n == 0) return new FourierDecomposition(4);
+          if (n < 3 || n%2 == 0) return nullptr;
+          return new FourierDecomposition((n - 1)/2);
+          });
+      add("FourierFlow", typeid(FourierFlow), [](unsigned int n) -> ParameterizedFunction *
+          {
+          if (n == 0) return new FourierFlow(4);
+          if (n < 3 || n%2 == 0) return nullptr;
+          return new FourierFlow((n - 1)/2);
           });
       add("Polynomial2D", typeid(Polynomial2D), [](unsigned int n) -> ParameterizedFunction *
           {

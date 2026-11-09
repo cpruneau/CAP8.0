@@ -44,6 +44,7 @@ Functions/CompositeFunction.cpp
 Functions/Constant.cpp
 Functions/Cubic.cpp
 Functions/Exponential.cpp
+Functions/FourierDecomposition.cpp
 Functions/Function.cpp
 Functions/FunctionRegistry.cpp
 Functions/Laguerre.cpp
@@ -91,6 +92,7 @@ Search/SearchEngine.cpp
 Search/SearchProblem.cpp
 # Fitting
 Fitting/BayesianFitter.cpp
+Fitting/CalculateFourierDecomposition.cpp
 Fitting/ChiSquare.cpp
 Fitting/FitRecord.cpp
 Fitting/FitSelection.cpp
@@ -152,6 +154,12 @@ add_test(NAME FitRegions COMMAND TestFitRegions)
 add_executable(TestBezierCurve Functions/tests/TestBezierCurve.cpp)
 target_link_libraries(TestBezierCurve Math Base ${ROOT_LIBRARIES})
 add_test(NAME BezierCurve COMMAND TestBezierCurve)
+add_executable(TestFourierDecomposition Functions/tests/TestFourierDecomposition.cpp)
+target_link_libraries(TestFourierDecomposition Math Base ${ROOT_LIBRARIES})
+add_test(NAME FourierDecomposition COMMAND TestFourierDecomposition)
+add_executable(TestCalculateFourierDecomposition Fitting/tests/TestCalculateFourierDecomposition.cpp)
+target_link_libraries(TestCalculateFourierDecomposition Math Base ${ROOT_LIBRARIES})
+add_test(NAME CalculateFourierDecomposition COMMAND TestCalculateFourierDecomposition)
 add_executable(TestFunctionStorage Functions/tests/TestFunctionStorage.cpp)
 target_link_libraries(TestFunctionStorage Math Base ${ROOT_LIBRARIES})
 add_test(NAME FunctionStorage COMMAND TestFunctionStorage)

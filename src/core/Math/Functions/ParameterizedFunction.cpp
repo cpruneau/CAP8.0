@@ -372,7 +372,9 @@ namespace CAP
   void ParameterizedFunction::encodeBinary(BinaryWriter & w) const
   {
   String type;
-  if (dynamic_cast<const ParameterizedComposite *>(this)) type = kCompositeClass;
+  // a composite of no registered class of its own (e.g. one registered with registerComposite()): its components
+  // are recorded; a registered class derived from ParameterizedComposite (e.g. FourierDecomposition) is made by its name
+  if (dynamic_cast<const ParameterizedComposite *>(this) && !FunctionRegistry::isRegistered(*this)) type = kCompositeClass;
   else
     {
     if (!FunctionRegistry::isRegistered(*this))

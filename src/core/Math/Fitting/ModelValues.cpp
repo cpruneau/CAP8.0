@@ -16,6 +16,7 @@
 #include "DataPoints.hpp"
 #include "Function.hpp"
 #include "Histogram.hpp"
+#include "ParameterizedFunction.hpp"
 
 namespace CAP
 {
@@ -24,6 +25,19 @@ namespace CAP
 
   double binAverage(const Function & function, const Histogram & histogram, unsigned int index)
   {
+  // a function of one variable with parameters: its integral over the bin (analytical when the class has one, e.g.
+  // FourierDecomposition, Normal, the polynomials; adaptive Simpson otherwise) divided by the width of the bin
+  if (histogram.rank() == 1)
+    if (const ParameterizedFunction * f = dynamic_cast<const ParameterizedFunction*>(&function))
+      {
+      unsigned int i = index % histogram.nBins(0);
+      double center = histogram.binCenter(i, 0), width = histogram.binWidth(i, 0);
+      if (width > 0.0)
+        {
+        try { return f->integralInRange(center - 0.5*width, center + 0.5*width)/width; }
+        catch (...) { return std::numeric_limits<double>::quiet_NaN(); }
+        }
+      }
   static const double nodes[3]   = { -0.7745966692414834, 0.0, 0.7745966692414834 };   // sqrt(3/5)
   static const double weights[3] = { 5.0/18.0, 8.0/18.0, 5.0/18.0 };                  // sum 1: an average
   unsigned int rank = histogram.rank();
