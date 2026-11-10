@@ -9,7 +9,7 @@
 ################################################################################################
 # Build options (set with -D<option>=ON|OFF, or with the BuildCAP.py GUI).
 # The core modules (Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
-# Spherocity, SubSample, Performance, BasicEventGen) are always built.
+# ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen) are always built.
 ################################################################################################
 option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
@@ -82,7 +82,7 @@ find_package(ROOT REQUIRED COMPONENTS EG MathCore MathMore RIO Hist Tree Net )
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 ################################################################################################
 include(${ROOT_USE_FILE})
-include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Interpolation" "core/Math/Integral" "core/Math/Derivative" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Helpers" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
+include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Interpolation" "core/Math/Integral" "core/Math/Derivative" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Helpers" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/ParticleFlow" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
  )
 add_definitions(${ROOT_CXX_FLAGS})
 add_compile_options(-Wall -Wextra -pedantic)
@@ -165,10 +165,11 @@ add_subdirectory(analysis/ParticlePair3D)
 add_subdirectory(analysis/Performance)
 add_subdirectory(analysis/PtPt)
 add_subdirectory(analysis/NuDyn)
+add_subdirectory(analysis/ParticleFlow)
 add_subdirectory(analysis/Spherocity)
 add_subdirectory(analysis/SubSample)
 set(CAP_LINKED_MODULES Base Math Helpers Particles SubSample Global Spherocity ParticleSingle ParticlePair
-                       ParticlePair3D NuDyn PtPt Performance BasicEventGen)
+                       ParticlePair3D NuDyn ParticleFlow PtPt Performance BasicEventGen)
 set(CAP_OPTIONAL_BUILT "")
 
 ################################################################################################
@@ -354,7 +355,7 @@ if(optional_text STREQUAL "")
   set(optional_text "none")
 endif()
 message(STATUS "CAP core modules: Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, "
-               "PtPt, NuDyn, Spherocity, SubSample, Performance, BasicEventGen")
+               "PtPt, NuDyn, ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen")
 message(STATUS "CAP optional modules: ${optional_text}")
 message(STATUS "CAP libraries install directory: $ENV{CAP_LIB_PATH}")
 #include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Helpers" "Latex" "Glauber" "Particles"  "ParticleSingle" "ParticlePair"  "BasicEventGen" "$ENV{ROOTSYS}/include"

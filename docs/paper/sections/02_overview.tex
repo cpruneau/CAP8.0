@@ -20,9 +20,9 @@ The analyses hold the event processing: the library Particles, the framework sha
 particles, particle databases, filters, efficiencies, smearers, the base classes of the analysis tasks and of their
 histogram folders; Section~\ref{sec:analysis}), and one library per family of observables (Section~\ref{sec:observables}):
 single-particle spectra (ParticleSingle), pair correlations (ParticlePair) and their three-dimensional version
-(ParticlePair3D), transverse-momentum correlators (PtPt), multiplicity fluctuations (NuDyn), global observables
-(Global) and event shapes (Spherocity), performance studies (Performance), the combination of sub-samples
-(SubSample), and jet analyses (Jets, optional).
+(ParticlePair3D), transverse-momentum correlators (PtPt), multiplicity fluctuations (NuDyn), anisotropic flow
+(ParticleFlow), global observables (Global) and event shapes (Spherocity), performance studies (Performance), the
+combination of sub-samples (SubSample), and jet analyses (Jets, optional).
 
 \paragraph{\code{src/models}.}
 The models produce events (Section~\ref{sec:generators}): a simple generator (BasicEventGen), the Glauber model of
@@ -63,6 +63,7 @@ The libraries and the programs are installed in \code{lib} and \code{bin}.
     \midrule
     Particles      & analysis & Helpers                            & 13.6 \\
     \raggedright ParticleSingle, PtPt, NuDyn, Global, Spherocity & analysis & Particles & 4.6 \\
+    ParticleFlow   & analysis & Particles                          &  1.6 \\
     ParticlePair, ParticlePair3D & analysis & ParticleSingle      &  6.7 \\
     Performance, SubSample & analysis & Particles                 &  3.1 \\
     Jets$^*$       & analysis & Particles; FastJet                 &  4.2 \\

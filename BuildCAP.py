@@ -66,7 +66,7 @@ CONFIGURATIONS_DIR = os.path.join(CAP_DIR, "configurations")
 #: Modules always built (see src/CMakeLists.txt). Helpers holds the ROOT file and histogram helpers used by Particles,
 #: SubSample, Performance and several models: it stays a core module while the core uses ROOT.
 CORE_MODULES = ["Base", "Math", "Helpers", "Particles", "Global", "ParticleSingle", "ParticlePair", "ParticlePair3D",
-                "PtPt", "NuDyn", "Spherocity", "SubSample", "Performance", "BasicEventGen"]
+                "PtPt", "NuDyn", "ParticleFlow", "Spherocity", "SubSample", "Performance", "BasicEventGen"]
 
 #: Optional modules, in the order of the Optional modules pane: CMake option, label, folder in src (None for a feature
 #: or a placeholder without code), description, default, external package (key of EXTERNALS, "ROOT", or None).

@@ -244,7 +244,7 @@ class TaskDialog(tk.Toplevel):
             line.grid(row=r, column=2, sticky="ew", padx=(10, 0))
             if not names and not chosen:
                 ttk.Label(line, text="none defined", foreground="gray40").pack(side=tk.LEFT, pady=3)
-                ttk.Button(line, text="Filters pane…", command=lambda k=kind: self.show_filters(k)).pack(
+                ttk.Button(line, text="Filters pane…", command=lambda k=kind: self.show_filters(F.library_kind(k))).pack(
                     side=tk.LEFT, padx=8)
             for k, name in enumerate(chosen):
                 ttk.Label(line, text="%d" % (k + 1)).grid(row=k // 4, column=2 * (k % 4), sticky="e", padx=(8, 3))

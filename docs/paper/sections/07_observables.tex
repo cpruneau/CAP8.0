@@ -352,6 +352,108 @@ particle filters $(i,j)$; the folders with $j<i$ are filled. Table~\ref{tab:nudy
 of the class but not implemented.}
 
 % ---------------------------------------------------------------------------------------------------------------
+\subsection{Anisotropic flow}
+\label{sec:flow}
+
+The task \code{ParticleFlowAnalyzer} measures the Fourier coefficients $v_n$ of the azimuthal distributions of the
+particles, $dN/d\varphi \propto 1 + 2\sum_n v_n\cos n(\varphi-\Psi_n)$, by multi-particle cumulants, for the harmonics
+$n = 1,\dots,$ \code{nHarmonics} and the orders $2k = 2, 4, \dots,$ \code{maxOrder}, with and without a gap in
+(pseudo)rapidity, and by the scalar product method. Two sets of particles enter: the reference particles (RF), selected
+by the particle filters of the task (\code{PARTICLE\_FILTER}, one histogram folder per event filter and RF filter), and
+the particles of interest (POI), selected by a second list of filters (\code{POI\_FILTER}), whose differential flow is
+measured in every folder versus the event variable and the transverse momentum of the POI.
+
+\paragraph{Correlators.}
+With the weighted flow vectors of the RF of an event, $Q_{h,p} = \sum_i w_i^p e^{ih\varphi_i}$, the numerator of the
+$m$-particle correlator of harmonics $h_1,\dots,h_m$, a sum over the $m$-tuples of distinct particles, is obtained without
+a loop over tuples by summing over the partitions of the $m$ slots into blocks $B$ (the slots given to the same
+particle)~\cite{Bilandzic:2013kga}:
+\begin{equation}
+  N(S) = \sum_{B \ni \min S} (-1)^{|B|-1}(|B|-1)!\; Q_{h_B,|B|}\; N(S\setminus B),
+\end{equation}
+with $N(\emptyset) = 1$, where $S$ is a set of slots, $h_B$ is the sum of the harmonics of $B$, and $\min S$ is the first slot of $S$.
+\code{FlowCorrelator} computes $N(S)$ for all the $2^m$ subsets at once, in $3^m$ operations. With the harmonics
+arranged as $(+n,-n,+n,-n,\dots)$, the first $2k$ slots give the correlator $\avg{2k}_n = N/D$, where the denominator
+$D$ is the same sum with all harmonics zero. One call therefore gives all the orders. The event-averaged correlators
+$\avg{\avg{2k}}_n$ are profiles weighted by $D$. For the differential correlators $\avg{2k'}_n$, a POI takes the first
+slot and RF the others. The block of the first slot uses the vectors $p_{h}$ of the POI, or, when it holds more than one
+slot, the vectors $q_{h,p}$ of the particles that are both POI and RF~\cite{Bilandzic:2010jr}:
+\begin{equation}
+  N'(S) = \sum_{T\subseteq S\setminus\{1\}} (-1)^{|T|}\,|T|!\; X_{h_1+h_T,\,|T|+1}\; N(S\setminus\{1\}\setminus T),
+\end{equation}
+with $X_{h,1} = p_h$ and $X_{h,p} = q_{h,p}$ for $p\ge 2$. Self-correlations are thus removed exactly, whatever the overlap
+of the two selections. The particle weights $w_i$ (the inverse of the efficiencies of Section~\ref{sec:efficiency})
+correct for a non-uniform acceptance.
+
+\paragraph{Gap and sub-events.}
+With \code{gap} on, the RF are divided into two sub-events, $A$ ($x<-\Delta/2$) and $B$ ($x>\Delta/2$), where $x$ is the
+pseudorapidity or the rapidity (\code{gapVariable}) and $\Delta$ is \code{gapSize}. The gapped correlator takes $k$
+particles of harmonic $n$ in $A$ and $k$ of harmonic $-n$ in $B$:
+$N_A(n,\dots,n)\,N_B(n,\dots,n)^*$~\cite{Jia:2017hbm}. Non-flow correlations within a jet or a resonance decay, which do
+not reach across the gap, are suppressed. For the POI, a POI and $k-1$ RF are taken in one sub-event and $k$ RF in the
+other, and both assignments are summed.
+
+\paragraph{Cumulants and flow.}
+The derived calculator obtains the cumulants $c_n\{2k\}$ from the generating function~\cite{Borghini:2001vi},
+\begin{equation}
+  \sum_{k\ge1} c_n\{2k\}\frac{z^k}{(k!)^2} = \ln\Bigl(1+\sum_{k\ge1}\avg{\avg{2k}}_n\frac{z^k}{(k!)^2}\Bigr),
+\end{equation}
+by the recursion of the logarithm of a series, for any order. The first orders are
+\begin{align}
+  c_n\{2\} &= \avg{\avg{2}}, \nonumber\\
+  c_n\{4\} &= \avg{\avg{4}} - 2\avg{\avg{2}}^2, \nonumber\\
+  c_n\{6\} &= \avg{\avg{6}} - 9\avg{\avg{4}}\avg{\avg{2}} + 12\avg{\avg{2}}^3, \\
+  c_n\{8\} &= \avg{\avg{8}} - 16\avg{\avg{6}}\avg{\avg{2}} - 18\avg{\avg{4}}^2 \nonumber\\
+           &\quad + 144\avg{\avg{4}}\avg{\avg{2}}^2 - 144\avg{\avg{2}}^4. \nonumber
+\end{align}
+For a single flow magnitude $v$, $c_n\{2k\} = A_k v^{2k}$ with $A_k = 1, -1, 4, -33, 456, \dots$, so that
+$v_n\{2k\} = (c_n\{2k\}/A_k)^{1/2k}$, which is defined when $c_n\{2k\}/A_k > 0$. The differential cumulant $d_n\{2k\}$ is
+the cumulant with the block of the POI replaced, that is, the derivative of $c_n\{2k\}$ along
+$\avg{\avg{2j}}\to\avg{\avg{2j}}+(j/k)\avg{\avg{2j'}}$:
+\begin{align}
+  d_n\{4\} &= \avg{\avg{4'}} - 2\avg{\avg{2'}}\avg{\avg{2}}, \nonumber\\
+  d_n\{6\} &= \avg{\avg{6'}} - 6\avg{\avg{4'}}\avg{\avg{2}} - 3\avg{\avg{2'}}\avg{\avg{4}} \\
+           &\quad + 12\avg{\avg{2'}}\avg{\avg{2}}^2, \nonumber
+\end{align}
+and $v'_n\{2k\} = d_n\{2k\}/(A_k\, v_n\{2k\}^{2k-1})$. The scalar product method~\cite{Adler:2002pu} uses the sub-events
+of the gap: $v_n\{\mathrm{SP}\} = \avg{u_n Q^*}/\sqrt{\avg{Q_A Q_B^*}}$, where $u_n = e^{in\varphi}$ is the unit vector of
+a POI and $Q$ is the flow vector of the opposite sub-event. The uncertainties of the derived histograms are propagated
+linearly from those of the correlators, without their covariances; the sub-samples (Section~\ref{sec:subsample}) give
+the full uncertainties. Table~\ref{tab:flow} lists the histograms. \code{BasicEventGen} can impose flow coefficients on
+its particles (\code{Flow:Vn}, constant or rising with $\pT$), which serve to test the analysis. A test of the module
+recovers $v_2 = 0.1$ and $v_3 = 0.05$ at all orders up to 8, with a hole in the acceptance corrected by weights.
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of a flow folder (\code{ParticleFlowHistos}), for the harmonic $n$, the order $2k$ and the POI
+  filter $j$, as functions of the event variable; the names ending in \code{\_pt} are functions of the event variable
+  and of the $\pT$ of the POI.}
+  \label{tab:flow}
+  \small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Name & Content & Option \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Base (profiles)}} \\
+    \code{evt}                                      & distribution of the event variable & \\
+    \code{Corr}$2k$\code{\_n}$n$                    & $\avg{\avg{2k}}_n$ of the RF & \\
+    \code{CorrGap}$2k$\code{\_n}$n$                 & $\avg{\avg{2k}}_n$ across the gap & \code{gap} \\
+    \code{SPQaQb\_n}$n$                             & $\avg{Q_AQ_B^*}_n$ & \code{scalarProduct} \\
+    \code{POI}$j$\code{\_Corr}$2k$\code{\_n}$n$[\code{\_pt}]    & $\avg{\avg{2k'}}_n$ & \\
+    \code{POI}$j$\code{\_CorrGap}$2k$\code{\_n}$n$[\code{\_pt}] & $\avg{\avg{2k'}}_n$ across the gap & \code{gap} \\
+    \code{POI}$j$\code{\_SPuQ\_n}$n$[\code{\_pt}]   & $\avg{u_nQ^*}$ & \code{scalarProduct} \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Derived}} \\
+    \code{Cum}$2k$\code{\_n}$n$, \code{V}$2k$\code{\_n}$n$       & $c_n\{2k\}$, $v_n\{2k\}$ & \\
+    \code{CumGap}$2k$\code{\_n}$n$, \code{VGap}$2k$\code{\_n}$n$ & the same across the gap & \code{gap} \\
+    \code{POI}$j$\code{\_DCum}$2k$\code{\_n}$n$[\code{\_pt}], \code{POI}$j$\code{\_V}$2k$\code{\_n}$n$[\code{\_pt}] & $d_n\{2k\}$, $v'_n\{2k\}$ & \\
+    \code{POI}$j$\code{\_DCumGap}$2k$\ldots, \code{POI}$j$\code{\_VGap}$2k$\ldots & the same across the gap & \code{gap} \\
+    \code{POI}$j$\code{\_VSP\_n}$n$[\code{\_pt}]    & $v_n\{\mathrm{SP}\}$ & \code{scalarProduct} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Global observables and event shapes}
 \label{sec:global}
 

@@ -38,8 +38,11 @@ $e^{-x^2/2\sigma^2}$ (\code{Sigma}), or any function of one variable of the func
 (Section~\ref{sec:functions}), named by \code{Function:Name} with its parameters in \code{Function:Parameters}: a
 registered class, such as \code{Exponential} or \code{Polynomial}, or a composite built in CapGui. The Gaussian and
 the functions are tabulated on the range when the task is initialised and sampled by inverting their cumulative.
-New styles of generation are added as new values of \code{EventGenType}. The random numbers are drawn by a
-Mersenne Twister, with the seed \code{Random:Seed}.
+New styles of generation are added as new values of \code{EventGenType}. For tests of flow analyses
+(Section~\ref{sec:flow}), \code{Flow:Vn} lists coefficients $v_1, v_2, \dots$ that modulate the azimuths about a
+reaction plane $\Psi$ drawn for each event, $dN/d\varphi \propto 1 + 2\sum_n v_n(\pT)\cos n(\varphi-\Psi)$, with
+$v_n(\pT) = v_n$, or $v_n\min(\pT/p_0,1)$ for $p_0$ = \code{Flow:PtScale}; the azimuths are drawn by rejection. The
+random numbers are drawn by a Mersenne Twister, with the seed \code{Random:Seed}.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Therminator3}

@@ -292,7 +292,7 @@ def task_from_element(element, templates, warnings):
         if filters.OBSOLETE_KEY.match(p.key) or filters.JOB_KEY.match(p.key):
             continue            # keys of earlier versions; files of the job (see load_workflow_with_filters())
         group = p.key.split(":")[0]
-        if t.known and cls in templates and group in filters.KINDS and group not in groups:
+        if t.known and cls in templates and group in filters.CHOICE_KINDS and group not in groups:
             if group not in unused:     # e.g. the corrections of an analyzer, kept by its calculator in older files
                 unused.append(group)
             continue
@@ -1612,15 +1612,17 @@ def run_gui(initial_file=None, hook=None):
 
         def _object_users(self, kind, name):
             """Names of the tasks of the workflow that use an object of the library."""
-            return [t.name for t in self._all_stage_tasks() if name in filters.choices(t).get(kind, [])]
+            return [t.name for t in self._all_stage_tasks()
+                    if any(name in filters.choices(t).get(k, []) for k in filters.lists_of_kind(kind))]
 
         def _rename_object(self, kind, old, new):
             if kind == "PARTICLE_FILTER":           # the event filters testing its selection
                 filters.rename_selection(self.library, old, new)
             for t in list(self.items.values()) + [t for s in STAGES if s != self.stage for t in all_tasks(self.stages[s])]:
-                names = filters.choices(t).get(kind)
-                if names:
-                    filters.choices(t)[kind] = [new if n == old else n for n in names]
+                for list_kind in filters.lists_of_kind(kind):        # e.g. particle filters chosen as POI filters
+                    names = filters.choices(t).get(list_kind)
+                    if names:
+                        filters.choices(t)[list_kind] = [new if n == old else n for n in names]
                 options = getattr(t, "histograms", None)
                 if options is not None and kind in filters.CONDITION_KINDS:      # binning per combination of names
                     options.binning = {tuple(new if n == old else n for n in combo): values
@@ -1634,6 +1636,9 @@ def run_gui(initial_file=None, hook=None):
                     before = filters.filter_grid(t)
                     filters.choices(t)[kind] = [n for n in filters.choices(t)[kind] if n not in names]
                     filters.regrid_maps(t, before)
+                for alias in filters.lists_of_kind(kind)[1:]:       # e.g. particle filters chosen as POI filters
+                    if filters.choices(t).get(alias):
+                        filters.choices(t)[alias] = [n for n in filters.choices(t)[alias] if n not in names]
                 options = getattr(t, "histograms", None)
                 if options is not None and kind in filters.CONDITION_KINDS:
                     options.binning = {combo: values for combo, values in options.binning.items()

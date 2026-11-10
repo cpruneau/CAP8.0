@@ -9,6 +9,7 @@
 Run from the CAP directory:  python3 -m unittest discover -s tests/python
 """
 
+import copy
 import os
 import sys
 import tempfile
@@ -417,13 +418,42 @@ class TestKeys(unittest.TestCase):
         for cls, rank, calculator in (("ParticleSingleAnalyzer", 1, True), ("ParticlePairAnalyzer", 2, True),
                                       ("GlobalAnalyzer", 1, True), ("NuDynAnalyzer", 2, True), ("PtPtAnalyzer", 1, True),
                                       ("ParticlePair3DAnalyzer", 2, True), ("SpherocityAnalyzer", 1, False),
-                                      ("PerformanceAnalyzer", 1, True)):
+                                      ("ParticleFlowAnalyzer", 1, True), ("PerformanceAnalyzer", 1, True)):
             a = task(cls, "A")
             self.assertEqual((cls, F.histogram_layout(a, TEMPLATES), F.folder_rank(a, TEMPLATES)), (cls, "folders", rank))
             c = F.derived_calculator(a, TEMPLATES)
             self.assertEqual((cls, c is not None), (cls, calculator))
             if c is not None:
                 self.assertEqual((c.name, c.param("SOURCE_TASK").value), ("ADerived", "A"))
+
+    def test_poi_filters(self):
+        """The particles of interest of the flow analysis (POI_FILTER) are particle filters of the library: written as
+        the keys of its list, read back, checked against the library, and renamed with the particle filters."""
+        a = task("ParticleFlowAnalyzer", "Flow")
+        self.assertIn("POI_FILTER", F.task_kinds(a, TEMPLATES))
+        self.assertEqual(F.library_kind("POI_FILTER"), "PARTICLE_FILTER")
+        self.assertEqual(F.lists_of_kind("PARTICLE_FILTER"), ["PARTICLE_FILTER", "POI_FILTER"])
+        F.default_event_settings(a, TEMPLATES)
+        F.default_histogram_settings(a, TEMPLATES)
+        a.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP"], "POI_FILTER": ["PiM", "Unused"],
+                     "EVENT": ["Event"], "PARTICLE_DB": ["ParticleDb"]}
+        tasks = workflow()
+        tasks[0].children.append(a)
+        lib = library()
+        self.assertEqual(F.check_choices(tasks, lib, TEMPLATES), [])
+        written = copy.deepcopy(tasks)
+        F.apply_choices(written, lib, TEMPLATES, RunCAP.Param)
+        v = values(written[0].children[-1])
+        self.assertEqual((v["POI_FILTER:N"], v["POI_FILTER:USE"]), ("2", "true"))
+        self.assertEqual((v["POI_FILTER_0:NAME"], v["POI_FILTER_0:OWNER"], v["POI_FILTER_1:NAME"]),
+                         ("PiM", "false", "Unused"))
+        self.assertEqual(v["HISTOGRAM:N"], "1")                      # one folder per event filter and RF filter
+        read, warnings = F.extract_choices(written, TEMPLATES, lib)
+        self.assertEqual(F.choices(written[0].children[-1])["POI_FILTER"], ["PiM", "Unused"])
+        self.assertEqual(warnings, [])
+        self.assertEqual(len(read.names("PARTICLE_FILTER")), 3)       # no object added for the POI list
+        a.filters["POI_FILTER"] = ["NoSuchFilter"]
+        self.assertTrue(any("NoSuchFilter" in e for e in F.check_choices(tasks, lib, TEMPLATES)))
 
     def test_event_settings(self):
         """A generator creates its events, an analyzer uses them; the settings are written as set."""

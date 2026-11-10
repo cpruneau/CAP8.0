@@ -1,26 +1,22 @@
 ################################################################################################
-# Project CAP/ParticleFlow
-################################################################################################
-
-#include(${ROOT_USE_FILE})
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-#add_definitions(${ROOT_CXX_FLAGS})
-
-
-
-################################################################################################
-# Create a shared library with geneated dictionary
+# Project CAP/ParticleFlow: anisotropic flow by multi-particle cumulants and the scalar product method
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
-add_library(ParticleFlow SHARED   ParticleFlowHistos.cpp ParticleFlowDerivedHistos.cpp  ParticleFlowAnalyzer.cpp)
+add_library(ParticleFlow SHARED
+ParticleFlowTasks.cpp
+ParticleFlowAnalyzer.cpp
+ParticleFlowHistos.cpp
+FlowCorrelator.cpp
+FlowCumulants.cpp)
 
-target_link_libraries(ParticleFlow Base  Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
-target_include_directories(ParticleFlow  PUBLIC Base   Particles ParticleFlow ${EXTRA_INCLUDES} )
+target_link_libraries(ParticleFlow Base Math Particles ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_include_directories(ParticleFlow PUBLIC Base Particles ParticleFlow ${EXTRA_INCLUDES} )
 
-# optimization for big histogram access within the pair inner loop
-# WARNING: the sumw2 structure is not used -> estimate uncertainties using sub-samples
-add_definitions(-DOPTIMIZEADDBINCONTENT)
+install(TARGETS ParticleFlow LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 
-
-install(TARGETS ParticleFlow  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
-
+################################################################################################
+# Tests (run with ctest in the build directory; not installed)
+################################################################################################
+add_executable(TestParticleFlow tests/TestParticleFlow.cpp)
+target_link_libraries(TestParticleFlow ParticleFlow Particles Base Math ${ROOT_LIBRARIES})
+add_test(NAME ParticleFlow COMMAND TestParticleFlow)

@@ -80,6 +80,22 @@ TAG_OF_KIND = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter
                "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
                "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}
 KIND_OF_TAG = {tag: kind for kind, tag in TAG_OF_KIND.items()}
+#: Lists of objects of some tasks taken from the library of another kind: the particles of interest of the flow
+#: analysis (CAP::ParticleFlowAnalyzer, POI_FILTER) are particle filters of the library.
+ALIAS_KINDS = {"POI_FILTER": "PARTICLE_FILTER"}
+#: Kinds of the lists a task can choose objects for: those of the library and the aliases.
+CHOICE_KINDS = KINDS + list(ALIAS_KINDS)
+KIND_LABELS["POI_FILTER"] = "POI filters"
+
+
+def library_kind(kind):
+    """Kind of the library objects of a list (POI_FILTER: PARTICLE_FILTER)."""
+    return ALIAS_KINDS.get(kind, kind)
+
+
+def lists_of_kind(kind):
+    """Kinds of the lists choosing objects of a kind of the library: the kind and its aliases."""
+    return [kind] + [alias for alias, target in ALIAS_KINDS.items() if target == kind]
 SELECTIONS_ROOT = "CapSelections"
 #: Kinds defined by conditions (the others by parameters).
 CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER")
@@ -193,7 +209,7 @@ NAME_FULL = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*")
 TASK_SETTING_KINDS = ("EVENT",)
 MANAGED_KEY = re.compile(r"^(?:(?:%s)(?::N|_\d+:.*)|(?:%s):USE|HISTOGRAM_[1-4](?::N|_\d+:.*)"
                          r"|HISTOGRAM:N|HISTOGRAM_\d+:(?!(?:USE|CREATE|IMPORT|EXPORT|N)(?::|$)).*)$"
-                         % ("|".join(KINDS), "|".join(k for k in KINDS if k not in TASK_SETTING_KINDS)))
+                         % ("|".join(CHOICE_KINDS), "|".join(k for k in CHOICE_KINDS if k not in TASK_SETTING_KINDS)))
 #: Settings of the events of a task shown in its window.
 EVENT_SETTINGS = ("USE", "CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_NAME", "EXPORT", "EXPORT:PATH",
                   "EXPORT:FILE_NAME")
@@ -355,8 +371,8 @@ def default_event_settings(task, templates):
             p.value = "true" if value else "false"
 #: Settings of the lists of objects of a task (<KIND>:USE, IMPORT, CREATE, EXPORT and their files): FilterCreator
 #: creates, imports and exports the objects, so the tasks only choose them (they are hidden in RunCAP.py's windows).
-LIST_SETTING_KEY = re.compile(r"^(?:%s):(?:USE|IMPORT|CREATE|EXPORT)(?::.*)?$" % "|".join(KINDS))
-_OBJECT_KEY = re.compile(r"^(%s)_(\d+):(.+)$" % "|".join(KINDS))
+LIST_SETTING_KEY = re.compile(r"^(?:%s):(?:USE|IMPORT|CREATE|EXPORT)(?::.*)?$" % "|".join(CHOICE_KINDS))
+_OBJECT_KEY = re.compile(r"^(%s)_(\d+):(.+)$" % "|".join(CHOICE_KINDS))
 _CONDITION_KEY = re.compile(r"^CONDITION_(\d+):(.+)$")
 _FOLDER_KEY = re.compile(r"^HISTOGRAM_([1-4])_(\d+):(.+)$")
 _FOLDER_ATTRIBUTES = ("NAME", "TITLE", "OWNER", "BASE_NAME")
@@ -485,10 +501,10 @@ class FilterLibrary:
         return library
 
     def names(self, kind):
-        return [o.name for o in self.objects[kind]]
+        return [o.name for o in self.objects[library_kind(kind)]]
 
     def get(self, kind, name):
-        for o in self.objects[kind]:
+        for o in self.objects[library_kind(kind)]:
             if o.name == name:
                 return o
         return None
@@ -626,7 +642,7 @@ def _template_keys(task, templates):
 def task_kinds(task, templates):
     """Kinds of objects a task can use: those whose list its class configures (its template has <KIND>:N)."""
     keys = _template_keys(task, templates)
-    return [kind for kind in KINDS if kind + ":N" in keys]
+    return [kind for kind in CHOICE_KINDS if kind + ":N" in keys]
 
 
 def is_glauber(task):
@@ -1134,7 +1150,7 @@ def extract_choices(tasks, templates, library=None):
     warnings = []
     for task in _preorder(tasks):
         values = {p.key: p.value for p in task.params}
-        kinds = task_kinds(task, templates) or [k for k in KINDS if k + ":N" in values]
+        kinds = task_kinds(task, templates) or [k for k in CHOICE_KINDS if k + ":N" in values]
         task.filters = {}
         for kind in kinds:
             try:
@@ -1149,7 +1165,7 @@ def extract_choices(tasks, templates, library=None):
                     warnings.append("Task %s: %s_%d has no name (ignored)." % (task.name, kind, k))
                     continue
                 names.append(name)
-                if values.get(prefix + "OWNER", "false").lower() not in ("true", "1", "yes", "on"):
+                if kind in ALIAS_KINDS or values.get(prefix + "OWNER", "false").lower() not in ("true", "1", "yes", "on"):
                     continue
                 definition = _definition_from_keys(task, kind, k, name, values, warnings)
                 if kind in MAPS_KINDS and any(key.startswith(prefix) and key[len(prefix):] not in ("NAME", "TITLE", "OWNER")
@@ -1186,7 +1202,7 @@ def extract_choices(tasks, templates, library=None):
                 if library.get(kind, name) is None:
                     warnings.append("Task %s: %s %s is not defined by any task (added to the library, empty)."
                                     % (task.name, KIND_LABELS[kind].lower()[:-1], name))
-                    library.add(FilterDef(kind, name))
+                    library.add(FilterDef(library_kind(kind), name))
     return library, warnings
 
 
