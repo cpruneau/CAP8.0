@@ -116,9 +116,16 @@ changed is written: a zoom adds the range of an axis, a colour picked the colour
 a graph clicked on a canvas selects its element in the tree, and an element selected in the tree makes its canvas
 current. The commands of the Edit menu act on the plot file: Undo and Redo go back and forth through the changes made
 on the canvases and in the tree, and Cut, Copy, Paste, Duplicate and Delete act on the selection, an element of the
-file (a graph copied is its XML, also put on the clipboard, and is pasted where it belongs, near the selection). The
-File menu opens, closes, duplicates and saves plot files; the data files are opened apart (Open Data, Open Data
-Folder), for the browser.
+file (a graph copied is its XML, also put on the clipboard, and is pasted where it belongs, near the selection).
+
+\paragraph{Files.}
+The File menu acts on the two kinds of files of a session: plot files, and the data files and trees of the browser.
+It makes new plot files, windows, canvases and browsers, a plot file from data (below), and empty trees in which
+objects are gathered; it opens plot files, data files and folders of data; and it duplicates, saves, saves under
+another name, and closes. Duplicate, Save and Close act on what was used last, a canvas of a plot file or an entry
+of the browser: a window duplicated gets a copy of its canvases, an entry of a tree a copy of its object. A tree
+that was changed is marked in the browser, and is offered to be saved when it is closed or when CapGui quits, as a
+plot file is; Save All saves every plot file and tree changed.
 
 \paragraph{New plot files from the data.}
 A plot file can be made from the content of a CAP file, or from a workflow of RunCAP before it is run (File $>$ New
@@ -162,8 +169,9 @@ seen in the other.
 Data points, histograms and functions of one or two variables are fitted; a function is sampled on a set of points
 or a grid first. The functions offered are those of the registry (Section~\ref{sec:functions}) of the rank of the
 object: constant, linear and polynomial functions, Gaussian, log-normal and exponential functions, orthogonal series
-(Legendre, Chebyshev, Hermite, Laguerre), Bessel functions, the two-dimensional Gaussian and polynomials, and any
-class registered by a program. Composite functions are built in a dialog, either as a sum of registered functions or,
+(Legendre, Chebyshev, Hermite, Laguerre), Bessel functions, Fourier decompositions in either form up to a harmonic
+$n_{\max}$ (Section~\ref{sec:fourier}), the probability distributions of Section~\ref{sec:distributions}, the
+two-dimensional Gaussian and polynomials, and any class registered by a program. Composite functions are built in a dialog, either as a sum of registered functions or,
 in two variables, as a product $f(x)\,g(y)$ of functions of one variable; their components are labelled, and the
 parameters named after them (\code{signal.mean}, \code{background.a1}). A composite is either used for the session or
 registered under a name, which keeps it in the file of composites shared by CapGui and the programs. Each parameter
@@ -172,7 +180,7 @@ selection (Section~\ref{sec:fitting}), and after a fit the fitted values become 
 
 \paragraph{Statistic and method.}
 The statistic is the $\chi^2$ or, for histograms, the Poisson likelihood ratio, compared to the function at the centre
-of each bin or to its average over the bin. The minimisation is Levenberg--Marquardt, optionally preceded by a global
+of each bin or to its integral over the bin divided by the width of the bin (Section~\ref{sec:fitting}). The minimisation is Levenberg--Marquardt, optionally preceded by a global
 search by differential evolution over the bounds of the free parameters, for poor starting values or several minima.
 The fitting library offers more than the Fit window uses: unbinned and extended likelihoods, the other global
 searches of \code{ExtremumSearch} (simulated annealing, genetic algorithm, divide and conquer, explore--exploit), and
@@ -196,3 +204,30 @@ highlighted. The pane also sets how each fit is drawn (line, colour, over the se
 its quality is shown in the legend, and whether a residual panel is drawn below the graph, with the differences
 between the data and the fit, or the pulls. For a fit in two variables, the map of the pulls is drawn in a new
 canvas.
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Detector maps}
+\label{sec:guimaps}
+
+The particle efficiencies and smearers used by the jobs (Section~\ref{sec:efficiency}) are made and edited in the
+Detector Maps window and kept in a maps file, a CAP file holding any number of them, each named; RunCAP names the
+file and lets each task choose among its objects. The window lists the efficiencies and smearers of the file (added,
+renamed and removed there) and, for the one selected, each of its maps, the efficiency or the resolutions and biases
+of $\pT$, $\eta$ and $\varphi$, each of which is one of the following:
+a constant; a function of the registry, of one or more of the variables, with its parameters by name; a histogram,
+dropped from the browser (for instance an efficiency measured by the performance analysis of a simulation,
+Section~\ref{sec:performance}) or made empty with a given binning and edited bin by bin in a table; or a product of
+smooth curves of each variable, $\varepsilon(\pT)\, f(\eta)\, g(\varphi)$, drawn with the mouse. A map can be shown in
+the current graph, fitted there (Section~\ref{sec:guifits}), and replaced by the fitted function; a function can be sampled
+at the centres of the bins of a histogram. Values outside the range allowed, efficiencies outside $[0,1]$ or negative
+resolutions, are refused, with the reason shown.
+
+The curves are B\'ezier curves (\code{BezierCurve}): a cubic B\'ezier segment joins each pair of consecutive knots
+$(x_k,y_k)$, its inner control points placed at the thirds of the segment in $x$, so that every segment is a cubic in
+$x$ and the curve is a function, whatever the knots. The slopes at the knots are set automatically by the
+monotonicity-preserving rule of Fritsch and Butland, zero at a local extremum of the knots, so that the control
+points of each segment lie between its two knots: the curve never goes beyond its knots, and an efficiency whose
+knots are in $[0,1]$ stays in $[0,1]$ everywhere. The curve has a continuous derivative, and its integral is exact.
+On the canvas, the knots are dragged with the mouse, a click on the curve adds a knot there, barely changing its
+shape, and a right click removes one; the knots can also be typed in a table, and a curve can be made flat at its
+mean value.

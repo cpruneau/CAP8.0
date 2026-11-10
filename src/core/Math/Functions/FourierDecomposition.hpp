@@ -55,6 +55,8 @@ namespace CAP
   using ParameterizedFunction::evaluateAt;
   //! @brief Derivative at x. @param x x @return h'(x)
   double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
   //! @brief Integral from low to high. @param low lower end @param high upper end @return integral
   double integralInRange(double low, double high) const override;
   using ParameterizedFunction::integralInRange;
@@ -139,6 +141,11 @@ namespace CAP
   using ParameterizedComposite::evaluateAt;
   //! @brief Derivative at x. @param x x @return f'(x)
   double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
+  //! @brief Derivative, a decomposition of form 1: c_n -> n s_n, s_n -> -n c_n, the constant 0. @param axis 0
+  //! @return new FourierDecomposition (owned by the caller)
+  Function * derivativeFunction(unsigned int axis=0) const override;
   //! @brief Integral from low to high. @param low lower end @param high upper end @return integral
   double integralInRange(double low, double high) const override;
   //! @brief Integral over a box (rank 1). @param low lower end (one) @param high upper end (one) @return integral

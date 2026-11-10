@@ -450,7 +450,7 @@ def load_stages_with_filters(path, templates):
     library = None
     element = root.find("RUNCAP")
     if element is not None:
-        library, more = filters.read_runcap_element(element, everything)
+        library, more = filters.read_runcap_element(element, everything, os.path.dirname(os.path.abspath(path)))
         warnings += more
         first = next(s for s in STAGES if s in stages)
         for name, value in library.job.items():           # files of the job written before the stages
@@ -522,7 +522,7 @@ def write_stages(path, stages, library=None, templates=None, jobs=None, extra=No
     if library is not None:
         saved, library.job = library.job, {}           # the files of the jobs are in the TASK elements
         try:
-            document.append(filters.runcap_element(library, everything))
+            document.append(filters.runcap_element(library, everything, os.path.dirname(os.path.abspath(path))))
         finally:
             library.job = saved
     for element in extra or []:
@@ -827,6 +827,7 @@ def run_gui(initial_file=None, hook=None):
             self.subsamples = subsamples.SubSampleSettings()
             self.worker = None
             self.kill_requested = False
+            self.dropped_lines = 0          # lines of output not shown (after Kill)
             self.queue = queue.Queue()
             self.start_time = None
             root.title("CAP Workflow")
@@ -865,13 +866,13 @@ def run_gui(initial_file=None, hook=None):
             root.after(200, self._place_sashes)
 
         def _place_sashes(self):
-            # initial heights: workflow 24%, filters 36%, tasks 20%, output 20%
+            # initial heights: workflow 22%, filters 44%, tasks 18%, output 16%
             self.root.update_idletasks()
             h = self.panes.winfo_height()
             if h > 100:
-                self.panes.sashpos(0, int(h * 0.24))
-                self.panes.sashpos(1, int(h * 0.60))
-                self.panes.sashpos(2, int(h * 0.80))
+                self.panes.sashpos(0, int(h * 0.22))
+                self.panes.sashpos(1, int(h * 0.66))
+                self.panes.sashpos(2, int(h * 0.84))
 
         def _dialog(self, kind, **options):
             """File dialog of filedialog.<kind>. On macOS the file types are left out: Tk's native panel can abort
@@ -1497,12 +1498,19 @@ def run_gui(initial_file=None, hook=None):
             except OSError as e:
                 messagebox.showerror("Save workflow", "Cannot write %s:\n%s" % (filename, e))
                 return False
+            try:
+                linked = filters.save_linked(self.library)
+            except OSError as e:
+                messagebox.showerror("Save workflow", "The workflow is saved, but a linked selection file could not "
+                                                      "be written:\n%s" % e)
+                linked = []
             self.saved_path = filename
             self.settings["last_workflow"] = filename
             self.settings["workflow_dir"] = os.path.dirname(filename)
             self.dirty = False
             self._update_title()
-            self.status.set("Workflow saved to %s" % filename)
+            self.status.set("Workflow saved to %s%s" % (filename, "; selection files written: " + ", ".join(
+                os.path.basename(p) for p in linked) if linked else ""))
             return True
 
         def clear_workflow(self):
@@ -1579,13 +1587,13 @@ def run_gui(initial_file=None, hook=None):
             head = ttk.Frame(parent)
             head.pack(fill=tk.X, pady=(6, 0))
             ttk.Label(head, text="Filters", style="Section.TLabel").pack(side=tk.LEFT)
-            ttk.Label(head, text="Filters, events and particle databases defined here once, efficiencies and smearers "
-                                 "read from a maps file (made in CapGui): created by the task FilterCreator (run "
-                                 "first), used by name by the tasks (double-click a task below).",
+            ttk.Label(head, text="defined once, used by name by the tasks (double-click a task to choose them)",
                       foreground="gray40").pack(side=tk.LEFT, padx=10)
             self.filters_panel = RunCAPFiltersGui.FiltersPanel(
                 parent, self.library, on_change=self._library_changed, on_rename=self._rename_object,
-                on_remove=self._remove_objects, users=self._object_users)
+                on_remove=self._remove_objects, users=self._object_users,
+                directory=lambda: os.path.dirname(self.saved_path) if self.saved_path
+                else self.settings.get("workflow_dir") or CAP_DIR)
             self.filters_panel.configure(padding=(0, 4, 0, 0))
             self.filters_panel.pack(fill=tk.BOTH, expand=True)
 
@@ -1748,6 +1756,7 @@ def run_gui(initial_file=None, hook=None):
 
         def _start_runner(self, runner, success=None):
             self.kill_requested = False
+            self.dropped_lines = 0
             self.start_time = time.time()
             self.run_button.configure(state=tk.DISABLED)
             self.run_all_button.configure(state=tk.DISABLED)
@@ -1820,6 +1829,7 @@ def run_gui(initial_file=None, hook=None):
 
         def _start(self, commands, kind):
             self.kill_requested = False
+            self.dropped_lines = 0
             self.start_time = time.time()
             self.run_button.configure(state=tk.DISABLED)
             self.run_all_button.configure(state=tk.DISABLED)
@@ -1830,6 +1840,9 @@ def run_gui(initial_file=None, hook=None):
 
         def _run_commands(self, commands, env, kind):
             for description, cmd, cwd in commands:
+                if self.kill_requested:                 # Kill between two commands
+                    self.queue.put(("done", kind, False, "killed by the user"))
+                    return
                 self.queue.put(("status", description + "\u2026"))
                 self.queue.put(("text", "$ %s\n" % shell_text(cmd), "command"))
                 try:
@@ -1839,6 +1852,8 @@ def run_gui(initial_file=None, hook=None):
                 except OSError as e:
                     self.queue.put(("done", kind, False, "cannot run %s: %s" % (cmd[0], e)))
                     return
+                if self.kill_requested:                 # Kill while the process was starting
+                    self._signal(self.process, signal.SIGKILL)
                 for line in self.process.stdout:
                     self.queue.put(("line", line))
                 code = self.process.wait()
@@ -1851,7 +1866,26 @@ def run_gui(initial_file=None, hook=None):
                     return
             self.queue.put(("done", kind, True, "job completed" if kind == "job" else "templates written"))
 
+        @staticmethod
+        def _signal(process, sig):
+            """Send a signal to a process and its group (its children: start_new_session)."""
+            try:
+                os.killpg(process.pid, sig)
+            except (OSError, AttributeError):
+                try:
+                    process.send_signal(sig)
+                except OSError:
+                    pass
+
         def kill(self):
+            """Stop the running job: SIGTERM to its process group, SIGKILL 3 s later if it is still there. The output
+            still queued is not shown (a verbose job can have printed far more than the log could display yet), so
+            that the end of the job shows at once."""
+            if str(self.kill_button.cget("state")) == "disabled":
+                return
+            self.kill_requested = True
+            self._discard_output()
+            self.append("=== Kill requested ===\n", "warning")
             runner = self.runner
             if runner is not None:
                 runner.kill(signal.SIGTERM)
@@ -1859,21 +1893,29 @@ def run_gui(initial_file=None, hook=None):
                 self.root.after(3000, lambda: runner.kill(signal.SIGKILL))
                 return
             process = self.process
+            self.status.set("Killing the job\u2026")
             if process and process.poll() is None:
-                self.kill_requested = True
-                try:
-                    os.killpg(process.pid, signal.SIGTERM)
-                except (OSError, AttributeError):
-                    process.terminate()
-                self.status.set("Killing the job\u2026")
+                self._signal(process, signal.SIGTERM)
 
                 def force():
                     if process.poll() is None:
-                        try:
-                            os.killpg(process.pid, signal.SIGKILL)
-                        except (OSError, AttributeError):
-                            process.kill()
+                        self._signal(process, signal.SIGKILL)
                 self.root.after(3000, force)
+
+        def _discard_output(self):
+            """Drop the lines of output waiting in the queue (the other messages are kept, in order)."""
+            kept = []
+            try:
+                while True:
+                    item = self.queue.get_nowait()
+                    if item[0] == "line":
+                        self.dropped_lines += 1
+                    else:
+                        kept.append(item)
+            except queue.Empty:
+                pass
+            for item in kept:
+                self.queue.put(item)
 
         def _poll_queue(self):
             lines = []
@@ -1881,8 +1923,11 @@ def run_gui(initial_file=None, hook=None):
                 while True:
                     item = self.queue.get_nowait()
                     if item[0] == "line":
+                        if self.kill_requested:           # output of a killed job: not shown
+                            self.dropped_lines += 1
+                            continue
                         lines.append(item[1])
-                        if len(lines) >= 500:
+                        if len(lines) >= 2000:
                             break
                         continue
                     self._flush(lines)
@@ -1898,17 +1943,34 @@ def run_gui(initial_file=None, hook=None):
             self._flush(lines)
             self.root.after(50, self._poll_queue)
 
+        MAX_LOG_LINES = 100000      # older lines are removed from the log window (Save log saves what is shown)
+
         def _flush(self, lines):
             if not lines:
                 return
             self.output.configure(state=tk.NORMAL)
+            # consecutive lines of the same tag in one insert: much faster for verbose jobs
+            run, tag = [], None
             for line in lines:
-                self.output.insert(tk.END, line, self.line_tag(line))
+                t = self.line_tag(line)
+                if run and t != tag:
+                    self.output.insert(tk.END, "".join(run), tag)
+                    run = []
+                run.append(line)
+                tag = t
+            if run:
+                self.output.insert(tk.END, "".join(run), tag)
+            excess = int(self.output.index("end-1c").split(".")[0]) - self.MAX_LOG_LINES
+            if excess > 0:
+                self.output.delete("1.0", "%d.0" % (excess + 1))
             self.output.configure(state=tk.DISABLED)
             if self.autoscroll.get():
                 self.output.see(tk.END)
 
         def _finished(self, kind, ok, message):
+            if self.dropped_lines:
+                self.append("(%d lines of output after the kill not shown)\n" % self.dropped_lines, "warning")
+                self.dropped_lines = 0
             elapsed = time.time() - (self.start_time or time.time())
             text = "%s (%dm%02ds)" % (message[0].upper() + message[1:], elapsed // 60, elapsed % 60)
             self.append("=== %s ===\n" % text, "success" if ok else "failure")

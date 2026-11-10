@@ -806,6 +806,133 @@ class TestChecks(unittest.TestCase):
 
 
 
+class TestSelectionFiles(unittest.TestCase):
+    """Objects of the library in XML: elements, selection files, files imported or linked by a workflow."""
+
+    def objects(self):
+        pip = F.FilterDef("PARTICLE_FILTER", "PiP", "positive pions",
+                          [F.Condition("PDG", F.VALUE, 211, 0), F.Condition("PT", F.RANGE, 0.2, 2.0),
+                           F.Condition("ETA", F.DUAL_RANGE, -0.9, -0.1, 0.1, 0.9), F.Condition("LIVE", F.FLAG, 1, 0)])
+        central = F.FilterDef("EVENT_FILTER", "Central", "", [F.Condition("MULT", F.RANGE, 100, 1000, selection="PiP")])
+        efficiency = F.FilterDef("EVENT_EFFICIENCY", "Eff", "", parameters={"nBins_mult": "50", "Max_mult": "200"})
+        return [central, pip, efficiency]
+
+    def test_elements(self):
+        warnings = []
+        for o in self.objects():
+            e = F.object_element(o)
+            self.assertEqual(e.tag, F.TAG_OF_KIND[o.kind])
+            back = F.object_from_element(ET.fromstring(ET.tostring(e)), warnings)
+            self.assertTrue(back.same_definition(o), (o, back))
+        self.assertEqual(warnings, [])
+        pdg = F.object_element(self.objects()[1]).find("Condition")
+        self.assertEqual((pdg.get("quantity"), pdg.get("form"), pdg.get("value"), pdg.get("maximum")),
+                         ("PDG", "value", "211", None))
+        self.assertIsNone(F.object_from_element(ET.Element("Unknown"), warnings))
+        bad = ET.fromstring('<ParticleFilter name="X"><Condition quantity="PT" form="range" minimum="a"/>'
+                            '<Parameter name="nope">1</Parameter></ParticleFilter>')
+        o = F.object_from_element(bad, warnings, "file.xml")
+        self.assertEqual(o.conditions, [])
+        self.assertTrue(any("not a number" in w for w in warnings) and any("unknown parameter" in w for w in warnings))
+        old = ET.fromstring('<OBJECT kind="PARTICLE_FILTER" name="Old"><CONDITION subtype="PT" form="range" minimum="1" '
+                            'maximum="2"/></OBJECT>')
+        self.assertEqual(F.object_from_element(old, warnings).conditions, [F.Condition("PT", F.RANGE, 1, 2)])
+
+    def test_selection_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "selections.xml")
+            F.write_selections(path, self.objects())
+            with open(path) as f:
+                text = f.read()
+            self.assertIn("<CapSelections", text)
+            self.assertIn('<Condition quantity="PDG" form="value" value="211" />', text)
+            objects, extras, warnings = F.read_selections(path)
+            self.assertEqual((extras, warnings), ([], []))
+            self.assertTrue(all(a.same_definition(b) for a, b in zip(objects, self.objects())))
+            # particle maps and unknown elements are kept as they are
+            root = ET.parse(path).getroot()
+            ET.SubElement(root, "ParticleEfficiency", {"name": "TPC"})
+            ET.SubElement(root, "Future", {"x": "1"})
+            ET.ElementTree(root).write(path)
+            objects, extras, warnings = F.read_selections(path)
+            self.assertEqual([e.tag for e in extras], ["ParticleEfficiency", "Future"])
+            with open(path, "w") as f:
+                f.write("<Other/>")
+            with self.assertRaises(ValueError):
+                F.read_selections(path)
+
+    def test_link_import_and_save(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "shared", "selections.xml")
+            os.makedirs(os.path.dirname(path))
+            F.write_selections(path, self.objects())
+            library = F.FilterLibrary.with_defaults()
+            library.add(F.FilterDef("EVENT_FILTER", "Central", "the workflow's own"))
+            warnings = library.link(path)
+            self.assertEqual(len(warnings), 1)                                # Central: the workflow's kept
+            self.assertEqual(library.get("EVENT_FILTER", "Central").title, "the workflow's own")
+            self.assertEqual([o.name for o in library.linked(path)], ["PiP", "Eff"])
+            # written in the workflow: an Include, relative, not the linked objects
+            element = F.runcap_element(library, [], d)
+            self.assertEqual([e.get("file") for e in element.findall("Include")], [os.path.join("shared", "selections.xml")])
+            self.assertEqual([e.get("name") for e in element if e.tag in F.KIND_OF_TAG],
+                             ["Central", "Event", "ParticleDb"])
+            back, warnings = F.read_runcap_element(ET.fromstring(ET.tostring(element)), [], d)
+            self.assertEqual(len(warnings), 1)                                # Central, in both
+            self.assertEqual(back.links, [os.path.abspath(path)])
+            self.assertEqual(back.get("PARTICLE_FILTER", "PiP").source, os.path.abspath(path))
+            self.assertEqual(back.get("EVENT_FILTER", "Central").source, "")
+            # changes of linked objects: written back to the file (only when changed)
+            self.assertEqual(F.save_linked(back), [])
+            back.get("PARTICLE_FILTER", "PiP").title = "pi+"
+            self.assertEqual(F.save_linked(back), [os.path.abspath(path)])
+            objects, _, _ = F.read_selections(path)
+            self.assertEqual([o.title for o in objects if o.name == "PiP"], ["pi+"])
+            self.assertEqual([o.name for o in objects], ["Central", "PiP", "Eff"])   # Central: kept in the file
+            # unlinked: copied into the workflow, or removed
+            copy = F.read_runcap_element(ET.fromstring(ET.tostring(element)), [], d)[0]
+            self.assertEqual(copy.unlink(path, keep=True), {})
+            self.assertEqual((copy.links, copy.get("PARTICLE_FILTER", "PiP").source), ([], ""))
+            self.assertEqual(back.unlink(path, keep=False), {"PARTICLE_FILTER": ["PiP"], "EVENT_EFFICIENCY": ["Eff"]})
+            self.assertIsNone(back.get("PARTICLE_FILTER", "PiP"))
+            # imported: copies, replacing those of the same names (or not)
+            library = F.FilterLibrary.with_defaults()
+            library.add(F.FilterDef("EVENT_FILTER", "Central", "mine"))
+            objects, _, _ = F.read_selections(path)
+            self.assertEqual(library.import_objects(objects, {("PARTICLE_FILTER", "PiP")}), [])
+            self.assertEqual(library.names("PARTICLE_FILTER"), ["PiP"])
+            self.assertEqual(library.import_objects(objects), [("EVENT_FILTER", "Central"), ("PARTICLE_FILTER", "PiP")])
+            self.assertEqual(library.get("PARTICLE_FILTER", "PiP").source, "")
+            # a missing linked file: reported, still linked
+            os.remove(path)
+            back, warnings = F.read_runcap_element(ET.fromstring(ET.tostring(element)), [], d)
+            self.assertTrue(warnings and "cannot be read" in warnings[0])
+            self.assertEqual(back.links, [os.path.abspath(path)])
+            self.assertTrue(any("missing" in e for e in F.check_library(back)))
+
+    def test_workflow(self):
+        """A workflow linking a selection file: its tasks use the linked objects, and the file is read again when
+        the workflow is loaded (a change of the file reaches the workflow, without warning)."""
+        with tempfile.TemporaryDirectory() as d:
+            shared = os.path.join(d, "selections.xml")
+            F.write_selections(shared, self.objects())
+            library = F.FilterLibrary.with_defaults()
+            library.link(shared)
+            gen, single = task("BasicEventGen", "Gen"), task("ParticleSingleAnalyzer", "Single")
+            F.default_choices(gen, library, TEMPLATES)
+            F.default_choices(single, library, TEMPLATES)
+            F.choices(single)["PARTICLE_FILTER"] = ["PiP"]
+            F.choices(single)["EVENT_FILTER"] = ["Central"]
+            path = os.path.join(d, "workflow.xml")
+            RunCAP.write_workflow(path, [gen, single], library, TEMPLATES)
+            pip = F.FilterDef("PARTICLE_FILTER", "PiP", "changed", [F.Condition("PDG", F.VALUE, 211, 211)])
+            F.write_selections(shared, [pip] + self.objects()[::2])
+            tasks, back, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            self.assertEqual([w for w in warnings if "defined differently" in w or "selection" in w.lower()], [])
+            self.assertEqual(back.get("PARTICLE_FILTER", "PiP").title, "changed")
+            self.assertEqual(F.choices(tasks[1])["PARTICLE_FILTER"], ["PiP"])
+
+
 class TestMaps(unittest.TestCase):
     """The particle efficiencies and smearers read from a maps file."""
 

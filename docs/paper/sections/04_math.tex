@@ -6,11 +6,12 @@ The Math library (\code{src/core/Math}) holds the numerical objects of \CAP{}: d
 fits, extremum searches, random numbers, statistical tests and linear algebra. It replaces the parts of ROOT that
 earlier versions of \CAP{} relied on (histograms, \code{TF1}, \code{TGraph}, \code{TProfile}, the fitters and
 \code{gRandom}); its sources use only the Base library and the C++ standard library, and include no ROOT header. Its classes are arranged in
-eight folders: \code{Basic} (constants, special functions, integration, interpolation, statistics), \code{Data},
-\code{Functions}, \code{Fitting}, \code{Search}, \code{Random}, \code{StatisticalTests} and \code{LinearAlgebra}.
+eleven folders: \code{Basic} (constants, special functions, statistics), \code{Data}, \code{Functions},
+\code{Interpolation}, \code{Integral}, \code{Derivative}, \code{Fitting}, \code{Search}, \code{Random},
+\code{StatisticalTests} and \code{LinearAlgebra}.
 Figure~\ref{fig:hierarchy} shows the class hierarchy of the functions and of the data.
 
-\begin{figure}[t]
+\begin{figure*}[tp]
   \centering
   \includegraphics[width=\textwidth]{ClassHierarchy}
   \caption{Class hierarchy of the functions and histograms of \CAP{}~8. Open arrows point to the base class.
@@ -18,7 +19,7 @@ Figure~\ref{fig:hierarchy} shows the class hierarchy of the functions and of the
   (c)~histogram folders of the analyses (\code{src/analysis}). Dashed boxes are views (\code{ProjectedFunction})
   or optional modules (Jets).}
   \label{fig:hierarchy}
-\end{figure}
+\end{figure*}
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Data points and histograms}
@@ -38,9 +39,9 @@ for large sets. A set of points also holds the fits made to it (Section~\ref{sec
 The binning of a histogram is a \code{Partition}: a regular partition of a space of any rank, built one axis at a
 time. Axis $k$ is divided into $n_k$ bins of equal width over $[a_k, b_k)$. A bin is addressed by its indices
 $(i_0, i_1, \dots)$ along the axes, by the coordinates of a point inside it, or by a single global index
-\begin{equation}
+\begin{align}
   g = i_0 + n_0\,\bigl(i_1 + n_1\,(i_2 + \dots)\bigr), \qquad 0 \le g < \prod_k n_k ,
-\end{equation}
+\end{align}
 which is how the bins are stored. Nothing in the classes is specific to one, two or three dimensions: the pair
 analyses of Section~\ref{sec:observables} use histograms of rank 2, the three-dimensional pair analysis
 histograms of rank 3, and nothing prevents higher ranks.
@@ -50,9 +51,9 @@ histograms of rank 3, and nothing prevents higher ranks.
 whose coordinates are the centres of the bins, and its binning is a partition. Each bin $g$ stores three numbers:
 the number of entries $n_g$ (the number of fills), the average value per entry $a_g$, and the uncertainty $u_g$ of
 that average. The bin value and its uncertainty are
-\begin{equation}
+\begin{align}
   y_g = n_g\, a_g, \qquad \sigma_g = n_g\, u_g .
-\end{equation}
+\end{align}
 Filling with a weight $w$ adds $w$ to the value and $w^2$ to its squared uncertainty. Arithmetic (sums,
 differences, products, ratios, scaling) acts on the bin values and propagates the statistical uncertainties of
 uncorrelated operands; bins where a result is undefined, for instance a ratio with an empty denominator, are left
@@ -81,22 +82,90 @@ merging the profiles of several jobs or sub-samples gives the exact weighted mea
 A function is evaluated with one, two or three arguments, or with a vector of arguments, and a call with the wrong
 number of arguments throws an exception. \code{ParameterizedFunction} adds a list of parameters,
 $f(\mathbf{x};\mathbf{p})$. Each \code{Parameter} has a name, a value, a range and a type that says how it may vary in
-a fit: free, fixed, or bounded from below, above or both. A parameterised function provides its gradient
-$\nabla_{\mathbf{x}} f$ and its integral over a box; the defaults are numerical (finite differences for the gradient, adaptive Simpson rules for the integrals) and the
-functions of the library override them with analytical expressions where these exist. For rank one, the derivative
-$f'(x)$ and the mean of $x$ weighted by $f$ over a range are also available.
+a fit: free, fixed, or bounded from below, above or both. Every function provides its gradient
+$\nabla_{\mathbf{x}} f$ and its integral over a box, and for rank one its derivative $f'(x)$ and the mean of $x$
+weighted by $f$ over a range. The defaults are numerical (finite differences for the derivatives, adaptive Simpson
+rules for the integrals; Section~\ref{sec:numerics}), and the functions of the library override them with analytical
+expressions where these exist.
+Figure~\ref{fig:functions} shows the classes derived from \code{Function} and the classes they depend on.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{FunctionClasses}
+  \caption{Classes of the functions (\code{core/Math/Functions}). Open triangles point to the base class; abstract
+  classes are in italics. A box with a header in bold lists the classes derived from it; a box with a header in
+  italics groups classes derived from the class it points to. Dashed lines are dependencies: the diamond marks the
+  owner of the objects held. Classes of the Fitting folder are noted; \code{ProjectedFunction}, a view, is not
+  registered.}
+  \label{fig:functions}
+\end{figure*}
+
+\paragraph{Using a function.}
+A function of the library is made with the values of its parameters (their order is that of the constructor), or
+by the name of its class through \code{FunctionRegistry}. It is called with \code{evaluateAt()}, or as \code{f(x)} for
+rank one; its parameters are read with \code{parameters()} and \code{parameter(i)}, changed with
+\code{setParameterValue(i, v)} or \code{setParameterValues(v)}, and constrained for fits with \code{fixParameter(i)}
+and \code{setParameterLimits(i, min, max)}. \code{clone()} returns a copy of the function's own class, which is how
+fits keep the fitted function:
+\begin{widetext}
+\begin{verbatim}[language=C++]
+using namespace CAP::MATH;
+Normal g(100.0, 0.0, 1.0);              // amplitude, mean, width: parameters 0, 1, 2
+double y  = g(0.5);                     // g.evaluateAt(0.5); rank 2: g.evaluateAt(x, y)
+double dy = g.derivativeAt(0.5);        // analytical here, numerical by default
+double n  = g.integralInRange(-1, 1);   // also expectationValue(), gradientAt()
+g.setParameterValue(2, 0.8);            // width
+g.setParameterLimits(2, 0.1, 5.0);      // bounded in fits
+g.fixParameter(1);                      // mean fixed in fits
+for (const Parameter & p : g.parameters())
+  std::cout << p.name() << " = " << p.value() << std::endl;
+ParameterizedFunction * f = FunctionRegistry::create("Normal");  // owned by the caller
+ParameterizedFunction * c = g.clone();                           // a Normal
+\end{verbatim}
+\end{widetext}
+A call with the wrong number of variables, or a parameter set outside its bounds, throws an exception
+(\code{MathException}, \code{MathDomainException}). A new class derives from \code{ParameterizedFunction}, adds its
+parameters in its constructor and implements the \code{evaluateAt()} of its rank (\code{evaluateAt(double)} for rank
+one, the vector version for any rank); the base class provides the others, and numerical derivatives, gradients and
+integrals until the class overrides them with analytical ones. Implementing \code{clone()} and registering the class
+let fits of it be copied, saved and read back:
+\begin{widetext}
+\begin{verbatim}[language=C++]
+class Power : public ParameterizedFunction     // f(x) = a x^n
+{
+public:
+  Power(double a=1.0, double n=1.0)
+  {
+    addParameter(Parameter("a", a));
+    addParameter(Parameter("n", n, Parameter::Low, 0.0));   // n >= 0
+  }
+  double evaluateAt(double x) const override
+  {
+    return parameter(0).value()*std::pow(x, parameter(1).value());
+  }
+  using ParameterizedFunction::evaluateAt;     // the other versions
+  Power * clone() const override { return new Power(*this); }
+};
+FunctionRegistry::registerType<Power>("Power");
+\end{verbatim}
+\end{widetext}
+The complete reference of these classes is the documentation generated by Doxygen from the sources, which includes
+Fig.~\ref{fig:functions}.
 
 \paragraph{The library.}
 Table~\ref{tab:functions} lists the parameterised functions of \CAP{}. Polynomials of high degree are badly
 conditioned in fits; the series of orthogonal polynomials map the range of a fit onto the natural domain of the
 polynomials (for example $[-1,1]$ for Legendre and Chebyshev polynomials), where they are nearly orthogonal, and
-being linear in their coefficients, their least-squares coefficients are obtained exactly. The library also includes
-special functions without parameters (Bessel, Legendre and Laguerre functions, spherical harmonics) and scalar
+being linear in their coefficients, their least-squares coefficients are obtained exactly. The Fourier decompositions
+(Section~\ref{sec:fourier}) describe functions of an angle, and the B\'ezier curves, smooth curves through knots
+moved with the mouse, describe efficiencies and resolutions in CapGui. Twelve probability distributions, discrete,
+continuous and multivariate, are presented in Section~\ref{sec:distributions}. The library also includes
+special functions without parameters (gamma, beta and incomplete gamma functions, Bessel, Legendre and Laguerre
+functions, spherical harmonics) and scalar
 fields, functions of any rank defined by their values on a regular mesh and interpolated multilinearly, which
 Therminator3 uses for its chemical potentials and viscosity (Section~\ref{sec:therminator}).
 
-\begin{widetext}
-\begin{table}[t]
+\begin{table*}[t]
   \centering
   \caption{Parameterised functions of \CAP{}~8 (\code{core/Math/Functions}).}
   \label{tab:functions}
@@ -115,14 +184,17 @@ Therminator3 uses for its chemical potentials and viscosity (Section~\ref{sec:th
     \code{BesselJFunction} (and \code{Y}, \code{I}, \code{K}) & 1 & $A\, Z_n\bigl(k(x-x_0)\bigr)$ \\
     \code{Normal2D} & 2 & $A\exp\!\left[-\dfrac{u^2 - 2\rho u v + v^2}{2(1-\rho^2)}\right]$ \\
     \code{Polynomial2D} & 2 & $\sum_{i+j\le N} c_{ij}\, t^i s^j$ \\
+    \code{FourierDecomposition} & 1 & $k + \sum_{n=1}^{n_{\max}} \left[c_n \cos nx + s_n \sin nx\right]$ \\
+    \code{FourierFlow} & 1 & $k\left[1 + 2\sum_{n=1}^{n_{\max}} v_n \cos n(x-\psi_n)\right]$ \\
+    \code{BezierCurve} & 1 & cubic B\'ezier segments through knots $(x_k, y_k)$ \\
+    Distributions (Table~\ref{tab:distributions}) & 1 to $m-1$ & $A\, p(\mathbf{x};\boldsymbol{\theta})$ \\
     \code{ParameterizedComposite} & any & $\sum_k f_k(\mathbf{x};\mathbf{p}_k)$, or $f(x)\,g(y)$ \\
     \bottomrule
   \end{tabular}
-  \smallskip
+  \par\smallskip
   \raggedright\footnotesize In \code{Normal2D}, $u=(x-\mu_x)/\sigma_x$ and $v=(y-\mu_y)/\sigma_y$. In \code{Polynomial2D} and the
   series, $t$ and $s$ are $x$ and $y$ mapped onto the domain of the polynomials.
-\end{table}
-\end{widetext}
+\end{table*}
 
 \paragraph{Composite functions.}
 A \code{ParameterizedComposite} is a sum of parameterised functions, $f = \sum_k f_k(\mathbf{x};\mathbf{p}_k)$, whose
@@ -145,6 +217,414 @@ how the Fit window of CapGui offers its functions. Programs register their own c
 under a name are kept in a file shared by the programs and CapGui.
 
 % ---------------------------------------------------------------------------------------------------------------
+\subsection{Special functions and probability distributions}
+\label{sec:distributions}
+
+\paragraph{Gamma and beta functions.}
+\code{GammaFunction}, \code{BetaFunction} and \code{IncompleteGammaFunction} are functions without parameters, of
+one, two and two variables:
+\begin{align}
+  \Gamma(x) &= \int_0^\infty t^{x-1} e^{-t}\, dt, \qquad \\
+  B(a,b) &= \int_0^1 t^{a-1}(1-t)^{b-1}\, dt = \frac{\Gamma(a)\,\Gamma(b)}{\Gamma(a+b)} .
+\end{align}
+The gamma function continues the factorial, $\Gamma(n) = (n-1)!$, to real $x$, with poles at $x = 0, -1, -2,
+\dots$; for $a, b > 0$ the beta function is computed from $\ln\Gamma$, which does not overflow. The incomplete gamma
+functions split the integral of $\Gamma(a)$ at $x$,
+\begin{align}
+  \gamma(a,x) &= \int_0^x t^{a-1} e^{-t}\, dt, \qquad \\
+  \Gamma(a,x) &= \int_x^\infty t^{a-1} e^{-t}\, dt, \qquad\\
+  P(a,x) &= \frac{\gamma(a,x)}{\Gamma(a)}, \qquad \\
+  Q(a,x) &= 1 - P(a,x) = \frac{\Gamma(a,x)}{\Gamma(a)},
+\end{align}
+for $a > 0$ and $x \ge 0$; the object computes one of the four, $P$ by default, from the series of $P$ for
+$x < a+1$ and the continued fraction of $Q$ otherwise, so that each is precise where it is small. $P(k/2, x/2)$ is the
+cumulative distribution of a $\chi^2$ of $k$ degrees of freedom, and $Q(k+1,\mu)$ that of a Poisson distribution of
+mean $\mu$ at $k$.
+
+	\begin{table*}[t]
+		\centering
+		\caption{Probability distributions of \CAP{}~8 (\code{core/Math/Functions}), each multiplied by an amplitude $A$,
+			with their parameters $\boldsymbol{\theta}$, means and variances. The names are those of the registry; the classes
+			add \code{Distribution} (\code{PoissonDistribution}, \dots). $\alpha_0 = \sum_i \alpha_i$.}
+		\label{tab:distributions}
+		\small
+		\begin{tabular}{@{}llll@{}}
+			\toprule
+			Distribution & $\boldsymbol{\theta}$ & Mean & Variance \\
+			\midrule
+			\code{Poisson} & $\mu$ & $\mu$ & $\mu$ \\
+			\code{Binomial} & $n$, $p$ & $np$ & $np(1-p)$ \\
+			\code{NegativeBinomial} & $\mu$, $\kappa$ & $\mu$ & $\mu + \mu^2/\kappa$ \\
+			\code{Hypergeometric} & $N$, $K$, $n$ & $nK/N$ & $n\,\dfrac{K}{N}\left(1-\dfrac{K}{N}\right)\dfrac{N-n}{N-1}$ \\
+			\code{Multinomial} & $n$, $p_1, \dots, p_{m-1}$ & $n p_i$ & $n p_i (1-p_i)$; covariance $-n p_i p_j$ \\
+			\midrule
+			\code{Student} & $\nu$, $\mu$, $\sigma$ & $\mu$ ($\nu > 1$) & $\sigma^2\nu/(\nu-2)$ ($\nu > 2$) \\
+			\code{ChiSquare} & $k$ & $k$ & $2k$ \\
+			\code{FDistribution} & $d_1$, $d_2$ & $d_2/(d_2-2)$ ($d_2 > 2$) &
+			$\dfrac{2 d_2^2 (d_1 + d_2 - 2)}{d_1 (d_2-2)^2 (d_2-4)}$ ($d_2 > 4$) \\
+			\code{Cauchy} & $x_0$, $\gamma$ & undefined & undefined \\
+			\code{MaxwellBoltzmann} & $a$ & $2a\sqrt{2/\pi}$ & $a^2 (3\pi - 8)/\pi$ \\
+			\code{Weibull} & $k$, $\lambda$ & $\lambda\,\Gamma(1 + 1/k)$ & $\lambda^2\left[\Gamma(1 + 2/k) - \Gamma^2(1 + 1/k)\right]$ \\
+			\midrule
+			\code{Dirichlet} & $\alpha_1, \dots, \alpha_K$ & $\alpha_i/\alpha_0$ &
+			$\dfrac{\alpha_i(\alpha_0 - \alpha_i)}{\alpha_0^2(\alpha_0 + 1)}$; covariance $-\dfrac{\alpha_i \alpha_j}{\alpha_0^2(\alpha_0+1)}$ \\
+			\bottomrule
+		\end{tabular}
+	\end{table*}
+
+\paragraph{Distributions as functions.}
+The distributions of Table~\ref{tab:distributions} are parameterised functions whose first parameter is an amplitude
+$A$, the area under the curve or the sum over the counts:
+\begin{align}
+  f(\mathbf{x}; A, \boldsymbol{\theta}) = A\, p(\mathbf{x};\boldsymbol{\theta}),
+\end{align}
+where $p$ is the probability density, or the probability of the counts, and $\boldsymbol{\theta}$ the parameters of
+the distribution. With $A = 1$, $f$ is the distribution itself; with $A$ the number of events, it is the expected
+number of events per unit of $\mathbf{x}$, or with each count, which is fitted to a histogram. Like the other
+functions, the distributions are registered, fitted, drawn and stored with their fits. Each provides its mean and
+variance (infinite or undefined where they are), and the distributions of one variable their cumulative distribution
+$F(x)$ and upper tail $1 - F(x)$, the latter computed directly so that small tail probabilities keep their precision.
+The integral of a continuous distribution is exact, $\int_a^b f\, dx = A\,[F(b) - F(a)]$, with infinite bounds
+allowed and computed from the upper tails when both bounds are in that tail, so that a fit comparing a histogram to
+the integral of the function over each bin is exact too. The parameters that must be positive are bounded below by
+zero; a parameter out of its domain, as a fit may try, makes $f$ vanish rather than fail.
+
+
+
+\paragraph{Distributions of counts.}
+The probabilities of $k = 0, 1, 2, \dots$ counts of the Poisson, binomial, negative binomial and hypergeometric
+distributions are
+\begin{widetext}
+\begin{align}
+  P_{\mathrm{P}}(k;\mu) &= \frac{\mu^k e^{-\mu}}{k!}, \\
+  P_{\mathrm{B}}(k;n,p) &= \binom{n}{k} p^k (1-p)^{n-k}, \qquad 0 \le k \le n, \\
+  P_{\mathrm{NB}}(k;\mu,\kappa) &= \frac{\Gamma(k+\kappa)}{\Gamma(\kappa)\, k!}
+     \left(\frac{\mu}{\mu+\kappa}\right)^{k} \left(\frac{\kappa}{\mu+\kappa}\right)^{\kappa}, \\
+  P_{\mathrm{H}}(k;N,K,n) &= \frac{\binom{K}{k}\binom{N-K}{n-k}}{\binom{N}{n}}, \qquad
+     \max(0, n+K-N) \le k \le \min(n, K).
+\end{align}
+\end{widetext}
+
+The binomial distribution is that of the successes in $n$ trials of probability $p$, and the hypergeometric
+distribution that of the successes in $n$ draws without replacement from a population of $N$ holding $K$ successes; it tends to the binomial distribution of $p = K/N$ as $N$ grows. The negative binomial distribution is written, as for the multiplicities of particles, with its mean $\mu$ and a shape $\kappa > 0$ (the parameter \code{k} of the class): its variance $\mu + \mu^2/\kappa$ exceeds that of a Poisson distribution by $\mu^2/\kappa$, and it tends to the Poisson distribution of mean $\mu$ as $\kappa \to \infty$. In terms of a number of failures $r$ and a probability $q$
+of success, $r = \kappa$ and $q = \kappa/(\kappa + \mu)$. The trials $n$ of the binomial distribution, and $N$, $K$ and $n$ of the hypergeometric distribution, are fixed parameters by default.
+
+Between  integer values, the factorials and binomial coefficients are continued using the gamma function,
+$k! = \Gamma(k+1)$ and $\binom{n}{k} = \Gamma(n+1)/[\Gamma(k+1)\,\Gamma(n-k+1)]$, so that $f$ is a smooth function of $k$ and of the parameters, equal to $A\,P(k)$ at the integers and zero outside the support: $\sum_k f(k) = A$. A histogram of counts, with bins of width one centred on the integers, is fitted by comparing each bin to the value of $f$ at its centre (not to the integral of the continuation over the bin, which is not $P(k)$). The probability $P(k)$, the cumulative distribution and the moments are those of the counts. The cumulative distributions of the Poisson and negative binomial distributions are $Q(k+1, \mu)$ and the regularised incomplete beta function $I_q(\kappa, k+1)$; the others are sums.
+
+\paragraph{Continuous distributions.}
+The densities of Student's $t$ of $\nu$ degrees of freedom, location $\mu$ and scale $\sigma$, of the $\chi^2$ of $k$ degrees of freedom, of Fisher's $F$ of $d_1$ and $d_2$ degrees of freedom, of Cauchy (Breit--Wigner), of Maxwell--Boltzmann and of Weibull are
+\begin{widetext}
+	\begin{align}
+  p_t(x;\nu,\mu,\sigma) &= \frac{\Gamma\bigl(\tfrac{\nu+1}{2}\bigr)}{\sqrt{\nu\pi}\,\Gamma\bigl(\tfrac{\nu}{2}\bigr)\,\sigma}
+     \left(1 + \frac{t^2}{\nu}\right)^{-(\nu+1)/2}, \qquad t = \frac{x-\mu}{\sigma}, \\
+  p_{\chi^2}(x;k) &= \frac{x^{k/2-1}\, e^{-x/2}}{2^{k/2}\,\Gamma(k/2)}, \qquad x \ge 0, \\
+  p_F(x;d_1,d_2) &= \frac{1}{x\, B\bigl(\tfrac{d_1}{2},\tfrac{d_2}{2}\bigr)}
+     \sqrt{\frac{(d_1 x)^{d_1}\, d_2^{d_2}}{(d_1 x + d_2)^{d_1 + d_2}}}, \qquad x \ge 0, \\
+  p_C(x;x_0,\gamma) &= \frac{\gamma}{\pi\left[(x-x_0)^2 + \gamma^2\right]}, \\
+  p_{\mathrm{MB}}(v;a) &= \sqrt{\frac{2}{\pi}}\, \frac{v^2}{a^3}\, e^{-v^2/2a^2}, \qquad v \ge 0, \\
+  p_W(x;k,\lambda) &= \frac{k}{\lambda} \left(\frac{x}{\lambda}\right)^{k-1} e^{-(x/\lambda)^k}, \qquad x \ge 0 .
+\end{align}
+%\end{widetext}
+Their cumulative distributions $F_x$ are computed based on the regularised incomplete beta function $I_z(a,b)$,
+%\begin{widetext}
+	\begin{align}
+  F_t &= 1 - \tfrac{1}{2} I_{\nu/(\nu + t^2)}\bigl(\tfrac{\nu}{2}, \tfrac{1}{2}\bigr) \;(t \ge 0), \quad \\
+  F_{\chi^2} &= P\bigl(\tfrac{k}{2}, \tfrac{x}{2}\bigr), \quad\\
+  F_F &= I_{d_1 x/(d_1 x + d_2)}\bigl(\tfrac{d_1}{2}, \tfrac{d_2}{2}\bigr),\\
+  F_C &= \frac{1}{2} + \frac{1}{\pi}\arctan\frac{x - x_0}{\gamma}, \quad\\
+  F_{\mathrm{MB}}& = \mathrm{erf}\left(\frac{u}{\sqrt{2}}\right) - \sqrt{\frac{2}{\pi}}\, u\, e^{-u^2/2} \;(u = v/a), \quad\\
+  F_W &= 1 - e^{-(x/\lambda)^k} .
+\end{align}
+\end{widetext}
+The degrees of freedom need not be integers. Student's $t$ of one degree of freedom is the Cauchy distribution of
+half width $\gamma = \sigma$, and it tends to the normal distribution as $\nu \to \infty$; the Cauchy distribution has
+neither mean nor variance, its median and mode being $x_0$ and its full width at half maximum $2\gamma$. The
+Maxwell--Boltzmann distribution is that of the speeds of the particles of an ideal gas, $a = \sqrt{kT/m}$, of mode $\sqrt{2}\,a$. The Weibull distribution is exponential for $k = 1$ and Rayleigh for $k = 2$. The $\chi^2$ statistic of a fit is a different class, \code{ChiSquare}, described in Section~\ref{sec:fitting}.
+
+\paragraph{Multivariate distributions.}
+The multinomial distribution gives the probability of counts $k_1, \dots, k_m$ in $m$ categories, $\sum_i k_i = n$,
+when each of $n$ trials falls in category $i$ with probability $p_i$, $\sum_i p_i = 1$; the Dirichlet distribution is
+a density of fractions $x_1, \dots, x_K$ on the simplex $x_i > 0$, $\sum_i x_i = 1$, with concentrations
+$\alpha_i > 0$:
+\begin{align}
+  P_{\mathrm{M}}(k_1,\dots,k_m; n, \mathbf{p}) &= \frac{n!}{k_1! \cdots k_m!}\, p_1^{k_1} \cdots p_m^{k_m}, \qquad \\
+  p_{\mathrm{D}}(x_1,\dots,x_K;\boldsymbol{\alpha})& = \frac{\Gamma(\alpha_0)}{\prod_i \Gamma(\alpha_i)} 
+     \prod_{i=1}^{K} x_i^{\alpha_i - 1},\\ \quad \alpha_0 &= \sum_i \alpha_i .
+\end{align}
+Since the last variable is fixed by the others, $k_m = n - \sum_{i<m} k_i$ and $x_K = 1 - \sum_{i<K} x_i$, the
+distributions are functions of the first $m-1$ (or $K-1$) variables, and so is the last probability,
+$p_m = 1 - \sum_{i<m} p_i$: the parameters are independent, which a fit requires, the sum of $f$ over the counts or
+its integral over the simplex is $A$, and $f$ vanishes outside. With two categories they are the binomial
+distribution and the beta distribution $x^{\alpha_1-1}(1-x)^{\alpha_2-1}/B(\alpha_1,\alpha_2)$; with three, they are
+functions of two variables, drawn and fitted as such. The counts of the multinomial distribution are continued
+between the integers as above.
+\begin{widetext}
+\begin{verbatim}[language=C++]
+CAP::MATH::NegativeBinomialDistribution nbd(nEvents, 20.0, 2.0);  // A, mean, k
+CAP::MATH::Fitter fitter(nbd, multiplicity);                       // a histogram of counts
+CAP::MATH::FitResult r = fitter.fit();
+double tail = CAP::MATH::ChiSquareDistribution(1.0, 10.0).cdfUpper(18.3);
+CAP::MATH::DirichletDistribution d({2.0, 3.0, 4.0});               // f(x1, x2)
+\end{verbatim}
+\end{widetext}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Interpolation, integration and differentiation}
+\label{sec:numerics}
+
+The numerical tools of the library are gathered in three folders: \code{Interpolation}, \code{Integral} and
+\code{Derivative}. Each folder has a steering class, which applies the method chosen by an enumeration:
+\code{Interpolation}, \code{Integration} and \code{Differentiation}. The other classes of each folder implement the
+methods. The functions of the library use these tools rather than copies of their own: the numerical defaults of
+\code{Function} (Section~\ref{sec:functions}), the scalar fields, the tabulated random distributions, the bin
+averages of the fits and the polynomial functions all call them. Figure~\ref{fig:numerics} shows the classes and
+their dependencies.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{NumericalTools}
+  \caption{Classes of interpolation, integration and differentiation (\code{core/Math/Interpolation},
+  \code{Integral} and \code{Derivative}). The steering classes (green) apply the method chosen by an enumeration.
+  Open triangles point to the base class; the box of \code{Integrator} lists the classes derived from it. Free
+  functions are in yellow boxes. Dashed lines are dependencies: the diamond marks the owner. \code{Interpolation},
+  \code{PiecewisePolynomial} and \code{Derivative} are functions, derived from \code{Function}.}
+  \label{fig:numerics}
+\end{figure*}
+
+\paragraph{Steering classes.}
+The three steering classes share one pattern. The method is an enumeration, given to the constructor or to
+\code{setMethod()}. The class then forwards each call to the tool of that method, and the tool's own settings remain
+accessible. The values, derivatives and integrals of a function or table are obtained by the same calls whatever the
+method chosen:
+\begin{widetext}
+\begin{verbatim}[language=C++]
+using namespace CAP::MATH;
+Interpolation f(x, y, Interpolation::Spline);   // a Function through the points (x_i, y_i)
+double v = f(2.5);
+double s = f.integralInRange(0.0, 4.0);         // exact for the splines and Linear
+
+Integration integration(Integration::Romberg, 1.0E-10);   // or Trapezoid, Simpson,
+                                                          // GaussLegendre, MonteCarlo, Automatic
+IntegralResult r = integration.integrate(g, 0.0, 1.0);    // value, error, nEvaluations, converged
+double w = integration.integral(h, low, high);            // h of any rank, over a box
+
+Differentiation differentiation(Differentiation::Cubic);  // or Automatic, Analytical,
+                                                          // Linear, Quadratic, Polynomial
+double d2 = differentiation.derivative(g, 0.3, 2);        // g''(0.3)
+Derivative dg(g);                     // g' as a Function: analytical when g provides it
+\end{verbatim}
+\end{widetext}
+\code{Integration} is itself an \code{Integrator}, so it can be passed wherever an integrator is expected. It holds
+one integrator of each method, configured through \code{integrator(method)}, and it passes the tolerances it is
+given to all of them. In \code{Automatic} mode it chooses adaptive Simpson integration for one to three variables and
+Monte Carlo beyond. \code{Differentiation} and \code{Interpolation} are configured the same way:
+\code{setDegree()}, \code{setStencil()}, \code{setStep()} and \code{setRichardson()} for the first, \code{setMethod()}
+and \code{setPoints()} for the second.
+
+\paragraph{Interpolation.}
+\code{Interpolation} is a function of one variable through a table $(x_i,y_i)$, $i=0,\dots,n-1$, with $x$
+increasing at any spacing:
+\begin{itemize}
+\item \code{Nearest} gives the value of the nearest point.
+\item \code{Linear} gives $y_i + (y_{i+1}-y_i)(x-x_i)/(x_{i+1}-x_i)$ on $[x_i,x_{i+1}]$.
+\item \code{Polynomial} gives the polynomial of degree $n-1$ through all the points.
+\item \code{LocalPolynomial} gives the polynomial of degree $d$ through the $d+1$ points nearest to $x$. The window of
+points is centred on $x$ where possible and stays inside the table at its ends.
+\item \code{Spline}, \code{NaturalSpline}, \code{ClampedSpline} and \code{MonotoneSpline} give cubic splines.
+\end{itemize}
+The polynomials are evaluated by Neville's algorithm. Its table of interpolants
+\begin{equation}
+P_{i\dots i+m}(x)=\frac{(x-x_{i+m})\,P_{i\dots i+m-1}(x)+(x_i-x)\,P_{i+1\dots i+m}(x)}{x_i-x_{i+m}}
+\end{equation}
+also gives an error estimate: the last correction. Outside the table, the first and last pieces are extended.
+
+\code{Linear} and the splines are \code{PiecewisePolynomial} objects. Such a function is made of pieces
+$p_i(x)=\sum_k c_{ik}(x-b_i)^k$ between breakpoints $b_0<\dots<b_m$, so its derivatives of any order and its
+integrals are exact:
+\begin{equation}
+\int_{b_0}^{x} p = \sum_{j<i}\int_{b_j}^{b_{j+1}}p_j + \sum_k \frac{c_{ik}}{k+1}(x-b_i)^{k+1}.
+\end{equation}
+Its \code{derivativeFunction()} is again a piecewise polynomial, of one degree less.
+
+\code{CubicSpline} writes each piece in Hermite form from the values $y_i$ and slopes $s_i$ at the ends of
+the interval. With $h_i = x_{i+1}-x_i$ and $\delta_i=(y_{i+1}-y_i)/h_i$,
+\begin{equation}
+\begin{aligned}
+p_i(x) = y_i + s_i t &+ \frac{3\delta_i-2s_i-s_{i+1}}{h_i}\,t^2 \\
+&+ \frac{s_i+s_{i+1}-2\delta_i}{h_i^2}\,t^3,
+\end{aligned}
+\end{equation}
+where $t = x-x_i$.
+The four kinds of spline differ in how the slopes $s_i$ are chosen. Natural, clamped and not-a-knot splines require a
+continuous second derivative at the interior points, which gives the tridiagonal system
+\begin{equation}
+\begin{aligned}
+h_i\,s_{i-1} + 2(h_{i-1}+h_i)\,s_i &+ h_{i-1}\,s_{i+1} \\
+&= 3\,(h_i\,\delta_{i-1}+h_{i-1}\,\delta_i),
+\end{aligned}
+\end{equation}
+solved by the Thomas algorithm. Two end conditions close the system:
+\begin{itemize}
+\item the natural spline has a zero second derivative at the ends;
+\item the clamped spline takes the end slopes given by the caller;
+\item the not-a-knot spline (the default) has a continuous third derivative at the second and next-to-last points.
+It is therefore exact for cubic polynomials, and its error falls as $h^4$ for smooth functions.
+\end{itemize}
+The monotone spline (Fritsch--Carlson, as \code{pchip}) instead sets $s_i=0$ at local extrema and otherwise uses
+weighted harmonic means of the neighbouring slopes $\delta_{i-1}$ and $\delta_i$. Monotonic data then give a
+monotonic function without overshoot, which suits cumulative distributions.
+
+The free functions of \code{InterpolationTools} serve the other classes:
+\begin{itemize}
+\item \code{interpolatePolynomial}, \code{interpolateLocalPolynomial} and \code{localWindow} for polynomial
+interpolation;
+\item \code{inverseLinearInterpolation} for the abscissa where a nondecreasing table reaches a value, which inverts
+tabulated cumulative distributions;
+\item \code{interpolateMultilinear}, which weights the $2^r$ corners of the cell of a regular grid of rank $r$ by
+products of $1-u_k$ and $u_k$, the fractional positions $u_k$ in the cell. Scalar fields use it.
+\end{itemize}
+
+\paragraph{Integrators.}
+An \code{Integrator} integrates a function of rank one over $[a,b]$, or of any rank $r$ over a box. The integrand may
+be a \code{Function} or a callable, and reversed bounds change the sign. The result, an \code{IntegralResult}, holds
+the value, an error estimate, the number of evaluations, and whether the accuracy requested was reached:
+\begin{equation}
+|\Delta| \le \max(\epsilon_{\mathrm{abs}},\ \epsilon_{\mathrm{rel}}\,|I|),
+\end{equation}
+within at most \code{maxLevel()} refinements. Unless a derived class integrates the box directly, a box is integrated
+one variable at a time:
+\begin{equation}
+I = \int_{a_1}^{b_1} \mathrm{d}x_1 \left[\int\cdots\int f\,\mathrm{d}x_2\cdots \mathrm{d}x_r\right].
+\end{equation}
+
+The derived classes implement the methods below.
+\begin{itemize}
+\item \code{TrapezoidIntegrator} replaces the integrand by its linear interpolation between equally spaced points,
+\begin{equation}
+T(h) = h\left[\tfrac12 f(a) + \sum_{k=1}^{n-1} f(a+kh) + \tfrac12 f(b)\right],
+\end{equation}
+with an error of order $h^2$. The number of panels is doubled, evaluating only the new midpoints, until
+$|T(h/2)-T(h)|/3$ meets the tolerance. On a box of $r$ variables it applies the product rule on a grid of $N^r$
+points, each corner weighted by $1/2$ for each boundary it lies on. A maximum number of evaluations caps its cost.
+
+\item \code{SimpsonIntegrator} uses the parabola through the ends and middle of each panel,
+\begin{equation}
+S = \frac{b-a}{6}\left[f(a)+4f\!\left(\tfrac{a+b}{2}\right)+f(b)\right],
+\end{equation}
+exact for cubics, with an error of order $h^4$. In the adaptive mode (the default), the range is first cut into
+eight panels, so that narrow structures are not missed. Each panel is then halved until the two halves agree with
+the whole, $|\Delta| = |S_L+S_R-S| \le 15\tau$, and the result $S_L+S_R+\Delta/15$ is corrected by Richardson
+extrapolation (error of order $h^6$). The tolerance $\tau$ is relative to the integral of $|f|$ on the first panels,
+so integrals close to zero converge quickly. A fixed mode applies the rule on $n$ panels.
+
+\item \code{RombergIntegrator} extrapolates the trapezoidal estimates $R_{k,0}=T(h/2^k)$ to $h=0$,
+\begin{equation}
+R_{k,j} = R_{k,j-1} + \frac{R_{k,j-1}-R_{k-1,j-1}}{4^j-1},
+\end{equation}
+and stops when successive diagonal values $R_{k,k}$ agree. $R_{k,k}$ is exact for polynomials of degree $2k+1$ and
+converges very fast for smooth integrands.
+
+\item \code{GaussLegendreIntegrator} places $m$ points per panel at the roots $z_j$ of the Legendre polynomial
+$P_m$, with weights $w_j = 2/[(1-z_j^2)P_m'(z_j)^2]$:
+\begin{equation}
+\int_{-1}^{1} f \simeq \sum_{j=1}^m w_j f(z_j),
+\end{equation}
+exact for polynomials of degree $2m-1$. The roots are found by Newton's method and kept for each $m$. The number of
+panels is doubled to the tolerance, and boxes use the product rule. Its static functions \code{rule()},
+\code{quadrature()} and \code{productRule()} apply the rule without refinement. The \code{Legendre} and
+\code{Laguerre} functions, \code{BezierCurve} and the bin averages of the fits use them.
+
+\item \code{MonteCarloIntegrator} estimates the integral over a box of volume $V$ from $N$ points drawn uniformly,
+\begin{equation}
+I \simeq V\,\langle f\rangle, \qquad \sigma_I = V\sqrt{\frac{\langle f^2\rangle-\langle f\rangle^2}{N-1}},
+\end{equation}
+with mean and variance accumulated by Welford's algorithm. Batches of samples are doubled until $\sigma_I$ meets the
+tolerance. The error falls as $N^{-1/2}$ whatever the rank $r$, whereas the product rules need $N^r$ points, so
+Monte Carlo is the method of choice beyond three or four variables and for integrands with steps. It accepts
+functions of rank 1, 2 or any $n$ through the same calls. Its random numbers come from its own Mersenne Twister,
+seeded by \code{setSeed()}, so results are reproducible.
+\end{itemize}
+
+Values already computed are integrated by the free functions of \code{MathBasicIntegration}:
+\begin{itemize}
+\item the trapezoidal and Simpson rules on equally spaced or unevenly spaced points (a last odd interval is
+integrated with the parabola through the last three points);
+\item the cubic rule, the exact integral of the not-a-knot spline through the points;
+\item the trapezoidal and Simpson product rules on grids of two or $n$ dimensions;
+\item cumulative versions of these rules, from which the tabulated random distributions and the event generator of
+Section~\ref{sec:basicgen} build their cumulative distributions.
+\end{itemize}
+
+\paragraph{Differentiation.}
+A numerical derivative of order $n$ is the derivative of the polynomial of degree $d$ through $d+1$ points
+$x+o_j h$ around $x$:
+\begin{equation}
+f^{(n)}(x) \simeq \frac{1}{h^n}\sum_{j=0}^{d} w_j\, f(x+o_j h).
+\end{equation}
+The weights $w_j$ depend only on the offsets $o_j$. They are computed for any order and set of offsets by Fornberg's
+algorithm (\code{finiteDifferenceWeights}). The methods \code{Linear}, \code{Quadratic}, \code{Cubic} and
+\code{Polynomial} take $d=1,2,3$ or a chosen degree. The points are placed symmetrically about $x$ (\code{Central},
+with half-integer offsets for an even number of points), or forward or backward of it.
+
+The error is of order $h^p$, with $p=d+1-n$, plus one for symmetric stencils when $d+1-n$ is odd. The five-point
+central difference ($d=4$, $n=1$),
+\begin{equation}
+\begin{aligned}
+f'(x) \simeq \frac{1}{12h}\big[&f(x-2h)-8f(x-h)\\
+&+8f(x+h)-f(x+2h)\big],
+\end{aligned}
+\end{equation}
+is accurate to $h^4$. The step balances the truncation error $h^p$ against the rounding error $\varepsilon/h^n$,
+$\varepsilon$ being the machine precision:
+\begin{equation}
+h = 10^{\,\mathrm{round}(\log_{10}\varepsilon^{1/(p+n)})}\,\max(1,|x|),
+\end{equation}
+which is $10^{-3}\max(1,|x|)$ for the five-point difference. \code{setStep()} sets the step instead. Richardson extrapolation combines the estimates with
+$h$ and $h/2$, $(2^p D_{h/2}-D_h)/(2^p-1)$, to cancel the leading error.
+
+Partial derivatives differentiate along one axis, and mixed derivatives along each listed axis in turn. Sampled
+values are differentiated at the samples by local polynomials with the same weights: \code{derivativesOfSamples} for
+points at any spacing, \code{derivativeOnGrid} along one axis of a regular grid of any rank, which the scalar fields
+use.
+
+Analytical derivatives come from the functions themselves. \code{Function} declares \code{hasAnalyticalDerivative()},
+true for the classes that override \code{derivativeAt()} (the polynomials, \code{Exponential}, \code{Normal},
+\code{LogNormal}, the Cauchy distribution, \code{BezierCurve}, the Bessel, Legendre and Laguerre functions,
+\code{FourierHarmonic}, and the composites of such functions). It also declares \code{derivativeFunction(axis)},
+which returns the derivative as a new function for the classes whose derivatives are of the same kind:
+\begin{itemize}
+\item \code{Polynomial} gives a polynomial of one degree less, and \code{Exponential} gives $ab\,e^{bx}$;
+\item \code{FourierDecomposition} gives the decomposition with $c_n' = n s_n$, $s_n' = -n c_n$ and constant zero;
+\item \code{PiecewisePolynomial} and the splines give a piecewise polynomial;
+\item \code{Polynomial2D} gives the polynomial of each partial derivative;
+\item the orthogonal series give a series of the same family and mapping, multiplied by $\mathrm{d}t/\mathrm{d}x$:
+$P_n' = \sum_{k<n,\ n-k\ \mathrm{odd}}(2k+1)P_k$ (Legendre), $T_n' = 2n\sum_{k<n,\ n-k\ \mathrm{odd}}T_k$ with $T_0$
+counted half (Chebyshev), $H_n' = 2nH_{n-1}$ (Hermite), and $L_n^{\alpha\prime} = -\sum_{k<n}L_k^\alpha$ (Laguerre).
+\end{itemize}
+
+In \code{Automatic} mode, \code{Differentiation} applies \code{derivativeFunction()} as many times as the order allows.
+It then uses \code{derivativeAt()} (or \code{gradientAt()}) for a last analytical first derivative, and computes
+the rest numerically. \code{Analytical} throws an exception when the function provides neither. \code{Derivative}
+applies the same scheme as a function of the same rank: it computes the analytical part once, and evaluates the rest
+numerically at each call. The function differentiated is referred to, not copied; a \code{std::shared\_ptr} shares
+its ownership instead. A \code{Derivative} can itself be integrated, plotted, fitted or differentiated again:
+\begin{widetext}
+\begin{verbatim}[language=C++]
+Polynomial p{1.0, -2.0, 0.0, 4.0};
+Derivative d3(p, 3);                        // 24, analytical: three polynomials
+Normal g(1.0, 0.0, 1.5);
+Derivative g2(g, 2);                        // g' analytical, then numerical
+Derivative dxy(field, std::vector<unsigned int>{0, 1});   // d2f/dx dy, numerical
+double a = Integration().integral(g2, -1.0, 1.0);         // g'(1) - g'(-1)
+\end{verbatim}
+\end{widetext}
+The defaults of \code{Function} use these tools as well: \code{derivativeAt()} and \code{gradientAt()} take the
+five-point derivative of \code{Differentiation}. \code{integralInRange()} and \code{expectationValue()} use adaptive
+Simpson integration, with a relative tolerance of $10^{-10}$ for one variable and of $10^{-8}$ one variable at a time
+for a box.
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Fitting}
 \label{sec:fitting}
 
@@ -152,28 +632,30 @@ under a name are kept in a file shared by the programs and CapGui.
 A fit finds the parameters $\mathbf{p}$ of a function that minimise a statistic $S(\mathbf{p}) = -2\ln L$, up to a
 constant (\code{Likelihood}). Three statistics are provided. For data with Gaussian uncertainties, $S$ is the
 $\chi^2$,
-\begin{equation}
-  \chi^2(\mathbf{p}) = \sum_{i} \frac{\bigl(y_i - f(\mathbf{x}_i;\mathbf{p})\bigr)^2}{V_i},
-  \qquad V_i = \sigma_i^2 + s_i^2 + \sum_{k} \left(\frac{\partial f}{\partial x_k}\right)^{\!2} \sigma_{x_k,i}^2 ,
-\end{equation}
+\begin{align}
+  \chi^2(\mathbf{p}) &= \sum_{i} \frac{\bigl(y_i - f(\mathbf{x}_i;\mathbf{p})\bigr)^2}{V_i},\\
+  \qquad V_i& = \sigma_i^2 + s_i^2 + \sum_{k} \left(\frac{\partial f}{\partial x_k}\right)^{\!2} \sigma_{x_k,i}^2 ,
+\end{align}
 where the systematic uncertainties $s_i$ and the effective variance from the coordinate uncertainties are included
 on request (for rank one, the covariance of $x$ and $y$ is included as well). Points without an uncertainty, such as
 the empty bins of a histogram, are left out. For histograms with few entries per bin, the binned Poisson likelihood
 ratio of Baker and Cousins~\cite{Baker:1983tu},
-\begin{equation}
+\begin{align}
   S_{\mathrm{P}}(\mathbf{p}) = 2 \sum_{g} \left[ f_g - n_g + n_g \ln\frac{n_g}{f_g} \right],
-\end{equation}
+\end{align}
 is unbiased where the $\chi^2$ is not, includes the empty bins, and is asymptotically $\chi^2$-distributed. For
 individual events, the unbinned likelihood takes the function as the density of the events over a range $\Omega$,
-\begin{equation}
-  S_{\mathrm{U}} = -2\sum_{i} \ln\frac{f(\mathbf{x}_i;\mathbf{p})}{N(\mathbf{p})}, \qquad
-  S_{\mathrm{E}} = 2N(\mathbf{p}) - 2\sum_{i} \ln f(\mathbf{x}_i;\mathbf{p}), \qquad
-  N(\mathbf{p}) = \int_{\Omega} f(\mathbf{x};\mathbf{p})\, d\mathbf{x},
-\end{equation}
+\begin{align}
+  S_{\mathrm{U}} &= -2\sum_{i} \ln\frac{f(\mathbf{x}_i;\mathbf{p})}{N(\mathbf{p})}, \qquad \\ 
+  S_{\mathrm{E}} &= 2N(\mathbf{p}) - 2\sum_{i} \ln f(\mathbf{x}_i;\mathbf{p}), \qquad \\
+  N(\mathbf{p}) &= \int_{\Omega} f(\mathbf{x};\mathbf{p})\, d\mathbf{x},
+\end{align}
 without and with extension ($S_{\mathrm{E}}$, where $N$ is the expected number of events and the amplitude is
 fitted). For histograms whose bins are wide compared to the structures fitted, the function can be compared to its
-average over each bin, computed with a three-point Gauss--Legendre rule along each axis, rather than to its value at
-the centre of the bin.
+average over each bin rather than to its value at the centre of the bin. For a function of one variable, the average
+is its integral over the bin divided by the width of the bin, analytical for the functions that provide one (the
+Fourier decompositions and the continuous distributions, for instance) and computed by adaptive Simpson rules
+otherwise; in more variables, it is computed with a three-point Gauss--Legendre rule along each axis.
 
 \paragraph{Ranges and regions.}
 A fit uses the points in a selection (\code{FitSelection}): a box, $a_k \le x_k \le b_k$ for each variable, regions
@@ -187,9 +669,9 @@ either wholly in or wholly out of the selection, and $N$ is the sum of the integ
 \paragraph{Minimisation.}
 The default method is Levenberg--Marquardt. For a statistic made of residuals $r_i$ ($\chi^2$ and Poisson
 likelihood, whose residuals are the pulls and the signed deviance residuals), each step solves
-\begin{equation}
+\begin{align}
   \bigl(J^{\mathsf{T}}J + \lambda\,\mathrm{diag}(J^{\mathsf{T}}J)\bigr)\,\delta\mathbf{p} = -J^{\mathsf{T}}\mathbf{r},
-\end{equation}
+\end{align}
 where $J_{ia} = \partial r_i/\partial p_a$ is computed by central differences (one-sided at a bound), and the damping
 $\lambda$ grows tenfold until $S$ decreases and shrinks tenfold after each successful step. For the unbinned
 likelihood, which is not a sum of squares, the same scheme is applied to the numerical gradient and curvature of
@@ -197,7 +679,7 @@ $S$. Fixed parameters keep their values, and bounded parameters stay within thei
 are poor or $S$ has several minima, a global search (Section~\ref{sec:mathother}), such as differential evolution
 over the bounds of the free parameters, runs first and Levenberg--Marquardt refines its result. Starting values can
 also be estimated from the data in the selection for the common functions: moments for Gaussian peaks, a straight
-line in $\ln y$ for an exponential, exact least squares for polynomials and series.
+line in $\ln y$ for an exponential, exact least squares for polynomials, series and Fourier decompositions.
 
 \paragraph{Uncertainties.}
 The covariance of the free parameters at the minimum is $C = (J^{\mathsf{T}}J)^{-1}$ for a statistic made of residuals,
@@ -209,9 +691,9 @@ parameters at a bound.
 
 \paragraph{Bayesian fits.}
 \code{BayesianFitter} samples the posterior distribution of the parameters,
-\begin{equation}
+\begin{align}
   p(\mathbf{p}\,|\,\text{data}) \propto L(\mathbf{p})\,\prod_a \pi_a(p_a),
-\end{equation}
+\end{align}
 with priors $\pi_a$ that are flat, uniform, Gaussian (for instance an earlier
 measurement), log-uniform for a scale of unknown magnitude, or any log density. The sampler is an adaptive
 Metropolis--Hastings algorithm: several chains (four by default) start near the starting values; during the burn-in
@@ -227,6 +709,7 @@ of the selection. The records are written to and read from CAP files with the ob
 the function being recreated through the registry, so that a fit made in a program is drawn and inspected in
 CapGui, and the reverse. The residuals of a fit, $y_i - f(\mathbf{x}_i)$ or the pulls, are computed for the points
 used, and the fits of rank two of a histogram can be projected onto either axis with the histogram:
+\begin{widetext}
 \begin{verbatim}[language=C++]
 CAP::MATH::Normal model(100.0, 0.0, 1.0);            // starting values
 CAP::MATH::Fitter fitter(model, histogram);          // chi square by default
@@ -234,6 +717,93 @@ fitter.exclude(0, 4.5, 5.5);                         // leave a region out
 CAP::MATH::FitResult r = fitter.fit();
 histogram.addFit(fitter.record("gaussian"));         // saved with the histogram
 \end{verbatim}
+\end{widetext}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Fourier decompositions}
+\label{sec:fourier}
+
+\paragraph{Two forms.}
+Distributions of an angle, such as the azimuthal distributions of particles relative to a plane or the distributions
+of the difference $\Delta\varphi$ of the azimuths of pairs of particles, are described by their Fourier
+decomposition up to a harmonic $n_{\max}$ chosen by the user. \code{FourierDecomposition} writes it in one of two
+forms,
+\begin{align}
+  \label{eq:fourier}
+  f(x) &= k + \sum_{n=1}^{n_{\max}} \left[c_n \cos nx + s_n \sin nx\right]
+  \qquad\text{or}\qquad \\
+  f(x) &= k\left[1 + 2\sum_{n=1}^{n_{\max}} v_n \cos n(x - \psi_n)\right],
+\end{align}
+with $2n_{\max} + 1$ parameters, $k, c_1, s_1, \dots, c_{n_{\max}}, s_{n_{\max}}$ in the first form and
+$k, v_1, \psi_1, \dots, v_{n_{\max}}, \psi_{n_{\max}}$ in the second, where $v_n$ are the flow coefficients and
+$\psi_n$ the symmetry planes; $x$ is in radians and $f$ has period $2\pi$. The two forms are related by
+\begin{align}
+  c_n &= 2k\, v_n \cos n\psi_n, \quad \\
+  s_n &= 2k\, v_n \sin n\psi_n; \qquad \\
+  v_n &= \frac{\sqrt{c_n^2 + s_n^2}}{2k}, \quad \psi_n = \frac{1}{n}\,\mathrm{atan2}(s_n, c_n) \in \left(-\frac{\pi}{n}, \frac{\pi}{n}\right],
+\end{align}
+and the coefficients of either form can be read from a decomposition of the other; they are set in its own form.
+A decomposition is a composite (Section~\ref{sec:functions}) of a constant and of the harmonics $n = 1$ to
+$n_{\max}$ (\code{FourierHarmonic}), whose parameters are named as in Eq.~(\ref{eq:fourier}). In the second form the
+constant multiplies the harmonics rather than adding to them, and the decomposition computes its value, derivative
+and integral itself; the integral is analytical,
+\begin{widetext}
+\begin{align}
+  \int_a^b f\, dx = k\,(b-a) + \sum_{n=1}^{n_{\max}} \frac{c_n\,(\sin nb - \sin na) - s_n\,(\cos nb - \cos na)}{n}.
+\end{align}
+\end{widetext}
+Both forms are registered, as \code{FourierDecomposition} and \code{FourierFlow}, so that the Fit window offers
+them, with $n_{\max}$ as their degree, and a decomposition read from a file keeps its form. Their starting values are
+the weighted least-squares coefficients of the first form, converted to the second if needed.
+
+\paragraph{Calculation.} 
+
+The class 
+\code{CalculateFourierDecomposition} gives the decomposition of a function of one variable, or of data points such
+as a histogram, in either form, by one of two methods. With \emph{averages}, for $N$ points $x_i$ equally spaced over
+one period, the centres of the bins of a histogram over $2\pi$ or the points $x_i = x_0 + (i + \frac{1}{2})2\pi/N$ at
+which a function is sampled,
+\begin{align}
+  k &= \frac{1}{N}\sum_{i} y_i, \qquad  \\
+  c_n &= \frac{2}{N}\sum_{i} y_i \cos n x_i, \qquad \\
+  s_n &= \frac{2}{N}\sum_{i} y_i \sin n x_i . 
+\end{align}
+The sums of $\cos n x_i$ and $\sin n x_i$ over such points are orthogonal for $n < N/2$: for $N > 2n_{\max} + 1$ these averages are exactly the coefficients of least $\chi^2$ for equal uncertainties. Being linear in the $y_i$, their covariance follows from the uncertainties $\sigma_i$ of the points, $C_{ab} = \sum_i w_a(x_i)\, w_b(x_i)\,
+\sigma_i^2$,  where $w_a$  are the weights defined above; for equal uncertainties $\sigma$, $\sigma_k^2 = \sigma^2/N$ and $\sigma_{c_n}^2 = \sigma_{s_n}^2 = 2\sigma^2/N$, uncorrelated. The averages do not weigh the points by their uncertainties; a \emph{fit} does: the first form is fitted by $\chi^2$ (Section~\ref{sec:fitting}), each point weighed by its uncertainty, which also fits points unequally spaced or covering part of a period. The coefficients of the second form follow from those of the first by the relations above, and their covariance is propagated, $C' = J C J^{\mathsf{T}}$, with the Jacobian
+\begin{subequations}
+\begin{align}
+  \frac{\partial v_n}{\partial k} &= -\frac{a_n}{2k^2}, \quad \\
+  \frac{\partial v_n}{\partial c_n} &= \frac{c_n}{2k\,a_n}, \quad \\
+  \frac{\partial v_n}{\partial s_n} &= \frac{s_n}{2k\,a_n}, \quad \\
+  \frac{\partial \psi_n}{\partial c_n} &= -\frac{s_n}{n\, a_n^2}, \quad \\
+  \frac{\partial \psi_n}{\partial s_n} &= \frac{c_n}{n\, a_n^2}, \qquad \\
+  a_n &= \sqrt{c_n^2 + s_n^2};
+\end{align}
+\end{subequations}
+the phase of a harmonic that vanishes is undefined, and its variance infinite.
+
+The content of a bin of width $h$ is the average of the distribution over the bin, and the average of $\cos nx$ over
+a bin centred on $x_i$ is $\cos(n x_i)\,\sin(nh/2)/(nh/2)$: the harmonics of the contents are reduced by this factor,
+by 0.5\% for $n = 2$ and 2\% for $n = 4$ with 36 bins, for instance. On request, the averages are divided by the
+factor, and the fit compares each bin to the integral of the decomposition over it divided by $h$, so that the
+coefficients are those of the distribution rather than of the histogram.
+
+The quality of the decomposition is reported as that of a fit (\code{FitResult}): the $\chi^2$ of the decomposition
+to the points, computed by \code{ChiSquare}, the number of degrees of freedom $\nu = N - (2n_{\max} + 1)$,
+$\chi^2/\nu$ and the $p$-value, the coefficients with their uncertainties, covariance and correlations, and the
+largest and root-mean-square differences between the points and the decomposition. For a function, the uncertainty
+given to its samples is chosen by the user; with the default, one, the $\chi^2$ is the sum of the squared
+differences.
+\begin{widetext}
+\begin{verbatim}[language=C++]
+CAP::MATH::CalculateFourierDecomposition calculator(4, CAP::MATH::FourierDecomposition::kFlow,
+                                                    CAP::MATH::CalculateFourierDecomposition::kFit);
+calculator.setBinAveraging(true);                       // contents: averages over the bins
+CAP::MATH::FourierDecomposition d = calculator.calculate(histogram);
+double v2 = d.flow(2), error = calculator.result().errors[d.harmonicIndex(2)];
+double chi2PerNdf = calculator.chiSquarePerDegreeOfFreedom();
+\end{verbatim}
+\end{widetext}
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Searches, random numbers, statistical tests and linear algebra}
@@ -263,5 +833,5 @@ distributions they need. Upper tails are computed directly, so that small $p$-va
 \code{Vector3D}, \code{VectorND} and \code{VectorLorentz} the vectors and four-vectors of particle kinematics, with
 the $(+,-,-,-)$ metric and $c=1$.
 
-\todo{decide whether to add a short paragraph on Basic (integration, interpolation, robust moments) and a figure
+\todo{decide whether to add a short paragraph on Basic (robust moments) and a figure
 of a fit with an excluded region drawn by CapGui.}

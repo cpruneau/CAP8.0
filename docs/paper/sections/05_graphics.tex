@@ -2,17 +2,208 @@
 \section{The core: Graphics, Latex and Interpreter}
 \label{sec:graphics}
 
+Three libraries of the core turn the results of the analyses into figures and documents, and let them be explored
+without compiling a program. Graphics draws histograms, data points, functions and their fits on canvases, on the
+screen and in SVG, PDF and PowerPoint files; Latex writes \LaTeX{} documents and Beamer presentations of the canvases;
+and Interpreter runs a small command language, used interactively by CapShell. None of them uses ROOT: the drawing,
+the vector file formats and the typesetting of the labels are implemented in \CAP{} itself, in standard C++17.
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Graphics}
 \label{sec:graphicscore}
 
-\todo{painters (SVG, PDF, screen), graphs, canvases, axes, legends, fit curves and residual panels.}
+\paragraph{Drawing model.}
+A drawing is described independently of the device that shows it. A \code{Canvas} is the root of a tree of drawable
+objects (\code{Drawable2D}): lines, polygons, markers, axes, shapes and, above all, graphs. Each drawable is drawn by
+a \code{Renderer}, which turns it into calls to an abstract \code{Painter}: draw a line or a polygon, fill a rectangle,
+draw a marker or a text, measure a text. Coordinates passed to a painter are normalised, $(0,0)$ being the lower-left
+corner of the canvas and $(1,1)$ its upper-right corner, and each painter maps them onto its own device units. A
+renderer never calls a platform: the same code draws a canvas on every device, and what is seen on the
+screen is what is written to a file.
 
+The styles follow the conventions of ROOT, so that the styles of existing configurations keep their meaning: colours
+are numbers, with the numbering and values of ROOT (\code{kRed+2} is 634), held by a colour table of \CAP{} that does
+not need ROOT and gives numbers from 1000 up to any other colour; line, fill and marker styles and font codes are
+those of ROOT, the fill styles including its hatch patterns. Colours carry an opacity.
+
+\paragraph{Painters.}
+Four painters are provided. \code{SvgPainter} and \code{PdfPainter} write vector files with no external library: the
+PDF painter writes the file directly, with the fourteen fonts that every PDF reader has, and can write books of
+several pages, one canvas per page. \code{PptxPainter} writes PowerPoint presentations, one slide per canvas, in which
+what the renderers draw becomes native shapes (free-form lines and polygons, preset markers, text boxes), so that the
+slides can be edited in PowerPoint, Keynote or LibreOffice. \code{ImGuiPainter} draws on the screen for CapGui
+(Section~\ref{sec:capgui}). Several canvases can be drawn on one page, each in its own rectangle.
+
+\paragraph{Canvases and graphs.}
+A canvas is divided into a grid of $n \times m$ cells, each holding a \code{Graph}: a frame with its axes, title and
+legend, set in its cell by margins. A graph shows any number of items (\code{GraphItem}), each a function or a set of
+data points (a histogram, a profile or data points, Section~\ref{sec:data}) with its style; the objects are not
+copied, and the graph shows them as they are when it is drawn. The ranges are automatic, covering all the items and
+rounded to nice values ($1$, $2$ or $5\times 10^k$), unless they are set, and each axis is linear or logarithmic.
+Unlike in ROOT, the scales belong to the graph, not to the canvas. The titles of a graph and of its axes are taken from the first object shown (its title
+and the titles of its dimensions), and the items get their colours and markers from the palettes of the graph, item
+$k$ taking colour and marker $k$. The title, the axis titles and the legend have automatic positions, which can be
+moved, and automatic sizes, which follow the size of the cell. Each drawing records where the parts of the graph
+went, so that the graph can tell what lies under a point of the canvas: an axis, the title, the legend, a data point
+or the residual panel; CapGui uses it for its mouse interactions.
+
+Data points of one variable are drawn as markers with error bars for their statistical uncertainties, and
+optionally their uncertainties along $x$ and a line joining them; systematic uncertainties are drawn as boxes around
+the points, brackets above and below them, or a band. Functions are drawn as curves over their range.
+
+\paragraph{Maps.}
+Items of two variables, functions $f(x,y)$, histograms of rank two and data points with a value, are drawn as colour
+maps. Their values are put on the cells of a grid (\code{Grid2D}): the bins of a histogram, the nodes of points that
+form a regular grid, or the centres of $n \times n$ cells over which a function is evaluated, over the part of its
+range that is visible, so that zooming shows more detail; scattered points, which form no grid, are drawn as markers
+coloured by their value. The graph then has a third axis, $z$, drawn along a colour scale beside the frame, linear or
+logarithmic, whose range is automatic or set, and optionally symmetric about zero. A palette (\code{Palette}) gives
+the colour of each value: \emph{viridis} by default, perceptually uniform and readable in grey and by colour-blind
+readers, the default palette of ROOT, a grey scale for printing, and a diverging palette (blue, white, red) for
+values of both signs, such as correlation functions; with a number of steps, the palette shows filled contours.
+Contour lines are traced on the cells by marching squares, at equally spaced levels or at given levels, and the values
+can be written in the cells where they fit, or drawn as disks whose area follows their magnitude. Maps and curves can
+be shown together, for instance a curve over a map.
+
+\paragraph{Three-dimensional views.}
+A graph can show its maps in a three-dimensional view: a box with the $x$, $y$ and $z$ axes, seen from a direction
+given by an azimuth and an elevation, in orthographic projection (\code{Projection3D}). Each map is drawn as a surface
+shaded by the palette, as a mesh with its hidden lines removed, or as lego boxes, the parts being drawn from the
+farthest to the nearest. The view is turned with the mouse in CapGui.
+
+\paragraph{Fits.}
+The fits attached to an object (Section~\ref{sec:fitting}) are drawn with it, each with its own line, over its range
+or over the whole graph, and listed in the legend under the object, optionally with their quality
+($\chi^2/\nu$ or $-2\ln L$). Fits of rank two are drawn as contour lines over the map, at the levels of its
+contours, or as meshes in a three-dimensional view. A panel below the frame can show the residuals of the fits,
+$y_i - f(x_i)$ with their error bars or the pulls $\bigl(y_i - f(x_i)\bigr)/\sigma_i$, sharing the $x$ axis of the
+frame; for fits of two variables, the map of the pulls is drawn with the diverging palette and a range symmetric
+about zero (Fig.~\ref{fig:graphics}).
+
+\paragraph{Palettes, shapes and texts.}
+The palettes of a session (\code{Palettes}) are named: colour palettes (a default one, one safe for colour-blind
+readers, and one for the curves of the fits), marker palettes (filled or open markers) and the shading palettes of the
+maps; programs add their own. Each graph uses the current palettes of the session unless it names its own, so that
+changing a palette of the session restyles every graph that follows it. Shapes (\code{Shape}: rectangles, ellipses,
+triangles, polygons, lines and arrows, and text boxes) are drawn over a graph to annotate it; their positions are
+fractions of the cell of the graph, so that they keep their place when the axes are zoomed or the canvas is resized,
+and they can be filled, hatched, outlined and hold a text.
+
+The texts of the figures (titles, axis titles, legends, labels of shapes) are typeset by \LaTeX{} when they contain
+\verb|$| or \verb|\|, for instance \verb|$p_{\mathrm{T}}$ (GeV/$c$)|; texts in the notation of the \code{TLatex}
+class of ROOT (\verb|#Delta#varphi|, \verb|p_{T}|) are translated to \LaTeX{} first, so that the titles of existing
+histograms are typeset too. \LaTeX{} is a program, not a library: \code{LatexRenderer} runs \code{latex} and
+\code{dvisvgm} of the \LaTeX{} installation of the system on a small document, and keeps the glyphs of the result as
+vector paths, which every painter scales to the size of the text and draws as such (as paths in SVG and PDF files),
+so that the texts of the figures look like those of the paper they go into. Each typesetting takes about half a
+second, so the results are cached, in memory and on disk, and a text is typeset only once; the texts of a canvas
+are typeset together in a single run, and an interface asks for them in a background thread and draws plain text
+until they are ready. Without \LaTeX{}, the texts are drawn with the fonts of the painters, the \LaTeX{} and ROOT
+notations being turned into Unicode characters, superscripts and subscripts, as they are for PowerPoint.
+
+\paragraph{The canvases of a session.}
+The canvases of a session are listed, by name and by group (a window, a step of an analysis), in a registry
+(\code{CanvasRegistry}), from which every canvas, and through it every graph, is reached by a program, CapShell or
+CapGui; the registry writes them all, one file per canvas or per graph, or as a book of one page per canvas. A
+figure is made in a few lines:
+\begin{widetext}
+\begin{verbatim}[language=C++]
+CAP::GRAPHICS::Canvas canvas("spectra", "Transverse momentum spectra", 800, 600);
+canvas.divide(2, 1);                                        // two graphs side by side
+CAP::GRAPHICS::Graph & left = canvas.graph(0);
+left.show(CAP::GRAPHICS::GraphItem(&ptPions, "$\\pi^{+}$"));
+left.show(CAP::GRAPHICS::GraphItem(&ptKaons, "$K^{+}$"));           // overlaid
+left.setLogY(true);
+canvas.graph(1).show(CAP::GRAPHICS::GraphItem(&r2, "$R_2$"));        // a map
+CAP::GRAPHICS::PdfPainter pdf(800, 600);
+canvas.draw(pdf);
+pdf.write("spectra.pdf");
+\end{verbatim}
+\end{widetext}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.8\textwidth]{GraphicsExample}
+  \caption{A canvas of four graphs drawn by \CAP{}~8 and written by \code{PdfPainter}. (a) A peak over a linear
+  background, fitted by a composite function with the Poisson likelihood, a region around a narrow structure being
+  excluded from the fit (shaded); the panel below shows the pulls. (b) A correlated peak of two variables, drawn as a colour
+  map with contour lines, and its fit by a two-dimensional Gaussian, drawn as contours. (c) The same map in a
+  three-dimensional view, as a surface. (d) The map of the pulls of the fit, with the diverging palette.}
+  \label{fig:graphics}
+\end{figure*}
+
+\paragraph{Plot files.}
+The windows, canvases and graphs of a figure can also be described in an XML file, a \emph{plot file}, read and
+written by \code{PlotSpec}: its inputs (CAP files), its outputs, and for each graph the histograms and functions it
+shows and every setting of style that differs from the defaults. \code{PlotTemplate} makes plot files from the
+histograms of CAP files or of a workflow, laid out by task, histogram and combination of filters, and
+\code{PlotDocument} edits them, keeping their structure valid, with undo and redo. Plot files are what CapGui shows
+and saves, and what \code{PlotHistos} draws in batch; they are described with CapGui
+(Section~\ref{sec:plotfiles}).
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Documents}
 \label{sec:latex}
 
-\todo{LaTeX output of results: tables and figures of an analysis.}
+The Latex library writes \LaTeX{} documents from C++: a \code{LatexDocument} is a tree of elements (sections,
+subsections, paragraphs, texts, equations, lists, figures and groups of figures, and the frames of a Beamer
+presentation), with its packages, commands, title, authors and abstract, written as a \code{.tex} file. It is how
+the results of an analysis are put into documents without being copied by hand. \code{CanvasPresentation} makes a
+Beamer presentation of canvases: each canvas, or each of its graphs, is written as a PDF figure and shown on a frame
+of its own, titled after the canvas, and the document is compiled with \code{pdflatex}:
+\begin{widetext}
+\begin{verbatim}[language=C++]
+CAP::CanvasPresentation talk("Two-particle correlations");
+talk.setAuthor("C. Pruneau", "", "Wayne State University");
+talk.addCanvases(CAP::GRAPHICS::CanvasRegistry::session());
+CAP::String tex = talk.write("talk", "correlations");
+talk.compile(tex);                    // talk/correlations.pdf
+\end{verbatim}
+\end{widetext}
+The outputs of a plot file include such a document, either a Beamer presentation with one frame per canvas or an
+article with one section per window and one figure per canvas, written by CapGui and \code{PlotHistos}
+(Section~\ref{sec:plotfiles}), next to the PDF book and the PowerPoint presentation of the same canvases.
 
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{CapShell}
 \label{sec:capshell}
 
-\todo{the command-line interpreter: commands, scripts, figures.}
+\paragraph{The language.}
+CapShell runs the command language of the Interpreter library, meant for exploring results and making figures
+without writing and compiling a program, as ROOT's prompt is used, but with a language of its own rather than C++.
+It has variables, made by assignment; integers, reals, texts, booleans, \code{none} and lists; arithmetic (integers
+stay integers through $+$, $-$, $\times$ and powers, and a division always gives a real), comparisons and logical
+operators; ranges \code{a..b}; blocks, \code{if}--\code{else}, \code{while} and \code{for} loops over ranges and lists,
+with \code{break} and \code{continue}; and functions, defined with \code{fun}, which see their parameters and read and
+assign the global variables. The objects are those of the classes of the reflection registry
+(Section~\ref{sec:objects}): an object is made by calling its class, and used through its member functions and
+properties, so that every class registered becomes available to the language without further code. Histograms, data
+points, random generators, canvases and graphs are registered today.
+
+\paragraph{Built-in functions.}
+The built-in functions write values, give help on the language, on any function and on any registered class, list
+the classes and the variables, run files of commands, time them, and convert and combine values (numbers, texts,
+lists, sums, extrema and the usual mathematical functions). Others reach the files and the graphics: \code{ls},
+\code{read} and \code{write} list, read and write the objects of CAP files; \code{save} draws objects in one graph and
+writes it to an SVG or PDF file; and the canvases of the session are found by name or index, registered, saved one
+file per canvas or per graph, printed as a book, or shown in a Beamer presentation, compiled at once
+(Section~\ref{sec:latex}):
+\begin{verbatim}
+g = MersenneTwister(12345)
+h = Histogram("h", "Gaussian numbers", 40, -4, 4)
+for k in 1..10000 { h.fill(g.gauss(0, 1)) }
+if h.mean(0) > 0 { print("positive mean", h.mean(0)) }
+save("gauss.pdf", h)
+pt = read("run.cap", "Single/MB_PiP/n1_pt")
+c = Canvas("spectra", "Spectra", 800, 600)
+c.divide(1, 1)
+c.graph(0).add(pt)
+c.graph(0).logY = true
+c.save("pt.pdf")
+\end{verbatim}
+
+\paragraph{Sessions.}
+\code{CapShell} runs an interactive session, with line editing and a history kept between sessions when the
+\code{editline} library is present, runs files of commands and stops, or runs a file and continues interactively;
+commands are also read from the standard input, so that the program can be used in pipes and scripts. An error
+reports the file and the line where it occurred; in an interactive session, the session goes on.

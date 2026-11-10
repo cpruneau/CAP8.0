@@ -151,6 +151,14 @@ namespace CAP
   return evaluateAt(x[0]);
   }
 
+  Function * FourierDecomposition::derivativeFunction(unsigned int axis) const
+  {
+  if (axis != 0) return nullptr;
+  std::vector<double> a(nMax()), b(nMax());
+  for (unsigned int n=1; n<=nMax(); n++) { a[n-1] = n*sine(n); b[n-1] = -double(n)*cosine(n); }
+  return new FourierDecomposition(kCosineSine, 0.0, a, b);
+  }
+
   double FourierDecomposition::derivativeAt(double x) const
   {
   synchronize();

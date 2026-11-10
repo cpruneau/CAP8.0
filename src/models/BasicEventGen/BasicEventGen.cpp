@@ -16,6 +16,8 @@
 #include "FunctionRegistry.hpp"
 #include "ParameterizedComposite.hpp"
 #include "MathConstants.hpp"
+#include "MathBasicIntegration.hpp"
+#include "InterpolationTools.hpp"
 #include "PrintHelpers.hpp"
 
 namespace CAP
@@ -270,17 +272,13 @@ void BasicEventGen::tabulate(double low, double high)
   _tableX.resize(kTableSize+1);
   _tableCdf.resize(kTableSize+1);
   const double step = (high-low)/kTableSize;
-  double previous = density(low);
-  _tableX[0]   = low;
-  _tableCdf[0] = 0.0;
-  for (unsigned int k=1; k<=kTableSize; k++)
+  std::vector<double> values(kTableSize+1);
+  for (unsigned int k=0; k<=kTableSize; k++)
     {
-    double x = low + k*step;
-    double f = density(x);
-    _tableX[k]   = x;
-    _tableCdf[k] = _tableCdf[k-1] + 0.5*(previous+f)*step;   // trapezoidal rule
-    previous = f;
+    _tableX[k] = low + k*step;
+    values[k]  = density(_tableX[k]);
     }
+  _tableCdf = MATH::cumulativeTrapezoidRule(values,step);   // trapezoidal rule
   if (!(_tableCdf.back()>0.0))
     throw ConfigurationException(createKey(name(),"Distribution"),"the momentum distribution is zero on the range",__FUNCTION__);
 }
@@ -290,11 +288,7 @@ double BasicEventGen::drawMomentum(double low, double high)
   if (_distribution==kExponential) return _random.exp(_slope,low,high);
   // inverse of the tabulated cumulative (the table covers [low, high])
   double u = _random.random()*_tableCdf.back();
-  auto it = std::upper_bound(_tableCdf.begin(),_tableCdf.end(),u);
-  std::size_t k = std::min<std::size_t>(std::max<std::ptrdiff_t>(it-_tableCdf.begin(),1),_tableCdf.size()-1);
-  double c0 = _tableCdf[k-1], c1 = _tableCdf[k];
-  double t  = (c1>c0) ? (u-c0)/(c1-c0) : 0.5;
-  return _tableX[k-1] + t*(_tableX[k]-_tableX[k-1]);
+  return MATH::inverseLinearInterpolation(_tableX,_tableCdf,u);
 }
 
 void BasicEventGen::generateCylindrical(double m, MATH::VectorLorentz & momentum)

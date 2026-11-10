@@ -35,6 +35,9 @@
 #include "Polynomial2D.hpp"
 #include "BezierCurve.hpp"
 #include "FourierDecomposition.hpp"
+#include "ContinuousDistributions.hpp"
+#include "DiscreteDistributions.hpp"
+#include "MultivariateDistributions.hpp"
 #include "ParameterizedComposite.hpp"
 #include "FileSystem.hpp"
 #include "XmlDocument.hpp"
@@ -111,6 +114,28 @@ namespace CAP
           if (n == 0) return new FourierFlow(4);
           if (n < 3 || n%2 == 0) return nullptr;
           return new FourierFlow((n - 1)/2);
+          });
+      add<PoissonDistribution>("Poisson");
+      add<BinomialDistribution>("Binomial");
+      add<NegativeBinomialDistribution>("NegativeBinomial");
+      add<HypergeometricDistribution>("Hypergeometric");
+      add<StudentDistribution>("Student");
+      add<ChiSquareDistribution>("ChiSquare");
+      add<FDistribution>("FDistribution");
+      add<CauchyDistribution>("Cauchy");
+      add<MaxwellBoltzmannDistribution>("MaxwellBoltzmann");
+      add<WeibullDistribution>("Weibull");
+      add("Multinomial", typeid(MultinomialDistribution), [](unsigned int n) -> ParameterizedFunction *
+          {
+          if (n == 0) return new MultinomialDistribution(3u);
+          if (n < 3) return nullptr;
+          return new MultinomialDistribution(n - 1);       // amplitude, n, p_1 ... p_m-1
+          });
+      add("Dirichlet", typeid(DirichletDistribution), [](unsigned int n) -> ParameterizedFunction *
+          {
+          if (n == 0) return new DirichletDistribution(3u);
+          if (n < 3) return nullptr;
+          return new DirichletDistribution(n - 1);         // amplitude, alpha_1 ... alpha_K
           });
       add("Polynomial2D", typeid(Polynomial2D), [](unsigned int n) -> ParameterizedFunction *
           {

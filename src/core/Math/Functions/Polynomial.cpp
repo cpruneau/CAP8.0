@@ -103,6 +103,15 @@ namespace CAP
   }
 
   // Horner's method on the derivative coefficients k*c_k
+  Function * Polynomial::derivativeFunction(unsigned int axis) const
+  {
+  if (axis != 0) return nullptr;
+  std::vector<double> c;
+  for (unsigned int k=1; k<_parameters.size(); k++) c.push_back(double(k)*parameterValue(k));
+  if (c.empty()) c.push_back(0.0);
+  return new Polynomial(c);
+  }
+
   double Polynomial::derivativeAt(double x) const
   {
   double value = 0.0;

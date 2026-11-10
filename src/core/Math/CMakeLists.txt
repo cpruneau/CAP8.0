@@ -5,6 +5,9 @@
 #   Basic          basic numerical functions, constants, exceptions, complex numbers
 #   LinearAlgebra  matrices and vectors (2D, 3D, n-D, Lorentz)
 #   Functions      Function, ParameterizedFunction and the functions of CAP, special functions, fields
+#   Interpolation  interpolation of tables and grids, piecewise polynomials, cubic splines, Interpolation
+#   Integral       integrators (trapezoid, Simpson, Romberg, Gauss-Legendre, Monte Carlo), Integration, sampled rules
+#   Derivative     finite differences, Differentiation, Derivative
 #   Data           data points, histograms, profiles, tables
 #   Search         extremum searches (SearchEngine and its engines, ExtremumSearch)
 #   Fitting        fits (Fitter, likelihoods, chi square, Bayesian fits, fit records)
@@ -22,13 +25,30 @@ MathReflection.cpp
 Basic/Complex.cpp
 Basic/MathBasicFunctions.cpp
 Basic/MathBasicGeometry.cpp
-Basic/MathBasicIntegration.cpp
-Basic/MathBasicInterpolation.cpp
 Basic/MathBasicSearch.cpp
 Basic/MathBasicSortingFunctions.cpp
 Basic/MathBasicStatistics.cpp
 Basic/MathConstants.cpp
 Basic/MathExceptions.cpp
+# Interpolation
+Interpolation/CubicSpline.cpp
+Interpolation/Interpolation.cpp
+Interpolation/InterpolationTools.cpp
+Interpolation/MathBasicInterpolation.cpp
+Interpolation/PiecewisePolynomial.cpp
+# Integral
+Integral/GaussLegendreIntegrator.cpp
+Integral/Integration.cpp
+Integral/Integrator.cpp
+Integral/MathBasicIntegration.cpp
+Integral/MonteCarloIntegrator.cpp
+Integral/RombergIntegrator.cpp
+Integral/SimpsonIntegrator.cpp
+Integral/TrapezoidIntegrator.cpp
+# Derivative
+Derivative/Derivative.cpp
+Derivative/Differentiation.cpp
+Derivative/FiniteDifference.cpp
 # LinearAlgebra
 LinearAlgebra/Matrix.cpp
 LinearAlgebra/Vector2D.cpp
@@ -42,7 +62,9 @@ Functions/BesselFunction.cpp
 Functions/BesselFunctions.cpp
 Functions/CompositeFunction.cpp
 Functions/Constant.cpp
+Functions/ContinuousDistributions.cpp
 Functions/Cubic.cpp
+Functions/DiscreteDistributions.cpp
 Functions/Exponential.cpp
 Functions/FourierDecomposition.cpp
 Functions/Function.cpp
@@ -50,6 +72,7 @@ Functions/FunctionRegistry.cpp
 Functions/Laguerre.cpp
 Functions/Legendre.cpp
 Functions/Linear.cpp
+Functions/MultivariateDistributions.cpp
 Functions/LogNormal.cpp
 Functions/Normal.cpp
 Functions/Normal2D.cpp
@@ -62,6 +85,7 @@ Functions/Polynomial.cpp
 Functions/Polynomial2D.cpp
 Functions/Quartic.cpp
 Functions/ScalarField.cpp
+Functions/SpecialFunctions.cpp
 Functions/SphericalHarmonics.cpp
 Functions/XmlScalarField.cpp
 # Data
@@ -157,12 +181,25 @@ add_test(NAME BezierCurve COMMAND TestBezierCurve)
 add_executable(TestFourierDecomposition Functions/tests/TestFourierDecomposition.cpp)
 target_link_libraries(TestFourierDecomposition Math Base ${ROOT_LIBRARIES})
 add_test(NAME FourierDecomposition COMMAND TestFourierDecomposition)
+add_executable(TestDistributionFunctions Functions/tests/TestDistributionFunctions.cpp)
+target_link_libraries(TestDistributionFunctions Math Base ${ROOT_LIBRARIES})
+add_test(NAME DistributionFunctions COMMAND TestDistributionFunctions)
 add_executable(TestCalculateFourierDecomposition Fitting/tests/TestCalculateFourierDecomposition.cpp)
 target_link_libraries(TestCalculateFourierDecomposition Math Base ${ROOT_LIBRARIES})
 add_test(NAME CalculateFourierDecomposition COMMAND TestCalculateFourierDecomposition)
 add_executable(TestFunctionStorage Functions/tests/TestFunctionStorage.cpp)
 target_link_libraries(TestFunctionStorage Math Base ${ROOT_LIBRARIES})
 add_test(NAME FunctionStorage COMMAND TestFunctionStorage)
+
+add_executable(TestInterpolation Interpolation/tests/TestInterpolation.cpp)
+target_link_libraries(TestInterpolation Math Base ${ROOT_LIBRARIES})
+add_test(NAME Interpolation COMMAND TestInterpolation)
+add_executable(TestIntegral Integral/tests/TestIntegral.cpp)
+target_link_libraries(TestIntegral Math Base ${ROOT_LIBRARIES})
+add_test(NAME Integral COMMAND TestIntegral)
+add_executable(TestDerivative Derivative/tests/TestDerivative.cpp)
+target_link_libraries(TestDerivative Math Base ${ROOT_LIBRARIES})
+add_test(NAME Derivative COMMAND TestDerivative)
 
 install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

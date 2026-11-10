@@ -91,7 +91,9 @@ namespace CAP
   //! @param x variable @return f'(x)
   //! @throws MathException if x is outside the domain
   //!
-  double derivativeAt(double x) const;
+  double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
 
   //!
   //! @brief Antiderivative F(x) with F(0) = 0 (for H0 and L0: numerical integral from 0 to x).
@@ -106,7 +108,8 @@ namespace CAP
   //! @throws MathException if a bound is not finite or is outside the domain (for Y and K: bounds must be > 0,
   //! except that 0 is allowed for Y0 and K0, whose integral converges at 0)
   //!
-  double integralInRange(double low, double high) const;
+  double integralInRange(double low, double high) const override;
+  using Function::integralInRange;
 
   protected:
 

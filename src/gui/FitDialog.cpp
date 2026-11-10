@@ -118,7 +118,19 @@ namespace CAP
     { "Polynomial2D", "sum of cij t^i s^j, i + j <= N; t, s: x, y of the range mapped onto [-1, 1]" },
     { "FourierDecomposition", "k + sum_n [c_n cos(n x) + s_n sin(n x)], n = 1 to n max; x in radians" },
     { "FourierFlow", "k [1 + 2 sum_n v_n cos(n (x - psi_n))], n = 1 to n max; x in radians" },
-    { "FourierHarmonic", "c cos(n x) + s sin(n x), one harmonic (n fixed)" } };
+    { "FourierHarmonic", "c cos(n x) + s sin(n x), one harmonic (n fixed)" },
+    { "Poisson", "A mu^x e^-mu / x!, counts x (Gamma function between the integers)" },
+    { "Binomial", "A C(n, x) p^x (1 - p)^(n - x), counts x; n fixed by default" },
+    { "NegativeBinomial", "A Gamma(x + k)/(Gamma(k) x!) (mu/(mu + k))^x (k/(mu + k))^k, counts x of mean mu" },
+    { "Hypergeometric", "A C(K, x) C(N - K, n - x)/C(N, n), counts x; N, K, n fixed by default" },
+    { "Student", "A t density of ndf degrees of freedom, (x - location)/scale" },
+    { "ChiSquare", "A x^(k/2 - 1) e^(-x/2)/(2^(k/2) Gamma(k/2)), k degrees of freedom" },
+    { "FDistribution", "A F density of d1 and d2 degrees of freedom" },
+    { "Cauchy", "A gamma/(pi ((x - x0)^2 + gamma^2)), Breit-Wigner" },
+    { "MaxwellBoltzmann", "A sqrt(2/pi) x^2 e^(-x^2/(2 a^2))/a^3, speeds of scale a = sqrt(kT/m)" },
+    { "Weibull", "A (k/lambda) (x/lambda)^(k - 1) e^(-(x/lambda)^k)" },
+    { "Multinomial", "A n!/(x1! ... xm!) p1^x1 ... pm^xm of x1 ... xm-1 (xm = n - the others); n fixed" },
+    { "Dirichlet", "A Dirichlet density of x1 ... xK-1 (xK = 1 - the others), concentrations alpha" } };
   for (const auto & text : texts) if (name == text.first) return String(text.second);
   if (std::shared_ptr<const MATH::ParameterizedComposite> c = MATH::FunctionRegistry::composite(name)) return describeComposite(*c);
   return "function registered by a program";

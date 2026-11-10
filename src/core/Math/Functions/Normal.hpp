@@ -63,6 +63,8 @@ namespace CAP
   return amplitude()*std::exp(-0.5*z*z);
   }
 
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
   //!
   //! @brief Analytical first derivative at x.
   //! @param x value of the independent variable

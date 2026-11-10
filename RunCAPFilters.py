@@ -39,6 +39,19 @@ store of their own: the first Glauber task using one defines it.
 The library itself, including the objects no task uses, and the histogram options of the tasks are also written in a
 RUNCAP element of the workflow file, next to its TASK element (CAP reads only the TASK elements).
 
+Selection files. The objects of the library are written in XML, one element per object named after its kind
+(EventFilter, ParticleFilter, EventEfficiency, ...; see TAG_OF_KIND):
+    <ParticleFilter name="PiP" title="positive pions">
+      <Condition quantity="PDG" form="value" value="211"/>
+      <Condition quantity="PT" form="range" minimum="0.2" maximum="2"/>
+    </ParticleFilter>
+    <EventEfficiency name="Eff"><Parameter name="nBins_mult">100</Parameter> ...</EventEfficiency>
+The same elements are written in the RUNCAP element of a workflow, or in a file of their own, a selection file (root
+CapSelections, see write_selections(), read_selections()), which several workflows can share: a workflow either
+copies the objects of a selection file (import_selections()), or links it (FilterLibrary.link()), writing
+<Include file="..."/> (relative to the workflow) instead of the objects, which are read from the file each time the
+workflow is loaded and written back to it when the workflow is saved (save_linked()).
+
 No tkinter here: usable and testable without a display.
 """
 
@@ -62,6 +75,12 @@ KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle fil
                "EVENT_EFFICIENCY": "Event efficiencies", "PARTICLE_EFFICIENCY": "Particle efficiencies",
                "EVENT_SMEARER": "Event smearers", "PARTICLE_SMEARER": "Particle smearers", "EVENT": "Events",
                "PARTICLE_DB": "Particle databases"}
+#: Element of an object of each kind in XML (workflows and selection files), and the root of a selection file.
+TAG_OF_KIND = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "EVENT_EFFICIENCY": "EventEfficiency",
+               "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
+               "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}
+KIND_OF_TAG = {tag: kind for kind, tag in TAG_OF_KIND.items()}
+SELECTIONS_ROOT = "CapSelections"
 #: Kinds defined by conditions (the others by parameters).
 CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER")
 
@@ -378,8 +397,14 @@ class Condition:
         """TYPE written for CAP."""
         return TYPE_OF_FORM.get(self.form, self.form)
 
+    def significant(self):
+        """What the condition tests: the values its form uses (a value or a flag: the minimum only)."""
+        values = {VALUE: (self.minimum,), FLAG: (bool(self.minimum),), RANGE: (self.minimum, self.maximum)}.get(
+            self.form, (self.minimum, self.maximum, self.minimum2, self.maximum2))
+        return self.subtype, self.selection, self.form, values
+
     def __eq__(self, other):
-        return isinstance(other, Condition) and vars(self) == vars(other)
+        return isinstance(other, Condition) and self.significant() == other.significant()
 
     def __repr__(self):
         return "Condition(%s%s, %s, %g, %g)" % (self.subtype, "(%s)" % self.selection if self.selection else "",
@@ -387,16 +412,28 @@ class Condition:
 
 
 class FilterDef:
-    """An object of the library: kind, name, title, and its conditions (filters) or parameters (the others)."""
+    """An object of the library: kind, name, title, and its conditions (filters) or parameters (the others). source:
+    the selection file it comes from when the library links that file ("": an object of the workflow itself)."""
 
-    def __init__(self, kind, name, title="", conditions=None, parameters=None):
+    def __init__(self, kind, name, title="", conditions=None, parameters=None, source=""):
         self.kind = kind
         self.name = name
         self.title = title or ""
         self.conditions = list(conditions or [])
         self.parameters = dict(default_parameters(kind))
+        self.source = source or ""
         if kind not in MAPS_KINDS:                      # those of the maps file: read from it, none here
             self.parameters.update(parameters or {})
+
+    def same_definition(self, other):
+        """Whether two objects define the same thing (wherever they come from)."""
+        return (isinstance(other, FilterDef) and (self.kind, self.name, self.title, self.conditions, self.parameters)
+                == (other.kind, other.name, other.title, other.conditions, other.parameters))
+
+    def copy(self, source=""):
+        """A copy of the object, from another source."""
+        return FilterDef(self.kind, self.name, self.title, [copy.copy(c) for c in self.conditions],
+                         dict(self.parameters), source)
 
     def __eq__(self, other):
         return isinstance(other, FilterDef) and vars(self) == vars(other)
@@ -434,6 +471,10 @@ class FilterLibrary:
         self.objects = {kind: [] for kind in KINDS}
         self.settings = {kind: default_settings(kind) for kind in KINDS}
         self.job = {name: "" for name in JOB_SETTINGS}      # files of the job (see JOB_SETTINGS)
+        self.links = []                                     # selection files linked (absolute paths, in order)
+        self.link_extras = {}                               # {path: elements of the file not read, written back}
+        self.link_order = {}                                # {path: [(kind, name)] of the objects, in the file}
+        self.link_shadowed = {}                             # {path: objects of the file the workflow also defines}
 
     @staticmethod
     def with_defaults():
@@ -474,9 +515,71 @@ class FilterLibrary:
                 items.append(FilterDef(kind, name))
             k += 1
 
+    def all_objects(self):
+        """Every object, kind by kind."""
+        return [o for kind in KINDS for o in self.objects[kind]]
+
+    def linked(self, path):
+        """Objects that come from a linked selection file, kind by kind."""
+        path = os.path.abspath(path)
+        return [o for o in self.all_objects() if o.source and os.path.abspath(o.source) == path]
+
+    def link(self, path):
+        """Link a selection file: its objects are added to the library (an object of the same kind and name already
+        there is kept, with a warning), coming from the file, which they are written back to (save_linked()) and
+        read from again when the workflow is loaded. @return warnings @throws OSError, ValueError if the file cannot
+        be read"""
+        path = os.path.abspath(path)
+        objects, extras, warnings = read_selections(path)
+        if path not in self.links:
+            self.links.append(path)
+        self.link_extras[path] = extras
+        self.link_order[path] = [(o.kind, o.name) for o in objects]
+        shadowed = self.link_shadowed[path] = []
+        for o in objects:
+            existing = self.get(o.kind, o.name)
+            if existing is not None and existing.source != path:
+                warnings.append("%s: %s %s is already in the workflow (the one of the workflow is kept)."
+                                % (os.path.basename(path), KIND_LABELS[o.kind].lower()[:-1], o.name))
+                shadowed.append(o)                         # left in the file as it is
+                continue
+            o.source = path
+            self.add(o)
+        return warnings
+
+    def unlink(self, path, keep=True):
+        """Stop linking a selection file: its objects become objects of the workflow (keep) or are removed.
+        @return names removed {kind: [name]}"""
+        path = os.path.abspath(path)
+        removed = {}
+        for o in self.linked(path):
+            if keep:
+                o.source = ""
+            else:
+                self.objects[o.kind].remove(o)
+                removed.setdefault(o.kind, []).append(o.name)
+        if path in self.links:
+            self.links.remove(path)
+        self.link_extras.pop(path, None)
+        self.link_shadowed.pop(path, None)
+        self.link_order.pop(path, None)
+        return removed
+
+    def import_objects(self, objects, names=None):
+        """Copy objects into the library (those of the given (kind, name), or all), as objects of the workflow; an
+        object of the same kind and name is replaced. @return the (kind, name) replaced"""
+        replaced = []
+        for o in objects:
+            if names is not None and (o.kind, o.name) not in names:
+                continue
+            if self.get(o.kind, o.name) is not None:
+                replaced.append((o.kind, o.name))
+            self.add(o.copy(""))
+        return replaced
+
     def __eq__(self, other):
         return (isinstance(other, FilterLibrary) and self.objects == other.objects and self.settings == other.settings
-                and self.job == other.job)
+                and self.job == other.job and self.links == other.links)
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -923,7 +1026,8 @@ def _write_object(task, kind, k, name, definition, owner, Param):
             if c.subtype in SELECTION_SUBTYPES and kind == "EVENT_FILTER":
                 _set(task, cp + "SELECTION", "string", c.selection, Param)
             _set(task, cp + "MINIMUM", "double", number_text(c.minimum), Param)
-            _set(task, cp + "MAXIMUM", "double", number_text(c.maximum), Param)
+            _set(task, cp + "MAXIMUM", "double", number_text(c.minimum if c.form in (VALUE, FLAG) else c.maximum),
+                 Param)                                         # a value or a flag: CAP reads MINIMUM only
             if c.form == DUAL_RANGE:
                 _set(task, cp + "MINIMUM2", "double", number_text(c.minimum2), Param)
                 _set(task, cp + "MAXIMUM2", "double", number_text(c.maximum2), Param)
@@ -1060,7 +1164,7 @@ def extract_choices(tasks, templates, library=None):
                         for setting, _, _ in LIST_SETTINGS:       # settings of the owner (now FilterCreator's)
                             if kind + ":" + setting in values:
                                 library.settings[kind][setting] = values[kind + ":" + setting]
-                elif existing != definition:
+                elif not existing.source and not existing.same_definition(definition):
                     warnings.append("Task %s: %s %s is defined differently by an earlier task or the library (the first "
                                     "definition is kept)." % (task.name, KIND_LABELS[kind].lower()[:-1], name))
             if names:
@@ -1217,6 +1321,9 @@ def check_library(library):
                 value = o.parameters.get(pname, "")
                 if not _valid(ptype, value):
                     errors.append("%s %s: invalid %s value '%s' for %s." % (label.capitalize(), o.name, ptype, value, pname))
+    for path in library.links:
+        if not os.path.isfile(path):
+            errors.append("The linked selection file %s is missing: its objects are not in the workflow." % path)
     if any(library.objects[k] for k in MAPS_KINDS) and not maps_file(library):
         errors.append("The particle efficiencies and smearers are read from a maps file: choose it (Filters pane, "
                       "Detector maps).")
@@ -1375,22 +1482,188 @@ def check_choices(tasks, library, templates):
 # RUNCAP element of the workflow file
 # ------------------------------------------------------------------------------------------------------------------
 
-def runcap_element(library, tasks):
-    """The RUNCAP element: the library and the histogram options of the tasks."""
-    root = ET.Element("RUNCAP", {"version": "1"})
+def object_element(o):
+    """XML element of an object of the library (see TAG_OF_KIND): its name, title, conditions or parameters."""
+    element = ET.Element(TAG_OF_KIND[o.kind], {"name": o.name})
+    if o.title:
+        element.set("title", o.title)
+    for c in o.conditions:
+        attributes = {"quantity": c.subtype, "form": c.form}
+        if c.form == VALUE:
+            attributes["value"] = number_text(c.minimum)
+        elif c.form == FLAG:
+            attributes["value"] = "true" if c.minimum else "false"
+        else:
+            attributes.update(minimum=number_text(c.minimum), maximum=number_text(c.maximum))
+            if c.form == DUAL_RANGE:
+                attributes.update(minimum2=number_text(c.minimum2), maximum2=number_text(c.maximum2))
+        if c.selection:
+            attributes["selection"] = c.selection
+        ET.SubElement(element, "Condition", attributes)
+    for pname, _, _ in KIND_PARAMETERS.get(o.kind, []):
+        ET.SubElement(element, "Parameter", {"name": pname}).text = o.parameters.get(pname, "")
+    return element
+
+
+def object_from_element(element, warnings, where=""):
+    """Object of the library from its XML element (TAG_OF_KIND, or the OBJECT elements of earlier workflows), or None
+    (a warning added) if it is not one. @param where name of the file or element, for the warnings"""
+    where = where + ": " if where else ""
+    if element.tag == "OBJECT":                                     # earlier versions
+        kind = element.get("kind", "")
+        if kind not in KINDS:
+            warnings.append("%sunknown kind of object '%s' (ignored)." % (where, kind))
+            return None
+        conditions = []
+        for c in element.findall("CONDITION"):
+            try:
+                conditions.append(Condition(c.get("subtype", ""), c.get("form", RANGE), c.get("minimum", "0"),
+                                            c.get("maximum", "0"), c.get("minimum2", "0"), c.get("maximum2", "0"),
+                                            c.get("selection", "")))
+            except ValueError:
+                warnings.append("%sinvalid condition of %s (ignored)." % (where, element.get("name", "?")))
+        parameters = {p.get("name", ""): (p.text or "").strip() for p in element.findall("PARAMETER")}
+        return FilterDef(kind, element.get("name", ""), element.get("title", ""), conditions, parameters)
+    kind = KIND_OF_TAG.get(element.tag)
+    if kind is None:
+        warnings.append("%sunknown element <%s> (ignored)." % (where, element.tag))
+        return None
+    name = element.get("name", "")
+    conditions = []
+    for c in element.findall("Condition"):
+        form = c.get("form", RANGE)
+        try:
+            if form == VALUE:
+                value = c.get("value", c.get("minimum", "0"))
+                condition = Condition(c.get("quantity", ""), form, value, value)
+            elif form == FLAG:
+                value = 1.0 if c.get("value", c.get("minimum", "true")).lower() in ("true", "1", "yes", "on") else 0.0
+                condition = Condition(c.get("quantity", ""), form, value, value)
+            else:
+                condition = Condition(c.get("quantity", ""), form, c.get("minimum", "0"), c.get("maximum", "0"),
+                                      c.get("minimum2", "0"), c.get("maximum2", "0"))
+        except ValueError:
+            warnings.append("%sa condition of %s is not a number (ignored)." % (where, name or "?"))
+            continue
+        condition.selection = c.get("selection", "")
+        conditions.append(condition)
+    parameters = {p.get("name", ""): (p.text or "").strip() for p in element.findall("Parameter")}
+    unknown = sorted(set(parameters) - set(n for n, _, _ in KIND_PARAMETERS.get(kind, [])))
+    if unknown:
+        warnings.append("%s%s %s: unknown parameter%s %s (ignored)." % (where, KIND_LABELS[kind].lower()[:-1], name,
+                                                                          "s" if len(unknown) > 1 else "",
+                                                                          ", ".join(unknown)))
+    return FilterDef(kind, name, element.get("title", ""), conditions, parameters)
+
+
+def selections_element(objects, extras=()):
+    """Root element of a selection file holding objects (and other elements, written as they are)."""
+    root = ET.Element(SELECTIONS_ROOT, {"version": "1"})
+    for o in objects:
+        root.append(object_element(o))
+    for e in extras:
+        root.append(e)
+    return root
+
+
+def _xml_bytes(root):
+    root = copy.deepcopy(root)
+    _indent_xml(root)
+    return b'<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding="utf-8") + b"\n"
+
+
+def _indent_xml(element, level=0):
+    pad = "\n" + "  " * level
+    if len(element):
+        if not (element.text or "").strip():
+            element.text = pad + "  "
+        for child in element:
+            _indent_xml(child, level + 1)
+        if not (child.tail or "").strip():
+            child.tail = pad
+    if level and not (element.tail or "").strip():
+        element.tail = pad
+
+
+def write_selections(path, objects, extras=()):
+    """Write a selection file: the objects (kind by kind, in order) and other elements. @throws OSError"""
+    with open(path, "wb") as f:
+        f.write(_xml_bytes(selections_element(objects, extras)))
+
+
+def read_selections(path):
+    """Objects of a selection file (or of the RUNCAP element of a workflow file). @return objects, the other elements
+    of the file (kept as they are), warnings @throws OSError, ValueError if it is not a file of selections"""
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as error:
+        raise ValueError("%s is not an XML file: %s" % (path, error))
+    if root.tag == "CAP":                                       # a workflow: its RUNCAP element
+        root = root.find("RUNCAP")
+        if root is None:
+            raise ValueError("%s is a workflow without filters (no RUNCAP element)." % path)
+    elif root.tag != SELECTIONS_ROOT:
+        raise ValueError("%s is not a selection file (root <%s>, not <%s>)." % (path, root.tag, SELECTIONS_ROOT))
+    warnings, objects, extras, seen = [], [], [], set()
+    where = os.path.basename(path)
+    for element in root:
+        maps = KIND_OF_TAG.get(element.tag) in MAPS_KINDS or (element.tag == "OBJECT" and element.get("kind") in MAPS_KINDS)
+        if maps or (element.tag not in KIND_OF_TAG and element.tag != "OBJECT"):
+            if root.tag == SELECTIONS_ROOT:
+                extras.append(element)          # kept as they are: particle maps (from the maps file), later versions
+            continue
+        o = object_from_element(element, warnings, where)
+        if o is None:
+            continue
+        if (o.kind, o.name) in seen:
+            warnings.append("%s: two %ss named %s (the first is kept)." % (where, KIND_LABELS[o.kind].lower()[:-1],
+                                                                          o.name))
+            continue
+        seen.add((o.kind, o.name))
+        objects.append(o)
+    return objects, extras, warnings
+
+
+def save_linked(library):
+    """Write the objects that come from linked selection files back to them (only the files whose content changed).
+    @return paths written @throws OSError"""
+    written = []
+    for path in library.links:
+        objects = library.linked(path) + library.link_shadowed.get(path, [])
+        order = {key: k for k, key in enumerate(library.link_order.get(path, []))}
+        objects.sort(key=lambda o: order.get((o.kind, o.name), len(order)))   # the order of the file, new ones last
+        data = _xml_bytes(selections_element(objects, library.link_extras.get(path, ())))
+        try:
+            with open(path, "rb") as f:
+                if f.read() == data:
+                    continue
+        except OSError:
+            pass
+        with open(path, "wb") as f:
+            f.write(data)
+        written.append(path)
+    return written
+
+
+def _relative(path, base_dir):
+    if not base_dir:
+        return path
+    try:
+        return os.path.relpath(path, base_dir)
+    except ValueError:                                          # another drive (Windows)
+        return path
+
+
+def runcap_element(library, tasks, base_dir=None):
+    """The RUNCAP element: the library (its own objects, and Include elements for the selection files it links, with
+    paths relative to base_dir, the directory of the workflow) and the histogram options of the tasks."""
+    root = ET.Element("RUNCAP", {"version": "2"})
+    for path in library.links:
+        ET.SubElement(root, "Include", {"file": _relative(path, base_dir)})
     for kind in KINDS:
         for o in library.objects[kind]:
-            element = ET.SubElement(root, "OBJECT", {"kind": kind, "name": o.name, "title": o.title})
-            for c in o.conditions:
-                attributes = {"subtype": c.subtype, "form": c.form, "minimum": number_text(c.minimum),
-                              "maximum": number_text(c.maximum)}
-                if c.form == DUAL_RANGE:
-                    attributes.update(minimum2=number_text(c.minimum2), maximum2=number_text(c.maximum2))
-                if c.selection:
-                    attributes["selection"] = c.selection
-                ET.SubElement(element, "CONDITION", attributes)
-            for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
-                ET.SubElement(element, "PARAMETER", {"name": pname, "type": ptype}).text = o.parameters.get(pname, "")
+            if not o.source:
+                root.append(object_element(o))
     if any(library.job.values()):
         ET.SubElement(root, "JOB", {name.lower(): value for name, value in library.job.items() if value})
     for kind in KINDS:
@@ -1412,25 +1685,29 @@ def runcap_element(library, tasks):
     return root
 
 
-def read_runcap_element(element, tasks):
-    """Library and histogram options of the tasks from a RUNCAP element. @return library, warnings"""
+def read_runcap_element(element, tasks, base_dir=None):
+    """Library and histogram options of the tasks from a RUNCAP element (its objects, those of the selection files it
+    includes, paths relative to base_dir, and the OBJECT elements of earlier versions). @return library, warnings"""
     library = FilterLibrary()
     warnings = []
-    for o in element.findall("OBJECT"):
-        kind = o.get("kind", "")
-        if kind not in KINDS:
-            warnings.append("RUNCAP: unknown kind of object '%s' (ignored)." % kind)
-            continue
-        conditions = []
-        for c in o.findall("CONDITION"):
+    for e in element:                                   # the objects of the workflow, then those of the linked files
+        if e.tag in KIND_OF_TAG or e.tag == "OBJECT":
+            o = object_from_element(e, warnings, "RUNCAP")
+            if o is not None:
+                library.add(o)
+    for e in element:
+        if e.tag == "Include":
+            path = e.get("file", "")
+            if not os.path.isabs(path) and base_dir:
+                path = os.path.join(base_dir, path)
+            path = os.path.abspath(path)
             try:
-                conditions.append(Condition(c.get("subtype", ""), c.get("form", RANGE), c.get("minimum", "0"),
-                                            c.get("maximum", "0"), c.get("minimum2", "0"), c.get("maximum2", "0"),
-                                            c.get("selection", "")))
-            except ValueError:
-                warnings.append("RUNCAP: invalid condition of %s (ignored)." % o.get("name", "?"))
-        parameters = {p.get("name", ""): (p.text or "").strip() for p in o.findall("PARAMETER")}
-        library.add(FilterDef(kind, o.get("name", ""), o.get("title", ""), conditions, parameters))
+                warnings += library.link(path)
+            except (OSError, ValueError) as error:
+                warnings.append("Selection file %s cannot be read (%s): its objects are missing; it stays linked."
+                                % (path, error))
+                if path not in library.links:
+                    library.links.append(path)
     job = element.find("JOB")
     if job is not None:
         for name in JOB_SETTINGS:

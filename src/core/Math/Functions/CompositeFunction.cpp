@@ -1,7 +1,7 @@
 #include "CompositeFunction.hpp"
 #include <string>
-#include "ParameterizedFunction.hpp"
 #include "MathExceptions.hpp"
+#include "SimpsonIntegrator.hpp"
 
 
 namespace CAP
@@ -11,28 +11,9 @@ namespace CAP
 
   namespace
   {
-  // Presents a plain Function as a ParameterizedFunction, so that it gets the numerical
-  // derivativeAt() and integralInRange() of ParameterizedFunction.
-  class FunctionWrapper : public ParameterizedFunction
-  {
-  public:
-  FunctionWrapper(const Function & f) : ParameterizedFunction(f.rank()), _f(f) {}
-  double evaluateAt(const std::vector<double> & x) const override { return _f.evaluateAt(x); }
-  using ParameterizedFunction::evaluateAt;
-  private:
-  const Function & _f;
-  };
-
-  // Derivative of one component of rank 1: its own derivativeAt() if it has one, numerical otherwise.
-  double componentDerivative(const Function & f, double x)
-  {
-  if (const ParameterizedFunction * pf = dynamic_cast<const ParameterizedFunction*>(&f)) return pf->derivativeAt(x);
-  return FunctionWrapper(f).derivativeAt(x);
-  }
-
-  // Integral of one ParameterizedFunction over a box, through the version matching its rank,
-  // so that analytical overrides of any version are used.
-  double rankIntegral(const ParameterizedFunction & f, const std::vector<double> & low, const std::vector<double> & high)
+  // Integral of one component over a box, through the version matching its rank, so that analytical overrides of
+  // any version are used (numerical otherwise: the defaults of Function).
+  double componentIntegral(const Function & f, const std::vector<double> & low, const std::vector<double> & high)
   {
   switch (f.rank())
     {
@@ -41,13 +22,6 @@ namespace CAP
     case 3:  return f.integralInRange(low[0],high[0],low[1],high[1],low[2],high[2]);
     default: return f.integralInRange(low,high);
     }
-  }
-
-  // Integral of one component over a box: its own integralInRange() if it has one, numerical otherwise.
-  double componentIntegral(const Function & f, const std::vector<double> & low, const std::vector<double> & high)
-  {
-  if (const ParameterizedFunction * pf = dynamic_cast<const ParameterizedFunction*>(&f)) return rankIntegral(*pf,low,high);
-  return rankIntegral(FunctionWrapper(f),low,high);
   }
   } // anonymous namespace
 
@@ -256,20 +230,27 @@ namespace CAP
   return combine(x.data());
   }
 
+  bool CompositeFunction::hasAnalyticalDerivative() const
+  {
+  if (_operation == kProduct && rank() > 1) return false;
+  for (auto f : _functions) if (!f || !f->hasAnalyticalDerivative()) return false;
+  return !_functions.empty();
+  }
+
   double CompositeFunction::derivativeAt(double x) const
   {
   checkRank(1,__FUNCTION__);
   if (_operation == kSum)
     {
     double sum = 0.0;
-    for (auto f : _functions) sum += componentDerivative(*f,x);
+    for (auto f : _functions) sum += f->derivativeAt(x);
     return sum;
     }
   // a product of rank 1 (a pointwise product, or a product of one function): the product rule
   double sum = 0.0;
   for (std::size_t i=0; i<_functions.size(); i++)
     {
-    double term = componentDerivative(*_functions[i],x);
+    double term = _functions[i]->derivativeAt(x);
     for (std::size_t j=0; j<_functions.size(); j++) if (j != i) term *= _functions[j]->evaluateAt(x);
     sum += term;
     }
@@ -310,7 +291,16 @@ namespace CAP
       }
     return product;
     }
-  if (_operation == kPointwiseProduct) return componentIntegral(FunctionWrapper(*this),low,high);   // numerical
+  if (_operation == kPointwiseProduct)                    // numerical, as the defaults of Function
+    {
+    if (rank() == 1)
+      {
+      static const SimpsonIntegrator integrator(1.0E-10, 40, 8);
+      return integrator.integral(Integrand1D([this](double x) { return evaluateAt(x); }), low[0], high[0]);
+      }
+    static const SimpsonIntegrator integrator(1.0E-8, 20, 8);
+    return integrator.integral(IntegrandND([this](const std::vector<double> & x) { return evaluateAt(x); }), low, high);
+    }
   double sum = 0.0;
   for (auto f : _functions) sum += componentIntegral(*f,low,high);
   return sum;

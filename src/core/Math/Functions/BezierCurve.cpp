@@ -15,6 +15,7 @@
 #include <string>
 #include "BezierCurve.hpp"
 #include "MathExceptions.hpp"
+#include "GaussLegendreIntegrator.hpp"
 
 namespace CAP
 {
@@ -256,19 +257,13 @@ namespace CAP
   if (high > _x.back()) { sum += (high - std::max(low, _x.back()))*_y.back(); high = _x.back(); }
   if (!(high > low)) return sum;
   // each piece of a segment: 3-point Gauss-Legendre (exact for a cubic)
-  static const double nodes[3]   = { -0.7745966692414834, 0.0, 0.7745966692414834 };
-  static const double weights[3] = { 5.0/9.0, 8.0/9.0, 5.0/9.0 };
   for (unsigned int k=segment(low); k+1<_x.size() && _x[k] < high; k++)
     {
     double a = std::max(low, _x[k]), b = std::min(high, _x[k+1]);
     if (!(b > a)) continue;
     std::vector<double> p = controlPoints(k);
-    double h = _x[k+1] - _x[k];
-    for (int q=0; q<3; q++)
-      {
-      double x = 0.5*(a + b) + 0.5*(b - a)*nodes[q];
-      sum += 0.5*(b - a)*weights[q]*bernstein(p.data(), (x - _x[k])/h);
-      }
+    double h = _x[k+1] - _x[k], x0 = _x[k];
+    sum += GaussLegendreIntegrator::quadrature([&](double x) { return bernstein(p.data(), (x - x0)/h); }, a, b, 3);
     }
   return sum;
   }

@@ -2,6 +2,8 @@
 #include <cmath>
 #include <string>
 #include "MathExceptions.hpp"
+#include "InterpolationTools.hpp"
+#include "FiniteDifference.hpp"
 
 
 namespace CAP
@@ -338,42 +340,14 @@ namespace CAP
 
   double ScalarField::interpolateMesh(const double * x, const char * source) const
   {
+  // multilinear interpolation (InterpolationTools.hpp); linear extrapolation beyond the edges
   const unsigned int n = _nPoints.size();
-  std::vector<unsigned int> base(n);
-  std::vector<double> frac(n);
-  std::vector<unsigned int> stride(n);
-  unsigned int s = 1;
-  for (unsigned int k=0; k<n; k++)
-    {
-    if (!std::isfinite(x[k])) throw MathException("Coordinate is not finite",source);
-    stride[k] = s;
-    s *= _nPoints[k];
-    if (_nPoints[k]==1) { base[k] = 0; frac[k] = 0.0; continue; }
-    double t = (x[k]-_minima[k])/spacing(k);
-    double cell = std::floor(t);
-    if (cell<0.0) cell = 0.0;
-    if (cell>double(_nPoints[k]-2)) cell = double(_nPoints[k]-2);  // last cell; linear extrapolation beyond the edges
-    base[k] = (unsigned int) cell;
-    frac[k] = t - cell;
-    }
-  // sum over the 2^n corners of the cell; axes with a single node contribute one corner only
-  double sum = 0.0;
-  const unsigned long long nCorners = 1ull << n;
-  for (unsigned long long corner=0; corner<nCorners; corner++)
-    {
-    double weight = 1.0;
-    unsigned int index = 0;
-    bool valid = true;
-    for (unsigned int k=0; k<n; k++)
-      {
-      bool upper = (corner>>k) & 1ull;
-      if (upper && _nPoints[k]==1) { valid = false; break; }
-      weight *= upper ? frac[k] : 1.0-frac[k];
-      index  += (base[k] + (upper ? 1 : 0))*stride[k];
-      }
-    if (valid) sum += weight*_values[index];
-    }
-  return sum;
+  double spacings[16];
+  std::vector<double> more;
+  double * h = spacings;
+  if (n > 16) { more.resize(n); h = more.data(); }
+  for (unsigned int k=0; k<n; k++) h[k] = _nPoints[k]>1 ? (_maxima[k]-_minima[k])/double(_nPoints[k]-1) : 0.0;
+  return interpolateMultilinear(_values.data(),n,_nPoints.data(),_minima.data(),h,x,source);
   }
 
   double ScalarField::interpolate(double x) const
@@ -417,24 +391,9 @@ namespace CAP
   ScalarField result(*this);
   result.setName(name);
   result.setTitle(name);
-  const double h = spacing(axis);
-  unsigned int stride = 1;
-  for (unsigned int k=0; k<axis; k++) stride *= _nPoints[k];
-  for (unsigned int g=0; g<_values.size(); g++)
-    {
-    unsigned int i = (g/stride)%n;   // node index along the axis
-    const double * f = &_values[g - i*stride];   // f[m*stride] is node m along the axis
-    double d;
-    if (n==2)
-      d = (f[stride] - f[0])/h;
-    else if (i==0)
-      d = (-3.0*f[0] + 4.0*f[stride] - f[2*stride])/(2.0*h);
-    else if (i==n-1)
-      d = (3.0*f[i*stride] - 4.0*f[(i-1)*stride] + f[(i-2)*stride])/(2.0*h);
-    else
-      d = (f[(i+1)*stride] - f[(i-1)*stride])/(2.0*h);
-    result._values[g] = d;
-    }
+  // at each node, the derivative of the parabola through it and its neighbors along the axis (one-sided at the ends;
+  // linear with two nodes): FiniteDifference.hpp
+  result._values = derivativeOnGrid(_values,_nPoints,axis,spacing(axis),1,2);
   return result;
   }
   void ScalarField::encodeBinary(BinaryWriter & w) const

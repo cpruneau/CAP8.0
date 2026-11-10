@@ -73,6 +73,20 @@ namespace CAP
   //! @brief Value of the series. @param x x @return f(x)
   double evaluateAt(double x) const override;
   using ParameterizedFunction::evaluateAt;
+  //! @brief Derivative (exact: the derivative series, see derivativeFunction()). @param x x @return f'(x)
+  double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
+  //!
+  //! @brief Derivative, a series of the same family of degree N-1 and the same mapping: P_n' = sum over k < n, n-k
+  //! odd, of (2k+1) P_k (Legendre); T_n' = 2n sum over k < n, n-k odd, of T_k, T_0 counted half (Chebyshev);
+  //! H_n' = 2n H_{n-1} (Hermite); L_n^alpha' = -sum over k < n of L_k^alpha (Laguerre); times dt/dx.
+  //! @param axis 0 @return new series (owned by the caller)
+  //!
+  Function * derivativeFunction(unsigned int axis=0) const override;
+  //! @brief Coefficients of the derivative series (in t) and dt/dx. @param d set to the coefficients (N of them, at
+  //! least one) @return dt/dx
+  double derivativeCoefficients(std::vector<double> & d) const;
   //! @brief Set the fixed mapping parameters for a fit over [low, high] (see the class). @param low lower end
   //! @param high upper end
   void adaptToRange(double low, double high) override;

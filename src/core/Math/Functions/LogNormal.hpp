@@ -66,6 +66,8 @@ namespace CAP
   //! @return -f(x) (1 + (ln x - mu)/sigma^2) / x for x > 0, and 0 for x <= 0
   //!
   double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
 
   //!
   //! @brief Analytical integral from low to high, using the error function.

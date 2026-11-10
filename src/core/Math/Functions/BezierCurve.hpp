@@ -71,6 +71,8 @@ namespace CAP
   using ParameterizedFunction::evaluateAt;
   //! @brief Derivative at x (0 outside the knots). @param x x @return derivative
   double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
   //! @brief Exact integral from low to high (the end values held outside the knots). @param low lower end
   //! @param high upper end @return integral
   double integralInRange(double low, double high) const override;

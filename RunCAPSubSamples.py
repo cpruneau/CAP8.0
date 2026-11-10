@@ -36,6 +36,7 @@ import copy
 import os
 import re
 import shlex
+import signal
 import subprocess
 import threading
 import xml.etree.ElementTree as ET
@@ -447,6 +448,11 @@ class ParallelRunner:
             return False
         with self.lock:
             self.processes.add(p)
+        if self.killed:                         # killed while the process was starting
+            try:
+                os.killpg(p.pid, signal.SIGKILL)
+            except (OSError, AttributeError):
+                p.kill()
         prefix = "[%s] " % label if label else ""
         for line in p.stdout:
             self.put(("line", prefix + line))
