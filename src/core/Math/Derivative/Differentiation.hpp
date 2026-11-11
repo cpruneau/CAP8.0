@@ -13,6 +13,8 @@
 //!
 //! @image html NumericalTools.png "Interpolation, integration and differentiation: classes and dependencies" width=100%
 //! @image latex NumericalTools.pdf "Interpolation, integration and differentiation: classes and dependencies" width=\textwidth
+//! @image html DerivativeClasses.png "Classes of the folder Derivative" width=100%
+//! @image latex DerivativeClasses.pdf "Classes of the folder Derivative" width=\textwidth
 #ifndef CAP__MATH__Differentiation
 #define CAP__MATH__Differentiation
 #include <functional>

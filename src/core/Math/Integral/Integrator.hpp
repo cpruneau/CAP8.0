@@ -13,6 +13,8 @@
 //!
 //! @image html NumericalTools.png "Interpolation, integration and differentiation: classes and dependencies" width=100%
 //! @image latex NumericalTools.pdf "Interpolation, integration and differentiation: classes and dependencies" width=\textwidth
+//! @image html IntegralClasses.png "Classes of the folder Integral" width=100%
+//! @image latex IntegralClasses.pdf "Classes of the folder Integral" width=\textwidth
 #ifndef CAP__MATH__Integrator
 #define CAP__MATH__Integrator
 #include <functional>

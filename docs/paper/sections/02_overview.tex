@@ -26,8 +26,8 @@ combination of sub-samples (SubSample), and jet analyses (Jets, optional).
 
 \paragraph{\code{src/models}.}
 The models produce events (Section~\ref{sec:generators}): a simple generator (BasicEventGen), the Glauber model of
-nucleus--nucleus collisions (Glauber), a thermal model (Therminator3), an interface to Pythia~8 (Pythia, optional),
-and readers of the events of EPOS and PHSD (Epos, PHSD).
+nucleus--nucleus collisions (Glauber), a thermal model (Therminator3), interfaces to Pythia~8 and Herwig~7 (Pythia,
+Herwig, optional), and readers of the events of EPOS and PHSD (Epos, PHSD).
 
 \paragraph{\code{src/gui}.}
 The sources of the graphical interface CapGui (Section~\ref{sec:capgui}).
@@ -72,6 +72,7 @@ The libraries and the programs are installed in \code{lib} and \code{bin}.
     Glauber        & models   & Particles                          &  9.3 \\
     Therminator3$^*$ & models & Particles                          &  4.8 \\
     Pythia$^*$     & models   & Particles; Pythia8                 &  0.8 \\
+    Herwig$^*$     & models   & Particles; Herwig, ThePEG          &  0.5 \\
     \midrule
     CapGui$^*$ (program) & gui & Graphics; Dear ImGui, GLFW, OpenGL &  9.4 \\
     \bottomrule
@@ -123,11 +124,12 @@ using ROOT, but as an option (\code{CAP\_WITH\_ROOT\_FILES}). The front ends nee
 the flags of ROOT ask for it. Set the standard to 17 before submission.}
 
 \paragraph{Optional.}
-The interface to Pythia~8~\cite{Bierlich:2022pfr} and the jet analyses, which use FastJet~\cite{Cacciari:2011ma},
-are built when asked for. CMake looks for each package in turn in a copy distributed with \CAP{} (a folder
-\code{pythia8*} or \code{fastjet*} in the \CAP{} folder or in \code{external}), at the location given by an
-environment variable, and through the configuration tool of the package (\code{pythia8-config},
-\code{fastjet-config}), or uses the location given explicitly. A LaTeX installation with \code{dvisvgm} is used, when
+The interfaces to Pythia~8~\cite{Bierlich:2022pfr} and Herwig~7~\cite{Bellm:2015jjp}, and the jet analyses, which
+use FastJet~\cite{Cacciari:2011ma}, are built when asked for. CMake looks for each package in turn in a copy
+distributed with \CAP{} (a folder \code{pythia8*}, \code{Herwig*} or \code{fastjet*} in the \CAP{} folder or in
+\code{external}, or an installation \code{../Herwig/install} or \code{../Fastjet/install} next to the \CAP{} folder),
+at the location given by an environment variable, and through the configuration tool of the package
+(\code{pythia8-config}, \code{Herwig-config}, \code{fastjet-config}), or uses the location given explicitly. A LaTeX installation with \code{dvisvgm} is used, when
 present, to typeset the texts of the figures (Section~\ref{sec:graphicscore}), and \code{pdflatex} to compile the
 presentations; without them, texts are drawn with plain fonts. CapShell uses the \code{editline} library, when
 present, for line editing and history.
@@ -136,8 +138,6 @@ present, for line editing and history.
 CapGui is built on Dear ImGui~\cite{DearImGui} and GLFW, whose sources are in \code{external} and are compiled with
 \CAP{}, and on OpenGL, which every desktop system provides; the texts typeset by LaTeX are rasterised for the screen with NanoSVG. Nothing else needs to be
 installed to build the interface.
-\todo{Herwig: the build has an option for it, but the interface of \CAP{} to Herwig does not exist yet. Mention it as
-planned, or leave it out.}
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Building: BuildCAP.py}
@@ -146,7 +146,7 @@ planned, or leave it out.}
 \CAP{} is built with CMake, in a build folder of the \CAP{} folder, and installed in its folders \code{lib} and
 \code{bin}. The script \code{BuildCAP.py} is a window from which the build is configured and run (Fig.~\todo{screenshot}).
 It lists the core modules, always built, and the optional modules (Therminator3, Latex, Graphics, CapGui, the
-conversion of ROOT files, Jets, Epos, PHSD and Pythia), each with a check box, together with the locations of ROOT and of
+conversion of ROOT files, Jets, Epos, PHSD, Pythia and Herwig), each with a check box, together with the locations of ROOT and of
 the external packages; a button shows which installation of each package CMake will use. A toolbar chooses the build
 folder, the build type, the number of parallel jobs, and whether to install, and the output of CMake and make is shown
 in the lower half of the window and can be saved. Each command is printed before it runs, and the same build is made

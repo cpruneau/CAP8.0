@@ -422,7 +422,15 @@ Monte Carlo beyond. \code{Differentiation} and \code{Interpolation} are configur
 \code{setDegree()}, \code{setStencil()}, \code{setStep()} and \code{setRichardson()} for the first, \code{setMethod()}
 and \code{setPoints()} for the second.
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{InterpolationClasses}
+  \caption{Classes of interpolation (\code{core/Math/Interpolation}) and their users. Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
+  \label{fig:interpolation}
+\end{figure}
+
 \paragraph{Interpolation.}
+Figure~\ref{fig:interpolation} shows the classes of the folder.
 \code{Interpolation} is a function of one variable through a table $(x_i,y_i)$, $i=0,\dots,n-1$, with $x$
 increasing at any spacing:
 \begin{itemize}
@@ -485,7 +493,15 @@ tabulated cumulative distributions;
 products of $1-u_k$ and $u_k$, the fractional positions $u_k$ in the cell. Scalar fields use it.
 \end{itemize}
 
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{IntegralClasses}
+  \caption{Classes of integration (\code{core/Math/Integral}) and their users. Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
+  \label{fig:integral}
+\end{figure*}
+
 \paragraph{Integrators.}
+Figure~\ref{fig:integral} shows the classes of the folder.
 An \code{Integrator} integrates a function of rank one over $[a,b]$, or of any rank $r$ over a box. The integrand may
 be a \code{Function} or a callable, and reversed bounds change the sign. The result, an \code{IntegralResult}, holds
 the value, an error estimate, the number of evaluations, and whether the accuracy requested was reached:
@@ -556,7 +572,15 @@ integrated with the parabola through the last three points);
 Section~\ref{sec:basicgen} build their cumulative distributions.
 \end{itemize}
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{DerivativeClasses}
+  \caption{Classes of differentiation (\code{core/Math/Derivative}). Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
+  \label{fig:derivative}
+\end{figure}
+
 \paragraph{Differentiation.}
+Figure~\ref{fig:derivative} shows the classes of the folder.
 A numerical derivative of order $n$ is the derivative of the polynomial of degree $d$ through $d+1$ points
 $x+o_j h$ around $x$:
 \begin{equation}
@@ -627,6 +651,15 @@ for a box.
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Fitting}
 \label{sec:fitting}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{FittingClasses}
+  \caption{Classes of fitting (\code{core/Math/Fitting}): least-squares and likelihood fits (\code{Fitter}, \code{Likelihood}), their results and records, Bayesian fits, and Fourier decompositions. Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
+  \label{fig:fitting}
+\end{figure*}
+
+The classes of the folder \code{Fitting} are shown in Fig.~\ref{fig:fitting}.
 
 \paragraph{Statistics.}
 A fit finds the parameters $\mathbf{p}$ of a function that minimise a statistic $S(\mathbf{p}) = -2\ln L$, up to a
@@ -827,6 +860,14 @@ MT19937, whose state can be saved and restored to continue a sequence. New distr
 Binomial, Poisson, Gaussian, Student $t$ and $\chi^2$ tests, the compatibility of two histograms, and the
 Kolmogorov--Smirnov test are provided, with one- or two-sided alternatives, together with the cumulative
 distributions they need. Upper tails are computed directly, so that small $p$-values keep their precision.
+Figure~\ref{fig:stattests} shows the functions of the folder and their dependencies.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{StatisticalTestsClasses}
+  \caption{Statistical tests (\code{core/Math/StatisticalTests}): the tests, their result and the distributions they use. Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
+  \label{fig:stattests}
+\end{figure}
 
 \paragraph{Linear algebra and kinematics.}
 \code{Matrix} provides the dense matrices of the fits (products, inverses, determinants), and \code{Vector2D},

@@ -26,6 +26,9 @@ using namespace std;
 //! parameter (uniform in b^2 between the minimum and maximum), optionally rotates the event plane, and determines the
 //! nucleon-nucleon collisions from their transverse distances and the nucleon-nucleon collision profile.
 //!
+//! @image html GlauberClasses.png "Classes of the Glauber model (models/Glauber)" width=100%
+//! @image latex GlauberClasses.pdf "Classes of the Glauber model (models/Glauber)" width=\textwidth
+//!
 //! Main keys (\<name\>:GENERATION:...): NUCLEUS_A:NAME, NUCLEUS_A:NTRIALS, NUCLEUS_A:RECENTERING,
 //! NUCLEUS_A:ALLOW_OVERLAP, NUCLEUS_A:MIN_INTER (same for NUCLEUS_B), INTERACTION:NNCOLLISION_OPTION (1: profile
 //! NNProfile; 2 and 3, fluctuating cross sections, are not written yet and throw NoImplementationException), INTERACTION:RANDOMIZE_EP, INTERACTION:SQRT_S_OPTION,

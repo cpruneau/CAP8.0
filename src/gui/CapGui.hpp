@@ -9,6 +9,9 @@
  * *********************************************************************/
 //! @file CapGui.hpp
 //! @brief CapGui: main window of the CAP graphical interface (panes, browser, menus, status bar).
+//!
+//! @image html GuiClasses.png "Classes of CapGui (src/gui)" width=100%
+//! @image latex GuiClasses.pdf "Classes of CapGui (src/gui)" width=\textwidth
 #ifndef CAP__GUI__CapGui
 #define CAP__GUI__CapGui
 #include <functional>

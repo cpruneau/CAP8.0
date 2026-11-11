@@ -1,0 +1,39 @@
+% Shared style of the class diagrams of CAP (figures/*Classes.tex): \input after \documentclass[tikz]{standalone}.
+%  - boxes: blue = abstract base class, light blue = class, green = entry class of the folder (steering class, task),
+%    yellow = free functions (tools), grey = class of another folder;
+%  - arrows: open triangle = inherits from; dashed with diamond = owns (holds); dashed with arrow = uses.
+\usepackage[scaled=0.92]{helvet}
+\usetikzlibrary{arrows.meta,shapes.multipart,positioning,fit,backgrounds,calc}
+\renewcommand{\familydefault}{\sfdefault}
+\definecolor{abstract}{HTML}{D6E4F5}
+\definecolor{concrete}{HTML}{EEF4FB}
+\definecolor{steer}{HTML}{DCEFD9}
+\definecolor{tools}{HTML}{FFF8E6}
+\definecolor{external}{HTML}{E9E9E9}
+\definecolor{dependline}{HTML}{8A6D3B}
+\definecolor{folder}{HTML}{F7F7F7}
+\tikzset{
+  every picture/.style={font=\scriptsize},
+  cls/.style={draw, fill=concrete, align=center, inner sep=2.5pt, text width=#1, font=\tiny},
+  cls/.default=3.0cm,
+  abs/.style={cls=#1, fill=abstract},
+  abs/.default=3.0cm,
+  steer/.style={cls=#1, fill=steer, line width=0.8pt},
+  steer/.default=4.2cm,
+  tool/.style={cls=#1, fill=tools},
+  tool/.default=4.2cm,
+  ext/.style={cls=#1, fill=external, dashed},
+  ext/.default=2.6cm,
+  fam/.style={draw, rectangle split, rectangle split parts=2, rectangle split part fill={#1,white},
+              rectangle split part align={center,left}, inner sep=2.5pt, align=left},
+  inherit/.style={-{Triangle[open,length=2.2mm,width=2.2mm]}, thin},
+  uses/.style={dashed, dependline, -{Stealth[length=1.6mm]}, thin},
+  owns/.style={dashed, dependline, {Diamond[length=2.4mm,width=1.6mm]}-, thin},
+  lbl/.style={font=\tiny, text=dependline, align=center},
+  note/.style={font=\tiny, align=left, text=black!70},
+  title/.style={font=\footnotesize\bfseries, anchor=north west},
+}
+% a member line in a class box
+\newcommand{\m}[1]{\\#1}
+\newcommand{\cn}[1]{{\scriptsize\textbf{#1}}}
+\newcommand{\an}[1]{{\scriptsize\textbf{\textit{#1}}}}

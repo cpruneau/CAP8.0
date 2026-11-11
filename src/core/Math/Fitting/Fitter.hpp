@@ -9,6 +9,9 @@
  * *********************************************************************/
 //! @file Fitter.hpp
 //! @brief Fitter: fit of a ParameterizedFunction to data by least squares or maximum likelihood, and FitResult.
+//!
+//! @image html FittingClasses.png "Classes of the folder Fitting" width=100%
+//! @image latex FittingClasses.pdf "Classes of the folder Fitting" width=\textwidth
 #ifndef CAP__MATH__Fitter
 #define CAP__MATH__Fitter
 #include <memory>

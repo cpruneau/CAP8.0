@@ -29,6 +29,17 @@ PDF and PowerPoint painters, in the files it exports, and what is seen is what i
 background thread, cached in memory and on disk, and drawn as textures; plain text is shown until the image is ready,
 so that typesetting never blocks the interface.
 
+Figure~\ref{fig:gui} shows the classes of the interface. \code{CapGui} is the window: it holds the panes, the
+file browsers, the dialogs and the menu bar, and only displays. The application, \code{CapApp} and its derived
+class \code{CapGuiApp}, listens to the menus, decides what each command does, and owns the window.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{GuiClasses}
+  \caption{Classes of CapGui (\code{src/gui}). Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
+  \label{fig:gui}
+\end{figure*}
+
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Windows, canvases and graphs}
 \label{sec:windows}

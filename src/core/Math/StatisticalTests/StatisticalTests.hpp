@@ -10,6 +10,9 @@
 //! @file StatisticalTests.hpp
 //! @brief Statistical tests: binomial, Poisson, Gaussian (z), Student's t, chi square, histogram compatibility,
 //! Kolmogorov-Smirnov.
+//!
+//! @image html StatisticalTestsClasses.png "Functions of the folder StatisticalTests" width=100%
+//! @image latex StatisticalTestsClasses.pdf "Functions of the folder StatisticalTests" width=\textwidth
 #ifndef CAP__MATH__StatisticalTests
 #define CAP__MATH__StatisticalTests
 #include <functional>
