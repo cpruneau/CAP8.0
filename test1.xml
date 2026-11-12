@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PlotHistos version="1">
+  <Input id="RunAnaDerived" file="RunAnaDerived.cap"/>
+  <Output directory="figures" pdf="plots.pdf" pptx="plots.pptx" latex="plots_latex.tex" title="Plots"/>
+  <Window title="Multiplicity" width="1200" height="800">
+    <Canvas name="n1" title="n1" file="n1.pdf">
+      <Graph title="n1">
+        <Histogram input="RunAnaDerived" path="ParticleSingleAnalyzer/ALL_PiP/n1" label="$n_1^{\pi^+}$"/>
+        <Histogram input="RunAnaDerived" path="ParticleSingleAnalyzer/ALL_KP/n1" label="$n_1^{K^+}$" showMarkers="true" showLine="false" showErrors="true"/>
+        <Histogram input="RunAnaDerived" path="ParticleSingleAnalyzer/ALL_PP/n1" label="$n_1^{p}$" showMarkers="true">
+          <Marker style="33" size="1.2400000095367432"/>
+        </Histogram>
+        <Histogram input="RunAnaDerived" path="ParticleSingleAnalyzer/ALL_PiM/n1" label="n1"/>
+      </Graph>
+    </Canvas>
+  </Window>
+</PlotHistos>
