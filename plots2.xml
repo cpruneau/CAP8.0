@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PlotHistos version="1">
+  <Input id="RunAnaDerived" file="RunAnaDerived.cap"/>
+  <Output directory="figures" pdf="plots.pdf" pptx="plots.pptx" latex="plots_latex.tex" title="Plots"/>
+  <Window title="Window 1" width="1200" height="800">
+    <Canvas name="n1_pt" file="n1_pt.pdf" title="n1_vs_pt">
+      <Graph title="n1_pt">
+        <Axis which="y" log="true"/>
+        <Legend x="0.718594" y="0.934538" pointSize="24"/>
+        <Histogram input="RunAnaDerived" path="ParticleSingleAnalyzer/ALL_PiP/n1_pt" label="$n_1^{\pi^+}$"/>
+        <Histogram input="RunAnaDerived" path="ParticleSingleAnalyzer/ALL_KP/n1_pt" label="$n_1^{K^+}$"/>
+      </Graph>
+    </Canvas>
+  </Window>
+</PlotHistos>
