@@ -58,10 +58,6 @@ namespace CAP
  * @fn ModelBWA::ModelBWA()
  * @brief Default constructor.
  *
- * @fn ModelBWA::ModelBWA(TRandom2* aRandom)
- * @brief Constructor that links a random number generator form Integrator.
- * @param [in] aRandom pointer to <a href="http://root.cern.ch/root/html/TRandom2.html">TRandom2</a> random number generator
- *
  * @fn ModelBWA::~ModelBWA()
  * @brief Destructor.
  *

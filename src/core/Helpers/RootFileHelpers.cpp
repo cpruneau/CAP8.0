@@ -8,7 +8,6 @@
 #include "TSystem.h"
 #include "TParameter.h"
 #include "TSystemDirectory.h"
-#include "TRandom.h"
 
 namespace CAP
 {
