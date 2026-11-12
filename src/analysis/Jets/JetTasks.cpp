@@ -9,10 +9,15 @@
  * *********************************************************************/
 #include "JetAnalyzer.hpp"
 #include "JetFilter.hpp"
+#include "JetPairAnalyzer.hpp"
+#include "JetFluctuationAnalyzer.hpp"
 #include "TaskRegistration.hpp"
 
 CAP_REFLECTION(JetTasks)
 {
   CAP::registerTask<CAP::JetAnalyzer>("CAP::JetAnalyzer");
   CAP::registerTask<CAP::JetFilterCreator>("CAP::JetFilterCreator");
+  CAP::registerTask<CAP::JetPairAnalyzer>("CAP::JetPairAnalyzer");
+  CAP::registerTask<CAP::JetPairFilterCreator>("CAP::JetPairFilterCreator");
+  CAP::registerTask<CAP::JetFluctuationAnalyzer>("CAP::JetFluctuationAnalyzer");
 }

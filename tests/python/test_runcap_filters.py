@@ -447,6 +447,29 @@ class TestKeys(unittest.TestCase):
             a = task("JetAnalyzer", "Jets")
             self.assertIn("JET_FILTER", F.task_kinds(a, TEMPLATES))
 
+    def test_jet_pair_filters(self):
+        """Jet pair filters (JET_PAIR_FILTER, optional module Jets): ranks of the two jets and pair variables, created
+        by JetPairFilterCreator only when the library has some, and chosen by the jet pair analyzer."""
+        lib = library()
+        self.assertEqual(F.subtypes_for("JET_PAIR_FILTER")["RANK2"][1], (F.VALUE, F.RANGE))
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        self.assertFalse([t for t in creator.children if t.cls == "CAP::JetPairFilterCreator"])
+        lib.add(F.FilterDef("JET_PAIR_FILTER", "LeadSub", "leading-subleading, back to back",
+                            [F.Condition("RANK1", F.VALUE, 1, 1), F.Condition("RANK2", F.VALUE, 2, 2),
+                             F.Condition("DPHI", F.RANGE, 2.8, 3.2), F.Condition("PTRATIO", F.RANGE, 0.5, 1.0)]))
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        pairs = [t for t in creator.children if t.cls == "CAP::JetPairFilterCreator"]
+        self.assertEqual(len(pairs), 1)
+        v = values(pairs[0])
+        self.assertEqual((v["JET_PAIR_FILTER:N"], v["JET_PAIR_FILTER_0:NAME"]), ("1", "LeadSub"))
+        self.assertEqual((v["JET_PAIR_FILTER_0:CONDITION_1:TYPE"], v["JET_PAIR_FILTER_0:CONDITION_1:SUBTYPE"]),
+                         ("INTEGER", "RANK2"))
+        self.assertEqual(v["JET_PAIR_FILTER_0:CONDITION_3:TYPE"], "DOUBLE_RANGE")
+        self.assertEqual(F.check_library(lib), [])
+        if "CAP::JetPairAnalyzer" in TEMPLATES:
+            a = task("JetPairAnalyzer", "Pairs")
+            self.assertTrue({"JET_FILTER", "JET_PAIR_FILTER"} <= set(F.task_kinds(a, TEMPLATES)))
+
     def test_poi_filters(self):
         """The particles of interest of the flow analysis (POI_FILTER) are particle filters of the library: written as
         the keys of its list, read back, checked against the library, and renamed with the particle filters."""

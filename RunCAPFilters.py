@@ -63,7 +63,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 #: Kinds of objects of the library, in the order of the tabs of the Filters pane.
-KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
+KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "JET_PAIR_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
          "EVENT", "PARTICLE_DB"]
 #: Kinds of corrections (efficiencies and smearers).
 CORRECTION_KINDS = ("EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER")
@@ -72,11 +72,13 @@ SETTINGS_KINDS = CORRECTION_KINDS + ("PARTICLE_DB",)
 #: Kinds chosen by default by a new task (the first object of the library).
 DEFAULT_CHOICE_KINDS = ("EVENT", "PARTICLE_DB")
 KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle filters", "JET_FILTER": "Jet filters",
+               "JET_PAIR_FILTER": "Jet pair filters",
                "EVENT_EFFICIENCY": "Event efficiencies", "PARTICLE_EFFICIENCY": "Particle efficiencies",
                "EVENT_SMEARER": "Event smearers", "PARTICLE_SMEARER": "Particle smearers", "EVENT": "Events",
                "PARTICLE_DB": "Particle databases"}
 #: Element of an object of each kind in XML (workflows and selection files), and the root of a selection file.
 TAG_OF_KIND = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "JET_FILTER": "JetFilter",
+               "JET_PAIR_FILTER": "JetPairFilter",
                "EVENT_EFFICIENCY": "EventEfficiency",
                "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
                "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}
@@ -99,10 +101,10 @@ def lists_of_kind(kind):
     return [kind] + [alias for alias, target in ALIAS_KINDS.items() if target == kind]
 SELECTIONS_ROOT = "CapSelections"
 #: Kinds defined by conditions (the others by parameters).
-CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER")
+CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "JET_PAIR_FILTER")
 #: Kinds of the optional modules: their creator is written only when the library has objects of the kind (the jet
-#: filters need CAP built with Jets).
-OPTIONAL_KINDS = ("JET_FILTER",)
+#: filters and jet pair filters need CAP built with Jets).
+OPTIONAL_KINDS = ("JET_FILTER", "JET_PAIR_FILTER")
 
 #: Forms of a condition and the TYPE written for them.
 RANGE, DUAL_RANGE, VALUE, FLAG = "range", "two ranges", "value", "flag"
@@ -156,6 +158,16 @@ JET_SUBTYPES = {"PT": ("jet transverse momentum pT", (RANGE, DUAL_RANGE)),
                 "MASS": ("jet mass", (RANGE, DUAL_RANGE)),
                 "RANK": ("rank in pT in the event (1: leading)", (VALUE, RANGE)),
                 "MULT": ("number of constituents", (VALUE, RANGE))}
+#: Jet pair filters (CAP::JetPairFilter): the ranks of the two jets of a pair (the first of higher rank) and the
+#: variables of the pair.
+JET_PAIR_SUBTYPES = {"RANK1": ("rank of the first jet (1: leading)", (VALUE, RANGE)),
+                     "RANK2": ("rank of the second jet", (VALUE, RANGE)),
+                     "DPHI": ("azimuthal separation |phi1 - phi2| in [0, pi]", (RANGE, DUAL_RANGE)),
+                     "ACOPLANARITY": ("acoplanarity pi - |phi1 - phi2|", (RANGE, DUAL_RANGE)),
+                     "DETA": ("pseudorapidity separation |eta1 - eta2|", (RANGE, DUAL_RANGE)),
+                     "PTRATIO": ("pT ratio xJ = pT2/pT1", (RANGE, DUAL_RANGE)),
+                     "MASS": ("dijet mass", (RANGE, DUAL_RANGE)),
+                     "PT": ("dijet pT", (RANGE, DUAL_RANGE))}
 
 #: Parameters of the efficiencies and smearers: {kind: [(name, type, default)]}, as read by their configure(). The
 #: particle efficiencies and smearers have none here: they are read from a maps file (see MAPS_KINDS).
@@ -172,6 +184,7 @@ CREATOR_NAME, CREATOR_CLASS = "FilterCreator", "CAP::FilterCreator"
 CREATORS = {"EVENT_FILTER": ("EventFilters", "CAP::EventFilterCreator"),
             "PARTICLE_FILTER": ("ParticleFilters", "CAP::ParticleFilterCreator"),
             "JET_FILTER": ("JetFilters", "CAP::JetFilterCreator"),
+            "JET_PAIR_FILTER": ("JetPairFilters", "CAP::JetPairFilterCreator"),
             "EVENT_EFFICIENCY": ("EventEfficiencies", "CAP::EventEfficiencyCreator"),
             "PARTICLE_EFFICIENCY": ("ParticleEfficiencies", "CAP::ParticleEfficiencyCreator"),
             "EVENT_SMEARER": ("EventSmearers", "CAP::EventSmearerCreator"),
@@ -492,6 +505,8 @@ def subtypes_for(kind, glauber=False):
         return PARTICLE_SUBTYPES
     if kind == "JET_FILTER":
         return JET_SUBTYPES
+    if kind == "JET_PAIR_FILTER":
+        return JET_PAIR_SUBTYPES
     return {}
 
 

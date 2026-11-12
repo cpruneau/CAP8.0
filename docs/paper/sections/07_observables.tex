@@ -484,10 +484,51 @@ The per-event histograms are normalised by the number of events accepted by the 
 per-constituent histograms characterise the jets themselves: they are normalised by the number of jets of their folder,
 that is of their event filter, particle filter, radius and jet filter, so that a constituent distribution is a
 distribution per jet. The profiles are averages per jet.
-Two further tasks will use the same jets: an analysis of jet pairs (filters on the ranks of the jets, their
-azimuthal separation, acoplanarity, momentum balance and mass), and an analysis of the fluctuations and correlations
-of the multiplicities within the jets ($\avg{N}$, variances and second factorial moments by charge, $R_2$, $\nu_{\rm dyn}$),
-corrected for the underlying event measured in cones transverse to the leading jet.
+
+The task \code{JetPairAnalyzer} studies pairs of jets. For each event filter, particle filter, radius and jet filter,
+it forms the pairs of the jets accepted, each pair once with its first jet of higher rank, and fills one folder per jet
+pair filter (\code{JET\_PAIR\_FILTER}), named for instance \code{MB\_Charged\_R0p4\_AllJets\_LeadSub}. The pair
+filters, created by \code{JetPairFilterCreator}, test the ranks of the two jets (\code{RANK1}, \code{RANK2}: the leading
+and subleading jets, for instance), their azimuthal separation $|\Delta\varphi|$ in $[0,\pi]$, the acoplanarity
+$\pi - |\Delta\varphi|$, the separation $|\Delta\eta|$, the momentum balance $x_J = p_{T,2}/p_{T,1}$, and the mass and
+transverse momentum of the pair; a back-to-back selection, for instance, requires $|\Delta\varphi| > \pi - \delta$ and
+$x_J$ above a minimum. The folders hold the number of pairs per event, normalised by the number of events; and, per
+pair, $p_{T,1}$, $p_{T,2}$ and their correlation, $\eta_1$, $\eta_2$, the azimuthal difference
+$\Delta\varphi = \varphi_1 - \varphi_2$ in $[-\pi/2, 3\pi/2)$, the acoplanarity, $\Delta\eta$, $x_J$, the asymmetry
+$A_J = (p_{T,1}-p_{T,2})/(p_{T,1}+p_{T,2})$, the mass, transverse momentum and rapidity of the pair, and $\Delta\varphi$
+versus $x_J$, normalised by the number of pairs of the folder; with the averages of $x_J$, $A_J$ and the acoplanarity
+versus $p_{T,1}$. Both tasks share the base \code{JetTask}, which reads the radii and the jet filters, gets the jets of
+each event, and makes, names and normalises the folders.
+
+
+The task \code{JetFluctuationAnalyzer} measures the fluctuations and correlations of the multiplicities within the jets.
+For each jet accepted, it records the numbers of constituents $N$, $N_+$, $N_-$, $N_0$, the net charge $Q = N_+ - N_-$
+and $Q^2$, the second factorial moments $N(N-1)$, $N_+(N_+-1)$, $N_-(N_--1)$, $N_0(N_0-1)$, and the number of pairs of
+opposite charges $N_+N_-$, as averages per jet: integrated, versus the jet $p_T$, and versus $N$. The underlying event
+is measured, event by event, in cones of the radius of the jets transverse to the leading jet of the same particle
+filter and radius: at $\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}$ (\code{UE:MODE} \code{TRANSVERSE}), or at
+$\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}\pm 2R$ (\code{TRANSVERSE\_SHIFTED}). A cone is kept if it lies within
+the acceptance, $|\eta| < \eta_{\max} - R$, and does not overlap any jet (its axis at least $2R$ from that of every jet).
+The same moments of the particles of the cones fill profiles versus the variables of each jet of the event, so that the
+underlying event of a bin of jet $p_T$ or $N$ is that of the events of its jets.
+
+The derived quantities are computed at the end of the run: the variances $\sigma^2_N = F_2 + \avg{N} - \avg{N}^2$ (with
+$F_2 = \avg{N(N-1)}$) of the total and of each charge, that of the net charge, the normalised two-particle densities
+\begin{equation}
+  R_2^{++} = \frac{\avg{N_+(N_+-1)}}{\avg{N_+}^2} - 1, \qquad
+  R_2^{+-} = \frac{\avg{N_+N_-}}{\avg{N_+}\avg{N_-}} - 1,
+\end{equation}
+$R_2^{--}$ likewise, and $\nu_{\rm dyn} = R_2^{++} + R_2^{--} - 2R_2^{+-}$. They are also corrected for the underlying
+event. The particles of a jet are taken as the sum of those of the jet itself, $s$, and of the underlying event, $b$,
+independent, with $b$ distributed as in a cone. Then
+\begin{align}
+  \avg{s} &= \avg{N} - \avg{b}, \qquad
+  F_2(s) = F_2(N) - 2\avg{s}\avg{b} - F_2(b), \nonumber\\
+  \avg{s_+s_-} &= \avg{N_+N_-} - \avg{s_+}\avg{b_-} - \avg{b_+}\avg{s_-} - \avg{b_+b_-},
+\end{align}
+from which the variances, $R_2$ and $\nu_{\rm dyn}$ of $s$ follow. The moments are averages and are not scaled; the
+derived quantities are computed again by a job reading the folders (\code{HISTOGRAM:IMPORT}), for instance once the
+sub-samples are merged.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Global observables and event shapes}

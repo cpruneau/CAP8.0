@@ -8,7 +8,13 @@ Jet.cpp
 JetClustering.cpp
 JetFilter.cpp
 JetHistos.cpp
-JetAnalyzer.cpp)
+JetAnalyzer.cpp
+JetPair.cpp
+JetPairHistos.cpp
+JetPairAnalyzer.cpp
+JetUnderlyingEvent.cpp
+JetFluctuationHistos.cpp
+JetFluctuationAnalyzer.cpp)
 
 target_link_libraries(Jets Base Math Particles FASTJET_LIB ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Jets PUBLIC Jets Particles Base Math ${CAP_FASTJET_INCLUDE_PATH} ${EXTRA_INCLUDES} )
