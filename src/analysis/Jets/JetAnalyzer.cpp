@@ -1,30 +1,32 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
  *
  * For the licensing terms see LICENSE.
  *
- * Author: Claude Pruneau, Akash Raj,  Nov 2024
+ * Author: Claude Pruneau
  *
  * *********************************************************************/
 #include "JetAnalyzer.hpp"
-#include "JetHistos.hpp"
-#include "JetSingleHistos.hpp"
-#include "JetPairHistos.hpp"
-#include "PrintHelpers.hpp"
-#include "fastjet/ClusterSequence.hh"
+#include <cstdlib>
+#include <sstream>
+#include "Exceptions.hpp"
 #include "NameHelpers.hpp"
-#include "Histogram.hpp"
-#include "Profile.hpp"
-
+#include "PrintHelpers.hpp"
+#include "JetClustering.hpp"
+#include "Event.hpp"
 
 namespace CAP
 {
 
 JetAnalyzer::JetAnalyzer()
 :
-EventProcessorSingle<JetSingleHistos,JetSingleDerivedHistos>(),
-ManagedList<JetFilter>()
+EventProcessor(),
+_managedJetFilters(),
+_radii(),
+_settings(),
+_folders(),
+_folderNames()
 {
   appendClassName("JetAnalyzer");
   setMinimumReportLevel(Object::kInfo);
@@ -34,269 +36,180 @@ ManagedList<JetFilter>()
 
 JetAnalyzer::JetAnalyzer(const JetAnalyzer & source)
 :
-EventProcessorSingle<JetSingleHistos,JetSingleDerivedHistos>(source),
-ManagedList<JetFilter>(source)
-{   }
+EventProcessor(source),
+_managedJetFilters(source._managedJetFilters),
+_radii(source._radii),
+_settings(source._settings),
+_folders(),
+_folderNames(source._folderNames)
+{
+  for (JetHistos * folder : source._folders) _folders.push_back(new JetHistos(*folder));
+}
 
 JetAnalyzer & JetAnalyzer::operator=(const JetAnalyzer & rhs)
 {
   if (this!=&rhs)
     {
-    EventProcessorSingle<JetSingleHistos,JetSingleDerivedHistos>::operator=(rhs);
-    ManagedList<JetFilter>::operator=(rhs);
+    EventProcessor::operator=(rhs);
+    _managedJetFilters = rhs._managedJetFilters;
+    _radii = rhs._radii;
+    _settings = rhs._settings;
+    _folderNames = rhs._folderNames;
+    deleteFolders();
+    for (JetHistos * folder : rhs._folders) _folders.push_back(new JetHistos(*folder));
     }
   return *this;
 }
 
+JetAnalyzer::~JetAnalyzer()
+{
+  deleteFolders();
+}
+
+void JetAnalyzer::deleteFolders()
+{
+  for (JetHistos * folder : _folders) delete folder;
+  _folders.clear();
+}
 
 void JetAnalyzer::setDefaultConfiguration()
 {
-  EventProcessorSingle<JetSingleHistos,JetSingleDerivedHistos>::setDefaultConfiguration();
+  EventProcessor::setDefaultConfiguration();
   const String & taskName = name();
-  _configuration.addProperty(createKey(taskName,"HistogramBaseName"),"Jet");
-  _configuration.addProperty(createKey(taskName,"load",false);
-  _configuration.addProperty(createKey(taskName,"exportObject",true);
-  _configuration.addProperty(createKey(taskName,"CreateHistograms",true);
-  _configuration.addProperty(createKey(taskName,"JetRadius"),      0.4);
-  _configuration.addProperty(createKey(taskName,"JetPtMin"),       10.0);
-  _configuration.addProperty(createKey(taskName,"nBins_jet_n1"),   100);
-  _configuration.addProperty(createKey(taskName,"min_jet_n1"),     0.0);
-  _configuration.addProperty(createKey(taskName,"max_jet_n1"),     100.0);
-  _configuration.addProperty(createKey(taskName,"nBins_jet_p"),    100);
-  _configuration.addProperty(createKey(taskName,"min_jet_p"),      0.0);
-  _configuration.addProperty(createKey(taskName,"max_jet_p"),      100.0);
-  _configuration.addProperty(createKey(taskName,"nBins_jet_pt"),   100);
-  _configuration.addProperty(createKey(taskName,"min_jet_pt"),     0.0);
-  _configuration.addProperty(createKey(taskName,"max_jet_pt"),     100.0);
-  _configuration.addProperty(createKey(taskName,"nBins_jet_phi"),  32);
-  _configuration.addProperty(createKey(taskName,"min_jet_phi"),    0.0);
-  _configuration.addProperty(createKey(taskName,"max_jet_phi"),    CAP::MATH::twoPi());
-  _configuration.addProperty(createKey(taskName,"nBins_jet_eta"),   20);
-  _configuration.addProperty(createKey(taskName,"min_jet_eta"),     -2.0);
-  _configuration.addProperty(createKey(taskName,"max_jet_eta"),     2.0);
-  _configuration.addProperty(createKey(taskName,"nBins_jet_netQ"),  20);
-  _configuration.addProperty(createKey(taskName,"min_jet_netQ"),    -10.0);
-  _configuration.addProperty(createKey(taskName,"max_jet_netQ"),    10.0);
-  _configuration.addProperty(createKey(taskName,"nBins_p"),    100);
-  _configuration.addProperty(createKey(taskName,"min_p"),      0.0);
-  _configuration.addProperty(createKey(taskName,"max_p"),      10.0);
-  _configuration.addProperty(createKey(taskName,"pt_nbins"),   100);
-  _configuration.addProperty(createKey(taskName,"pt_min"),     0.0);
-  _configuration.addProperty(createKey(taskName,"pt_max"),     10.0);
-  _configuration.addProperty(createKey(taskName,"phi_nbins"),  36);
-  _configuration.addProperty(createKey(taskName,"phi_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,"phi_max"),    CAP::MATH::twoPi());
-  _configuration.addProperty(createKey(taskName,"eta_nbins"),  40);
-  _configuration.addProperty(createKey(taskName,"eta_min"),    -2.0);
-  _configuration.addProperty(createKey(taskName,"eta_max"),    2.0);
-  _configuration.addProperty(createKey(taskName,"jt_nbins"),   50);
-  _configuration.addProperty(createKey(taskName,"jt_min"),     0.0);
-  _configuration.addProperty(createKey(taskName,"jt_max"),     5.0);
-  _configuration.addProperty(createKey(taskName,"th_nbins"),   20);
-  _configuration.addProperty(createKey(taskName,"th_min"),     0.0);
-  _configuration.addProperty(createKey(taskName,"th_max"),     CAP::MATH::pi()/4.0);
-  _configuration.addProperty(createKey(taskName,"z_nbins"),   50);
-  _configuration.addProperty(createKey(taskName,"z_min"),     0.0);
-  _configuration.addProperty(createKey(taskName,"z_max"),     1.0);
+  _configuration.addProperty(createKey(taskName,"JET","R"),                String("0.4"));
+  _configuration.addProperty(createKey(taskName,"JET","ALGORITHM"),        String("ANTIKT"));
+  _configuration.addProperty(createKey(taskName,"JET","RECOMBINATION"),    String("E"));
+  _configuration.addProperty(createKey(taskName,"JET","PT_MIN"),           5.0);
+  _configuration.addProperty(createKey(taskName,"JET","PARTICLE_ETA_MAX"), 0.9);
+  _managedJetFilters.setDefaultObjectConfiguration(taskName,"JET_FILTER",_configuration);
+  JetHistos::addDefaultConfiguration(_configuration,taskName);
+}
+
+void JetAnalyzer::configure(const Configuration & configuration)
+{
+  EventProcessor::configure(configuration);
+  const String & taskName = name();
+  auto key = [&](const char * k) { return createKey(taskName,"JET",k); };
+  _settings.algorithm      = JetSettings::algorithmOf(configuration.valueString(key("ALGORITHM")));
+  _settings.recombination  = JetSettings::recombinationOf(configuration.valueString(key("RECOMBINATION")));
+  _settings.ptMin          = configuration.valueDouble(key("PT_MIN"));
+  _settings.particleEtaMax = configuration.valueDouble(key("PARTICLE_ETA_MAX"));
+  _radii.clear();
+  std::string list = configuration.valueString(key("R")).c_str();
+  for (char & c : list) if (c==',' || c==';') c = ' ';
+  std::istringstream stream(list);
+  std::string item;
+  while (stream >> item)
+    {
+    char * end = nullptr;
+    double r = std::strtod(item.c_str(),&end);
+    if (end==item.c_str() || *end!='\0' || !(r>0.0))
+      throw ConfigurationException(key("R"),String("invalid radius ")+String(item.c_str()),__FUNCTION__);
+    if (!(r<_settings.particleEtaMax))
+      throw ConfigurationException(key("R"),String("radius ")+String(item.c_str())+" not below PARTICLE_ETA_MAX",__FUNCTION__);
+    _radii.push_back(r);
+    }
+  if (_radii.empty()) throw ConfigurationException(key("R"),"no radius given",__FUNCTION__);
+  _managedJetFilters.configureObjects(configuration);
+  deleteFolders();
+  _folderNames.clear();
+  unsigned int n = nEventFilters()*nParticleFilters()*_radii.size()*nJetFilters();
+  for (unsigned int k=0; k<n; k++) _folderNames.push_back(folderName(k));
+  for (unsigned int k=0; k<n; k++)
+    {
+    JetHistos * folder = new JetHistos();
+    folder->configure(taskName,"HISTOGRAM",configuration,k);
+    folder->setName(folderName(k));
+    _folders.push_back(folder);
+    }
 }
 
 void JetAnalyzer::initialize()
 {
-  jetFilters = ManagedList<JetFilter>::getObjects();
-  nJetFilters() = jetFilters.size();
-  Analyzer::initialize();
+  EventProcessor::initialize();
+  _managedJetFilters.initialize();
+  for (JetHistos * folder : _folders) folder->create();
 }
 
-void JetAnalyzer::create(const Configuration & configuration)
+JetSettings JetAnalyzer::settings(unsigned int r) const
 {
-  String bn = configuration.valueString(createKey(taskName,"HistogramBaseName"));
-  jetRadius = configuration.valueDouble(createKey(taskName,"JetRadius"));
-  jetPtMin  = configuration.valueDouble(createKey(taskName,"JetPtMin"));
-  JetHistos * jetHistos;
-  JetSingleHistos * jetSingleHistos;
-  JetPairHistos * jetPairHistos;
+  JetSettings s = _settings;
+  s.radius = _radii.at(r);
+  return s;
+}
 
-  for (auto & eventFilter : eventFilters)
-    {
-    String efn = eventFilter->name();
-    for (auto & jetFilter : jetFilters)
-      {
-      String jfn = jetFilter->name();
-
-      jetHistos = new JetHistos();
-      jetHistos->setName(createName(_histogramBaseName,efn,jfn));
-      jetHistos->setParentTask(this);
-      jetHistos->create(const Configuration & configuration);
-      addList(jetHistos);
-
-      jetSingleHistos = new JetSingleHistos();
-      jetSingleHistos->setName(createName(_histogramBaseName,efn,jfn));
-      jetSingleHistos->setParentTask(this);
-      jetSingleHistos->create(const Configuration & configuration);
-      addList(jetSingleHistos);
-
-      jetPairHistos = new JetPairHistos();
-      jetPairHistos->setName(createName(_histogramBaseName,efn,jfn));
-      jetPairHistos->setParentTask(this);
-      jetPairHistos->create(const Configuration & configuration);
-      addList(jetPairHistos);
-      }
-    }
+String JetAnalyzer::folderName(unsigned int k) const
+{
+  if (k<_folderNames.size()) return _folderNames[k];
+  unsigned int nJ = nJetFilters(), nR = _radii.size(), nP = nParticleFilters();
+  if (nJ==0 || nR==0 || nP==0) return String("Folder_")+String(std::to_string(k).c_str());
+  unsigned int j = k%nJ;  k /= nJ;
+  unsigned int r = k%nR;  k /= nR;
+  unsigned int p = k%nP;  k /= nP;
+  unsigned int e = k;
+  return eventFilters()[e]->name()+"_"+particleFilters()[p]->name()+"_"+JetSettings::radiusLabel(_radii[r])+"_"
+         +jetFilters()[j]->name();
 }
 
 void JetAnalyzer::execute()
 {
+  _taskExecuted.increment();
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (! filterParticles(theEvent))  return;
-  std::vector<PseudoJet> pseudoJetsInput;
-  pseudoJetsInput.clear();
-
-  for (auto accepted : _acceptedEventFilters)
+  filterParticles(theEvent);                  // the events without accepted particles count (no jets)
+  const unsigned int nE = nEventFilters(), nP = nParticleFilters(), nR = _radii.size(), nJ = nJetFilters();
+  std::vector<const Jet*> accepted;
+  for (unsigned int p=0; p<nP; p++)
     {
-    if (!accepted) continue;
-    unsigned int  baseSingle   = iEventFilter*nParticleFilters();
-    for (unsigned int iParticleFilter=0; iParticleFilter<nParticleFilters();iParticleFilter++)
+    const std::vector<Particle*> & particles = acceptedParticles(p);
+    for (unsigned int r=0; r<nR; r++)
       {
-      ParticleSingleHistos * histosSingle = (ParticleSingleHistos *) listAt(baseSingle+iParticleFilter);
-      std::vector<Particle*> & particlesSelected = acceptedParticles(iParticleFilter);
-
-
-  for (auto & particle : acceptedParticles) // acceptedParticles is set in  filterParticles(theEvent)
-    {
-    int pid = particle->type().pdgCode();
-    VectorLorentz & momentum = particle->momentum();
-//    printValue("k",k);
-//    printValue("px",momentum.x());
-//    printValue("py",momentum.y());
-//    printValue("pz",momentum.z());
-//    printValue("e",momentum.t());
-//    printValue("pid",pid);
-    PseudoJet pseudoJet (momentum.x(),momentum.y(),momentum.z(),momentum.t());
-    pseudoJet.set_user_index(pid);
-    pseudoJetsInput.push_back(pseudoJet);
-    //k++;
-    }
-//  printValue("jetRadius",jetRadius);
-//  printValue("jetPtMin",jetPtMin);
-
-  JetDefinition jetDef(antikt_algorithm,jetRadius);
-  ClusterSequence * clusterSequence = new ClusterSequence(pseudoJetsInput, jetDef);
-  std::vector<PseudoJet> clusteredJets = sorted_by_pt( clusterSequence->inclusive_jets(jetPtMin) );
-//printJets (clusteredJets);
-//  printValue("jetRadius",jetRadius);
-//  printValue("clusteredJets.size()",clusteredJets.size());
-  unsigned int iEventFilter = 0;
-  for (auto accepted : _acceptedEventFilters)
-    {
-    if (!accepted)
-      {
-      printString("EVENT NOT ACCEPTED");
-      continue;
-      }
-    unsigned int  baseSingle   = iEventFilter*nJetFilters();
-    for (unsigned int iJetFilter=0; iJetFilter<nJetFilters();iJetFilter++)
-      {
-      int index = baseSingle+iJetFilter;
-      JetHistos & jetHistos = (JetHistos & ) listAt(index);
-      JetSingleHistos & jetSingleHistos = (JetSingleHistos & ) listAt(1,index);
-      JetPairHistos & jetPairHistos     = (JetPairHistos & ) listAt(2,index);
-      for (auto jet : clusteredJets)
+      const JetSettings jetSettings = settings(r);
+      const std::vector<Jet> & jets = JetClustering::jets(theEvent,particleFilters()[p],particles,jetSettings);
+      for (unsigned int j=0; j<nJ; j++)
         {
-        if (jetFilters[iJetFilter]->accept(jet))
-          {
-          jetHistos.fill(jet);
-          jetSingleHistos.fill(jet);
-          jetPairHistos.fill(jet);
-          }
+        accepted.clear();
+        for (const Jet & jet : jets) if (jetFilters()[j]->accept(jet)) accepted.push_back(&jet);
+        for (unsigned int e=0; e<nE; e++)
+          if (_acceptedEventFilters[e]) _folders[folderIndex(e,p,r,j)]->fill(accepted);
         }
       }
-    iEventFilter++;
     }
-  _taskExecuted.increment();;
-  delete clusterSequence;
 }
 
-//!
-//!Jet histograms are scaled by the number of jets accepted - instead of the number of events accepted.
-//!
-void JetAnalyzer::scaleHistograms()
+void JetAnalyzer::scaleHistograms(const std::vector<double> & factors)
 {
-  if (reportStart(__FUNCTION__)) { /* no ops */ };
-
-  for (int iEventFilter=0; iEventFilter<nEventFilters(); iEventFilter++)
-  {
-    unsigned int  baseSingle   = iEventFilter*nJetFilters();
-    for (int iJetFilter=0; iJetFilter<nJetFilters(); iJetFilter++)
-    {
-      int index = baseSingle+iJetFilter;
-      JetHistos & jetHistos = (JetHistos & ) listAt(index);
-      double jetAccepted = jetHistos.acceptedJets();
-      double scale = 1.0;
-      if (jetAccepted>1)
-        scale = 1.0/jetAccepted;
-      jetHistos.scaleHistograms(scale);
-      JetSingleHistos & jetSingleHistos = (JetSingleHistos & ) listAt(1,index);
-      jetSingleHistos.scaleHistograms(scale);
-      JetPairHistos & jetPairHistos     = (JetPairHistos & ) listAt(2,index);
-      jetPairHistos.scaleHistograms(scale);
-    }
-  }
-  if (reportEnd(__FUNCTION__)) {/* no ops */};
+  const unsigned int perEventFilter = nEventFilters()>0 ? _folders.size()/nEventFilters() : 0;
+  for (unsigned int k=0; k<_folders.size(); k++) _folders[k]->normalize(factors.at(k/perEventFilter));
 }
 
-//void JetAnalyzer::printJets (const vector<fastjet::PseudoJet> & jets)
-//{
-//  // sort jets into increasing pt
-//  vector<fastjet::PseudoJet> sorted_jets = sorted_by_pt(jets);
-//
-//  // label the columns
-//  printf("%5s %15s %15s %15s %15s\n","jet #", "rapidity",
-//         "phi", "pt", "n constituents");
-//
-//  // print out the details for each jet
-//  for (unsigned int i = 0; i < sorted_jets.size(); i++)
-//    {
-//    // the following is not super efficient since it creates an
-//    // intermediate constituents vector
-//    int n_constituents = sorted_jets[i].constituents().size();
-//    printf("%5u %15.8f %15.8f %15.8f %8u\n",
-//           i, sorted_jets[i].rap(), sorted_jets[i].phi(),
-//           sorted_jets[i].perp(), n_constituents);
-//  }
-//}
+void JetAnalyzer::finalize()
+{
+  EventProcessor::scaleHistograms();
+  _managedJetFilters.finalize();
+  EventProcessor::finalize();
+}
 
+void JetAnalyzer::saveHistograms(Folder & top)
+{
+  if (!_folders.empty())
+    {
+    Folder * folder = top.folder(name());
+    if (!folder) folder = top.addFolder(name());
+    for (unsigned int k=0; k<_folders.size(); k++) _folders[k]->saveTo(*folder->addFolder(folderName(k)));
+    }
+  EventProcessor::saveHistograms(top);
+}
 
-    //!
-//! Loop on particle filters to setup the jet finder.
-    //!
-    bool JetAnalyzer::filterJets(std::vector< std::vector<Particle*> > acceptedParticles)
-      {
-      bool analyzeEvent = false;
-      for (auto & particles : acceptedParticles)
-        {
-        bool useThisFilter = false;
-        for (auto & particle : particles)
-          {
-          int pid = particle->type().pdgCode();
-          VectorLorentz & momentum = particle->momentum();
-          PseudoJet pseudoJet (momentum.x(),momentum.y(),momentum.z(),momentum.t());
-          pseudoJet.set_user_index(pid);
-          pseudoJetsInput.push_back(pseudoJet);
-          }
-          acceptedParticleFilters[iParticleFilter] = useThisFilter;
-        if (useThisFilter) analyzeEvent = true;
-        iParticleFilter++;
-        }
-      return analyzeEvent;
-      }
-
-
-
-
-
-
-
-
+void JetAnalyzer::makeEmptyHistograms(Folder & top)
+{
+  for (JetHistos * h : _folders) h->create();
+  if (!_folders.empty())
+    {
+    Folder * folder = top.folder(name());
+    if (!folder) folder = top.addFolder(name());
+    for (unsigned int k=0; k<_folders.size(); k++) _folders[k]->saveTo(*folder->addFolder(folderName(k)));
+    }
+}
 
 } // namespace CAP

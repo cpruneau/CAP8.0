@@ -454,6 +454,42 @@ recovers $v_2 = 0.1$ and $v_3 = 0.05$ at all orders up to 8, with a hole in the 
 \end{table*}
 
 % ---------------------------------------------------------------------------------------------------------------
+\subsection{Jets}
+\label{sec:jets}
+
+The module Jets, built when \CAP{} is configured with FastJet~\cite{Cacciari:2011ma}, finds the jets of the events and
+measures their properties. The task \code{JetAnalyzer} clusters the particles accepted by each of its particle filters
+with the anti-$k_T$~\cite{Cacciari:2008gp}, $k_T$ or Cambridge/Aachen algorithm, for each radius $R$ of a list given in
+one run (\code{JET:R}, e.g. \code{0.2, 0.4, 0.6}). The jets kept are those above a minimum transverse momentum
+(\code{JET:PT\_MIN}) and fully inside the acceptance of the particles, $|\eta_{\rm jet}| < \eta_{\max} - R$
+(\code{JET:PARTICLE\_ETA\_MAX}). They are ranked by decreasing $p_T$, the leading jet having rank 1. The jets of an event
+are found once per particle filter and radius, and kept for the event, so that every jet task of the job uses the same
+jets without clustering them again (\code{JetClustering}).
+
+Jet filters (\code{JET\_FILTER}) select the jets, with conditions on their transverse momentum, pseudorapidity,
+azimuth, mass, number of constituents, and rank in the event: the leading jet, the subleading jet, or any range of
+ranks. They are defined in the library of RunCAP, as the event and particle filters, and are created by the task
+\code{JetFilterCreator}. The histograms of \code{JetAnalyzer} fill one folder per event filter, particle filter,
+radius and jet filter, named for instance \code{MB\_Charged\_R0p4\_Leading}. They hold:
+\begin{itemize}
+  \item per event: the number of jets accepted and the scalar sum of their $p_T$ (events without a jet included);
+  \item per jet: $p_T$, $\eta$, $\varphi$, the mass, the numbers of constituents in total and by charge sign
+  ($N$, $N_+$, $N_-$, $N_0$), the net charge, and the jet charge $Q_\kappa = \sum_i q_i\,(p_{T,i}/p_{T,{\rm jet}})^\kappa$;
+  their averages are also profiles versus the jet $p_T$;
+  \item per constituent, in total and by charge sign: the momentum fraction $z = p_{T,i}/p_{T,{\rm jet}}$, the
+  momentum $j_T$ perpendicular to the jet axis, the angle $\theta$ to the axis, the distance $r$ to the axis in rapidity
+  and azimuth, and the transverse momentum profile $\rho(r)$.
+\end{itemize}
+The per-event histograms are normalised by the number of events accepted by the event filter. The per-jet and
+per-constituent histograms characterise the jets themselves: they are normalised by the number of jets of their folder,
+that is of their event filter, particle filter, radius and jet filter, so that a constituent distribution is a
+distribution per jet. The profiles are averages per jet.
+Two further tasks will use the same jets: an analysis of jet pairs (filters on the ranks of the jets, their
+azimuthal separation, acoplanarity, momentum balance and mass), and an analysis of the fluctuations and correlations
+of the multiplicities within the jets ($\avg{N}$, variances and second factorial moments by charge, $R_2$, $\nu_{\rm dyn}$),
+corrected for the underlying event measured in cones transverse to the leading jet.
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Global observables and event shapes}
 \label{sec:global}
 

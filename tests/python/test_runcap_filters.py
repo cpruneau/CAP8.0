@@ -106,7 +106,9 @@ class TestKeys(unittest.TestCase):
     def test_creator(self):
         creator, subs = self.creator()
         self.assertEqual((creator.name, creator.cls), ("FilterCreator", "CAP::FilterCreator"))
-        self.assertEqual([t.cls for t in creator.children], [c for _, c in F.CREATORS.values()])
+        # one subtask per kind; the optional kinds (jet filters) only when the library has objects of the kind
+        self.assertEqual([t.cls for t in creator.children],
+                         [c for k, (_, c) in F.CREATORS.items() if k not in F.OPTIONAL_KINDS])
         e = subs["CAP::EventFilterCreator"]
         self.assertEqual(e["EVENT_FILTER:N"], "2")
         self.assertEqual((e["EVENT_FILTER_0:NAME"], e["EVENT_FILTER_0:OWNER"]), ("MB", "true"))
@@ -426,6 +428,25 @@ class TestKeys(unittest.TestCase):
             if c is not None:
                 self.assertEqual((c.name, c.param("SOURCE_TASK").value), ("ADerived", "A"))
 
+    def test_jet_filters(self):
+        """Jet filters (JET_FILTER, optional module Jets): conditions on the jet and its rank, created by
+        JetFilterCreator only when the library has some, and chosen by a jet analyzer."""
+        lib = library()
+        self.assertEqual(F.subtypes_for("JET_FILTER")["RANK"][1], (F.VALUE, F.RANGE))
+        lib.add(F.FilterDef("JET_FILTER", "Leading", "leading jet", [F.Condition("RANK", F.VALUE, 1, 1),
+                                                                     F.Condition("PT", F.RANGE, 10, 100)]))
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        jets = [t for t in creator.children if t.cls == "CAP::JetFilterCreator"]
+        self.assertEqual(len(jets), 1)
+        v = values(jets[0])
+        self.assertEqual((v["JET_FILTER:N"], v["JET_FILTER_0:NAME"], v["JET_FILTER_0:OWNER"]), ("1", "Leading", "true"))
+        self.assertEqual((v["JET_FILTER_0:CONDITION_0:TYPE"], v["JET_FILTER_0:CONDITION_0:SUBTYPE"]), ("INTEGER", "RANK"))
+        self.assertEqual(v["JET_FILTER_0:CONDITION_1:TYPE"], "DOUBLE_RANGE")
+        self.assertEqual(F.check_library(lib), [])
+        if "CAP::JetAnalyzer" in TEMPLATES:
+            a = task("JetAnalyzer", "Jets")
+            self.assertIn("JET_FILTER", F.task_kinds(a, TEMPLATES))
+
     def test_poi_filters(self):
         """The particles of interest of the flow analysis (POI_FILTER) are particle filters of the library: written as
         the keys of its list, read back, checked against the library, and renamed with the particle filters."""
@@ -475,7 +496,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual((g["EVENT:CREATE"], g["EVENT:USE"], g["EVENT:EXPORT"]), ("true", "false", "true"))
         self.assertEqual((s["EVENT:CREATE"], s["EVENT:USE"]), ("false", "true"))
         self.assertEqual(len([k for k in g if k == "EVENT:USE"]), 1)
-        events = values(copies[0].children[F.KINDS.index("EVENT")])
+        events = values(next(t for t in copies[0].children if t.cls == "CAP::EventCreator"))
         self.assertEqual(events["EVENT:USE"], "true")                    # FilterCreator's list of events
         self.assertEqual(F.check_choices(tasks, library(), TEMPLATES), [])
         gen.param("EVENT:CREATE").value = "false"

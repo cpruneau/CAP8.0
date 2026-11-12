@@ -1,21 +1,23 @@
 ################################################################################################
-# Project CAP/Jets
-################################################################################################
-
-###include(${ROOT_USE_FILE})
-###include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-###add_definitions(${ROOT_CXX_FLAGS})
-
-
-################################################################################################
-# Create a shared library with geneated dictionary
+# Project CAP/Jets: jets found with FastJet (optional module, CAP_WITH_JETS)
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
-add_library(Jets SHARED JetHistos.cpp JetSingleHistos.cpp JetPairHistos.cpp JetHelpers.cpp JetAnalyzer.cpp
-JetHistosDerived.cpp JetSingleHistosDerived.cpp  JetPairHistosDerived.cpp)
+add_library(Jets SHARED
+JetTasks.cpp
+Jet.cpp
+JetClustering.cpp
+JetFilter.cpp
+JetHistos.cpp
+JetAnalyzer.cpp)
 
-target_link_libraries(Jets Base Particles FASTJET_LIB ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
-target_include_directories(Jets PUBLIC Jets Particles Pythia Base Math ${CAP_FASTJET_INCLUDE_PATH}  ${EXTRA_INCLUDES} )
+target_link_libraries(Jets Base Math Particles FASTJET_LIB ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_include_directories(Jets PUBLIC Jets Particles Base Math ${CAP_FASTJET_INCLUDE_PATH} ${EXTRA_INCLUDES} )
 
 install(TARGETS Jets LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 
+################################################################################################
+# Tests (run with ctest in the build directory; not installed)
+################################################################################################
+add_executable(TestJets tests/TestJets.cpp)
+target_link_libraries(TestJets Jets Particles Base Math FASTJET_LIB ${ROOT_LIBRARIES})
+add_test(NAME Jets COMMAND TestJets)
