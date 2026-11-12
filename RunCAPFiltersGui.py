@@ -191,6 +191,22 @@ class FiltersPanel(ttk.Frame):
         self._show_editor()
         self._update_problems()
 
+    def _users_text(self, kind, name):
+        users = self.users(kind, name)
+        return ("Used by " + ", ".join(users)) if users else "Used by no task."
+
+    def refresh_users(self):
+        """Update the "Used by" of the tree and of the object shown, after the tasks chose other objects. The editor is
+        not remade: a field being typed in keeps the focus."""
+        for kind in F.KINDS:
+            for o in self.library.objects[kind]:
+                iid = self._object_id(kind, o.name)
+                if self.tree.exists(iid):
+                    self.tree.set(iid, "used", ", ".join(self.users(kind, o.name)))
+        label = getattr(self, "_users_label", None)
+        if label is not None and label.winfo_exists() and self.selected[0] == "object":
+            label.configure(text=self._users_text(self.selected[1], self.selected[2]))
+
     @staticmethod
     def _object_id(kind, name):
         return "object\t%s\t%s" % (kind, name)
@@ -595,9 +611,8 @@ class FiltersPanel(ttk.Frame):
         title = tk.StringVar(self, value=definition.title)
         ttk.Entry(head, textvariable=title, width=36).pack(side=tk.LEFT, padx=(4, 0), fill=tk.X, expand=True)
         title.trace_add("write", lambda *a: self._set_title(definition, title.get()))
-        users = self.users(kind, definition.name)
-        ttk.Label(frame, text=("Used by " + ", ".join(users)) if users else "Used by no task.",
-                  foreground="gray40").pack(anchor="w", pady=(4, 0))
+        self._users_label = ttk.Label(frame, text=self._users_text(kind, definition.name), foreground="gray40")
+        self._users_label.pack(anchor="w", pady=(4, 0))
         if kind in F.CONDITION_KINDS:
             self._make_conditions(frame, definition)
         else:
@@ -684,8 +699,9 @@ class FiltersPanel(ttk.Frame):
                        lambda e, c=condition, v=selection: self._set(c, "selection", v.get()))
             self._make_fields(row, condition)
         if not definition.conditions:
-            ttk.Label(box, text="No condition: the filter accepts every %s."
-                      % ("event" if kind == "EVENT_FILTER" else "particle"), foreground="gray40").pack(anchor="w")
+            accepted = {"EVENT_FILTER": "event", "JET_FILTER": "jet", "JET_PAIR_FILTER": "jet pair"}.get(kind, "particle")
+            ttk.Label(box, text="No condition: the filter accepts every %s." % accepted,
+                      foreground="gray40").pack(anchor="w")
         add = ttk.Button(frame, text="+ Condition", command=lambda: self._add_condition(definition))
         add.pack(anchor="w", pady=(4, 2))
         if len(definition.conditions) >= MAX_CONDITIONS:

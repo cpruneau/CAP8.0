@@ -1442,9 +1442,9 @@ def run_gui(initial_file=None, hook=None):
             usage = [(t.name, sorted((k, tuple(v)) for k, v in filters.choices(t).items()))
                      for t in self._all_stage_tasks()]
             if usage != getattr(self, "_usage", None):        # tasks chose other objects: "used by" of the pane
-                self._usage = usage
+                self._usage = usage                           # (only the labels: the editor keeps the field typed in)
                 if self.filters_panel is not None:
-                    self.filters_panel.refresh()
+                    self.filters_panel.refresh_users()
             self._update_arrows()
             self._update_stages()
             if message:
