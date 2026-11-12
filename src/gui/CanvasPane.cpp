@@ -863,8 +863,8 @@ namespace CAP
   {
   static const char * tips[] =
     {
-    "Select: click a shape to select it, drag it to move it (or one of its handles to reshape it); "
-    "right-click for its menu, double-click for its properties",
+    ("Select: click a shape to select it, drag it to move it (or one of its handles to reshape it); "
+     "right-click for its menu, double-click for its properties"),
     "Rectangle: drag in a graph (Shift: square)",
     "Oval: drag in a graph (Shift: circle)",
     "Triangle: drag in a graph (Shift: as wide as high)",
@@ -922,7 +922,7 @@ namespace CAP
     }
   }
 
-  bool CanvasPane::handleDrawing(ImGuiPainter & painter, bool hovered, int k, const Point2D & p)
+  bool CanvasPane::handleDrawing(ImGuiPainter & /*painter*/, bool hovered, int k, const Point2D & p)
   {
   ImGuiIO & io = ImGui::GetIO();
   bool polygon = _tool == kPolygonTool;

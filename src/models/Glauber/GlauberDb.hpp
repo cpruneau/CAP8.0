@@ -102,7 +102,7 @@ namespace CAP
   //! @brief Configure the database: its file, \<taskName\>:\<objectType\>_\<index\>:FILE (see the class description).
   //! @param taskName task @param objectType type (DB) @param configuration configuration @param index index
   virtual void configure(const String & taskName, const String & objectType, const Configuration & configuration,
-                         unsigned int index);
+                         unsigned int index) override;
   //! @brief Set the file of the database (read when a nucleus is first looked for). @param fileName file ("NONE":
   //! the built-in table; relative paths are taken in $CAP_DATABASE_PATH)
   void setFileName(const String & fileName) { _fileName = fileName; _loaded = false; }

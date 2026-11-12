@@ -38,7 +38,9 @@ HerwigTasks.cpp
 HerwigEventGenerator.cpp)
 target_link_libraries(Herwig Base Particles "${CAP_HERWIG_API_LIBRARY}" "${CAP_THEPEG_LIBRARY}"
                       ${EXTRA_LIBS})
-target_include_directories(Herwig PUBLIC Base Particles Herwig ${CAP_HERWIG_INCLUDE_DIRS} ${EXTRA_INCLUDES})
+target_include_directories(Herwig PUBLIC Base Particles Herwig ${EXTRA_INCLUDES})
+# ThePEG, Herwig, GSL and Boost headers: external, their warnings are not shown
+target_include_directories(Herwig SYSTEM PUBLIC ${CAP_HERWIG_INCLUDE_DIRS})
 # ThePEG/Config/std.h has "using std::mem_fun;", which C++17 removed: libc++ (macOS) declares it again with this macro
 # (libstdc++ still has it, deprecated). ThePEG and Herwig themselves are compiled as C++14.
 target_compile_definitions(Herwig PRIVATE _LIBCPP_ENABLE_CXX17_REMOVED_BINDERS)
@@ -52,7 +54,16 @@ if(APPLE)
   if(CAP_HAVE_NO_TYPED_NEW)
     target_compile_options(Herwig PRIVATE -fno-typed-cxx-new-delete)
   endif()
-  target_link_libraries(Herwig c++)
+  # -lc++ for libHerwig only (not passed on to the programs linking it); the compiler adds -lc++ as well, and Apple's
+  # linker would warn about the duplicate
+  target_link_options(Herwig PRIVATE -lc++)
+  include(CheckCXXSourceCompiles)
+  set(CMAKE_REQUIRED_LINK_OPTIONS "-Wl,-no_warn_duplicate_libraries")
+  check_cxx_source_compiles("int main() { return 0; }" CAP_HAVE_NO_WARN_DUPLICATE_LIBRARIES)
+  unset(CMAKE_REQUIRED_LINK_OPTIONS)
+  if(CAP_HAVE_NO_WARN_DUPLICATE_LIBRARIES)
+    target_link_options(Herwig PRIVATE -Wl,-no_warn_duplicate_libraries)
+  endif()
   # the libraries of Herwig are found where they are installed, from the build and the installed CAP
   set_target_properties(Herwig PROPERTIES BUILD_RPATH "${CAP_HERWIG_DIR}/lib/ThePEG;${CAP_HERWIG_DIR}/lib/Herwig;${CAP_HERWIG_DIR}/lib"
                                           INSTALL_RPATH "${CAP_HERWIG_DIR}/lib/ThePEG;${CAP_HERWIG_DIR}/lib/Herwig;${CAP_HERWIG_DIR}/lib")

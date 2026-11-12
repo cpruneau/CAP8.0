@@ -19,8 +19,10 @@
 #include "imgui_internal.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-//! Silence the deprecation warnings of OpenGL on macOS.
+//! Silence the deprecation warnings of OpenGL on macOS (also defined by CMake for CapImGui).
+#ifndef GL_SILENCE_DEPRECATION
 #define GL_SILENCE_DEPRECATION
+#endif
 #include <GLFW/glfw3.h>
 #include "CapGui.hpp"
 #include "CanvasRegistry.hpp"

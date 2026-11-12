@@ -11,6 +11,8 @@
 # The core modules (Base, Math, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
 # ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen) are always built.
 ################################################################################################
+cmake_minimum_required(VERSION 3.13)   # 3.13: target_link_options()
+
 option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
 option(CAP_WITH_GRAPHICS     "Build the Graphics module (2D drawing; macOS window and demo)"  ON)
@@ -34,14 +36,11 @@ set(CAP_SHERPA_DIR  "" CACHE PATH "Sherpa installation prefix")
 set(CAP_THERMALFIST_DIR "" CACHE PATH "Thermal-FIST directory (the source tree, holding include/HRGBase.h)")
 
 if(APPLE)
-    cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
     set (CMAKE_OSX_DEPLOYMENT_TARGET "26.0" CACHE STRING "Minimum OS X deployment version" FORCE)
     project(CAP VERSION 1.0 DESCRIPTION "Correlation Analysis Package" LANGUAGES CXX)
 #    set (CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Architectures" FORCE)
 #    set (CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET[arch=arm64] "11.0" CACHE STRING "arm 64 minimum deployment target" FORCE)
 else()
- cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
- cmake_policy(SET CMP0048 NEW)
  project(CAP DESCRIPTION "Correlation Analysis Package" LANGUAGES CXX)
 endif()
 
@@ -229,7 +228,7 @@ if(CAP_WITH_JETS)
     message(FATAL_ERROR "FastJet: no libfastjet in ${CAP_FASTJET_DIR}/lib (is FastJet built and installed?)")
   endif()
   set(CAP_FASTJET_INCLUDE_PATH "${CAP_FASTJET_DIR}/include")
-  include_directories("${CAP_FASTJET_INCLUDE_PATH}")   # also needed by rootcling for the dictionary
+  include_directories(SYSTEM "${CAP_FASTJET_INCLUDE_PATH}")   # external headers: their warnings are not shown
   add_library(FASTJET_LIB SHARED IMPORTED)
   set_target_properties(FASTJET_LIB PROPERTIES IMPORTED_LOCATION "${CAP_FASTJET_LIBRARY}"
                         INTERFACE_INCLUDE_DIRECTORIES "${CAP_FASTJET_INCLUDE_PATH}")
@@ -249,7 +248,7 @@ if(CAP_WITH_PYTHIA8)
     message(FATAL_ERROR "Pythia8: no libpythia8 in ${CAP_PYTHIA8_DIR}/lib (is Pythia8 built?)")
   endif()
   set(CAP_PYTHIA8_INCLUDE_PATH "${CAP_PYTHIA8_DIR}/include")
-  include_directories("${CAP_PYTHIA8_INCLUDE_PATH}" "${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8")   # also for rootcling
+  include_directories(SYSTEM "${CAP_PYTHIA8_INCLUDE_PATH}" "${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8")   # external headers
   add_library(PYTHIA8_LIB SHARED IMPORTED)
   set_target_properties(PYTHIA8_LIB PROPERTIES IMPORTED_LOCATION "${CAP_PYTHIA8_LIBRARY}"
                         INTERFACE_INCLUDE_DIRECTORIES "${CAP_PYTHIA8_INCLUDE_PATH};${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8")
@@ -263,7 +262,7 @@ if(CAP_WITH_HERWIG)
                      BUNDLED "../Herwig/install" "Herwig*" "herwig*" "external/Herwig*" "external/herwig*" ENV CAP_HERWIG_PATH HERWIG_DIR
                      TOOL Herwig-config)
   if(EXISTS "${CMAKE_SOURCE_DIR}/models/Herwig/CMakeLists.txt")
-    include_directories("${CAP_HERWIG_DIR}/include")
+    include_directories(SYSTEM "${CAP_HERWIG_DIR}/include")   # external headers: their warnings are not shown
     add_subdirectory(models/Herwig)
     list(APPEND CAP_LINKED_MODULES Herwig)
     list(APPEND CAP_OPTIONAL_BUILT "Herwig (Herwig: ${CAP_HERWIG_DIR})")

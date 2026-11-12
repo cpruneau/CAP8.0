@@ -127,8 +127,8 @@ int main()
   for (unsigned int i = 0; i < n; i++) samples.push_back(makeSample(random, h[i], s[i]));
   std::vector<const Folder *> pointers;
   for (auto & f : samples) pointers.push_back(&f);
-  double W = 0.0, W2 = 0.0;
-  for (double x : w) { W += x; W2 += x * x; }
+  double W = 0.0;
+  for (double x : w) W += x;
 
   // --- SUBSAMPLE: weighted average and uncertainty of the mean
   Folder mean;

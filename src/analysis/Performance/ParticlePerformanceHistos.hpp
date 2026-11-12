@@ -87,16 +87,16 @@ public:
   virtual void configure(const String& taskName,
                                const String & objectType,
                                const Configuration & configuration,
-                               unsigned int index);
+                               unsigned int index) override;
   //! @brief Create the base histograms (according to the fill options).
-  virtual void create();
+  virtual void create() override;
   //! @brief Create the derived histograms (according to the fill options), empty; see calculateDerived().
   virtual void createDerived();
   //! @brief Whether the derived histograms exist (createDerived(), or read from a file). @return true if they do
   bool hasDerived() const { return h_eff[kPt]!=nullptr; }
   //! @brief Load the base histograms from a folder of a file, and the derived histograms if the folder has them.
   //! @param inputFile folder
-  virtual void loadFrom(const Folder & inputFile);
+  virtual void loadFrom(const Folder & inputFile) override;
   //! @brief Load the derived histograms from a folder of a file, if it has all of them (they are there once a derived
   //! calculator computed them); otherwise none is loaded, and no exception is thrown. @param inputFile folder
   virtual void loadDerivedFrom(const Folder & inputFile);

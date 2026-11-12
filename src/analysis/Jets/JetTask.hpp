@@ -187,6 +187,7 @@ public:
   EventProcessor::finalize();
   }
 
+  using EventProcessor::scaleHistograms;   // the other overloads stay visible
   //! @brief Normalize the folders of each event filter. @param factors factors (1/number of events)
   virtual void scaleHistograms(const std::vector<double> & factors) override
   {

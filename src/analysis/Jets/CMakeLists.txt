@@ -17,7 +17,8 @@ JetFluctuationHistos.cpp
 JetFluctuationAnalyzer.cpp)
 
 target_link_libraries(Jets Base Math Particles FASTJET_LIB ${EXTRA_LIBS} )
-target_include_directories(Jets PUBLIC Jets Particles Base Math ${CAP_FASTJET_INCLUDE_PATH} ${EXTRA_INCLUDES} )
+target_include_directories(Jets PUBLIC Jets Particles Base Math ${EXTRA_INCLUDES} )
+target_include_directories(Jets SYSTEM PUBLIC ${CAP_FASTJET_INCLUDE_PATH})
 
 install(TARGETS Jets LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 

@@ -88,7 +88,7 @@ public:
   //! @brief Read the conditions. @param ownerName owner @param typeName JET_PAIR_FILTER @param configuration
   //! configuration @param index index of the filter @throws FilterException for an unknown type or quantity
   virtual void configure(const String & ownerName, const String & typeName, const Configuration & configuration,
-                         unsigned int index);
+                         unsigned int index) override;
   //! @brief Quantity of a SUBTYPE (kNone if unknown). @param subtype name @return quantity
   static JetPairFilterType typeOf(const String & subtype);
 };

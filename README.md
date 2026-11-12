@@ -2,7 +2,7 @@
  Correlation Analysis Package
 
 # Prerequisites
-- `cmake` (3.5 or later), `make` and a C++17 compiler. CAP does not need ROOT.
+- `cmake` (3.13 or later), `make` and a C++17 compiler. CAP does not need ROOT.
 - Optional: `PYTHIA8` (Pythia event generator, `-DCAP_WITH_PYTHIA8=ON`), with its location in
  ```
  export PYTHIA8=<your_pythia8_directory>
