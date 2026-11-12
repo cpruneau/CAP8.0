@@ -551,9 +551,7 @@ class FilterLibrary:
         """Keep the first n objects of a kind, or add new ones (named after the kind) up to n."""
         items = self.objects[kind]
         del items[n:]
-        base = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "EVENT_EFFICIENCY": "EventEfficiency",
-                "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
-                "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}[kind]
+        base = TAG_OF_KIND[kind]   # new objects are named EventFilter0, JetFilter0, ...
         k = 0
         while len(items) < n:
             name = "%s%d" % (base, k)
