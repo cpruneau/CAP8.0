@@ -11,7 +11,7 @@
  * *********************************************************************/
 #include "GlauberNucleon.hpp"
 #include "PrintHelpers.hpp"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 
 
 namespace CAP
@@ -284,18 +284,18 @@ namespace CAP
   
   void GlauberNucleon::setRndmPositionInCube(double halfSize)
   {
-  double x = halfSize*(2.0*gRandom->Rndm()-1);
-  double y = halfSize*(2.0*gRandom->Rndm()-1);
-  double z = halfSize*(2.0*gRandom->Rndm()-1);
+  double x = halfSize*(2.0*CAP::MATH::randomGenerator().random()-1);
+  double y = halfSize*(2.0*CAP::MATH::randomGenerator().random()-1);
+  double z = halfSize*(2.0*CAP::MATH::randomGenerator().random()-1);
   _position.setTXYZ(0.0,x,y,z);
   }
   
   void GlauberNucleon::setRndmPositionInSphere(double maxRadiusSq)
   {
-  double phi    = twoPi()*gRandom->Rndm();
-  double cosTh  = 2.0*gRandom->Rndm()-1.0;
+  double phi    = twoPi()*CAP::MATH::randomGenerator().random();
+  double cosTh  = 2.0*CAP::MATH::randomGenerator().random()-1.0;
   double sinTh  = std::sqrt(1.0-cosTh*cosTh);
-  double r      = std::sqrt(maxRadiusSq)*gRandom->Rndm();
+  double r      = std::sqrt(maxRadiusSq)*CAP::MATH::randomGenerator().random();
   double rSinTh = r*sinTh;
   double x      = rSinTh*std::cos(phi);
   double y      = rSinTh*std::sin(phi);
@@ -311,8 +311,8 @@ namespace CAP
   
   void GlauberNucleon::setRndmPositionInSphere(NuclearDistribution & d)
   {
-  double phi    = twoPi()*gRandom->Rndm();
-  double cosTh  = 2.0*gRandom->Rndm()-1.0;
+  double phi    = twoPi()*CAP::MATH::randomGenerator().random();
+  double cosTh  = 2.0*CAP::MATH::randomGenerator().random()-1.0;
   double sinTh  = std::sqrt(1.0-cosTh*cosTh);
   double r      = d.random();
   double rSinTh = r*sinTh;

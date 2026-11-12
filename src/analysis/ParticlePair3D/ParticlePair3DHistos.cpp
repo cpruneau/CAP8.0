@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "ParticlePair3DHistos.hpp"
 #include "Exceptions.hpp"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 #include "MathConstants.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
@@ -711,7 +711,7 @@ namespace CAP
 
     for (int iParticle1=0; iParticle1<nPart1; iParticle1++)
       {
-      phi1 = CAP::MATH::twoPi() * gRandom->Rndm();
+      phi1 = CAP::MATH::twoPi() * CAP::MATH::randomGenerator().random();
       part1_ptY->random(y1,pt1);
       h_n1_1_pt_mc->fill(pt1);
       h_n1_1_y_mc->fill(y1);
@@ -724,7 +724,7 @@ namespace CAP
       {
       for (int iParticle2=0; iParticle2<nPart2; iParticle2++)
         {
-        phi2 = CAP::MATH::twoPi() * gRandom->Rndm();
+        phi2 = CAP::MATH::twoPi() * CAP::MATH::randomGenerator().random();
         part2_ptY->random(y2,pt2);
         h_n1_2_pt_mc->fill(pt2);
         h_n1_2_y_mc->fill(y2);

@@ -15,7 +15,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 #include "ClosureCalculator.hpp"
 #include "ClosureIterator.hpp"
 #include "CapFile.hpp"
@@ -85,7 +85,7 @@ Histogram * histogram(const char * name, const std::vector<double> & values)
 
 int main()
 {
-  gRandom->SetSeed(4357);
+  CAP::MATH::randomGenerator().setSeed(4357);
   ParticleType pion;
   pion.setName("pi+"); pion.setCharge(1.0); pion.setPdgCode(211); pion.setMass(0.13957);
   const double mass = 0.13957, genPt = 1.5, genEta = 0.5;
@@ -138,7 +138,7 @@ int main()
   for (unsigned int k=0; k<n; k++)
     {
     histos.fillGenerated(gen[k],1.0);
-    if (gRandom->Rndm() > 0.8) continue;
+    if (CAP::MATH::randomGenerator().random() > 0.8) continue;
     histos.fill(reco[k],1.0);
     detected++;
     }

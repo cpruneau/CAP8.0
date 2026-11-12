@@ -12,7 +12,6 @@
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
-#include "TRandom.h"
 #include "Exceptions.hpp"
 #include "EventEfficiency.hpp"
 #include "EventSmearer.hpp"

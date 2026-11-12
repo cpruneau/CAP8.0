@@ -1,8 +1,8 @@
+#include "FileListing.hpp"
 #include "Exceptions.hpp"
 #include "FileSystem.hpp"
 #include "LatexDocument.hpp"
 #include "PrintHelpers.hpp"
-#include "RootFileHelpers.hpp"
 #include "StreamHelpers.hpp"
 #include <iostream>
 

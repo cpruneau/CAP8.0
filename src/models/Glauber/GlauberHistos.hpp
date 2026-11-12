@@ -11,7 +11,6 @@
  * *********************************************************************/
 #ifndef CAP__GlauberHistos
 #define CAP__GlauberHistos
-#include "TObject.h"
 #include "Task.hpp"
 #include "Exceptions.hpp"
 #include "ManagedObjects.hpp"

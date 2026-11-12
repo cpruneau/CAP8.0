@@ -11,7 +11,6 @@
  * *********************************************************************/
 #ifndef CAP__GlauberPlotter
 #define CAP__GlauberPlotter
-#include "TObject.h"
 
 namespace CAP
 {

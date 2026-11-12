@@ -6,11 +6,16 @@
 ################################################################################################
 # Create a shared library with geneated dictionary
 ################################################################################################
-add_library(Pythia SHARED
-PythiaTasks.cpp
-PythiaEventGenerator.cpp
-PythiaEventReader.cpp)
-target_link_libraries(Pythia  Base  Helpers  Particles  PYTHIA8_LIB  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+# PythiaEventReader reads Pythia events stored in ROOT trees: built only with CAP_WITH_ROOT
+set(CAP_PYTHIA_SOURCES PythiaTasks.cpp PythiaEventGenerator.cpp)
+if(CAP_WITH_ROOT)
+  list(APPEND CAP_PYTHIA_SOURCES PythiaEventReader.cpp)
+endif()
+add_library(Pythia SHARED ${CAP_PYTHIA_SOURCES})
+target_link_libraries(Pythia  Base  Particles  PYTHIA8_LIB  ${EXTRA_LIBS} )
+if(CAP_WITH_ROOT)
+  target_link_libraries(Pythia Helpers ${ROOT_LIBRARIES})
+endif()
 target_include_directories(Pythia  PUBLIC  Base  Particles Pythia "${CAP_PYTHIA8_INCLUDE_PATH}" "${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8"
  ${EXTRA_INCLUDES})
 

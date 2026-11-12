@@ -7,6 +7,7 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
+#include "FileListing.hpp"
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -19,7 +20,6 @@
 #include "NameHelpers.hpp"
 #include "Exceptions.hpp"
 #include "CapFile.hpp"
-#include "RootFileHelpers.hpp"
 #include "ManagedObjects.hpp"
 #include "WorkflowHistograms.hpp"
 #include "XmlDocument.hpp"

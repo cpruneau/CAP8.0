@@ -2,22 +2,21 @@
  Correlation Analysis Package
 
 # Prerequisites
-- Valid `PYTHIA8` installation
-- Valid `FastJet` installation
-- Valid `root` installation built with `PYTHIA8` support
-- Environment variable for `PYTHIA8` location
+- `cmake` (3.5 or later), `make` and a C++17 compiler. CAP does not need ROOT.
+- Optional: `PYTHIA8` (Pythia event generator, `-DCAP_WITH_PYTHIA8=ON`), with its location in
  ```
  export PYTHIA8=<your_pythia8_directory>
  ```
-- Environment variable for `FastJet` location
+- Optional: `FastJet` (jet analysis, `-DCAP_WITH_JETS=ON`), with its location in
  ```
  export FASTJET=<your_fastjet_directory>
  ```
-- `root` environment activated with
+- Optional: `root` (`-DCAP_WITH_ROOT=ON`: `.root` histogram files in CapGui and `bin/CapRootConvert`, the Epos and
+  Pythia readers of ROOT event trees), activated with
  ```
  source <your_root_install_path>/bin/thisroot.sh
  ```
-- massive storage path (for massive storage of `root` files)
+- massive storage path (for massive storage of output files)
  ```
  export CAP_LARGE_DATA=<your_massive_storage_path>
  ```

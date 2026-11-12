@@ -1,14 +1,8 @@
 #include "ThermalHistos.hpp"
-#include "RootConversion.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
-#include "TCanvas.h"
-#include "TLine.h"
-#include "TArrow.h"
-#include "TFrame.h"
-#include "TStyle.h"
 #include "ParticleDb.hpp"
 #include "ThermalHadron.hpp"
 #include "ThermalHadronGas.hpp"
@@ -16,30 +10,6 @@
 
 namespace CAP
 {
-  TLine * createLine(float x1, float y1, float x2, float y2, int style, int color, int width, bool doDraw)
-  {
-  TLine *line = new TLine(x1,y1,x2,y2);
-  line->SetLineStyle(style);
-  line->SetLineColor(color);
-  line->SetLineWidth(width);
-  if (doDraw) line->Draw();
-  return line;
-  }
-  
-  //!
-  //!Create Arrow Line
-  //!
-  TArrow * createArrow(float x1, float y1, float x2, float y2, float arrowSize, Option_t* option, int style, int color, int width, bool doDraw)
-  {
-  TArrow *line = new TArrow(x1,y1,x2,y2,arrowSize,option);
-  line->SetLineStyle(style);
-  line->SetLineColor(color);
-  line->SetLineWidth(width);
-  line->SetFillColor(color);
-  
-  if (doDraw) line->Draw();
-  return line;
-  }
   
   
   
@@ -352,66 +322,6 @@ namespace CAP
     }
   }
   
-  void ThermalHistos::drawMassSpectrum(const ThermalHadronGas & thermalGas)
-  {
-  gStyle->SetPalette(1,0);
-  gStyle->SetOptStat(0);
-  gStyle->SetOptFit(0);
-  gStyle->SetOptDate(0);
-  gStyle->SetOptTitle(0);
-  gStyle->SetPadBorderMode(0);
-  Double_t w = 4000;
-  Double_t h = 4000;
-  auto c = new TCanvas("c", "c", w, h);
-  c->SetCanvasSize(4000, 4000);
-  //c->SetWindowSize(2000, 500);
-  double parentMass;
-  double daughterMass;
-  TH1 * diagRoot = toRootHistogram(*diag);   // ROOT copy, drawn as the frame of the diagram
-  diagRoot->SetMinimum(0.0);
-  diagRoot->SetMaximum(2.2);
-//  diagRoot->GetXaxis()->SetTicklength(0); // Removes tick marks
-//  diagRoot->GetXaxis()->SetLabelOffset(999); //
-//  diagRoot->GetYaxis()->SetTitleOffset(1.3); //
-  diagRoot->Draw();
-  double _position = 0.5;
-  const std::vector<ThermalHadron> & hadrons = thermalGas.hadrons();
-  
-  unsigned int k = 0;
-  for (auto & hadron : hadrons)
-    {
-    _position = 6.0*(double(k)-200.0) + 2.5;
-    parentMass = hadron.type().mass();
-    createLine(0.0, parentMass, 333.0, parentMass, 1, 1, 1, true);
-    if (hadron.type().isStable() || parentMass>2.0) continue;
-    k++;
-    if (k<200 || k>250) continue;
-    const std::vector<ParticleDecayMode> & decayModes = hadron.type().decayModes();
-    
-    for (auto & decayMode : decayModes)
-      {
-      const vector<int> & childrenCodes = decayMode.childrenPdgCodes();
-      for (auto & childCode : childrenCodes)
-        {
-        if (childCode == 22) continue; // dont care about photons
-        const ThermalHadron & childHadron = thermalGas.findHadronFor(childCode);
-        daughterMass = childHadron.type().mass();
-        double massDif = parentMass - daughterMass;
-        if (massDif>0.1  &&  daughterMass>0)
-          {
-          //createArrow(float x1, float y1, float x2, float y2, float arrowSize, Option_t* option, int style, int color, int width, bool doDraw)
-          if (massDif<0.5) createArrow(_position, parentMass, _position, daughterMass, 0.004, "|>", 1, 1, 1,true);
-          else if (massDif<1.0) createArrow(_position, parentMass, _position, daughterMass, 0.004, "|>", 1, 2, 1,true);
-          else if (massDif<1.5) createArrow(_position, parentMass, _position, daughterMass, 0.004, "|>", 2, 4, 1,true);
-          else if (massDif<2.0) createArrow(_position, parentMass, _position, daughterMass, 0.004, "|>", 2, 6, 1,true);
-          else  createArrow(_position, parentMass, _position, daughterMass, 0.004, "|>", 1, 7, 1,true);
-          }
-        _position += 1.0;
-        }
-      }
-    }
-  c->Print("./MassDecay.pdf");
-  }
   
   
 } // namespace CAP

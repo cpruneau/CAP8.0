@@ -2,9 +2,6 @@
 # Project CAP/ParticleSingle
 ################################################################################################
 
-#include(${ROOT_USE_FILE})
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-#add_definitions(${ROOT_CXX_FLAGS})
 
 
 
@@ -15,10 +12,9 @@ add_compile_options(-Wall -Wextra -pedantic)
 add_library(ParticleSingle SHARED
 ParticleSingleTasks.cpp   ParticleSingleHistos.cpp  ParticleSingleAnalyzer.cpp )
 
-message(STATUS "ROOT_LIBRARIES: ${ROOT_LIBRARIES}")
 message(STATUS "EXTRA_LIBS: ${EXTRA_LIBS}")
 message(STATUS "EXTRA_INCLUDES: ${EXTRA_INCLUDES}")
-target_link_libraries(ParticleSingle Base   Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(ParticleSingle Base   Particles  ${EXTRA_LIBS} )
 target_include_directories(ParticleSingle  PUBLIC Base    Particles ParticleSingle ${EXTRA_INCLUDES} )
 
 # optimization for big histogram access within the pair inner loop

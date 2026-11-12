@@ -11,7 +11,7 @@
  * *********************************************************************/
 #include "GlauberExceptions.hpp"
 #include "NuclearDistribution.hpp"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 #include <algorithm>
 #include "PrintHelpers.hpp"
 using namespace std;
@@ -239,10 +239,10 @@ namespace CAP
   {
   if (!_radiusGen) createHistogram();
   // radius distributed as the histogram (uniform within the chosen bin), using the cumulative sums computed once
-  double u = gRandom->Rndm()*_cumulative.back();
+  double u = CAP::MATH::randomGenerator().random()*_cumulative.back();
   unsigned int k = std::upper_bound(_cumulative.begin(),_cumulative.end(),u) - _cumulative.begin();
   if (k>=_cumulative.size()) k = _cumulative.size()-1;
-  return _radiusGen->binLowEdge(k,0) + gRandom->Rndm()*_radiusGen->binWidth(k,0);
+  return _radiusGen->binLowEdge(k,0) + CAP::MATH::randomGenerator().random()*_radiusGen->binWidth(k,0);
   }
 
   void NuclearDistribution::reset()

@@ -158,7 +158,7 @@ namespace CAP
   Listing & l = _listings[directory];
   // sub-directories and CAP files (and ROOT files when CapGui reads them), directories first, by name (case-insensitive); hidden entries left out
   FileSystem::ListOptions options;
-#ifdef CAP_WITH_ROOT_FILES
+#ifdef CAP_WITH_ROOT
   options.extensions = { ".cap", ".root" };
 #else
   options.extensions = { ".cap" };

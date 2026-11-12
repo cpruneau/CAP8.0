@@ -11,7 +11,7 @@
  * *********************************************************************/
 #include "GlauberExceptions.hpp"
 #include "PTotProfile.hpp"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -98,7 +98,7 @@ namespace CAP
   // was: return 0; (not implemented)
   if (_cdf.empty()) throw Exception("Parameters not set (or invalid): call setParameters() first",__FUNCTION__);
   const unsigned int n = _cdf.size()-1;
-  double r = gRandom->Rndm();
+  double r = CAP::MATH::randomGenerator().random();
   unsigned int k = std::upper_bound(_cdf.begin(),_cdf.end(),r) - _cdf.begin();   // _cdf[k-1] <= r < _cdf[k]
   if (k<1) k = 1;
   if (k>n) k = n;

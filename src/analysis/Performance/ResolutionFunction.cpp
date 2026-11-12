@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "ResolutionFunction.hpp"
 #include "PrintHelpers.hpp"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 #include "Exceptions.hpp"
 
 
@@ -97,9 +97,9 @@ double ResolutionFunction::smear(double pt, double eta, double phi, double & out
 //    }
   switch (option)
     {
-      case 0: output = gRandom->Gaus(pt+bias,rms);  break;
-      case 1: output = gRandom->Gaus(eta+bias,rms); break;
-      case 2: output = gRandom->Gaus(phi+bias,rms); break;
+      case 0: output = CAP::MATH::randomGenerator().gauss(pt+bias,rms);  break;
+      case 1: output = CAP::MATH::randomGenerator().gauss(eta+bias,rms); break;
+      case 2: output = CAP::MATH::randomGenerator().gauss(phi+bias,rms); break;
     }
   return output;
 }

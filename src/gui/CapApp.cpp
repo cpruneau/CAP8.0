@@ -18,7 +18,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "FileSystem.hpp"
-#ifdef CAP_WITH_ROOT_FILES
+#ifdef CAP_WITH_ROOT
 #include "RootFileConversion.hpp"
 #endif
 #include "CapApp.hpp"
@@ -498,7 +498,7 @@ namespace CAP
     for (const auto & e : _configuration.extensions)
       {
       bool root = FileSystem::hasExtension(String("x") + e, ".root");
-#ifndef CAP_WITH_ROOT_FILES
+#ifndef CAP_WITH_ROOT
       if (root) continue;                                // ROOT files not supported: not offered
 #endif
       if (root || FileSystem::hasExtension(String("x") + e, ".cap")) types.push_back(e);
@@ -694,7 +694,7 @@ namespace CAP
   {
   try
     {
-#ifdef CAP_WITH_ROOT_FILES
+#ifdef CAP_WITH_ROOT
     if (FileSystem::hasExtension(path, ".root"))
       {
       auto file = std::make_shared<CapFile>(String(""), File::kReadWrite);
@@ -800,7 +800,7 @@ namespace CAP
   browser.onRemove     = [this](int file, const String & path) { removeEntry(file, path); };
   browser.onSaveTree   = [this](int file) { saveTree(file, true); };
   browser.onDuplicate  = [this](int file, const String & path) { duplicateEntry(file, path); };
-#ifdef CAP_WITH_ROOT_FILES
+#ifdef CAP_WITH_ROOT
   browser.onExportRoot = [this](int file, const String & path) { exportRoot(file, path); };
 #endif
   browser.onSaveCopy   = [this](int file, const String & path) { saveCopy(file, path); };
@@ -1086,7 +1086,7 @@ namespace CAP
   return false;
   }
 
-#ifdef CAP_WITH_ROOT_FILES
+#ifdef CAP_WITH_ROOT
   void CapApp::exportRoot(int target, const String & folderPath)
   {
   BrowserFile * entry = file(target);

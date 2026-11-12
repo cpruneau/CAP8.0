@@ -11,7 +11,6 @@
 //! @brief Dictionaries of the creators of filters, efficiencies and smearers, and FilterCreator.
 #include "ObjectCreator.hpp"
 
-templateClassImp(CAP::ObjectCreator);
 
 namespace CAP
 {

@@ -13,7 +13,8 @@
 #include "MathConstants.hpp"
 #include "NNProfile.hpp"
 #include "PrintHelpers.hpp"
-#include "TMath.h"
+#include <cmath>
+#include "Distributions.hpp"
 using namespace std;
 using CAP::MATH::pi;
 using CAP::MATH::twoPi;
@@ -82,7 +83,7 @@ namespace CAP
     return p;
     }
   else // otherwise use the Gamma formula from RybczyRybczynski et al.
-    return _g*(1-TMath::Gamma(_omegaInv,_gOverOmegaR2*x*x));
+    return _g*(1-CAP::MATH::Distributions::regularizedGammaP(_omegaInv,_gOverOmegaR2*x*x));
   }
 
   //!

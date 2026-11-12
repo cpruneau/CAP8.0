@@ -2,9 +2,6 @@
 # Project CAP/ParticlePair
 ################################################################################################
 
-#include(${ROOT_USE_FILE})
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-#add_definitions(${ROOT_CXX_FLAGS})
 
 
 ################################################################################################
@@ -17,7 +14,7 @@ ParticlePairAnalyzer.cpp
 ParticlePairHistos.cpp
 ParticlePairBFHistos.cpp)
 
-target_link_libraries(ParticlePair Base   Particles ParticleSingle ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(ParticlePair Base   Particles ParticleSingle ${EXTRA_LIBS} )
 target_include_directories(ParticlePair  PUBLIC Base Particles ParticleSingle ParticlePair ${EXTRA_INCLUDES} )
 
 # optimization for big histogram access within the pair inner loop

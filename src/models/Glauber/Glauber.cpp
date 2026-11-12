@@ -234,7 +234,7 @@ bool GlauberMC::calculateEvent(double impactPar)
       if (dij>d2) continue;
       double bij = TMath::Sqrt(dij);
       double val = fNNProf->Eval(bij);
-      double ran = gRandom->Uniform();
+      double ran = CAP::MATH::randomGenerator().random();
       if (ran>val) continue;
       nucleonB->collide();
       nucleonA->collide();
@@ -522,7 +522,7 @@ bool GlauberMC::CalcResults(double impactPar)
     TF1 rad("rad","2*pi/[0]/[0]*TMath::Exp(-x*x/(2.*[0]*[0]))",0.0,5*ksg); 
     rad.setParameter(0,ksg);
     const double minval = rad.Eval(5*ksg);
-    eventStat.Phi0         = gRandom->Uniform(0,TMath::TwoPi());
+    eventStat.Phi0         = CAP::MATH::randomGenerator().uniform(0,TMath::TwoPi());
     double kcphi0  = TMath::Cos(eventStat.Phi0);
     double ksphi0  = TMath::Sin(eventStat.Phi0);
     double x       = eventStat.X0;
@@ -649,7 +649,7 @@ TObjArray *GlauberMC::allNucleons()
 
 bool GlauberMC::nextEvent(double impactPar)
 {
-  if (impactPar<0) impactPar = TMath::Sqrt((_impactParMax*_impactParMax-_impactParMin*_impactParMin)*gRandom->Rndm()+_impactParMin*_impactParMin);
+  if (impactPar<0) impactPar = TMath::Sqrt((_impactParMax*_impactParMax-_impactParMin*_impactParMin)*CAP::MATH::randomGenerator().random()+_impactParMin*_impactParMin);
   _nucleusA.generateNucleons(-impactPar/2.);
   _nucleusB.generateNucleons(impactPar/2.);
   return calculateEvent(impactPar);

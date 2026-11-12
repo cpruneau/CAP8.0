@@ -14,7 +14,7 @@
 #include "GlauberHistos.hpp"
 #include "MathBasicFunctions.hpp"
 #include "NuclearDistribution.hpp"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 
 
 namespace CAP
@@ -265,7 +265,7 @@ namespace CAP
     if (_useRadialProfile)
       {
       smearRadius = 0.5;// fix me radialProfile->GetRandom();
-      smearPhi    = twoPi() * gRandom->Rndm();
+      smearPhi    = twoPi() * CAP::MATH::randomGenerator().random();
       x += smearRadius*std::cos(smearPhi);
       y += smearRadius*std::sin(smearPhi);
       }
@@ -280,7 +280,7 @@ namespace CAP
     if (_useRadialProfile)
       {
       smearRadius = 0.5;//radialProfile->GetRandom();
-      smearPhi    = twoPi() * gRandom->Rndm();
+      smearPhi    = twoPi() * CAP::MATH::randomGenerator().random();
       x += smearRadius*std::cos(smearPhi);
       y += smearRadius*std::sin(smearPhi);
       }

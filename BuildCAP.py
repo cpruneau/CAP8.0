@@ -16,7 +16,7 @@ The window has three parts:
   * a toolbar (top): Build, Stop, Save output, Clear, the build directory name, the build type, the number of parallel
     jobs and whether to install;
   * the options (upper half): the core modules (always built) and the install directory, and the optional modules
-    (Glauber, Therminator3, Epos, PHSD, Pythia, Herwig, Sherpa, Thermal-FIST, Jets, ROOT histograms, Latex, Graphics,
+    (Glauber, Therminator3, Epos, PHSD, Pythia, Herwig, Sherpa, Thermal-FIST, Jets, ROOT, Latex, Graphics,
     CapGui); a module that needs an external package has the location of that package on the line below it;
   * the output of cmake and make (lower half), which can be saved to a file.
 
@@ -36,8 +36,9 @@ copy next to CAP (../Herwig/install, ../Sherpa/install, ../Thermal-FIST, ../Fast
 or PYTHIA8, CAP_HERWIG_PATH or HERWIG_DIR, CAP_SHERPA_PATH or SHERPA_DIR, CAP_THERMALFIST_PATH or THERMALFIST_DIR,
 CAP_FASTJET_PATH or FASTJET), then the package's configuration tool (pythia8-config, Herwig-config, Sherpa-config,
 fastjet-config). The status line under each location shows what would be used. Sherpa and Thermal-FIST are
-placeholders: CMake checks their location, but CAP has no interface to them yet. ROOT is required by the core modules;
-its location sits under "ROOT histograms", which turns the import and export of .root files on or off.
+placeholders: CMake checks their location, but CAP has no interface to them yet. ROOT is optional (off by default): the
+"ROOT" option builds the Helpers library (.root files in CapGui, bin/CapRootConvert) and the readers of ROOT event trees
+(Epos, the Pythia event reader); its location sits under it.
 
 The settings are saved in <CAP>/.BuildCAP.json; Save configuration and Load configuration write and read them to and
 from other files, by default in <CAP>/configurations (e.g. one per machine or per set of packages). Requires Python 3.7+ with tkinter (on macOS with Homebrew Python:
@@ -63,9 +64,8 @@ SETTINGS_FILE = os.path.join(CAP_DIR, ".BuildCAP.json")
 #: Default directory of the configuration files (Save configuration, Load configuration), created when needed.
 CONFIGURATIONS_DIR = os.path.join(CAP_DIR, "configurations")
 
-#: Modules always built (see src/CMakeLists.txt). Helpers holds the ROOT file and histogram helpers used by Particles,
-#: SubSample, Performance and several models: it stays a core module while the core uses ROOT.
-CORE_MODULES = ["Base", "Math", "Helpers", "Particles", "Global", "ParticleSingle", "ParticlePair", "ParticlePair3D",
+#: Modules always built (see src/CMakeLists.txt); none of them uses ROOT.
+CORE_MODULES = ["Base", "Math", "Particles", "Global", "ParticleSingle", "ParticlePair", "ParticlePair3D",
                 "PtPt", "NuDyn", "ParticleFlow", "Spherocity", "SubSample", "Performance", "BasicEventGen"]
 
 #: Optional modules, in the order of the Optional modules pane: CMake option, label, folder in src (None for a feature
@@ -74,7 +74,7 @@ CORE_MODULES = ["Base", "Math", "Helpers", "Particles", "Global", "ParticleSingl
 OPTIONAL_MODULES = [
     ("CAP_WITH_GLAUBER",      "Glauber",         "Glauber", "Glauber Monte Carlo of nucleus-nucleus collisions", True, None),
     ("CAP_WITH_THERMINATOR3", "Therminator3",    "Therminator3", "Thermal model event generator", True, None),
-    ("CAP_WITH_EPOS",         "Epos",            "Epos", "EPOS event reader", True, None),
+    ("CAP_WITH_EPOS",         "Epos",            "Epos", "EPOS event reader (needs ROOT)", False, None),
     ("CAP_WITH_PHSD",         "PHSD",            "PHSD", "PHSD event reader", True, None),
     ("CAP_WITH_PYTHIA8",      "Pythia",          "Pythia", "Pythia8 event generator interface", False, "PYTHIA8"),
     ("CAP_WITH_HERWIG",       "Herwig",          "Herwig", "Herwig 7 event generator interface", False, "HERWIG"),
@@ -83,8 +83,8 @@ OPTIONAL_MODULES = [
     ("CAP_WITH_THERMALFIST",  "Thermal-FIST",    None, "Thermal-FIST hadron resonance gas model (placeholder: no CAP "
      "interface yet)", False, "THERMALFIST"),
     ("CAP_WITH_JETS",         "Jets",            "Jets", "Jet analysis with FastJet (in progress)", False, "FASTJET"),
-    ("CAP_WITH_ROOT_FILES",   "ROOT histograms", None, "Import and export ROOT histograms (.root files in CapGui, "
-     "bin/CapRootConvert)", True, "ROOT"),
+    ("CAP_WITH_ROOT",         "ROOT",            "Helpers", "ROOT files and trees: Helpers library (.root files in CapGui, "
+     "bin/CapRootConvert), Epos and Pythia event readers", False, "ROOT"),
     ("CAP_WITH_LATEX",        "Latex",           "Latex", "LaTeX documents of results", True, None),
     ("CAP_WITH_GRAPHICS",     "Graphics",        "Graphics", "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)",
      True, None),
@@ -319,8 +319,10 @@ def build_commands(s):
     if not os.path.exists(os.path.join(build_dir, "CMakeCache.txt")) or s.get("reconfigure"):
         configure += ["-G", "Unix Makefiles"]          # the generator can only be chosen for a new cache
     configure.append("-DCMAKE_BUILD_TYPE=%s" % s["build_type"])
+    known = {m[0] for m in OPTIONAL_MODULES}   # options of older settings files (e.g. CAP_WITH_ROOT_FILES) are dropped
     for opt, value in sorted(s["options"].items()):
-        configure.append("-D%s=%s" % (opt, "ON" if value else "OFF"))
+        if opt in known:
+            configure.append("-D%s=%s" % (opt, "ON" if value else "OFF"))
     for key, ext in EXTERNALS.items():
         # an empty value lets CMake search again (distributed copy, environment, configuration tool)
         configure.append("-D%s=%s" % (ext["var"], s["prefixes"].get(key, "")))
@@ -521,9 +523,9 @@ def run_gui():
             self._update_dependent_rows()
 
         def _update_dependent_rows(self):
-            """A package location can be edited when its module is checked; ROOT always (the core modules use it)."""
+            """A package location can be edited when its module is checked."""
             for opt, key in self.module_external.items():
-                needed = key == "ROOT" or self.option_vars[opt].get()
+                needed = self.option_vars[opt].get()
                 entry, button = self.prefix_widgets[key]
                 state = tk.NORMAL if needed else tk.DISABLED
                 entry.configure(state=state)
@@ -537,9 +539,9 @@ def run_gui():
         def _detect(self, key):
             if key == "ROOT":
                 prefix, how = detect_root(self.root_dir.get().strip())
-                note = "  \u2014 also needed by the core modules" if prefix else ""
+                note = ""
                 if not prefix:
-                    how = "not found: enter the ROOT installation directory (required by the core modules)"
+                    how = "not found: enter the ROOT installation directory (needed only with the ROOT option)"
             else:
                 prefix, how = detect_external(key, self.prefix_vars[key].get().strip())
                 note = ""
@@ -730,8 +732,8 @@ def run_gui():
                 return "cmake was not found (looked in PATH and %s)." % ", ".join(EXTRA_PATHS)
             if not which("make"):
                 return "make was not found."
-            if not detect_root(s["root_dir"])[0]:
-                return "ROOT was not found: enter its installation directory (the one containing bin/root-config)."
+            if s["options"].get("CAP_WITH_ROOT") and not detect_root(s["root_dir"])[0]:
+                return "ROOT was not found: enter its installation directory (the one containing bin/root-config), or uncheck ROOT."
             missing = []
             for opt, _, _, _, _, key in OPTIONAL_MODULES:
                 if key in EXTERNALS and s["options"].get(opt) and not detect_external(key, s["prefixes"].get(key, ""))[0]:

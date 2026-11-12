@@ -11,7 +11,6 @@
  * *********************************************************************/
 #ifndef CAP__GlauberEvent
 #define CAP__GlauberEvent
-#include <TObject.h>
 #include "GlauberPoint.hpp"
 #include "GlauberNucleus.hpp"
 #include "GlauberEventMoments.hpp"

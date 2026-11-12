@@ -2,9 +2,6 @@
 # Project CAP/Particles
 ################################################################################################
 
-#include(${ROOT_USE_FILE})
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-#add_definitions(${ROOT_CXX_FLAGS})
 
 
 ################################################################################################
@@ -26,7 +23,6 @@ EventProcessor.cpp
 EventSmearer.cpp
 FileIterator.cpp
 HistogramFolder.cpp
-RootHistogramGroup.cpp
 ManagedObject.cpp
 ObjectCreator.cpp
 Particle.cpp
@@ -45,8 +41,8 @@ ParticlePairFilter.cpp
 ParticleSmear.cpp
 ParticleType.cpp)
 
-target_link_libraries(Particles Base Math Helpers   ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
-target_include_directories(Particles  PUBLIC Base Math Helpers Particles  ${EXTRA_INCLUDES} )
+target_link_libraries(Particles Base Math   ${EXTRA_LIBS} )
+target_include_directories(Particles  PUBLIC Base Math Particles  ${EXTRA_INCLUDES} )
 
 install(TARGETS Particles  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 
@@ -55,11 +51,11 @@ install(TARGETS Particles  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 # Tests (run with ctest in the build directory; not installed)
 ################################################################################################
 add_executable(TestParticleSelection tests/TestParticleSelection.cpp)
-target_link_libraries(TestParticleSelection Particles Base Math ${ROOT_LIBRARIES})
+target_link_libraries(TestParticleSelection Particles Base Math)
 add_test(NAME ParticleSelection COMMAND TestParticleSelection)
 add_executable(TestParticleEfficiency tests/TestParticleEfficiency.cpp)
-target_link_libraries(TestParticleEfficiency Particles Base Math ${ROOT_LIBRARIES})
+target_link_libraries(TestParticleEfficiency Particles Base Math)
 add_test(NAME ParticleEfficiency COMMAND TestParticleEfficiency)
 add_executable(TestParticleSmear tests/TestParticleSmear.cpp)
-target_link_libraries(TestParticleSmear Particles Base Math ${ROOT_LIBRARIES})
+target_link_libraries(TestParticleSmear Particles Base Math)
 add_test(NAME ParticleSmear COMMAND TestParticleSmear)

@@ -1,9 +1,6 @@
 ################################################################################################
 # Project CAP/ParticlePair3D
 ################################################################################################
-#include(${ROOT_USE_FILE})
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-#add_definitions(${ROOT_CXX_FLAGS})
 
 
 ################################################################################################
@@ -16,7 +13,7 @@ ParticlePair3DAnalyzer.cpp
 ParticlePair3DBFHistos.cpp
 ParticlePair3DHistos.cpp)
 
-target_link_libraries(ParticlePair3D Base   Particles ParticleSingle ParticlePair ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(ParticlePair3D Base   Particles ParticleSingle ParticlePair ${EXTRA_LIBS} )
 target_include_directories(ParticlePair3D  PUBLIC Base Particles ParticleSingle ParticlePair ParticlePair3D ${EXTRA_INCLUDES} )
 
 # optimization for big histogram access within the pair inner loop

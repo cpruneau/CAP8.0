@@ -1,6 +1,5 @@
 #ifndef CAP_ThermalModel
 #define CAP_ThermalModel
-#include "TObject.h"
 #include "EventProcessor.hpp"
 #include "ThermalHistos.hpp"
 #include "ThermalHadronGasFD.hpp"

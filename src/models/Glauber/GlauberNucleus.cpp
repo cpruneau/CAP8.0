@@ -11,7 +11,7 @@
  * *********************************************************************/
 #include "GlauberNucleus.hpp"
 #include "PrintHelpers.hpp"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 
 
 namespace CAP
@@ -351,7 +351,7 @@ namespace CAP
               //              else if (_nucleusType.radialDistType == 7)
               //                Rtheta = _nucleusType._radiusProton*(1+_nucleusType.shapeBeta2*ROOT::MATH::sph_legendre(2,0,theta)+_nucleusType.shapeBeta4*ROOT::MATH::sph_legendre(4,0,theta));
               double prob = 1.0;// 1.0/(1.0+exp((R-Rtheta)/_nucleusType._skinProton));
-              if (gRandom->Rndm()<=prob) notInside = false;
+              if (CAP::MATH::randomGenerator().random()<=prob) notInside = false;
               }
             }
             break;
@@ -394,9 +394,9 @@ namespace CAP
         }
 //      if (nNucleons>2)
 //        {
-//        double xRot = gRandom->Rndm()*twoPi();
-//        double yRot = gRandom->Rndm()*twoPi();
-//        double zRot = gRandom->Rndm()*twoPi();
+//        double xRot = CAP::MATH::randomGenerator().random()*twoPi();
+//        double yRot = CAP::MATH::randomGenerator().random()*twoPi();
+//        double zRot = CAP::MATH::randomGenerator().random()*twoPi();
 //        nucleon.rotateXYZ(xRot,yRot,zRot);
 //        }
       }
@@ -643,7 +643,7 @@ namespace CAP
 //        {
 //        TGlauNucleon *nucleon=(TGlauNucleon*)fNucleons->At(i);
 //        double frac=double(fZ-iz)/double(fN-i);
-//        double rn=gRandom->Uniform(0,1);
+//        double rn=CAP::MATH::randomGenerator().uniform(0,1);
 //        if (rn<frac)
 //          {
 //          nucleon->SetType(1);
@@ -660,12 +660,12 @@ namespace CAP
 //
 //  fTrials = 0;
 //  fNonSmeared = 0;
-//  fPhiRot = gRandom->Rndm()*2*TMath::Pi();
-//  const double cosThetaRot = 2*gRandom->Rndm()-1;
+//  fPhiRot = CAP::MATH::randomGenerator().random()*2*TMath::Pi();
+//  const double cosThetaRot = 2*CAP::MATH::randomGenerator().random()-1;
 //  fThetaRot = TMath::ACos(cosThetaRot);
-//  fXRot = gRandom->Rndm()*2*TMath::Pi();
-//  fYRot = gRandom->Rndm()*2*TMath::Pi();
-//  fZRot = gRandom->Rndm()*2*TMath::Pi();
+//  fXRot = CAP::MATH::randomGenerator().random()*2*TMath::Pi();
+//  fYRot = CAP::MATH::randomGenerator().random()*2*TMath::Pi();
+//  fZRot = CAP::MATH::randomGenerator().random()*2*TMath::Pi();
 //
 //  const Bool_t hulthen = (fF==3||fF==4);
 //  TString tmpname(name());
@@ -678,8 +678,8 @@ namespace CAP
 //  if (fN==1)
 //    { //special treatment for proton
 //      double r = fFunc1->GetRandom();
-//      double phi = gRandom->Rndm() * 2 * TMath::Pi();
-//      double ctheta = 2*gRandom->Rndm() - 1;
+//      double phi = CAP::MATH::randomGenerator().random() * 2 * TMath::Pi();
+//      double ctheta = 2*CAP::MATH::randomGenerator().random() - 1;
 //      double stheta = TMath::Sqrt(1-ctheta*ctheta);
 //      TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(0));
 //      nucleon->reset();
@@ -691,8 +691,8 @@ namespace CAP
 //    } else if (fN==2  &&  hulthen) { //special treatment for Hulten
 //
 //      double r = fFunc1->GetRandom()/2;
-//      double phi = gRandom->Rndm() * 2 * TMath::Pi();
-//      double ctheta = 2*gRandom->Rndm() - 1;
+//      double phi = CAP::MATH::randomGenerator().random() * 2 * TMath::Pi();
+//      double ctheta = 2*CAP::MATH::randomGenerator().random() - 1;
 //      double stheta = TMath::Sqrt(1-ctheta*ctheta);
 //
 //      TGlauNucleon *nucleon1=(TGlauNucleon*)(fNucleons->At(0));
@@ -708,8 +708,8 @@ namespace CAP
 //                         -nucleon1->GetZ());
 //      } else {
 //        r = fFunc1->GetRandom()/2;
-//        phi = gRandom->Rndm() * 2 * TMath::Pi();
-//        ctheta = 2*gRandom->Rndm() - 1;
+//        phi = CAP::MATH::randomGenerator().random() * 2 * TMath::Pi();
+//        ctheta = 2*CAP::MATH::randomGenerator().random() - 1;
 //        stheta = TMath::Sqrt(1-ctheta*ctheta);
 //        nucleon2->SetXYZ(r * stheta * TMath::Cos(phi),
 //                         r * stheta * TMath::Sin(phi),
@@ -820,9 +820,9 @@ namespace CAP
 //      { // all other nuclei
 //
 //        const double startingEdge  = 20; // throw nucleons within a cube of this size (fm)
-//        const double startingEdgeX = startingEdge + fNodeDist*gRandom->Rndm() - 0.5*fNodeDist;
-//        const double startingEdgeY = startingEdge + fNodeDist*gRandom->Rndm() - 0.5*fNodeDist;
-//        const double startingEdgeZ = startingEdge + fNodeDist*gRandom->Rndm() - 0.5*fNodeDist;
+//        const double startingEdgeX = startingEdge + fNodeDist*CAP::MATH::randomGenerator().random() - 0.5*fNodeDist;
+//        const double startingEdgeY = startingEdge + fNodeDist*CAP::MATH::randomGenerator().random() - 0.5*fNodeDist;
+//        const double startingEdgeZ = startingEdge + fNodeDist*CAP::MATH::randomGenerator().random() - 0.5*fNodeDist;
 //        const Int_t nslots = 2*startingEdge/fNodeDist+1;
 //        if (fNodeDist>0)
 //          {
@@ -854,9 +854,9 @@ namespace CAP
 //              { // the extended way, throw in a box and test the weight
 //                while (!nucleon_inside)
 //                  {
-//                  x = (fR*2)*(gRandom->Rndm() * 2 - 1);
-//                  y = (fR*2)*(gRandom->Rndm() * 2 - 1);
-//                  z = (fR*2)*(gRandom->Rndm() * 2 - 1);
+//                  x = (fR*2)*(CAP::MATH::randomGenerator().random() * 2 - 1);
+//                  y = (fR*2)*(CAP::MATH::randomGenerator().random() * 2 - 1);
+//                  z = (fR*2)*(CAP::MATH::randomGenerator().random() * 2 - 1);
 //                  double r = TMath::Sqrt(x*x+y*y);
 //                  double theta = TMath::ATan2(r,z);
 //                  double R = TMath::Sqrt(x*x+y*y+z*z);
@@ -870,14 +870,14 @@ namespace CAP
 //                  cerr << "Should not end here because you do not have libMathMore" << endl;
 //#endif
 //                  double prob = 1/(1+TMath::Exp((R-Rtheta)/fA));
-//                  if (gRandom->Rndm()<prob)
+//                  if (CAP::MATH::randomGenerator().random()<prob)
 //                    nucleon_inside=1;
 //                  }
 //              } else if ((fF==8) || (fF==14)) { // use TF2
 //                double r;
 //                double theta;
 //                fFunc3->random(r,theta);
-//                double phi = 2*TMath::Pi()*gRandom->Rndm();
+//                double phi = 2*TMath::Pi()*CAP::MATH::randomGenerator().random();
 //                x = r * TMath::Sin(phi) * TMath::Sin(theta);
 //                y = r * TMath::Cos(phi) * TMath::Sin(theta);
 //                z = r *                   TMath::Cos(theta);
@@ -887,16 +887,16 @@ namespace CAP
 //                  ff = fFunc2;
 //                if (fNodeDist<=0) { // "continuous" mode
 //                  double r = ff->GetRandom();
-//                  double phi = 2*TMath::Pi()*gRandom->Rndm();
-//                  double ctheta = 2*gRandom->Rndm() - 1 ;
+//                  double phi = 2*TMath::Pi()*CAP::MATH::randomGenerator().random();
+//                  double ctheta = 2*CAP::MATH::randomGenerator().random() - 1 ;
 //                  double stheta = TMath::Sqrt(1-ctheta*ctheta);
 //                  x = r * stheta * TMath::Cos(phi);
 //                  y = r * stheta * TMath::Sin(phi);
 //                  z = r * ctheta;
 //                } else { // "grid/lattice" mode
-//                  Int_t iNode = Int_t((2*startingEdge/fNodeDist)*gRandom->Rndm());
-//                  Int_t jNode = Int_t((2*startingEdge/fNodeDist)*gRandom->Rndm());
-//                  Int_t kNode = Int_t((2*startingEdge/fNodeDist)*gRandom->Rndm());
+//                  Int_t iNode = Int_t((2*startingEdge/fNodeDist)*CAP::MATH::randomGenerator().random());
+//                  Int_t jNode = Int_t((2*startingEdge/fNodeDist)*CAP::MATH::randomGenerator().random());
+//                  Int_t kNode = Int_t((2*startingEdge/fNodeDist)*CAP::MATH::randomGenerator().random());
 //                  Int_t index=iNode*nslots*nslots+jNode*nslots+kNode;
 //                  if (fIsUsed->TestBitNumber(index))
 //                    continue;
@@ -919,14 +919,14 @@ namespace CAP
 //                  }
 //                  const double r2 = x*x + y*y + z*z;
 //                  const double r  = TMath::Sqrt(r2);
-//                  if ((r>fMaxR)||(r2*gRandom->Rndm()>ff->Eval(r)))
+//                  if ((r>fMaxR)||(r2*CAP::MATH::randomGenerator().random()>ff->Eval(r)))
 //                    continue;
 //                  if (fSmearing>0.0) {
 //                    Int_t nAttemptsToSmear = 0;
 //                    while (1) {
-//                      xsmeared = x*gRandom->Gaus(1.0,fSmearing);
-//                      ysmeared = y*gRandom->Gaus(1.0,fSmearing);
-//                      zsmeared = z*gRandom->Gaus(1.0,fSmearing);
+//                      xsmeared = x*CAP::MATH::randomGenerator().gauss(1.0,fSmearing);
+//                      ysmeared = y*CAP::MATH::randomGenerator().gauss(1.0,fSmearing);
+//                      zsmeared = z*CAP::MATH::randomGenerator().gauss(1.0,fSmearing);
 //                      nAttemptsToSmear++;
 //                      if (TestMinDist(i,xsmeared,ysmeared,zsmeared)) {
 //                        x = xsmeared;

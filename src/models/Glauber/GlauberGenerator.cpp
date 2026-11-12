@@ -10,14 +10,12 @@
  *
  * *********************************************************************/
 #include "GlauberGenerator.hpp"
-#include "RootConversion.hpp"
 #include "GlauberEvent.hpp"
 #include "GlauberEventMoments.hpp"
 #include "Exceptions.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
-#include "TCanvas.h"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 
 
 
@@ -355,17 +353,7 @@ namespace CAP
         }
       cout << " integral: " << sum << endl;
 
-      TCanvas * canvas = new TCanvas("NNProfile","NNProfile",5,5,800, 800);
-      canvas->SetLogy(1);
-      TH1 * hRoot = toRootHistogram(*h);
-      hRoot->Draw();
-      canvas->Print("NNProfile.pdf");
-
-      TCanvas * canvas2 = new TCanvas("NNProfileS","NNProfileS",25,5,800, 800);
-      //canvas2->SetLogy(1);
-      TH1 * hsRoot = toRootHistogram(*hs);
-      hsRoot->Draw();
-      canvas2->Print("NNProfileS.pdf");
+      // (the profile and its integral were drawn here with ROOT, in NNProfile.pdf and NNProfileS.pdf)
 
       break;
       }
@@ -396,7 +384,7 @@ namespace CAP
   // printValue("Check",1);
   std::vector<GlauberPoint> & interactionPositions = ev.interactionPositions();
   interactionPositions.clear();
-  double impact = std::sqrt(_minImpactSq + (_maxImpactSq-_minImpactSq)*gRandom->Rndm());
+  double impact = std::sqrt(_minImpactSq + (_maxImpactSq-_minImpactSq)*CAP::MATH::randomGenerator().random());
   ev.setImpactParameter(impact);
 
   // printValue("Check",2);
@@ -405,7 +393,7 @@ namespace CAP
   // printValue("Check",3);
   if (_randomizeEP)
     {
-    double eventPlaneAngle = twoPi()*gRandom->Rndm();
+    double eventPlaneAngle = twoPi()*CAP::MATH::randomGenerator().random();
     shiftA.rotateZ(eventPlaneAngle);
     shiftB.rotateZ(eventPlaneAngle);
     }
@@ -445,7 +433,7 @@ namespace CAP
           {
           // printValue("Check",9);
          double prob = _nnXSectProfile->evaluate(distanceAB);
-          ran = gRandom->Rndm();
+          ran = CAP::MATH::randomGenerator().random();
           ev.setEventXSection(_xSection);
 //          printValue("distanceAB",distanceAB);
 //          printValue("prob",prob);
@@ -470,7 +458,7 @@ namespace CAP
           double d = std::sqrt(0.05*(xSectA+xSectB)/pi()); // 0.05 = 0.5/10 --> fm
           if (distanceAB>d) continue;
           double prob = _nnXSectProfile->evaluate(distanceAB);
-          if (gRandom->Uniform() > prob) continue;
+          if (CAP::MATH::randomGenerator().random() > prob) continue;
           ev.setEventXSection(_xSection);
           }
         }

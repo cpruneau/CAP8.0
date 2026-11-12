@@ -1,6 +1,5 @@
 #ifndef CAP_Therminator3
 #define CAP_Therminator3
-#include "TObject.h"
 #include "Model.hpp"
 #include "Thermodynamics.hpp"
 #include "EventProcessor.hpp"

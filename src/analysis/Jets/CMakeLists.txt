@@ -16,7 +16,7 @@ JetUnderlyingEvent.cpp
 JetFluctuationHistos.cpp
 JetFluctuationAnalyzer.cpp)
 
-target_link_libraries(Jets Base Math Particles FASTJET_LIB ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(Jets Base Math Particles FASTJET_LIB ${EXTRA_LIBS} )
 target_include_directories(Jets PUBLIC Jets Particles Base Math ${CAP_FASTJET_INCLUDE_PATH} ${EXTRA_INCLUDES} )
 
 install(TARGETS Jets LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
@@ -25,5 +25,5 @@ install(TARGETS Jets LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 # Tests (run with ctest in the build directory; not installed)
 ################################################################################################
 add_executable(TestJets tests/TestJets.cpp)
-target_link_libraries(TestJets Jets Particles Base Math FASTJET_LIB ${ROOT_LIBRARIES})
+target_link_libraries(TestJets Jets Particles Base Math FASTJET_LIB)
 add_test(NAME Jets COMMAND TestJets)

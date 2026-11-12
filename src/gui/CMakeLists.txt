@@ -74,14 +74,14 @@ set_target_properties(CapGuiCore PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRE
 target_compile_definitions(CapGuiCore PUBLIC CAP_SOURCE_ROOT="${CAP_TOP_DIR}")
 target_include_directories(CapGuiCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} PRIVATE ${CAP_TOP_DIR}/external/nanosvg)
 set_source_files_properties(NanoSvg.cpp PROPERTIES COMPILE_OPTIONS "-w")   # nanosvg: third-party code, no warnings
-target_link_libraries(CapGuiCore PUBLIC CapImGui Graphics Particles Math Base ${ROOT_LIBRARIES})
+target_link_libraries(CapGuiCore PUBLIC CapImGui Graphics Particles Math Base)
 if(CAP_WITH_LATEX)   # File > Make Presentation (Latex/CanvasPresentation)
   target_link_libraries(CapGuiCore PUBLIC Latex)
   target_compile_definitions(CapGuiCore PUBLIC CAP_GUI_PRESENTATIONS)
 endif()
-if(CAP_WITH_ROOT_FILES)   # .root files in the browser: their histograms converted (Helpers/RootFileConversion)
+if(CAP_WITH_ROOT)   # .root files in the browser: their histograms converted (Helpers/RootFileConversion)
   target_link_libraries(CapGuiCore PUBLIC Helpers)
-  target_compile_definitions(CapGuiCore PUBLIC CAP_WITH_ROOT_FILES)
+  target_compile_definitions(CapGuiCore PUBLIC CAP_WITH_ROOT)
 endif()
 
 # ---- CapGui: the canvases, the plot files and the browser (see CapGuiApp.hpp); the analysis libraries are linked

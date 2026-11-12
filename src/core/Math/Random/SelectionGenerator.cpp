@@ -55,7 +55,7 @@ void CAP::SelectionGenerator::initializeWith(const std::vector<double> & probabi
 
 int CAP::SelectionGenerator::generate()
 {
-  double v = gRandom->Rndm();
+  double v = CAP::MATH::randomGenerator().random();
   int n = cumulativeProbability.size();
   if (n==0) throw CAP::Exception("Generator not initialized","SelectionGenerator::generate()");
   for (int k=0; k<n; k++)

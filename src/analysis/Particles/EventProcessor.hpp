@@ -9,7 +9,6 @@
  * *********************************************************************/
 #ifndef CAP__EventProcessor
 #define CAP__EventProcessor
-#include "TObject.h"
 #include "AnalysisTask.hpp"
 #include "Exceptions.hpp"
 #include "ManagedObjects.hpp"

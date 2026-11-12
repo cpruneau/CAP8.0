@@ -1,9 +1,6 @@
 ################################################################################################
 # Project CAP/Performance
 ################################################################################################
-#include(${ROOT_USE_FILE})
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-#add_definitions(${ROOT_CXX_FLAGS})
 
 
 ################################################################################################
@@ -21,7 +18,7 @@ MeasurementSimulator.cpp
 ParticlePerformanceHistos.cpp
 PerformanceAnalyzer.cpp)
 
-target_link_libraries(Performance Base Math Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(Performance Base Math Particles  ${EXTRA_LIBS} )
 target_include_directories(Performance  PUBLIC Performance Base  Particles   ${EXTRA_INCLUDES} )
 
 # optimization for big histogram access within the pair inner loop
@@ -33,6 +30,6 @@ install(TARGETS Performance  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
 # Tests (run with ctest in the build directory; not installed)
 ################################################################################################
 add_executable(TestPerformance tests/TestPerformance.cpp)
-target_link_libraries(TestPerformance Performance Particles Base Math ${ROOT_LIBRARIES})
+target_link_libraries(TestPerformance Performance Particles Base Math)
 add_test(NAME Performance COMMAND TestPerformance)
 

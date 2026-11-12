@@ -10,7 +10,7 @@
 #ifndef CAP__SelectionGenerator
 #define CAP__SelectionGenerator
 #include <vector>
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 
 namespace CAP
 {
@@ -18,7 +18,7 @@ namespace CAP
 //! @brief Random selection of an index according to given probabilities.
 //!
 //! The generator is initialized with n probabilities (or relative weights: they are normalized to a sum of 1).
-//! generate() then returns an index k in [0, n-1] with probability p_k, using ROOT's gRandom.
+//! generate() then returns an index k in [0, n-1] with probability p_k, using CAP::MATH::randomGenerator().
 //!
 //! Example:
 //! @code

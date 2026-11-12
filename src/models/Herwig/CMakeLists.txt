@@ -36,8 +36,8 @@ list(REMOVE_DUPLICATES CAP_HERWIG_INCLUDE_DIRS)
 add_library(Herwig SHARED
 HerwigTasks.cpp
 HerwigEventGenerator.cpp)
-target_link_libraries(Herwig Base Helpers Particles "${CAP_HERWIG_API_LIBRARY}" "${CAP_THEPEG_LIBRARY}"
-                      ${ROOT_LIBRARIES} ${EXTRA_LIBS})
+target_link_libraries(Herwig Base Particles "${CAP_HERWIG_API_LIBRARY}" "${CAP_THEPEG_LIBRARY}"
+                      ${EXTRA_LIBS})
 target_include_directories(Herwig PUBLIC Base Particles Herwig ${CAP_HERWIG_INCLUDE_DIRS} ${EXTRA_INCLUDES})
 # ThePEG/Config/std.h has "using std::mem_fun;", which C++17 removed: libc++ (macOS) declares it again with this macro
 # (libstdc++ still has it, deprecated). ThePEG and Herwig themselves are compiled as C++14.
