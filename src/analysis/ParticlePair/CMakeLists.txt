@@ -22,5 +22,5 @@ target_include_directories(ParticlePair  PUBLIC Base Particles ParticleSingle Pa
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(TARGETS ParticlePair  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(ParticlePair LIBRARY "$ENV{CAP_LIB_PATH}")
 

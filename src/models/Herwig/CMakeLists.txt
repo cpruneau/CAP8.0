@@ -72,4 +72,4 @@ else()
                                           INSTALL_RPATH "${CAP_HERWIG_DIR}/lib/ThePEG;${CAP_HERWIG_DIR}/lib/Herwig;${CAP_HERWIG_DIR}/lib")
 endif()
 
-install(TARGETS Herwig LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Herwig LIBRARY "$ENV{CAP_LIB_PATH}")

@@ -24,4 +24,4 @@ target_include_directories(Pythia  SYSTEM PUBLIC "${CAP_PYTHIA8_INCLUDE_PATH}" "
 # $CAP_PYTHIA8_PATH is set (e.g. jobs run by RunCAP.py)
 target_compile_definitions(Pythia PRIVATE CAP_PYTHIA8_XMLDOC="${CAP_PYTHIA8_DIR}/share/Pythia8/xmldoc")
 
-install(TARGETS Pythia  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}") 
+cap_install(Pythia LIBRARY "$ENV{CAP_LIB_PATH}") 

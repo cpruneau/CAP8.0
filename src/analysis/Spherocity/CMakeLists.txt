@@ -18,5 +18,5 @@ target_include_directories(Spherocity  PUBLIC Spherocity Base  Particles  ${EXTR
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(TARGETS Spherocity  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Spherocity LIBRARY "$ENV{CAP_LIB_PATH}")
 

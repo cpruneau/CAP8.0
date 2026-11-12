@@ -12,7 +12,7 @@ FlowCumulants.cpp)
 target_link_libraries(ParticleFlow Base Math Particles ${EXTRA_LIBS} )
 target_include_directories(ParticleFlow PUBLIC Base Particles ParticleFlow ${EXTRA_INCLUDES} )
 
-install(TARGETS ParticleFlow LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(ParticleFlow LIBRARY "$ENV{CAP_LIB_PATH}")
 
 ################################################################################################
 # Tests (run with ctest in the build directory; not installed)

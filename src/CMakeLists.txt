@@ -11,7 +11,7 @@
 # The core modules (Base, Math, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
 # ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen) are always built.
 ################################################################################################
-cmake_minimum_required(VERSION 3.13)   # 3.13: target_link_options()
+cmake_minimum_required(VERSION 3.14)   # 3.14: generator expressions in install(CODE)
 
 option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
@@ -94,6 +94,22 @@ if("$ENV{CAP_BIN_PATH}" STREQUAL "")
 else()
   set(CAP_INSTALL_BIN_DIR "$ENV{CAP_BIN_PATH}")
 endif()
+
+################################################################################################
+# cap_install(<target> LIBRARY|RUNTIME|BUNDLE <destination>): install(TARGETS), the installed file removed first.
+# CMake does not copy a file whose time equals that of the installed one to the second, but still edits the rpaths
+# of the installed copy: a target linked and installed within the same second then makes the next install fail
+# ("install_name_tool: ... would duplicate path", "no LC_RPATH load command"). Removed first, it is always copied.
+################################################################################################
+function(cap_install target kind destination)
+  if(kind STREQUAL "BUNDLE")
+    set(installed "${destination}/$<TARGET_FILE_NAME:${target}>.app/Contents/MacOS/$<TARGET_FILE_NAME:${target}>")
+  else()
+    set(installed "${destination}/$<TARGET_FILE_NAME:${target}>")
+  endif()
+  install(CODE "file(REMOVE \"${installed}\")")
+  install(TARGETS ${target} ${kind} DESTINATION "${destination}")
+endfunction()
 
 ################################################################################################
 # cap_resolve_prefix(<var> <label> <file> <bundled glob...> ENV <env vars...> TOOL <config tool>)
@@ -292,7 +308,7 @@ endif()
 ################################################################################################
 add_executable(CAP CAP.cxx)
 target_link_libraries(CAP PUBLIC ${CAP_LINKED_MODULES})
-install(TARGETS CAP RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+cap_install(CAP RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
 # CapGui (File > New from Data), PlotEditor and PlotHistos (--template) configure the tasks of workflows (without
 # running them): they need all the task classes

@@ -6,7 +6,7 @@
 #
 # To build and run CAP, you need the following tools
 #
-#   cmake    :  (3.13 or later) available (free) from: https://cmake.org/download/
+#   cmake    :  (3.14 or later) available (free) from: https://cmake.org/download/
 #   make     :  indigenous to all LINUX, UNIX, and MacOS platforms
 #   a C++17 compiler (clang or gcc)
 #

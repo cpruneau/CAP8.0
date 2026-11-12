@@ -27,7 +27,7 @@ Viscosity.cpp)
 
 target_link_libraries(Therminator3 Base Math Particles  ${EXTRA_LIBS} )
 target_include_directories(Therminator3  PUBLIC  Base Math Particles  ${EXTRA_INCLUDES} )
-install(TARGETS Therminator3  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Therminator3 LIBRARY "$ENV{CAP_LIB_PATH}")
 
 # Tests (run with ctest in the build directory; not installed)
 add_executable(TestTherminator3Models tests/TestTherminator3Models.cpp)

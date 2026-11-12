@@ -18,5 +18,5 @@ target_include_directories(Global  PUBLIC Global Base  Particles  ${EXTRA_INCLUD
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(TARGETS Global  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Global LIBRARY "$ENV{CAP_LIB_PATH}")
 

@@ -36,5 +36,5 @@ if(CAP_WITH_GRAPHICS)   # presentations of canvases (CanvasPresentation)
   add_test(NAME CanvasPresentation COMMAND TestCanvasPresentation)
 endif()
 
-install(TARGETS Latex LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Latex LIBRARY "$ENV{CAP_LIB_PATH}")
 

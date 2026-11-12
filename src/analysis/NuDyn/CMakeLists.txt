@@ -14,5 +14,5 @@ NuDynHistos.cpp)
 target_link_libraries(NuDyn Base  Particles  ${EXTRA_LIBS} )
 target_include_directories(NuDyn  PUBLIC Base  Particles  NuDyn ${EXTRA_INCLUDES} ) 
 
-install(TARGETS NuDyn  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(NuDyn LIBRARY "$ENV{CAP_LIB_PATH}")
 

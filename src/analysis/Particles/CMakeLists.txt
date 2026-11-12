@@ -44,7 +44,7 @@ ParticleType.cpp)
 target_link_libraries(Particles Base Math   ${EXTRA_LIBS} )
 target_include_directories(Particles  PUBLIC Base Math Particles  ${EXTRA_INCLUDES} )
 
-install(TARGETS Particles  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Particles LIBRARY "$ENV{CAP_LIB_PATH}")
 
 
 ################################################################################################

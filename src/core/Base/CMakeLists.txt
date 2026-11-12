@@ -77,5 +77,5 @@ add_executable(TestFolderEditing tests/TestFolderEditing.cpp)
 target_link_libraries(TestFolderEditing Base)
 add_test(NAME FolderEditing COMMAND TestFolderEditing)
 
-install(TARGETS Base  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Base LIBRARY "$ENV{CAP_LIB_PATH}")
 

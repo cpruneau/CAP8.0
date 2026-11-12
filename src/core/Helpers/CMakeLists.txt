@@ -37,7 +37,7 @@ add_test(NAME RootConversion COMMAND TestRootConversion)
 add_executable(CapRootConvert CapRootConvert.cxx)
 target_link_libraries(CapRootConvert Helpers Base Math ${ROOT_LIBRARIES})
 set_target_properties(CapRootConvert PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")   # runs without SetupCAP.sh
-install(TARGETS CapRootConvert RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+cap_install(CapRootConvert RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
-install(TARGETS Helpers  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Helpers LIBRARY "$ENV{CAP_LIB_PATH}")
 

@@ -202,5 +202,5 @@ add_executable(TestDerivative Derivative/tests/TestDerivative.cpp)
 target_link_libraries(TestDerivative Math Base)
 add_test(NAME Derivative COMMAND TestDerivative)
 
-install(TARGETS Math  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Math LIBRARY "$ENV{CAP_LIB_PATH}")
 

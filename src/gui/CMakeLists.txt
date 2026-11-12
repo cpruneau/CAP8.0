@@ -96,14 +96,14 @@ set_source_files_properties(PlotHistos.C PROPERTIES LANGUAGE CXX)
 set_target_properties(PlotHistos PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON LINKER_LANGUAGE CXX
                       INSTALL_RPATH "$ENV{CAP_LIB_PATH}")
 target_link_libraries(PlotHistos PRIVATE CapGuiCore)
-install(TARGETS PlotHistos RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+cap_install(PlotHistos RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
 # ---- PlotEditor: another name of CapGui (PlotEditor plots.xml opens the plot file in CapGui)
 add_executable(PlotEditor CapGuiMain.cpp PlotCatalog.cpp)
 set_target_properties(PlotEditor PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON
                       INSTALL_RPATH "$ENV{CAP_LIB_PATH}")
 target_link_libraries(PlotEditor PRIVATE CapGuiCore)
-install(TARGETS PlotEditor RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+cap_install(PlotEditor RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
 if(APPLE)
   # macOS: CapGui.app, an application bundle that can be opened from the Finder or the Dock. Started that way it gets
@@ -121,12 +121,12 @@ if(APPLE)
     MACOSX_BUNDLE            TRUE
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
     INSTALL_RPATH            "$ENV{CAP_LIB_PATH}")
-  install(TARGETS CapGui BUNDLE DESTINATION "${CAP_INSTALL_BIN_DIR}")
+  cap_install(CapGui BUNDLE "${CAP_INSTALL_BIN_DIR}")
   install(CODE "
     file(REMOVE \"${CAP_INSTALL_BIN_DIR}/CapGui\")
     file(CREATE_LINK \"CapGui.app/Contents/MacOS/CapGui\" \"${CAP_INSTALL_BIN_DIR}/CapGui\" SYMBOLIC)
     message(STATUS \"Installing: ${CAP_INSTALL_BIN_DIR}/CapGui -> CapGui.app/Contents/MacOS/CapGui\")")
 else()
   set_target_properties(CapGui PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")
-  install(TARGETS CapGui RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+  cap_install(CapGui RUNTIME "${CAP_INSTALL_BIN_DIR}")
 endif()

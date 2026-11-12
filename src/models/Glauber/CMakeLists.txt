@@ -33,7 +33,7 @@ SmearingProfile.cpp)
 target_link_libraries(Glauber Base Math Particles  ${EXTRA_LIBS} )
 target_include_directories(Glauber PUBLIC Base Math Glauber ParticleDb Particles ${EXTRA_INCLUDES} )
 
-install(TARGETS Glauber  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Glauber LIBRARY "$ENV{CAP_LIB_PATH}")
 
 
 # The database of nuclei (DB/Glauber/NucleusDb.xml) and its built-in copy (run with ctest; not installed)

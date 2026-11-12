@@ -21,5 +21,5 @@ target_include_directories(ParticlePair3D  PUBLIC Base Particles ParticleSingle 
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(TARGETS ParticlePair3D  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(ParticlePair3D LIBRARY "$ENV{CAP_LIB_PATH}")
 

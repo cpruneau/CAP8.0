@@ -22,5 +22,5 @@ target_include_directories(ParticleSingle  PUBLIC Base    Particles ParticleSing
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-install(TARGETS ParticleSingle  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(ParticleSingle LIBRARY "$ENV{CAP_LIB_PATH}")
 

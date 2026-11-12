@@ -12,7 +12,7 @@ BasicEventGen.cpp)
 target_link_libraries(BasicEventGen  Base  Particles   ${EXTRA_LIBS} )
 target_include_directories(BasicEventGen  PUBLIC  Base Math Particles ${EXTRA_INCLUDES})
 
-install(TARGETS BasicEventGen  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}") 
+cap_install(BasicEventGen LIBRARY "$ENV{CAP_LIB_PATH}") 
 
 ################################################################################################
 # Tests (run with ctest in the build directory; not installed)

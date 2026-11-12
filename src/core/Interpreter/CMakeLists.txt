@@ -17,7 +17,7 @@ if(TARGET Graphics)   # save(): figures as SVG or PDF; the canvases of the sessi
     target_compile_definitions(Interpreter PRIVATE CAP_INTERPRETER_LATEX)
   endif()
 endif()
-install(TARGETS Interpreter LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Interpreter LIBRARY "$ENV{CAP_LIB_PATH}")
 
 # bin/CapShell, with line editing and history when the system has libedit (macOS, Linux with libedit-dev)
 add_executable(CapShell CapShell.cxx)
@@ -30,7 +30,7 @@ if(EDITLINE_INCLUDE_DIR AND EDITLINE_LIBRARY)
   target_compile_definitions(CapShell PRIVATE CAP_HAVE_EDITLINE)
 endif()
 set_target_properties(CapShell PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")   # runs without SetupCAP.sh
-install(TARGETS CapShell RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+cap_install(CapShell RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
 # Tests (run with ctest in the build directory; not installed)
 add_executable(TestInterpreter tests/TestInterpreter.cpp)
