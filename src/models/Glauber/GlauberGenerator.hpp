@@ -14,6 +14,9 @@
 #include "GlauberDb.hpp"
 #include "GlauberEvent.hpp"
 #include "GlauberEventFilter.hpp"
+#include "NNProfile.hpp"
+#include "NNXSectVsSqrtS.hpp"
+#include "PTotProfile.hpp"
 #include "ManagedObjects.hpp"
 #include "Task.hpp"
 
@@ -29,11 +32,18 @@ using namespace std;
 //! @image html GlauberClasses.png "Classes of the Glauber model (models/Glauber)" width=100%
 //! @image latex GlauberClasses.pdf "Classes of the Glauber model (models/Glauber)" width=\textwidth
 //!
-//! Main keys (\<name\>:GENERATION:...): NUCLEUS_A:NAME, NUCLEUS_A:NTRIALS, NUCLEUS_A:RECENTERING,
-//! NUCLEUS_A:ALLOW_OVERLAP, NUCLEUS_A:MIN_INTER (same for NUCLEUS_B), INTERACTION:NNCOLLISION_OPTION (1: profile
-//! NNProfile; 2 and 3, fluctuating cross sections, are not written yet and throw NoImplementationException), INTERACTION:RANDOMIZE_EP, INTERACTION:SQRT_S_OPTION,
-//! INTERACTION:DISTANCE_MAX, INTERACTION:HARD_DISTANCE_MAX; the event loop keys are \<name\>:EVENT:REQUESTED:N and
-//! EVENT:REPORT:N.
+//! Main keys (\<name\>:GENERATION:...), with the defaults of TGlauberMC v3.2:
+//!  - NUCLEUS_A:NAME (same keys for NUCLEUS_B), NTRIALS (1000), RECENTERING (true), RECENTERING_MODE (1: see
+//!    GlauberNucleus::recenterNucleus()), ALLOW_OVERLAP (false), MIN_INTER (hard core, 0.4 fm), LATTICE (false),
+//!    LATTICE_TYPE (0), NODE_DISTANCE (fm), SMEARING (0), MAX_CENTER_SHIFT (not positive: 0.1 fm for the reweighted
+//!    types, 99 otherwise);
+//!  - INTERACTION:xSECT_OPTION (1: sigma from SQRT_S with SQRT_S_OPTION, see NNXSectVsSqrtS; 2: xSECTION, mb);
+//!  - INTERACTION:NNCOLLISION_OPTION (1: fixed cross section; 2: cross section drawn for each event; 3: drawn for each
+//!    nucleon; 2 and 3 from the distribution of TGlauberMC with width xSECTION_SIGMA, see PTotProfile);
+//!  - INTERACTION:xSECTION_OMEGA (0: hard sphere; 0 < omega <= 1: gamma profile, see NNProfile), xSECTION_G;
+//!  - INTERACTION:IMPACT_MIN, IMPACT_MAX, RANDOMIZE_EP, DISTANCE_MAX (largest transverse distance tested, 4 fm),
+//!    HARD_DISTANCE_MAX (not positive: sqrt(HARD_FRACTION sigma/(10 pi)), HARD_FRACTION 0.65).
+//! The event loop keys are \<name\>:EVENT:REQUESTED:N and EVENT:REPORT:N.
 //!
 class GlauberGenerator
   :
@@ -132,8 +142,10 @@ class GlauberGenerator
   double _maxImpact;
   //! Maximum transverse distance of an interaction (fm).
   double _intDistanceMax;
-  //! Maximum transverse distance of a hard interaction (fm).
+  //! Maximum transverse distance of a hard interaction (fm); not positive: from _hardFraction.
   double _hardIntDistMax;
+  //! Fraction of the cross section whose disk makes hard collisions (TGlauberMC fHardFrac, default 0.65).
+  double _hardFraction;
 
   //! Squares of the above.
   double _minImpactSq;
@@ -147,6 +159,8 @@ class GlauberGenerator
   NNProfile       *_nnXSectProfile;
   //! Fluctuating cross section distribution (owned).
   PTotProfile     *_ptotProfile;
+  //! Collision profile of the current event (NNCOLLISION_OPTION 2).
+  NNProfile        _eventProfile;
 
 };
 

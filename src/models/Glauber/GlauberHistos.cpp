@@ -19,6 +19,7 @@
 
 
 using CAP::MATH::pi;
+using CAP::MATH::twoPi;
 
 namespace CAP
 {
@@ -50,21 +51,21 @@ namespace CAP
   _nSpect_min(0.0),
   _impact_min(0.0),
   _cs_min(-1.0),
-  _psi_min(-pi()/2.0),
+  _psi_min(0.0),
   _ecc_min(-1.0),
   _rN_min(0.0),
-  _psiN_min(-pi()/2.0),
-  _eccN_min(-1.0),
+  _psiN_min(0.0),
+  _eccN_min(0.0),
 
   _nParts_max(500.0),
   _nBinaries_max(1000.0),
   _nSpect_max(500.0),
   _impact_max(12.0),
   _cs_max(1.0),
-  _psi_max(pi()/2.0),
+  _psi_max(pi()),
   _ecc_max(1.0),
   _rN_max(12.0),
-  _psiN_max(pi()/2.0),
+  _psiN_max(twoPi()),
   _eccN_max(1.0),
 
   h_impactPar(nullptr),
@@ -617,8 +618,8 @@ namespace CAP
     {
 
     // system==participants as a whole
-    h_sysMeanX = createHistogram(createName(_histogramBaseName,"sysMeanX"), _impact_nBins,_impact_min,_impact_max,"<x> (fm)","N");
-    h_sysMeanY = createHistogram(createName(_histogramBaseName,"sysMeanY"), _impact_nBins,_impact_min,_impact_max,"<y> (fm)","N");
+    h_sysMeanX = createHistogram(createName(_histogramBaseName,"sysMeanX"), _impact_nBins,-0.5*_impact_max,0.5*_impact_max,"<x> (fm)","N");
+    h_sysMeanY = createHistogram(createName(_histogramBaseName,"sysMeanY"), _impact_nBins,-0.5*_impact_max,0.5*_impact_max,"<y> (fm)","N");
     h_sysVarX  = createHistogram(createName(_histogramBaseName,"sysVarX"),  _impact_nBins,_impact_min,_impact_max,"<x^{2}> (fm^{2})","N");
     h_sysVarY  = createHistogram(createName(_histogramBaseName,"sysVarY"),  _impact_nBins,_impact_min,_impact_max,"<y^{2}> (fm^{2})","N");
     h_sysVarXY = createHistogram(createName(_histogramBaseName,"sysVarXY"), _impact_nBins,_impact_min,_impact_max,"<xy> (fm^{2})","N");
@@ -863,31 +864,19 @@ namespace CAP
     h_sysEccYVsImpact    ->fill(impact,momentsSystem._eccY);
     h_sysEccVsImpact     ->fill(impact,momentsSystem._ecc);
     h_sysPsiVsImpact     ->fill(impact,momentsSystem._psi);
-//    printValue("Check",4);
-//    printValue("_nOrders",_nOrders);
-//    for (int iOrder=0; iOrder<_nOrders; ++iOrder)
-//      {
-//      printValue("iOrder",iOrder);
-//      h_sysCosPhiN[iOrder]->fill(momentsSystem._cosPhiN[iOrder],weight);
-//      printValue("Check","4a");
-//      h_sysSinPhiN[iOrder]->fill(momentsSystem._sinPhiN[iOrder],weight);
-//      printValue("Check","4b");
-//      h_sysRnN[iOrder]    ->fill(momentsSystem._rN[iOrder],weight);
-//      printValue("Check","4c");
-//      h_sysPsiN[iOrder]   ->fill(momentsSystem._psiN[iOrder],weight);
-//      printValue("Check","4d");
-//      h_sysEccN[iOrder]   ->fill(momentsSystem._eccN[iOrder],weight);
-//      printValue("Check","4e");
-//      h_sysCosPhiNVsImpact[iOrder]  ->fill(impact,momentsSystem._cosPhiN[iOrder]);
-//      printValue("Check","4f");
-//      h_sysSinPhiNVsImpact[iOrder]  ->fill(impact,momentsSystem._sinPhiN[iOrder]);
-//      printValue("Check","4g");
-//      h_sysRnNVsImpact[iOrder]      ->fill(impact,momentsSystem._rN[iOrder]);
-//      printValue("Check","4h");
-//      h_sysPsiNVsImpact[iOrder]     ->fill(impact,momentsSystem._psiN[iOrder]);
-//      printValue("Check","4i");
-//      h_sysEccNVsImpact[iOrder]     ->fill(impact,momentsSystem._eccN[iOrder]);
-//      }
+    for (int iOrder=0; iOrder<_nOrders && iOrder<int(momentsSystem._eccN.size()); ++iOrder)
+      {
+      h_sysCosPhiN[iOrder]->fill(momentsSystem._cosPhiN[iOrder],weight);
+      h_sysSinPhiN[iOrder]->fill(momentsSystem._sinPhiN[iOrder],weight);
+      h_sysRnN[iOrder]    ->fill(momentsSystem._rN[iOrder],weight);
+      h_sysPsiN[iOrder]   ->fill(momentsSystem._psiN[iOrder],weight);
+      h_sysEccN[iOrder]   ->fill(momentsSystem._eccN[iOrder],weight);
+      h_sysCosPhiNVsImpact[iOrder]  ->fill(impact,momentsSystem._cosPhiN[iOrder]);
+      h_sysSinPhiNVsImpact[iOrder]  ->fill(impact,momentsSystem._sinPhiN[iOrder]);
+      h_sysRnNVsImpact[iOrder]      ->fill(impact,momentsSystem._rN[iOrder]);
+      h_sysPsiNVsImpact[iOrder]     ->fill(impact,momentsSystem._psiN[iOrder]);
+      h_sysEccNVsImpact[iOrder]     ->fill(impact,momentsSystem._eccN[iOrder]);
+      }
     }
   if (_fillArea) calculateArea(event);
   if (_drawEvents && _drawEventsIndex<_drawEventsN)

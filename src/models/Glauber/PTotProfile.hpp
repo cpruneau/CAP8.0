@@ -41,6 +41,11 @@ namespace CAP
   //! @brief Random cross section drawn from evaluate() (inverse transform of its cumulative distribution).
   //! @return cross section @throws Exception if the parameters are not set
   double random();
+  //! @brief Mean of the distribution (mb). @return mean
+  double mean() const { return _mean; }
+  //! @brief Set sigma and omega, and lambda so that the mean is sigma (TGlauberMC: lambda = sigma/<x> at lambda 1).
+  //! @param nnXSect sigma (mb) @param nnXSectOmega omega (> 0)
+  void setParametersWithMean(double nnXSect, double nnXSectOmega);
   //! @brief Set the parameters. @param nnXSect mean cross section @param nnXSectOmega relative width
   //! @param nnXSectLambda scale
   void setParameters(double nnXSect,
@@ -61,6 +66,7 @@ namespace CAP
   double _nnXSectOmega;
   double _nnXSectLambda;
   double _xMax;                 //!< upper edge of the tabulated range (cache, not saved)
+  double _mean;                 //!< mean of the distribution (cache, not saved)
   std::vector<double> _cdf;     //!< normalized cumulative distribution on [0,_xMax] (cache, not saved)
 
   //! @brief Tabulate the cumulative distribution used by random() (called by setParameters()).

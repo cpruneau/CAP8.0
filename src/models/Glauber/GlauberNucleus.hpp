@@ -15,6 +15,8 @@
 #include "GlauberNucleon.hpp"
 #include "GlauberNucleusType.hpp"
 #include "NuclearDistribution.hpp"
+#include <memory>
+#include <vector>
 
 namespace CAP
 {
@@ -195,6 +197,25 @@ namespace CAP
   void setRecenteringMode(double v)  { _recenteringMode = v; }
   //! @brief Set: whether a user cross section is used. @param v value
   void setUserSigmaMode(bool v)      { _userSigmaMode = v;}
+  //! @brief Set the smearing of the nucleons placed on a lattice (rms of the Gaussian factor of each coordinate; 0:
+  //! none). @param v value
+  void setSmearing(double v)         { _smearing = v; }
+  //! @brief Set the largest distance of the center of a thrown nucleus from the origin (fm); farther, the nucleus is
+  //! thrown again (setNucleus() sets 0.1 for the reweighted types, 99 otherwise). @param v value
+  void setMaxCenterShift(double v)   { _maxCenterShift = v; }
+  double smearing() const            { return _smearing; }
+  double maxCenterShift() const      { return _maxCenterShift; }
+  //! @brief Azimuth of the symmetry axis of the last nucleus thrown (deformed nuclei, configurations). @return angle
+  double orientationPhi() const      { return _orientationPhi; }
+  //! @brief Polar angle of the symmetry axis of the last nucleus thrown. @return angle
+  double orientationTheta() const    { return _orientationTheta; }
+  //! @brief Nucleons of the last nucleus left unsmeared on their lattice node (no position found). @return count
+  int nNonSmeared() const            { return _nNonSmeared; }
+
+  //! @brief Rotate (x,y,z) so that the z axis goes to the unit vector (ux,uy,uz).
+  static void rotateUz(double ux, double uy, double uz, double & x, double & y, double & z);
+  //! @brief Rotate (x,y,z) about x by psiX, then y by psiY, then z by psiZ.
+  static void rotateXYZ3D(double psiX, double psiY, double psiZ, double & x, double & y, double & z);
 
   protected:
   
@@ -225,9 +246,27 @@ namespace CAP
   bool   _userSigmaMode;
 
   //! Density distribution of the protons.
+  double _smearing;          //!< smearing of the lattice positions (0: none)
+  double _maxCenterShift;    //!< largest distance of the center from the origin before recentering (fm)
+  double _orientationPhi;    //!< orientation of the last nucleus thrown: azimuth
+  double _orientationTheta;  //!< orientation of the last nucleus thrown: polar angle
+  int    _nNonSmeared;       //!< nucleons left unsmeared in the last nucleus thrown
+
+  //! @brief Whether (x,y,z) is closer than the minimum distance to one of the first n nucleons.
+  bool isCloseToPlaced(int n, double x, double y, double z) const;
+  void positionDeuteron();
+  void positionContinuous();
+  void positionOnLattice();
+  void positionFromConfiguration();
+  void readConfigurations();
+  String configurationFileName() const;
+
   NuclearDistribution _protonDistribution;
   //! Density distribution of the neutrons.
   NuclearDistribution _neutronDistribution;
+  std::shared_ptr<const std::vector<double>> _configurations;  //!< nucleon configurations read from a file (type 6)
+  long _configurationIndex;                                     //!< next configuration used
+  std::vector<char> _usedNodes;                                 //!< lattice nodes taken (lattice placement)
 
   };
   

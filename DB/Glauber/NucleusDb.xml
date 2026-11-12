@@ -10,7 +10,8 @@
     A, Z          numbers of nucleons and protons
     radialType    radial density (see NuclearDistribution): 0 exponential, 1 three-parameter Fermi (3pF),
                   2 three-parameter Gaussian (3pG), 3 Hulthen (deuteron), 4 Hulthen with the neutron opposite to
-                  the proton, 5 ellipsoid, 6 nucleon configurations read from a file, 7 deformed (box method),
+                  the proton, 5 ellipsoid, 6 nucleon configurations read from a file (He3, H3, He4, C, O: the
+                  files of TGlauberMC in Glauber/NucleonConfigurations), 7 deformed (box method),
                   8 deformed (beta2, beta4), 9 proton Gaussian, 10 proton double Gaussian, 11 3pF with distinct
                   proton and neutron parameters, 12 3pF reweighted (r0, r1, r2), 13 as 11 reweighted, 14 as 8
                   reweighted, 15 harmonic oscillator

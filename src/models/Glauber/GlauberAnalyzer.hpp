@@ -45,6 +45,8 @@ namespace CAP
   Accountant _eventAccepted;
   //! Whether the radial profile is used.
   bool _useRadialProfile;
+  //! x, y of the wounded nucleons of the current event (the moments are filled from them, in two passes).
+  std::vector<double> _positions;
   //bool _fillEvents;
   //radialProfile;
 

@@ -85,6 +85,9 @@ public:
   double _eccY;
   double _ecc;
   double _psi;
+  //! Means of the first pass (the center of the second).
+  double _firstMeanX = 0.0;
+  double _firstMeanY = 0.0;
 
   //! Harmonic sums and eccentricities eps_n, angles psi_n of each order.
   std::vector<double> _cosPhiN;

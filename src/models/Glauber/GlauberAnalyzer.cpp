@@ -11,6 +11,7 @@
  * *********************************************************************/
 #include <algorithm>
 #include "GlauberAnalyzer.hpp"
+#include <initializer_list>
 #include "GlauberHistos.hpp"
 #include "MathBasicFunctions.hpp"
 #include "NuclearDistribution.hpp"
@@ -111,8 +112,8 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"cs_min"),-1.0);
   _configuration.addProperty(createKey(taskName,objectType,"cs_max"),1.0);
   _configuration.addProperty(createKey(taskName,objectType,"psi_nBins"),20);
-  _configuration.addProperty(createKey(taskName,objectType,"psi_min"),-pi()/2.0);
-  _configuration.addProperty(createKey(taskName,objectType,"psi_max"),pi()/2.0);
+  _configuration.addProperty(createKey(taskName,objectType,"psi_min"),0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"psi_max"),pi());
   _configuration.addProperty(createKey(taskName,objectType,"ecc_nBins"),20);
   _configuration.addProperty(createKey(taskName,objectType,"ecc_min"),-1.0);
   _configuration.addProperty(createKey(taskName,objectType,"ecc_max"),1.0);
@@ -120,10 +121,10 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"rn_min"),0.0);
   _configuration.addProperty(createKey(taskName,objectType,"rn_max"),12.0);
   _configuration.addProperty(createKey(taskName,objectType,"psiN_nBins"),20);
-  _configuration.addProperty(createKey(taskName,objectType,"psiN_min"),-pi()/2.0);
-  _configuration.addProperty(createKey(taskName,objectType,"psiN_max"),pi()/2.0);
+  _configuration.addProperty(createKey(taskName,objectType,"psiN_min"),0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"psiN_max"),twoPi());
   _configuration.addProperty(createKey(taskName,objectType,"eccN_nBins"),20);
-  _configuration.addProperty(createKey(taskName,objectType,"eccN_min"),-1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"eccN_min"),0.0);
   _configuration.addProperty(createKey(taskName,objectType,"eccN_max"),1.0);
   _configuration.addProperty(createKey(taskName,objectType,"area_nBins"),50);
   _configuration.addProperty(createKey(taskName,objectType,"area_min"),0.0);
@@ -252,39 +253,31 @@ namespace CAP
                                     std::vector<GlauberNucleon> & nucleonsB,
                                     GlauberEventMoments & moments)
   {
-  // first call to calculate the first moments
-  // second call to calculate 2nd and higher moments, eccentricity and psi
-  double smearRadius, smearPhi, x, y;
-
-  for (auto & nucleonA : nucleonsA)
-    {
-    if (!nucleonA.isWounded()) continue;
-    const VectorLorentz & position = nucleonA.position();
-    x = position.x();
-    y = position.y();
-    if (_useRadialProfile)
+  // the positions of the wounded nucleons (smeared once, when a radial profile is used), then the two passes over them
+  _positions.clear();
+  for (auto * nucleons : {&nucleonsA, &nucleonsB})
+    for (auto & nucleon : *nucleons)
       {
-      smearRadius = 0.5;// fix me radialProfile->GetRandom();
-      smearPhi    = twoPi() * CAP::MATH::randomGenerator().random();
-      x += smearRadius*std::cos(smearPhi);
-      y += smearRadius*std::sin(smearPhi);
+      if (!nucleon.isWounded()) continue;
+      const VectorLorentz & position = nucleon.position();
+      double x = position.x();
+      double y = position.y();
+      if (_useRadialProfile)
+        {
+        double smearRadius = 0.5;// fix me radialProfile->GetRandom();
+        double smearPhi    = twoPi() * CAP::MATH::randomGenerator().random();
+        x += smearRadius*std::cos(smearPhi);
+        y += smearRadius*std::sin(smearPhi);
+        }
+      _positions.push_back(x);
+      _positions.push_back(y);
       }
-    moments.fill(x,y);
-    }
-  for (auto & nucleonB : nucleonsB)
+  moments.resetPass();
+  for (int pass=0; pass<2; pass++)
     {
-    if (!nucleonB.isWounded()) continue;
-    const VectorLorentz & position = nucleonB.position();
-    x = position.x();
-    y = position.y();
-    if (_useRadialProfile)
-      {
-      smearRadius = 0.5;//radialProfile->GetRandom();
-      smearPhi    = twoPi() * CAP::MATH::randomGenerator().random();
-      x += smearRadius*std::cos(smearPhi);
-      y += smearRadius*std::sin(smearPhi);
-      }
-    moments.fill(x,y);
+    moments.reset();
+    for (size_t k=0; k+1<_positions.size(); k+=2) moments.fill(_positions[k],_positions[k+1]);
+    moments.calculateAverages();
     }
   }
 
@@ -297,13 +290,7 @@ namespace CAP
   std::vector<GlauberNucleon> & nucleonsA = nucleusA.allNucleons();
   std::vector<GlauberNucleon> & nucleonsB = nucleusB.allNucleons();
   GlauberEventMoments & momentsSystem = ev.momentsSystem();
-  momentsSystem.resetPass();
-  momentsSystem.reset();
   fillMoments(nucleonsA,nucleonsB,momentsSystem);
-  momentsSystem.calculateAverages();
-  momentsSystem.reset();
-  fillMoments(nucleonsA,nucleonsB,momentsSystem);
-  momentsSystem.calculateAverages();
 
   std::vector<GlauberEventFilter*> & filters = eventFilters();
   std::vector<GlauberHistos*> & glauberHistos = histograms();
