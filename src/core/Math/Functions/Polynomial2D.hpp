@@ -60,6 +60,14 @@ namespace CAP
   //! @brief Value. @param x x @param y y @return f(x,y)
   double evaluateAt(double x, double y) const override;
   using ParameterizedFunction::evaluateAt;
+  //! @brief Gradient (exact). @param x point (two coordinates) @return partial derivatives
+  VectorND gradientAt(const std::vector<double> & x) const override;
+  using ParameterizedFunction::gradientAt;
+  //! @brief The derivatives are analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
+  //! @brief Partial derivative, a polynomial of degree N-1 with the same mapping. @param axis 0 (x) or 1 (y)
+  //! @return new Polynomial2D (owned by the caller), null if the axis is not 0 or 1
+  Function * derivativeFunction(unsigned int axis=0) const override;
   //! @brief Map the box [low[0], high[0]] x [low[1], high[1]] onto [-1, 1] x [-1, 1] (fixed mapping parameters).
   //! @param low lower ends @param high upper ends
   void adaptToRange(const std::vector<double> & low, const std::vector<double> & high) override;

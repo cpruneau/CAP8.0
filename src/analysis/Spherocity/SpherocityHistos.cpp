@@ -77,6 +77,7 @@ namespace CAP
   configuration.addProperty(createKey(taskName,type,"FillS1"),        false);
   configuration.addProperty(createKey(taskName,type,"FillS1VsS0"),    false);
   configuration.addProperty(createKey(taskName,type,"nSteps"),        1000);
+  configuration.addProperty(createKey(taskName,type,"MinMultiplicity"), 3);
   configuration.addProperty(createKey(taskName,type,"spherocity_nbins"), 100);
   configuration.addProperty(createKey(taskName,type,"spherocity_min"), 0.0);
   configuration.addProperty(createKey(taskName,type,"spherocity_max"), 1.0);

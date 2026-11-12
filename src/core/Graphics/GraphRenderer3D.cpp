@@ -34,7 +34,7 @@ namespace CAP
     Color  color;                  // fill
     bool   outline;                // with the lines of the cells
     bool   filled = true;          // filled (otherwise only its outline, in line: a cell of the mesh of a fit)
-    LineAttributes line;           // outline of an unfilled face
+    LineAttributes line {};        // outline of an unfilled face
   };
 
   Color shade(const Color & c, double f) { return Color(float(c.red*f), float(c.green*f), float(c.blue*f), c.alpha); }

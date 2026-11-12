@@ -44,6 +44,7 @@ public:
   MATH::VectorLorentz cylindrical(double m)  { MATH::VectorLorentz v; generateCylindrical(m,v); return v; }
   MATH::VectorLorentz spherical(double m)    { MATH::VectorLorentz v; generateSpherical(m,v); return v; }
   const std::vector<ParticleType*> & types() const { return _types; }
+  void setPsi(double psi)                    { _psi = psi; }
 };
 
 //! Mean and standard error of a sample.
@@ -168,6 +169,42 @@ int main()
     }
   check(std::fabs(mp.mean()-2.0/3.0)<5*mp.error(), "spherical user function f(p) = p: <p> = 2/3", __LINE__);
   check(ok, "spherical: theta in [ThetaMin, ThetaMax]", __LINE__);
+  }
+
+  // flow: <cos(n(phi - Psi))> = v_n, constant or rising linearly with pT up to PtScale
+  {
+  TestGen gen;
+  gen.set("Flow:Vn",String("0, 0.1, 0.05"));
+  gen.setup(db);
+  gen.setPsi(1.0);
+  Moments c1, c2, c3;
+  for (int i=0; i<n; i++)
+    {
+    MATH::VectorLorentz v = gen.cylindrical(mPi);
+    double d = std::atan2(v[2],v[1])-1.0;
+    c1.add(std::cos(d)); c2.add(std::cos(2*d)); c3.add(std::cos(3*d));
+    }
+  check(std::fabs(c1.mean())<5*c1.error(), "flow: <cos(phi - Psi)> = v1 = 0", __LINE__);
+  check(std::fabs(c2.mean()-0.1)<5*c2.error(), "flow: <cos 2(phi - Psi)> = v2", __LINE__);
+  check(std::fabs(c3.mean()-0.05)<5*c3.error(), "flow: <cos 3(phi - Psi)> = v3", __LINE__);
+  TestGen rising;
+  rising.set("Flow:Vn",String("0, 0.2"));
+  rising.set("Flow:PtScale",2.0);
+  rising.set("Slope",1.0);
+  rising.setup(db);
+  rising.setPsi(0.0);
+  Moments low, high;
+  for (int i=0; i<n; i++)
+    {
+    MATH::VectorLorentz v = rising.cylindrical(mPi);
+    double x = pt(v), c = std::cos(2*std::atan2(v[2],v[1]));
+    if (x>0.4 && x<0.6) low.add(c/(x/2.0));        // v2(pT) = 0.2 pT/2 below 2
+    if (x>2.0) high.add(c);                          // v2 = 0.2 above
+    }
+  check(std::fabs(low.mean()-0.2)<5*low.error(), "flow: v2(pT) = v2 pT/PtScale below PtScale", __LINE__);
+  check(std::fabs(high.mean()-0.2)<5*high.error(), "flow: v2(pT) = v2 above PtScale", __LINE__);
+  TestGen bad; bad.set("Flow:Vn",String("0.3, 0.3"));
+  check(throws(bad,db), "flow: sum of |v_n| >= 1/2: ConfigurationException", __LINE__);
   }
 
   // particle types and invalid settings

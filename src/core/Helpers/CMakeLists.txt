@@ -19,9 +19,10 @@ RootChainManager.cpp
 RootFileHelpers.cpp
 RootHistogramHelpers.cpp
 RootConversion.cpp
-RootFileConversion.cpp)
+RootFileConversion.cpp
+RootHistogramGroup.cpp)
 
-target_link_libraries(Helpers Base Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(Helpers Particles Base Math ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Helpers PUBLIC Base Math ${EXTRA_INCLUDES} )
 
 # Tests (run with ctest in the build directory; not installed)
@@ -32,13 +33,11 @@ add_executable(TestRootConversion tests/TestRootConversion.cpp)
 target_link_libraries(TestRootConversion Helpers Base Math ${ROOT_LIBRARIES})
 add_test(NAME RootConversion COMMAND TestRootConversion)
 
-# Conversion of the histograms of ROOT files to CAP files and back (option CAP_WITH_ROOT_FILES)
-if(CAP_WITH_ROOT_FILES)
-  add_executable(CapRootConvert CapRootConvert.cxx)
-  target_link_libraries(CapRootConvert Helpers Base Math ${ROOT_LIBRARIES})
-  set_target_properties(CapRootConvert PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")   # runs without SetupCAP.sh
-  install(TARGETS CapRootConvert RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
-endif()
+# Conversion of the histograms of ROOT files to CAP files and back (the Helpers library is built only with CAP_WITH_ROOT)
+add_executable(CapRootConvert CapRootConvert.cxx)
+target_link_libraries(CapRootConvert Helpers Base Math ${ROOT_LIBRARIES})
+set_target_properties(CapRootConvert PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")   # runs without SetupCAP.sh
+cap_install(CapRootConvert RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
-install(TARGETS Helpers  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Helpers LIBRARY "$ENV{CAP_LIB_PATH}")
 

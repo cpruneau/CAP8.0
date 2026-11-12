@@ -127,6 +127,10 @@ namespace CAP
   //! @return p'(x); 0 for a constant or for the zero polynomial
   //!
   double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
+  //! @brief Derivative as a new function of the same kind. @param axis 0 @return new function (owned by the caller)
+  Function * derivativeFunction(unsigned int axis=0) const override;
 
   //!
   //! @brief Analytical integral from low to high: P(high) - P(low), with P(x) = c0 x + c1 x^2/2 + ... + cn x^(n+1)/(n+1).

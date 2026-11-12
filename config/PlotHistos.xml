@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Example of a PlotHistos file: the plots of the output of a pair analysis (RunCAP.py, ParticlePairAnalyzer named
+  "Pair", with the particle filters PiP, PiM, KP, KM and the event filter MB).
+
+    PlotHistos config/PlotHistos.xml derived.cap          windows on screen; the Plots menu writes the outputs
+    PlotHistos (option all) config/PlotHistos.xml derived.cap
+                                                          no window: printed plots, PDF, PowerPoint and LaTeX
+  (the options are given on the command line with two dashes; PlotHistos with the option help lists them)
+
+  Everything is optional except the paths of the histograms. Paths of files are relative to this file.
+    Window   title width height columns rows             n x m canvases (the first window is the main window)
+    Canvas   name title width height columns rows file   q x p graphs; file: printed to it (Plots > Print Named Plots)
+      Background color alpha style
+    Graph    title cell file legend logX logY logZ titlePointSize showFits showResiduals residualMode palette ...
+      Margins left bottom right top                     fractions of the cell
+      Axis     which="x|y|z|residual" title min max log range="auto" labelPointSize titlePointSize nMajorTicks ...
+        Line, Labels, TitleText                         the axis line, the labels, the title
+      Frame    (Fill, Line)    Legend show x y pointSize (Fill, Line)    TitleText
+      Histogram input path label showLine showMarkers showErrors showSysErrors sysStyle showContours ...
+        Line color alpha style width     Marker color alpha style size     SysFill, SysLine, ContourLine
+      Function class parameters xMin xMax [yMin yMax] label nSamples    (classes of the function registry)
+  Colors: ROOT numbers (2), names of the color table (kRed+1, black), or #rrggbb.
+  Plots > Save Settings writes every setting, as shown on screen, back to this file (or to a new one).
+-->
+<PlotHistos version="1">
+  <Input id="pairs" file="derived.cap"/>
+  <Output directory="figures" pdf="plots.pdf" pptx="plots.pptx" latex="presentation.tex" latexStyle="beamer"
+          latexCompile="false" title="Pair analysis" author="CAP"/>
+
+  <Window title="Single particles" width="1300" height="650" columns="2" rows="1">
+    <Canvas name="spectra" title="Transverse momentum spectra" width="700" height="500" file="spectra.pdf">
+      <Graph title="p_{T} spectra" legend="true" file="spectra_pt.pdf">
+        <Margins left="0.16" bottom="0.14" right="0.04" top="0.1"/>
+        <Axis which="x" title="p_{T} (GeV/c)" min="0" max="2"/>
+        <Axis which="y" title="dN/dp_{T}" log="true"/>
+        <Histogram input="pairs" path="Pair/MB_PiP/n1_pt" label="#pi^{+}">
+          <Marker color="kRed+1" style="20" size="1"/>
+        </Histogram>
+        <Histogram input="pairs" path="Pair/MB_KP/n1_pt" label="K^{+}">
+          <Marker color="kBlue+1" style="21" size="1"/>
+        </Histogram>
+        <Function class="Exponential" parameters="30, -2" xMin="0.2" xMax="2" label="exp(-2 p_{T})">
+          <Line color="kGreen+2" style="2" width="2"/>
+        </Function>
+      </Graph>
+    </Canvas>
+    <Canvas name="eta" title="Pseudorapidity" width="700" height="500" columns="2" rows="1">
+      <Graph title="#pi^{+}"><Histogram path="Pair/MB_PiP/n1_eta"/></Graph>
+      <Graph title="#pi^{-}"><Histogram path="Pair/MB_PiM/n1_eta"><Marker color="kBlue+1" style="24"/></Histogram></Graph>
+    </Canvas>
+  </Window>
+
+  <Window title="Pairs" width="1200" height="550" columns="1" rows="1">
+    <Canvas name="R2" title="R_{2}(#Delta y, #Delta#varphi)" width="1000" height="450" columns="2" rows="1" file="R2.pdf">
+      <Graph title="#pi^{+}#pi^{-}" palette="viridis"><Histogram path="Pair/MB_PiP_PiM/R2_DyDphi"/></Graph>
+      <Graph title="#pi^{+}#pi^{+}" palette="viridis"><Histogram path="Pair/MB_PiP_PiP/R2_DyDphi"/></Graph>
+    </Canvas>
+  </Window>
+</PlotHistos>

@@ -1,6 +1,6 @@
 #include "PrintHelpers.hpp"
 #include "Thermodynamics.hpp"
-#include "TMath.h"
+#include <cmath>
 
 
 namespace CAP

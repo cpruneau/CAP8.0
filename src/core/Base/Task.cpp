@@ -12,7 +12,6 @@
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "TFile.h"
 #include "EnvironmentVariables.hpp"
 #include "XmlDocument.hpp"
 #include "Reflection.hpp"

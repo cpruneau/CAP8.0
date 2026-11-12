@@ -48,6 +48,11 @@ namespace CAP
 
   //! @brief Analytical first derivative at x. @param x value of the independent variable @return a b exp(b x)
   double derivativeAt(double x) const override { return exponent()*amplitude()*std::exp(exponent()*x); }
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
+  //! @brief Derivative, a b exp(b x). @param axis 0 @return new Exponential (owned by the caller)
+  Function * derivativeFunction(unsigned int axis=0) const override
+  { return axis == 0 ? new Exponential(exponent()*amplitude(), exponent()) : nullptr; }
 
   //!
   //! @brief Analytical integral from low to high: (a/b) (exp(b high) - exp(b low)), or a (high - low) if b = 0.

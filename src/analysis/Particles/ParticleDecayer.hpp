@@ -11,7 +11,7 @@
 #define CAP__ParticleDecayer
 #include <iostream>
 #include <iomanip>
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 #include "Particle.hpp"
 #include "VectorLorentz.hpp"
 
@@ -32,14 +32,14 @@ namespace CAP
 class ParticleDecayer
 {
 public:
-  //! @brief Default constructor (uses gRandom).
+  //! @brief Default constructor (uses CAP::MATH::randomGenerator()).
   ParticleDecayer();
   //! @brief Destructor.
   virtual ~ParticleDecayer() {}
   //! @brief Set the random number generator. @param _random generator (not owned)
-  void setRandomGenerator(TRandom * _random) { random = _random; }
+  void setRandomGenerator(CAP::MATH::RandomGenerator * _random) { random = _random; }
   //! @brief Random number generator. @return generator
-  TRandom * getRandomGenerator() { return random; }
+  CAP::MATH::RandomGenerator * getRandomGenerator() { return random; }
 
   //! @brief Two-body decay. @param parentType type of the parent @param parentMomentum its momentum
   //! @param parentPosition its production point @param childType1 type of product 1 @param p1 its momentum (set)
@@ -118,7 +118,7 @@ protected:
   static double   twoPi;
 
   //! Random number generator (not owned).
-  TRandom * random;
+  CAP::MATH::RandomGenerator * random;
 
 
 

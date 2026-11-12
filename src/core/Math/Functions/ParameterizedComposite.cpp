@@ -162,6 +162,13 @@ namespace CAP
   return sum;
   }
 
+  bool ParameterizedComposite::hasAnalyticalDerivative() const
+  {
+  if (rank() != 1 || _components.empty()) return false;
+  for (const auto & component : _components) if (!component->hasAnalyticalDerivative()) return false;
+  return true;
+  }
+
   double ParameterizedComposite::derivativeAt(double x) const
   {
   checkRank(1, __FUNCTION__);

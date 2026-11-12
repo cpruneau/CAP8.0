@@ -39,15 +39,31 @@ store of their own: the first Glauber task using one defines it.
 The library itself, including the objects no task uses, and the histogram options of the tasks are also written in a
 RUNCAP element of the workflow file, next to its TASK element (CAP reads only the TASK elements).
 
+Selection files. The objects of the library are written in XML, one element per object named after its kind
+(EventFilter, ParticleFilter, EventEfficiency, ...; see TAG_OF_KIND):
+    <ParticleFilter name="PiP" title="positive pions">
+      <Condition quantity="PDG" form="value" value="211"/>
+      <Condition quantity="PT" form="range" minimum="0.2" maximum="2"/>
+    </ParticleFilter>
+    <EventEfficiency name="Eff"><Parameter name="nBins_mult">100</Parameter> ...</EventEfficiency>
+The same elements are written in the RUNCAP element of a workflow, or in a file of their own, a selection file (root
+CapSelections, see write_selections(), read_selections()), which several workflows can share: a workflow either
+copies the objects of a selection file (import_selections()), or links it (FilterLibrary.link()), writing
+<Include file="..."/> (relative to the workflow) instead of the objects, which are read from the file each time the
+workflow is loaded and written back to it when the workflow is saved (save_linked()).
+
 No tkinter here: usable and testable without a display.
 """
 
 import copy
+import math
+import os
 import re
+import subprocess
 import xml.etree.ElementTree as ET
 
 #: Kinds of objects of the library, in the order of the tabs of the Filters pane.
-KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
+KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "JET_PAIR_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
          "EVENT", "PARTICLE_DB"]
 #: Kinds of corrections (efficiencies and smearers).
 CORRECTION_KINDS = ("EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER")
@@ -55,12 +71,40 @@ CORRECTION_KINDS = ("EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", 
 SETTINGS_KINDS = CORRECTION_KINDS + ("PARTICLE_DB",)
 #: Kinds chosen by default by a new task (the first object of the library).
 DEFAULT_CHOICE_KINDS = ("EVENT", "PARTICLE_DB")
-KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle filters",
+KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle filters", "JET_FILTER": "Jet filters",
+               "JET_PAIR_FILTER": "Jet pair filters",
                "EVENT_EFFICIENCY": "Event efficiencies", "PARTICLE_EFFICIENCY": "Particle efficiencies",
                "EVENT_SMEARER": "Event smearers", "PARTICLE_SMEARER": "Particle smearers", "EVENT": "Events",
                "PARTICLE_DB": "Particle databases"}
+#: Element of an object of each kind in XML (workflows and selection files), and the root of a selection file.
+TAG_OF_KIND = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "JET_FILTER": "JetFilter",
+               "JET_PAIR_FILTER": "JetPairFilter",
+               "EVENT_EFFICIENCY": "EventEfficiency",
+               "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
+               "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}
+KIND_OF_TAG = {tag: kind for kind, tag in TAG_OF_KIND.items()}
+#: Lists of objects of some tasks taken from the library of another kind: the particles of interest of the flow
+#: analysis (CAP::ParticleFlowAnalyzer, POI_FILTER) are particle filters of the library.
+ALIAS_KINDS = {"POI_FILTER": "PARTICLE_FILTER"}
+#: Kinds of the lists a task can choose objects for: those of the library and the aliases.
+CHOICE_KINDS = KINDS + list(ALIAS_KINDS)
+KIND_LABELS["POI_FILTER"] = "POI filters"
+
+
+def library_kind(kind):
+    """Kind of the library objects of a list (POI_FILTER: PARTICLE_FILTER)."""
+    return ALIAS_KINDS.get(kind, kind)
+
+
+def lists_of_kind(kind):
+    """Kinds of the lists choosing objects of a kind of the library: the kind and its aliases."""
+    return [kind] + [alias for alias, target in ALIAS_KINDS.items() if target == kind]
+SELECTIONS_ROOT = "CapSelections"
 #: Kinds defined by conditions (the others by parameters).
-CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER")
+CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "JET_PAIR_FILTER")
+#: Kinds of the optional modules: their creator is written only when the library has objects of the kind (the jet
+#: filters and jet pair filters need CAP built with Jets).
+OPTIONAL_KINDS = ("JET_FILTER", "JET_PAIR_FILTER")
 
 #: Forms of a condition and the TYPE written for them.
 RANGE, DUAL_RANGE, VALUE, FLAG = "range", "two ranges", "value", "flag"
@@ -69,11 +113,23 @@ TYPE_OF_FORM = {RANGE: "DOUBLE_RANGE", DUAL_RANGE: "DOUBLE_DUAL_RANGE", VALUE: "
 FORM_OF_TYPE = {"DOUBLE_RANGE": RANGE, "DOUBLE_DUAL_RANGE": DUAL_RANGE, "INTEGER": VALUE, "BOOL": FLAG}
 
 #: Quantities of the conditions: {SUBTYPE: (description, forms accepted)}, as read by the configure() functions.
-EVENT_SUBTYPES = {}
+#: Event filters: the global quantities of the selection of a particle filter, named by the condition (SELECTION),
+#: computed once per event and shared by the tasks (CAP::ParticleSelection, CAP::EventFilter).
+SELECTION_SUBTYPES = {"MULT": ("multiplicity of a selection", (RANGE,)),
+                      "ENERGY": ("energy of a selection", (RANGE,)),
+                      "CHARGE": ("net charge of a selection", (RANGE,)),
+                      "STRANGENESS": ("net strangeness of a selection", (RANGE,)),
+                      "BARYON": ("net baryon number of a selection", (RANGE,)),
+                      "PTSUM": ("pT sum of a selection", (RANGE,)),
+                      "SPHERO": ("spherocity of a selection", (RANGE,))}
+EVENT_SUBTYPES = dict(SELECTION_SUBTYPES)
+#: Earlier versions: the quantities set by GlobalAnalyzer for its particle filter k (it must run first).
+LEGACY_EVENT_SUBTYPES = set()
 for _k in range(6):
     EVENT_SUBTYPES["MULT_%d" % _k] = ("multiplicity %d" % _k, (RANGE,))
     EVENT_SUBTYPES["ENERGY_%d" % _k] = ("energy %d" % _k, (RANGE,))
     EVENT_SUBTYPES["SPHERO_%d" % _k] = ("spherocity %d" % _k, (RANGE,))
+    LEGACY_EVENT_SUBTYPES |= {"MULT_%d" % _k, "ENERGY_%d" % _k, "SPHERO_%d" % _k}
 #: Event filters of the Glauber tasks (GlauberEventFilter).
 GLAUBER_SUBTYPES = {"IMPACT": ("impact parameter b", (RANGE, DUAL_RANGE)),
                     "NPARTS": ("participants N_part", (RANGE, DUAL_RANGE)),
@@ -94,21 +150,31 @@ PARTICLE_SUBTYPES = {"PT": ("transverse momentum pT", (RANGE, DUAL_RANGE)),
                      "CHARM": ("charm", (VALUE,)),
                      "LIVE": ("live (not decayed)", (FLAG,)),
                      "ENABLED": ("enabled", (FLAG,))}
+#: Jet filters (CAP::JetFilter): the jet and its rank in pT among the jets of the event found with the same particle
+#: filter and radius (1: leading).
+JET_SUBTYPES = {"PT": ("jet transverse momentum pT", (RANGE, DUAL_RANGE)),
+                "ETA": ("jet pseudorapidity eta", (RANGE, DUAL_RANGE)),
+                "PHI": ("jet azimuth phi in [0, 2 pi)", (RANGE, DUAL_RANGE)),
+                "MASS": ("jet mass", (RANGE, DUAL_RANGE)),
+                "RANK": ("rank in pT in the event (1: leading)", (VALUE, RANGE)),
+                "MULT": ("number of constituents", (VALUE, RANGE))}
+#: Jet pair filters (CAP::JetPairFilter): the ranks of the two jets of a pair (the first of higher rank) and the
+#: variables of the pair.
+JET_PAIR_SUBTYPES = {"RANK1": ("rank of the first jet (1: leading)", (VALUE, RANGE)),
+                     "RANK2": ("rank of the second jet", (VALUE, RANGE)),
+                     "DPHI": ("azimuthal separation |phi1 - phi2| in [0, pi]", (RANGE, DUAL_RANGE)),
+                     "ACOPLANARITY": ("acoplanarity pi - |phi1 - phi2|", (RANGE, DUAL_RANGE)),
+                     "DETA": ("pseudorapidity separation |eta1 - eta2|", (RANGE, DUAL_RANGE)),
+                     "PTRATIO": ("pT ratio xJ = pT2/pT1", (RANGE, DUAL_RANGE)),
+                     "MASS": ("dijet mass", (RANGE, DUAL_RANGE)),
+                     "PT": ("dijet pT", (RANGE, DUAL_RANGE))}
 
-#: Parameters of the efficiencies and smearers: {kind: [(name, type, default)]}, as read by their configure().
-_TWO_PI = "6.283185307179586"
+#: Parameters of the efficiencies and smearers: {kind: [(name, type, default)]}, as read by their configure(). The
+#: particle efficiencies and smearers have none here: they are read from a maps file (see MAPS_KINDS).
 KIND_PARAMETERS = {
     "EVENT_EFFICIENCY": [("BASE_NAME", "string", ""), ("nBins_mult", "int", "100"), ("Min_mult", "double", "0"),
                          ("Max_mult", "double", "100")],
-    "PARTICLE_EFFICIENCY": [("BASE_NAME", "string", ""), ("pt_nbins", "int", "100"), ("pt_min", "double", "0"),
-                            ("pt_max", "double", "10"), ("eta_nbins", "int", "20"), ("eta_min", "double", "-1"),
-                            ("eta_max", "double", "1"), ("phi_nbins", "int", "36"), ("phi_min", "double", "0"),
-                            ("phi_max", "double", _TWO_PI)],
     "EVENT_SMEARER": [("BASE_NAME", "string", "")],
-    "PARTICLE_SMEARER": [("BASE_NAME", "string", ""), ("n_nbins", "int", "100"), ("nSpecies", "bool", "false"),
-                         ("pt_nbins", "int", "100"), ("pt_min", "double", "0"), ("pt_max", "double", "10"),
-                         ("eta_nbins", "int", "20"), ("eta_min", "double", "-1"), ("eta_max", "double", "1"),
-                         ("phi_nbins", "int", "36"), ("phi_min", "double", "0"), ("phi_max", "double", _TWO_PI)],
     # switch read by ParticleDb::configure(): true turns off the weak decays (K0S, K0L, Lambda, Sigma, Xi, Omega)
     "PARTICLE_DB": [("_dbDisableWeakDecays", "bool", "false")],
 }
@@ -117,6 +183,8 @@ KIND_PARAMETERS = {
 CREATOR_NAME, CREATOR_CLASS = "FilterCreator", "CAP::FilterCreator"
 CREATORS = {"EVENT_FILTER": ("EventFilters", "CAP::EventFilterCreator"),
             "PARTICLE_FILTER": ("ParticleFilters", "CAP::ParticleFilterCreator"),
+            "JET_FILTER": ("JetFilters", "CAP::JetFilterCreator"),
+            "JET_PAIR_FILTER": ("JetPairFilters", "CAP::JetPairFilterCreator"),
             "EVENT_EFFICIENCY": ("EventEfficiencies", "CAP::EventEfficiencyCreator"),
             "PARTICLE_EFFICIENCY": ("ParticleEfficiencies", "CAP::ParticleEfficiencyCreator"),
             "EVENT_SMEARER": ("EventSmearers", "CAP::EventSmearerCreator"),
@@ -157,8 +225,6 @@ def default_settings(kind):
     settings = {name: value for name, _, value in LIST_SETTINGS}
     settings.update(KIND_SETTINGS.get(kind, {}))
     return settings
-#: The C++ code handles at most this many particle filters per task (EventProcessor::acceptedParticles()).
-MAX_PARTICLE_FILTERS = 8
 #: Suffix of the names of the folders of derived histograms.
 DERIVED_SUFFIX = "_D"
 #: Names of objects: as task names, without spaces or colons (they become parts of keys and histogram names).
@@ -169,13 +235,85 @@ NAME_FULL = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*")
 TASK_SETTING_KINDS = ("EVENT",)
 MANAGED_KEY = re.compile(r"^(?:(?:%s)(?::N|_\d+:.*)|(?:%s):USE|HISTOGRAM_[1-4](?::N|_\d+:.*)"
                          r"|HISTOGRAM:N|HISTOGRAM_\d+:(?!(?:USE|CREATE|IMPORT|EXPORT|N)(?::|$)).*)$"
-                         % ("|".join(KINDS), "|".join(k for k in KINDS if k not in TASK_SETTING_KINDS)))
+                         % ("|".join(CHOICE_KINDS), "|".join(k for k in CHOICE_KINDS if k not in TASK_SETTING_KINDS)))
 #: Settings of the events of a task shown in its window.
 EVENT_SETTINGS = ("USE", "CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_NAME", "EXPORT", "EXPORT:PATH",
                   "EXPORT:FILE_NAME")
 #: Tasks making events (generators, readers, models): they create them; the analyzers use them.
 EVENT_SOURCES = ("BasicEventGen", "PythiaEventGenerator", "PythiaEventReader", "EposEventReader", "PHSDEventReader",
                  "Therminator3", "ThermalModel", "GlauberGenerator", "EventMerger")
+
+
+#: Tasks writing an event of their own from the event they read: {class: default name of the written event}. Their
+#: events are [read, written]; the written event is an object of the library like the others, used (and reset before
+#: each event) by the event iterator, and chosen by the analyzers of the detector-level events.
+EVENT_WRITERS = {"MeasurementSimulator": "FastSimEvent"}
+
+
+#: Analyzers of the events written by those tasks: they read the written event first and the event it was made from
+#: second (PerformanceAnalyzer: the detector-level event and, for the efficiencies, the generator-level event).
+WRITTEN_EVENT_READERS = ("PerformanceAnalyzer",)
+
+
+def default_reader_events(task, library):
+    """Events of a new analyzer of written events (WRITTEN_EVENT_READERS): [written, read] when the library has a written
+    event (FastSimEvent)."""
+    if task.cls.replace("CAP::", "") not in WRITTEN_EVENT_READERS:
+        return
+    names = library.names("EVENT")
+    written = [n for n in EVENT_WRITERS.values() if n in names]
+    if not written:
+        return
+    others = [n for n in names if n not in EVENT_WRITERS.values()]
+    choices(task)["EVENT"] = written[:1] + others[:1]
+
+
+def writes_events(task):
+    """Whether a task writes an event of its own (see EVENT_WRITERS)."""
+    return task.cls.replace("CAP::", "") in EVENT_WRITERS
+
+
+def written_event(task):
+    """Name of the event a task writes (its second event), or None."""
+    names = choices(task).get("EVENT", [])
+    return names[1] if writes_events(task) and len(names) >= 2 else None
+
+
+def default_writer_events(task, library):
+    """Events of a task writing one: [the first other event of the library, its written event], the written event
+    (EVENT_WRITERS) added to the library if needed. USE on, CREATE off: it reads the first and fills the second
+    itself. @return True if changed"""
+    if not writes_events(task):
+        return False
+    written = EVENT_WRITERS[task.cls.replace("CAP::", "")]
+    names = choices(task).setdefault("EVENT", [])
+    changed = False
+    if len(names) < 2:
+        if library.get("EVENT", written) is None:
+            library.add(FilterDef("EVENT", written))
+        if not names:
+            names.extend(n for n in library.names("EVENT")[:1] if n != written)
+        if names and names[0] != written:
+            names[1:] = [written]
+            changed = True
+    for name, value in (("USE", "true"), ("CREATE", "false")):
+        p = task.param("EVENT:" + name)
+        if p is not None and p.value != value:
+            p.value = value
+            changed = True
+    return changed
+
+
+def update_writer_events(tasks, library):
+    """Tasks writing events (MeasurementSimulator) of workflows written before they did: their written event is set
+    (FastSimEvent). @return warnings"""
+    warnings = []
+    for task in _preorder(tasks):
+        if default_writer_events(task, library):
+            warnings.append("Task %s reads %s and writes %s (Events)." % (
+                task.name, choices(task)["EVENT"][0] if choices(task).get("EVENT") else "?",
+                written_event(task) or EVENT_WRITERS[task.cls.replace("CAP::", "")]))
+    return warnings
 
 
 def makes_events(task):
@@ -214,6 +352,9 @@ def events_made_below(iterator, templates):
             if not is_glauber(child) and "EVENT" in task_kinds(child, templates) and any(
                     _param_value(child, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
                 names.extend(n for n in choices(child).get("EVENT", []) if n not in names)
+            written = written_event(child)
+            if written and written not in names:
+                names.append(written)
             visit(child)
     visit(iterator)
     return names
@@ -247,6 +388,8 @@ def default_event_settings(task, templates):
     """Events of a new task: created by a generator or reader, used by an analyzer, neither by the other tasks."""
     if "EVENT" not in task_kinds(task, templates):
         return
+    if writes_events(task):
+        return                                          # see default_writer_events()
     source = makes_events(task)
     for name, value in (("CREATE", source), ("USE", not source and histogram_layout(task, templates) is not None)):
         p = task.param("EVENT:" + name)
@@ -254,8 +397,8 @@ def default_event_settings(task, templates):
             p.value = "true" if value else "false"
 #: Settings of the lists of objects of a task (<KIND>:USE, IMPORT, CREATE, EXPORT and their files): FilterCreator
 #: creates, imports and exports the objects, so the tasks only choose them (they are hidden in RunCAP.py's windows).
-LIST_SETTING_KEY = re.compile(r"^(?:%s):(?:USE|IMPORT|CREATE|EXPORT)(?::.*)?$" % "|".join(KINDS))
-_OBJECT_KEY = re.compile(r"^(%s)_(\d+):(.+)$" % "|".join(KINDS))
+LIST_SETTING_KEY = re.compile(r"^(?:%s):(?:USE|IMPORT|CREATE|EXPORT)(?::.*)?$" % "|".join(CHOICE_KINDS))
+_OBJECT_KEY = re.compile(r"^(%s)_(\d+):(.+)$" % "|".join(CHOICE_KINDS))
 _CONDITION_KEY = re.compile(r"^CONDITION_(\d+):(.+)$")
 _FOLDER_KEY = re.compile(r"^HISTOGRAM_([1-4])_(\d+):(.+)$")
 _FOLDER_ATTRIBUTES = ("NAME", "TITLE", "OWNER", "BASE_NAME")
@@ -279,10 +422,12 @@ def number_text(value):
 # ------------------------------------------------------------------------------------------------------------------
 
 class Condition:
-    """A condition of a filter on one quantity (SUBTYPE): a range [minimum, maximum), two ranges, a value or a flag."""
+    """A condition of a filter on one quantity (SUBTYPE): a range [minimum, maximum), two ranges, a value or a flag.
+    For the quantities of a selection (SELECTION_SUBTYPES), selection is the name of the particle filter."""
 
-    def __init__(self, subtype, form=RANGE, minimum=0.0, maximum=0.0, minimum2=0.0, maximum2=0.0):
+    def __init__(self, subtype, form=RANGE, minimum=0.0, maximum=0.0, minimum2=0.0, maximum2=0.0, selection=""):
         self.subtype = subtype
+        self.selection = selection or ""
         self.form = form
         self.minimum = float(minimum)
         self.maximum = float(maximum)
@@ -294,23 +439,43 @@ class Condition:
         """TYPE written for CAP."""
         return TYPE_OF_FORM.get(self.form, self.form)
 
+    def significant(self):
+        """What the condition tests: the values its form uses (a value or a flag: the minimum only)."""
+        values = {VALUE: (self.minimum,), FLAG: (bool(self.minimum),), RANGE: (self.minimum, self.maximum)}.get(
+            self.form, (self.minimum, self.maximum, self.minimum2, self.maximum2))
+        return self.subtype, self.selection, self.form, values
+
     def __eq__(self, other):
-        return isinstance(other, Condition) and vars(self) == vars(other)
+        return isinstance(other, Condition) and self.significant() == other.significant()
 
     def __repr__(self):
-        return "Condition(%s, %s, %g, %g)" % (self.subtype, self.form, self.minimum, self.maximum)
+        return "Condition(%s%s, %s, %g, %g)" % (self.subtype, "(%s)" % self.selection if self.selection else "",
+                                                 self.form, self.minimum, self.maximum)
 
 
 class FilterDef:
-    """An object of the library: kind, name, title, and its conditions (filters) or parameters (the others)."""
+    """An object of the library: kind, name, title, and its conditions (filters) or parameters (the others). source:
+    the selection file it comes from when the library links that file ("": an object of the workflow itself)."""
 
-    def __init__(self, kind, name, title="", conditions=None, parameters=None):
+    def __init__(self, kind, name, title="", conditions=None, parameters=None, source=""):
         self.kind = kind
         self.name = name
         self.title = title or ""
         self.conditions = list(conditions or [])
         self.parameters = dict(default_parameters(kind))
-        self.parameters.update(parameters or {})
+        self.source = source or ""
+        if kind not in MAPS_KINDS:                      # those of the maps file: read from it, none here
+            self.parameters.update(parameters or {})
+
+    def same_definition(self, other):
+        """Whether two objects define the same thing (wherever they come from)."""
+        return (isinstance(other, FilterDef) and (self.kind, self.name, self.title, self.conditions, self.parameters)
+                == (other.kind, other.name, other.title, other.conditions, other.parameters))
+
+    def copy(self, source=""):
+        """A copy of the object, from another source."""
+        return FilterDef(self.kind, self.name, self.title, [copy.copy(c) for c in self.conditions],
+                         dict(self.parameters), source)
 
     def __eq__(self, other):
         return isinstance(other, FilterDef) and vars(self) == vars(other)
@@ -338,6 +503,10 @@ def subtypes_for(kind, glauber=False):
         return GLAUBER_SUBTYPES if glauber else EVENT_SUBTYPES
     if kind == "PARTICLE_FILTER":
         return PARTICLE_SUBTYPES
+    if kind == "JET_FILTER":
+        return JET_SUBTYPES
+    if kind == "JET_PAIR_FILTER":
+        return JET_PAIR_SUBTYPES
     return {}
 
 
@@ -348,6 +517,10 @@ class FilterLibrary:
         self.objects = {kind: [] for kind in KINDS}
         self.settings = {kind: default_settings(kind) for kind in KINDS}
         self.job = {name: "" for name in JOB_SETTINGS}      # files of the job (see JOB_SETTINGS)
+        self.links = []                                     # selection files linked (absolute paths, in order)
+        self.link_extras = {}                               # {path: elements of the file not read, written back}
+        self.link_order = {}                                # {path: [(kind, name)] of the objects, in the file}
+        self.link_shadowed = {}                             # {path: objects of the file the workflow also defines}
 
     @staticmethod
     def with_defaults():
@@ -358,10 +531,10 @@ class FilterLibrary:
         return library
 
     def names(self, kind):
-        return [o.name for o in self.objects[kind]]
+        return [o.name for o in self.objects[library_kind(kind)]]
 
     def get(self, kind, name):
-        for o in self.objects[kind]:
+        for o in self.objects[library_kind(kind)]:
             if o.name == name:
                 return o
         return None
@@ -378,9 +551,7 @@ class FilterLibrary:
         """Keep the first n objects of a kind, or add new ones (named after the kind) up to n."""
         items = self.objects[kind]
         del items[n:]
-        base = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "EVENT_EFFICIENCY": "EventEfficiency",
-                "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
-                "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}[kind]
+        base = TAG_OF_KIND[kind]   # new objects are named EventFilter0, JetFilter0, ...
         k = 0
         while len(items) < n:
             name = "%s%d" % (base, k)
@@ -388,9 +559,71 @@ class FilterLibrary:
                 items.append(FilterDef(kind, name))
             k += 1
 
+    def all_objects(self):
+        """Every object, kind by kind."""
+        return [o for kind in KINDS for o in self.objects[kind]]
+
+    def linked(self, path):
+        """Objects that come from a linked selection file, kind by kind."""
+        path = os.path.abspath(path)
+        return [o for o in self.all_objects() if o.source and os.path.abspath(o.source) == path]
+
+    def link(self, path):
+        """Link a selection file: its objects are added to the library (an object of the same kind and name already
+        there is kept, with a warning), coming from the file, which they are written back to (save_linked()) and
+        read from again when the workflow is loaded. @return warnings @throws OSError, ValueError if the file cannot
+        be read"""
+        path = os.path.abspath(path)
+        objects, extras, warnings = read_selections(path)
+        if path not in self.links:
+            self.links.append(path)
+        self.link_extras[path] = extras
+        self.link_order[path] = [(o.kind, o.name) for o in objects]
+        shadowed = self.link_shadowed[path] = []
+        for o in objects:
+            existing = self.get(o.kind, o.name)
+            if existing is not None and existing.source != path:
+                warnings.append("%s: %s %s is already in the workflow (the one of the workflow is kept)."
+                                % (os.path.basename(path), KIND_LABELS[o.kind].lower()[:-1], o.name))
+                shadowed.append(o)                         # left in the file as it is
+                continue
+            o.source = path
+            self.add(o)
+        return warnings
+
+    def unlink(self, path, keep=True):
+        """Stop linking a selection file: its objects become objects of the workflow (keep) or are removed.
+        @return names removed {kind: [name]}"""
+        path = os.path.abspath(path)
+        removed = {}
+        for o in self.linked(path):
+            if keep:
+                o.source = ""
+            else:
+                self.objects[o.kind].remove(o)
+                removed.setdefault(o.kind, []).append(o.name)
+        if path in self.links:
+            self.links.remove(path)
+        self.link_extras.pop(path, None)
+        self.link_shadowed.pop(path, None)
+        self.link_order.pop(path, None)
+        return removed
+
+    def import_objects(self, objects, names=None):
+        """Copy objects into the library (those of the given (kind, name), or all), as objects of the workflow; an
+        object of the same kind and name is replaced. @return the (kind, name) replaced"""
+        replaced = []
+        for o in objects:
+            if names is not None and (o.kind, o.name) not in names:
+                continue
+            if self.get(o.kind, o.name) is not None:
+                replaced.append((o.kind, o.name))
+            self.add(o.copy(""))
+        return replaced
+
     def __eq__(self, other):
         return (isinstance(other, FilterLibrary) and self.objects == other.objects and self.settings == other.settings
-                and self.job == other.job)
+                and self.job == other.job and self.links == other.links)
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -437,7 +670,7 @@ def _template_keys(task, templates):
 def task_kinds(task, templates):
     """Kinds of objects a task can use: those whose list its class configures (its template has <KIND>:N)."""
     keys = _template_keys(task, templates)
-    return [kind for kind in KINDS if kind + ":N" in keys]
+    return [kind for kind in CHOICE_KINDS if kind + ":N" in keys]
 
 
 def is_glauber(task):
@@ -810,6 +1043,8 @@ def default_choices(task, library, templates):
     for kind in DEFAULT_CHOICE_KINDS:
         if kind in task_kinds(task, templates) and library.objects[kind] and not choices(task).get(kind):
             choices(task)[kind] = [library.objects[kind][0].name]
+    default_writer_events(task, library)
+    default_reader_events(task, library)
 
 
 def glauber_only(definition):
@@ -832,8 +1067,11 @@ def _write_object(task, kind, k, name, definition, owner, Param):
             cp = prefix + "CONDITION_%d:" % i
             _set(task, cp + "TYPE", "string", c.type, Param)
             _set(task, cp + "SUBTYPE", "string", c.subtype, Param)
+            if c.subtype in SELECTION_SUBTYPES and kind == "EVENT_FILTER":
+                _set(task, cp + "SELECTION", "string", c.selection, Param)
             _set(task, cp + "MINIMUM", "double", number_text(c.minimum), Param)
-            _set(task, cp + "MAXIMUM", "double", number_text(c.maximum), Param)
+            _set(task, cp + "MAXIMUM", "double", number_text(c.minimum if c.form in (VALUE, FLAG) else c.maximum),
+                 Param)                                         # a value or a flag: CAP reads MINIMUM only
             if c.form == DUAL_RANGE:
                 _set(task, cp + "MINIMUM2", "double", number_text(c.minimum2), Param)
                 _set(task, cp + "MAXIMUM2", "double", number_text(c.maximum2), Param)
@@ -852,9 +1090,11 @@ def creator_task(library, templates, TaskConfig, Param):
         return t
     creator = new(CREATOR_NAME, CREATOR_CLASS)
     for kind in KINDS:
+        objects = [o for o in library.objects[kind] if not glauber_only(o)]
+        if kind in OPTIONAL_KINDS and not objects:
+            continue
         sub = new(*CREATORS[kind])
         strip_managed(sub)
-        objects = [o for o in library.objects[kind] if not glauber_only(o)]
         _set(sub, kind + ":N", "int", str(len(objects)), Param)
         use = sub.param(kind + ":USE")
         if use is not None:
@@ -863,6 +1103,8 @@ def creator_task(library, templates, TaskConfig, Param):
             _set(sub, kind + ":USE", "bool", "true" if objects else "false", Param)
         for name, ptype, _ in LIST_SETTINGS:
             value = library.settings[kind].get(name, default_settings(kind)[name])
+            if kind in MAPS_KINDS and name == "IMPORT" and not objects:
+                value = "false"                         # nothing to read: the file is not opened
             p = sub.param(kind + ":" + name)
             if p is not None:
                 p.value = value
@@ -938,7 +1180,7 @@ def extract_choices(tasks, templates, library=None):
     warnings = []
     for task in _preorder(tasks):
         values = {p.key: p.value for p in task.params}
-        kinds = task_kinds(task, templates) or [k for k in KINDS if k + ":N" in values]
+        kinds = task_kinds(task, templates) or [k for k in CHOICE_KINDS if k + ":N" in values]
         task.filters = {}
         for kind in kinds:
             try:
@@ -953,9 +1195,13 @@ def extract_choices(tasks, templates, library=None):
                     warnings.append("Task %s: %s_%d has no name (ignored)." % (task.name, kind, k))
                     continue
                 names.append(name)
-                if values.get(prefix + "OWNER", "false").lower() not in ("true", "1", "yes", "on"):
+                if kind in ALIAS_KINDS or values.get(prefix + "OWNER", "false").lower() not in ("true", "1", "yes", "on"):
                     continue
                 definition = _definition_from_keys(task, kind, k, name, values, warnings)
+                if kind in MAPS_KINDS and any(key.startswith(prefix) and key[len(prefix):] not in ("NAME", "TITLE", "OWNER")
+                                              for key in values):
+                    warnings.append("%s %s: its maps are read from the maps file now (Filters pane, Detector maps); "
+                                    "the parameters of this file are ignored." % (MAPS_LABELS[kind], name))
                 existing = library.get(kind, name)
                 if existing is None:
                     library.add(definition)
@@ -964,7 +1210,7 @@ def extract_choices(tasks, templates, library=None):
                         for setting, _, _ in LIST_SETTINGS:       # settings of the owner (now FilterCreator's)
                             if kind + ":" + setting in values:
                                 library.settings[kind][setting] = values[kind + ":" + setting]
-                elif existing != definition:
+                elif not existing.source and not existing.same_definition(definition):
                     warnings.append("Task %s: %s %s is defined differently by an earlier task or the library (the first "
                                     "definition is kept)." % (task.name, KIND_LABELS[kind].lower()[:-1], name))
             if names:
@@ -986,7 +1232,7 @@ def extract_choices(tasks, templates, library=None):
                 if library.get(kind, name) is None:
                     warnings.append("Task %s: %s %s is not defined by any task (added to the library, empty)."
                                     % (task.name, KIND_LABELS[kind].lower()[:-1], name))
-                    library.add(FilterDef(kind, name))
+                    library.add(FilterDef(library_kind(kind), name))
     return library, warnings
 
 
@@ -1006,6 +1252,7 @@ def remove_creator(tasks, library):
                 p = sub.param(kind + ":" + name)
                 if p is not None:
                     library.settings[kind][name] = p.value
+    share_maps_file(library)
     return kept
 
 
@@ -1033,7 +1280,7 @@ def _definition_from_keys(task, kind, k, name, values, warnings):
         ctype = values.get(cp + "TYPE", "")
         form = FORM_OF_TYPE.get(ctype.upper(), ctype)
         conditions.append(Condition(values.get(cp + "SUBTYPE", ""), form, number("MINIMUM"), number("MAXIMUM"),
-                                    number("MINIMUM2"), number("MAXIMUM2")))
+                                    number("MINIMUM2"), number("MAXIMUM2"), values.get(cp + "SELECTION", "")))
     return FilterDef(kind, name, title, conditions)
 
 
@@ -1068,6 +1315,20 @@ def _histograms_from_keys(task, templates, values, warnings):
 # Checks
 # ------------------------------------------------------------------------------------------------------------------
 
+def rename_selection(library, old, new):
+    """A particle filter renamed: the conditions of the event filters on its selection follow."""
+    for o in library.objects["EVENT_FILTER"]:
+        for c in o.conditions:
+            if c.subtype in SELECTION_SUBTYPES and c.selection == old:
+                c.selection = new
+
+
+def selection_users(library, name):
+    """Names of the event filters testing the selection of a particle filter."""
+    return [o.name for o in library.objects["EVENT_FILTER"]
+            if any(c.subtype in SELECTION_SUBTYPES and c.selection == name for c in o.conditions)]
+
+
 def check_library(library):
     """Problems of the objects of the library (names, conditions, parameters, file of the particle databases)."""
     errors = []
@@ -1097,10 +1358,21 @@ def check_library(library):
                 elif c.form == DUAL_RANGE and not c.minimum2 < c.maximum2:
                     errors.append("%s %s, condition %d: the second minimum is not below the second maximum."
                                   % (label.capitalize(), o.name, i + 1))
+                elif kind == "EVENT_FILTER" and c.subtype in SELECTION_SUBTYPES \
+                        and c.selection not in library.names("PARTICLE_FILTER"):
+                    errors.append("%s %s, condition %d: %s needs a particle filter of the library (%s)."
+                                  % (label.capitalize(), o.name, i + 1, accepted[c.subtype][0],
+                                     "'%s' is not one" % c.selection if c.selection else "none chosen"))
             for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
                 value = o.parameters.get(pname, "")
                 if not _valid(ptype, value):
                     errors.append("%s %s: invalid %s value '%s' for %s." % (label.capitalize(), o.name, ptype, value, pname))
+    for path in library.links:
+        if not os.path.isfile(path):
+            errors.append("The linked selection file %s is missing: its objects are not in the workflow." % path)
+    if any(library.objects[k] for k in MAPS_KINDS) and not maps_file(library):
+        errors.append("The particle efficiencies and smearers are read from a maps file: choose it (Filters pane, "
+                      "Detector maps).")
     return errors
 
 
@@ -1166,9 +1438,8 @@ def check_choices(tasks, library, templates):
                                 task.name, dict(EVENT_SUBTYPES, **GLAUBER_SUBTYPES)[c.subtype][0], name,
                                 "only the Glauber tasks can" if c.subtype in GLAUBER_SUBTYPES
                                 else "a Glauber task tests impact parameter, participants, collisions or spectators"))
-            if kind == "PARTICLE_FILTER" and len(names) > MAX_PARTICLE_FILTERS:
-                errors.append("Task %s uses %d particle filters: CAP handles at most %d." % (task.name, len(names),
-                                                                                          MAX_PARTICLE_FILTERS))
+        if any(k in kinds for k in MAPS_KINDS):
+            errors += check_maps_choices(task)
         if "EVENT" in kinds and _param_value(task, "EVENT:IMPORT", "false") == "true" \
                 and _param_value(task, "EVENT:IMPORT:FILE_NAME", "NONE") in ("", "NONE"):
             errors.append("Task %s imports events but the file is not named." % task.name)
@@ -1223,10 +1494,27 @@ def check_choices(tasks, library, templates):
             if missing:
                 errors.append("Event iterator %s does not use the events %s made by its tasks: it must use them (it "
                               "resets them before each event)." % (task.name, ", ".join(missing)))
-    made = set()                                        # events created or imported by a task
+    made = set()                                        # events created or imported by a task, or written by one
     for task in _preorder(tasks):
         if any(_param_value(task, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
             made.update(choices(task).get("EVENT", []))
+        if written_event(task):
+            made.add(written_event(task))
+    for task in _preorder(tasks):
+        if not writes_events(task):
+            continue
+        names = choices(task).get("EVENT", [])
+        if len(names) != 2 or names[0] == names[1]:
+            errors.append("Task %s reads one event and writes another (by default %s): choose two events, in this "
+                          "order (Events)." % (task.name, EVENT_WRITERS[task.cls.replace("CAP::", "")]))
+        elif _param_value(task, "EVENT:USE", "false") != "true":
+            errors.append("Task %s must use its events (Events: Use)." % task.name)
+        else:
+            for other in _preorder(tasks):
+                if other is not task and names[1] in choices(other).get("EVENT", []) and any(
+                        _param_value(other, "EVENT:" + flag, "false") == "true" for flag in ("CREATE", "IMPORT")):
+                    errors.append("Task %s writes the events %s, which task %s also makes: choose another event."
+                                  % (task.name, names[1], other.name))
     for task in _preorder(tasks):
         if _param_value(task, "EVENT:USE", "false") == "true":
             for name in choices(task).get("EVENT", []):
@@ -1240,20 +1528,188 @@ def check_choices(tasks, library, templates):
 # RUNCAP element of the workflow file
 # ------------------------------------------------------------------------------------------------------------------
 
-def runcap_element(library, tasks):
-    """The RUNCAP element: the library and the histogram options of the tasks."""
-    root = ET.Element("RUNCAP", {"version": "1"})
+def object_element(o):
+    """XML element of an object of the library (see TAG_OF_KIND): its name, title, conditions or parameters."""
+    element = ET.Element(TAG_OF_KIND[o.kind], {"name": o.name})
+    if o.title:
+        element.set("title", o.title)
+    for c in o.conditions:
+        attributes = {"quantity": c.subtype, "form": c.form}
+        if c.form == VALUE:
+            attributes["value"] = number_text(c.minimum)
+        elif c.form == FLAG:
+            attributes["value"] = "true" if c.minimum else "false"
+        else:
+            attributes.update(minimum=number_text(c.minimum), maximum=number_text(c.maximum))
+            if c.form == DUAL_RANGE:
+                attributes.update(minimum2=number_text(c.minimum2), maximum2=number_text(c.maximum2))
+        if c.selection:
+            attributes["selection"] = c.selection
+        ET.SubElement(element, "Condition", attributes)
+    for pname, _, _ in KIND_PARAMETERS.get(o.kind, []):
+        ET.SubElement(element, "Parameter", {"name": pname}).text = o.parameters.get(pname, "")
+    return element
+
+
+def object_from_element(element, warnings, where=""):
+    """Object of the library from its XML element (TAG_OF_KIND, or the OBJECT elements of earlier workflows), or None
+    (a warning added) if it is not one. @param where name of the file or element, for the warnings"""
+    where = where + ": " if where else ""
+    if element.tag == "OBJECT":                                     # earlier versions
+        kind = element.get("kind", "")
+        if kind not in KINDS:
+            warnings.append("%sunknown kind of object '%s' (ignored)." % (where, kind))
+            return None
+        conditions = []
+        for c in element.findall("CONDITION"):
+            try:
+                conditions.append(Condition(c.get("subtype", ""), c.get("form", RANGE), c.get("minimum", "0"),
+                                            c.get("maximum", "0"), c.get("minimum2", "0"), c.get("maximum2", "0"),
+                                            c.get("selection", "")))
+            except ValueError:
+                warnings.append("%sinvalid condition of %s (ignored)." % (where, element.get("name", "?")))
+        parameters = {p.get("name", ""): (p.text or "").strip() for p in element.findall("PARAMETER")}
+        return FilterDef(kind, element.get("name", ""), element.get("title", ""), conditions, parameters)
+    kind = KIND_OF_TAG.get(element.tag)
+    if kind is None:
+        warnings.append("%sunknown element <%s> (ignored)." % (where, element.tag))
+        return None
+    name = element.get("name", "")
+    conditions = []
+    for c in element.findall("Condition"):
+        form = c.get("form", RANGE)
+        try:
+            if form == VALUE:
+                value = c.get("value", c.get("minimum", "0"))
+                condition = Condition(c.get("quantity", ""), form, value, value)
+            elif form == FLAG:
+                value = 1.0 if c.get("value", c.get("minimum", "true")).lower() in ("true", "1", "yes", "on") else 0.0
+                condition = Condition(c.get("quantity", ""), form, value, value)
+            else:
+                condition = Condition(c.get("quantity", ""), form, c.get("minimum", "0"), c.get("maximum", "0"),
+                                      c.get("minimum2", "0"), c.get("maximum2", "0"))
+        except ValueError:
+            warnings.append("%sa condition of %s is not a number (ignored)." % (where, name or "?"))
+            continue
+        condition.selection = c.get("selection", "")
+        conditions.append(condition)
+    parameters = {p.get("name", ""): (p.text or "").strip() for p in element.findall("Parameter")}
+    unknown = sorted(set(parameters) - set(n for n, _, _ in KIND_PARAMETERS.get(kind, [])))
+    if unknown:
+        warnings.append("%s%s %s: unknown parameter%s %s (ignored)." % (where, KIND_LABELS[kind].lower()[:-1], name,
+                                                                          "s" if len(unknown) > 1 else "",
+                                                                          ", ".join(unknown)))
+    return FilterDef(kind, name, element.get("title", ""), conditions, parameters)
+
+
+def selections_element(objects, extras=()):
+    """Root element of a selection file holding objects (and other elements, written as they are)."""
+    root = ET.Element(SELECTIONS_ROOT, {"version": "1"})
+    for o in objects:
+        root.append(object_element(o))
+    for e in extras:
+        root.append(e)
+    return root
+
+
+def _xml_bytes(root):
+    root = copy.deepcopy(root)
+    _indent_xml(root)
+    return b'<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding="utf-8") + b"\n"
+
+
+def _indent_xml(element, level=0):
+    pad = "\n" + "  " * level
+    if len(element):
+        if not (element.text or "").strip():
+            element.text = pad + "  "
+        for child in element:
+            _indent_xml(child, level + 1)
+        if not (child.tail or "").strip():
+            child.tail = pad
+    if level and not (element.tail or "").strip():
+        element.tail = pad
+
+
+def write_selections(path, objects, extras=()):
+    """Write a selection file: the objects (kind by kind, in order) and other elements. @throws OSError"""
+    with open(path, "wb") as f:
+        f.write(_xml_bytes(selections_element(objects, extras)))
+
+
+def read_selections(path):
+    """Objects of a selection file (or of the RUNCAP element of a workflow file). @return objects, the other elements
+    of the file (kept as they are), warnings @throws OSError, ValueError if it is not a file of selections"""
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as error:
+        raise ValueError("%s is not an XML file: %s" % (path, error))
+    if root.tag == "CAP":                                       # a workflow: its RUNCAP element
+        root = root.find("RUNCAP")
+        if root is None:
+            raise ValueError("%s is a workflow without filters (no RUNCAP element)." % path)
+    elif root.tag != SELECTIONS_ROOT:
+        raise ValueError("%s is not a selection file (root <%s>, not <%s>)." % (path, root.tag, SELECTIONS_ROOT))
+    warnings, objects, extras, seen = [], [], [], set()
+    where = os.path.basename(path)
+    for element in root:
+        maps = KIND_OF_TAG.get(element.tag) in MAPS_KINDS or (element.tag == "OBJECT" and element.get("kind") in MAPS_KINDS)
+        if maps or (element.tag not in KIND_OF_TAG and element.tag != "OBJECT"):
+            if root.tag == SELECTIONS_ROOT:
+                extras.append(element)          # kept as they are: particle maps (from the maps file), later versions
+            continue
+        o = object_from_element(element, warnings, where)
+        if o is None:
+            continue
+        if (o.kind, o.name) in seen:
+            warnings.append("%s: two %ss named %s (the first is kept)." % (where, KIND_LABELS[o.kind].lower()[:-1],
+                                                                          o.name))
+            continue
+        seen.add((o.kind, o.name))
+        objects.append(o)
+    return objects, extras, warnings
+
+
+def save_linked(library):
+    """Write the objects that come from linked selection files back to them (only the files whose content changed).
+    @return paths written @throws OSError"""
+    written = []
+    for path in library.links:
+        objects = library.linked(path) + library.link_shadowed.get(path, [])
+        order = {key: k for k, key in enumerate(library.link_order.get(path, []))}
+        objects.sort(key=lambda o: order.get((o.kind, o.name), len(order)))   # the order of the file, new ones last
+        data = _xml_bytes(selections_element(objects, library.link_extras.get(path, ())))
+        try:
+            with open(path, "rb") as f:
+                if f.read() == data:
+                    continue
+        except OSError:
+            pass
+        with open(path, "wb") as f:
+            f.write(data)
+        written.append(path)
+    return written
+
+
+def _relative(path, base_dir):
+    if not base_dir:
+        return path
+    try:
+        return os.path.relpath(path, base_dir)
+    except ValueError:                                          # another drive (Windows)
+        return path
+
+
+def runcap_element(library, tasks, base_dir=None):
+    """The RUNCAP element: the library (its own objects, and Include elements for the selection files it links, with
+    paths relative to base_dir, the directory of the workflow) and the histogram options of the tasks."""
+    root = ET.Element("RUNCAP", {"version": "2"})
+    for path in library.links:
+        ET.SubElement(root, "Include", {"file": _relative(path, base_dir)})
     for kind in KINDS:
         for o in library.objects[kind]:
-            element = ET.SubElement(root, "OBJECT", {"kind": kind, "name": o.name, "title": o.title})
-            for c in o.conditions:
-                attributes = {"subtype": c.subtype, "form": c.form, "minimum": number_text(c.minimum),
-                              "maximum": number_text(c.maximum)}
-                if c.form == DUAL_RANGE:
-                    attributes.update(minimum2=number_text(c.minimum2), maximum2=number_text(c.maximum2))
-                ET.SubElement(element, "CONDITION", attributes)
-            for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
-                ET.SubElement(element, "PARAMETER", {"name": pname, "type": ptype}).text = o.parameters.get(pname, "")
+            if not o.source:
+                root.append(object_element(o))
     if any(library.job.values()):
         ET.SubElement(root, "JOB", {name.lower(): value for name, value in library.job.items() if value})
     for kind in KINDS:
@@ -1275,24 +1731,29 @@ def runcap_element(library, tasks):
     return root
 
 
-def read_runcap_element(element, tasks):
-    """Library and histogram options of the tasks from a RUNCAP element. @return library, warnings"""
+def read_runcap_element(element, tasks, base_dir=None):
+    """Library and histogram options of the tasks from a RUNCAP element (its objects, those of the selection files it
+    includes, paths relative to base_dir, and the OBJECT elements of earlier versions). @return library, warnings"""
     library = FilterLibrary()
     warnings = []
-    for o in element.findall("OBJECT"):
-        kind = o.get("kind", "")
-        if kind not in KINDS:
-            warnings.append("RUNCAP: unknown kind of object '%s' (ignored)." % kind)
-            continue
-        conditions = []
-        for c in o.findall("CONDITION"):
+    for e in element:                                   # the objects of the workflow, then those of the linked files
+        if e.tag in KIND_OF_TAG or e.tag == "OBJECT":
+            o = object_from_element(e, warnings, "RUNCAP")
+            if o is not None:
+                library.add(o)
+    for e in element:
+        if e.tag == "Include":
+            path = e.get("file", "")
+            if not os.path.isabs(path) and base_dir:
+                path = os.path.join(base_dir, path)
+            path = os.path.abspath(path)
             try:
-                conditions.append(Condition(c.get("subtype", ""), c.get("form", RANGE), c.get("minimum", "0"),
-                                            c.get("maximum", "0"), c.get("minimum2", "0"), c.get("maximum2", "0")))
-            except ValueError:
-                warnings.append("RUNCAP: invalid condition of %s (ignored)." % o.get("name", "?"))
-        parameters = {p.get("name", ""): (p.text or "").strip() for p in o.findall("PARAMETER")}
-        library.add(FilterDef(kind, o.get("name", ""), o.get("title", ""), conditions, parameters))
+                warnings += library.link(path)
+            except (OSError, ValueError) as error:
+                warnings.append("Selection file %s cannot be read (%s): its objects are missing; it stays linked."
+                                % (path, error))
+                if path not in library.links:
+                    library.links.append(path)
     job = element.find("JOB")
     if job is not None:
         for name in JOB_SETTINGS:
@@ -1326,3 +1787,239 @@ def prepared_for_writing(tasks, library, templates, Param, TaskConfig):
     copies = [duplicate(t) for t in tasks if t.cls != CREATOR_CLASS]
     apply_choices(copies, library, templates, Param)
     return [creator_task(library, templates, TaskConfig, Param)] + copies
+
+
+# ------------------------------------------------------------------------------------------------------------------
+# Particle efficiencies and smearers: read from a maps file (CapGui, Detector Maps)
+# ------------------------------------------------------------------------------------------------------------------
+
+#: Kinds read from a maps file: RunCAP does not define them, it lists those of the file (bin/CAP --maps-list) and the
+#: tasks choose them by name. FilterCreator imports them (IMPORT from the file, CREATE off), each from the folder of
+#: its name (KinematicMapFolder in CAP: the folders are self-describing).
+MAPS_KINDS = ("PARTICLE_EFFICIENCY", "PARTICLE_SMEARER")
+MAPS_LABELS = {"PARTICLE_EFFICIENCY": "Particle efficiency", "PARTICLE_SMEARER": "Particle smearer"}
+#: Program listing the objects of a maps file.
+CAP_PROGRAM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "CAP")
+#: How a task uses the efficiencies (or smearers) it chooses, by the number of names chosen (see EventProcessor::
+#: objectFor() in CAP): none, one for all the particles, or one per event filter and particle filter.
+NO_MAPS, ONE_FOR_ALL, PER_FILTERS = "none", "one", "per filters"
+
+
+class MapsEntry:
+    """An object of a maps file: kind, name, species (PDG codes, text) and the sources of its maps (text)."""
+
+    def __init__(self, kind, name, species="", maps=""):
+        self.kind, self.name, self.species, self.maps = kind, name, species, maps
+
+    def __repr__(self):
+        return "MapsEntry(%s, %s)" % (self.kind, self.name)
+
+
+def maps_file(library):
+    """The maps file of a workflow (from the import settings of its efficiencies and smearers), or ""."""
+    for kind in MAPS_KINDS:
+        settings = library.settings[kind]
+        name = settings.get("IMPORT:FILE_NAME", "")
+        if settings.get("IMPORT") == "true" and name not in ("", "NONE"):
+            path = settings.get("IMPORT:PATH", "")
+            return name if path in ("", "DEFAULT") else os.path.join(path, name)
+    return ""
+
+
+def set_maps_file(library, path):
+    """Read the efficiencies and smearers from a maps file (imported by FilterCreator, never created nor exported);
+    an empty path: none."""
+    for kind in MAPS_KINDS:
+        settings = library.settings[kind]
+        settings.update({"CREATE": "false", "EXPORT": "false"})
+        if path:
+            settings.update({"IMPORT": "true", "IMPORT:PATH": os.path.dirname(os.path.abspath(path)),
+                             "IMPORT:FILE_NAME": os.path.basename(path)})
+        else:
+            settings.update({"IMPORT": "false", "IMPORT:PATH": "DEFAULT", "IMPORT:FILE_NAME": "NONE"})
+
+
+def share_maps_file(library):
+    """One maps file for both kinds: the import settings of the kind that has one (the other may have been written
+    off, having no object) go to the other."""
+    for kind in MAPS_KINDS:
+        settings = library.settings[kind]
+        if settings.get("IMPORT") == "true" and settings.get("IMPORT:FILE_NAME", "") not in ("", "NONE"):
+            for other in MAPS_KINDS:
+                for name in ("CREATE", "IMPORT", "IMPORT:PATH", "IMPORT:FILE_NAME", "EXPORT"):
+                    library.settings[other][name] = settings.get(name, default_settings(other)[name])
+            return
+
+
+def parse_maps_list(text):
+    """Objects of a maps file from the output of bin/CAP --maps-list: [MapsEntry]."""
+    entries = []
+    for line in text.splitlines():
+        fields = line.rstrip("\n").split("\t")
+        if len(fields) >= 3 and fields[0] == "MAP" and fields[1] in MAPS_KINDS:
+            entries.append(MapsEntry(fields[1], fields[2], fields[3] if len(fields) > 3 else "",
+                                     fields[4] if len(fields) > 4 else ""))
+    return entries
+
+
+def list_maps(path, program=None):
+    """Objects of a maps file, read by bin/CAP --maps-list. @return [MapsEntry]
+    @throws RuntimeError if the file cannot be read"""
+    program = program or CAP_PROGRAM
+    if not os.path.isfile(path):
+        raise RuntimeError("No maps file %s." % path)
+    if not os.path.isfile(program):
+        raise RuntimeError("%s not found: build CAP first (BuildCAP)." % program)
+    result = subprocess.run([program, "--maps-list", path], capture_output=True, text=True)
+    entries = parse_maps_list(result.stdout)
+    if result.returncode != 0:
+        raise RuntimeError("Cannot read %s:\n%s" % (path, (result.stdout + result.stderr).strip()[-600:]))
+    return entries
+
+
+def sync_maps(library, entries):
+    """The efficiencies and smearers of the library become those of a maps file (in its order).
+    @param entries [MapsEntry] @return names no longer in the file: {kind: [name]}"""
+    removed = {}
+    for kind in MAPS_KINDS:
+        names = [e.name for e in entries if e.kind == kind]
+        removed[kind] = [n for n in library.names(kind) if n not in names]
+        library.objects[kind] = [library.get(kind, n) or FilterDef(kind, n) for n in names]
+    return removed
+
+
+def maps_mode(task, kind):
+    """How a task uses its objects of a kind: NO_MAPS, ONE_FOR_ALL or PER_FILTERS (several names)."""
+    n = len(choices(task).get(kind, []))
+    return NO_MAPS if n == 0 else ONE_FOR_ALL if n == 1 else PER_FILTERS
+
+
+def filter_grid(task):
+    """Names of the event filters and particle filters a task chooses: (event filters, particle filters)."""
+    return list(choices(task).get("EVENT_FILTER", [])), list(choices(task).get("PARTICLE_FILTER", []))
+
+
+def set_maps_mode(task, kind, mode, library):
+    """Set how a task uses its objects of a kind: none, one for all (the first chosen, or the first of the library),
+    or one per event filter and particle filter (event filter major, as its histogram folders; the cells take the
+    name chosen until then)."""
+    chosen = list(choices(task).get(kind, []))
+    names = library.names(kind)
+    first = chosen[0] if chosen else (names[0] if names else "")
+    if mode == NO_MAPS or not first:
+        choices(task).pop(kind, None)
+        return
+    if mode == ONE_FOR_ALL:
+        choices(task)[kind] = [first]
+        return
+    events, particles = filter_grid(task)
+    n = max(1, len(events)) * max(1, len(particles))
+    choices(task)[kind] = [chosen[k] if len(chosen) == n else first for k in range(n)]
+
+
+def regrid_maps(task, before):
+    """After the filters of a task changed: its grids of efficiencies and smearers (one per event filter and particle
+    filter) take the new size, each cell of a pair of filters still chosen keeping its name (the others take the first
+    name of the grid). @param before filter_grid() of the task before the change"""
+    after = filter_grid(task)
+    if after == before:
+        return
+    old_events, old_particles = before
+    for kind in MAPS_KINDS:
+        chosen = choices(task).get(kind, [])
+        nef, npf = max(1, len(old_events)), max(1, len(old_particles))
+        if len(chosen) <= 1 or len(chosen) not in (nef * npf, npf):
+            continue
+        cells = {}
+        for i, e in enumerate(old_events or [""]):
+            for j, p in enumerate(old_particles or [""]):
+                cells[(e, p)] = chosen[i * npf + j] if len(chosen) == nef * npf else chosen[j]
+        events, particles = after
+        choices(task)[kind] = [cells.get((e, p), chosen[0]) for e in (events or [""]) for p in (particles or [""])]
+
+
+def remove_maps_names(task, kind, names, library):
+    """Objects of a kind no longer in the library: in the choices of a task, replaced by the first one left (a grid
+    keeps its size), or none if none is left."""
+    chosen = choices(task).get(kind, [])
+    if not set(chosen) & set(names):
+        return
+    left = library.names(kind)
+    if not left:
+        choices(task).pop(kind, None)
+    else:
+        choices(task)[kind] = [left[0] if n in names else n for n in chosen]
+
+
+def check_maps_choices(task):
+    """Problems of the numbers of efficiencies and smearers a task chooses: [message]."""
+    events, particles = filter_grid(task)
+    nef, npf = max(1, len(events)), max(1, len(particles))
+    problems = []
+    for kind in MAPS_KINDS:
+        n = len(choices(task).get(kind, []))
+        if n not in (0, 1, npf, nef * npf):
+            problems.append("Task %s: %d %s for %d event filter%s and %d particle filter%s: choose one for all, or one "
+                            "per event filter and particle filter (%d)." % (
+                                task.name, n, KIND_LABELS[kind].lower(), nef, "s" if nef > 1 else "", npf,
+                                "s" if npf > 1 else "", nef * npf))
+    return problems
+
+
+#: Catalog of the functions of CAP (written by bin/CAP --function-catalog; see function_catalog()).
+FUNCTION_CATALOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DB", "FunctionCatalog.xml")
+
+
+class CatalogFunction:
+    """A function of the catalog: name, rank, composite, and its variants {number of parameters: [(name, value)]}."""
+
+    def __init__(self, name, rank, composite=False, variants=None, default=None):
+        self.name = name
+        self.rank = rank
+        self.composite = composite
+        self.variants = dict(variants or {})
+        self.default = default if default is not None else (min(self.variants) if self.variants else 0)
+
+    def parameters(self, n=None):
+        """[(name, starting value)] of the variant with n parameters (default: the default variant)."""
+        return self.variants.get(self.default if n is None else n, [])
+
+
+_catalog = None
+
+
+def load_function_catalog(path=FUNCTION_CATALOG_FILE):
+    """Functions of a catalog file: {name: CatalogFunction} ({} if the file is missing or not a catalog)."""
+    try:
+        root = ET.parse(path).getroot()
+    except (OSError, ET.ParseError):
+        return {}
+    if root.get("type") != "function-catalog":
+        return {}
+    catalog = {}
+    for f in root.iter("FUNCTION"):
+        variants, default = {}, None
+        for v in f.iter("VARIANT"):
+            n = int(v.get("nParameters", "0"))
+            variants[n] = [(p.get("name", "p%d" % k), p.get("value", "0")) for k, p in enumerate(v.iter("PARAMETER"))]
+            if v.get("default") == "true":
+                default = n
+        catalog[f.get("name")] = CatalogFunction(f.get("name"), int(f.get("rank", "1")), f.get("composite") == "true",
+                                                 variants, default)
+    return catalog
+
+
+def function_catalog():
+    """The catalog of the functions of CAP, read once from FUNCTION_CATALOG_FILE ({} if there is none yet)."""
+    global _catalog
+    if _catalog is None:
+        _catalog = load_function_catalog()
+    return _catalog
+
+
+def set_function_catalog(catalog):
+    """Use another catalog (None: read FUNCTION_CATALOG_FILE again when next needed)."""
+    global _catalog
+    _catalog = catalog
+
+

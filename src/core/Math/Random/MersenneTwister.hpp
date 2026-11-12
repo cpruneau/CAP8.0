@@ -73,6 +73,15 @@ namespace CAP
   void twist();
   };
 
+  //!
+  //! @brief The random number generator shared by all of CAP (it replaces ROOT's gRandom).
+  //!
+  //! A MersenneTwister seeded with 4357 (the default seed of ROOT's TRandom3) when first used; setSeed() it to change
+  //! the sequence (0: a different seed at each run). Classes that need a generator of their own create one instead.
+  //! @return the generator
+  //!
+  MersenneTwister & randomGenerator();
+
   } // namespace MATH
 } // namespace CAP
 

@@ -12,6 +12,7 @@
 #ifndef CAP__GUI__CapApp
 #define CAP__GUI__CapApp
 #include <deque>
+#include <functional>
 #include <memory>
 #include <vector>
 #include "String.hpp"
@@ -131,6 +132,9 @@ namespace CAP
   void reloadFile(int id);
   //! @brief Connect a file browser to the files of the application. @param browser browser
   void connectBrowser(FileBrowser & browser);
+  //! @brief Connect the Detector Maps window to the application (file dialog, histograms of the open files, graphs),
+  //! and open the maps file given with --maps.
+  void connectMapsDialog();
   //! @brief Make a new, empty tree (editable) in a browser. @param browser browser @return its id
   int  newTree(FileBrowser & browser);
   //!
@@ -146,8 +150,30 @@ namespace CAP
   //! @brief Remove an entry of an editable tree (its objects are kept for the graphs showing them). @param target
   //! tree @param path entry
   void removeEntry(int target, const String & path);
-  //! @brief Save an editable tree to a CAP file chosen by the user. @param target tree
-  void saveTree(int target);
+  //! @brief Save an editable tree to its CAP file, or to a file chosen by the user. @param target tree
+  //! @param ask whether to ask for the file even if the tree has one @param after called once it is saved
+  void saveTree(int target, bool ask=true, const std::function<void()> & after = std::function<void()>());
+  //! @brief Save the changed trees, one after the other (a file is asked for the trees never saved; Cancel stops).
+  //! @param after called once they are all saved
+  void saveChangedTrees(const std::function<void()> & after = std::function<void()>());
+  //! @brief Copy an object or a folder of an editable tree beside itself, named "<name>_copy" (made unique).
+  //! @param target tree @param path entry @return false if it cannot be (a file read from disk, the whole tree)
+  bool duplicateEntry(int target, const String & path);
+  //!
+  //! @brief Close files and trees in a browser (all browsers if null), asking first to save each changed tree that
+  //! would be closed (not shown in another browser): Save, Don't Save, or Cancel (which stops there).
+  //! @param ids files @param browser browser @param after called once they are all closed (not after Cancel)
+  //!
+  void closeFilesAsking(const std::vector<int> & ids, FileBrowser * browser,
+                        const std::function<void()> & after = std::function<void()>());
+  //! @brief Close a browser (the first one is hidden), asking to save its changed trees. @param browser browser
+  void requestCloseBrowser(FileBrowser & browser);
+  //! @brief Before quitting: ask to save the changed trees. @return true if there is none (quit now), false if the
+  //! questions are asked (quitting again once answered)
+  bool confirmTreesBeforeExit();
+  //! @brief Entry selected in the browser used last. @param path set to its path ("" for a whole file or tree)
+  //! @param folder set to whether it is a folder @return its file or tree, or null if none is selected
+  BrowserFile * selectedEntry(String & path, bool & folder);
   //! @brief Ask for a ROOT file, then write the histograms of a folder of a file or tree to it (see exportRootFile()).
   //! @param target file or tree @param folderPath folder ("" for the top)
   void exportRoot(int target, const String & folderPath);
@@ -234,6 +260,7 @@ namespace CAP
 
   std::vector<String> _arguments;   //!< files and folders given on the command line
   String _configurationFile;   //!< configuration file read (or given with --config)
+  String _mapsFile;            //!< maps file opened in the Detector Maps window at startup (--maps)
   AppConfiguration _configuration;   //!< configuration
   CapGui _gui;   //!< the window
   std::vector<std::unique_ptr<MATH::Function>>   _functions;   //!< functions created by the application (demo)
@@ -291,8 +318,15 @@ namespace CAP
 
   //! @brief First configuration file found: $HOME/.CapGui.xml, $CAP_ROOT_PATH/config/CapGui.xml, the one of the sources. @return path, or ""
   String findConfigurationFile() const;
-  //! @brief Create the menus of the menu bar.
-  void buildMenus();
+  //! @brief Create the menus of the menu bar (a program built on the application can make its own).
+  virtual void buildMenus();
+  //! @brief Add menus of a program built on the application, before the Help menu (nothing here). @param bar menu bar
+  virtual void addMenus(MenuBar & bar) { (void)bar; }
+  //! @brief Called once the window is open, the menus made and the files of the command line opened, before the
+  //! event loop: a program built on the application makes its canvases there (nothing here).
+  virtual void onStartup() { }
+  //! @brief The open file of a path, if it is open (shared with the browser). @param path path @return file, or null
+  BrowserFile * fileOfPath(const String & path);
   //! @brief Prepare a new canvas pane: graphs, mode, callbacks (undo, drop, show data). @param pane pane
   void setupPane(CanvasPane & pane);
   //! @brief Show the demonstration objects (a Gaussian with pseudo-data, an exponential).
@@ -308,7 +342,7 @@ namespace CAP
   //! @brief Go back to a state of the canvases. @param state state
   void restore(const Snapshot & state);
   //! @brief Enable, disable and check the menu items according to the state.
-  void updateMenuStates();
+  virtual void updateMenuStates();
   //! @brief Draw the application windows (preferences, about, shortcuts, dialogs) every frame.
   void renderWindows();
   //! @brief Draw the Preferences window, if shown.
@@ -327,6 +361,22 @@ namespace CAP
   void makePresentation(const String & texFile);
   //! @brief Open file of an identifier. @param id identifier @return file, or null
   BrowserFile * file(int id);
+  //! @brief Save Changes dialog of the trees being closed (closeFilesAsking()).
+  void renderTreeClosing();
+  //! Trees and files being closed by closeFilesAsking(): those left, the browser, what follows
+  struct TreeClosing
+  {
+  std::vector<int> ids;               //!< files left to close, the next one first
+  FileBrowser * browser = nullptr;    //!< browser (null: all)
+  std::function<void()> after;        //!< called once they are all closed
+  bool ask = false;                   //!< the dialog opens at the next frame
+  };
+  TreeClosing _treeClosing;   //!< trees being closed
+  //! @brief Close the next files of _treeClosing until a changed tree is met (then ask). 
+  void continueClosing();
+  //! @brief Whether closing a file in a browser asks to save it (a changed tree no other browser shows).
+  //! @param id file @param browser browser (null: all) @return true if so
+  bool asksBeforeClosing(int id, const FileBrowser * browser) const;
   };
 
   } // namespace GUI

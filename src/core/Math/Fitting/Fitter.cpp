@@ -17,6 +17,7 @@
 #include <functional>
 #include <limits>
 #include "Fitter.hpp"
+#include "CalculateFourierDecomposition.hpp"
 #include "DataPoints.hpp"
 #include "MathExceptions.hpp"
 #include "ParameterizedFunction.hpp"
@@ -597,6 +598,15 @@ namespace CAP
     if (series->estimate(x, y, w)) return true;
     for (unsigned int k=0; k<before.size(); k++) series->setParameter(k, before[k]);   // unchanged if it fails
     return false;
+    }
+  if (FourierDecomposition * fourier = dynamic_cast<FourierDecomposition*>(&function))
+    {
+    // form 1 by weighted linear least squares (form 2 from it)
+    std::vector<double> c;
+    if (!CalculateFourierDecomposition::leastSquares(x, y, w, fourier->nMax(), c)) return false;
+    if (fourier->form() == FourierDecomposition::kFlow && !CalculateFourierDecomposition::toFlow(c)) return false;
+    setEstimates(function, c);
+    return true;
     }
   if (Polynomial * polynomial = dynamic_cast<Polynomial*>(&function))
     {

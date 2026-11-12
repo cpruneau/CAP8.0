@@ -105,6 +105,56 @@ namespace CAP
   return sum;
   }
 
+  double OrthogonalSeries::derivativeCoefficients(std::vector<double> & d) const
+  {
+  const unsigned int n = _nCoefficients;
+  d.assign(n > 1 ? n - 1 : 1, 0.0);
+  for (unsigned int m=1; m<n; m++)
+    {
+    double c = parameterValue(m);
+    switch (_family)
+      {
+      case kLegendre:  for (unsigned int k=m%2==0 ? 1 : 0; k<m; k+=2) d[k] += (2.0*k + 1.0)*c; break;
+      case kChebyshev: for (unsigned int k=m%2==0 ? 1 : 0; k<m; k+=2) d[k] += (k == 0 ? 1.0 : 2.0)*m*c; break;
+      case kHermite:   d[m-1] += 2.0*m*c; break;
+      case kLaguerre:  for (unsigned int k=0; k<m; k++) d[k] -= c; break;
+      }
+    }
+  double a = parameterValue(n), b = parameterValue(n + 1);
+  if (_family == kLegendre || _family == kChebyshev) return b != a ? 2.0/(b - a) : 1.0;
+  return b != 0 ? 1.0/b : 1.0;
+  }
+
+  double OrthogonalSeries::derivativeAt(double x) const
+  {
+  std::vector<double> d, p;
+  double factor = derivativeCoefficients(d);
+  polynomials(_family, unsigned(d.size()) - 1, variable(x), _family == kLaguerre ? parameterValue(_nCoefficients + 2) : 0.0, p);
+  double sum = 0;
+  for (std::size_t k=0; k<d.size(); k++) sum += d[k]*p[k];
+  return factor*sum;
+  }
+
+  Function * OrthogonalSeries::derivativeFunction(unsigned int axis) const
+  {
+  if (axis != 0) return nullptr;
+  std::vector<double> d;
+  double factor = derivativeCoefficients(d);
+  unsigned int degree = unsigned(d.size()) - 1;
+  OrthogonalSeries * s = nullptr;
+  switch (_family)
+    {
+    case kLegendre:  s = new LegendreSeries(degree); break;
+    case kChebyshev: s = new ChebyshevSeries(degree); break;
+    case kHermite:   s = new HermiteSeries(degree); break;
+    case kLaguerre:  s = new LaguerreSeries(degree, parameterValue(_nCoefficients + 2)); break;
+    }
+  for (unsigned int k=0; k<=degree; k++) s->_parameters[k].setValue(factor*d[k]);
+  for (unsigned int k=0; k<nMappingParameters(_family); k++)          // the same mapping
+    s->_parameters[s->_nCoefficients + k] = _parameters[_nCoefficients + k];
+  return s;
+  }
+
   void OrthogonalSeries::adaptToRange(double low, double high)
   {
   if (!(high > low)) return;

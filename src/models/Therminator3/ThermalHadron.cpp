@@ -3,8 +3,7 @@
 #include "PrintHelpers.hpp"
 #include "MathConstants.hpp"
 #include <cmath>
-#include <TMath.h>
-#include "Math/SpecFunc.h"
+#include "Bessel.hpp"
 
 namespace CAP
 {
@@ -196,13 +195,14 @@ namespace CAP
   double arg, argSq;
   double nn;
   double K_1, K_2;
+  const CAP::MATH::Bessel besselK1(CAP::MATH::Bessel::BesselK,1), besselK2(CAP::MATH::Bessel::BesselK,2);
   for (unsigned int n = 1; n<_truncateOrder; n++)
     {
     nn = n;
     arg   = nn*betaMass;
     argSq = arg*arg;
-    K_1   = TMath::BesselK1(arg);
-    K_2   = TMath::BesselK(2, arg);
+    K_1   = besselK1.evaluateAt(arg);
+    K_2   = besselK2.evaluateAt(arg);
     theta *= -1.0;   //pow(-sign, n-1);
     fugacity *= lambda; // pow(lambda, n);
     _nDensity += theta*fugacity*K_2/nn;

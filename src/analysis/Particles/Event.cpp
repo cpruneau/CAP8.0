@@ -7,7 +7,9 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
+#include <algorithm>
 #include "Event.hpp"
+#include "EventFilter.hpp"
 #include "PrintHelpers.hpp"
 
 
@@ -28,15 +30,69 @@ namespace CAP
   _strangeness(),
   _baryon(),
   _ptSum(),
-  _spherocity()
+  _spherocity(),
+  _epoch(1),
+  _globalsVersion(0),
+  _selections(),
+  _selectionEpochs(),
+  _filterResults(),
+  _filterEpochs(),
+  _filterVersions()
   {
-  initializeMult();
-  initializeEnergy();
-  initializeCharge();
-  initializeStrangeness();
-  initializeBaryon();
-  initializePtSum();
-  initializeSpherocity();
+  initializeMult(6);
+  initializeEnergy(6);
+  initializeCharge(6);
+  initializeStrangeness(6);
+  initializeBaryon(6);
+  initializePtSum(6);
+  initializeSpherocity(6);
+  }
+
+  Event::Event(const Event & source)
+  :
+  ManagedObject(source),
+  _eventIndex(source._eventIndex),
+  _eventNumber(source._eventNumber),
+  _projectileA(source._projectileA),
+  _projectileB(source._projectileB),
+  _particles(source._particles),
+  _multiplicity(source._multiplicity),
+  _energy(source._energy),
+  _charge(source._charge),
+  _strangeness(source._strangeness),
+  _baryon(source._baryon),
+  _ptSum(source._ptSum),
+  _spherocity(source._spherocity),
+  _epoch(1),
+  _globalsVersion(0),
+  _selections(),
+  _selectionEpochs(),
+  _filterResults(),
+  _filterEpochs(),
+  _filterVersions()
+  { }
+
+  Event & Event::operator=(const Event & source)
+  {
+  if (this!=&source)
+    {
+    ManagedObject::operator=(source);
+    _eventIndex   = source._eventIndex;
+    _eventNumber  = source._eventNumber;
+    _projectileA  = source._projectileA;
+    _projectileB  = source._projectileB;
+    _particles    = source._particles;
+    _multiplicity = source._multiplicity;
+    _energy       = source._energy;
+    _charge       = source._charge;
+    _strangeness  = source._strangeness;
+    _baryon       = source._baryon;
+    _ptSum        = source._ptSum;
+    _spherocity   = source._spherocity;
+    _epoch++;
+    _globalsVersion++;
+    }
+  return *this;
   }
 
   Event::~Event()
@@ -52,6 +108,7 @@ namespace CAP
   _eventIndex  = 0;
   _eventNumber = 0;
   _particles.clear();
+  _epoch++;
   }
 
   //!
@@ -62,6 +119,7 @@ namespace CAP
   _eventIndex++;
   _eventNumber  = 0;
   _particles.clear();
+  _epoch++;
   //  resetMult();
   //  resetEnergy();
   //  resetCharge();
@@ -74,6 +132,43 @@ namespace CAP
   void Event::addParticle(Particle * particle)
   {
   _particles.push_back(particle);
+  _epoch++;
+  }
+
+  ParticleSelection & Event::selection(unsigned int slot) const
+  {
+  if (slot >= _selections.size())
+    {
+    unsigned int n = std::max(slot+1, ParticleSelection::nSlots());
+    for (unsigned int k=(unsigned int)_selections.size(); k<n; k++)
+      _selections.emplace_back(new ParticleSelection(ParticleSelection::filterAt(k), k));
+    _selectionEpochs.resize(n, 0);
+    }
+  ParticleSelection & s = *_selections[slot];
+  if (_selectionEpochs[slot] != _epoch)
+    {
+    s.fill(_particles, ParticleSelection::ptOrder());
+    _selectionEpochs[slot] = _epoch;
+    }
+  return s;
+  }
+
+  bool Event::accepted(const EventFilter & filter, unsigned int slot) const
+  {
+  if (slot >= _filterResults.size())
+    {
+    unsigned int n = std::max(slot+1, ParticleSelection::nEventSlots());
+    _filterResults.resize(n, 0);
+    _filterEpochs.resize(n, 0);
+    _filterVersions.resize(n, 0);
+    }
+  if (_filterEpochs[slot] != _epoch || _filterVersions[slot] != _globalsVersion)
+    {
+    _filterResults[slot]  = filter.accept(*this) ? 1 : 0;
+    _filterEpochs[slot]   = _epoch;
+    _filterVersions[slot] = _globalsVersion;
+    }
+  return _filterResults[slot] != 0;
   }
 
   Particle * Event::particleAt(unsigned long index)

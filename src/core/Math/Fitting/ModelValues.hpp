@@ -22,8 +22,11 @@ namespace CAP
   class Histogram;
 
   //!
-  //! @brief Average of a function over bin index of a histogram (any rank): the 3-point Gauss-Legendre rule along each
-  //! axis (3^rank evaluations), exact for polynomials of degree 5 in each variable.
+  //! @brief Average of a function over bin index of a histogram (any rank). For a histogram of one variable and a
+  //! ParameterizedFunction, its integral over the bin (ParameterizedFunction::integralInRange(): analytical when the
+  //! class has one, e.g. FourierDecomposition, adaptive Simpson otherwise) divided by the width of the bin; otherwise
+  //! the 3-point Gauss-Legendre rule along each axis (3^rank evaluations), exact for polynomials of degree 5 in each
+  //! variable.
   //! @param function function (of the rank of the histogram) @param histogram histogram @param index global bin index
   //! @return average, NaN if the function cannot be evaluated
   //!

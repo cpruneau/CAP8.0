@@ -69,12 +69,15 @@ namespace CAP
   using Function::evaluateAt;
 
   //! @brief First derivative, -L_{n-1}^(alpha+1)(x) (0 for n = 0). @param x variable @return derivative
-  double derivativeAt(double x) const;
+  double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
   //! @brief Antiderivative -L_{n+1}^(alpha-1)(x). @param x variable @return antiderivative (defined up to a constant)
   double antiderivativeAt(double x) const;
   //! @brief Integral from low to high (negative if low > high). @param low lower bound @param high upper bound @return integral
   //! @throws MathException if a bound is not finite
-  double integralInRange(double low, double high) const;
+  double integralInRange(double low, double high) const override;
+  using Function::integralInRange;
 
   //! @brief Whether the polynomials of this alpha are orthogonal on [0, infinity), i.e. alpha > -1. @return true if orthogonal
   bool isOrthogonal() const { return _alpha > -1.0; }

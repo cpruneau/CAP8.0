@@ -42,10 +42,6 @@ namespace CAP
  * @fn ModelKrakowSFO::ModelKrakowSFO()
  * @brief Default constructor.
  *
- * @fn ModelKrakowSFO::ModelKrakowSFO(TRandom2* aRandom)
- * @brief Constructor that links a random number generator form Integrator.
- * @param [in] aRandom pointer to <a href="http://root.cern.ch/root/html/TRandom2.html">TRandom2</a> random number generator
- *
  * @fn ModelKrakowSFO::~ModelKrakowSFO()
  * @brief Destructor.
  *

@@ -763,7 +763,7 @@ namespace CAP
   //! @}
 
   //! @brief Back to an empty graph with default settings.
-  virtual void reset();
+  virtual void reset() override;
 
   protected:
 

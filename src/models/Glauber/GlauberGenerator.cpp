@@ -1,12 +1,21 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
+ * All rights reserved.
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau,  Nov 10, 2026
+ * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
+ *
+ * *********************************************************************/
 #include "GlauberGenerator.hpp"
-#include "RootConversion.hpp"
 #include "GlauberEvent.hpp"
 #include "GlauberEventMoments.hpp"
 #include "Exceptions.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
-#include "TCanvas.h"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 
 
 
@@ -122,6 +131,10 @@ namespace CAP
   Task::setDefaultConfiguration();
   String taskName = name();
   String objectType;
+  // the defaults of the lists first: the values below (EVENT:USE, EVENT:N, DB:USE, DB:N, ...) replace theirs
+  _managedDb.setDefaultObjectConfiguration(taskName,"DB", _configuration);
+  _managedEvents.setDefaultObjectConfiguration(taskName,"EVENT", _configuration);
+  _managedEventFilters.setDefaultObjectConfiguration(taskName,"EVENT_FILTER", _configuration);
 
   _configuration.addProperty(createKey(taskName,"SEVERITY"),         "TRACE");
   _configuration.addProperty(createKey(taskName,"SUBTASK:N"),        0);
@@ -143,6 +156,7 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,"DB_0:NAME"),"DefaultDb");
   _configuration.addProperty(createKey(taskName,"DB_0:TITLE"),"DefaultDb");
   _configuration.addProperty(createKey(taskName,"DB_0:OWNER"),true);
+  _configuration.addProperty(createKey(taskName,"DB_0:FILE"),"Glauber/NucleusDb.xml");   // nuclei (in $CAP_DATABASE_PATH)
 
   objectType = "GENERATION";
   _configuration.addProperty(createKey(taskName,objectType,"NUCLEUS_A:NAME"),          "Pb");
@@ -178,9 +192,6 @@ namespace CAP
 //  _configuration.addProperty(createKey(taskName,objectType,"PTOTPROFILE:NNXSECTOMEGA"),    1.0);
 //  _configuration.addProperty(createKey(taskName,objectType,"PTOTPROFILE:NNXSECTLAMBDA"),   1.0);
 
-  _managedDb.setDefaultObjectConfiguration(taskName,"DB", _configuration);
-  _managedEvents.setDefaultObjectConfiguration(taskName,"EVENT", _configuration);
-  _managedEventFilters.setDefaultObjectConfiguration(taskName,"EVENT_FILTER", _configuration);
   }
 
 
@@ -342,17 +353,7 @@ namespace CAP
         }
       cout << " integral: " << sum << endl;
 
-      TCanvas * canvas = new TCanvas("NNProfile","NNProfile",5,5,800, 800);
-      canvas->SetLogy(1);
-      TH1 * hRoot = toRootHistogram(*h);
-      hRoot->Draw();
-      canvas->Print("NNProfile.pdf");
-
-      TCanvas * canvas2 = new TCanvas("NNProfileS","NNProfileS",25,5,800, 800);
-      //canvas2->SetLogy(1);
-      TH1 * hsRoot = toRootHistogram(*hs);
-      hsRoot->Draw();
-      canvas2->Print("NNProfileS.pdf");
+      // (the profile and its integral were drawn here with ROOT, in NNProfile.pdf and NNProfileS.pdf)
 
       break;
       }
@@ -383,7 +384,7 @@ namespace CAP
   // printValue("Check",1);
   std::vector<GlauberPoint> & interactionPositions = ev.interactionPositions();
   interactionPositions.clear();
-  double impact = std::sqrt(_minImpactSq + (_maxImpactSq-_minImpactSq)*gRandom->Rndm());
+  double impact = std::sqrt(_minImpactSq + (_maxImpactSq-_minImpactSq)*CAP::MATH::randomGenerator().random());
   ev.setImpactParameter(impact);
 
   // printValue("Check",2);
@@ -392,7 +393,7 @@ namespace CAP
   // printValue("Check",3);
   if (_randomizeEP)
     {
-    double eventPlaneAngle = twoPi()*gRandom->Rndm();
+    double eventPlaneAngle = twoPi()*CAP::MATH::randomGenerator().random();
     shiftA.rotateZ(eventPlaneAngle);
     shiftB.rotateZ(eventPlaneAngle);
     }
@@ -432,7 +433,7 @@ namespace CAP
           {
           // printValue("Check",9);
          double prob = _nnXSectProfile->evaluate(distanceAB);
-          ran = gRandom->Rndm();
+          ran = CAP::MATH::randomGenerator().random();
           ev.setEventXSection(_xSection);
 //          printValue("distanceAB",distanceAB);
 //          printValue("prob",prob);
@@ -457,7 +458,7 @@ namespace CAP
           double d = std::sqrt(0.05*(xSectA+xSectB)/pi()); // 0.05 = 0.5/10 --> fm
           if (distanceAB>d) continue;
           double prob = _nnXSectProfile->evaluate(distanceAB);
-          if (gRandom->Uniform() > prob) continue;
+          if (CAP::MATH::randomGenerator().random() > prob) continue;
           ev.setEventXSection(_xSection);
           }
         }

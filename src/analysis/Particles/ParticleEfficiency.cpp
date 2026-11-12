@@ -7,177 +7,91 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#include "Exceptions.hpp"
-#include "Task.hpp"
-#include "NameHelpers.hpp"
-#include "PrintHelpers.hpp"
-#include "Histogram.hpp"
-#include "Profile.hpp"
 #include "ParticleEfficiency.hpp"
-
+#include "Exceptions.hpp"
+#include "NameHelpers.hpp"
+#include <algorithm>
+#include <string>
 
 namespace CAP
 {
 
-  ParticleEfficiency::ParticleEfficiency()
+  ParticleEfficiency::ParticleEfficiency(double efficiency)
   :
-  HistogramFolder(),
-  h_efficiency_etaPt(nullptr),
-  h_weight_etaPt(nullptr),
-  pt_nbins(0),
-  eta_nbins(0),
-  phi_nbins(0),
-  pt_min(0),
-  pt_max(0),
-  eta_min(0),
-  eta_max(0),
-  phi_min(0),
-  phi_max(0)
-  { /* no ops */}
+  KinematicMapFolder(),
+  _species(),
+  _random()
+  {
+  appendClassName("ParticleEfficiency");
+  setName("ParticleEfficiency");
+  setTitle("ParticleEfficiency");
+  addMap("EFFICIENCY",KinematicMap(1.0),0.0,1.0);
+  setConstant(efficiency);
+  }
 
-  ParticleEfficiency::ParticleEfficiency(const ParticleEfficiency & source)
+  ParticleEfficiency::ParticleEfficiency(std::shared_ptr<const MATH::Function> function, const std::vector<Variable> & variables)
   :
-  HistogramFolder(source),
-  h_efficiency_etaPt(nullptr),
-  h_weight_etaPt(nullptr),
-  pt_nbins(source.pt_nbins),
-  eta_nbins(source.eta_nbins),
-  phi_nbins(source.phi_nbins),
-  pt_min(source.pt_min),
-  pt_max(source.pt_max),
-  eta_min(source.eta_min),
-  eta_max(source.eta_max),
-  phi_min(source.phi_min),
-  phi_max(source.phi_max)
+  ParticleEfficiency(1.0)
   {
-  cloneB(source);
+  setFunction(function,variables);
   }
 
-  ParticleEfficiency & ParticleEfficiency::operator=(const ParticleEfficiency & rhs)
+  ParticleEfficiency::ParticleEfficiency(const MATH::Histogram & histogram, const std::vector<Variable> & variables)
+  :
+  ParticleEfficiency(1.0)
   {
-  if (this!=&rhs)
-    {
-    HistogramFolder::operator=(rhs);
-    cloneB(rhs);
-    pt_nbins   = rhs.pt_nbins;
-    eta_nbins  = rhs.eta_nbins;
-    phi_nbins  = rhs.phi_nbins;
-    pt_min     = rhs.pt_min;
-    pt_max     = rhs.pt_max;
-    eta_min    = rhs.eta_min;
-    eta_max    = rhs.eta_max;
-    phi_min    = rhs.phi_min;
-    phi_max    = rhs.phi_max;
-    }
-  return *this;
+  setHistogram(histogram,variables);
   }
 
-  double ParticleEfficiency::efficiencyAt(const VectorLorentz & momentum)
+  void ParticleEfficiency::configure(const String & taskName, const String & typeName,
+                                     const Configuration & configuration, unsigned int index)
   {
-  int k = h_efficiency_etaPt->binIndex(momentum.pseudorapidity(),momentum.perp());
-  if (k<0) return 0.0;   // outside the (eta,pt) range of the histogram
-  return h_efficiency_etaPt->binValueAtGlobal(k);
+  KinematicMapFolder::configure(taskName,typeName,configuration,index);
+  String species = configuration.valueString(createKey(taskName,typeName,index,"SPECIES"),true,"");
+  _species.clear();
+  for (double code : KinematicMap::parseNumbers(species)) _species.push_back(int(code));
   }
 
-  double ParticleEfficiency::weightAt(const VectorLorentz & momentum)
+  void ParticleEfficiency::saveSettings(Folder & outputFile) const
   {
-  if (!h_weight_etaPt) calculateWeights();
-  int k = h_weight_etaPt->binIndex(momentum.pseudorapidity(),momentum.perp());
-  if (k<0) return 0.0;   // outside the (eta,pt) range of the histogram
-  return h_weight_etaPt->binValueAtGlobal(k);
+  std::string text;
+  for (unsigned int k=0; k<_species.size(); k++) { if (k) text += ","; text += std::to_string(_species[k]); }
+  writeSetting(outputFile,settingName("SPECIES"),String(text.c_str()));
   }
 
-  bool ParticleEfficiency::accept(const Particle & particle)
+  void ParticleEfficiency::loadSettings(const Folder & inputFile)
   {
-  return gRandom->Rndm()<=efficiencyAt(particle.momentum());
+  String text;
+  if (!readSetting(inputFile,settingName("SPECIES"),text)) return;
+  _species.clear();
+  for (double code : KinematicMap::parseNumbers(text)) _species.push_back(int(code));
   }
 
-  bool ParticleEfficiency::accept(const VectorLorentz & momentum)
+  bool ParticleEfficiency::appliesTo(const Particle & particle) const
   {
-  return gRandom->Rndm()<=efficiencyAt(momentum);
+  if (_species.empty()) return true;
+  const ParticleType * type = particle.typePtr();
+  if (!type) return false;
+  return std::find(_species.begin(),_species.end(),type->pdgCode())!=_species.end();
   }
 
-  void ParticleEfficiency::calculateWeights()
+  double ParticleEfficiency::efficiency(const Particle & particle) const
   {
-  if (h_weight_etaPt) delete h_weight_etaPt;
-  if (h_efficiency_etaPt)
-    {
-    h_weight_etaPt = h_efficiency_etaPt->clone();
-    // weight = 1/efficiency in bins with an efficiency in (0,1]; 0 elsewhere
-    for (unsigned int k=0; k<h_weight_etaPt->nBinsTotal(); k++)
-      {
-      double v  = h_weight_etaPt->binValueAtGlobal(k);
-      double ev = h_weight_etaPt->binUncertaintyAtGlobal(k);
-      if (v>0.0  &&  v<=1.0)
-        {
-        double w  = 1.0/v;
-        double ew = w*ev/v;
-        h_weight_etaPt->setBinAtGlobal(k,1,w,ew);
-        }
-      else
-        {
-        h_weight_etaPt->setBinAtGlobal(k,0,0.0,0.0);
-        }
-      }
-    }
-  else
-    {
-    throw Exception("Missing histogram h_efficiency_etaPt",__FUNCTION__);
-    }
+  if (!appliesTo(particle)) return 0.0;
+  const VectorLorentz & p = particle.momentum();
+  return efficiency(p.perp(),p.pseudorapidity(),p.phi());
   }
 
-
-
-  void ParticleEfficiency::cloneB(const ParticleEfficiency & source)
+  double ParticleEfficiency::weight(const Particle & particle) const
   {
-  // the efficiency histogram belongs to the group (copied with it); the weight histogram is owned by this object
-  h_efficiency_etaPt = histogramLike(source.h_efficiency_etaPt);
-  delete h_weight_etaPt;
-  h_weight_etaPt     = safeClone(source.h_weight_etaPt);
+  double e = efficiency(particle);
+  return e>0.0 ? 1.0/e : 0.0;
   }
 
-  void ParticleEfficiency::configure(const String & ownerName,
-                                     const String & typeName,
-                                     const Configuration & configuration,
-                                     unsigned int index)
+  bool ParticleEfficiency::accept(const Particle & particle, MATH::RandomGenerator & random) const
   {
-  HistogramFolder::configure(ownerName,typeName,configuration,index);
-  int pt_nbins   = configuration.valueInt(   createKey(ownerName,typeName,index,"pt_nbins"));
-  double pt_min  = configuration.valueDouble(createKey(ownerName,typeName,index,"pt_min"));
-  double pt_max  = configuration.valueDouble(createKey(ownerName,typeName,index,"pt_max"));
-  int eta_nbins  = configuration.valueInt(   createKey(ownerName,typeName,index,"eta_nbins"));
-  double eta_min = configuration.valueDouble(createKey(ownerName,typeName,index,"eta_min"));
-  double eta_max = configuration.valueDouble(createKey(ownerName,typeName,index,"eta_max"));
-  //  int phi_nbins  = configuration.valueInt(createKey(ownerName,typeName,index,"phi_nbins"));
-  //  double phi_min = configuration.valueDouble(createKey(ownerName,typeName,index,"phi_min"));
-  //  double phi_max = configuration.valueDouble(createKey(ownerName,typeName,index,"phi_max"));
-  if (reportDebug(__FUNCTION__))
-    {
-    printCR();
-    printLine();
-    printValue("Histo Base Name",baseName());
-    printValue("pt_nbins",   pt_nbins);
-    printValue("pt_min",     pt_min);
-    printValue("pt_max",     pt_max);
-    printValue("eta_nbins",  eta_nbins);
-    printValue("eta_min",    eta_min);
-    printValue("eta_max",    eta_max);
-    printCR();
-    }
-  }
-  
-  void ParticleEfficiency::create()
-  {
-  if (reportDebug(__FUNCTION__)) { printCR();}
-  h_efficiency_etaPt  = createHistogram(createName(baseName(),"efficiency_etaPt"),eta_nbins,eta_min,eta_max,pt_nbins,pt_min,pt_max,"#eta","p_{T}","#epsilon",2);
-
-  }
-
-  void ParticleEfficiency::loadFrom(const Folder & inputFile)
-  {
-  String name = "PART_EFF_ALL_ALL_etaPt";
-  printValue(name,name);
-  h_efficiency_etaPt  = importHistogram(inputFile,name);
+  double e = efficiency(particle);
+  return random.random()<e;           // r in [0, 1): always accepted for e = 1, never for e = 0
   }
 
 } // namespace CAP

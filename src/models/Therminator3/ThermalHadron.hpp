@@ -2,7 +2,6 @@
 #define CAP_ThermalHadron
 #include <vector>
 #include "ParticleType.hpp"
-#include "TObject.h"
 
 class ThermalHadronGas;
 class Model;
@@ -10,7 +9,7 @@ class Model;
 namespace CAP
 {
 
-  class ThermalHadron : public TObject
+  class ThermalHadron
   {
   protected:
 

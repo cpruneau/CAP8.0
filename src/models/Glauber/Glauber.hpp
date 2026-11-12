@@ -1,3 +1,14 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
+ * All rights reserved.
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau,  Nov 10, 2026
+ * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
+ *
+ * *********************************************************************/
 #ifndef CAP__GlauberTask
 #define CAP__GlauberTask
 #include "Task.hpp"
@@ -22,7 +33,7 @@ namespace CAP
 #include <TNamed.h>
 #include <TNtuple.h>
 #include <TObjArray.h>
-#include <TRandom.h>
+#include "MersenneTwister.hpp"
 #include <TRotation.h>
 #include <String.h>
 #include <TSystem.h>
@@ -270,7 +281,7 @@ bool GlauberMC::calculateEvent(double impactPar)
       double bij = TMath::Sqrt(dij);
       if (fNNProf) {
         double val = fNNProf->Eval(bij);
-        double ran = gRandom->Uniform();
+        double ran = CAP::MATH::randomGenerator().random();
         if (ran>val)
           continue;
       }
@@ -556,7 +567,7 @@ bool GlauberMC::CalcResults(double impactPar)
     TF1 rad("rad","2*pi/[0]/[0]*TMath::Exp(-x*x/(2.*[0]*[0]))",0.0,5*ksg); 
     rad.setParameter(0,ksg);
     const double minval = rad.Eval(5*ksg);
-    eventStats.Phi0         = gRandom->Uniform(0,TMath::TwoPi());
+    eventStats.Phi0         = CAP::MATH::randomGenerator().uniform(0,TMath::TwoPi());
     double kcphi0  = TMath::Cos(eventStats.Phi0);
     double ksphi0  = TMath::Sin(eventStats.Phi0);
     double x       = eventStats.X0;
@@ -682,7 +693,7 @@ TObjArray *GlauberMC::allNucleons()
 bool GlauberMC::nextEvent(double impactPar)
 {
   if (impactPar<0) 
-    impactPar = TMath::Sqrt((_impactParMax*_impactParMax-_impactParMin*_impactParMin)*gRandom->Rndm()+_impactParMin*_impactParMin);
+    impactPar = TMath::Sqrt((_impactParMax*_impactParMax-_impactParMin*_impactParMin)*CAP::MATH::randomGenerator().random()+_impactParMin*_impactParMin);
 
   _nucleusA.generateNucleons(-impactPar/2.);
   _nucleusB.generateNucleons(impactPar/2.);

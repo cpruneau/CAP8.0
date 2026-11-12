@@ -12,10 +12,12 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include "GaussLegendreIntegrator.hpp"
 #include "ModelValues.hpp"
 #include "DataPoints.hpp"
 #include "Function.hpp"
 #include "Histogram.hpp"
+#include "ParameterizedFunction.hpp"
 
 namespace CAP
 {
@@ -24,40 +26,40 @@ namespace CAP
 
   double binAverage(const Function & function, const Histogram & histogram, unsigned int index)
   {
-  static const double nodes[3]   = { -0.7745966692414834, 0.0, 0.7745966692414834 };   // sqrt(3/5)
-  static const double weights[3] = { 5.0/18.0, 8.0/18.0, 5.0/18.0 };                  // sum 1: an average
+  // a function of one variable with parameters: its integral over the bin (analytical when the class has one, e.g.
+  // FourierDecomposition, Normal, the polynomials; adaptive Simpson otherwise) divided by the width of the bin
+  if (histogram.rank() == 1)
+    if (const ParameterizedFunction * f = dynamic_cast<const ParameterizedFunction*>(&function))
+      {
+      unsigned int i = index % histogram.nBins(0);
+      double center = histogram.binCenter(i, 0), width = histogram.binWidth(i, 0);
+      if (width > 0.0)
+        {
+        try { return f->integralInRange(center - 0.5*width, center + 0.5*width)/width; }
+        catch (...) { return std::numeric_limits<double>::quiet_NaN(); }
+        }
+      }
+  // otherwise the average over the bin by the product of 3-point Gauss-Legendre rules (exact for cubics in each variable)
   unsigned int rank = histogram.rank();
-  std::vector<double> center(rank), half(rank);
+  std::vector<double> low(rank), high(rank);
   unsigned int rest = index;
+  double volume = 1.0;
   for (unsigned int k=0; k<rank; k++)                      // axis 0 varies fastest
     {
     unsigned int n = histogram.nBins(k), i = rest % n;
     rest /= n;
-    center[k] = histogram.binCenter(i, k);
-    half[k] = 0.5*histogram.binWidth(i, k);
+    double center = histogram.binCenter(i, k), half = 0.5*histogram.binWidth(i, k);
+    low[k] = center - half;
+    high[k] = center + half;
+    volume *= 2.0*half;
     }
-  unsigned int nPoints = 1;
-  for (unsigned int k=0; k<rank; k++) nPoints *= 3;
-  std::vector<double> x(rank);
-  double sum = 0;
   try
     {
-    for (unsigned int p=0; p<nPoints; p++)
-      {
-      double weight = 1;
-      unsigned int code = p;
-      for (unsigned int k=0; k<rank; k++)
-        {
-        unsigned int j = code % 3;
-        code /= 3;
-        x[k] = center[k] + half[k]*nodes[j];
-        weight *= weights[j];
-        }
-      sum += weight*(rank == 1 ? function.evaluateAt(x[0]) : function.evaluateAt(x));
-      }
+    double integral = GaussLegendreIntegrator::productRule([&](const std::vector<double> & x)
+                        { return rank == 1 ? function.evaluateAt(x[0]) : function.evaluateAt(x); }, low, high, 3);
+    return integral/volume;
     }
   catch (...) { return std::numeric_limits<double>::quiet_NaN(); }
-  return sum;
   }
 
   double modelValue(const Function & function, const DataPoints & data, unsigned int index, bool binAveraging)

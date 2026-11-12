@@ -23,17 +23,17 @@ namespace CAP
   double mass2 = mass*mass;
   double chemPotential = chemicalPotential(type);
 
-  double rho       = _rhoMax * gRandom->Rndm();
-  double sPhi      = twoPi() * gRandom->Rndm();
-  double sRapidity = _sRapidityRange * (gRandom->Rndm() - 0.5);;
+  double rho       = _rhoMax * CAP::MATH::randomGenerator().random();
+  double sPhi      = twoPi() * CAP::MATH::randomGenerator().random();
+  double sRapidity = _sRapidityRange * (CAP::MATH::randomGenerator().random() - 0.5);;
   double tau       = _tauI + _amp*rho;
 
-  double zeta      = gRandom->Rndm();
+  double zeta      = CAP::MATH::randomGenerator().random();
   double zetac     = (zeta>0.9999999) ? 0.0000001 : 1.00-zeta;
   double pT        = zeta/zetac;
   double dPt       = 1.0/(zetac*zetac);
-  double pPhi      = twoPi() * gRandom->Rndm();
-  double pRapidity = _pRapidityRange * (gRandom->Rndm() - 0.5);
+  double pPhi      = twoPi() * CAP::MATH::randomGenerator().random();
+  double pRapidity = _pRapidityRange * (CAP::MATH::randomGenerator().random() - 0.5);
   double mT        = std::sqrt(mass2+pT*pT);
   //double e         = mT*std::cosh(pRapidity);
 
@@ -71,13 +71,13 @@ namespace CAP
       default: break;
       case 3:
       case 5:
-      Xt += -_delay * std::log(gRandom->Rndm()); break;
+      Xt += -_delay * std::log(CAP::MATH::randomGenerator().positive()); break;
       case 6:
         {
         // formation: the particle streams freely with velocity p/E during the delay only, from its point
         // on the hypersurface (Therminator 2 used the full time Xt, as if it streamed from t = 0)
         double energy = std::sqrt(mT*mT + Pz*Pz);
-        double delay  = -_delay * std::log(gRandom->Rndm());
+        double delay  = -_delay * std::log(CAP::MATH::randomGenerator().positive());
         Xt += delay;
         Xx += delay * Px / energy;
         Xy += delay * Py / energy;

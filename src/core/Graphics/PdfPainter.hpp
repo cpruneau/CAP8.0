@@ -59,21 +59,21 @@ namespace CAP
   //! @brief Number of pages, the current one included. @return number
   int nPages() const { return int(_pages.size()) + 1; }
 
-  virtual float width()  const { return _regionWidth;  }   //!< Width of the current region (points)
-  virtual float height() const { return _regionHeight; }   //!< Height of the current region (points)
+  virtual float width()  const override { return _regionWidth;  }   //!< Width of the current region (points)
+  virtual float height() const override { return _regionHeight; }   //!< Height of the current region (points)
   //! @brief Open polyline (see Painter::drawLine()).
-  virtual void drawLine(const std::vector<Point2D> & points, const LineAttributes & line);
+  virtual void drawLine(const std::vector<Point2D> & points, const LineAttributes & line) override;
   //! @brief Closed polygon (see Painter::drawPolygon()).
-  virtual void drawPolygon(const std::vector<Point2D> & points, const FillAttributes & fill, const LineAttributes & line);
+  virtual void drawPolygon(const std::vector<Point2D> & points, const FillAttributes & fill, const LineAttributes & line) override;
   //! @brief Polygon of any color (see Painter::fillPolygon()).
-  virtual void fillPolygon(const std::vector<Point2D> & points, const Color & color);
+  virtual void fillPolygon(const std::vector<Point2D> & points, const Color & color) override;
   //! @brief Rectangle of any color, slightly enlarged so that adjacent cells show no seam (see Painter::fillRectangle()).
-  virtual void fillRectangle(float x0, float y0, float x1, float y1, const Color & color);
+  virtual void fillRectangle(float x0, float y0, float x1, float y1, const Color & color) override;
   //! @brief One marker (see Painter::drawMarker()).
-  virtual void drawMarker(const Point2D & position, const MarkerAttributes & marker);
+  virtual void drawMarker(const Point2D & position, const MarkerAttributes & marker) override;
   //! @brief Text (see Painter::drawText()): the glyph paths of a text typeset by LaTeX, otherwise a text in the standard
   //! font of its ROOT font code.
-  virtual void drawText(const Point2D & position, const String & text, const TextAttributes & attributes, float angle=0.0);
+  virtual void drawText(const Point2D & position, const String & text, const TextAttributes & attributes, float angle=0.0) override;
   //! @brief Width of a text in points: that of its LaTeX image (see Painter::textWidth()), otherwise from the metrics
   //! of the standard fonts it is drawn with. @param text text @param attributes font and size @return width
   virtual float textWidth(const String & text, const TextAttributes & attributes) const override;

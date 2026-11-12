@@ -51,14 +51,30 @@ void PerformanceAnalyzer::setDefaultConfiguration()
 void PerformanceAnalyzer::execute()
 {
   _taskExecuted.increment();
-  Event & theEvent = event();
+  Event & theEvent = event();                     // detector level
   if (!filterEvent(theEvent)) return;
-  if (!filterParticles(theEvent.particles()))  return;
   unsigned int npf = nParticleFilters();
   std::vector<ParticlePerformanceHistos*> & folders = histograms();
   if (folders.size()<_acceptedEventFilters.size()*npf)
     throw Exception("Fewer histogram folders than combinations of filters",__FUNCTION__);
-  // loop over the event filters (was over the particle filter flags), groups at e*nPF + p
+  std::vector<Event*> & theEvents = events();
+  Event * genEvent = theEvents.size()>1 ? theEvents[1] : nullptr;
+
+  // generator level (efficiency denominator): before the detector level, whose selections replace these
+  if (genEvent && filterParticles(*genEvent))
+    for (unsigned int iEventFilter=0; iEventFilter<_acceptedEventFilters.size(); iEventFilter++)
+      {
+      if (!_acceptedEventFilters[iEventFilter]) continue;
+      for (unsigned int iParticleFilter=0; iParticleFilter<npf;iParticleFilter++)
+        {
+        if (!_acceptedParticleFilters[iParticleFilter]) continue;
+        ParticlePerformanceHistos * histos = folders[iEventFilter*npf+iParticleFilter];
+        for (auto & particle : acceptedParticles(iParticleFilter)) histos->fillGenerated(*particle,1.0);
+        }
+      }
+
+  // detector level: reco - gen, and the efficiency numerator
+  if (!filterParticles(theEvent))  return;
   for (unsigned int iEventFilter=0; iEventFilter<_acceptedEventFilters.size(); iEventFilter++)
     {
     if (!_acceptedEventFilters[iEventFilter]) continue;
@@ -72,5 +88,4 @@ void PerformanceAnalyzer::execute()
       }
     }
 }
-
 } // namespace CAP

@@ -55,7 +55,7 @@ void ParticlePair3DAnalyzer::execute()
   _taskExecuted.increment();;
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (! filterParticles(theEvent.particles()))  return;
+  if (! filterParticles(theEvent))  return;
   const unsigned int nPF   = nParticleFilters();
   const unsigned int nPFsq = nPF*nPF;
   std::vector<ParticlePair3DHistos*> & pairFolders   = histograms();

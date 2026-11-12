@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Nuclei of the Glauber Monte Carlo (CAP::GlauberDb, models/Glauber). One NUCLEUS element per nucleus type, found
+  by its name (GENERATION:NUCLEUS_A:NAME and NUCLEUS_B:NAME of GlauberGenerator). Nuclei can be added or changed
+  here; the file read is GlauberGenerator:DB_0:FILE (default Glauber/NucleusDb.xml, in $CAP_DATABASE_PATH).
+  NucleusDbEditor.py (at the top of CAP) edits it in a table and checks it.
+
+  Attributes (lengths in fm):
+    name          name of the nucleus type (e.g. Pb, Au2rw)
+    A, Z          numbers of nucleons and protons
+    radialType    radial density (see NuclearDistribution): 0 exponential, 1 three-parameter Fermi (3pF),
+                  2 three-parameter Gaussian (3pG), 3 Hulthen (deuteron), 4 Hulthen with the neutron opposite to
+                  the proton, 5 ellipsoid, 6 nucleon configurations read from a file, 7 deformed (box method),
+                  8 deformed (beta2, beta4), 9 proton Gaussian, 10 proton double Gaussian, 11 3pF with distinct
+                  proton and neutron parameters, 12 3pF reweighted (r0, r1, r2), 13 as 11 reweighted, 14 as 8
+                  reweighted, 15 harmonic oscillator
+    radius, skin, w                      radius, skin depth and w parameter of the proton density
+    neutronRadius, neutronSkin, neutronW those of the neutron density (default: those of the protons)
+    beta2, beta4  deformation parameters (default 0)
+    r0, r1, r2    parameters of the reweighting of the types 12, 13 and 14 (default 0)
+    a, b          parameters of special profiles (default 0)
+    maxRadius     largest radius of the nucleons (default 3 x 1.2 A^(1/3))
+    comment       source of the parameters
+
+  Uranium (U): Heinz and Kuhlman, nucl-th/0411054, with radius = 6.8 x 0.91 and w = 6.8 x 0.26.
+-->
+<CAP version="1" type="glauberNucleusDb">
+  <NUCLEUS_DB>
+    <NUCLEUS name="p" A="1" Z="1" radialType="0" radius="0.234" skin="0" w="0"/>
+    <NUCLEUS name="pg" A="1" Z="1" radialType="9" radius="0.514" skin="0" w="0"/>
+    <NUCLEUS name="pdg" A="1" Z="1" radialType="10" radius="1" skin="0" w="0" comment="from arXiv:1101.5953"/>
+    <NUCLEUS name="dpf" A="2" Z="1" radialType="1" radius="0.01" skin="0.5882" w="0" comment="deuteron 2pf (tuned to useHulthen)"/>
+    <NUCLEUS name="dh" A="2" Z="1" radialType="3" radius="0.2283" skin="1.1765" w="0" comment="deuteron useHulthen free"/>
+    <NUCLEUS name="d" A="2" Z="1" radialType="4" radius="0.2283" skin="1.1765" w="0" comment="deuteron useHulthen constrained"/>
+    <NUCLEUS name="He3" A="3" Z="2" radialType="6" radius="0.00" skin="0.0000" w="0" comment="read configurations from file"/>
+    <NUCLEUS name="H3" A="3" Z="1" radialType="6" radius="0.00" skin="0.0000" w="0" comment="read configurations from file"/>
+    <NUCLEUS name="He4" A="4" Z="2" radialType="6" radius="0.00" skin="0.0000" w="0" comment="read configurations from file"/>
+    <NUCLEUS name="C" A="12" Z="6" radialType="6" radius="2.608" skin="0.513" w="-0.051" comment="read configurations from file"/>
+    <NUCLEUS name="O" A="16" Z="8" radialType="6" radius="2.608" skin="0.513" w="-0.051" comment="read configurations from file"/>
+    <NUCLEUS name="Opar" A="16" Z="8" radialType="1" radius="2.608" skin="0.513" w="-0.051" comment="WS parameterization"/>
+    <NUCLEUS name="Oho" A="16" Z="8" radialType="15" radius="1.833" skin="1.544" w="0" comment="Harmonic oscillator parameterization"/>
+    <NUCLEUS name="Al" A="27" Z="13" radialType="8" radius="3.34" skin="0.580" w="0.0" beta2="-0.448" beta4="0.239"/>
+    <NUCLEUS name="Si" A="28" Z="14" radialType="1" radius="3.34" skin="0.580" w="-0.233"/>
+    <NUCLEUS name="Si2" A="28" Z="14" radialType="8" radius="3.34" skin="0.580" w="0" beta2="-0.478" beta4="0.250"/>
+    <NUCLEUS name="S" A="32" Z="16" radialType="2" radius="2.54" skin="2.191" w="0.16"/>
+    <NUCLEUS name="Ar" A="40" Z="18" radialType="1" radius="3.53" skin="0.542" w="0"/>
+    <NUCLEUS name="Ca" A="40" Z="20" radialType="1" radius="3.766" skin="0.586" w="-0.161"/>
+    <NUCLEUS name="Ni" A="58" Z="28" radialType="1" radius="4.309" skin="0.517" w="-0.1308"/>
+    <NUCLEUS name="Cu" A="63" Z="29" radialType="1" radius="4.20" skin="0.596" w="0"/>
+    <NUCLEUS name="Curw" A="63" Z="29" radialType="12" radius="4.20" skin="0.596" w="0" r0="1.00898" r1="-0.000790403" r2="-0.000389897"/>
+    <NUCLEUS name="Cu2" A="63" Z="29" radialType="8" radius="4.20" skin="0.596" w="0" beta2="0.162" beta4="-0.006"/>
+    <NUCLEUS name="Cu2rw" A="63" Z="29" radialType="14" radius="4.20" skin="0.596" w="0" beta2="0.162" beta4="-0.006" r0="1.01269" r1="-0.00298083" r2="-9.97222e-05"/>
+    <NUCLEUS name="CuHN" A="63" Z="29" radialType="1" radius="4.28" skin="0.5" w="0" comment="from arXiv:0904.4080v1"/>
+    <NUCLEUS name="Xe" A="129" Z="54" radialType="1" radius="5.36" skin="0.59" w="0" comment="adapted from arXiv:1703.04278"/>
+    <NUCLEUS name="Xes" A="129" Z="54" radialType="1" radius="5.42" skin="0.57" w="0" comment="scale from Sb (Antimony, A=122, r=5.32) by 1.019 = (129/122)**0.333"/>
+    <NUCLEUS name="Xe2" A="129" Z="54" radialType="8" radius="5.36" skin="0.59" w="0" beta2="0.161" beta4="-0.003" comment="adapted from arXiv:1703.04278 and Z. Physik (1974) 270: 113"/>
+    <NUCLEUS name="Xe2a" A="129" Z="54" radialType="8" radius="5.36" skin="0.59" w="0" beta2="0.18" beta4="0" comment="ALICE parameters (see public note from 2018 at https://cds.cern.ch/collection/ALICE%20Public%20Notes?ln=en)"/>
+    <NUCLEUS name="Xerw" A="129" Z="54" radialType="12" radius="5.36" skin="0.59" w="0" r0="1.00911" r1="-0.000722999" r2="-0.0002663"/>
+    <NUCLEUS name="Xesrw" A="129" Z="54" radialType="12" radius="5.42" skin="0.57" w="0" r0="1.0096" r1="-0.000874123" r2="-0.000256708"/>
+    <NUCLEUS name="Xe2arw" A="129" Z="54" radialType="14" radius="5.36" skin="0.59" w="0" beta2="0.18" beta4="0" r0="1.01246" r1="-0.0024851" r2="-5.72464e-05"/>
+    <NUCLEUS name="W" A="186" Z="74" radialType="1" radius="6.58" skin="0.480" w="0"/>
+    <NUCLEUS name="Au" A="197" Z="79" radialType="1" radius="6.38" skin="0.535" w="0"/>
+    <NUCLEUS name="Aurw" A="197" Z="79" radialType="12" radius="6.38" skin="0.535" w="0" r0="1.00899" r1="-0.000590908" r2="-0.000210598"/>
+    <NUCLEUS name="Au2" A="197" Z="79" radialType="8" radius="6.38" skin="0.535" w="0" beta2="-0.131" beta4="-0.031"/>
+    <NUCLEUS name="Au2rw" A="197" Z="79" radialType="14" radius="6.38" skin="0.535" w="0" beta2="-0.131" beta4="-0.031" r0="1.01261" r1="-0.00225517" r2="-3.71513e-05"/>
+    <NUCLEUS name="AuHN" A="197" Z="79" radialType="1" radius="6.42" skin="0.44" w="0" comment="from arXiv:0904.4080v1"/>
+    <NUCLEUS name="Pb" A="208" Z="82" radialType="1" radius="6.62" skin="0.546" w="0"/>
+    <NUCLEUS name="Pbrw" A="208" Z="82" radialType="12" radius="6.62" skin="0.546" w="0" r0="1.00863" r1="-0.00044808" r2="-0.000205872" comment="only Pb 207 was tested but should be the same for 208"/>
+    <NUCLEUS name="Pb*" A="208" Z="82" radialType="1" radius="6.624" skin="0.549" w="0"/>
+    <NUCLEUS name="PbHN" A="208" Z="82" radialType="1" radius="6.65" skin="0.460" w="0"/>
+    <NUCLEUS name="Pbpn" A="208" Z="82" radialType="11" radius="6.68" skin="0.447" w="0" neutronRadius="6.69" neutronSkin="0.56" neutronW="0"/>
+    <NUCLEUS name="Pbpnrw" A="208" Z="82" radialType="13" radius="6.68" skin="0.447" w="0" neutronRadius="6.69" neutronSkin="0.56" neutronW="0"/>
+    <NUCLEUS name="U" A="238" Z="92" radialType="5" radius="6.188" skin="0.54" w="1.77"/>
+    <NUCLEUS name="U2" A="238" Z="92" radialType="8" radius="6.67" skin="0.44" w="0" beta2="0.280" beta4="0.093"/>
+  </NUCLEUS_DB>
+</CAP>

@@ -20,7 +20,7 @@
 #include "Particle.hpp"
 #include "ParticleFilter.hpp"
 #include "ParticleEfficiency.hpp"
-#include "ParticleSmearer.hpp"
+#include "ParticleSmear.hpp"
 
 namespace CAP
 {

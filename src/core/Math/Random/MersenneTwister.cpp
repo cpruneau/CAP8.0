@@ -126,5 +126,11 @@ namespace CAP
   resetDistributions();
   }
 
+  MersenneTwister & randomGenerator()
+  {
+  static MersenneTwister generator(4357);
+  return generator;
+  }
+
   } // namespace MATH
 } // namespace CAP

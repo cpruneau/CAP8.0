@@ -12,6 +12,8 @@ Usage (from anywhere; the script locates CAP from its own position):
     python3 RunCAP.py [workflow.xml]          # open the GUI (and load a workflow)
     python3 RunCAP.py --print-command FILE    # print the command that runs the workflow FILE and exit (no GUI)
     python3 RunCAP.py --check FILE            # load FILE, check its values against the templates and exit (no GUI)
+    python3 RunCAP.py --subsamples FILE [DIR] # write the sub-samples of FILE in DIR, print how to run them (no GUI)
+    python3 RunCAP.py --combine FILE [DIR]    # combine the sub-samples of DIR (e.g. run on a cluster) (no GUI)
 
 The window has four parts, from top to bottom:
   * a toolbar: Run (the stage shown), Run all stages, Save workflow, Load workflow, Clear workflow (a new, empty
@@ -21,11 +23,14 @@ The window has four parts, from top to bottom:
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
     under the workflow reorder the tasks and nest them: a nested task is a subtask of the task above it (e.g. the
     event generator and the analyzers inside an EventIterator, which executes them for every event);
-  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, defined once, created
-    by the task FilterCreator (written first in the workflow file, with one subtask per kind) and used by the tasks by
-    name. One tab per kind (event and particle filters, event and particle efficiencies and
-    smearers), the number of objects of that kind, and for each its name and title and its conditions (a range, two
-    ranges, a value or a flag of one quantity) or binning parameters;
+  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, created by the task
+    FilterCreator (written first in the workflow file, with one subtask per kind) and used by the tasks by name. One
+    tab per kind (event and particle filters, event efficiencies and smearers, events, particle databases), the number
+    of objects of that kind, and for each its name and title and its conditions (a range, two ranges, a value or a flag
+    of one quantity) or parameters. The particle efficiencies and smearers are not defined here: they are made and
+    edited in CapGui (Detector Maps) and saved in a maps file, which the tab Detector maps names (RunCAP lists its
+    objects with bin/CAP --maps-list); each task then uses none, one for all particles, or one per event filter and
+    particle filter;
   * the tasks: one line per task of the workflow, in run order, with the filters it uses, the number of its
     histogram folders and its first problem. Above it, the buttons of the stages of the workflow (Event Processing,
     Derived Histos, Balance Fct) choose the stage shown in the workflow editor, and the files of its job. Double-clicking
@@ -37,7 +42,10 @@ The window has four parts, from top to bottom:
 
 Available tasks: the XML templates written by "bin/CAP --xml-templates" (one file per task class, listing every
 parameter with its default value and type, see CAP::Task::exportXmlTemplates()). They are kept in <CAP>/DB/Templates
-and regenerated automatically when bin/CAP or the libraries are newer than them (or with the Refresh button).
+and regenerated automatically when bin/CAP or the libraries are newer than them (or with the Refresh button). The folder
+then holds exactly the task classes of the last build: templates of classes no longer built are removed. The base class
+Task is not offered (only the stage wrappers, Workflow, DerivedHistos and BalanceFct, are Tasks). The catalog of the
+functions of CAP (bin/CAP --function-catalog, DB/FunctionCatalog.xml) is written at the same time.
 
 Stages: a workflow has up to three stages, each run by its own CAP job, one after the other: Event Processing
 (generators, analyzers filling their histograms event by event), Derived Histos (the calculators of the derived
@@ -57,6 +65,13 @@ histograms of all its tasks to one output file in that directory (Output file; b
 task, holding a folder per combination of event and particle filters with its histograms and derived histograms. A
 derived run reads the histograms it imports from its input file (Input file: the output file of the fill run).
 
+Sub-samples (RunCAPSubSamples.py): the row under the files of the job runs the workflow as N independent sub-samples
+(each with its own seeds, in <output>/sub_000, ...), here (several at once) or on a Slurm cluster (job array submitted
+over ssh), and combines them with CAP::SubSampleStatCalculator: the sub-sample average with the uncertainty of the mean,
+or the delete-one jackknife (on the outputs of a stage, or through the later stages, run on each replica). Run all
+stages then runs the sub-samples; Combine combines those of the output directory. The settings are saved in the
+workflow file.
+
 Filters (RunCAPFilters.py): the event and particle filters, efficiencies and smearers of a workflow form a library
 shared by its tasks; each task chooses its objects by name, and the analyzers get one histogram folder per combination
 of their filters. write_workflow() writes their keys in the tasks (the first task using an object defines it) and the
@@ -74,6 +89,7 @@ import json
 import os
 import queue
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -83,12 +99,14 @@ import time
 import xml.etree.ElementTree as ET
 
 import RunCAPFilters as filters
+import RunCAPSubSamples as subsamples
 
 CAP_DIR = os.path.dirname(os.path.abspath(__file__))
 BIN_DIR = os.path.join(CAP_DIR, "bin")
 CAP_EXE = os.path.join(BIN_DIR, "CAP")
 TEMPLATES_DIR = os.path.join(CAP_DIR, "DB", "Templates")
 TEMPLATES_STAMP = os.path.join(TEMPLATES_DIR, ".generated")
+TEMPLATES_STAGING = os.path.join(TEMPLATES_DIR, ".new")     # bin/CAP writes the templates here first
 SETTINGS_FILE = os.path.join(CAP_DIR, ".RunCAP.json")
 
 #: Report levels of a task (CAP::Object).
@@ -133,6 +151,11 @@ class Param:
         self.value = normalize_value(self.type, value)
         self.default = self.value
         self.description = description or ""
+
+    def __getstate__(self):
+        """State copied (copy.deepcopy, TaskConfig.clone()): without the links to widgets (widget_var, set by the
+        window of the task), which cannot be copied."""
+        return {k: v for k, v in self.__dict__.items() if not k.startswith("widget_")}
 
 
 class TaskConfig:
@@ -263,9 +286,16 @@ def task_from_element(element, templates, warnings):
                         % (name, cls or "?"))
     if element.get("severity"):
         t.severity = element.get("severity").upper()
+    groups = {p.key.split(":")[0] for p in t.params}
+    unused = []                  # groups of the filters, corrections and databases that the class does not have
     for p in read_parameters(element):
         if filters.OBSOLETE_KEY.match(p.key) or filters.JOB_KEY.match(p.key):
             continue            # keys of earlier versions; files of the job (see load_workflow_with_filters())
+        group = p.key.split(":")[0]
+        if t.known and cls in templates and group in filters.CHOICE_KINDS and group not in groups:
+            if group not in unused:     # e.g. the corrections of an analyzer, kept by its calculator in older files
+                unused.append(group)
+            continue
         existing = t.param(p.key)
         if existing is None:
             if t.known and not filters.MANAGED_KEY.match(p.key):
@@ -273,6 +303,9 @@ def task_from_element(element, templates, warnings):
             t.params.append(p)
         else:
             existing.value = normalize_value(existing.type, p.value)
+    if unused:
+        warnings.append("Task %s: the keys of %s were dropped (class %s does not use them; saving the workflow removes "
+                        "them from the file)." % (name, ", ".join(unused), cls))
     for child in element.findall("TASK"):
         t.children.append(task_from_element(child, templates, warnings))
     return t
@@ -417,7 +450,7 @@ def load_stages_with_filters(path, templates):
     library = None
     element = root.find("RUNCAP")
     if element is not None:
-        library, more = filters.read_runcap_element(element, everything)
+        library, more = filters.read_runcap_element(element, everything, os.path.dirname(os.path.abspath(path)))
         warnings += more
         first = next(s for s in STAGES if s in stages)
         for name, value in library.job.items():           # files of the job written before the stages
@@ -433,6 +466,7 @@ def load_stages_with_filters(path, templates):
         more += extra
         tasks = filters.remove_creator(tasks, library)
         more += filters.update_event_settings(tasks, templates)
+        more += filters.update_writer_events(tasks, library)
         more += filters.update_iterator_events(tasks, templates)
         lists += filters.update_histogram_lists(tasks, templates)
         stages[stage] = tasks
@@ -457,12 +491,13 @@ def write_workflow(path, tasks, library=None, templates=None):
     return write_stages(path, {EVENTS: tasks}, library, templates, jobs)[EVENTS]
 
 
-def write_stages(path, stages, library=None, templates=None, jobs=None):
+def write_stages(path, stages, library=None, templates=None, jobs=None, extra=None):
     """Write the stages of a workflow ({stage: top-level tasks}; stages without tasks are left out) to path: a TASK
     element per stage, the task CAP runs for it (attribute stage), with the files of its job (jobs[stage]: keys JOB:...
     of that task). With a library (RunCAPFilters.FilterLibrary), the keys of the filters, efficiencies, smearers and
     histogram folders chosen by the tasks are written in their parameters (the tasks are unchanged), FilterCreator
-    first in each stage, and the library in a RUNCAP element. Returns {stage: name of the task to run}."""
+    first in each stage, and the library in a RUNCAP element. extra: more elements of the root (e.g. the settings of
+    the sub-samples, RunCAPSubSamples). Returns {stage: name of the task to run}."""
     document = ET.Element("CAP", {"version": "1"})
     names = {}
     everything = []
@@ -487,9 +522,11 @@ def write_stages(path, stages, library=None, templates=None, jobs=None):
     if library is not None:
         saved, library.job = library.job, {}           # the files of the jobs are in the TASK elements
         try:
-            document.append(filters.runcap_element(library, everything))
+            document.append(filters.runcap_element(library, everything, os.path.dirname(os.path.abspath(path))))
         finally:
             library.job = saved
+    for element in extra or []:
+        document.append(element)
     _indent(document)
     with open(path, "wb") as f:
         f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -524,6 +561,31 @@ def check_workflow(tasks, stage=EVENTS):
     return errors
 
 
+def check_sources(stages, run=None):
+    """Problems of the tasks reading the histograms of an analyzer of the stage before (SOURCE_TASK): a calculator of
+    derived histograms needs its analyzer in Event Processing, a balance function the folders of its analyzer in Derived
+    Histos (its calculator, or the analyzer itself run as derived). Checked for the stages of run (default: all) whose
+    stage before has tasks and is run too (a stage run alone may read a file made earlier)."""
+    errors = []
+    run = list(run if run is not None else STAGES)
+    for stage, before in ((DERIVED, EVENTS), (BF, DERIVED)):
+        if stage not in run or before not in run or not stages.get(stage) or not stages.get(before):
+            continue
+        made = set()
+        for t in all_tasks(stages[before]):
+            made.add(t.name)
+            source = t.param("SOURCE_TASK")
+            if source is not None and source.value not in ("", "NONE"):
+                made.add(source.value)
+        for t in all_tasks(stages[stage]):
+            source = t.param("SOURCE_TASK")
+            if source is not None and source.value not in ("", "NONE") and source.value not in made:
+                errors.append("%s: task %s reads the histograms of %s, which %s does not make (remove %s, or add %s "
+                              "back to %s)." % (STAGE_TITLES[stage], t.name, source.value, STAGE_TITLES[before], t.name,
+                                                source.value, STAGE_TITLES[before]))
+    return errors
+
+
 def run_command(xml_path, root_name, output_dir):
     xml_path = os.path.abspath(xml_path)
     return [CAP_EXE, root_name, os.path.dirname(xml_path) + "/", os.path.basename(xml_path),
@@ -531,7 +593,39 @@ def run_command(xml_path, root_name, output_dir):
 
 
 def template_command():
-    return [CAP_EXE, "--xml-templates", TEMPLATES_DIR + "/"]
+    return [CAP_EXE, "--xml-templates", TEMPLATES_STAGING + "/"]
+
+
+def catalog_command():
+    """Command writing the catalog of the functions of CAP (see RunCAPFilters.FUNCTION_CATALOG_FILE)."""
+    return [CAP_EXE, "--function-catalog", filters.FUNCTION_CATALOG_FILE]
+
+
+def prepare_template_staging():
+    """Empty staging directory for bin/CAP --xml-templates."""
+    shutil.rmtree(TEMPLATES_STAGING, ignore_errors=True)
+    os.makedirs(TEMPLATES_STAGING, exist_ok=True)
+
+
+def install_templates():
+    """Make DB/Templates hold exactly the templates just written by bin/CAP: those of the task classes of the last build.
+
+    Templates of classes that are no longer built (a module turned off, a class removed) are deleted. Returns the short
+    names of the removed classes, or None if bin/CAP wrote no template (DB/Templates is then left unchanged).
+    """
+    new = {os.path.basename(f) for f in glob.glob(os.path.join(TEMPLATES_STAGING, "*.xml"))}
+    if not new:
+        return None
+    removed = []
+    for path in glob.glob(os.path.join(TEMPLATES_DIR, "*.xml")):
+        name = os.path.basename(path)
+        if name not in new:
+            os.remove(path)
+            removed.append(name[:-4])
+    for name in new:
+        os.replace(os.path.join(TEMPLATES_STAGING, name), os.path.join(TEMPLATES_DIR, name))
+    shutil.rmtree(TEMPLATES_STAGING, ignore_errors=True)
+    return sorted(removed)
 
 
 def build_time():
@@ -546,6 +640,8 @@ def templates_outdated():
     if not os.path.exists(CAP_EXE):
         return False
     if not glob.glob(os.path.join(TEMPLATES_DIR, "*.xml")) or not os.path.exists(TEMPLATES_STAMP):
+        return True
+    if not os.path.exists(filters.FUNCTION_CATALOG_FILE):
         return True
     return build_time() > os.path.getmtime(TEMPLATES_STAMP)
 
@@ -727,8 +823,11 @@ def run_gui(initial_file=None, hook=None):
             self.saved_path = ""        # file of the last save or load
             self.dirty = False
             self.process = None
+            self.runner = None              # sub-samples running (RunCAPSubSamples.ParallelRunner)
+            self.subsamples = subsamples.SubSampleSettings()
             self.worker = None
             self.kill_requested = False
+            self.dropped_lines = 0          # lines of output not shown (after Kill)
             self.queue = queue.Queue()
             self.start_time = None
             root.title("CAP Workflow")
@@ -767,13 +866,13 @@ def run_gui(initial_file=None, hook=None):
             root.after(200, self._place_sashes)
 
         def _place_sashes(self):
-            # initial heights: workflow 24%, filters 36%, tasks 20%, output 20%
+            # initial heights: workflow 22%, filters 44%, tasks 18%, output 16%
             self.root.update_idletasks()
             h = self.panes.winfo_height()
             if h > 100:
-                self.panes.sashpos(0, int(h * 0.24))
-                self.panes.sashpos(1, int(h * 0.60))
-                self.panes.sashpos(2, int(h * 0.80))
+                self.panes.sashpos(0, int(h * 0.22))
+                self.panes.sashpos(1, int(h * 0.66))
+                self.panes.sashpos(2, int(h * 0.84))
 
         def _dialog(self, kind, **options):
             """File dialog of filedialog.<kind>. On macOS the file types are left out: Tk's native panel can abort
@@ -907,6 +1006,8 @@ def run_gui(initial_file=None, hook=None):
             for cls in sorted(self.templates, key=lambda c: short_class_name(c).lower()):
                 if cls in creators:
                     continue            # FilterCreator is written from the Filters pane
+                if cls == WRAPPER_CLASS:
+                    continue            # the base class Task: only the stage wrappers (Workflow, ...) are Tasks
                 name = short_class_name(cls)
                 if text and text not in name.lower():
                     continue
@@ -1093,6 +1194,8 @@ def run_gui(initial_file=None, hook=None):
                 ttk.Entry(files, textvariable=var, width=30).pack(side=tk.LEFT)
                 var.trace_add("write", lambda *a, n=name, v=var: self._set_job(n, v.get().strip()))
                 self.job_vars[name] = var
+            self.subsample_bar = subsamples.make_bar(parent, self, self.subsamples, sys.modules[__name__], ToolTip)
+            self.subsample_bar.pack(fill=tk.X, pady=(0, 4))
             box = ttk.Frame(parent)
             box.pack(fill=tk.BOTH, expand=True)
             columns = ("class", "events", "particles", "others", "folders", "problems")
@@ -1191,6 +1294,8 @@ def run_gui(initial_file=None, hook=None):
             self.workflow_label.configure(text="Workflow \u2014 %s (run order)%s" % (
                 STAGE_TITLES[self.stage], ("   [other stages: %s task(s)]" % ", ".join(counts)) if counts else ""))
             self.run_button.configure(text="\u25B6 Run " + STAGE_TITLES[self.stage])
+            if getattr(self, "subsample_bar", None) is not None:
+                self.subsample_bar.update_stages()
 
         def show_stage(self, stage):
             """Show the tasks of a stage in the workflow editor. The first time the stage of derived histograms is
@@ -1337,9 +1442,9 @@ def run_gui(initial_file=None, hook=None):
             usage = [(t.name, sorted((k, tuple(v)) for k, v in filters.choices(t).items()))
                      for t in self._all_stage_tasks()]
             if usage != getattr(self, "_usage", None):        # tasks chose other objects: "used by" of the pane
-                self._usage = usage
+                self._usage = usage                           # (only the labels: the editor keeps the field typed in)
                 if self.filters_panel is not None:
-                    self.filters_panel.refresh()
+                    self.filters_panel.refresh_users()
             self._update_arrows()
             self._update_stages()
             if message:
@@ -1368,7 +1473,9 @@ def run_gui(initial_file=None, hook=None):
                     finally:
                         self.library.job = saved
                 errors += [prefix + e for e in more]
-            if not run:
+            if run:
+                errors += check_sources(self.all_stages(), stages)
+            else:
                 errors += filters.check_library(self.library)
             if errors:
                 more = "\n(and %d more)" % (len(errors) - 12) if len(errors) > 12 else ""
@@ -1386,16 +1493,24 @@ def run_gui(initial_file=None, hook=None):
             if not filename:
                 return False
             try:
-                write_stages(filename, self.all_stages(), self.library, self.templates, self.jobs)
+                write_stages(filename, self.all_stages(), self.library, self.templates, self.jobs,
+                             [self.subsamples.to_element()])
             except OSError as e:
                 messagebox.showerror("Save workflow", "Cannot write %s:\n%s" % (filename, e))
                 return False
+            try:
+                linked = filters.save_linked(self.library)
+            except OSError as e:
+                messagebox.showerror("Save workflow", "The workflow is saved, but a linked selection file could not "
+                                                      "be written:\n%s" % e)
+                linked = []
             self.saved_path = filename
             self.settings["last_workflow"] = filename
             self.settings["workflow_dir"] = os.path.dirname(filename)
             self.dirty = False
             self._update_title()
-            self.status.set("Workflow saved to %s" % filename)
+            self.status.set("Workflow saved to %s%s" % (filename, "; selection files written: " + ", ".join(
+                os.path.basename(p) for p in linked) if linked else ""))
             return True
 
         def clear_workflow(self):
@@ -1410,6 +1525,8 @@ def run_gui(initial_file=None, hook=None):
             self.stages = {s: [] for s in STAGES}
             self.jobs = {s: new_job() for s in STAGES}
             self.library.job = self.jobs[EVENTS]
+            self.subsamples = subsamples.SubSampleSettings()
+            self.subsample_bar.show(self.subsamples)
             self.set_workflow([])
             self.filters_panel.library = self.library
             self.filters_panel.refresh()
@@ -1439,6 +1556,8 @@ def run_gui(initial_file=None, hook=None):
             self.library = library
             self.stages = {s: stages.get(s, []) for s in STAGES}
             self.jobs = jobs
+            self.subsamples = subsamples.read_settings(filename)
+            self.subsample_bar.show(self.subsamples)
             self.stage = next(s for s in STAGES if self.stages[s]) if any(self.stages.values()) else EVENTS
             self.library.job = self.jobs[self.stage]
             self.set_workflow(self.stages[self.stage])
@@ -1462,18 +1581,19 @@ def run_gui(initial_file=None, hook=None):
 
         # ---------------------------------------------------------------------------------------------- filters
         def _make_filters(self, parent):
-            """The Filters pane: the filters, efficiencies and smearers of the workflow, used by the tasks by name."""
+            """The Filters pane: the filters of the workflow and its maps file (efficiencies and smearers), used by the
+            tasks by name."""
             import RunCAPFiltersGui
             head = ttk.Frame(parent)
             head.pack(fill=tk.X, pady=(6, 0))
             ttk.Label(head, text="Filters", style="Section.TLabel").pack(side=tk.LEFT)
-            ttk.Label(head, text="Filters, corrections, events and particle databases: defined here once, created by "
-                                 "the task FilterCreator (run first), used by name by the tasks (double-click a task "
-                                 "below).",
+            ttk.Label(head, text="defined once, used by name by the tasks (double-click a task to choose them)",
                       foreground="gray40").pack(side=tk.LEFT, padx=10)
             self.filters_panel = RunCAPFiltersGui.FiltersPanel(
                 parent, self.library, on_change=self._library_changed, on_rename=self._rename_object,
-                on_remove=self._remove_objects, users=self._object_users)
+                on_remove=self._remove_objects, users=self._object_users,
+                directory=lambda: os.path.dirname(self.saved_path) if self.saved_path
+                else self.settings.get("workflow_dir") or CAP_DIR)
             self.filters_panel.configure(padding=(0, 4, 0, 0))
             self.filters_panel.pack(fill=tk.BOTH, expand=True)
 
@@ -1492,13 +1612,17 @@ def run_gui(initial_file=None, hook=None):
 
         def _object_users(self, kind, name):
             """Names of the tasks of the workflow that use an object of the library."""
-            return [t.name for t in self._all_stage_tasks() if name in filters.choices(t).get(kind, [])]
+            return [t.name for t in self._all_stage_tasks()
+                    if any(name in filters.choices(t).get(k, []) for k in filters.lists_of_kind(kind))]
 
         def _rename_object(self, kind, old, new):
+            if kind == "PARTICLE_FILTER":           # the event filters testing its selection
+                filters.rename_selection(self.library, old, new)
             for t in list(self.items.values()) + [t for s in STAGES if s != self.stage for t in all_tasks(self.stages[s])]:
-                names = filters.choices(t).get(kind)
-                if names:
-                    filters.choices(t)[kind] = [new if n == old else n for n in names]
+                for list_kind in filters.lists_of_kind(kind):        # e.g. particle filters chosen as POI filters
+                    names = filters.choices(t).get(list_kind)
+                    if names:
+                        filters.choices(t)[list_kind] = [new if n == old else n for n in names]
                 options = getattr(t, "histograms", None)
                 if options is not None and kind in filters.CONDITION_KINDS:      # binning per combination of names
                     options.binning = {tuple(new if n == old else n for n in combo): values
@@ -1506,8 +1630,15 @@ def run_gui(initial_file=None, hook=None):
 
         def _remove_objects(self, kind, names):
             for t in list(self.items.values()) + [t for s in STAGES if s != self.stage for t in all_tasks(self.stages[s])]:
-                if filters.choices(t).get(kind):
+                if kind in filters.MAPS_KINDS:                  # a grid keeps its size
+                    filters.remove_maps_names(t, kind, names, self.library)
+                elif filters.choices(t).get(kind):
+                    before = filters.filter_grid(t)
                     filters.choices(t)[kind] = [n for n in filters.choices(t)[kind] if n not in names]
+                    filters.regrid_maps(t, before)
+                for alias in filters.lists_of_kind(kind)[1:]:       # e.g. particle filters chosen as POI filters
+                    if filters.choices(t).get(alias):
+                        filters.choices(t)[alias] = [n for n in filters.choices(t)[alias] if n not in names]
                 options = getattr(t, "histograms", None)
                 if options is not None and kind in filters.CONDITION_KINDS:
                     options.binning = {combo: values for combo, values in options.binning.items()
@@ -1522,8 +1653,127 @@ def run_gui(initial_file=None, hook=None):
             self._run_stages([self.stage])
 
         def run_all(self):
-            """Run the stages that have tasks, in order (one CAP job each; a job starts when the previous succeeded)."""
+            """Run the stages that have tasks, in order (one CAP job each; a job starts when the previous succeeded);
+            with sub-samples, run them (here, or on the Slurm cluster) and combine them."""
+            if self.subsamples.enabled:
+                if self.subsamples.where == subsamples.SLURM:
+                    self.slurm_action("submit")
+                else:
+                    self.run_subsamples()
+                return
             self._run_stages([s for s in STAGES if self.stage_tasks(s)])
+
+        # ------------------------------------------------------------------------------------------- sub-samples
+        def present_stages(self):
+            return [s for s in STAGES if self.stage_tasks(s)]
+
+        def subsamples_changed(self, dirty=True):
+            self.subsample_bar.update_stages()
+            self.run_all_button.configure(text="\u25B6\u25B6 Run sub-samples" if self.subsamples.enabled
+                                          else "\u25B6\u25B6 Run all stages")
+            if dirty:
+                self._changed()
+
+        def _production(self, title, write=True):
+            """Write the files of the sub-samples in the output directory (RunCAPSubSamples.write_production()).
+            Returns the production, or None (error shown)."""
+            if self._busy():
+                return None
+            stages = [s for s in STAGES if self.stage_tasks(s)]
+            if not stages:
+                messagebox.showerror(title, "The workflow has no task.")
+                return None
+            if write and not self._check("Cannot run the sub-samples", run=True, stages=stages):
+                return None
+            output_dir = self.output_dir.get().strip()
+            if not output_dir:
+                messagebox.showerror(title, "Enter the output directory.")
+                return None
+            try:
+                production = subsamples.write_production(output_dir, self.subsamples, sys.modules[__name__],
+                                                         self.all_stages(), self.library, self.templates, self.jobs,
+                                                         subsample_files=write)
+            except (ValueError, OSError) as e:
+                messagebox.showerror(title, str(e))
+                return None
+            self.settings["output_dir"] = output_dir
+            save_settings(self.settings)
+            return production
+
+        def _announce(self, title, production):
+            stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.append("\n=== %s (%s) ===\n" % (title, stamp), "command")
+            self.append("%d sub-samples (%s), stages %s, %s; files in %s\n" % (
+                self.subsamples.count, subsamples.MODE_TITLES[self.subsamples.mode],
+                ", ".join(STAGE_TITLES[s] for s in production.stages),
+                ("seeds: " + ", ".join(production.seeds)) if production.seeds else
+                "no Seed parameter in the tasks (only gRandom differs)", production.directory))
+
+        def run_subsamples(self):
+            """Run the sub-samples here (several at once), then combine them."""
+            if not os.path.exists(CAP_EXE):
+                messagebox.showerror("Run", "%s does not exist: build and install CAP first (BuildCAP.py)." % CAP_EXE)
+                return
+            production = self._production("Run sub-samples")
+            if production is None:
+                return
+            self._announce("Sub-samples", production)
+            api = sys.modules[__name__]
+            sequences = [(subsamples.directory_name(self.subsamples, k),
+                          subsamples.subsample_commands(production, self.subsamples, api, k))
+                         for k in range(self.subsamples.count)]
+            runner = subsamples.ParallelRunner(sequences, self.subsamples.parallel, job_environment(), self.queue.put,
+                                               [subsamples.combine_command(production, api)])
+            self._start_runner(runner)
+
+        def combine_subsamples(self):
+            """Combine the sub-samples of the output directory (run elsewhere, e.g. on a cluster)."""
+            if not os.path.exists(CAP_EXE):
+                messagebox.showerror("Combine", "%s does not exist: build and install CAP first (BuildCAP.py)." % CAP_EXE)
+                return
+            production = self._production("Combine", write=False)
+            if production is None:
+                return
+            self._announce("Combining the sub-samples", production)
+            runner = subsamples.ParallelRunner([], 1, job_environment(), self.queue.put,
+                                               [subsamples.combine_command(production, sys.modules[__name__])])
+            self._start_runner(runner)
+
+        def slurm_action(self, kind):
+            """Submit the sub-samples to the Slurm cluster, show their status, or fetch their outputs."""
+            if kind != "submit" and not self.subsamples.slurm.host.strip():
+                messagebox.showerror("Slurm", "Enter the login host of the cluster (Slurm\u2026).")
+                return
+            production = self._production("Slurm", write=(kind == "submit"))
+            if production is None:
+                return
+            if kind == "submit":
+                self._announce("Sub-samples on %s" % self.subsamples.slurm.host, production)
+                self.append("sbatch script: %s\n" % production.sbatch)
+                commands = subsamples.submit_commands(production, self.subsamples)
+            elif kind == "status":
+                commands = subsamples.status_commands(production, self.subsamples)
+            else:
+                commands = subsamples.fetch_commands(production, self.subsamples)
+            runner = subsamples.ParallelRunner([("", commands)], 1, job_environment(), self.queue.put)
+            self._start_runner(runner, {"submit": "array submitted", "status": "status shown",
+                                        "fetch": "outputs fetched (Combine to combine them)"}[kind])
+
+        def _start_runner(self, runner, success=None):
+            self.kill_requested = False
+            self.dropped_lines = 0
+            self.start_time = time.time()
+            self.run_button.configure(state=tk.DISABLED)
+            self.run_all_button.configure(state=tk.DISABLED)
+            self.kill_button.configure(state=tk.NORMAL)
+            self.runner = runner
+
+            def work():
+                ok, message = runner.run()
+                self.runner = None
+                self.queue.put(("done", "job", ok, success if ok and success else message))
+            self.worker = threading.Thread(target=work, daemon=True)
+            self.worker.start()
 
         def _run_stages(self, stages):
             if self._busy():
@@ -1549,7 +1799,8 @@ def run_gui(initial_file=None, hook=None):
                     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     fd, path = tempfile.mkstemp(prefix="RunCAP_%s_" % stamp, suffix=".xml")
                     os.close(fd)
-                    names = write_stages(path, self.all_stages(), self.library, self.templates, self.jobs)
+                    names = write_stages(path, self.all_stages(), self.library, self.templates, self.jobs,
+                                         [self.subsamples.to_element()])
             except OSError as e:
                 messagebox.showerror("Run", str(e))
                 return
@@ -1572,11 +1823,18 @@ def run_gui(initial_file=None, hook=None):
             if not force and not templates_outdated():
                 return
             os.makedirs(TEMPLATES_DIR, exist_ok=True)
+            try:
+                prepare_template_staging()
+            except OSError as e:
+                self.status.set("Cannot prepare %s: %s" % (TEMPLATES_STAGING, e))
+                return
             self.append("\n=== Task templates (bin/CAP or the libraries changed) ===\n", "command")
-            self._start([("Writing the task templates", template_command(), CAP_DIR)], "templates")
+            self._start([("Writing the task templates", template_command(), CAP_DIR),
+                         ("Writing the function catalog", catalog_command(), CAP_DIR)], "templates")
 
         def _start(self, commands, kind):
             self.kill_requested = False
+            self.dropped_lines = 0
             self.start_time = time.time()
             self.run_button.configure(state=tk.DISABLED)
             self.run_all_button.configure(state=tk.DISABLED)
@@ -1587,6 +1845,9 @@ def run_gui(initial_file=None, hook=None):
 
         def _run_commands(self, commands, env, kind):
             for description, cmd, cwd in commands:
+                if self.kill_requested:                 # Kill between two commands
+                    self.queue.put(("done", kind, False, "killed by the user"))
+                    return
                 self.queue.put(("status", description + "\u2026"))
                 self.queue.put(("text", "$ %s\n" % shell_text(cmd), "command"))
                 try:
@@ -1596,6 +1857,8 @@ def run_gui(initial_file=None, hook=None):
                 except OSError as e:
                     self.queue.put(("done", kind, False, "cannot run %s: %s" % (cmd[0], e)))
                     return
+                if self.kill_requested:                 # Kill while the process was starting
+                    self._signal(self.process, signal.SIGKILL)
                 for line in self.process.stdout:
                     self.queue.put(("line", line))
                 code = self.process.wait()
@@ -1608,23 +1871,56 @@ def run_gui(initial_file=None, hook=None):
                     return
             self.queue.put(("done", kind, True, "job completed" if kind == "job" else "templates written"))
 
-        def kill(self):
-            process = self.process
-            if process and process.poll() is None:
-                self.kill_requested = True
+        @staticmethod
+        def _signal(process, sig):
+            """Send a signal to a process and its group (its children: start_new_session)."""
+            try:
+                os.killpg(process.pid, sig)
+            except (OSError, AttributeError):
                 try:
-                    os.killpg(process.pid, signal.SIGTERM)
-                except (OSError, AttributeError):
-                    process.terminate()
-                self.status.set("Killing the job\u2026")
+                    process.send_signal(sig)
+                except OSError:
+                    pass
+
+        def kill(self):
+            """Stop the running job: SIGTERM to its process group, SIGKILL 3 s later if it is still there. The output
+            still queued is not shown (a verbose job can have printed far more than the log could display yet), so
+            that the end of the job shows at once."""
+            if str(self.kill_button.cget("state")) == "disabled":
+                return
+            self.kill_requested = True
+            self._discard_output()
+            self.append("=== Kill requested ===\n", "warning")
+            runner = self.runner
+            if runner is not None:
+                runner.kill(signal.SIGTERM)
+                self.status.set("Killing the jobs\u2026")
+                self.root.after(3000, lambda: runner.kill(signal.SIGKILL))
+                return
+            process = self.process
+            self.status.set("Killing the job\u2026")
+            if process and process.poll() is None:
+                self._signal(process, signal.SIGTERM)
 
                 def force():
                     if process.poll() is None:
-                        try:
-                            os.killpg(process.pid, signal.SIGKILL)
-                        except (OSError, AttributeError):
-                            process.kill()
+                        self._signal(process, signal.SIGKILL)
                 self.root.after(3000, force)
+
+        def _discard_output(self):
+            """Drop the lines of output waiting in the queue (the other messages are kept, in order)."""
+            kept = []
+            try:
+                while True:
+                    item = self.queue.get_nowait()
+                    if item[0] == "line":
+                        self.dropped_lines += 1
+                    else:
+                        kept.append(item)
+            except queue.Empty:
+                pass
+            for item in kept:
+                self.queue.put(item)
 
         def _poll_queue(self):
             lines = []
@@ -1632,8 +1928,11 @@ def run_gui(initial_file=None, hook=None):
                 while True:
                     item = self.queue.get_nowait()
                     if item[0] == "line":
+                        if self.kill_requested:           # output of a killed job: not shown
+                            self.dropped_lines += 1
+                            continue
                         lines.append(item[1])
-                        if len(lines) >= 500:
+                        if len(lines) >= 2000:
                             break
                         continue
                     self._flush(lines)
@@ -1649,17 +1948,34 @@ def run_gui(initial_file=None, hook=None):
             self._flush(lines)
             self.root.after(50, self._poll_queue)
 
+        MAX_LOG_LINES = 100000      # older lines are removed from the log window (Save log saves what is shown)
+
         def _flush(self, lines):
             if not lines:
                 return
             self.output.configure(state=tk.NORMAL)
+            # consecutive lines of the same tag in one insert: much faster for verbose jobs
+            run, tag = [], None
             for line in lines:
-                self.output.insert(tk.END, line, self.line_tag(line))
+                t = self.line_tag(line)
+                if run and t != tag:
+                    self.output.insert(tk.END, "".join(run), tag)
+                    run = []
+                run.append(line)
+                tag = t
+            if run:
+                self.output.insert(tk.END, "".join(run), tag)
+            excess = int(self.output.index("end-1c").split(".")[0]) - self.MAX_LOG_LINES
+            if excess > 0:
+                self.output.delete("1.0", "%d.0" % (excess + 1))
             self.output.configure(state=tk.DISABLED)
             if self.autoscroll.get():
                 self.output.see(tk.END)
 
         def _finished(self, kind, ok, message):
+            if self.dropped_lines:
+                self.append("(%d lines of output after the kill not shown)\n" % self.dropped_lines, "warning")
+                self.dropped_lines = 0
             elapsed = time.time() - (self.start_time or time.time())
             text = "%s (%dm%02ds)" % (message[0].upper() + message[1:], elapsed // 60, elapsed % 60)
             self.append("=== %s ===\n" % text, "success" if ok else "failure")
@@ -1670,13 +1986,23 @@ def run_gui(initial_file=None, hook=None):
             if kind == "templates":
                 if ok:
                     try:
-                        with open(TEMPLATES_STAMP, "w") as f:
-                            f.write(datetime.datetime.now().isoformat() + "\n")
-                    except OSError:
-                        pass
+                        removed = install_templates()
+                        if removed is None:
+                            self.append("bin/CAP wrote no template: the previous templates are kept.\n", "failure")
+                        else:
+                            if removed:
+                                self.append("Not in the last build (removed from the available tasks): %s\n"
+                                            % ", ".join(removed), "warning")
+                            with open(TEMPLATES_STAMP, "w") as f:
+                                f.write(datetime.datetime.now().isoformat() + "\n")
+                    except OSError as e:
+                        self.append("Cannot update %s: %s\n" % (TEMPLATES_DIR, e), "failure")
                 self.reload_templates()
 
         def reload_templates(self):
+            filters.set_function_catalog(None)           # read again (written with the templates)
+            if self.filters_panel is not None:
+                self.filters_panel.refresh()
             self.templates = load_templates()
             self._fill_available()
             if not self.templates:
@@ -1725,11 +2051,51 @@ def run_gui(initial_file=None, hook=None):
 # Command line
 # ------------------------------------------------------------------------------------------------------------------
 
-def main():
-    args = sys.argv[1:]
+def subsamples_main(args):
+    """--subsamples FILE [DIR]: write the files of the sub-samples of the workflow FILE in DIR (by default the output
+    directory of the settings) and print the commands that run them (with Slurm, the sbatch script to submit);
+    --combine FILE [DIR]: combine the sub-samples of DIR (run here, or elsewhere and copied there)."""
+    if len(args) < 2:
+        print("Usage: RunCAP.py %s workflow.xml [output directory]" % args[0], file=sys.stderr)
+        return 2
+    templates = load_templates()
+    try:
+        stages, library, jobs, warnings = load_stages_with_filters(args[1], templates)
+    except (ValueError, OSError) as e:
+        print(e, file=sys.stderr)
+        return 1
+    settings = subsamples.read_settings(args[1])
+    directory = args[2] if len(args) > 2 else load_settings()["output_dir"]
+    api = sys.modules[__name__]
+    try:
+        production = subsamples.write_production(directory, settings, api, stages, library, templates, jobs,
+                                                 subsample_files=(args[0] == "--subsamples"))
+    except (ValueError, OSError) as e:
+        print(e, file=sys.stderr)
+        return 1
+    if args[0] == "--subsamples":
+        print("%d sub-samples (%s) in %s" % (settings.count, subsamples.MODE_TITLES[settings.mode], directory))
+        if production.sbatch:
+            print("Slurm: copy %s/*.xml and %s to %s on the cluster, then: sbatch %s"
+                  % (production.directory, subsamples.SBATCH_FILE, settings.slurm.directory, subsamples.SBATCH_FILE))
+        else:
+            for k in range(settings.count):
+                for _, cmd, cwd in subsamples.subsample_commands(production, settings, api, k):
+                    print("(cd %s && %s)" % (shell_text([cwd]), shell_text(cmd)))
+        print("Then combine with: %s" % shell_text(subsamples.combine_command(production, api)[1]))
+        return 0
+    _, cmd, cwd = subsamples.combine_command(production, api)
+    print("$ " + shell_text(cmd))
+    return subprocess.call(cmd, cwd=cwd, env=job_environment())
+
+
+def main(args=None):
+    args = sys.argv[1:] if args is None else args
     if "-h" in args or "--help" in args:
         print(__doc__)
         return 0
+    if args and args[0] in ("--subsamples", "--combine"):
+        return subsamples_main(args)
     if args and args[0] in ("--check", "--print-command"):
         if len(args) < 2:
             print("Usage: RunCAP.py %s workflow.xml" % args[0], file=sys.stderr)
@@ -1757,6 +2123,7 @@ def main():
             library.job = jobs[stage]
             errors += ["%s: %s" % (STAGE_TITLES[stage], e) for e in check_workflow(tasks, stage)
                        + filters.check_choices(tasks, library, templates) + filters.check_job(tasks, library, templates)]
+        errors += check_sources(stages)
         for e in errors:
             print("error: " + e)
         print("%d task(s), %d warning(s), %d error(s)" % (count, len(warnings), len(errors)))

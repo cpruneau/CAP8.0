@@ -1,0 +1,13 @@
+# Herwig 7 input file: minimum-bias proton-proton collisions at 13.6 TeV (from share/Herwig/LHC-MB.in), for the
+# CAP workflow RunHerwig.xml. HerwigEventGenerator reads it ("Herwig read", here) when LHC-MB-13.6TeV.run is missing
+# or older; the run file is then used by the job.
+read snippets/PPCollider.in
+cd /Herwig/Generators
+set EventGenerator:EventHandler:LuminosityFunction:Energy 13600.0
+set /Herwig/Shower/ShowerHandler:IntrinsicPtGaussian 2.2*GeV
+read snippets/MB.in
+read snippets/Diffraction.in
+# K0S, Lambda, Sigma, Xi, Omega... stable (c tau > 1 cm), as the primary particles of the LHC experiments
+read snippets/Particles-SetLonglivedParticlesStable.in
+cd /Herwig/Generators
+saverun LHC-MB-13.6TeV EventGenerator

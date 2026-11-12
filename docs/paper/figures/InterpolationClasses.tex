@@ -1,0 +1,49 @@
+% Classes of src/core/Math/Interpolation and their dependencies. Paper: section "Interpolation, integration and
+% differentiation" (fig:interpolation); Doxygen: Interpolation.hpp.
+%   pdflatex InterpolationClasses.tex; pdftoppm -r 200 -png -singlefile InterpolationClasses.pdf InterpolationClasses;
+%   pdftocairo -svg InterpolationClasses.pdf InterpolationClasses.svg
+\documentclass[tikz,border=2pt]{standalone}
+\input{ClassDiagramStyle}
+\input{ClassDiagramLegend}
+\begin{document}
+\begin{tikzpicture}[every node/.append style={anchor=north}]
+  \begin{scope}[on background layer]
+    \fill[folder, rounded corners=3pt] (-0.1,-1.0) rectangle (9.3,-7.0);
+  \end{scope}
+  \node[title] at (0.0,-1.05) {Interpolation};
+
+  \node[abs=4.4cm] (Function) at (4.6,0.3)
+    {\an{Function} \tiny(Functions)\m{evaluateAt(), derivativeAt(), integralInRange(),}\m{derivativeFunction()}};
+
+  \node[steer=4.4cm] (Interp) at (6.85,-1.45)
+    {\cn{Interpolation} \tiny(a Function)\m{table $(x_i, y_i)$, $x$ increasing}
+     \m{enum Method: Nearest, Linear, LocalPolynomial,}\m{Polynomial, Spline, NaturalSpline,}
+     \m{ClampedSpline, MonotoneSpline}\m{exact derivatives and integrals for}\m{Linear and the splines}};
+  \node[cls=3.6cm] (PP) at (2.1,-1.45)
+    {\cn{PiecewisePolynomial} \tiny(a Function)\m{a polynomial on each interval;}
+     \m{exact derivativeAt(), derivativeFunction(),}\m{integralInRange()}};
+  \node[cls=3.6cm] (CS) at (2.1,-3.35)
+    {\cn{CubicSpline}\m{enum Kind: Natural, Clamped,}\m{NotAKnot, Monotone (Fritsch--Carlson)}
+     \m{tridiagonal (Thomas) solution}};
+  \node[tool=4.4cm] (Tools) at (6.85,-4.3)
+    {\cn{InterpolationTools} \tiny(functions)\m{findInterval(), localWindow(),}
+     \m{interpolatePolynomial() (Neville),}\m{interpolateLocalPolynomial(),}
+     \m{inverseLinearInterpolation(), interpolateMultilinear()}};
+  \node[tool=3.6cm] (Basic) at (2.1,-5.2)
+    {\cn{MathBasicInterpolation}\m{legacy functions: nearest, linear}\m{and cubic, on uniform or monotone}\m{tables}};
+
+  \draw[inherit] (PP.north) -- (PP.north |- Function.south);
+  \draw[inherit] ([xshift=-0.6cm]Interp.north) -- ([xshift=-0.6cm]Interp.north |- Function.south);
+  \draw[inherit] (CS.north) -- (PP.south);
+  \draw[owns] (Interp.west |- 0,-2.0) -- node[lbl, below]{Linear,\\splines} (PP.east |- 0,-2.0);
+  \draw[uses] (Interp.south) -- node[lbl, right]{Nearest, polynomials} (Tools.north);
+
+  \node[ext=2.6cm] (Field) at (1.5,-7.45) {\cn{ScalarField}\m{multilinear}};
+  \node[ext=3.2cm] (RD) at (5.0,-7.45) {\cn{RandomDistribution,}\m{BasicEventGen (inverse CDF)}};
+  \node[ext=2.4cm] (Plot) at (8.0,-7.45) {\cn{FiniteDifference}\m{(Derivative): localWindow()}};
+  \draw[uses] (Field.north) -- ++(0,0.25) -| ([xshift=-1.2cm]Tools.south);
+  \draw[uses] (RD.north) -- ++(0,0.4) -| ([xshift=0.3cm]Tools.south);
+  \draw[uses] (Plot.north) -- (Plot.north |- Tools.south);
+  \legendat{0.0}{-8.55}
+\end{tikzpicture}
+\end{document}

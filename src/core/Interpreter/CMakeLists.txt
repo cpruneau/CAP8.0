@@ -8,7 +8,7 @@ Builtins.cpp
 Interpreter.cpp
 Lexer.cpp
 Parser.cpp)
-target_link_libraries(Interpreter Math Base ${ROOT_LIBRARIES})
+target_link_libraries(Interpreter Math Base)
 if(TARGET Graphics)   # save(): figures as SVG or PDF; the canvases of the session
   target_link_libraries(Interpreter Graphics)
   target_compile_definitions(Interpreter PRIVATE CAP_INTERPRETER_GRAPHICS)
@@ -17,11 +17,11 @@ if(TARGET Graphics)   # save(): figures as SVG or PDF; the canvases of the sessi
     target_compile_definitions(Interpreter PRIVATE CAP_INTERPRETER_LATEX)
   endif()
 endif()
-install(TARGETS Interpreter LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Interpreter LIBRARY "$ENV{CAP_LIB_PATH}")
 
 # bin/CapShell, with line editing and history when the system has libedit (macOS, Linux with libedit-dev)
 add_executable(CapShell CapShell.cxx)
-target_link_libraries(CapShell Interpreter Math Base ${ROOT_LIBRARIES})
+target_link_libraries(CapShell Interpreter Math Base)
 find_path(EDITLINE_INCLUDE_DIR editline/readline.h)
 find_library(EDITLINE_LIBRARY edit)
 if(EDITLINE_INCLUDE_DIR AND EDITLINE_LIBRARY)
@@ -30,9 +30,9 @@ if(EDITLINE_INCLUDE_DIR AND EDITLINE_LIBRARY)
   target_compile_definitions(CapShell PRIVATE CAP_HAVE_EDITLINE)
 endif()
 set_target_properties(CapShell PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")   # runs without SetupCAP.sh
-install(TARGETS CapShell RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+cap_install(CapShell RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
 # Tests (run with ctest in the build directory; not installed)
 add_executable(TestInterpreter tests/TestInterpreter.cpp)
-target_link_libraries(TestInterpreter Interpreter Math Base ${ROOT_LIBRARIES})
+target_link_libraries(TestInterpreter Interpreter Math Base)
 add_test(NAME Interpreter COMMAND TestInterpreter)

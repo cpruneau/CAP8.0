@@ -27,7 +27,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 #include "Event.hpp"
 #include "ParticleDb.hpp"
 #include "ParticleFilter.hpp"
@@ -190,7 +190,7 @@ std::vector<Generated> generate(TestModel<M> & model, int nEvents)
 
 int main()
 {
-  gRandom->SetSeed(4357);
+  CAP::MATH::randomGenerator().setSeed(4357);
   ParticleDb db;
   db.loadFromXml(CAP_PARTICLE_DB);
 

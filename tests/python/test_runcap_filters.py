@@ -9,6 +9,7 @@
 Run from the CAP directory:  python3 -m unittest discover -s tests/python
 """
 
+import copy
 import os
 import sys
 import tempfile
@@ -26,6 +27,8 @@ TEMPLATES.update(RunCAP.load_templates(os.path.join(CAP_DIR, "tests", "python", 
 
 
 def task(cls, name=None):
+    if "CAP::" + cls not in TEMPLATES:          # an optional module (Glauber, ...) not in the last build
+        raise unittest.SkipTest("%s not built (no template)" % cls)
     t = TEMPLATES["CAP::" + cls].clone()
     if name:
         t.name = name
@@ -46,7 +49,8 @@ def library():
                                                          F.Condition("LIVE", F.FLAG, 1)]))
     lib.add(F.FilterDef("PARTICLE_FILTER", "PiM", "pi-", [F.Condition("PDG", F.VALUE, -211)]))
     lib.add(F.FilterDef("PARTICLE_FILTER", "Unused", "", [F.Condition("CHARGE", F.VALUE, 1)]))
-    lib.add(F.FilterDef("PARTICLE_EFFICIENCY", "Eff", "", parameters={"pt_nbins": "50"}))
+    lib.add(F.FilterDef("PARTICLE_EFFICIENCY", "Eff", "", parameters={"pt_nbins": "50"}))   # parameters ignored
+    F.set_maps_file(lib, "/data/maps/Maps.cap")
     return lib
 
 
@@ -102,7 +106,9 @@ class TestKeys(unittest.TestCase):
     def test_creator(self):
         creator, subs = self.creator()
         self.assertEqual((creator.name, creator.cls), ("FilterCreator", "CAP::FilterCreator"))
-        self.assertEqual([t.cls for t in creator.children], [c for _, c in F.CREATORS.values()])
+        # one subtask per kind; the optional kinds (jet filters) only when the library has objects of the kind
+        self.assertEqual([t.cls for t in creator.children],
+                         [c for k, (_, c) in F.CREATORS.items() if k not in F.OPTIONAL_KINDS])
         e = subs["CAP::EventFilterCreator"]
         self.assertEqual(e["EVENT_FILTER:N"], "2")
         self.assertEqual((e["EVENT_FILTER_0:NAME"], e["EVENT_FILTER_0:OWNER"]), ("MB", "true"))
@@ -140,20 +146,30 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(subs["CAP::EventFilterCreator"]["EVENT_FILTER_0:CONDITION_0:MAXIMUM"], "1000000")
 
     def test_parameters(self):
+        """The particle efficiencies and smearers are imported from the maps file: their names only, no parameters."""
         _, subs = self.creator()
         e = subs["CAP::ParticleEfficiencyCreator"]
-        self.assertEqual(e["PARTICLE_EFFICIENCY_0:OWNER"], "true")
-        self.assertEqual(e["PARTICLE_EFFICIENCY_0:pt_nbins"], "50")
-        self.assertEqual(e["PARTICLE_EFFICIENCY_0:eta_nbins"], "20")
+        self.assertEqual((e["PARTICLE_EFFICIENCY_0:NAME"], e["PARTICLE_EFFICIENCY_0:OWNER"]), ("Eff", "true"))
+        self.assertFalse(any(k.startswith("PARTICLE_EFFICIENCY_0:") and k.split(":", 1)[1] not in ("NAME", "TITLE", "OWNER")
+                             for k in e))
+        self.assertEqual((e["PARTICLE_EFFICIENCY:IMPORT"], e["PARTICLE_EFFICIENCY:CREATE"], e["PARTICLE_EFFICIENCY:EXPORT"]),
+                         ("true", "false", "false"))
+        self.assertEqual((e["PARTICLE_EFFICIENCY:IMPORT:PATH"], e["PARTICLE_EFFICIENCY:IMPORT:FILE_NAME"]),
+                         ("/data/maps", "Maps.cap"))
+        self.assertEqual(subs["CAP::ParticleSmearerCreator"]["PARTICLE_SMEARER:IMPORT"], "false")   # none: not opened
 
     def test_settings(self):
         lib = library()
-        lib.settings["PARTICLE_EFFICIENCY"].update({"IMPORT": "true", "IMPORT:FILE_NAME": "Eff.root"})
+        F.set_maps_file(lib, "/other/Eff.root")
+        self.assertEqual(F.maps_file(lib), "/other/Eff.root")
         creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
         e = values(creator.children[3])
         self.assertEqual((e["PARTICLE_EFFICIENCY:IMPORT"], e["PARTICLE_EFFICIENCY:IMPORT:FILE_NAME"]),
                          ("true", "Eff.root"))
         self.assertEqual(len([k for k in e if k == "PARTICLE_EFFICIENCY:IMPORT"]), 1)
+        F.set_maps_file(lib, "")
+        self.assertEqual(F.maps_file(lib), "")
+        self.assertIn("read from a maps file", " ".join(F.check_library(lib)))
 
     def test_list_flags_off(self):
         """FilterCreator imports, creates and exports the objects: never the tasks (their model is unchanged)."""
@@ -404,13 +420,84 @@ class TestKeys(unittest.TestCase):
         for cls, rank, calculator in (("ParticleSingleAnalyzer", 1, True), ("ParticlePairAnalyzer", 2, True),
                                       ("GlobalAnalyzer", 1, True), ("NuDynAnalyzer", 2, True), ("PtPtAnalyzer", 1, True),
                                       ("ParticlePair3DAnalyzer", 2, True), ("SpherocityAnalyzer", 1, False),
-                                      ("PerformanceAnalyzer", 1, False)):
+                                      ("ParticleFlowAnalyzer", 1, True), ("PerformanceAnalyzer", 1, True)):
             a = task(cls, "A")
             self.assertEqual((cls, F.histogram_layout(a, TEMPLATES), F.folder_rank(a, TEMPLATES)), (cls, "folders", rank))
             c = F.derived_calculator(a, TEMPLATES)
             self.assertEqual((cls, c is not None), (cls, calculator))
             if c is not None:
                 self.assertEqual((c.name, c.param("SOURCE_TASK").value), ("ADerived", "A"))
+
+    def test_jet_filters(self):
+        """Jet filters (JET_FILTER, optional module Jets): conditions on the jet and its rank, created by
+        JetFilterCreator only when the library has some, and chosen by a jet analyzer."""
+        lib = library()
+        self.assertEqual(F.subtypes_for("JET_FILTER")["RANK"][1], (F.VALUE, F.RANGE))
+        lib.add(F.FilterDef("JET_FILTER", "Leading", "leading jet", [F.Condition("RANK", F.VALUE, 1, 1),
+                                                                     F.Condition("PT", F.RANGE, 10, 100)]))
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        jets = [t for t in creator.children if t.cls == "CAP::JetFilterCreator"]
+        self.assertEqual(len(jets), 1)
+        v = values(jets[0])
+        self.assertEqual((v["JET_FILTER:N"], v["JET_FILTER_0:NAME"], v["JET_FILTER_0:OWNER"]), ("1", "Leading", "true"))
+        self.assertEqual((v["JET_FILTER_0:CONDITION_0:TYPE"], v["JET_FILTER_0:CONDITION_0:SUBTYPE"]), ("INTEGER", "RANK"))
+        self.assertEqual(v["JET_FILTER_0:CONDITION_1:TYPE"], "DOUBLE_RANGE")
+        self.assertEqual(F.check_library(lib), [])
+        if "CAP::JetAnalyzer" in TEMPLATES:
+            a = task("JetAnalyzer", "Jets")
+            self.assertIn("JET_FILTER", F.task_kinds(a, TEMPLATES))
+
+    def test_jet_pair_filters(self):
+        """Jet pair filters (JET_PAIR_FILTER, optional module Jets): ranks of the two jets and pair variables, created
+        by JetPairFilterCreator only when the library has some, and chosen by the jet pair analyzer."""
+        lib = library()
+        self.assertEqual(F.subtypes_for("JET_PAIR_FILTER")["RANK2"][1], (F.VALUE, F.RANGE))
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        self.assertFalse([t for t in creator.children if t.cls == "CAP::JetPairFilterCreator"])
+        lib.add(F.FilterDef("JET_PAIR_FILTER", "LeadSub", "leading-subleading, back to back",
+                            [F.Condition("RANK1", F.VALUE, 1, 1), F.Condition("RANK2", F.VALUE, 2, 2),
+                             F.Condition("DPHI", F.RANGE, 2.8, 3.2), F.Condition("PTRATIO", F.RANGE, 0.5, 1.0)]))
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        pairs = [t for t in creator.children if t.cls == "CAP::JetPairFilterCreator"]
+        self.assertEqual(len(pairs), 1)
+        v = values(pairs[0])
+        self.assertEqual((v["JET_PAIR_FILTER:N"], v["JET_PAIR_FILTER_0:NAME"]), ("1", "LeadSub"))
+        self.assertEqual((v["JET_PAIR_FILTER_0:CONDITION_1:TYPE"], v["JET_PAIR_FILTER_0:CONDITION_1:SUBTYPE"]),
+                         ("INTEGER", "RANK2"))
+        self.assertEqual(v["JET_PAIR_FILTER_0:CONDITION_3:TYPE"], "DOUBLE_RANGE")
+        self.assertEqual(F.check_library(lib), [])
+        if "CAP::JetPairAnalyzer" in TEMPLATES:
+            a = task("JetPairAnalyzer", "Pairs")
+            self.assertTrue({"JET_FILTER", "JET_PAIR_FILTER"} <= set(F.task_kinds(a, TEMPLATES)))
+
+    def test_poi_filters(self):
+        """The particles of interest of the flow analysis (POI_FILTER) are particle filters of the library: written as
+        the keys of its list, read back, checked against the library, and renamed with the particle filters."""
+        a = task("ParticleFlowAnalyzer", "Flow")
+        self.assertIn("POI_FILTER", F.task_kinds(a, TEMPLATES))
+        self.assertEqual(F.library_kind("POI_FILTER"), "PARTICLE_FILTER")
+        self.assertEqual(F.lists_of_kind("PARTICLE_FILTER"), ["PARTICLE_FILTER", "POI_FILTER"])
+        F.default_event_settings(a, TEMPLATES)
+        F.default_histogram_settings(a, TEMPLATES)
+        a.filters = {"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP"], "POI_FILTER": ["PiM", "Unused"],
+                     "EVENT": ["Event"], "PARTICLE_DB": ["ParticleDb"]}
+        tasks = workflow()
+        tasks[0].children.append(a)
+        lib = library()
+        self.assertEqual(F.check_choices(tasks, lib, TEMPLATES), [])
+        written = copy.deepcopy(tasks)
+        F.apply_choices(written, lib, TEMPLATES, RunCAP.Param)
+        v = values(written[0].children[-1])
+        self.assertEqual((v["POI_FILTER:N"], v["POI_FILTER:USE"]), ("2", "true"))
+        self.assertEqual((v["POI_FILTER_0:NAME"], v["POI_FILTER_0:OWNER"], v["POI_FILTER_1:NAME"]),
+                         ("PiM", "false", "Unused"))
+        self.assertEqual(v["HISTOGRAM:N"], "1")                      # one folder per event filter and RF filter
+        read, warnings = F.extract_choices(written, TEMPLATES, lib)
+        self.assertEqual(F.choices(written[0].children[-1])["POI_FILTER"], ["PiM", "Unused"])
+        self.assertEqual(warnings, [])
+        self.assertEqual(len(read.names("PARTICLE_FILTER")), 3)       # no object added for the POI list
+        a.filters["POI_FILTER"] = ["NoSuchFilter"]
+        self.assertTrue(any("NoSuchFilter" in e for e in F.check_choices(tasks, lib, TEMPLATES)))
 
     def test_event_settings(self):
         """A generator creates its events, an analyzer uses them; the settings are written as set."""
@@ -432,7 +519,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual((g["EVENT:CREATE"], g["EVENT:USE"], g["EVENT:EXPORT"]), ("true", "false", "true"))
         self.assertEqual((s["EVENT:CREATE"], s["EVENT:USE"]), ("false", "true"))
         self.assertEqual(len([k for k in g if k == "EVENT:USE"]), 1)
-        events = values(copies[0].children[F.KINDS.index("EVENT")])
+        events = values(next(t for t in copies[0].children if t.cls == "CAP::EventCreator"))
         self.assertEqual(events["EVENT:USE"], "true")                    # FilterCreator's list of events
         self.assertEqual(F.check_choices(tasks, library(), TEMPLATES), [])
         gen.param("EVENT:CREATE").value = "false"
@@ -535,6 +622,40 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(F.events_made_below(it, TEMPLATES), ["Event", "Other"])
         self.assertEqual(len(F.update_iterator_events(tasks, TEMPLATES)), 1)
         self.assertEqual(F.choices(it)["EVENT"], ["Event", "Other"])
+
+    def test_measurement_simulator_writes_fast_sim_event(self):
+        """MeasurementSimulator reads the generator-level event and writes FastSimEvent: a new one gets both (FastSimEvent
+        added to the library), the iterator uses (resets) FastSimEvent too, the analyzers may choose it, and a workflow
+        written before is completed on loading."""
+        tasks = workflow()
+        it = tasks[0]
+        lib = library()
+        sim = task("MeasurementSimulator", "Simulator")
+        F.default_choices(sim, lib, TEMPLATES)
+        F.default_event_settings(sim, TEMPLATES)
+        self.assertEqual(F.choices(sim)["EVENT"], ["Event", "FastSimEvent"])
+        self.assertIn("FastSimEvent", lib.names("EVENT"))
+        self.assertEqual((sim.param("EVENT:USE").value, sim.param("EVENT:CREATE").value), ("true", "false"))
+        performance = task("PerformanceAnalyzer", "Performance")                    # reads FastSimEvent, then Event
+        F.default_choices(performance, lib, TEMPLATES)
+        self.assertEqual(F.choices(performance)["EVENT"], ["FastSimEvent", "Event"])
+        sim.filters.update({"EVENT_FILTER": ["MB"], "PARTICLE_FILTER": ["PiP"]})
+        it.children.insert(1, sim)
+        F.choices(it.children[2])["EVENT"] = ["FastSimEvent"]                       # Single analyzes the detector level
+        self.assertEqual(F.events_made_below(it, TEMPLATES), ["Event", "FastSimEvent"])
+        self.assertEqual(len(F.update_iterator_events(tasks, TEMPLATES)), 1)
+        self.assertEqual(F.choices(it)["EVENT"], ["Event", "FastSimEvent"])
+        self.assertEqual(F.check_choices(tasks, lib, TEMPLATES), [])
+        F.choices(sim)["EVENT"] = ["Event"]                                          # one event: reported
+        self.assertIn("Task Simulator reads one event and writes another", "\n".join(F.check_choices(tasks, lib, TEMPLATES)))
+        with tempfile.TemporaryDirectory() as d:                                     # completed when read
+            path = os.path.join(d, "old.xml")
+            RunCAP.write_workflow(path, tasks, lib, TEMPLATES)
+            read, lib2, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+        read_sim = read[0].children[1]
+        self.assertEqual(F.choices(read_sim)["EVENT"], ["Event", "FastSimEvent"])
+        self.assertIn("Task Simulator reads Event and writes FastSimEvent", "\n".join(warnings))
+        self.assertEqual(F.check_choices(read, lib2, TEMPLATES), [])
 
     def test_nested_iterator_resets_its_own_events(self):
         """The events made under a nested EventIterator are its own, not those of the enclosing iterator."""
@@ -721,12 +842,12 @@ class TestChecks(unittest.TestCase):
         self.assertIn("Invalid name 'Bad name'", text)
         self.assertIn("cannot be tested as a value", text)
         self.assertIn("minimum of multiplicity 1 is not below", text)
-        self.assertIn("at most 8", text)
+        self.assertNotIn("at most 8", text)          # no limit of particle filters (shared selections)
         self.assertIn("only the Glauber tasks", text)
         self.assertIn("Missing is not in the library", text)
         self.assertIn("Task Pair fills histograms", text)
         self.assertIn("Task Pair uses no event", text)
-        self.assertEqual(len(errors), 8)
+        self.assertEqual(len(errors), 7)
         pair.param("HISTOGRAM_3:CREATE").value = "false"
         text = "\n".join(F.check_choices(tasks, lib, TEMPLATES))
         self.assertIn("single histograms are used but neither created nor imported (HISTOGRAM_3)", text)
@@ -756,6 +877,193 @@ class TestChecks(unittest.TestCase):
         self.assertEqual(lib.names("PARTICLE_FILTER"), ["PiP", "PiM", "Unused", "ParticleFilter0", "ParticleFilter1"])
         lib.resize("PARTICLE_FILTER", 1)
         self.assertEqual(lib.names("PARTICLE_FILTER"), ["PiP"])
+
+
+
+class TestSelectionFiles(unittest.TestCase):
+    """Objects of the library in XML: elements, selection files, files imported or linked by a workflow."""
+
+    def objects(self):
+        pip = F.FilterDef("PARTICLE_FILTER", "PiP", "positive pions",
+                          [F.Condition("PDG", F.VALUE, 211, 0), F.Condition("PT", F.RANGE, 0.2, 2.0),
+                           F.Condition("ETA", F.DUAL_RANGE, -0.9, -0.1, 0.1, 0.9), F.Condition("LIVE", F.FLAG, 1, 0)])
+        central = F.FilterDef("EVENT_FILTER", "Central", "", [F.Condition("MULT", F.RANGE, 100, 1000, selection="PiP")])
+        efficiency = F.FilterDef("EVENT_EFFICIENCY", "Eff", "", parameters={"nBins_mult": "50", "Max_mult": "200"})
+        return [central, pip, efficiency]
+
+    def test_elements(self):
+        warnings = []
+        for o in self.objects():
+            e = F.object_element(o)
+            self.assertEqual(e.tag, F.TAG_OF_KIND[o.kind])
+            back = F.object_from_element(ET.fromstring(ET.tostring(e)), warnings)
+            self.assertTrue(back.same_definition(o), (o, back))
+        self.assertEqual(warnings, [])
+        pdg = F.object_element(self.objects()[1]).find("Condition")
+        self.assertEqual((pdg.get("quantity"), pdg.get("form"), pdg.get("value"), pdg.get("maximum")),
+                         ("PDG", "value", "211", None))
+        self.assertIsNone(F.object_from_element(ET.Element("Unknown"), warnings))
+        bad = ET.fromstring('<ParticleFilter name="X"><Condition quantity="PT" form="range" minimum="a"/>'
+                            '<Parameter name="nope">1</Parameter></ParticleFilter>')
+        o = F.object_from_element(bad, warnings, "file.xml")
+        self.assertEqual(o.conditions, [])
+        self.assertTrue(any("not a number" in w for w in warnings) and any("unknown parameter" in w for w in warnings))
+        old = ET.fromstring('<OBJECT kind="PARTICLE_FILTER" name="Old"><CONDITION subtype="PT" form="range" minimum="1" '
+                            'maximum="2"/></OBJECT>')
+        self.assertEqual(F.object_from_element(old, warnings).conditions, [F.Condition("PT", F.RANGE, 1, 2)])
+
+    def test_selection_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "selections.xml")
+            F.write_selections(path, self.objects())
+            with open(path) as f:
+                text = f.read()
+            self.assertIn("<CapSelections", text)
+            self.assertIn('<Condition quantity="PDG" form="value" value="211" />', text)
+            objects, extras, warnings = F.read_selections(path)
+            self.assertEqual((extras, warnings), ([], []))
+            self.assertTrue(all(a.same_definition(b) for a, b in zip(objects, self.objects())))
+            # particle maps and unknown elements are kept as they are
+            root = ET.parse(path).getroot()
+            ET.SubElement(root, "ParticleEfficiency", {"name": "TPC"})
+            ET.SubElement(root, "Future", {"x": "1"})
+            ET.ElementTree(root).write(path)
+            objects, extras, warnings = F.read_selections(path)
+            self.assertEqual([e.tag for e in extras], ["ParticleEfficiency", "Future"])
+            with open(path, "w") as f:
+                f.write("<Other/>")
+            with self.assertRaises(ValueError):
+                F.read_selections(path)
+
+    def test_link_import_and_save(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "shared", "selections.xml")
+            os.makedirs(os.path.dirname(path))
+            F.write_selections(path, self.objects())
+            library = F.FilterLibrary.with_defaults()
+            library.add(F.FilterDef("EVENT_FILTER", "Central", "the workflow's own"))
+            warnings = library.link(path)
+            self.assertEqual(len(warnings), 1)                                # Central: the workflow's kept
+            self.assertEqual(library.get("EVENT_FILTER", "Central").title, "the workflow's own")
+            self.assertEqual([o.name for o in library.linked(path)], ["PiP", "Eff"])
+            # written in the workflow: an Include, relative, not the linked objects
+            element = F.runcap_element(library, [], d)
+            self.assertEqual([e.get("file") for e in element.findall("Include")], [os.path.join("shared", "selections.xml")])
+            self.assertEqual([e.get("name") for e in element if e.tag in F.KIND_OF_TAG],
+                             ["Central", "Event", "ParticleDb"])
+            back, warnings = F.read_runcap_element(ET.fromstring(ET.tostring(element)), [], d)
+            self.assertEqual(len(warnings), 1)                                # Central, in both
+            self.assertEqual(back.links, [os.path.abspath(path)])
+            self.assertEqual(back.get("PARTICLE_FILTER", "PiP").source, os.path.abspath(path))
+            self.assertEqual(back.get("EVENT_FILTER", "Central").source, "")
+            # changes of linked objects: written back to the file (only when changed)
+            self.assertEqual(F.save_linked(back), [])
+            back.get("PARTICLE_FILTER", "PiP").title = "pi+"
+            self.assertEqual(F.save_linked(back), [os.path.abspath(path)])
+            objects, _, _ = F.read_selections(path)
+            self.assertEqual([o.title for o in objects if o.name == "PiP"], ["pi+"])
+            self.assertEqual([o.name for o in objects], ["Central", "PiP", "Eff"])   # Central: kept in the file
+            # unlinked: copied into the workflow, or removed
+            copy = F.read_runcap_element(ET.fromstring(ET.tostring(element)), [], d)[0]
+            self.assertEqual(copy.unlink(path, keep=True), {})
+            self.assertEqual((copy.links, copy.get("PARTICLE_FILTER", "PiP").source), ([], ""))
+            self.assertEqual(back.unlink(path, keep=False), {"PARTICLE_FILTER": ["PiP"], "EVENT_EFFICIENCY": ["Eff"]})
+            self.assertIsNone(back.get("PARTICLE_FILTER", "PiP"))
+            # imported: copies, replacing those of the same names (or not)
+            library = F.FilterLibrary.with_defaults()
+            library.add(F.FilterDef("EVENT_FILTER", "Central", "mine"))
+            objects, _, _ = F.read_selections(path)
+            self.assertEqual(library.import_objects(objects, {("PARTICLE_FILTER", "PiP")}), [])
+            self.assertEqual(library.names("PARTICLE_FILTER"), ["PiP"])
+            self.assertEqual(library.import_objects(objects), [("EVENT_FILTER", "Central"), ("PARTICLE_FILTER", "PiP")])
+            self.assertEqual(library.get("PARTICLE_FILTER", "PiP").source, "")
+            # a missing linked file: reported, still linked
+            os.remove(path)
+            back, warnings = F.read_runcap_element(ET.fromstring(ET.tostring(element)), [], d)
+            self.assertTrue(warnings and "cannot be read" in warnings[0])
+            self.assertEqual(back.links, [os.path.abspath(path)])
+            self.assertTrue(any("missing" in e for e in F.check_library(back)))
+
+    def test_workflow(self):
+        """A workflow linking a selection file: its tasks use the linked objects, and the file is read again when
+        the workflow is loaded (a change of the file reaches the workflow, without warning)."""
+        with tempfile.TemporaryDirectory() as d:
+            shared = os.path.join(d, "selections.xml")
+            F.write_selections(shared, self.objects())
+            library = F.FilterLibrary.with_defaults()
+            library.link(shared)
+            gen, single = task("BasicEventGen", "Gen"), task("ParticleSingleAnalyzer", "Single")
+            F.default_choices(gen, library, TEMPLATES)
+            F.default_choices(single, library, TEMPLATES)
+            F.choices(single)["PARTICLE_FILTER"] = ["PiP"]
+            F.choices(single)["EVENT_FILTER"] = ["Central"]
+            path = os.path.join(d, "workflow.xml")
+            RunCAP.write_workflow(path, [gen, single], library, TEMPLATES)
+            pip = F.FilterDef("PARTICLE_FILTER", "PiP", "changed", [F.Condition("PDG", F.VALUE, 211, 211)])
+            F.write_selections(shared, [pip] + self.objects()[::2])
+            tasks, back, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            self.assertEqual([w for w in warnings if "defined differently" in w or "selection" in w.lower()], [])
+            self.assertEqual(back.get("PARTICLE_FILTER", "PiP").title, "changed")
+            self.assertEqual(F.choices(tasks[1])["PARTICLE_FILTER"], ["PiP"])
+
+
+class TestMaps(unittest.TestCase):
+    """The particle efficiencies and smearers read from a maps file."""
+
+    def test_list(self):
+        text = ("Some line of CAP\nMAP\tPARTICLE_EFFICIENCY\tEffPi\t211,-211\tEFFICIENCY=function\n"
+                "MAP\tPARTICLE_SMEARER\tSmear\t\tPT=function, ETA=none\nMAP\tOTHER\tx\n")
+        entries = F.parse_maps_list(text)
+        self.assertEqual([(e.kind, e.name, e.species) for e in entries],
+                         [("PARTICLE_EFFICIENCY", "EffPi", "211,-211"), ("PARTICLE_SMEARER", "Smear", "")])
+        lib = library()
+        removed = F.sync_maps(lib, entries)
+        self.assertEqual(removed, {"PARTICLE_EFFICIENCY": ["Eff"], "PARTICLE_SMEARER": []})
+        self.assertEqual((lib.names("PARTICLE_EFFICIENCY"), lib.names("PARTICLE_SMEARER")), (["EffPi"], ["Smear"]))
+        with self.assertRaises(RuntimeError):
+            F.list_maps("/no/such/Maps.cap")
+
+    def test_modes_and_grids(self):
+        lib = library()
+        lib.add(F.FilterDef("PARTICLE_EFFICIENCY", "Eff2"))
+        t = task("LegacySingleAnalyzer", "Single")
+        F.choices(t).update({"EVENT_FILTER": ["MB", "Central"], "PARTICLE_FILTER": ["PiP", "PiM"]})
+        kind = "PARTICLE_EFFICIENCY"
+        F.set_maps_mode(t, kind, F.ONE_FOR_ALL, lib)
+        self.assertEqual((F.choices(t)[kind], F.maps_mode(t, kind)), (["Eff"], F.ONE_FOR_ALL))
+        F.set_maps_mode(t, kind, F.PER_FILTERS, lib)
+        self.assertEqual(F.choices(t)[kind], ["Eff"] * 4)
+        F.choices(t)[kind][1] = "Eff2"                                   # MB, PiM
+        before = F.filter_grid(t)
+        F.choices(t)["EVENT_FILTER"] = ["Central", "MB"]                 # rows swapped: the cells follow
+        F.regrid_maps(t, before)
+        self.assertEqual(F.choices(t)[kind], ["Eff", "Eff", "Eff", "Eff2"])
+        before = F.filter_grid(t)
+        F.choices(t)["PARTICLE_FILTER"] = ["PiM"]
+        F.regrid_maps(t, before)
+        self.assertEqual(F.choices(t)[kind], ["Eff", "Eff2"])
+        self.assertEqual(F.check_maps_choices(t), [])
+        F.choices(t)[kind] = ["Eff", "Eff", "Eff"]
+        self.assertIn("one per event filter and particle filter (2)", F.check_maps_choices(t)[0])
+        F.remove_maps_names(t, kind, ["Eff"], lib)                      # Eff2 left in the library
+        lib.objects[kind] = [o for o in lib.objects[kind] if o.name != "Eff"]
+        F.remove_maps_names(t, kind, ["Eff"], lib)
+        self.assertEqual(F.choices(t)[kind], ["Eff2", "Eff2", "Eff2"])
+        lib.objects[kind] = []
+        F.remove_maps_names(t, kind, ["Eff2"], lib)
+        self.assertNotIn(kind, F.choices(t))
+
+    def test_old_parameters_ignored(self):
+        """A workflow written with the parameters of an efficiency: they are ignored, with a warning."""
+        lib = library()
+        tasks = workflow()
+        copies = F.prepared_for_writing(tasks, lib, TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        creator = copies[0]
+        sub = next(c for c in creator.children if c.cls == "CAP::ParticleEfficiencyCreator")
+        F._set(sub, "PARTICLE_EFFICIENCY_0:pt_nbins", "int", "50", RunCAP.Param)
+        library2, warnings = F.extract_choices(copies, TEMPLATES)
+        self.assertTrue(any("read from the maps file now" in w for w in warnings))
+        self.assertEqual(library2.get("PARTICLE_EFFICIENCY", "Eff").parameters, {})
 
 
 if __name__ == "__main__":

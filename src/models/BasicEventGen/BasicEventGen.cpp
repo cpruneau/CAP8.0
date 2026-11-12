@@ -16,6 +16,8 @@
 #include "FunctionRegistry.hpp"
 #include "ParameterizedComposite.hpp"
 #include "MathConstants.hpp"
+#include "MathBasicIntegration.hpp"
+#include "InterpolationTools.hpp"
 #include "PrintHelpers.hpp"
 
 namespace CAP
@@ -57,7 +59,10 @@ _setSeed(true),
 _seedValue(14316431),
 _random(),
 _mass(),
-_types()
+_types(),
+_vn(),
+_flowPtScale(0.0),
+_psi(0.0)
 {
   appendClassName("BasicEventGen");
   setMinimumReportLevel(Object::kInfo);
@@ -93,6 +98,8 @@ void BasicEventGen::setDefaultConfiguration()
   _configuration.addProperty(createKey(taskName,"Sigma"),               0.5);
   _configuration.addProperty(createKey(taskName,"Function:Name"),      String("NONE"));
   _configuration.addProperty(createKey(taskName,"Function:Parameters"),String(""));
+  _configuration.addProperty(createKey(taskName,"Flow:Vn"),            String(""));
+  _configuration.addProperty(createKey(taskName,"Flow:PtScale"),        0.0);
   _configuration.addProperty(createKey(taskName,"Random:SetSeed"),     true);
   _configuration.addProperty(createKey(taskName,"Random:Seed"),        14316431);
 }
@@ -162,6 +169,13 @@ void BasicEventGen::readSettings()
   String parameters   = _configuration.valueString(key("Function:Parameters"),true,"");
   range.toUpper();
   distribution.toUpper();
+  String flow   = _configuration.valueString(key("Flow:Vn"),true,"");
+  _vn           = flow.isEmpty() ? std::vector<double>() : parseNumbers(flow,key("Flow:Vn"));
+  _flowPtScale  = _configuration.valueDouble(key("Flow:PtScale"));
+  double vnSum  = 0.0;
+  for (double v : _vn) vnSum += std::fabs(v);
+  if (!(vnSum<0.5)) throw ConfigurationException(key("Flow:Vn"),"the sum of the |v_n| must be below 1/2",__FUNCTION__);
+  if (_flowPtScale<0.0) throw ConfigurationException(key("Flow:PtScale"),"must not be negative",__FUNCTION__);
 
   // style and ranges
   if (_eventGenType!=kCylindrical && _eventGenType!=kSpherical)
@@ -270,17 +284,13 @@ void BasicEventGen::tabulate(double low, double high)
   _tableX.resize(kTableSize+1);
   _tableCdf.resize(kTableSize+1);
   const double step = (high-low)/kTableSize;
-  double previous = density(low);
-  _tableX[0]   = low;
-  _tableCdf[0] = 0.0;
-  for (unsigned int k=1; k<=kTableSize; k++)
+  std::vector<double> values(kTableSize+1);
+  for (unsigned int k=0; k<=kTableSize; k++)
     {
-    double x = low + k*step;
-    double f = density(x);
-    _tableX[k]   = x;
-    _tableCdf[k] = _tableCdf[k-1] + 0.5*(previous+f)*step;   // trapezoidal rule
-    previous = f;
+    _tableX[k] = low + k*step;
+    values[k]  = density(_tableX[k]);
     }
+  _tableCdf = MATH::cumulativeTrapezoidRule(values,step);   // trapezoidal rule
   if (!(_tableCdf.back()>0.0))
     throw ConfigurationException(createKey(name(),"Distribution"),"the momentum distribution is zero on the range",__FUNCTION__);
 }
@@ -290,11 +300,22 @@ double BasicEventGen::drawMomentum(double low, double high)
   if (_distribution==kExponential) return _random.exp(_slope,low,high);
   // inverse of the tabulated cumulative (the table covers [low, high])
   double u = _random.random()*_tableCdf.back();
-  auto it = std::upper_bound(_tableCdf.begin(),_tableCdf.end(),u);
-  std::size_t k = std::min<std::size_t>(std::max<std::ptrdiff_t>(it-_tableCdf.begin(),1),_tableCdf.size()-1);
-  double c0 = _tableCdf[k-1], c1 = _tableCdf[k];
-  double t  = (c1>c0) ? (u-c0)/(c1-c0) : 0.5;
-  return _tableX[k-1] + t*(_tableX[k]-_tableX[k-1]);
+  return MATH::inverseLinearInterpolation(_tableX,_tableCdf,u);
+}
+
+double BasicEventGen::drawPhi(double pt)
+{
+  if (_vn.empty()) return _random.uniform(_phiMin,_phiMax);
+  double scale = (_flowPtScale>0.0) ? std::min(pt/_flowPtScale,1.0) : 1.0;
+  double maximum = 1.0;
+  for (double v : _vn) maximum += 2.0*std::fabs(v)*scale;
+  for (;;)
+    {
+    double phi = _random.uniform(_phiMin,_phiMax);
+    double f = 1.0;
+    for (unsigned int n=1; n<=_vn.size(); n++) f += 2.0*_vn[n-1]*scale*std::cos(n*(phi-_psi));
+    if (_random.random()*maximum<f) return phi;
+    }
 }
 
 void BasicEventGen::generateCylindrical(double m, MATH::VectorLorentz & momentum)
@@ -302,9 +323,10 @@ void BasicEventGen::generateCylindrical(double m, MATH::VectorLorentz & momentum
   const double m2 = m*m;
   for (unsigned int trial=0; trial<kMaxTrials; trial++)
     {
-    double phi = _random.uniform(_phiMin,_phiMax);
+    double phi = _vn.empty() ? _random.uniform(_phiMin,_phiMax) : 0.0;
     double y   = _random.uniform(_rapidityMin,_rapidityMax);
     double pt  = _useMomentumRange ? drawMomentum(0.0,_pMax) : drawMomentum(_ptMin,_ptMax);
+    if (!_vn.empty()) phi = drawPhi(pt);
     double mt  = std::sqrt(m2 + pt*pt);
     double pz  = mt*std::sinh(y);
     if (_useMomentumRange)
@@ -320,10 +342,11 @@ void BasicEventGen::generateCylindrical(double m, MATH::VectorLorentz & momentum
 
 void BasicEventGen::generateSpherical(double m, MATH::VectorLorentz & momentum)
 {
-  double phi      = _random.uniform(_phiMin,_phiMax);
+  double phi      = _vn.empty() ? _random.uniform(_phiMin,_phiMax) : 0.0;
   double cosTheta = _random.uniform(std::cos(_thetaMax),std::cos(_thetaMin));   // isotropic
   double sinTheta = std::sqrt(std::max(0.0,1.0-cosTheta*cosTheta));
   double p        = drawMomentum(_pMin,_pMax);
+  if (!_vn.empty()) phi = drawPhi(p*sinTheta);
   momentum.setTXYZ(std::sqrt(m*m+p*p),p*sinTheta*std::cos(phi),p*sinTheta*std::sin(phi),p*cosTheta);
 }
 
@@ -334,6 +357,7 @@ void BasicEventGen::execute()
   MATH::VectorLorentz position;
   position.setTXYZ(0.0, 0.0, 0.0, 0.0);
   const auto & filters = particleFilters();
+  if (!_vn.empty()) _psi = _random.uniform(0.0,MATH::twoPi());
   for (unsigned int iType = 0; iType<_types.size(); iType++)
     {
     long nParticles = _random.uniformInteger(_multMin,_multMax);

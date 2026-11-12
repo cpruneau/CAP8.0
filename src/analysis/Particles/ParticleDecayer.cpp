@@ -24,7 +24,7 @@ double ParticleDecayer::twoPi = 2.0*3.1415927;
 
 ParticleDecayer::ParticleDecayer()
 :
-random(gRandom)
+random(&CAP::MATH::randomGenerator())
 {
 }
 
@@ -53,7 +53,7 @@ void  ParticleDecayer::decay2(ParticleType  & parentType,
   //mWidth   = parentType.getWidth();
   tau      = parentType.lifeTime();
   taup     = gamma*tau;
-  timeToDecay = -3.0E23 * taup * std::log(random->Rndm()); // fm
+  timeToDecay = -3.0E23 * taup * std::log(random->positive()); // fm
   r1 = parentPosition;
   r2 = parentPosition;
   VectorLorentz shift;
@@ -82,10 +82,10 @@ void  ParticleDecayer::decay2(ParticleType  & parentType,
 
   double p_lrf = std::sqrt(temp*temp - 4*m1*m1*m2*m2)/(2*mp);
   // randomly pick emission angle of particle 1
-  double phi      = twoPi*random->Rndm();
+  double phi      = twoPi*random->random();
   double cosPhi   = std::cos(phi);
   double sinPhi   = std::sin(phi);
-  double cosTheta = 2.*random->Rndm() - 1.0;
+  double cosTheta = 2.*random->random() - 1.0;
   double sinTheta = std::sqrt(1.00 - cosTheta*cosTheta);
   // compute daughter particles' energy and momentum in the parent rest frame
   double e1_lrf   = std::sqrt(p_lrf*p_lrf + m1*m1);
@@ -140,7 +140,7 @@ void  ParticleDecayer::decay3(ParticleType & parentType,
   //mWidth   = parentType.getWidth();
   tau      = parentType.lifeTime();
   taup     = gamma*tau;
-  timeToDecay = -3.0E23 * taup * std::log(random->Rndm()); // fm
+  timeToDecay = -3.0E23 * taup * std::log(random->positive()); // fm
   r1 = parentPosition;
   r2 = parentPosition;
   r3 = parentPosition;
@@ -154,8 +154,8 @@ void  ParticleDecayer::decay3(ParticleType & parentType,
 
   do {
     do {
-      e1_lrf = random->Rndm()*deltaM + m1;
-      e2_lrf = random->Rndm()*deltaM + m2;
+      e1_lrf = random->random()*deltaM + m1;
+      e2_lrf = random->random()*deltaM + m2;
     } while (e1_lrf + e2_lrf > mp);
     p1_lrf = std::sqrt(e1_lrf*e1_lrf - m1*m1);
     p2_lrf = std::sqrt(e2_lrf*e2_lrf - m2*m2);
@@ -168,9 +168,9 @@ void  ParticleDecayer::decay3(ParticleType & parentType,
   double tp2_lrf_z = p2_lrf*cos12_lrf;
   double tp3_lrf_x = - tp2_lrf_x;
   double tp3_lrf_z = - (p1_lrf + tp2_lrf_z);
-  double phi       = twoPi*random->Rndm();
-  double ksi       = twoPi*random->Rndm();
-  double cos_theta = 2.0*random->Rndm() - 1.0;
+  double phi       = twoPi*random->random();
+  double ksi       = twoPi*random->random();
+  double cos_theta = 2.0*random->random() - 1.0;
   double sin_phi   = std::sin(phi);
   double cos_phi   = std::cos(phi);
   double sin_ksi   = std::sin(ksi);
@@ -241,7 +241,7 @@ void ParticleDecayer::decay4(ParticleType & parentType,
   double gamma    = parentMomentum.gamma();
   double tau      = parentType.lifeTime();
   double taup     = gamma*tau;
-  double timeToDecay = -3.0E23 * taup * std::log(random->Rndm()); // fm
+  double timeToDecay = -3.0E23 * taup * std::log(random->positive()); // fm
   VectorLorentz shift;
   shift.setTXYZ(timeToDecay,vx*timeToDecay,vy*timeToDecay,vz*timeToDecay);
   r1 = parentPosition; r1 += shift;
@@ -260,13 +260,13 @@ void ParticleDecayer::decay4(ParticleType & parentType,
   double m123 = m1+m2+m3;
   for (int iTry=0; iTry<10000; iTry++)
     {
-    double ra = random->Rndm();
-    double rb = random->Rndm();
+    double ra = random->random();
+    double rb = random->random();
     if (ra>rb) std::swap(ra,rb);
     m12  = m1+m2    + ra*kinetic;
     m123 = m1+m2+m3 + rb*kinetic;
     double w = twoBodyMomentum(mp,m123,m4)*twoBodyMomentum(m123,m12,m3)*twoBodyMomentum(m12,m1,m2);
-    if (random->Rndm()*wMax <= w) break;
+    if (random->random()*wMax <= w) break;
     }
   VectorLorentz p123, p12;
   twoBodyDecay(mp,  m123,m4,p123,p4);   // parent rest frame
@@ -297,8 +297,8 @@ double ParticleDecayer::twoBodyMomentum(double m, double ma, double mb)
 void ParticleDecayer::twoBodyDecay(double m, double ma, double mb, VectorLorentz & pa, VectorLorentz & pb)
 {
   double p        = twoBodyMomentum(m,ma,mb);
-  double phi      = twoPi*random->Rndm();
-  double cosTheta = 2.0*random->Rndm() - 1.0;
+  double phi      = twoPi*random->random();
+  double cosTheta = 2.0*random->random() - 1.0;
   double sinTheta = std::sqrt(1.0 - cosTheta*cosTheta);
   double px = p*sinTheta*std::cos(phi);
   double py = p*sinTheta*std::sin(phi);

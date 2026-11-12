@@ -1,0 +1,40 @@
+% Classes of src/core/Math/Derivative and their dependencies. Paper: section "Interpolation, integration and
+% differentiation" (fig:derivative); Doxygen: Differentiation.hpp.
+%   pdflatex DerivativeClasses.tex; pdftoppm -r 200 -png -singlefile DerivativeClasses.pdf DerivativeClasses;
+%   pdftocairo -svg DerivativeClasses.pdf DerivativeClasses.svg
+\documentclass[tikz,border=2pt]{standalone}
+\input{ClassDiagramStyle}
+\input{ClassDiagramLegend}
+\begin{document}
+\begin{tikzpicture}[every node/.append style={anchor=north}]
+  \begin{scope}[on background layer]
+    \fill[folder, rounded corners=3pt] (-0.1,-1.05) rectangle (9.2,-5.75);
+  \end{scope}
+  \node[title] at (0.0,-1.1) {Derivative};
+
+  \node[abs=4.2cm] (Function) at (4.4,0.35)
+    {\an{Function} \tiny(Functions)\m{derivativeAt(), gradientAt(): numerical by default}
+     \m{hasAnalyticalDerivative(), derivativeFunction()}};
+
+  \node[cls=3.3cm] (Derivative) at (1.8,-1.55)
+    {\cn{Derivative} \tiny(a Function)\m{derivative of order $n$ of $f$ along an axis,}
+     \m{or mixed (axes); evaluateAt(), update()}};
+  \node[steer=4.6cm] (Diff) at (6.3,-1.55)
+    {\cn{Differentiation}\m{enum Method: Automatic, Analytical, Linear,}\m{Quadratic, Cubic, Polynomial (degree)}
+     \m{derivative(), partialDerivative(), mixedDerivative(),}\m{gradient(), derivatives() of sampled values}
+     \m{step, Richardson extrapolation, Stencil}};
+  \node[tool=4.6cm] (FD) at (6.3,-3.85)
+    {\cn{FiniteDifference} \tiny(functions)\m{enum class Stencil: Central, Forward, Backward}
+     \m{finiteDifferenceWeights() (Fornberg),}\m{finiteDifferenceOffsets(), finiteDifferenceStep(),}
+     \m{derivativesOfSamples(), derivativeOnGrid()}};
+  \node[ext=3.0cm] (Field) at (1.8,-4.15) {\cn{ScalarField} \tiny(LinearAlgebra)\m{gradients on its grid}};
+
+  \draw[inherit] (Derivative.north) -- (Derivative.north |- Function.south);
+  \draw[owns] (Derivative.east |- 0,-2.0) -- (Diff.west |- 0,-2.0);
+  \draw[uses] ([xshift=1.2cm]Function.south) -- node[lbl, right]{numerical\\defaults} ([xshift=-1.1cm]Diff.north);
+  \draw[uses] (Diff.south) -- (FD.north);
+  \draw[uses] (Field.east) -- (FD.west |- Field.east);
+  \draw[uses] ([xshift=1.6cm]Diff.north) |- node[lbl, pos=0.3, right]{Analytical:\\derivativeFunction()} (Function.east);
+  \legendat{0.0}{-6.0}
+\end{tikzpicture}
+\end{document}

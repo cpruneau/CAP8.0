@@ -188,6 +188,40 @@ namespace CAP
   }
 
   //!
+  //! @brief Add to a folder the empty histogram folders of the task, as saveHistograms() would write them (see
+  //! AnalysisTask::makeEmptyHistograms()): each folder's histograms created and, for the calculators (BASE is
+  //! AnalysisTask), its derived histograms too. @param top folder of the job
+  //!
+  void makeEmptyHistograms(Folder & top) override
+  {
+  constexpr bool calculator = std::is_same_v<BASE, AnalysisTask>;
+  for (HISTOS * h : _managedHistograms.getObjects())
+    {
+    h->create();
+    if constexpr (calculator && hasCreateDerived<HISTOS>::value) h->createDerived();
+    }
+  for (SingleFolder * single : _singleHistograms)
+    {
+    single->create();
+    if constexpr (calculator && hasCreateDerived<SingleFolder>::value) single->createDerived();
+    }
+  if (_managedHistograms.size()>0)
+    {
+    String name = this->histogramTaskName();
+    Folder * folder = top.folder(name);
+    if (!folder) folder = top.addFolder(name);
+    auto namer = [this](unsigned int k) { return this->combinationName(k,RANK); };
+    _managedHistograms.saveToFolders(*folder,namer);
+    for (unsigned int k=0; k<_singleHistograms.size(); k++)
+      _singleHistograms[k]->saveTo(*folder->addFolder(this->combinationName(k,1)));
+    }
+  }
+
+  //! Whether a folder class has createDerived() (the folders of the analyses with derived histograms).
+  template <class T, class = void> struct hasCreateDerived : std::false_type { };
+  template <class T> struct hasCreateDerived<T, std::void_t<decltype(std::declval<T&>().createDerived())>> : std::true_type { };
+
+  //!
   //! @brief Read the histogram folders imported (IMPORT) from the input folder of the job (folder histogramTaskName(),
   //! a folder per combination of filters); then those of the subtasks. @param top folder of the job
   //! @throws Exception if a folder is missing

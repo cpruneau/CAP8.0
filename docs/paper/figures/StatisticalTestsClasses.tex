@@ -1,0 +1,43 @@
+% Contents of src/core/Math/StatisticalTests and their dependencies. Paper: section "Statistical tests"
+% (fig:stattests); Doxygen: StatisticalTests.hpp.
+%   pdflatex StatisticalTestsClasses.tex; pdftoppm -r 200 -png -singlefile StatisticalTestsClasses.pdf StatisticalTestsClasses;
+%   pdftocairo -svg StatisticalTestsClasses.pdf StatisticalTestsClasses.svg
+\documentclass[tikz,border=2pt]{standalone}
+\input{ClassDiagramStyle}
+\input{ClassDiagramLegend}
+\begin{document}
+\begin{tikzpicture}[every node/.append style={anchor=north}]
+  \begin{scope}[on background layer]
+    \fill[folder, rounded corners=3pt] (-0.1,-1.0) rectangle (9.3,-6.75);
+  \end{scope}
+  \node[title] at (0.0,-1.05) {StatisticalTests};
+
+  \node[ext=2.7cm] (DP) at (1.5,0.3) {\cn{DataPoints} \tiny(Data)\m{histograms, data points}};
+  \node[ext=2.7cm] (PF) at (4.6,0.3) {\an{Function} \tiny(Functions)\m{expected values, densities}};
+  \node[ext=3.0cm] (Gui) at (7.7,0.3) {\cn{CapGui, ClosureCalculator}\m{(gui, Performance): comparisons}};
+
+  \node[steer=5.6cm] (Tests) at (3.0,-1.5)
+    {\cn{StatisticalTests} \tiny(functions)\m{binomialTest(), poissonTest(), poissonComparisonTest()}
+     \m{gaussianTest() ($z$), gaussianComparisonTest()}
+     \m{studentTTest() (one or two samples), pairedStudentTTest()}
+     \m{chiSquareTest() (a value; observed and expected;}\m{data and function), chiSquareIndependenceTest()}
+     \m{histogramCompatibilityTest(), kolmogorovSmirnovTest()}\m{(a CDF or density; two samples; two histograms)}};
+  \node[cls=2.4cm] (TR) at (7.75,-1.35)
+    {\cn{TestResult}\m{statistic, degrees of}\m{freedom, $p$-value,}\m{estimate, number of}\m{points}};
+  \node[cls=2.4cm] (Enums) at (7.75,-3.55)
+    {\cn{enum classes}\m{Alternative: kTwoSided,}\m{kLess, kGreater}\m{HistogramComparison:}\m{kCounts, kValues, kShapes}};
+  \node[tool=5.6cm] (Dist) at (3.0,-4.75)
+    {\cn{Distributions} \tiny(functions)\m{regularizedGammaP(), regularizedGammaQ(), regularizedBeta()}
+     \m{normalDensity(), normalCdf(), normalUpper(), normalQuantile()}
+     \m{studentCdf(), studentUpper(), chiSquareCdf(), chiSquareUpper()}
+     \m{binomialProbability/Cdf/Upper(), poissonProbability/Cdf/Upper(),}\m{kolmogorovUpper()}};
+
+  \draw[uses] (Tests.east |- TR.west) -- (TR.west);
+  \draw[uses] (Tests.east |- 0,-2.95) -| (Enums.north);
+  \draw[uses] (Tests.south) -- node[lbl, right]{$p$-values} (Dist.north);
+  \draw[uses] (1.5,0 |- Tests.north) -- (DP.south);
+  \draw[uses] (4.6,0 |- Tests.north) -- (PF.south);
+  \draw[uses] (Gui.south) -- ++(0,-0.35) -| ([xshift=-0.3cm]Tests.north east);
+  \legendat{0.0}{-7.0}
+\end{tikzpicture}
+\end{document}

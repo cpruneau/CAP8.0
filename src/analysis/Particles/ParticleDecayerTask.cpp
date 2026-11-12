@@ -148,6 +148,7 @@ void ParticleDecayerTask::execute()
     // e.g. after ParticleDb::enableAllDecays(), for which no decay mode can be drawn)
     if (particle->isLive() && !particle->isStable()) decayParticle(*particle,ev);
     }
+  ev.invalidateSelections();    // decayed particles are no longer live: the selections are made again
 }
 
 } // namespace CAP

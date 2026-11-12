@@ -4,12 +4,13 @@
  *
  * For the licensing terms see LICENSE.
  *
- * Author: Claude Pruneau,   04/01/2024
+ * Author: Claude Pruneau,  Nov 10, 2026
+ * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
 #ifndef CAP__GlauberHistos
 #define CAP__GlauberHistos
-#include "TObject.h"
 #include "Task.hpp"
 #include "Exceptions.hpp"
 #include "ManagedObjects.hpp"
