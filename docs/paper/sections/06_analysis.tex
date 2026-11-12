@@ -39,15 +39,7 @@ only read and complete histograms, derive from \code{AnalysisTask} alone, and th
 contain only their filters and histogram settings.
 
 \paragraph{Event loop.}
-\code{EventIterator} is the task that runs the event loop: for each of the events requested, it executes its subtasks
-in order, typically one or several generators followed by the analyzers, and reports its progress periodically. It
-checks when it is initialised that it uses the events that its subtasks make, so that a generator and the analyzers
-that follow it work on the same event. The iterator resets the event before each pass, and the generators add their
-particles to it, so that several generators can fill one event: a hard process embedded in a soft background, for
-example. \code{EventMerger} goes further and fills one event with the particles of several events of each of its input
-streams, to simulate pile-up. An \code{Event} holds its particles, created by a particle factory and reused from
-event to event to avoid allocations, the two colliding projectiles, and the selections of its particles made by the
-particle filters of the tasks, which are shared by all of them (Section~\ref{sec:filters}).
+\code{EventIterator} is the task that runs the event loop: for each of the events requested, it executes its subtasks in order, typically one or several generators followed by the analyzers, and reports its progress periodically. It checks when it is initialised that it uses the events that its subtasks make, so that a generator and the analyzers that follow it work on the same event. The iterator resets the event before each pass, and the generators add their particles to it, so that several generators can fill one event: a hard process embedded in a soft background, for example. \code{EventMerger} goes further and fills one event with the particles of several events of each of its input streams, to simulate pile-up. An \code{Event} holds its particles, created by a particle factory and reused from event to event to avoid allocations, the two colliding projectiles, and the selections of its particles made by the particle filters of the tasks, which are shared by all of them (Section~\ref{sec:filters}).
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Event and particle filters}
@@ -55,13 +47,7 @@ particle filters of the tasks, which are shared by all of them (Section~\ref{sec
 
 \paragraph{Filters.}
 A filter is a list of conditions, all of which must be satisfied; a filter without conditions accepts everything. A
-condition sets a range, two ranges, or a value of one quantity. Event filters select events by a global quantity of the
-particles accepted by a particle filter, named by the condition: their multiplicity, energy, net charge, net
-strangeness, net baryon number, $\pT$ sum or spherocity; they thereby define event classes such as classes of
-centrality or of multiplicity in a given acceptance. Particle filters select particles by their kinematics ($\pT$, the components of the
-momentum, the energy, the pseudorapidity, the rapidity and the azimuth), by the properties of their type (PDG code,
-charge, strangeness, baryon number, charm and beauty), and by their state. A filter is configured by keys
-\code{<owner>:PARTICLE\_FILTER\_<index>:\dots}, for instance
+condition sets a range, two ranges, or a value of one quantity. Event filters select events by a global quantity of the particles accepted by a particle filter, named by the condition: their multiplicity, energy, net charge, net strangeness, net baryon number, $\pT$ sum or spherocity; they thereby define event classes such as classes of centrality or of multiplicity in a given acceptance. Particle filters select particles by their kinematics ($\pT$, the components of the momentum, the energy, the pseudorapidity, the rapidity and the azimuth), by the properties of their type (PDG code, charge, strangeness, baryon number, charm and beauty), and by their state. A filter is configured by keys \code{<owner>:PARTICLE\_FILTER\_<index>:\dots}, for instance
 {\footnotesize
 \begin{verbatim}
 ...:CONDITION:N = 2

@@ -223,7 +223,7 @@ endif()
 
 if(CAP_WITH_JETS)
   cap_resolve_prefix(CAP_FASTJET_DIR "FastJet" "include/fastjet/ClusterSequence.hh"
-                     BUNDLED "fastjet*" "external/fastjet*" ENV CAP_FASTJET_PATH FASTJET TOOL fastjet-config)
+                     BUNDLED "../Fastjet/install" "fastjet*" "external/fastjet*" ENV CAP_FASTJET_PATH FASTJET TOOL fastjet-config)
   find_library(CAP_FASTJET_LIBRARY NAMES fastjet PATHS "${CAP_FASTJET_DIR}/lib" NO_DEFAULT_PATH)
   if(NOT CAP_FASTJET_LIBRARY)
     message(FATAL_ERROR "FastJet: no libfastjet in ${CAP_FASTJET_DIR}/lib (is FastJet built and installed?)")
@@ -260,7 +260,7 @@ endif()
 
 if(CAP_WITH_HERWIG)
   cap_resolve_prefix(CAP_HERWIG_DIR "Herwig" "include/Herwig/API/HerwigAPI.h"
-                     BUNDLED "Herwig*" "herwig*" "external/Herwig*" "external/herwig*" ENV CAP_HERWIG_PATH HERWIG_DIR
+                     BUNDLED "../Herwig/install" "Herwig*" "herwig*" "external/Herwig*" "external/herwig*" ENV CAP_HERWIG_PATH HERWIG_DIR
                      TOOL Herwig-config)
   if(EXISTS "${CMAKE_SOURCE_DIR}/models/Herwig/CMakeLists.txt")
     include_directories("${CAP_HERWIG_DIR}/include")
