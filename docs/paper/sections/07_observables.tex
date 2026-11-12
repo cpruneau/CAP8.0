@@ -352,24 +352,209 @@ particle filters $(i,j)$; the folders with $j<i$ are filled. Table~\ref{tab:nudy
 of the class but not implemented.}
 
 % ---------------------------------------------------------------------------------------------------------------
+\subsection{Anisotropic flow}
+\label{sec:flow}
+
+The task \code{ParticleFlowAnalyzer} measures the Fourier coefficients $v_n$ of the azimuthal distributions of the
+particles, $dN/d\varphi \propto 1 + 2\sum_n v_n\cos n(\varphi-\Psi_n)$, by multi-particle cumulants, for the harmonics
+$n = 1,\dots,$ \code{nHarmonics} and the orders $2k = 2, 4, \dots,$ \code{maxOrder}, with and without a gap in
+(pseudo)rapidity, and by the scalar product method. Two sets of particles enter: the reference particles (RF), selected
+by the particle filters of the task (\code{PARTICLE\_FILTER}, one histogram folder per event filter and RF filter), and
+the particles of interest (POI), selected by a second list of filters (\code{POI\_FILTER}), whose differential flow is
+measured in every folder versus the event variable and the transverse momentum of the POI.
+
+\paragraph{Correlators.}
+With the weighted flow vectors of the RF of an event, $Q_{h,p} = \sum_i w_i^p e^{ih\varphi_i}$, the numerator of the
+$m$-particle correlator of harmonics $h_1,\dots,h_m$, a sum over the $m$-tuples of distinct particles, is obtained without
+a loop over tuples by summing over the partitions of the $m$ slots into blocks $B$ (the slots given to the same
+particle)~\cite{Bilandzic:2013kga}:
+\begin{equation}
+  N(S) = \sum_{B \ni \min S} (-1)^{|B|-1}(|B|-1)!\; Q_{h_B,|B|}\; N(S\setminus B),
+\end{equation}
+with $N(\emptyset) = 1$, where $S$ is a set of slots, $h_B$ is the sum of the harmonics of $B$, and $\min S$ is the first slot of $S$.
+\code{FlowCorrelator} computes $N(S)$ for all the $2^m$ subsets at once, in $3^m$ operations. With the harmonics
+arranged as $(+n,-n,+n,-n,\dots)$, the first $2k$ slots give the correlator $\avg{2k}_n = N/D$, where the denominator
+$D$ is the same sum with all harmonics zero. One call therefore gives all the orders. The event-averaged correlators
+$\avg{\avg{2k}}_n$ are profiles weighted by $D$. For the differential correlators $\avg{2k'}_n$, a POI takes the first
+slot and RF the others. The block of the first slot uses the vectors $p_{h}$ of the POI, or, when it holds more than one
+slot, the vectors $q_{h,p}$ of the particles that are both POI and RF~\cite{Bilandzic:2010jr}:
+\begin{equation}
+  N'(S) = \sum_{T\subseteq S\setminus\{1\}} (-1)^{|T|}\,|T|!\; X_{h_1+h_T,\,|T|+1}\; N(S\setminus\{1\}\setminus T),
+\end{equation}
+with $X_{h,1} = p_h$ and $X_{h,p} = q_{h,p}$ for $p\ge 2$. Self-correlations are thus removed exactly, whatever the overlap
+of the two selections. The particle weights $w_i$ (the inverse of the efficiencies of Section~\ref{sec:efficiency})
+correct for a non-uniform acceptance.
+
+\paragraph{Gap and sub-events.}
+With \code{gap} on, the RF are divided into two sub-events, $A$ ($x<-\Delta/2$) and $B$ ($x>\Delta/2$), where $x$ is the
+pseudorapidity or the rapidity (\code{gapVariable}) and $\Delta$ is \code{gapSize}. The gapped correlator takes $k$
+particles of harmonic $n$ in $A$ and $k$ of harmonic $-n$ in $B$:
+$N_A(n,\dots,n)\,N_B(n,\dots,n)^*$~\cite{Jia:2017hbm}. Non-flow correlations within a jet or a resonance decay, which do
+not reach across the gap, are suppressed. For the POI, a POI and $k-1$ RF are taken in one sub-event and $k$ RF in the
+other, and both assignments are summed.
+
+\paragraph{Cumulants and flow.}
+The derived calculator obtains the cumulants $c_n\{2k\}$ from the generating function~\cite{Borghini:2001vi},
+\begin{equation}
+  \sum_{k\ge1} c_n\{2k\}\frac{z^k}{(k!)^2} = \ln\Bigl(1+\sum_{k\ge1}\avg{\avg{2k}}_n\frac{z^k}{(k!)^2}\Bigr),
+\end{equation}
+by the recursion of the logarithm of a series, for any order. The first orders are
+\begin{align}
+  c_n\{2\} &= \avg{\avg{2}}, \nonumber\\
+  c_n\{4\} &= \avg{\avg{4}} - 2\avg{\avg{2}}^2, \nonumber\\
+  c_n\{6\} &= \avg{\avg{6}} - 9\avg{\avg{4}}\avg{\avg{2}} + 12\avg{\avg{2}}^3, \\
+  c_n\{8\} &= \avg{\avg{8}} - 16\avg{\avg{6}}\avg{\avg{2}} - 18\avg{\avg{4}}^2 \nonumber\\
+           &\quad + 144\avg{\avg{4}}\avg{\avg{2}}^2 - 144\avg{\avg{2}}^4. \nonumber
+\end{align}
+For a single flow magnitude $v$, $c_n\{2k\} = A_k v^{2k}$ with $A_k = 1, -1, 4, -33, 456, \dots$, so that
+$v_n\{2k\} = (c_n\{2k\}/A_k)^{1/2k}$, which is defined when $c_n\{2k\}/A_k > 0$. The differential cumulant $d_n\{2k\}$ is
+the cumulant with the block of the POI replaced, that is, the derivative of $c_n\{2k\}$ along
+$\avg{\avg{2j}}\to\avg{\avg{2j}}+(j/k)\avg{\avg{2j'}}$:
+\begin{align}
+  d_n\{4\} &= \avg{\avg{4'}} - 2\avg{\avg{2'}}\avg{\avg{2}}, \nonumber\\
+  d_n\{6\} &= \avg{\avg{6'}} - 6\avg{\avg{4'}}\avg{\avg{2}} - 3\avg{\avg{2'}}\avg{\avg{4}} \\
+           &\quad + 12\avg{\avg{2'}}\avg{\avg{2}}^2, \nonumber
+\end{align}
+and $v'_n\{2k\} = d_n\{2k\}/(A_k\, v_n\{2k\}^{2k-1})$. The scalar product method~\cite{Adler:2002pu} uses the sub-events
+of the gap: $v_n\{\mathrm{SP}\} = \avg{u_n Q^*}/\sqrt{\avg{Q_A Q_B^*}}$, where $u_n = e^{in\varphi}$ is the unit vector of
+a POI and $Q$ is the flow vector of the opposite sub-event. The uncertainties of the derived histograms are propagated
+linearly from those of the correlators, without their covariances; the sub-samples (Section~\ref{sec:subsample}) give
+the full uncertainties. Table~\ref{tab:flow} lists the histograms. \code{BasicEventGen} can impose flow coefficients on
+its particles (\code{Flow:Vn}, constant or rising with $\pT$), which serve to test the analysis. A test of the module
+recovers $v_2 = 0.1$ and $v_3 = 0.05$ at all orders up to 8, with a hole in the acceptance corrected by weights.
+
+\begin{table*}[t]
+  \centering
+  \caption{Histograms of a flow folder (\code{ParticleFlowHistos}), for the harmonic $n$, the order $2k$ and the POI
+  filter $j$, as functions of the event variable; the names ending in \code{\_pt} are functions of the event variable
+  and of the $\pT$ of the POI.}
+  \label{tab:flow}
+  \small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Name & Content & Option \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Base (profiles)}} \\
+    \code{evt}                                      & distribution of the event variable & \\
+    \code{Corr}$2k$\code{\_n}$n$                    & $\avg{\avg{2k}}_n$ of the RF & \\
+    \code{CorrGap}$2k$\code{\_n}$n$                 & $\avg{\avg{2k}}_n$ across the gap & \code{gap} \\
+    \code{SPQaQb\_n}$n$                             & $\avg{Q_AQ_B^*}_n$ & \code{scalarProduct} \\
+    \code{POI}$j$\code{\_Corr}$2k$\code{\_n}$n$[\code{\_pt}]    & $\avg{\avg{2k'}}_n$ & \\
+    \code{POI}$j$\code{\_CorrGap}$2k$\code{\_n}$n$[\code{\_pt}] & $\avg{\avg{2k'}}_n$ across the gap & \code{gap} \\
+    \code{POI}$j$\code{\_SPuQ\_n}$n$[\code{\_pt}]   & $\avg{u_nQ^*}$ & \code{scalarProduct} \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Derived}} \\
+    \code{Cum}$2k$\code{\_n}$n$, \code{V}$2k$\code{\_n}$n$       & $c_n\{2k\}$, $v_n\{2k\}$ & \\
+    \code{CumGap}$2k$\code{\_n}$n$, \code{VGap}$2k$\code{\_n}$n$ & the same across the gap & \code{gap} \\
+    \code{POI}$j$\code{\_DCum}$2k$\code{\_n}$n$[\code{\_pt}], \code{POI}$j$\code{\_V}$2k$\code{\_n}$n$[\code{\_pt}] & $d_n\{2k\}$, $v'_n\{2k\}$ & \\
+    \code{POI}$j$\code{\_DCumGap}$2k$\ldots, \code{POI}$j$\code{\_VGap}$2k$\ldots & the same across the gap & \code{gap} \\
+    \code{POI}$j$\code{\_VSP\_n}$n$[\code{\_pt}]    & $v_n\{\mathrm{SP}\}$ & \code{scalarProduct} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+% ---------------------------------------------------------------------------------------------------------------
+\subsection{Jets}
+\label{sec:jets}
+
+The module Jets, built when \CAP{} is configured with FastJet~\cite{Cacciari:2011ma}, finds the jets of the events and
+measures their properties. The task \code{JetAnalyzer} clusters the particles accepted by each of its particle filters
+with the anti-$k_T$~\cite{Cacciari:2008gp}, $k_T$ or Cambridge/Aachen algorithm, for each radius $R$ of a list given in
+one run (\code{JET:R}, e.g. \code{0.2, 0.4, 0.6}). The jets kept are those above a minimum transverse momentum
+(\code{JET:PT\_MIN}) and fully inside the acceptance of the particles, $|\eta_{\rm jet}| < \eta_{\max} - R$
+(\code{JET:PARTICLE\_ETA\_MAX}). They are ranked by decreasing $p_T$, the leading jet having rank 1. The jets of an event
+are found once per particle filter and radius, and kept for the event, so that every jet task of the job uses the same
+jets without clustering them again (\code{JetClustering}).
+
+Jet filters (\code{JET\_FILTER}) select the jets, with conditions on their transverse momentum, pseudorapidity,
+azimuth, mass, number of constituents, and rank in the event: the leading jet, the subleading jet, or any range of
+ranks. They are defined in the library of RunCAP, as the event and particle filters, and are created by the task
+\code{JetFilterCreator}. The histograms of \code{JetAnalyzer} fill one folder per event filter, particle filter,
+radius and jet filter, named for instance \code{MB\_Charged\_R0p4\_Leading}. They hold:
+\begin{itemize}
+  \item per event: the number of jets accepted and the scalar sum of their $p_T$ (events without a jet included);
+  \item per jet: $p_T$, $\eta$, $\varphi$, the mass, the numbers of constituents in total and by charge sign
+  ($N$, $N_+$, $N_-$, $N_0$), the net charge, and the jet charge $Q_\kappa = \sum_i q_i\,(p_{T,i}/p_{T,{\rm jet}})^\kappa$;
+  their averages are also profiles versus the jet $p_T$;
+  \item per constituent, in total and by charge sign: the momentum fraction $z = p_{T,i}/p_{T,{\rm jet}}$, the
+  momentum $j_T$ perpendicular to the jet axis, the angle $\theta$ to the axis, the distance $r$ to the axis in rapidity
+  and azimuth, and the transverse momentum profile $\rho(r)$.
+\end{itemize}
+The per-event histograms are normalised by the number of events accepted by the event filter. The per-jet and
+per-constituent histograms characterise the jets themselves: they are normalised by the number of jets of their folder,
+that is of their event filter, particle filter, radius and jet filter, so that a constituent distribution is a
+distribution per jet. The profiles are averages per jet.
+
+The task \code{JetPairAnalyzer} studies pairs of jets. For each event filter, particle filter, radius and jet filter,
+it forms the pairs of the jets accepted, each pair once with its first jet of higher rank, and fills one folder per jet
+pair filter (\code{JET\_PAIR\_FILTER}), named for instance \code{MB\_Charged\_R0p4\_AllJets\_LeadSub}. The pair
+filters, created by \code{JetPairFilterCreator}, test the ranks of the two jets (\code{RANK1}, \code{RANK2}: the leading
+and subleading jets, for instance), their azimuthal separation $|\Delta\varphi|$ in $[0,\pi]$, the acoplanarity
+$\pi - |\Delta\varphi|$, the separation $|\Delta\eta|$, the momentum balance $x_J = p_{T,2}/p_{T,1}$, and the mass and
+transverse momentum of the pair; a back-to-back selection, for instance, requires $|\Delta\varphi| > \pi - \delta$ and
+$x_J$ above a minimum. The folders hold the number of pairs per event, normalised by the number of events; and, per
+pair, $p_{T,1}$, $p_{T,2}$ and their correlation, $\eta_1$, $\eta_2$, the azimuthal difference
+$\Delta\varphi = \varphi_1 - \varphi_2$ in $[-\pi/2, 3\pi/2)$, the acoplanarity, $\Delta\eta$, $x_J$, the asymmetry
+$A_J = (p_{T,1}-p_{T,2})/(p_{T,1}+p_{T,2})$, the mass, transverse momentum and rapidity of the pair, and $\Delta\varphi$
+versus $x_J$, normalised by the number of pairs of the folder; with the averages of $x_J$, $A_J$ and the acoplanarity
+versus $p_{T,1}$. Both tasks share the base \code{JetTask}, which reads the radii and the jet filters, gets the jets of
+each event, and makes, names and normalises the folders.
+
+
+The task \code{JetFluctuationAnalyzer} measures the fluctuations and correlations of the multiplicities within the jets.
+For each jet accepted, it records the numbers of constituents $N$, $N_+$, $N_-$, $N_0$, the net charge $Q = N_+ - N_-$
+and $Q^2$, the second factorial moments $N(N-1)$, $N_+(N_+-1)$, $N_-(N_--1)$, $N_0(N_0-1)$, and the number of pairs of
+opposite charges $N_+N_-$, as averages per jet: integrated, versus the jet $p_T$, and versus $N$. The underlying event
+is measured, event by event, in cones of the radius of the jets transverse to the leading jet of the same particle
+filter and radius: at $\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}$ (\code{UE:MODE} \code{TRANSVERSE}), or at
+$\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}\pm 2R$ (\code{TRANSVERSE\_SHIFTED}). A cone is kept if it lies within
+the acceptance, $|\eta| < \eta_{\max} - R$, and does not overlap any jet (its axis at least $2R$ from that of every jet).
+The same moments of the particles of the cones fill profiles versus the variables of each jet of the event, so that the
+underlying event of a bin of jet $p_T$ or $N$ is that of the events of its jets.
+
+The derived quantities are computed at the end of the run: the variances $\sigma^2_N = F_2 + \avg{N} - \avg{N}^2$ (with
+$F_2 = \avg{N(N-1)}$) of the total and of each charge, that of the net charge, the normalised two-particle densities
+\begin{equation}
+  R_2^{++} = \frac{\avg{N_+(N_+-1)}}{\avg{N_+}^2} - 1, \qquad
+  R_2^{+-} = \frac{\avg{N_+N_-}}{\avg{N_+}\avg{N_-}} - 1,
+\end{equation}
+$R_2^{--}$ likewise, and $\nu_{\rm dyn} = R_2^{++} + R_2^{--} - 2R_2^{+-}$. They are also corrected for the underlying
+event. The particles of a jet are taken as the sum of those of the jet itself, $s$, and of the underlying event, $b$,
+independent, with $b$ distributed as in a cone. Then
+\begin{align}
+  \avg{s} &= \avg{N} - \avg{b}, \qquad
+  F_2(s) = F_2(N) - 2\avg{s}\avg{b} - F_2(b), \nonumber\\
+  \avg{s_+s_-} &= \avg{N_+N_-} - \avg{s_+}\avg{b_-} - \avg{b_+}\avg{s_-} - \avg{b_+b_-},
+\end{align}
+from which the variances, $R_2$ and $\nu_{\rm dyn}$ of $s$ follow. The moments are averages and are not scaled; the
+derived quantities are computed again by a job reading the folders (\code{HISTOGRAM:IMPORT}), for instance once the
+sub-samples are merged.
+
+% ---------------------------------------------------------------------------------------------------------------
 \subsection{Global observables and event shapes}
 \label{sec:global}
 
 The task \code{GlobalAnalyzer} computes, for each event and each particle filter, the multiplicity $n$, the total energy
 $e=\sum_i E_i$, the net electric charge $q=\sum_i q_i$, the net strangeness $s$ and the net baryon number $b$ of the
-accepted particles, their total transverse momentum $\sum\pT$ and its mean $\sum\pT/n$. These values are also stored in
-the event record, where the event filters of the other tasks use them to define event classes (multiplicity classes, for
-instance), and \code{NuDynAnalyzer} uses one of them as its event variable. The histograms hold their event-by-event
+accepted particles, their total transverse momentum $\sum\pT$ and its mean $\sum\pT/n$. They are the global quantities
+of the selections of its particle filters, made once per event and shared by the tasks (Section~\ref{sec:filters}), which
+the event filters of any task also test directly to define event classes (multiplicity classes, for instance);
+\code{NuDynAnalyzer} uses one of them as its event variable. The histograms hold their event-by-event
 distributions and their averages versus $n$ (Table~\ref{tab:global}); the derived calculator adds the inclusive mean
 transverse momentum versus multiplicity, $\avg{\sum\pT}/n$.
 
 The task \code{SpherocityAnalyzer} computes the transverse spherocity of the accepted particles of each event,
 \begin{equation}
-  S_0 = \min_{\hat{\mathbf n}} \left(\frac{\sum_i |\mathbf p_{\mathrm{T},i}\times\hat{\mathbf n}|}{\sum_i p_{\mathrm{T},i}}\right)^2 ,
+  S_0 = \frac{\pi^2}{4}\,\min_{\hat{\mathbf n}} \left(\frac{\sum_i |\mathbf p_{\mathrm{T},i}\times\hat{\mathbf n}|}{\sum_i p_{\mathrm{T},i}}\right)^2 ,
 \end{equation}
-where the minimum is searched over \code{nSteps} directions $\hat{\mathbf n}$ of the transverse plane, and its unweighted
-version $S_1$, computed with unit transverse vectors. $S_0$ ranges from 0 for pencil-like events to $\pi^2/4$ for
-isotropic ones (\CAP{} does not apply the usual factor $\pi^2/4$, which would bring it to 1).
+where $\hat{\mathbf n}$ is a unit vector of the transverse plane, and its unweighted version $S_1$, computed with the
+unit vectors $\mathbf p_{\mathrm{T},i}/p_{\mathrm{T},i}$. Both range from 0 for pencil-like events to 1 for isotropic
+ones. Since the sum is a concave function of the azimuth of $\hat{\mathbf n}$ between the directions of the particles,
+its minimum lies along one of them: these directions are tried, which gives the exact minimum, for up to \code{nSteps}
+particles, and \code{nSteps} directions spread over $\pi$ are tried for more. Selections of fewer than
+\code{MinMultiplicity} particles (by default 3) are not filled, since their spherocity is not meaningful; analyses of
+data usually require at least 10 charged particles. The same quantity is that of the selections tested by the event
+filters (Section~\ref{sec:filters}).
 \todo{reference for spherocity.}
 
 \begin{table*}[t]

@@ -9,6 +9,7 @@
  * *********************************************************************/
 //! @file Polynomial2D.cpp
 //! @brief Implementation of Polynomial2D.
+#include <memory>
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -78,6 +79,40 @@ namespace CAP
   values.assign(n, 0.0);
   for (unsigned int d=0; d<=_degree; d++)
     for (unsigned int i=0; i<=d; i++) values[index(i, d - i)] = tp[i]*sp[d - i];
+  }
+
+  Function * Polynomial2D::derivativeFunction(unsigned int axis) const
+  {
+  if (axis > 1) return nullptr;
+  unsigned int n = nCoefficients();
+  double scale = parameterValue(n + 1 + 2*axis);
+  double factor = scale != 0 ? 1.0/scale : 1.0;
+  Polynomial2D * d = new Polynomial2D(_degree > 0 ? _degree - 1 : 0);
+  unsigned int m = d->nCoefficients();
+  for (unsigned int k=0; k<m; k++) d->_parameters[k].setValue(0.0);
+  for (unsigned int deg=1; deg<=_degree; deg++)
+    for (unsigned int i=0; i<=deg; i++)
+      {
+      unsigned int j = deg - i;
+      unsigned int power = axis == 0 ? i : j;
+      if (power == 0) continue;
+      unsigned int target = axis == 0 ? index(i - 1, j) : index(i, j - 1);
+      d->_parameters[target].setValue(d->_parameters[target].value() + factor*power*parameterValue(index(i, j)));
+      }
+  for (unsigned int k=0; k<4; k++) d->_parameters[m + k] = _parameters[n + k];   // the same mapping
+  return d;
+  }
+
+  VectorND Polynomial2D::gradientAt(const std::vector<double> & x) const
+  {
+  checkRank(x.size(), __FUNCTION__);
+  VectorND g(2);
+  for (unsigned int axis=0; axis<2; axis++)
+    {
+    std::unique_ptr<Function> d(derivativeFunction(axis));
+    g[axis] = d->evaluateAt(x[0], x[1]);
+    }
+  return g;
   }
 
   double Polynomial2D::evaluateAt(double x, double y) const

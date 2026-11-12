@@ -1,0 +1,70 @@
+% Classes of src/gui (CapGui) and their dependencies. Paper: section "CapGui" (fig:gui); Doxygen: CapGui.hpp.
+%   pdflatex GuiClasses.tex; pdftoppm -r 200 -png -singlefile GuiClasses.pdf GuiClasses;
+%   pdftocairo -svg GuiClasses.pdf GuiClasses.svg
+\documentclass[tikz,border=2pt]{standalone}
+\input{ClassDiagramStyle}
+\input{ClassDiagramLegend}
+\begin{document}
+\begin{tikzpicture}[every node/.append style={anchor=north}]
+  \begin{scope}[on background layer]
+    \fill[folder, rounded corners=3pt] (-0.15,-0.25) rectangle (17.45,-8.3);
+  \end{scope}
+  \node[title] at (0.0,-0.3) {gui};
+
+  % application (left column)
+  \node[steer=3.7cm] (GuiApp) at (2.05,-0.75)
+    {\cn{CapGuiApp} \tiny(a CapApp)\m{the application of CapGui: every}\m{session a plot file; tabs, pane links,}\m{PlotEditor; PlotCatalog, PlotOutputs}};
+  \node[cls=3.7cm] (App) at (2.05,-2.45)
+    {\cn{CapApp} \tiny(an ActionListener)\m{configuration, menus and their actions,}\m{files, undo, presentations, comparisons}\m{(StatisticalTests)}};
+  \node[cls=3.2cm] (Action) at (2.05,-4.2) {\cn{ActionListener, ActionEvent}\m{the actions of the menus}};
+  \node[cls=2.0cm] (MenuBar) at (2.4,-5.35) {\cn{MenuBar}\m{shortcuts}};
+  \node[cls=1.5cm] (Menu) at (2.4,-6.3) {\cn{Menu}};
+  \node[cls=2.2cm] (MenuItem) at (2.4,-7.1) {\cn{MenuItem}\m{MenuItemStyle}};
+  \draw[inherit] (GuiApp.south) -- (App.north);
+  \draw[inherit] (App.south) -- (Action.north);
+  \draw[owns] (MenuBar.south) -- (Menu.north);
+  \draw[owns] (Menu.south) -- (MenuItem.north);
+  \draw[uses] (MenuItem.west) -- (0.0,0 |- MenuItem.west) |- node[lbl, pos=0.25, right]{notifies} (Action.west);
+
+  % window
+  \node[steer=4.4cm] (Gui) at (8.0,-0.6)
+    {\cn{CapGui}\m{main window: panes, file browsers, menus,}\m{status bar; displays only: the application,}\m{a listener of the menu bar, decides}\m{(Dear ImGui, GLFW, OpenGL)}};
+  \draw[owns] (App.east |- 0,-2.6) -- (5.2,-2.6) |- node[lbl, pos=0.75, above]{the window} (Gui.west |- 0,-1.3);
+  \draw[owns] (Gui.west |- 0,-1.75) -- (4.5,-1.75) |- (MenuBar.east);
+
+  \node[cls=2.0cm] (FileDialog) at (11.7,-0.6) {\cn{FileDialog}\m{open, folder, save}};
+  \node[cls=1.9cm] (FitDialog) at (13.9,-0.6) {\cn{FitDialog}\m{Fit window (Fitter)}};
+  \node[cls=2.4cm] (Maps) at (16.0,-0.6) {\cn{DetectorMapsDialog}\m{efficiencies, smearers}};
+  \draw[owns] (Gui.north) -- (8.0,0.05) -- (16.0,0.05) -- (Maps.north);
+  \draw (FileDialog.north) -- (11.7,0.05);
+  \draw (FitDialog.north) -- (13.9,0.05);
+
+  \node[cls=2.4cm] (Canvas) at (6.1,-2.75) {\cn{CanvasPane}\m{a canvas, its toolbar}\m{and the mouse}};
+  \node[cls=2.2cm] (Browser) at (9.9,-2.75) {\cn{FileBrowser}\m{folders and objects}\m{of the CAP files}};
+  \node[cls=1.9cm] (DataPane) at (12.3,-2.75) {\cn{DataPane}\m{a histogram or}\m{data as a table}};
+  \node[cls=1.9cm] (FitPane) at (14.5,-2.75) {\cn{FitPane}\m{fits of the}\m{selected graph}};
+  \draw[owns] (Gui.south) -- (8.0,-2.4);
+  \draw (6.1,-2.4) -- (14.5,-2.4);
+  \foreach \c in {Canvas, Browser, DataPane, FitPane} \draw (\c.north |- 0,-2.4) -- (\c.north);
+
+  % drawing
+  \node[cls=2.4cm] (Painter) at (6.1,-4.4) {\cn{ImGuiPainter}\m{(a Painter): draws the}\m{Graphics with Dear ImGui}};
+  \node[tool=2.2cm] (Editor) at (8.6,-4.4) {\cn{GraphEditor}\m{dialogs: title, axes,}\m{legend, items}};
+  \node[cls=2.4cm] (Tex) at (8.6,-5.85) {\cn{LatexTextures}\m{OpenGL textures of the}\m{texts typeset by LaTeX}};
+  \draw[owns] (Canvas.south) -- (Painter.north);
+  \draw[uses] (Canvas.east |- 0,-3.2) -| (Editor.north);
+  \draw[uses] (6.9,0 |- Painter.south) |- (Tex.west);
+
+  \node[tool=2.9cm] (Outputs) at (12.6,-4.4) {\cn{PlotOutputs}\m{figures, PDF book, PowerPoint}\m{presentation, LaTeX document}};
+  \node[tool=2.9cm] (Catalog) at (15.6,-4.4) {\cn{PlotCatalog}\m{catalogPlots(): histograms of}\m{CAP files, RunCAP workflows}};
+
+  % other folders
+  \node[ext=2.2cm] (GPainter) at (5.6,-7.6) {\an{Painter} \tiny(Graphics)};
+  \node[ext=2.3cm] (GCanvas) at (8.4,-7.6) {\cn{Canvas, Graph}\m{(Graphics)}};
+  \node[ext=2.0cm] (CapFile) at (10.8,-7.6) {\cn{CapFile} \tiny(Base)};
+  \draw[inherit] (5.6,0 |- Painter.south) -- (GPainter.north);
+  \draw[uses] (Canvas.west) -- (4.8,0 |- Canvas.west) |- (7.6,-7.3) -- (7.6,0 |- GCanvas.north);
+  \draw[uses] (10.8,0 |- Browser.south) -- (CapFile.north);
+  \legendat{0.0}{-8.55}
+\end{tikzpicture}
+\end{document}

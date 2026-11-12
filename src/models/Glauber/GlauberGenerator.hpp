@@ -1,3 +1,14 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
+ * All rights reserved.
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau,  Nov 10, 2026
+ * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
+ *
+ * *********************************************************************/
 #ifndef CAP__GlauberGenerator
 #define CAP__GlauberGenerator
 #include "GlauberDb.hpp"
@@ -14,6 +25,9 @@ using namespace std;
 //! @brief Monte Carlo Glauber event generator: for each event, places the nucleons of the two nuclei, draws the impact
 //! parameter (uniform in b^2 between the minimum and maximum), optionally rotates the event plane, and determines the
 //! nucleon-nucleon collisions from their transverse distances and the nucleon-nucleon collision profile.
+//!
+//! @image html GlauberClasses.png "Classes of the Glauber model (models/Glauber)" width=100%
+//! @image latex GlauberClasses.pdf "Classes of the Glauber model (models/Glauber)" width=\textwidth
 //!
 //! Main keys (\<name\>:GENERATION:...): NUCLEUS_A:NAME, NUCLEUS_A:NTRIALS, NUCLEUS_A:RECENTERING,
 //! NUCLEUS_A:ALLOW_OVERLAP, NUCLEUS_A:MIN_INTER (same for NUCLEUS_B), INTERACTION:NNCOLLISION_OPTION (1: profile

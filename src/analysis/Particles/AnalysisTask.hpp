@@ -98,6 +98,15 @@ namespace CAP
   //!
   String combinationName(unsigned int index, unsigned int nParticles) const;
 
+  //!
+  //! @brief Add to a folder the histogram folders this task writes to the output file of its job, made empty without
+  //! processing anything (the histograms the configuration asks for, created but not filled; for the calculators,
+  //! with their derived histograms): what a job of the task would write, e.g. to make a plotting template from a
+  //! workflow (see WorkflowHistograms). The subtasks are not visited. Nothing here (a task without histograms).
+  //! @param top folder of the job
+  //!
+  virtual void makeEmptyHistograms(Folder & top) { (void)top; }
+
   //! @brief Scale the histograms by a factor (implemented by derived classes). @param factor factor
   //! @throws NoImplementationException here
   virtual void scaleHistograms(double factor);

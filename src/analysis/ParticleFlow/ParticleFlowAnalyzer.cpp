@@ -4,22 +4,22 @@
  *
  * For the licensing terms see LICENSE.
  *
- * Author: Claude Pruneau,   04/01/2024
+ * Author: Claude Pruneau
  *
  * *********************************************************************/
 #include "ParticleFlowAnalyzer.hpp"
+#include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "Histogram.hpp"
-#include "Profile.hpp"
-
 
 namespace CAP
 {
 
 ParticleFlowAnalyzer::ParticleFlowAnalyzer()
 :
-EventProcessorSingle<ParticleFlowHistos,ParticleFlowDerivedHistos>()
+Base(),
+_managedPoiFilters(),
+_poiSlots()
 {
   appendClassName("ParticleFlowAnalyzer");
   setMinimumReportLevel(Object::kInfo);
@@ -29,85 +29,87 @@ EventProcessorSingle<ParticleFlowHistos,ParticleFlowDerivedHistos>()
 
 ParticleFlowAnalyzer::ParticleFlowAnalyzer(const ParticleFlowAnalyzer & source)
 :
-EventProcessorSingle<ParticleFlowHistos,ParticleFlowDerivedHistos>(source)
-{   }
+Base(source),
+_managedPoiFilters(source._managedPoiFilters),
+_poiSlots(source._poiSlots)
+{ }
 
 ParticleFlowAnalyzer & ParticleFlowAnalyzer::operator=(const ParticleFlowAnalyzer & rhs)
 {
   if (this!=&rhs)
     {
-    EventProcessorSingle<ParticleFlowHistos,ParticleFlowDerivedHistos>:operator=(rhs);
+    Base::operator=(rhs);
+    _managedPoiFilters = rhs._managedPoiFilters;
+    _poiSlots          = rhs._poiSlots;
     }
   return *this;
 }
 
 void ParticleFlowAnalyzer::setDefaultConfiguration()
 {
-  EventProcessorSingle<ParticleFlowHistos,ParticleFlowDerivedHistos>::setDefaultConfiguration();
-  const String & taskName = name();
-  String objectType = "HISTOGRAM";
-  _configuration.addProperty(createKey(taskName,objectType,"n1_nbins"),  100);
-  _configuration.addProperty(createKey(taskName,objectType,"n1_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"n1_max"),  100.0);
+  if (reportDebug(__FUNCTION__)) { printCR(); }
+  Base::setDefaultConfiguration();
+  _managedPoiFilters.setDefaultObjectConfiguration(name(),"POI_FILTER",_configuration);
+  ParticleFlowHistos::addDefaultConfiguration(_configuration,name());
+}
 
-  _configuration.addProperty(createKey(taskName,objectType,"etot_nbins"),  100);
-  _configuration.addProperty(createKey(taskName,objectType,"etot_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"etot_max"),  100.0);
+void ParticleFlowAnalyzer::configure(const Configuration & configuration)
+{
+  Base::configure(configuration);
+  _managedPoiFilters.configureObjects(configuration);
+  std::vector<String> names;
+  for (ParticleFilter * filter : _managedPoiFilters.getObjects()) names.push_back(filter->name());
+  for (ParticleFlowHistos * folder : histograms()) folder->setPoiNames(names);
+}
 
-  _configuration.addProperty(createKey(taskName,objectType,"pt_nbins"),  100);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"pt_max"),  100.0);
+void ParticleFlowAnalyzer::initialize()
+{
+  _managedPoiFilters.initialize();
+  Base::initialize();
+  _poiSlots.clear();
+  for (ParticleFilter * filter : _managedPoiFilters.getObjects())
+    _poiSlots.push_back(ParticleSelection::slot(filter,ptOrder()));
+}
 
-  _configuration.addProperty(createKey(taskName,objectType,"eta_nbins"),  20);
-  _configuration.addProperty(createKey(taskName,objectType,"eta_min"),   -1.0);
-  _configuration.addProperty(createKey(taskName,objectType,"eta_max"),    1.0);
-
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_nbins"),  20);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_min"),   -1.0);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_max"),    1.0);
-
-  _configuration.addProperty(createKey(taskName,objectType,"phi_nbins"),  36);
-  _configuration.addProperty(createKey(taskName,objectType,"phi_min"),    0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"phi_max"),    CAP::MATH::twoPi());
-
-  _configuration.addProperty(createKey(taskName,objectType,"phiEta_nbins"),    720);
-  _configuration.addProperty(createKey(taskName,objectType,"phiEtaPt_nbins"),  7200);
-  _configuration.addProperty(createKey(taskName,objectType,"phiY_nbins"),      720);
-  _configuration.addProperty(createKey(taskName,objectType,"phiYPt_nbins"),    7200);
-  _configuration.addProperty(createKey(taskName,objectType,"eta_fill"),         true);
-  _configuration.addProperty(createKey(taskName,objectType,"rapidity_fill"),           false);
-  _configuration.addProperty(createKey(taskName,objectType,"p2_fill"),          false);
-  _configuration.addProperty(createKey(taskName,objectType,"FillPid"),         false);
+void ParticleFlowAnalyzer::finalize()
+{
+  Base::finalize();
+  _managedPoiFilters.finalize();
 }
 
 void ParticleFlowAnalyzer::execute()
 {
-  _taskExecuted.increment();;
+  _taskExecuted.increment();
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (! filterParticles(theEvent.particles()))  return;
-  unsigned int iEventFilter = 0;
-  std::vector<ParticleFlowHistos*> histograms = histograms_1();
-  for (auto accepted : _acceptedParticleFilters)
+  if (!filterParticles(theEvent)) return;
+  const double evt = getEvtClassValue();
+  const unsigned int nef = nEventFilters(), npf = nParticleFilters(), npoi = _poiSlots.size();
+  std::vector<ParticleFlowHistos*> & folders = histograms();
+  if (folders.size()<nCombinations()) throw Exception("Fewer histogram folders than combinations of filters",__FUNCTION__);
+  std::vector<const std::vector<Particle*>*> poi(npoi);
+  for (unsigned int j=0; j<npoi; j++) poi[j] = &theEvent.selection(_poiSlots[j]).particles();
+  std::vector<ParticleEfficiency*> & efficiencies = particleEfficiencies();
+  std::vector<double> refWeights;
+  std::vector<std::vector<double>> poiWeights(npoi);
+  for (unsigned int e=0; e<nef; e++)
     {
-    if (!accepted) continue;
-    unsigned int  baseFlow   = iEventFilter*nParticleFilters();
-    for (unsigned int iParticleFilter=0; iParticleFilter<nParticleFilters();iParticleFilter++)
+    if (!_acceptedEventFilters[e]) continue;
+    for (unsigned int r=0; r<npf; r++)
       {
-      ParticleFlowHistos * histosFlow = histograms[baseFlow+iParticleFilter];
-      std::vector<Particle*> & particlesSelected = acceptedParticles[iParticleFilter];
-      std::vector<double>   & weightsSelected   = acceptedWeights[iParticleFilter];
-      double multiplicityAccepted = 0.0;
-      double energyAccepted = 0.0;
-      for (auto & particle : particlesSelected)
+      if (!_acceptedParticleFilters[r]) continue;
+      const std::vector<Particle*> & ref = acceptedParticles(r);
+      ParticleEfficiency * efficiency = objectFor(efficiencies,e,nef,r,npf,"particle efficiencies");
+      refWeights.resize(ref.size());
+      for (unsigned int i=0; i<ref.size(); i++) refWeights[i] = efficiency ? efficiency->weight(*ref[i]) : 1.0;
+      for (unsigned int j=0; j<npoi; j++)
         {
-        multiplicityAccepted++;
-        energyAccepted += particle->momentum().t();
-        histosFlow.fill(*particle,1.0);
+        poiWeights[j].resize(poi[j]->size());
+        for (unsigned int i=0; i<poi[j]->size(); i++)
+          poiWeights[j][i] = efficiency ? efficiency->weight(*(*poi[j])[i]) : 1.0;
         }
-      histosFlow.fillMultiplicity(multiplicityAccepted,energyAccepted,1.0);
+      folders[e*npf+r]->fill(evt,ref,refWeights,poi,poiWeights);
       }
-    iEventFilter++;
     }
 }
 

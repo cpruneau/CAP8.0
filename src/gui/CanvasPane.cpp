@@ -97,6 +97,19 @@ namespace CAP
   void CanvasPane::renderToolbar()
   {
   ImGui::PushID("toolbar");
+  // first, so that they stay visible however narrow the pane: + (new pane) and x (close this pane)
+  if (onAddPane)
+    {
+    if (ImGui::Button("+")) onAddPane();
+    ImGui::SetItemTooltip("New canvas pane, beside this one");
+    ImGui::SameLine();
+    }
+  if (onClosePane)
+    {
+    if (ImGui::Button("x")) onClosePane();
+    ImGui::SetItemTooltip("Close this canvas (in a plot file: remove the canvas from it; Edit > Undo brings it back)");
+    ImGui::SameLine(0, 18);
+    }
   renderPalette();
   ImGui::SameLine(0, 18);
   ImGui::Checkbox("Keep shapes", &_keepShapes);
@@ -172,15 +185,6 @@ namespace CAP
     {
     ImGui::SameLine(0, 18);
     ImGui::TextDisabled("graph %d of %d", _selectedGraph+1, _canvas.nGraphs());
-    }
-  if (onAddPane)
-    {
-    float buttonWidth = ImGui::CalcTextSize("+").x + 2*ImGui::GetStyle().FramePadding.x;
-    ImGui::SameLine(0, 18);
-    float available = ImGui::GetContentRegionAvail().x;   // right-aligned
-    if (available > buttonWidth) ImGui::SetCursorPosX(ImGui::GetCursorPosX() + available - buttonWidth);
-    if (ImGui::Button("+")) onAddPane();
-    ImGui::SetItemTooltip("New canvas pane, beside this one (close a pane with the x of its tab)");
     }
   ImGui::PopID();
   }
@@ -425,6 +429,7 @@ namespace CAP
     }
 
   drawShapeOverlay(painter);
+  drawCurveKnots(painter);
 
   // drop target: an object dragged from the file browser goes to the graph under the mouse
   if (ImGui::BeginDragDropTarget())
@@ -559,6 +564,27 @@ namespace CAP
   Graph::Pick pick;
   if (k >= 0) pick = _canvas.graph(k).pick(p, tolX, tolY);
 
+  // ---- a knot of the edited curve dragged
+  if (_drag.kind == kMoveKnot)
+    {
+    if (_curve && _drag.graph >= 0 && _drag.graph < _canvas.nGraphs() && _drag.vertex >= 0
+        && _drag.vertex < int(_curve->nKnots()))
+      {
+      Graph & g = _canvas.graph(_drag.graph);
+      double x, y;
+      g.fromCanvas(g.view(), p, x, y);
+      _curve->moveKnot(unsigned(_drag.vertex), x, y);
+      if (_curveChanged) _curveChanged();
+      ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+      char text[160];
+      std::snprintf(text, sizeof(text), "Knot %d: x = %.5g   y = %.5g", _drag.vertex + 1,
+                    _curve->knotX(unsigned(_drag.vertex)), _curve->knotY(unsigned(_drag.vertex)));
+      _hoverText = text;
+      }
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Left) || !_curve) _drag = Drag();
+    return true;
+    }
+
   // ---- a drag in progress
   if (_drag.kind != kNoDrag)
     {
@@ -612,6 +638,9 @@ namespace CAP
 
   if (_tool != kSelectTool || _drafting) return handleDrawing(painter, hovered, k, p);
   if (!hovered) { _hoverText = ""; return false; }
+
+  // ---- the edited curve: its knots and the curve itself, before the other parts of the graph
+  if (_curve && k >= 0 && k == curveGraph() && handleCurve(painter, k)) return true;
 
   // ---- shapes (over everything else): the handles of the selected one, then the shape under the mouse
   if (k >= 0)
@@ -834,8 +863,8 @@ namespace CAP
   {
   static const char * tips[] =
     {
-    "Select: click a shape to select it, drag it to move it (or one of its handles to reshape it); "
-    "right-click for its menu, double-click for its properties",
+    ("Select: click a shape to select it, drag it to move it (or one of its handles to reshape it); "
+     "right-click for its menu, double-click for its properties"),
     "Rectangle: drag in a graph (Shift: square)",
     "Oval: drag in a graph (Shift: circle)",
     "Triangle: drag in a graph (Shift: as wide as high)",
@@ -893,7 +922,7 @@ namespace CAP
     }
   }
 
-  bool CanvasPane::handleDrawing(ImGuiPainter & painter, bool hovered, int k, const Point2D & p)
+  bool CanvasPane::handleDrawing(ImGuiPainter & /*painter*/, bool hovered, int k, const Point2D & p)
   {
   ImGuiIO & io = ImGui::GetIO();
   bool polygon = _tool == kPolygonTool;
@@ -978,6 +1007,104 @@ namespace CAP
     }
   if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) finish();
   return true;
+  }
+
+  void CanvasPane::editCurve(MATH::BezierCurve * curve, const std::function<void()> & changed)
+  {
+  _curve = curve;
+  _curveChanged = changed;
+  if (_drag.kind == kMoveKnot) _drag = Drag();
+  }
+
+  int CanvasPane::curveGraph() const
+  {
+  if (!_curve) return -1;
+  for (int k=0; k<_canvas.nGraphs(); k++)
+    for (const auto & item : _canvas.graph(k).items())
+      if (item.kind() == GraphItem::kFunction && item.function() == _curve) return k;
+  return -1;
+  }
+
+  bool CanvasPane::handleCurve(ImGuiPainter & painter, int k)
+  {
+  Graph & g = _canvas.graph(k);
+  const Graph::View view = g.view();
+  ImVec2 mouse = ImGui::GetMousePos();
+  Point2D p = painter.toCanvas(mouse.x, mouse.y);
+  if (!g.frameContains(p)) return false;
+  const float tolerance = 7.0f;   // pixels
+  // the knot under the mouse
+  int knot = -1;
+  for (unsigned int j=0; j<_curve->nKnots(); j++)
+    {
+    float sx, sy;
+    painter.toScreen(g.toCanvas(view, _curve->knotX(j), _curve->knotY(j)), sx, sy);
+    if (std::fabs(sx - mouse.x) <= tolerance && std::fabs(sy - mouse.y) <= tolerance) knot = int(j);
+    }
+  double x, y;
+  g.fromCanvas(view, p, x, y);
+  if (knot >= 0)
+    {
+    ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+    char text[200];
+    std::snprintf(text, sizeof(text), "Knot %d: x = %.5g   y = %.5g   (drag: move; right-click: remove)", knot + 1,
+                  _curve->knotX(unsigned(knot)), _curve->knotY(unsigned(knot)));
+    _hoverText = text;
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+      {
+      if (_curve->removeKnot(unsigned(knot))) { if (_curveChanged) _curveChanged(); }
+      else _hoverText = "A curve keeps at least 2 knots";
+      return true;
+      }
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+      {
+      Drag drag;
+      drag.kind   = kMoveKnot;
+      drag.graph  = k;
+      drag.vertex = knot;
+      _drag = drag;
+      _selectedGraph = k;
+      return true;
+      }
+    return false;
+    }
+  // the curve under the mouse: a click adds a knot there, which can be dragged at once
+  float cx, cy;
+  painter.toScreen(g.toCanvas(view, x, _curve->evaluateAt(x)), cx, cy);
+  if (std::fabs(cy - mouse.y) > tolerance) return false;
+  ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+  _hoverText = "Click: add a knot here (then drag it)";
+  if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left)) return false;
+  int added = _curve->insertKnot(x);
+  if (added < 0) return true;
+  if (_curveChanged) _curveChanged();
+  Drag drag;
+  drag.kind   = kMoveKnot;
+  drag.graph  = k;
+  drag.vertex = added;
+  _drag = drag;
+  _selectedGraph = k;
+  return true;
+  }
+
+  void CanvasPane::drawCurveKnots(ImGuiPainter & painter)
+  {
+  int k = curveGraph();
+  if (k < 0) return;
+  const Graph & g = _canvas.graph(k);
+  const Graph::View view = g.view();
+  ImDrawList * drawList = ImGui::GetWindowDrawList();
+  ImU32 blue  = ImGui::GetColorU32(ImVec4(0.18f, 0.43f, 0.85f, 1.0f));
+  ImU32 white = ImGui::GetColorU32(ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+  for (unsigned int j=0; j<_curve->nKnots(); j++)
+    {
+    Point2D q = g.toCanvas(view, _curve->knotX(j), _curve->knotY(j));
+    float sx, sy;
+    painter.toScreen(q, sx, sy);
+    bool dragged = _drag.kind == kMoveKnot && _drag.vertex == int(j);
+    drawList->AddCircleFilled(ImVec2(sx, sy), dragged ? 6.0f : 5.0f, dragged ? blue : white);
+    drawList->AddCircle(ImVec2(sx, sy), dragged ? 6.0f : 5.0f, blue, 0, 2.0f);
+    }
   }
 
   void CanvasPane::drawShapeOverlay(ImGuiPainter & painter)

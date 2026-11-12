@@ -1,8 +1,20 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
+ * All rights reserved.
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau,  Nov 10, 2026
+ * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
+ *
+ * *********************************************************************/
+#include <algorithm>
 #include "GlauberAnalyzer.hpp"
 #include "GlauberHistos.hpp"
 #include "MathBasicFunctions.hpp"
 #include "NuclearDistribution.hpp"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 
 
 namespace CAP
@@ -60,6 +72,9 @@ namespace CAP
   if (reportDebug(__FUNCTION__)) { printCR();}
   Task::setDefaultConfiguration();
   const String & taskName = Task::name();
+  // the defaults of the lists first: the values below (EVENT:USE, EVENT:N, ...) replace theirs
+  _managedEvents.setDefaultObjectConfiguration(taskName,"EVENT", _configuration);
+  _managedEventFilters.setDefaultObjectConfiguration(taskName,"EVENT_FILTER", _configuration);
 
   _configuration.addProperty(createKey(taskName,"SEVERITY"),         "TRACE");
   _configuration.addProperty(createKey(taskName,"SUBTASK:N"),        0);
@@ -79,31 +94,55 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"drawEvents:N"),20);
   _configuration.addProperty(createKey(taskName,objectType,"nOrders"),4);
 
-  _configuration.addProperty(createKey(taskName,objectType,"nParts_nbins"),100);
-  _configuration.addProperty(createKey(taskName,objectType,"nBinaries_nbins"),100);
-  _configuration.addProperty(createKey(taskName,objectType,"nSpect_nbins"),100);
-  _configuration.addProperty(createKey(taskName,objectType,"impact_nbins"),50);
-  _configuration.addProperty(createKey(taskName,objectType,"area_nBins"),50);
-
+  // binning of the histograms (the keys GlauberHistos::configure() reads): <variable>_nBins, _min, _max
+  _configuration.addProperty(createKey(taskName,objectType,"nParts_nBins"),100);
   _configuration.addProperty(createKey(taskName,objectType,"nParts_min"),0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"nBinaries_min"),0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"nSpect_min"),0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"impact_min"),0.0);
-  _configuration.addProperty(createKey(taskName,objectType,"area_min"),0.0);
-
   _configuration.addProperty(createKey(taskName,objectType,"nParts_max"),400.0);
-  _configuration.addProperty(createKey(taskName,objectType,"nBinaries_maxn"),1000.0);
+  _configuration.addProperty(createKey(taskName,objectType,"nBinaries_nBins"),100);
+  _configuration.addProperty(createKey(taskName,objectType,"nBinaries_min"),0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"nBinaries_max"),1000.0);
+  _configuration.addProperty(createKey(taskName,objectType,"nSpect_nBins"),100);
+  _configuration.addProperty(createKey(taskName,objectType,"nSpect_min"),0.0);
   _configuration.addProperty(createKey(taskName,objectType,"nSpect_max"),400.0);
+  _configuration.addProperty(createKey(taskName,objectType,"impact_nBins"),50);
+  _configuration.addProperty(createKey(taskName,objectType,"impact_min"),0.0);
   _configuration.addProperty(createKey(taskName,objectType,"impact_max"),14.0);
+  _configuration.addProperty(createKey(taskName,objectType,"cs_nBins"),20);
+  _configuration.addProperty(createKey(taskName,objectType,"cs_min"),-1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"cs_max"),1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"psi_nBins"),20);
+  _configuration.addProperty(createKey(taskName,objectType,"psi_min"),-pi()/2.0);
+  _configuration.addProperty(createKey(taskName,objectType,"psi_max"),pi()/2.0);
+  _configuration.addProperty(createKey(taskName,objectType,"ecc_nBins"),20);
+  _configuration.addProperty(createKey(taskName,objectType,"ecc_min"),-1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"ecc_max"),1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"rn_nBins"),20);
+  _configuration.addProperty(createKey(taskName,objectType,"rn_min"),0.0);
+  _configuration.addProperty(createKey(taskName,objectType,"rn_max"),12.0);
+  _configuration.addProperty(createKey(taskName,objectType,"psiN_nBins"),20);
+  _configuration.addProperty(createKey(taskName,objectType,"psiN_min"),-pi()/2.0);
+  _configuration.addProperty(createKey(taskName,objectType,"psiN_max"),pi()/2.0);
+  _configuration.addProperty(createKey(taskName,objectType,"eccN_nBins"),20);
+  _configuration.addProperty(createKey(taskName,objectType,"eccN_min"),-1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"eccN_max"),1.0);
+  _configuration.addProperty(createKey(taskName,objectType,"area_nBins"),50);
+  _configuration.addProperty(createKey(taskName,objectType,"area_min"),0.0);
   _configuration.addProperty(createKey(taskName,objectType,"area_max"),14.0);
 
-  _managedEvents.setDefaultObjectConfiguration(taskName,"EVENT", _configuration);
-  _managedEventFilters.setDefaultObjectConfiguration(taskName,"EVENT_FILTER", _configuration);
   _managedHistograms.setDefaultObjectConfiguration(taskName,objectType, _configuration);
 
 
   //  TF1 *radialProfile = new TF1("radialProfile","x*TMath::Exp(-x*x/(2.*[0]*[0]))",0.0,3.0*sigma);
   //  radialProfile->SetParameter(0,sigma);
+  }
+
+  namespace
+  {
+  //! Folder of histogram group k: named after event filter k.
+  String filterFolderName(const std::vector<String> & names, unsigned int k)
+  {
+  return k<names.size() ? names[k] : String("Folder_")+String(std::to_string(k).c_str());
+  }
   }
 
   void GlauberAnalyzer::configure(const Configuration & configuration)
@@ -115,6 +154,17 @@ namespace CAP
   _managedHistograms.configureObjects(configuration);
   _eventFilterNames.clear();
   for (auto filter : eventFilters()) _eventFilterNames.push_back(filter->name());
+  // one group of histograms per event filter (one if there is none): the groups the configuration does not list
+  // (HISTOGRAM:N smaller, e.g. 0 when written without filters) are made here, configured as those it lists
+  if (configuration.valueBool(createKey(name(),"HISTOGRAM","USE"), true, true))
+    {
+    unsigned int needed = std::max(1u, (unsigned int) _eventFilterNames.size());
+    for (unsigned int k=_managedHistograms.size(); k<needed; k++)
+      {
+      GlauberHistos * histos = _managedHistograms.instantiateObject(name()+String("_")+filterFolderName(_eventFilterNames,k));
+      histos->configure(name(),"HISTOGRAM",configuration,k);
+      }
+    }
   }
 
   void GlauberAnalyzer::initialize()
@@ -137,15 +187,6 @@ namespace CAP
   if (nef<1) nef = 1;
   _eventAccepted.initialize("EventAccepted",nef);
   _acceptedEventFilters.assign(nef,false);
-  }
-
-  namespace
-  {
-  //! Folder of histogram group k: named after event filter k.
-  String filterFolderName(const std::vector<String> & names, unsigned int k)
-  {
-  return k<names.size() ? names[k] : String("Folder_")+String(std::to_string(k).c_str());
-  }
   }
 
   void GlauberAnalyzer::saveHistograms(Folder & top)
@@ -224,7 +265,7 @@ namespace CAP
     if (_useRadialProfile)
       {
       smearRadius = 0.5;// fix me radialProfile->GetRandom();
-      smearPhi    = twoPi() * gRandom->Rndm();
+      smearPhi    = twoPi() * CAP::MATH::randomGenerator().random();
       x += smearRadius*std::cos(smearPhi);
       y += smearRadius*std::sin(smearPhi);
       }
@@ -239,7 +280,7 @@ namespace CAP
     if (_useRadialProfile)
       {
       smearRadius = 0.5;//radialProfile->GetRandom();
-      smearPhi    = twoPi() * gRandom->Rndm();
+      smearPhi    = twoPi() * CAP::MATH::randomGenerator().random();
       x += smearRadius*std::cos(smearPhi);
       y += smearRadius*std::sin(smearPhi);
       }
@@ -270,9 +311,7 @@ namespace CAP
     {
     if (filters.size()==0)
       {
-      //printValue("glauberHistos.size()",glauberHistos.size());
-
-      glauberHistos[0]->fill(ev,1.0);
+      if (!glauberHistos.empty()) glauberHistos[0]->fill(ev,1.0);
       _eventAccepted.increment(0);
       }
     else
@@ -282,7 +321,7 @@ namespace CAP
         {
         if (filter->accept(ev))
           {
-          glauberHistos[iEventFilter]->fill(ev,1.0);
+          if (iEventFilter<glauberHistos.size()) glauberHistos[iEventFilter]->fill(ev,1.0);
           _eventAccepted.increment(iEventFilter);
           }
         iEventFilter++;
@@ -307,10 +346,7 @@ namespace CAP
     {
     if (count>0)
       {
-      double f = 1.0/double(count);
-      printValue("Count",count);
-      printValue("Scaling factor",f);
-      factors.push_back(f);
+      factors.push_back(1.0/double(count));
       }
     else
       factors.push_back(1.0);
@@ -322,19 +358,13 @@ namespace CAP
 
   void GlauberAnalyzer::scaleHistograms(const std::vector<double> & factors)
   {
-  printValue("Check",1);
   std::vector<GlauberHistos*> & histos = histograms();
-  printValue("histos.size()",histos.size());
-  printValue("factors.size()",factors.size());
 
-  for (unsigned int k=0; k< histos.size(); k++)
+  for (unsigned int k=0; k<histos.size() && k<factors.size(); k++)
     {
-    printValue("k",k);
-    double scale = factors[k];
-    printValue("scale",scale);
-    histos[k]->scaleHistograms(scale);
+    if (reportInfo(__FUNCTION__)) { printValue("k",k); printValue("scale",factors[k]); }
+    histos[k]->scaleHistograms(factors[k]);
     }
-  printValue("Check",2);
   }
   
 

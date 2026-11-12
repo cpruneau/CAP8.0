@@ -2,24 +2,20 @@
 
 ####################################################################################################
 #
-# Source this script to define CAP environment variables used in the build and running of CAP6.0 with root.
-# This script assumes the following environment variables are already defined
+# Source this script to define the CAP environment variables used to build and run CAP.
 #
-# The build and run CAP, you need to have the following tools
+# To build and run CAP, you need the following tools
 #
-#   cmake    :  (cmake3) available (free) from: https://cmake.org/download/
+#   cmake    :  (3.14 or later) available (free) from: https://cmake.org/download/
 #   make     :  indigenous to all LINUX, UNIX, and MacOS platforms
-#   root     :  available from the CERN root distribution or from various sources
-#   PYTHIA8  :  available from https://pythia.org
-#   FASTJET  :  available from https://fastjet.fr
+#   a C++17 compiler (clang or gcc)
 #
-# To build and run the code, you will need a version root that works on your machine. Given root uses
-# dynamic load libraries, it is sufficient (usually) to get a recent binary of root for your
-# platform. Alternatively, you can also use a version built from the source. Note: EG libraries
-# are no longer required with CAP.
-#
-# The cmake code assumes root is located at $ROOTSYS and
-# that the $LD_LIBRARY_PATH, $SHLIB_PATH, $PYTHONPATH,
+# Optional packages (each turned on with a CMake option, see src/CMakeLists.txt or BuildCAP.py)
+#   PYTHIA8  :  available from https://pythia.org            (-DCAP_WITH_PYTHIA8=ON)
+#   FASTJET  :  available from https://fastjet.fr            (-DCAP_WITH_JETS=ON)
+#   root     :  available from https://root.cern             (-DCAP_WITH_ROOT=ON: .root histogram files, the Helpers
+#               library, the Epos and Pythia readers of ROOT event trees). CAP does not need ROOT otherwise; with
+#               CAP_WITH_ROOT, cmake locates ROOT through $ROOTSYS.
 #
 # To build the code after download
 #    cd  CAP             : i.e., whereever you have located your download version of CAP

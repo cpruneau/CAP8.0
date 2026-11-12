@@ -2,9 +2,6 @@
 # Project CAP/Base
 ################################################################################################
 
-#include(${ROOT_USE_FILE})
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-#add_definitions(${ROOT_CXX_FLAGS})
 
 
 ################################################################################################
@@ -27,11 +24,13 @@ CapFile.cpp
 Directory.cpp
 File.cpp
 FileSystem.cpp
+FileListing.cpp
 FileSystemEntry.cpp
 Folder.cpp
 Reflection.cpp
 BaseReflection.cpp
 LongParameter.cpp
+StringParameter.cpp
 NameHelpers.cpp
 Object.cpp
 Parser.cpp
@@ -40,7 +39,6 @@ Properties.cpp
 PropertiesParser.cpp
 Property.cpp
 String.cpp
-SelectionGenerator.cpp
 StreamHelpers.cpp
 Task.cpp
 Timer.cpp
@@ -51,7 +49,7 @@ XmlFile.cpp
 XmlReader.cpp
 XmlWriter.cpp)
 
-target_link_libraries(Base ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(Base ${EXTRA_LIBS} )
 target_include_directories(Base PUBLIC Base ${EXTRA_INCLUDES} )
 
 # optimization for big histogram access within the pair inner loop
@@ -61,23 +59,23 @@ add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 # Tests (run with ctest in the build directory; not installed)
 add_executable(TestFileSystem tests/TestFileSystem.cpp)
-target_link_libraries(TestFileSystem Base ${ROOT_LIBRARIES})
+target_link_libraries(TestFileSystem Base)
 add_test(NAME FileSystem COMMAND TestFileSystem)
 add_executable(TestDirectory tests/TestDirectory.cpp)
-target_link_libraries(TestDirectory Base ${ROOT_LIBRARIES})
+target_link_libraries(TestDirectory Base)
 add_test(NAME Directory COMMAND TestDirectory)
 add_executable(TestFileLoading tests/TestFileLoading.cpp)
-target_link_libraries(TestFileLoading Base ${ROOT_LIBRARIES})
+target_link_libraries(TestFileLoading Base)
 add_test(NAME FileLoading COMMAND TestFileLoading)
 add_executable(TestLazyLoading tests/TestLazyLoading.cpp)
-target_link_libraries(TestLazyLoading Base ${ROOT_LIBRARIES})
+target_link_libraries(TestLazyLoading Base)
 add_test(NAME LazyLoading COMMAND TestLazyLoading)
 add_executable(TestReflection tests/TestReflection.cpp)
-target_link_libraries(TestReflection Base ${ROOT_LIBRARIES})
+target_link_libraries(TestReflection Base)
 add_test(NAME Reflection COMMAND TestReflection)
 add_executable(TestFolderEditing tests/TestFolderEditing.cpp)
-target_link_libraries(TestFolderEditing Base ${ROOT_LIBRARIES})
+target_link_libraries(TestFolderEditing Base)
 add_test(NAME FolderEditing COMMAND TestFolderEditing)
 
-install(TARGETS Base  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(Base LIBRARY "$ENV{CAP_LIB_PATH}")
 

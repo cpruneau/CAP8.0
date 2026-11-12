@@ -92,7 +92,7 @@ int main()
     CHECK(Region(box).remove(1) == band && Region::dimensionName(3) == "x3");
 
     FitSelection all;
-    CHECK(all.everything() && all.contains({123.0}) && all.toString() == "all points");
+    CHECK(all.everything() && all.contains(std::vector<double>{ 123.0 }) && all.toString() == "all points");
     FitSelection s({0.0}, {10.0});
     s.exclude(0, 4.0, 6.0);
     CHECK(s.contains(3.9) && !s.contains(4.0) && !s.contains(5.0) && !s.contains(6.0) && s.contains(6.1) && !s.contains(10.5));

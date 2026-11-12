@@ -163,7 +163,9 @@ namespace CAP
   //! @return sum of f_i'(x)
   //! @throws MathException if the rank is not 1
   //!
-  virtual double derivativeAt(double x) const;
+  double derivativeAt(double x) const override;
+  //! @brief Whether the derivative is analytical: all the components have analytical derivatives. @return true if so
+  bool hasAnalyticalDerivative() const override;
 
   //!
   //! @brief Integral of a composite of rank 1 from low to high: sum of the components' integrals.
@@ -171,14 +173,14 @@ namespace CAP
   //! @return integral of f(x) dx from low to high
   //! @throws MathException if the rank is not 1, or (numerical integration) if a bound is not finite
   //!
-  virtual double integralInRange(double low, double high) const;
+  double integralInRange(double low, double high) const override;
   //!
   //! @brief Integral of a composite of rank 2 over [x1Low, x1High] x [x2Low, x2High].
   //! @param x1Low lower bound of x1 @param x1High upper bound of x1 @param x2Low lower bound of x2 @param x2High upper bound of x2
   //! @return integral of f dx1 dx2
   //! @throws MathException if the rank is not 2, or (numerical integration) if a bound is not finite
   //!
-  virtual double integralInRange(double x1Low, double x1High, double x2Low, double x2High) const;
+  double integralInRange(double x1Low, double x1High, double x2Low, double x2High) const override;
   //!
   //! @brief Integral of a composite of rank 3 over [x1Low, x1High] x [x2Low, x2High] x [x3Low, x3High].
   //! @param x1Low lower bound of x1 @param x1High upper bound of x1 @param x2Low lower bound of x2
@@ -186,14 +188,14 @@ namespace CAP
   //! @return integral of f dx1 dx2 dx3
   //! @throws MathException if the rank is not 3, or (numerical integration) if a bound is not finite
   //!
-  virtual double integralInRange(double x1Low, double x1High, double x2Low, double x2High, double x3Low, double x3High) const;
+  double integralInRange(double x1Low, double x1High, double x2Low, double x2High, double x3Low, double x3High) const override;
   //!
   //! @brief Integral of the composite over the box [low[0], high[0]] x ... x [low[n-1], high[n-1]], for any rank n.
   //! @param low lower bounds, one per variable @param high upper bounds, one per variable
   //! @return integral of f over the box
   //! @throws MathException if low.size() or high.size() differs from the rank, or (numerical integration) if a bound is not finite
   //!
-  virtual double integralInRange(const std::vector<double> & low, const std::vector<double> & high) const;
+  double integralInRange(const std::vector<double> & low, const std::vector<double> & high) const override;
 
   protected:
 

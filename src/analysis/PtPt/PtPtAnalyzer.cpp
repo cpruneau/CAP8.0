@@ -44,7 +44,7 @@ void PtPtAnalyzer::execute()
   _taskExecuted.increment();
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (!filterParticles(theEvent.particles()))  return;
+  if (!filterParticles(theEvent))  return;
 //  double mult = getEvtClassValue();
 //  for (unsigned int iEventFilter=0; iEventFilter<nEventFilters();iEventFilter++)
 //    {

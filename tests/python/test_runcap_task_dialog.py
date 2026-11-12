@@ -29,6 +29,15 @@ except Exception:                               # no tkinter, or no display
     _root = None
 
 
+def widgets(widget, cls):
+    found = []
+    for child in widget.winfo_children():
+        if isinstance(child, cls):
+            found.append(child)
+        found += widgets(child, cls)
+    return found
+
+
 def library():
     lib = F.FilterLibrary()
     for name in ("MB", "Central"):
@@ -74,16 +83,45 @@ class TestDialog(unittest.TestCase):
         dialog.destroy()
 
     def test_filter_lines(self):
-        """One line per kind: a count menu, then one name menu per filter used."""
+        """One line per kind: a count menu, then one name menu per filter used (the particle efficiencies and
+        smearers: a line of their own, see test_maps_choice)."""
         def menus():
             return [w for w in self.dialog.filters_box.winfo_children() if isinstance(w, tk.ttk.Combobox)]
-        self.assertEqual(len(menus()), len(F.task_kinds(self.task, TEMPLATES)))          # the count menus
+        kinds = F.task_kinds(self.task, TEMPLATES)
+        self.assertEqual(len(menus()), len([k for k in kinds if k not in F.MAPS_KINDS]))   # the count menus
         self.dialog._set_count("PARTICLE_FILTER", 3)
         line = self.dialog.filters_box.grid_slaves(row=F.task_kinds(self.task, TEMPLATES).index("PARTICLE_FILTER"),
                                                    column=2)[0]
         names = [w.get() for w in line.winfo_children() if isinstance(w, tk.ttk.Combobox)]
         self.assertEqual(names, ["PiP", "PiM", "KP"])
         self.assertEqual(menus()[1].cget("values")[-1], "3")                 # at most the 3 particle filters defined
+
+    def test_maps_choice(self):
+        """Particle efficiencies: none, one for all, or a grid of one per event filter and particle filter, which
+        follows the filters chosen."""
+        for name in ("EffPi", "EffK"):
+            self.library.add(F.FilterDef("PARTICLE_EFFICIENCY", name))
+        F.set_maps_file(self.library, "/data/Maps.cap")
+        self.dialog.refresh()
+        self.dialog._set_count("EVENT_FILTER", 2)
+        self.dialog._set_count("PARTICLE_FILTER", 2)
+        kind = "PARTICLE_EFFICIENCY"
+        self.assertEqual(F.maps_mode(self.task, kind), F.NO_MAPS)
+        self.dialog._set_maps_mode(kind, F.ONE_FOR_ALL)
+        self.assertEqual(self.task.filters[kind], ["EffPi"])
+        self.dialog._set_maps_mode(kind, F.PER_FILTERS)
+        self.assertEqual(self.task.filters[kind], ["EffPi"] * 4)            # MB x (PiP, PiM), Central x (PiP, PiM)
+        self.dialog._set_choice(kind, 3, "EffK")                            # Central, PiM
+        row = F.task_kinds(self.task, TEMPLATES).index(kind)
+        line = self.dialog.filters_box.grid_slaves(row=row, column=1)[0]
+        cells = [w.get() for w in widgets(line, tk.ttk.Combobox)]
+        self.assertEqual(cells, ["Per event filter and particle filter", "EffPi", "EffPi", "EffPi", "EffK"])
+        self.dialog._set_count("PARTICLE_FILTER", 3)                        # KP added: its cells take the first name
+        self.assertEqual(self.task.filters[kind], ["EffPi", "EffPi", "EffPi", "EffPi", "EffK", "EffPi"])
+        self.dialog._set_choice("EVENT_FILTER", 0, "Central")               # MB replaced: Central twice
+        self.assertEqual(F.check_maps_choices(self.task), [])
+        self.dialog._set_maps_mode(kind, F.NO_MAPS)
+        self.assertNotIn(kind, self.task.filters)
 
     def test_choices(self):
         self.dialog._set_count("EVENT_FILTER", 1)

@@ -11,8 +11,8 @@ PtPtTasks.cpp
 PtPtAnalyzer.cpp
 PtPtHistos.cpp)
 
-target_link_libraries(PtPt Base  Particles  ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
+target_link_libraries(PtPt Base  Particles  ${EXTRA_LIBS} )
 target_include_directories(PtPt  PUBLIC Base  Particles  PtPt ${EXTRA_INCLUDES} ) 
 
-install(TARGETS PtPt  LIBRARY DESTINATION "$ENV{CAP_LIB_PATH}")
+cap_install(PtPt LIBRARY "$ENV{CAP_LIB_PATH}")
 

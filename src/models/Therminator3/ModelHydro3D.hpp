@@ -53,10 +53,6 @@ namespace CAP
  * @fn ModelHydro3D::ModelHydro3D()
  * @brief Default constructor.
  *
- * @fn ModelHydro3D::ModelHydro3D(TRandom2* aRandom)
- * @brief Constructor that links a random number generator form Integrator.
- * @param [in] aRandom pointer to <a href="http://root.cern.ch/root/html/TRandom2.html">TRandom2</a> random number generator
- *
  * @fn ModelHydro3D::~ModelHydro3D()
  * @brief Destructor.
  *

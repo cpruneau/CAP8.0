@@ -1,8 +1,20 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
+ * All rights reserved.
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau,  Nov 10, 2026
+ * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
+ *
+ * *********************************************************************/
 #include "GlauberExceptions.hpp"
 #include "MathConstants.hpp"
 #include "NNProfile.hpp"
 #include "PrintHelpers.hpp"
-#include "TMath.h"
+#include <cmath>
+#include "Distributions.hpp"
 using namespace std;
 using CAP::MATH::pi;
 using CAP::MATH::twoPi;
@@ -71,7 +83,7 @@ namespace CAP
     return p;
     }
   else // otherwise use the Gamma formula from RybczyRybczynski et al.
-    return _g*(1-TMath::Gamma(_omegaInv,_gOverOmegaR2*x*x));
+    return _g*(1-CAP::MATH::Distributions::regularizedGammaP(_omegaInv,_gOverOmegaR2*x*x));
   }
 
   //!

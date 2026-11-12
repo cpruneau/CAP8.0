@@ -194,6 +194,31 @@ public:
         }
   }
 
+  //!
+  //! @brief Add to a folder the empty folders the task writes (see AnalysisTask::makeEmptyHistograms()): those of the
+  //! analyzer with their derived histograms, and the BF folders. @param top folder of the job
+  //!
+  void makeEmptyHistograms(Folder & top) override
+  {
+  Base::makeEmptyHistograms(top);
+  const unsigned int nEF = this->nEventFilters(), nPF = this->nParticleFilters(), nSp = _species.size();
+  std::vector<PAIR*> & pairFolders = this->histograms();
+  if (pairFolders.size()<this->nCombinations()) return;
+  Folder * folder = top.folder(this->histogramTaskName());
+  if (!folder) folder = top.addFolder(this->histogramTaskName());
+  for (unsigned int e=0; e<nEF; e++)
+    for (unsigned int s1=0; s1<nSp; s1++)
+      for (unsigned int s2=0; s2<nSp; s2++)
+        {
+        BF bf(bfFolderName(e,s1,s2));
+        bf.setParentTask(this);
+        bf.createFrom(*pairFolders[e*nPF*nPF + _species[s1].first*nPF + _species[s2].first]);
+        Folder * target = folder->folder(bf.name());
+        if (!target) target = folder->addFolder(bf.name());
+        bf.saveTo(*target);
+        }
+  }
+
   //! @brief Delete the BF folders, and clear the task.
   virtual void clear() override
   {

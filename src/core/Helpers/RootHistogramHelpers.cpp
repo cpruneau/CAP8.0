@@ -7,7 +7,7 @@
 #include "TSystem.h"
 #include "TParameter.h"
 #include "TSystemDirectory.h"
-#include "TRandom.h"
+#include "MersenneTwister.hpp"
 #include "Vector3D.hpp"
 #include "MathBasicFunctions.hpp"
 
@@ -1257,8 +1257,8 @@ namespace CAP
     {
     n1_1->GetRandom2 (y1, pt1);
     n1_2->GetRandom2 (y2, pt2);
-    phi1 = 2.0*CAP::MATH::pi() * gRandom->Rndm();
-    phi2 = 2.0*CAP::MATH::pi() * gRandom->Rndm();
+    phi1 = 2.0*CAP::MATH::pi() * CAP::MATH::randomGenerator().random();
+    phi2 = 2.0*CAP::MATH::pi() * CAP::MATH::randomGenerator().random();
     bool status = calculateQ3DwPtPhiY(pt1, phi1, y1, pt2, phi2, y2, Qlong, Qout, Qside);
     if (status==0)
       {
@@ -1288,8 +1288,8 @@ namespace CAP
     {
     n1_1->GetRandom2 (eta1, pt1);
     n1_2->GetRandom2 (eta2, pt2);
-    phi1 = 2.0*CAP::MATH::pi() * gRandom->Rndm();
-    phi2 = 2.0*CAP::MATH::pi() * gRandom->Rndm();
+    phi1 = 2.0*CAP::MATH::pi() * CAP::MATH::randomGenerator().random();
+    phi2 = 2.0*CAP::MATH::pi() * CAP::MATH::randomGenerator().random();
     bool status = calculateQ3DwPtPhiEta(pt1, phi1, eta1, pt2, phi2, eta2, Qlong, Qout, Qside);
     if (status==0)
       {
@@ -1329,8 +1329,8 @@ namespace CAP
             v3  = v1*v2;
             for (int k=0;k<100000;k++)
               {
-              phi1 = 2.0*CAP::MATH::pi() * gRandom->Rndm();
-              phi2 = 2.0*CAP::MATH::pi() * gRandom->Rndm();
+              phi1 = 2.0*CAP::MATH::pi() * CAP::MATH::randomGenerator().random();
+              phi2 = 2.0*CAP::MATH::pi() * CAP::MATH::randomGenerator().random();
               eta1 = n1_1->GetXaxis()->GetBinCenter(i1x);
               pt1  = n1_1->GetZaxis()->GetBinCenter(i1y);
               eta2 = n1_2->GetXaxis()->GetBinCenter(i2x);

@@ -1,3 +1,14 @@
+/* **********************************************************************
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
+ * All rights reserved.
+ *
+ * For the licensing terms see LICENSE.
+ *
+ * Author: Claude Pruneau,  Nov 10, 2026
+ * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
+ *
+ * *********************************************************************/
 #include "MathConstants.hpp"
 #include "GlauberPoint.hpp"
 

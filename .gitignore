@@ -69,5 +69,6 @@ _orig_*/
 # workflow GUI: per-user settings, generated task templates, default job output
 .RunCAP.json
 DB/Templates/
+DB/FunctionCatalog.xml
 /output/
 .RunCAP.crash.log

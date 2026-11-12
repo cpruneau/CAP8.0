@@ -19,8 +19,10 @@
 #include "imgui_internal.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-//! Silence the deprecation warnings of OpenGL on macOS.
+//! Silence the deprecation warnings of OpenGL on macOS (also defined by CMake for CapImGui).
+#ifndef GL_SILENCE_DEPRECATION
 #define GL_SILENCE_DEPRECATION
+#endif
 #include <GLFW/glfw3.h>
 #include "CapGui.hpp"
 #include "CanvasRegistry.hpp"
@@ -228,6 +230,11 @@ namespace CAP
   CanvasPane & pane = *_panes.back();
   pane.setShowToolbar(_settings.toolbars);
   pane.onAddPane = [this]() { _addRequested = true; };
+  CanvasPane * added = &pane;
+  pane.onClosePane = [this, added]()
+    {
+    for (int k=0; k<nPanes(); k++) if (_panes[std::size_t(k)].get() == added) { requestClosePane(k); break; }
+    };
   if (onNewPane) onNewPane(pane);
   return pane;
   }
@@ -236,9 +243,12 @@ namespace CAP
   {
   nColumns = nColumns < 1 ? 1 : (nColumns > 6 ? 6 : nColumns);
   nRows    = nRows    < 1 ? 1 : (nRows    > 6 ? 6 : nRows);
-  size_t n = size_t(nColumns*nRows);
-  while (_panes.size() > n) _panes.pop_back();
-  while (_panes.size() < n) newPane();
+  int n = nColumns*nRows;
+  // the panes of the main window (those of the windows of canvases stay)
+  auto nMain = [this]() { int m = 0; for (const auto & p : _panes) if (p->host() < 0) m++; return m; };
+  while (nMain() > n)
+    for (int k=nPanes()-1; k>=0; k--) if (_panes[k]->host() < 0) { _panes.erase(_panes.begin() + k); break; }
+  while (nMain() < n) newPane();
   _columns = nColumns;
   _rows    = nRows;
   _gridColumns = nColumns;
@@ -249,9 +259,11 @@ namespace CAP
   void CapGui::setPaneCount(int n)
   {
   n = n < 1 ? 1 : (n > 36 ? 36 : n);
-  if (n == nPanes()) return;
-  while (nPanes() > n) _panes.pop_back();
-  while (nPanes() < n) newPane();
+  auto nMain = [this]() { int m = 0; for (const auto & p : _panes) if (p->host() < 0) m++; return m; };
+  if (n == nMain()) return;
+  while (nMain() > n)
+    for (int k=nPanes()-1; k>=0; k--) if (_panes[k]->host() < 0) { _panes.erase(_panes.begin() + k); break; }
+  while (nMain() < n) newPane();
   _gridColumns = int(std::ceil(std::sqrt(double(n))));
   _columns = _gridColumns;
   _rows    = (n + _gridColumns - 1)/_gridColumns;
@@ -268,6 +280,155 @@ namespace CAP
   return pane;
   }
 
+  int CapGui::addPaneWindow(const String & title, int columns, int rows, int width, int height)
+  {
+  PaneWindow window;
+  window.title   = title;
+  window.label   = title.str() + "###CapPaneWindow" + std::to_string(_paneWindows.size());
+  window.columns = std::max(1, columns);
+  window.rows    = std::max(1, rows);
+  window.width   = std::max(200, width);
+  window.height  = std::max(150, height);
+  _paneWindows.push_back(window);
+  return int(_paneWindows.size()) - 1;
+  }
+
+  void CapGui::setPaneWindow(int k, const String & title, int columns, int rows, int width, int height)
+  {
+  while (int(_paneWindows.size()) <= k) addPaneWindow(title, columns, rows, width, height);
+  PaneWindow & w = _paneWindows[std::size_t(k)];
+  w.title = title;
+  w.label = title.str() + "###CapPaneWindow" + std::to_string(k);
+  columns = std::max(1, columns);
+  rows = std::max(1, rows);
+  if (w.columns != columns || w.rows != rows) { w.columns = columns; w.rows = rows; w.layoutPending = true; }
+  bool shown = false;
+  for (const auto & p : _panes) if (p->host() == k) shown = true;
+  if (!shown) { w.width = std::max(200, width); w.height = std::max(150, height); w.placed = false; }
+  }
+
+  void CapGui::setPaneWindowPaneCount(int k, int n)
+  {
+  if (k < 0 || k >= nPaneWindows()) return;
+  int count = 0;
+  for (const auto & p : _panes) if (p->host() == k) count++;
+  if (count == n) return;
+  while (count > n)
+    for (int j=nPanes()-1; j>=0; j--) if (_panes[std::size_t(j)]->host() == k) { _panes.erase(_panes.begin() + j); count--; break; }
+  while (count < n) { addPaneTo(k); count++; }
+  _paneWindows[std::size_t(k)].layoutPending = true;
+  if (_currentPane >= nPanes()) _currentPane = 0;
+  }
+
+  void CapGui::closePaneWindowsFrom(int k)
+  {
+  for (int j=nPanes()-1; j>=0; j--) if (_panes[std::size_t(j)]->host() >= k) _panes.erase(_panes.begin() + j);
+  for (std::size_t w=std::size_t(std::max(0, k)); w<_paneWindows.size(); w++) { _paneWindows[w].placed = false; _paneWindows[w].layoutPending = true; }
+  if (_currentPane >= nPanes()) _currentPane = 0;
+  }
+
+  std::vector<CanvasPane *> CapGui::panesOf(int window)
+  {
+  std::vector<CanvasPane *> panes;
+  for (const auto & p : _panes) if (p->host() == window) panes.push_back(p.get());
+  return panes;
+  }
+
+  CanvasPane & CapGui::addPaneTo(int window)
+  {
+  CanvasPane & pane = newPane();
+  if (window >= 0 && window < nPaneWindows())
+    {
+    pane.setHost(window);
+    _paneWindows[std::size_t(window)].layoutPending = true;
+    }
+  return pane;
+  }
+
+  void CapGui::paneWindowLayout(int k, int & width, int & height, int & columns, int & rows) const
+  {
+  const PaneWindow & w = _paneWindows.at(std::size_t(k));
+  width = w.width; height = w.height; columns = w.columns; rows = w.rows;
+  }
+
+  void CapGui::setWindowTitle(const String & title)
+  {
+  _settings.title = title;
+  if (_window) glfwSetWindowTitle(_window, title.data());
+  }
+
+  void CapGui::windowSize(int & width, int & height) const
+  {
+  width = _settings.width; height = _settings.height;
+  if (_window) glfwGetWindowSize(_window, &width, &height);
+  }
+
+  void CapGui::setWindowSize(int width, int height)
+  {
+  _settings.width = width; _settings.height = height;
+  if (_window && width > 0 && height > 0) glfwSetWindowSize(_window, width, height);
+  _layoutRequested = true;
+  }
+
+  void CapGui::renderPaneWindows()
+  {
+  ImGuiViewport * main = ImGui::GetMainViewport();
+  for (std::size_t w=0; w<_paneWindows.size(); w++)
+    {
+    PaneWindow & window = _paneWindows[w];
+    std::vector<CanvasPane *> panes;
+    for (const auto & p : _panes) if (p->host() == int(w)) panes.push_back(p.get());
+    if (panes.empty()) continue;
+    if (!window.placed)
+      {
+      // a window of its own on the screen (not merged into the main one): beside the main window if the screen has
+      // room for it, otherwise below it, otherwise cascaded over it
+      float width = float(window.width), height = float(window.height);
+      ImVec2 screenMin(main->Pos.x, main->Pos.y), screenMax(main->Pos.x + main->Size.x, main->Pos.y + main->Size.y);
+      ImGuiPlatformIO & platform = ImGui::GetPlatformIO();
+      for (const ImGuiPlatformMonitor & m : platform.Monitors)
+        if (main->Pos.x >= m.WorkPos.x && main->Pos.x < m.WorkPos.x + m.WorkSize.x &&
+            main->Pos.y >= m.WorkPos.y && main->Pos.y < m.WorkPos.y + m.WorkSize.y)
+          { screenMin = m.WorkPos; screenMax = ImVec2(m.WorkPos.x + m.WorkSize.x, m.WorkPos.y + m.WorkSize.y); }
+      float step = 30.0f*float(w);
+      ImVec2 position(main->Pos.x + main->Size.x + 8.0f + step, main->Pos.y + step);
+      if (position.x + width > screenMax.x)
+        {
+        position = ImVec2(main->Pos.x + step, main->Pos.y + main->Size.y + 8.0f + step);
+        if (position.y + height > screenMax.y)
+          position = ImVec2(std::max(screenMin.x, std::min(main->Pos.x + 60.0f + 40.0f*float(w), screenMax.x - width)),
+                            std::max(screenMin.y, std::min(main->Pos.y + 80.0f + 40.0f*float(w), screenMax.y - height)));
+        }
+      ImGui::SetNextWindowPos(position, ImGuiCond_Always);
+      ImGui::SetNextWindowSize(ImVec2(float(window.width), float(window.height)), ImGuiCond_Always);
+      window.placed = true;
+      }
+    ImGuiWindowClass windowClass;
+    windowClass.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoAutoMerge;
+    ImGui::SetNextWindowClass(&windowClass);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    bool visible = ImGui::Begin(window.label.c_str(), nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
+    ImGui::PopStyleVar();
+    ImVec2 size = ImGui::GetWindowSize();
+    window.width = int(size.x);
+    window.height = int(size.y);
+    ImGuiID dock = ImHashStr((std::string("CapPaneWindowDock") + std::to_string(w)).c_str());
+    if (window.layoutPending)
+      {
+      ImVec2 area = ImGui::GetContentRegionAvail();
+      ImGui::DockBuilderRemoveNode(dock);
+      ImGui::DockBuilderAddNode(dock, ImGuiDockNodeFlags_DockSpace);
+      ImGui::DockBuilderSetNodeSize(dock, ImVec2(std::max(area.x, 100.0f), std::max(area.y, 100.0f)));
+      dockGrid(dock, panes, window.columns);
+      ImGui::DockBuilderFinish(dock);
+      window.layoutPending = false;
+      }
+    if (visible) ImGui::DockSpace(dock, ImVec2(0, 0));
+    else ImGui::DockSpace(dock, ImVec2(0, 0), ImGuiDockNodeFlags_KeepAliveOnly);
+    ImGui::End();
+    }
+  }
+
   DataPane & CapGui::addDataPane()
   {
   char name[32];
@@ -282,11 +443,21 @@ namespace CAP
   void CapGui::closePane(int k)
   {
   if (k < 0 || k >= nPanes()) return;
-  if (nPanes() == 1)
+  int nMain = 0;
+  for (const auto & p : _panes) if (p->host() < 0) nMain++;
+  if (_panes[k]->host() < 0 && nMain == 1)
     {
     // the last canvas (moved out of the main window): an empty one takes its place in the main window
     ImGuiWindow * window = ImGui::GetCurrentContext() ? ImGui::FindWindowByName(_panes[k]->windowId()) : nullptr;
-    if (!window || !window->Viewport || window->Viewport == ImGui::GetMainViewport()) return;
+    if (!window || !window->Viewport || window->Viewport == ImGui::GetMainViewport())
+      {
+      // the last canvas of the main window stays, emptied
+      CanvasPane & pane = *_panes[k];
+      pane.canvas() = GRAPHICS::Canvas();
+      pane.divide(1, 1);
+      pane.setSelectedGraph(0);
+      return;
+      }
     newPane();
     _gridColumns = 1;
     _layoutRequested = true;
@@ -521,6 +692,7 @@ namespace CAP
     }
   if (_layoutRequested) { buildDockLayout(dockspace); _layoutRequested = false; }
   ImGui::DockSpaceOverViewport(dockspace, viewport);
+  renderPaneWindows();
   renderCanvases(hoverText);
 
   renderBrowser();
@@ -535,6 +707,12 @@ namespace CAP
   {
   if (_activeBrowser < 0 || _activeBrowser >= int(_browsers.size())) _activeBrowser = 0;
   return *_browsers[_activeBrowser];
+  }
+
+  void CapGui::closeBrowser(FileBrowser & browser)
+  {
+  if (!_browsers.empty() && _browsers.front().get() == &browser) { _settings.browserVisible = false; return; }
+  _browsersToClose.push_back(&browser);
   }
 
   FileBrowser & CapGui::addBrowser()
@@ -568,16 +746,29 @@ namespace CAP
     ImGui::DockBuilderSplitNode(dockId, ImGuiDir_Left, 0.22f, &left, &canvases);
     ImGui::DockBuilderDockWindow(FileBrowser::mainWindowName(), left);
     }
+  if (!_sideWindow.empty())
+    {
+    ImGuiID side = 0;
+    ImGui::DockBuilderSplitNode(canvases, ImGuiDir_Left, _sideFraction, &side, &canvases);
+    ImGui::DockBuilderDockWindow(_sideWindow.c_str(), side);
+    }
   buildPaneGrid(canvases);
   ImGui::DockBuilderFinish(dockId);
   }
 
   void CapGui::buildPaneGrid(unsigned int nodeId)
   {
+  std::vector<CanvasPane *> panes;
+  for (const auto & p : _panes) if (p->host() < 0) panes.push_back(p.get());
+  dockGrid(nodeId, panes, _gridColumns);
+  }
+
+  void CapGui::dockGrid(unsigned int nodeId, const std::vector<CanvasPane *> & panes, int gridColumns)
+  {
   // rows from the top, then the panes of each row from the left (the last row may have fewer panes)
-  int n = nPanes();
+  int n = int(panes.size());
   if (n == 0) return;
-  int columns = std::min(std::max(_gridColumns, 1), n);
+  int columns = std::min(std::max(gridColumns, 1), n);
   int rows = (n + columns - 1)/columns;
   std::vector<ImGuiID> rowNodes;
   ImGuiID remaining = nodeId;
@@ -596,14 +787,24 @@ namespace CAP
       {
       ImGuiID left = 0;
       ImGui::DockBuilderSplitNode(rest, ImGuiDir_Left, 1.0f/float(count - c), &left, &rest);
-      ImGui::DockBuilderDockWindow(_panes[r*columns + c]->windowId(), left);
+      ImGui::DockBuilderDockWindow(panes[r*columns + c]->windowId(), left);
       }
-    ImGui::DockBuilderDockWindow(_panes[r*columns + count - 1]->windowId(), rest);
+    ImGui::DockBuilderDockWindow(panes[r*columns + count - 1]->windowId(), rest);
     }
   }
 
   void CapGui::renderBrowser()
   {
+  for (FileBrowser * closing : _browsersToClose)
+    for (std::size_t k=1; k<_browsers.size(); k++)
+      if (_browsers[k].get() == closing)
+        {
+        if (onCloseBrowser) onCloseBrowser(*closing);
+        _browsers.erase(_browsers.begin() + long(k));
+        if (_activeBrowser >= int(k)) _activeBrowser = 0;
+        break;
+        }
+  _browsersToClose.clear();
   if (!_settings.browserVisible) return;
   ImGuiViewport * viewport = ImGui::GetMainViewport();
   if (_undockRequested)
@@ -624,7 +825,7 @@ namespace CAP
     {
     // follow what the user did with the mouse (docking or undocking the window)
     if (!_layoutRequested) _settings.browserDocked = ImGui::IsWindowDocked();
-    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) _activeBrowser = 0;
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) { _activeBrowser = 0; _lastFocus = kFocusBrowser; }
     _browsers.front()->render();
     }
   else if (!_layoutRequested) _settings.browserDocked = ImGui::IsWindowDocked();
@@ -641,11 +842,12 @@ namespace CAP
     bool open = true;
     if (ImGui::Begin(browser.windowName(), &open))
       {
-      if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) _activeBrowser = int(k);
+      if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) { _activeBrowser = int(k); _lastFocus = kFocusBrowser; }
       browser.render();
       }
     ImGui::End();
     if (open) { k++; continue; }
+    if (onBrowserCloseRequest && !onBrowserCloseRequest(browser)) { k++; continue; }
     if (onCloseBrowser) onCloseBrowser(browser);
     _browsers.erase(_browsers.begin() + long(k));
     if (_activeBrowser >= int(k)) _activeBrowser = 0;
@@ -676,15 +878,16 @@ namespace CAP
     CanvasPane & pane = *_panes[k];
     bool open = true;
     if (_focusRequested && k == _currentPane) ImGui::SetNextWindowFocus();
-    // a close button when there are other canvases, or when the canvas was moved out of the main window (closing the
-    // last canvas then puts an empty one in the main window, see closePane())
+    // a close button on every canvas (closing the last canvas of the main window clears it, see closePane())
     ImGuiWindow * window = ImGui::FindWindowByName(pane.windowId());
     bool outside = window && window->Viewport && window->Viewport != ImGui::GetMainViewport();
     // its group in the registry of the canvases: the main window, or the separate window holding it
     if (pane.canvas().registry())
       {
       String group = "Main window";
-      if (outside)
+      if (pane.host() >= 0 && pane.host() < nPaneWindows())
+        group = _paneWindows[std::size_t(pane.host())].title;
+      else if (outside)
         {
         auto found = _windowNumbers.find(window->Viewport->ID);
         if (found == _windowNumbers.end()) found = _windowNumbers.emplace(window->Viewport->ID, int(_windowNumbers.size()) + 2).first;
@@ -695,13 +898,14 @@ namespace CAP
       if (k >= 0 && !(registry.group(k) == group)) registry.setGroup(pane.canvas(), group);
       }
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
-    bool visible = ImGui::Begin(pane.windowLabel(), (nPanes() > 1 || outside) ? &open : nullptr,
+    bool visible = ImGui::Begin(pane.windowLabel(), &open,
                                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
     ImGui::PopStyleVar();
     if (visible)
       {
       // the pane whose window gets the focus (click, tab) becomes current
       bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+      if (focused) _lastFocus = kFocusCanvas;
       if (focused && _focusedPane != k) { _currentPane = k; _focusedPane = k; }
       ImVec2 size = ImGui::GetContentRegionAvail();
       bool clicked = pane.render(size.x, size.y, k == _currentPane, _font);
@@ -733,6 +937,7 @@ namespace CAP
     }
   renderFitPane();
   if (_fitDialog.render(_panes.empty() ? nullptr : &currentPane().currentGraph())) setFitPaneVisible(true);
+  _mapsDialog.render();
   if (areaX1 > areaX0) { _areaX = areaX0; _areaY = areaY0; _areaWidth = areaX1 - areaX0; _areaHeight = areaY1 - areaY0; }
 
   // panes added (+ button) or closed (x of their tab) by the user
@@ -746,7 +951,9 @@ namespace CAP
     {
     if (beforePanesChange) beforePanesChange();
     std::sort(_closeRequests.rbegin(), _closeRequests.rend());
-    for (int k : _closeRequests) closePane(k);
+    _closeRequests.erase(std::unique(_closeRequests.begin(), _closeRequests.end()), _closeRequests.end());
+    std::vector<int> rest = onClosePanes ? onClosePanes(_closeRequests) : _closeRequests;
+    for (int k : rest) closePane(k);
     _closeRequests.clear();
     }
   }

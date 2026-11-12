@@ -2,6 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include "MathExceptions.hpp"
+#include "GaussLegendreIntegrator.hpp"
 
 
 namespace CAP
@@ -91,27 +92,9 @@ namespace CAP
 
   void Legendre::gaussLegendre(unsigned int m, std::vector<double> & nodes, std::vector<double> & weights)
   {
-  if (m==0) throw MathException("Number of points must be at least 1",__FUNCTION__);
-  nodes.assign(m,0.0);
-  weights.assign(m,0.0);
-  for (unsigned int i=0; i<(m+1)/2; i++)   // roots are symmetric: compute the positive ones
-    {
-    double z  = std::cos(M_PI*(i + 0.75)/(m + 0.5));   // initial guess for root i
-    double dp = 1.0;
-    for (int iteration=0; iteration<100; iteration++)
-      {
-      double pm = value(m,z);
-      dp = derivative(m,z);
-      double dz = pm/dp;
-      z -= dz;
-      if (std::fabs(dz) <= 1.0E-16) break;
-      }
-    dp = derivative(m,z);
-    double w = 2.0/((1.0 - z*z)*dp*dp);
-    nodes[i]       =  z;   weights[i]       = w;
-    nodes[m-1-i]   = -z;   weights[m-1-i]   = w;
-    }
-  if (m%2==1) nodes[m/2] = 0.0;
+  GaussLegendreIntegrator::rule(m,nodes,weights);
+  std::reverse(nodes.begin(),nodes.end());      // decreasing order
+  std::reverse(weights.begin(),weights.end());
   }
 
   double Legendre::integralInRange(double low, double high) const
@@ -123,11 +106,7 @@ namespace CAP
   double result = fHigh - fLow;
   if (std::fabs(result) >= 1.0E-3*std::max(std::fabs(fLow),std::fabs(fHigh))) return result;
   // the antiderivatives nearly cancel: Gauss-Legendre quadrature with n/2+1 points, exact for a polynomial of degree n
-  std::vector<double> nodes, weights;
-  gaussLegendre(_degree/2+1,nodes,weights);
-  double mid = 0.5*(high+low), half = 0.5*(high-low), sum = 0.0;
-  for (unsigned int i=0; i<nodes.size(); i++) sum += weights[i]*evaluateAt(mid + half*nodes[i]);
-  return half*sum;
+  return GaussLegendreIntegrator::quadrature([this](double x) { return evaluateAt(x); },low,high,_degree/2+1);
   }
 
   } // namespace MATH

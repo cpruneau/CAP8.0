@@ -53,7 +53,7 @@ void NuDynAnalyzer::execute()
   _taskExecuted.increment();;
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (!filterParticles(theEvent.particles()))  return;
+  if (!filterParticles(theEvent))  return;
   double mult = getEvtClassValue();
   //double weight = 1.0;
   unsigned int nef = nEventFilters();

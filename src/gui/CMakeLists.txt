@@ -50,14 +50,16 @@ if(APPLE)
   target_compile_definitions(CapImGui PUBLIC GL_SILENCE_DEPRECATION)
 endif()
 
-# ---- CapGui
-add_executable(CapGui
-  CapGuiMain.cpp
+# ---- the interface, as a library used by bin/CapGui and by the programs built on it (bin/PlotHistos)
+add_library(CapGuiCore STATIC
   CapApp.cpp
   CapGui.cpp
+  CapGuiApp.cpp
+  PlotOutputs.cpp
   CanvasPane.cpp
   DataPane.cpp
   FitDialog.cpp
+  DetectorMapsDialog.cpp
   FitPane.cpp
   FileBrowser.cpp
   FileDialog.cpp
@@ -68,19 +70,40 @@ add_executable(CapGui
   Menu.cpp
   MenuBar.cpp
   MenuItem.cpp)
-set_target_properties(CapGui PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
-target_compile_definitions(CapGui PRIVATE CAP_SOURCE_ROOT="${CAP_TOP_DIR}")
-target_include_directories(CapGui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CAP_TOP_DIR}/external/nanosvg)
+set_target_properties(CapGuiCore PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON POSITION_INDEPENDENT_CODE ON)
+target_compile_definitions(CapGuiCore PUBLIC CAP_SOURCE_ROOT="${CAP_TOP_DIR}")
+target_include_directories(CapGuiCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} PRIVATE ${CAP_TOP_DIR}/external/nanosvg)
 set_source_files_properties(NanoSvg.cpp PROPERTIES COMPILE_OPTIONS "-w")   # nanosvg: third-party code, no warnings
-target_link_libraries(CapGui PRIVATE CapImGui Graphics Math Base ${ROOT_LIBRARIES})
+target_link_libraries(CapGuiCore PUBLIC CapImGui Graphics Particles Math Base)
 if(CAP_WITH_LATEX)   # File > Make Presentation (Latex/CanvasPresentation)
-  target_link_libraries(CapGui PRIVATE Latex)
-  target_compile_definitions(CapGui PRIVATE CAP_GUI_PRESENTATIONS)
+  target_link_libraries(CapGuiCore PUBLIC Latex)
+  target_compile_definitions(CapGuiCore PUBLIC CAP_GUI_PRESENTATIONS)
 endif()
-if(CAP_WITH_ROOT_FILES)   # .root files in the browser: their histograms converted (Helpers/RootFileConversion)
-  target_link_libraries(CapGui PRIVATE Helpers)
-  target_compile_definitions(CapGui PRIVATE CAP_WITH_ROOT_FILES)
+if(CAP_WITH_ROOT)   # .root files in the browser: their histograms converted (Helpers/RootFileConversion)
+  target_link_libraries(CapGuiCore PUBLIC Helpers)
+  target_compile_definitions(CapGuiCore PUBLIC CAP_WITH_ROOT)
 endif()
+
+# ---- CapGui: the canvases, the plot files and the browser (see CapGuiApp.hpp); the analysis libraries are linked
+# in src/CMakeLists.txt (File > New from Data configures workflows, see PlotCatalog.hpp)
+add_executable(CapGui CapGuiMain.cpp PlotCatalog.cpp)
+set_target_properties(CapGui PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+target_link_libraries(CapGui PRIVATE CapGuiCore)
+
+# ---- PlotHistos: the outputs of a plot file in batch mode, or CapGui on it (see PlotHistos.C)
+add_executable(PlotHistos PlotHistos.C PlotCatalog.cpp)
+set_source_files_properties(PlotHistos.C PROPERTIES LANGUAGE CXX)
+set_target_properties(PlotHistos PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON LINKER_LANGUAGE CXX
+                      INSTALL_RPATH "$ENV{CAP_LIB_PATH}")
+target_link_libraries(PlotHistos PRIVATE CapGuiCore)
+cap_install(PlotHistos RUNTIME "${CAP_INSTALL_BIN_DIR}")
+
+# ---- PlotEditor: another name of CapGui (PlotEditor plots.xml opens the plot file in CapGui)
+add_executable(PlotEditor CapGuiMain.cpp PlotCatalog.cpp)
+set_target_properties(PlotEditor PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON
+                      INSTALL_RPATH "$ENV{CAP_LIB_PATH}")
+target_link_libraries(PlotEditor PRIVATE CapGuiCore)
+cap_install(PlotEditor RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
 if(APPLE)
   # macOS: CapGui.app, an application bundle that can be opened from the Finder or the Dock. Started that way it gets
@@ -98,12 +121,12 @@ if(APPLE)
     MACOSX_BUNDLE            TRUE
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
     INSTALL_RPATH            "$ENV{CAP_LIB_PATH}")
-  install(TARGETS CapGui BUNDLE DESTINATION "${CAP_INSTALL_BIN_DIR}")
+  cap_install(CapGui BUNDLE "${CAP_INSTALL_BIN_DIR}")
   install(CODE "
     file(REMOVE \"${CAP_INSTALL_BIN_DIR}/CapGui\")
     file(CREATE_LINK \"CapGui.app/Contents/MacOS/CapGui\" \"${CAP_INSTALL_BIN_DIR}/CapGui\" SYMBOLIC)
     message(STATUS \"Installing: ${CAP_INSTALL_BIN_DIR}/CapGui -> CapGui.app/Contents/MacOS/CapGui\")")
 else()
   set_target_properties(CapGui PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")
-  install(TARGETS CapGui RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+  cap_install(CapGui RUNTIME "${CAP_INSTALL_BIN_DIR}")
 endif()

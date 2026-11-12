@@ -8,35 +8,39 @@
 
 ################################################################################################
 # Build options (set with -D<option>=ON|OFF, or with the BuildCAP.py GUI).
-# The core modules (Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
-# Spherocity, SubSample, Performance, BasicEventGen, Glauber) are always built.
+# The core modules (Base, Math, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
+# ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen) are always built.
 ################################################################################################
+cmake_minimum_required(VERSION 3.14)   # 3.14: generator expressions in install(CODE)
+
 option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
 option(CAP_WITH_GRAPHICS     "Build the Graphics module (2D drawing; macOS window and demo)"  ON)
 option(CAP_WITH_GUI          "Build bin/CapGui, the graphical interface (Dear ImGui; requires Graphics)" ON)
-option(CAP_WITH_ROOT_FILES   "Read and write ROOT histograms: .root files in the CapGui browser, bin/CapRootConvert" ON)
+option(CAP_WITH_ROOT         "Use ROOT (off: CAP needs no ROOT): the Helpers library (.root histogram files in CapGui, bin/CapRootConvert), the readers of ROOT event trees (Epos, Pythia)" OFF)
 option(CAP_WITH_JETS         "Build the Jets module (requires FastJet)"                       OFF)
-option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader)"                      ON)
+option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader; requires CAP_WITH_ROOT)" OFF)
 option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      ON)
 option(CAP_WITH_PYTHIA8      "Build the interface to the Pythia8 event generator (library Pythia)" OFF)
 option(CAP_WITH_HERWIG       "Build the interface to the Herwig event generator"              OFF)
+option(CAP_WITH_GLAUBER      "Build the Glauber module (Glauber Monte Carlo of nucleus-nucleus collisions)" ON)
+option(CAP_WITH_SHERPA       "Build the interface to the Sherpa event generator (placeholder)" OFF)
+option(CAP_WITH_THERMALFIST  "Build the interface to Thermal-FIST (placeholder)"              OFF)
 # Installation prefixes of the external packages. When empty, a copy distributed with CAP is used if present
 # (a directory <CAP>/pythia8*, <CAP>/external/pythia8*, ...), then the environment (CAP_PYTHIA8_PATH, PYTHIA8, ...),
 # then the package's configuration tool (pythia8-config --prefix, ...).
 set(CAP_PYTHIA8_DIR "" CACHE PATH "Pythia8 installation prefix")
 set(CAP_HERWIG_DIR  "" CACHE PATH "Herwig installation prefix")
 set(CAP_FASTJET_DIR "" CACHE PATH "FastJet installation prefix")
+set(CAP_SHERPA_DIR  "" CACHE PATH "Sherpa installation prefix")
+set(CAP_THERMALFIST_DIR "" CACHE PATH "Thermal-FIST directory (the source tree, holding include/HRGBase.h)")
 
 if(APPLE)
-    cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
     set (CMAKE_OSX_DEPLOYMENT_TARGET "26.0" CACHE STRING "Minimum OS X deployment version" FORCE)
     project(CAP VERSION 1.0 DESCRIPTION "Correlation Analysis Package" LANGUAGES CXX)
 #    set (CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Architectures" FORCE)
 #    set (CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET[arch=arm64] "11.0" CACHE STRING "arm 64 minimum deployment target" FORCE)
 else()
- cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
- cmake_policy(SET CMP0048 NEW)
  project(CAP DESCRIPTION "Correlation Analysis Package" LANGUAGES CXX)
 endif()
 
@@ -48,8 +52,7 @@ endif()
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type: Release, Debug, RelWithDebInfo or MinSizeRel" FORCE)
 endif()
-set(CMAKE_CXX_STANDARD 14)
-####set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 enable_testing()   # ctest runs the test programs of the modules
 # Tests of the model of RunCAP.py (filters, histogram folders), with the templates of DB/Templates
@@ -59,29 +62,23 @@ if(Python3_Interpreter_FOUND)
            COMMAND ${Python3_EXECUTABLE} -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/../tests/python
            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..)
 endif()
-set(CAP_ROOT_PATH "$ENV{CAP_ROOT_PATH}")
-
 ################################################################################################
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
+# ROOT is optional (CAP_WITH_ROOT, off by default). Without it, nothing in CAP includes a ROOT header or links a ROOT
+# library. With it, ROOT is located through $ROOTSYS (or CMAKE_PREFIX_PATH), and ${ROOT_LIBRARIES} is linked only by
+# the targets that need ROOT: Helpers, CapRootConvert, the Epos module and the Pythia event reader.
 ################################################################################################
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-
-################################################################################################
-#---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-################################################################################################
-find_package(ROOT REQUIRED COMPONENTS EG MathCore MathMore RIO Hist Tree Net )
-
-################################################################################################
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-################################################################################################
-include(${ROOT_USE_FILE})
-include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Helpers" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber" "$ENV{ROOTSYS}/include"
+if(CAP_WITH_ROOT)
+  list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+  find_package(ROOT REQUIRED COMPONENTS MathCore RIO Hist Tree)
+  include(${ROOT_USE_FILE})
+  add_compile_definitions(CAP_WITH_ROOT)
+  include_directories("core/Helpers")
+else()
+  set(ROOT_LIBRARIES "")
+endif()
+include_directories(${CMAKE_SOURCE_DIR} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Interpolation" "core/Math/Integral" "core/Math/Derivative" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/ParticleFlow" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber"
  )
-add_definitions(${ROOT_CXX_FLAGS})
 add_compile_options(-Wall -Wextra -pedantic)
-add_library(EG SHARED IMPORTED)
 
 get_filename_component(CAP_TOP_DIR "${CMAKE_SOURCE_DIR}" DIRECTORY)   # the CAP8.0 directory
 
@@ -97,6 +94,22 @@ if("$ENV{CAP_BIN_PATH}" STREQUAL "")
 else()
   set(CAP_INSTALL_BIN_DIR "$ENV{CAP_BIN_PATH}")
 endif()
+
+################################################################################################
+# cap_install(<target> LIBRARY|RUNTIME|BUNDLE <destination>): install(TARGETS), the installed file removed first.
+# CMake does not copy a file whose time equals that of the installed one to the second, but still edits the rpaths
+# of the installed copy: a target linked and installed within the same second then makes the next install fail
+# ("install_name_tool: ... would duplicate path", "no LC_RPATH load command"). Removed first, it is always copied.
+################################################################################################
+function(cap_install target kind destination)
+  if(kind STREQUAL "BUNDLE")
+    set(installed "${destination}/$<TARGET_FILE_NAME:${target}>.app/Contents/MacOS/$<TARGET_FILE_NAME:${target}>")
+  else()
+    set(installed "${destination}/$<TARGET_FILE_NAME:${target}>")
+  endif()
+  install(CODE "file(REMOVE \"${installed}\")")
+  install(TARGETS ${target} ${kind} DESTINATION "${destination}")
+endfunction()
 
 ################################################################################################
 # cap_resolve_prefix(<var> <label> <file> <bundled glob...> ENV <env vars...> TOOL <config tool>)
@@ -151,8 +164,6 @@ endfunction()
 add_subdirectory(core/Base)
 add_subdirectory(models/BasicEventGen)
 add_subdirectory(core/Math)
-add_subdirectory(core/Helpers)
-add_subdirectory(models/Glauber)
 add_subdirectory(analysis/Global)
 add_subdirectory(analysis/Particles)
 add_subdirectory(analysis/ParticleSingle)
@@ -161,15 +172,27 @@ add_subdirectory(analysis/ParticlePair3D)
 add_subdirectory(analysis/Performance)
 add_subdirectory(analysis/PtPt)
 add_subdirectory(analysis/NuDyn)
+add_subdirectory(analysis/ParticleFlow)
 add_subdirectory(analysis/Spherocity)
 add_subdirectory(analysis/SubSample)
-set(CAP_LINKED_MODULES Base Math Helpers Glauber Particles SubSample Global Spherocity ParticleSingle ParticlePair
-                       ParticlePair3D NuDyn PtPt Performance BasicEventGen)
+set(CAP_LINKED_MODULES Base Math Particles SubSample Global Spherocity ParticleSingle ParticlePair
+                       ParticlePair3D NuDyn ParticleFlow PtPt Performance BasicEventGen)
 set(CAP_OPTIONAL_BUILT "")
+if(CAP_WITH_ROOT)   # ROOT histograms and files: RootFileHelpers, RootConversion, RootFileConversion, RootChainManager, ...
+  add_subdirectory(core/Helpers)
+  list(APPEND CAP_LINKED_MODULES Helpers)
+  list(APPEND CAP_OPTIONAL_BUILT "Helpers (ROOT ${ROOT_VERSION})")
+endif()
 
 ################################################################################################
 # Optional modules
 ################################################################################################
+if(CAP_WITH_GLAUBER)
+  add_subdirectory(models/Glauber)
+  list(APPEND CAP_LINKED_MODULES Glauber)
+  list(APPEND CAP_OPTIONAL_BUILT Glauber)
+endif()
+
 if(CAP_WITH_THERMINATOR3)
   add_subdirectory(models/Therminator3)
   list(APPEND CAP_LINKED_MODULES Therminator3)
@@ -199,7 +222,9 @@ if(CAP_WITH_GUI)        # bin/CapGui: Dear ImGui + GLFW (distributed in <CAP>/ex
   endif()
 endif()
 
-if(CAP_WITH_EPOS)
+if(CAP_WITH_EPOS AND NOT CAP_WITH_ROOT)
+  message(WARNING "CAP_WITH_EPOS requires CAP_WITH_ROOT (the EPOS events are ROOT trees): the Epos module is not built.")
+elseif(CAP_WITH_EPOS)
   add_subdirectory(models/Epos)
   list(APPEND CAP_LINKED_MODULES Epos)
   list(APPEND CAP_OPTIONAL_BUILT Epos)
@@ -213,13 +238,13 @@ endif()
 
 if(CAP_WITH_JETS)
   cap_resolve_prefix(CAP_FASTJET_DIR "FastJet" "include/fastjet/ClusterSequence.hh"
-                     BUNDLED "fastjet*" "external/fastjet*" ENV CAP_FASTJET_PATH FASTJET TOOL fastjet-config)
+                     BUNDLED "../Fastjet/install" "fastjet*" "external/fastjet*" ENV CAP_FASTJET_PATH FASTJET TOOL fastjet-config)
   find_library(CAP_FASTJET_LIBRARY NAMES fastjet PATHS "${CAP_FASTJET_DIR}/lib" NO_DEFAULT_PATH)
   if(NOT CAP_FASTJET_LIBRARY)
     message(FATAL_ERROR "FastJet: no libfastjet in ${CAP_FASTJET_DIR}/lib (is FastJet built and installed?)")
   endif()
   set(CAP_FASTJET_INCLUDE_PATH "${CAP_FASTJET_DIR}/include")
-  include_directories("${CAP_FASTJET_INCLUDE_PATH}")   # also needed by rootcling for the dictionary
+  include_directories(SYSTEM "${CAP_FASTJET_INCLUDE_PATH}")   # external headers: their warnings are not shown
   add_library(FASTJET_LIB SHARED IMPORTED)
   set_target_properties(FASTJET_LIB PROPERTIES IMPORTED_LOCATION "${CAP_FASTJET_LIBRARY}"
                         INTERFACE_INCLUDE_DIRECTORIES "${CAP_FASTJET_INCLUDE_PATH}")
@@ -239,7 +264,7 @@ if(CAP_WITH_PYTHIA8)
     message(FATAL_ERROR "Pythia8: no libpythia8 in ${CAP_PYTHIA8_DIR}/lib (is Pythia8 built?)")
   endif()
   set(CAP_PYTHIA8_INCLUDE_PATH "${CAP_PYTHIA8_DIR}/include")
-  include_directories("${CAP_PYTHIA8_INCLUDE_PATH}" "${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8")   # also for rootcling
+  include_directories(SYSTEM "${CAP_PYTHIA8_INCLUDE_PATH}" "${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8")   # external headers
   add_library(PYTHIA8_LIB SHARED IMPORTED)
   set_target_properties(PYTHIA8_LIB PROPERTIES IMPORTED_LOCATION "${CAP_PYTHIA8_LIBRARY}"
                         INTERFACE_INCLUDE_DIRECTORIES "${CAP_PYTHIA8_INCLUDE_PATH};${CAP_PYTHIA8_INCLUDE_PATH}/Pythia8")
@@ -250,10 +275,10 @@ endif()
 
 if(CAP_WITH_HERWIG)
   cap_resolve_prefix(CAP_HERWIG_DIR "Herwig" "include/Herwig/API/HerwigAPI.h"
-                     BUNDLED "Herwig*" "herwig*" "external/Herwig*" "external/herwig*" ENV CAP_HERWIG_PATH HERWIG_DIR
+                     BUNDLED "../Herwig/install" "Herwig*" "herwig*" "external/Herwig*" "external/herwig*" ENV CAP_HERWIG_PATH HERWIG_DIR
                      TOOL Herwig-config)
   if(EXISTS "${CMAKE_SOURCE_DIR}/models/Herwig/CMakeLists.txt")
-    include_directories("${CAP_HERWIG_DIR}/include")
+    include_directories(SYSTEM "${CAP_HERWIG_DIR}/include")   # external headers: their warnings are not shown
     add_subdirectory(models/Herwig)
     list(APPEND CAP_LINKED_MODULES Herwig)
     list(APPEND CAP_OPTIONAL_BUILT "Herwig (Herwig: ${CAP_HERWIG_DIR})")
@@ -263,16 +288,43 @@ if(CAP_WITH_HERWIG)
   endif()
 endif()
 
+# Placeholders: the packages are located (so their location can be checked), but CAP has no interface to them yet.
+if(CAP_WITH_SHERPA)
+  cap_resolve_prefix(CAP_SHERPA_DIR "Sherpa" "include/SHERPA-MC/SHERPA/Main/Sherpa.H"
+                     BUNDLED "../Sherpa/install" "Sherpa*" "sherpa*" "external/Sherpa*" "external/sherpa*"
+                     ENV CAP_SHERPA_PATH SHERPA_DIR TOOL Sherpa-config)
+  message(WARNING "Sherpa was found in ${CAP_SHERPA_DIR}, but CAP has no interface to Sherpa yet: nothing is built for it.")
+endif()
+
+if(CAP_WITH_THERMALFIST)
+  cap_resolve_prefix(CAP_THERMALFIST_DIR "Thermal-FIST" "include/HRGBase.h"
+                     BUNDLED "../Thermal-FIST" "Thermal-FIST*" "external/Thermal-FIST*" ENV CAP_THERMALFIST_PATH THERMALFIST_DIR)
+  message(WARNING "Thermal-FIST was found in ${CAP_THERMALFIST_DIR}, but CAP has no interface to Thermal-FIST yet: "
+                  "nothing is built for it.")
+endif()
+
 ################################################################################################
 # CAP executable
 ################################################################################################
 add_executable(CAP CAP.cxx)
 target_link_libraries(CAP PUBLIC ${CAP_LINKED_MODULES})
-install(TARGETS CAP RUNTIME DESTINATION "${CAP_INSTALL_BIN_DIR}")
+cap_install(CAP RUNTIME "${CAP_INSTALL_BIN_DIR}")
+
+# CapGui (File > New from Data), PlotEditor and PlotHistos (--template) configure the tasks of workflows (without
+# running them): they need all the task classes
+if(TARGET CapGui)
+  cmake_policy(SET CMP0079 NEW)   # the programs are made in gui/
+  foreach(program CapGui PlotEditor PlotHistos)
+    target_link_libraries(${program} PRIVATE ${CAP_LINKED_MODULES})
+  endforeach()
+endif()
 
 # The task classes in the reflection registry (run with ctest; not installed)
 add_executable(TestTaskRegistry tests/TestTaskRegistry.cpp)
 target_link_libraries(TestTaskRegistry PUBLIC ${CAP_LINKED_MODULES})
+if(CAP_WITH_GLAUBER)   # the test expects the Glauber tasks only when they are built
+  target_compile_definitions(TestTaskRegistry PRIVATE CAP_WITH_GLAUBER)
+endif()
 add_test(NAME TaskRegistry COMMAND TestTaskRegistry)
 
 # Sources that must compile without ROOT (no ROOT include path): most of Base (strings, files, folders, CAP files,
@@ -281,7 +333,7 @@ set(CAP_ROOT_FREE_SOURCES
   core/Base/Accountant.cpp core/Base/BinaryFile.cpp core/Base/CapFile.cpp core/Base/CmdlineParser.cpp
   core/Base/Condition.cpp core/Base/Configuration.cpp core/Base/ConfigurationManager.cpp core/Base/Crc32.cpp
   core/Base/Directory.cpp core/Base/Exceptions.cpp core/Base/Factory.cpp core/Base/File.cpp core/Base/FileSystem.cpp
-  core/Base/FileSystemEntry.cpp core/Base/Filter.cpp core/Base/Folder.cpp core/Base/LongParameter.cpp
+  core/Base/FileSystemEntry.cpp core/Base/Filter.cpp core/Base/Folder.cpp core/Base/LongParameter.cpp core/Base/StringParameter.cpp
   core/Base/NameHelpers.cpp core/Base/Object.cpp core/Base/Parser.cpp core/Base/PhysicsConstants.cpp
   core/Base/PrintHelpers.cpp core/Base/Properties.cpp core/Base/PropertiesParser.cpp core/Base/Property.cpp
   core/Base/Reflection.cpp core/Base/String.cpp core/Base/TxtFile.cpp core/Base/XmlDocument.cpp
@@ -302,7 +354,8 @@ set(CAP_ROOT_FREE_COMMAND ${CMAKE_CXX_COMPILER} -std=c++17 -fsyntax-only)
 if(CMAKE_OSX_SYSROOT)
   list(APPEND CAP_ROOT_FREE_COMMAND -isysroot ${CMAKE_OSX_SYSROOT})
 endif()
-foreach(dir core/Base core/Math core/Math/Basic core/Math/LinearAlgebra core/Math/Functions core/Math/Data core/Math/Search
+foreach(dir core/Base core/Math core/Math/Basic core/Math/LinearAlgebra core/Math/Functions core/Math/Interpolation
+            core/Math/Integral core/Math/Derivative core/Math/Data core/Math/Search
             core/Math/Fitting core/Math/StatisticalTests core/Math/Random core/Interpreter core/Graphics)
   list(APPEND CAP_ROOT_FREE_COMMAND -I${CMAKE_SOURCE_DIR}/${dir})
 endforeach()
@@ -315,9 +368,7 @@ string(REPLACE ";" ", " optional_text "${CAP_OPTIONAL_BUILT}")
 if(optional_text STREQUAL "")
   set(optional_text "none")
 endif()
-message(STATUS "CAP core modules: Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, "
-               "PtPt, NuDyn, Spherocity, SubSample, Performance, BasicEventGen, Glauber")
+message(STATUS "CAP core modules: Base, Math, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, "
+               "PtPt, NuDyn, ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen")
 message(STATUS "CAP optional modules: ${optional_text}")
 message(STATUS "CAP libraries install directory: $ENV{CAP_LIB_PATH}")
-#include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} "Base" "Math" "Helpers" "Latex" "Glauber" "Particles"  "ParticleSingle" "ParticlePair"  "BasicEventGen" "$ENV{ROOTSYS}/include"
-#"$ENV{CAP_FASTJET_INCLUDE_PATH}" "$ENV{CAP_PYTHIA8_INCLUDE_PATH}" "$ENV{CAP_PYTHIA8_INCLUDE_PATH}/Pythia8/" )

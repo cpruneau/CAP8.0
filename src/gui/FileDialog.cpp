@@ -87,7 +87,9 @@ namespace CAP
   {
   _open = false;
   ImGui::CloseCurrentPopup();
-  if (_callback) _callback(String(path));
+  // a copy: the callback may open the dialog again (the next file of a Save All), which replaces _callback
+  Callback callback = _callback;
+  if (callback) callback(String(path));
   }
 
   void FileDialog::render()

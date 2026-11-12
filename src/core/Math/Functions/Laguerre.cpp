@@ -2,6 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include "MathExceptions.hpp"
+#include "GaussLegendreIntegrator.hpp"
 
 
 namespace CAP
@@ -84,41 +85,6 @@ namespace CAP
   return -value(_degree+1,_alpha-1.0,x);
   }
 
-  namespace
-  {
-  // Gauss-Legendre quadrature with m points on [low, high]: exact for polynomials of degree <= 2m-1.
-  // Nodes are the roots of the Legendre polynomial P_m, found by Newton's method.
-  double gaussLegendre(const Laguerre & f, double low, double high, unsigned int m)
-  {
-  double mid = 0.5*(high+low), half = 0.5*(high-low);
-  double sum = 0.0;
-  for (unsigned int i=0; i<m; i++)
-    {
-    double z = std::cos(M_PI*(i+0.75)/(m+0.5));   // initial guess for root i
-    double dp = 1.0;
-    for (int iteration=0; iteration<100; iteration++)
-      {
-      double p0 = 1.0, p1 = z;                      // P_0, P_1, then upward recurrence to P_m
-      for (unsigned int k=2; k<=m; k++)
-        {
-        double p2 = ((2.0*k-1.0)*z*p1 - (k-1.0)*p0)/k;
-        p0 = p1;
-        p1 = p2;
-        }
-      if (m==1) p0 = 1.0;
-      double pm = (m==1) ? z : p1;
-      dp = m*(z*pm - p0)/(z*z - 1.0);               // P_m'(z)
-      double dz = pm/dp;
-      z -= dz;
-      if (std::fabs(dz) <= 1.0E-16) break;
-      }
-    double weight = 2.0/((1.0 - z*z)*dp*dp);
-    sum += weight*f.evaluateAt(mid + half*z);
-    }
-  return half*sum;
-  }
-  }
-
   double Laguerre::integralInRange(double low, double high) const
   {
   if (!std::isfinite(low) || !std::isfinite(high)) throw MathException("Integration bounds must be finite",__FUNCTION__);
@@ -128,7 +94,7 @@ namespace CAP
   double result = fHigh - fLow;
   // when the antiderivatives nearly cancel (short intervals), use Gauss-Legendre quadrature, exact for a polynomial of degree n
   if (std::fabs(result) < 1.0E-3*std::max(std::fabs(fLow),std::fabs(fHigh)))
-    return gaussLegendre(*this,low,high,_degree/2+1);
+    return GaussLegendreIntegrator::quadrature([this](double x) { return evaluateAt(x); },low,high,_degree/2+1);
   return result;
   }
 

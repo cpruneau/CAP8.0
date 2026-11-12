@@ -480,6 +480,9 @@ public:
   //!
   void addChild(Particle* child);
 
+  //! @brief Remove the children of this particle (the children themselves are not modified).
+  void clearChildren() { _children.clear(); }
+
   //!
   //!Add the given two given particles as children of this particle.
   //!

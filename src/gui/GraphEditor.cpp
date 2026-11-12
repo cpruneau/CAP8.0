@@ -621,7 +621,7 @@ namespace CAP
         std::string format = item.valueFormat().str();
         ImGui::SetNextItemWidth(100);
         if (ImGui::InputText("format", &format)) { item.setValueFormat(String(format)); changed = true; }
-        ImGui::SetItemTooltip("printf format of one number, e.g. %.3g, %.1f, %.2e");
+        ImGui::SetItemTooltip("%s", "printf format of one number, e.g. %.3g, %.1f, %.2e");
         float points = item.valuePointSize();
         if (pointSizeEdit("text size", points)) { item.setValuePointSize(points); changed = true; }
         bool automatic = item.valueColor() < 0;

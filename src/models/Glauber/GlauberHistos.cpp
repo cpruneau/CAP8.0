@@ -4,19 +4,18 @@
  *
  * For the licensing terms see LICENSE.
  *
- * Author: Claude Pruneau,   04/01/2024
+ * Author: Claude Pruneau,  Nov 10, 2026
+ * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
 #include "GlauberHistos.hpp"
-#include "RootConversion.hpp"
 #include "MathConstants.hpp"
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
 #include "VectorLorentz.hpp"
-#include "TEllipse.h"
-#include "TCanvas.h"
 
 
 using CAP::MATH::pi;
@@ -382,6 +381,7 @@ namespace CAP
   _fillBasics    = configuration.valueBool(   createKey(taskName,type,"fillBasics"));
   _fillMoments   = configuration.valueBool(   createKey(taskName,type,"fillMoments"));
   _fillSmeared   = configuration.valueBool(   createKey(taskName,type,"fillSmeared"));
+  _fillArea      = configuration.valueBool(   createKey(taskName,type,"fillArea"));
   _drawEvents    = configuration.valueBool(   createKey(taskName,type,"drawEvents"));
   _drawEventsN   = configuration.valueInt(    createKey(taskName,type,"drawEvents:N"));
   _drawEventsIndex = 0;
@@ -674,75 +674,14 @@ namespace CAP
 
   }
 
-  void GlauberHistos::drawEvent(GlauberEvent & event, const String & eventName)
+  void GlauberHistos::drawEvent(GlauberEvent & /*event*/, const String & eventName)
   {
-  float xHalfWidth = 14.0;
-  float yHalfWidth = 14.0;
-  // empty frame for the drawing
-  Histogram frame(eventName,eventName,1,-xHalfWidth,xHalfWidth,1,-yHalfWidth,yHalfWidth);
-  frame.setDimensionTitle(0,"x(fm)");
-  frame.setDimensionTitle(1,"y(fm)");
-  TH1 * h = toRootHistogram(frame);
-  TCanvas * canvas = new TCanvas(eventName,eventName,5,5,800, 800);
-  double protonRadius = 0.5*std::sqrt(event.eventXSection()/(pi()*10));
-  h->Draw();
-  TEllipse e;
-  e.SetFillColor(0);
-  e.SetFillStyle(0);
-  e.SetLineColor(1);
-  e.SetLineStyle(2);
-  e.SetLineWidth(1);
-
-  double halfImpact = 0.5*event.impactParameter();
-  GlauberNucleus & nucleusA = event.nucleusA();
-  GlauberNucleus & nucleusB = event.nucleusB();
-  std::vector<GlauberNucleon> & nucleonsA = nucleusA.allNucleons();
-  std::vector<GlauberNucleon> & nucleonsB = nucleusB.allNucleons();
-  double radiusA =  nucleusA.type().radiusProton();
-  double radiusB =  nucleusB.type().radiusProton();
-  e.DrawEllipse(halfImpact, 0.0,radiusA,radiusA,0,360,0);
-  e.DrawEllipse(-halfImpact,0.0,radiusB,radiusB,0,360,0);
-
-  e.SetLineColor(2);
-  e.SetFillColor(2);
-  double r = protonRadius;
-  for (auto nucleon : nucleonsA)
-    {
-    double x = nucleon.position().x();
-    double y = nucleon.position().y();
-    if (nucleon.isWounded())
-      e.SetFillStyle(1001);
-    else
-      e.SetFillStyle(0);
-     e.DrawEllipse(x,y,r,r,0.0,360.0,0);
-    }
-  e.SetLineColor(4);
-  e.SetFillColor(4);
-  for (auto nucleon : nucleonsB)
-    {
-    double x = nucleon.position().x();
-    double y = nucleon.position().y();
-    if (nucleon.isWounded())
-      e.SetFillStyle(1001);
-    else
-      e.SetFillStyle(0);
-    e.DrawEllipse(x,y,r,r,0.0,360.0,0);
-    }
-
-  std::vector<GlauberPoint> & intPoints = event.interactionPositions();
-  r = 0.25;
-  e.SetFillStyle(1001);
-  e.SetLineColor(1);
-  e.SetFillColor(1);
-  for (auto point : intPoints)
-    {
-    double x = point.x();
-    double y = point.y();
-    e.DrawEllipse(x,y,r,r,0.0,360.0,0);
-    }
-
-  canvas->Print(eventName+".pdf");
-  delete h;
+  // The event display (nuclei, nucleons and interaction points as ellipses in eventName.pdf) was drawn with ROOT
+  // (TCanvas, TEllipse); it is not available until it is redrawn with CAP's Graphics module.
+  static bool warned = false;
+  if (!warned && reportWarning(__FUNCTION__))
+    std::cout << "Event displays are not available (ROOT removed): " << eventName << " is not drawn" << std::endl;
+  warned = true;
   }
 
 
@@ -1082,7 +1021,7 @@ namespace CAP
   //  TF1 radiusProf("rad","2.0*pi/[0]/[0]*TMath::Exp(-x*x/(2.*[0]*[0]))",0.0,5*ksg);
   //  radiusProf.SetParameter(0,ksg);
   //  const double minval = radiusProf.Eval(5.0*ksg);
-  //  double phi0         = gRandom->Uniform(0,twoPi());
+  //  double phi0         = CAP::MATH::randomGenerator().uniform(0,twoPi());
   //  double kcphi0  = std::cos(phi0);
   //  double ksphi0  = std::sin(phi0);
   //  double x       = fEv.X0;

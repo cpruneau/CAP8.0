@@ -158,7 +158,7 @@ namespace CAP
   Listing & l = _listings[directory];
   // sub-directories and CAP files (and ROOT files when CapGui reads them), directories first, by name (case-insensitive); hidden entries left out
   FileSystem::ListOptions options;
-#ifdef CAP_WITH_ROOT_FILES
+#ifdef CAP_WITH_ROOT
   options.extensions = { ".cap", ".root" };
 #else
   options.extensions = { ".cap" };
@@ -258,8 +258,8 @@ namespace CAP
   if (loose.empty() && _folders.empty())
     {
     ImGui::Spacing();
-    ImGui::TextWrapped("Use File > Open to open a CAP file, File > Open Folder to browse a folder, or New Tree to "
-                       "make a tree of copies.");
+    ImGui::TextWrapped("Use File > Open > Data File to open a CAP file, File > Open > Data Folder to browse a folder, "
+                       "or New Tree (File > New > Empty Folder Tree) to make a tree of copies.");
     ImGui::Spacing();
     ImGui::TextWrapped("Click an object to show it in the selected graph, or drag it onto a graph.");
     }
@@ -290,10 +290,13 @@ namespace CAP
   bool reveal = (_reveal == file.path.str());
   if (reveal) ImGui::SetNextItemOpen(true);
   else        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-  bool open = ImGui::TreeNodeEx("##file", ImGuiTreeNodeFlags_SpanAvailWidth, "%s%s", label.data(),
+  ImGuiTreeNodeFlags fileFlags = ImGuiTreeNodeFlags_SpanAvailWidth;
+  if (_selected.file == file.id && _selected.path.isEmpty()) fileFlags |= ImGuiTreeNodeFlags_Selected;
+  bool open = ImGui::TreeNodeEx("##file", fileFlags, "%s%s%s", label.data(), file.modified ? " *" : "",
                                 file.editable ? (file.path.isEmpty() ? "  (tree, not saved)" : "  (tree)") : "");
   if (reveal) { ImGui::SetScrollHereY(0.2f); _reveal.clear(); }
   ImGuiID nodeId = ImGui::GetItemID();
+  if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) select(file.id, "", true);
   dragAndDrop(file.id, "", label, true, file.editable);
   if (!ImGui::IsDragDropActive())
     ImGui::SetItemTooltip("%s", file.editable ? (file.path.isEmpty() ? "Tree not saved yet: drag objects and folders "
@@ -371,10 +374,13 @@ namespace CAP
   bool loaded = (file != nullptr);
   if (loaded) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_Text));
   else        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  bool open = ImGui::TreeNodeEx("##capfile", ImGuiTreeNodeFlags_SpanAvailWidth, "%s", label.c_str());
+  ImGuiTreeNodeFlags fileFlags = ImGuiTreeNodeFlags_SpanAvailWidth;
+  if (file && _selected.file == file->id && _selected.path.isEmpty()) fileFlags |= ImGuiTreeNodeFlags_Selected;
+  bool open = ImGui::TreeNodeEx("##capfile", fileFlags, "%s", label.c_str());
   ImGui::PopStyleColor();
   if (reveal) { ImGui::SetScrollHereY(0.2f); _reveal.clear(); }
   ImGuiID nodeId = ImGui::GetItemID();
+  if (file && ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) select(file->id, "", true);
   if (file) dragAndDrop(file->id, "", String(label), true, false);
   if (!ImGui::IsDragDropActive()) ImGui::SetItemTooltip("%s%s", path.c_str(), loaded ? "" : "\nclick to open");
   if (ImGui::IsItemToggledOpen() && open && !file && onOpenFile)
@@ -425,7 +431,10 @@ namespace CAP
       if (!folderMatches(*sub) && !matches(name)) continue;
       ImGui::PushID(name.data());
       if (!_filter.empty()) ImGui::SetNextItemOpen(true);
-      bool open = ImGui::TreeNodeEx("##folder", ImGuiTreeNodeFlags_SpanAvailWidth, "%s/", name.data());
+      ImGuiTreeNodeFlags folderFlags = ImGuiTreeNodeFlags_SpanAvailWidth;
+      if (_selected.file == fileId && _selected.path.str() == path) folderFlags |= ImGuiTreeNodeFlags_Selected;
+      bool open = ImGui::TreeNodeEx("##folder", folderFlags, "%s/", name.data());
+      if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) select(fileId, String(path), true);
       dragAndDrop(fileId, path, name, true, editable);
       if (ImGui::BeginPopupContextItem("##folderMenu"))
         {
@@ -471,12 +480,11 @@ namespace CAP
 
   // click (press and release on the object without dragging): show it
   std::string key = std::to_string(fileId) + "\n" + path;
-  if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) _pressed = key;
+  if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) { _pressed = key; select(fileId, String(path), false); }
   if (showable && _pressed == key && ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)
       && ImGui::GetIO().MouseDragMaxDistanceSqr[0] < 16.0f)
     {
-    _selected.file = fileId;
-    _selected.path = String(path);
+    select(fileId, String(path), false);
     if (onShowObject) onShowObject(_selected);
     }
 
@@ -496,8 +504,7 @@ namespace CAP
     {
     if (ImGui::MenuItem("Show", nullptr, false, showable) && onShowObject)
       {
-      _selected.file = fileId;
-      _selected.path = String(path);
+      select(fileId, String(path), false);
       onShowObject(_selected);
       }
     if (ImGui::MenuItem("Show Data Table", nullptr, false, showable) && onShowData)
@@ -546,6 +553,7 @@ namespace CAP
   std::string leaf = path.substr(path.rfind('/') == std::string::npos ? 0 : path.rfind('/') + 1);
   if (ImGui::MenuItem("Rename..."))
     _nameRequest = NameRequest{NameRequest::kRename, fileId, path, leaf, false};
+  if (ImGui::MenuItem("Duplicate") && onDuplicate) onDuplicate(fileId, String(path));
   if (ImGui::MenuItem("Remove") && onRemove) onRemove(fileId, String(path));
   }
 

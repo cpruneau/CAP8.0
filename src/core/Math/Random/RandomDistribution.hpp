@@ -51,7 +51,8 @@ namespace CAP
 
   //!
   //! @brief Distribution of any density f on [minimum, maximum], tabulated: the integral of f is computed on n bins
-  //! (Simpson's rule in each), and inverted with a linear interpolation in each bin.
+  //! (Simpson's rule in each: cumulativeSimpsonRule()), and inverted with a linear interpolation in each bin
+  //! (inverseLinearInterpolation()).
   //!
   //! @code
   //!   CAP::MATH::TabulatedDistribution d([](double x) { return x*x*std::exp(-x); }, 0.0, 20.0);
@@ -76,6 +77,7 @@ namespace CAP
   double _minimum;   //!< low edge
   double _maximum;   //!< high edge
   double _integral;   //!< integral of the density
+  std::vector<double> _edges;        //!< bin edges
   std::vector<double> _cumulative;   //!< integral up to each bin edge, divided by _integral (0 to 1)
   };
 

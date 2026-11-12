@@ -4,6 +4,7 @@
 #include <functional>
 #include "BesselFunctions.hpp"
 #include "MathExceptions.hpp"
+#include "SimpsonIntegrator.hpp"
 
 
 namespace CAP
@@ -14,20 +15,6 @@ namespace CAP
   namespace
   {
   const double twoOverPi = 2.0/M_PI;
-
-  // Recursive step of adaptive Simpson integration on [a,b]
-  double adaptiveSimpson(const std::function<double(double)> & g, double a, double b,
-                         double fa, double fm, double fb, double whole, double tolerance, int depth)
-  {
-  double m = 0.5*(a+b), lm = 0.5*(a+m), rm = 0.5*(m+b);
-  double flm = g(lm), frm = g(rm);
-  double left  = (m-a)*(fa + 4.0*flm + fm)/6.0;
-  double right = (b-m)*(fm + 4.0*frm + fb)/6.0;
-  double delta = left + right - whole;
-  if (depth<=0 || std::fabs(delta) <= 15.0*tolerance) return left + right + delta/15.0;
-  return adaptiveSimpson(g,a,m,fa,flm,fm,left, 0.5*tolerance,depth-1)
-       + adaptiveSimpson(g,m,b,fm,frm,fb,right,0.5*tolerance,depth-1);
-  }
   }
 
   Bessel::Bessel(BesselType type, unsigned int order)
@@ -211,24 +198,9 @@ namespace CAP
 
   double Bessel::numericalIntegral(double low, double high) const
   {
-  if (low==high) return 0.0;
-  if (low>high) return -numericalIntegral(high,low);
-  auto g = [this](double t) { return evaluateAt(t); };
-  const int nPanels = 16;
-  double width = (high-low)/nPanels;
-  std::vector<double> fs(2*nPanels+1);
-  for (int k=0; k<=2*nPanels; k++) fs[k] = g(low + 0.5*k*width);
-  double coarseAbs = 0.0;
-  for (int k=0; k<nPanels; k++) coarseAbs += width*(std::fabs(fs[2*k]) + 4.0*std::fabs(fs[2*k+1]) + std::fabs(fs[2*k+2]))/6.0;
-  double tolerance = 1.0E-12*std::max(coarseAbs,1.0E-300);
-  double sum = 0.0;
-  for (int k=0; k<nPanels; k++)
-    {
-    double a = low + k*width, b = a + width;
-    double whole = width*(fs[2*k] + 4.0*fs[2*k+1] + fs[2*k+2])/6.0;
-    sum += adaptiveSimpson(g,a,b,fs[2*k],fs[2*k+1],fs[2*k+2],whole,tolerance/nPanels,40);
-    }
-  return sum;
+  // adaptive Simpson, 16 panels first, relative tolerance 1e-12
+  static const SimpsonIntegrator integrator(1.0E-12, 40, 16);
+  return integrator.integral(Integrand1D([this](double t) { return evaluateAt(t); }), low, high);
   }
 
   double Bessel::integralInRange(double low, double high) const

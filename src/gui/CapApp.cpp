@@ -18,7 +18,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "FileSystem.hpp"
-#ifdef CAP_WITH_ROOT_FILES
+#ifdef CAP_WITH_ROOT
 #include "RootFileConversion.hpp"
 #endif
 #include "CapApp.hpp"
@@ -218,6 +218,7 @@ namespace CAP
     {
     String argument(argv[k]);
     if ((argument == "--config" || argument == "-c") && k+1 < argc) _configurationFile = argv[++k];
+    else if (argument == "--maps" && k+1 < argc) _mapsFile = argv[++k];
     else if (argument.str().rfind("-psn_", 0) == 0) continue;   // process serial number added by older macOS Finders
     else _arguments.push_back(argument);
     }
@@ -269,7 +270,13 @@ namespace CAP
   _gui.onCommand = [this](const String & command) { actionPerformed(ActionEvent{command, nullptr}); };
 
   connectBrowser(_gui.browser());
+  connectMapsDialog();
   _gui.onNewBrowser = [this](FileBrowser & browser) { connectBrowser(browser); };
+  _gui.onBrowserCloseRequest = [this](FileBrowser & browser)
+    {
+    for (const auto & f : _files) if (browser.showsFile(f.id) && asksBeforeClosing(f.id, &browser)) { requestCloseBrowser(browser); return false; }
+    return true;
+    };
   _gui.onCloseBrowser = [this](FileBrowser & browser)
     {
     std::vector<int> ids;
@@ -299,8 +306,15 @@ namespace CAP
     {
     if (FileSystem::isDirectory(argument)) openFolder(argument); else openFile(argument);
     }
+  onStartup();
   _gui.run();
   return 0;
+  }
+
+  BrowserFile * CapApp::fileOfPath(const String & path)
+  {
+  for (auto & f : _files) if (!f.editable && f.path == path) return &f;
+  return nullptr;
   }
 
   void CapApp::setupPane(CanvasPane & pane)
@@ -375,6 +389,7 @@ namespace CAP
   edit.addItem("Clear All Canvases", "edit.clearAll",    "", "Clear all the graphs of all the canvases");
   edit.addSeparator();
   edit.addItem("Fit...", "edit.fit", "", "Fit a function to data points, a histogram or a function of the selected graph");
+  edit.addItem("Detector Maps...", "edit.maps", "", "The particle efficiencies and smearers of a maps file (RunCAP: Import)");
   edit.addSeparator();
   edit.addItem("Preferences...", "edit.preferences", "Ctrl+,", "Window, canvas and graph settings; save them as configuration");
 
@@ -437,6 +452,7 @@ namespace CAP
   window.addItem("Next Canvas",     "window.next",     "Ctrl+]", "Make the next canvas current");
   window.addItem("Previous Canvas", "window.previous", "Ctrl+[", "Make the previous canvas current");
 
+  addMenus(bar);
   Menu & help = bar.addMenu("Help");
   help.addItem("About CAP GUI", "help.about", "", "Version and components");
   help.addItem("Keyboard Shortcuts", "help.shortcuts", "F1", "List of the keyboard shortcuts");
@@ -482,7 +498,7 @@ namespace CAP
     for (const auto & e : _configuration.extensions)
       {
       bool root = FileSystem::hasExtension(String("x") + e, ".root");
-#ifndef CAP_WITH_ROOT_FILES
+#ifndef CAP_WITH_ROOT
       if (root) continue;                                // ROOT files not supported: not offered
 #endif
       if (root || FileSystem::hasExtension(String("x") + e, ".cap")) types.push_back(e);
@@ -506,6 +522,18 @@ namespace CAP
     _gui.setStatus(String("New browser: ") + String(browser.windowName()));
     }
   else if (c == "file.newTree") newTree(_gui.activeBrowser());
+  else if (c == "file.closeBrowser") requestCloseBrowser(_gui.activeBrowser());
+  else if (c == "file.closeTree" || c == "file.duplicateEntry" || c == "file.saveTree" || c == "file.saveTreeAs")
+    {
+    String path;
+    bool folder = false;
+    BrowserFile * entry = selectedEntry(path, folder);
+    if (!entry) { _gui.setStatus("Select a tree, a file or one of their objects in the browser first"); return; }
+    if (c == "file.closeTree")          closeFilesAsking({ entry->id }, &_gui.activeBrowser());
+    else if (c == "file.duplicateEntry") duplicateEntry(entry->id, path);
+    else if (!entry->editable)           _gui.setStatus("A file read from disk is not changed: Save As writes a copy (right-click on it)");
+    else                                 saveTree(entry->id, c == "file.saveTreeAs");
+    }
   else if (c == "file.closeAll")
     {
     std::vector<int> ids;
@@ -577,6 +605,7 @@ namespace CAP
     }
   else if (c == "edit.preferences") _showPreferences = true;
   else if (c == "edit.fit") _gui.openFitDialog();
+  else if (c == "edit.maps") _gui.openMapsDialog();
   else if (c == "view.toolbars") _gui.setShowToolbars(event.source ? event.source->isChecked() : !_gui.showToolbars());
   else if (c == "view.legends")
     {
@@ -607,7 +636,7 @@ namespace CAP
     _renameText = _gui.currentPane().title().str();
     _renameRequested = true;
     }
-  else if (c == "window.close")    { if (_gui.nPanes() > 1) { recordUndo(); _gui.closePane(_gui.currentPaneIndex()); } }
+  else if (c == "window.close")    _gui.requestClosePane(_gui.currentPaneIndex());   // as the x of the pane
   else if (c == "window.next")     _gui.setCurrentPane((_gui.currentPaneIndex() + 1) % _gui.nPanes());
   else if (c == "window.previous") _gui.setCurrentPane((_gui.currentPaneIndex() + _gui.nPanes() - 1) % _gui.nPanes());
   else if (c == "help.about")      _showAbout = true;
@@ -665,7 +694,7 @@ namespace CAP
   {
   try
     {
-#ifdef CAP_WITH_ROOT_FILES
+#ifdef CAP_WITH_ROOT
     if (FileSystem::hasExtension(path, ".root"))
       {
       auto file = std::make_shared<CapFile>(String(""), File::kReadWrite);
@@ -760,7 +789,7 @@ namespace CAP
   browser.onShowObject = [this](const ObjectReference & object) { showObject(object); };
   browser.onShowData   = [this](const ObjectReference & object) { showData(object); };
   browser.onShowFolder = [this](int file, const String & folder) { showFolder(file, folder); };
-  browser.onCloseFile  = [this, b](int file) { closeFile(file, b); };
+  browser.onCloseFile  = [this, b](int file) { closeFilesAsking({ file }, b); };
   browser.onReloadFile = [this](int file) { reloadFile(file); };
   browser.onCommand    = [this](const String & command) { actionPerformed(ActionEvent{command, nullptr}); };
   browser.onNewTree    = [this, b]() { newTree(*b); };
@@ -769,8 +798,9 @@ namespace CAP
   browser.onNewFolder  = [this](int file, const String & path, const String & name) { newFolder(file, path, name); };
   browser.onRename     = [this](int file, const String & path, const String & name) { renameEntry(file, path, name); };
   browser.onRemove     = [this](int file, const String & path) { removeEntry(file, path); };
-  browser.onSaveTree   = [this](int file) { saveTree(file); };
-#ifdef CAP_WITH_ROOT_FILES
+  browser.onSaveTree   = [this](int file) { saveTree(file, true); };
+  browser.onDuplicate  = [this](int file, const String & path) { duplicateEntry(file, path); };
+#ifdef CAP_WITH_ROOT
   browser.onExportRoot = [this](int file, const String & path) { exportRoot(file, path); };
 #endif
   browser.onSaveCopy   = [this](int file, const String & path) { saveCopy(file, path); };
@@ -809,7 +839,7 @@ namespace CAP
   if (!from || !to || !from->file || !to->file) return false;
   if (!to->editable)
     {
-    _gui.showMessage("Copy", "Files read from disk cannot be modified: copy into a tree (New Tree).");
+    _gui.showMessage("Copy", "Files read from disk cannot be modified: copy into a tree (File > New > Empty Folder Tree).");
     return false;
     }
   // a folder cannot be copied into itself or one of its sub-folders
@@ -839,6 +869,7 @@ namespace CAP
       std::string leaf = sourcePath.substr(sourcePath.rfind('/') == std::string::npos ? 0 : sourcePath.rfind('/') + 1);
       copied = destination->copyEntry(*from->file, source.path, destination->uniqueName(String(leaf)));
       }
+    to->modified = true;
     _gui.setStatus(String("Copied ") + copied + String(" into ") + to->name
                    + (folderPath.isEmpty() ? String("") : String("/") + folderPath));
     return true;
@@ -860,6 +891,7 @@ namespace CAP
     {
     if (parent->contains(name)) { _gui.showMessage("New Folder", String("An entry named ") + name + String(" exists")); return; }
     parent->addFolder(name);
+    tree->modified = true;
     _gui.setStatus(String("New folder ") + name);
     }
   catch (const std::exception & e) { _gui.showMessage("New Folder", String(e.what())); }
@@ -873,6 +905,7 @@ namespace CAP
     {
     Folder & top = *tree->file;
     top.rename(path, name);
+    tree->modified = true;
     _gui.setStatus(String("Renamed ") + path + String(" to ") + name);
     }
   catch (const std::exception & e) { _gui.showMessage("Rename", String(e.what())); }
@@ -886,19 +919,174 @@ namespace CAP
   std::unique_ptr<FolderItem> item = top.take(path);
   if (!item) return;
   _removed.push_back(std::move(item));                   // the graphs showing its objects keep them
+  tree->modified = true;
   _gui.setStatus(String("Removed ") + path);
   }
 
-  void CapApp::saveTree(int target)
+  void CapApp::saveTree(int target, bool ask, const std::function<void()> & after)
   {
   BrowserFile * tree = file(target);
   if (!tree || !tree->editable) return;
+  if (!ask && !tree->path.isEmpty())
+    {
+    if (saveTreeTo(target, tree->path) && after) after();
+    return;
+    }
   String name = tree->path.isEmpty() ? tree->name + String(".cap") : FileSystem::name(tree->path);
-  _gui.fileDialog().open(FileDialog::kSaveFile, "Save the tree", _configuration.directory, {".cap"}, name,
-                         [this, target](const String & chosen) { saveTreeTo(target, chosen); });
+  String start = tree->path.isEmpty() ? _configuration.directory : FileSystem::parent(tree->path);
+  _gui.fileDialog().open(FileDialog::kSaveFile, String("Save the tree ") + tree->name, start, {".cap"}, name,
+                         [this, target, after](const String & chosen) { if (saveTreeTo(target, chosen) && after) after(); });
   }
 
-#ifdef CAP_WITH_ROOT_FILES
+  void CapApp::saveChangedTrees(const std::function<void()> & after)
+  {
+  for (const auto & f : _files)
+    if (f.editable && f.modified)
+      {
+      int id = f.id;
+      saveTree(id, false, [this, after]() { saveChangedTrees(after); });   // the next one once this one is saved
+      return;
+      }
+  if (after) after();
+  }
+
+  bool CapApp::duplicateEntry(int target, const String & path)
+  {
+  BrowserFile * tree = file(target);
+  if (!tree || !tree->file) return false;
+  if (!tree->editable)
+    {
+    _gui.showMessage("Duplicate", "Files read from disk cannot be modified: drag the object into a tree (New > Empty "
+                                  "Folder Tree), then duplicate it there.");
+    return false;
+    }
+  if (path.isEmpty()) { _gui.setStatus("Select an object or a folder of the tree to duplicate"); return false; }
+  std::string p = path.str();
+  std::size_t slash = p.rfind('/');
+  String parentPath = slash == std::string::npos ? String("") : String(p.substr(0, slash));
+  String leaf = String(slash == std::string::npos ? p : p.substr(slash + 1));
+  Folder * parent = treeFolder(*tree, parentPath);
+  if (!parent) return false;
+  try
+    {
+    Folder & top = *tree->file;
+    bool folder = parent->folder(leaf) != nullptr;
+    String name = parent->copyEntry(top, path, parent->uniqueName(leaf + String("_copy")));
+    tree->modified = true;
+    String copy = parentPath.isEmpty() ? name : parentPath + String("/") + name;
+    _gui.activeBrowser().select(target, copy, folder);
+    _gui.setStatus(String("Duplicated ") + path + String(" as ") + copy);
+    return true;
+    }
+  catch (const std::exception & e)
+    {
+    _gui.showMessage("Duplicate", String("Cannot duplicate ") + path + String(":\n") + String(e.what()));
+    return false;
+    }
+  }
+
+  BrowserFile * CapApp::selectedEntry(String & path, bool & folder)
+  {
+  const FileBrowser & browser = _gui.activeBrowser();
+  BrowserFile * entry = file(browser.selected().file);
+  path   = entry ? browser.selected().path : String("");
+  folder = entry ? browser.selectedIsFolder() : false;
+  return entry;
+  }
+
+  bool CapApp::asksBeforeClosing(int id, const FileBrowser * browser) const
+  {
+  const BrowserFile * entry = nullptr;
+  for (const auto & f : _files) if (f.id == id) entry = &f;
+  if (!entry || !entry->editable || !entry->modified) return false;
+  if (browser)
+    for (const auto & b : _gui.browsers())
+      if (b.get() != browser && b->showsFile(id)) return false;   // still shown elsewhere: not closed
+  return true;
+  }
+
+  void CapApp::closeFilesAsking(const std::vector<int> & ids, FileBrowser * browser, const std::function<void()> & after)
+  {
+  _treeClosing.ids     = ids;
+  _treeClosing.browser = browser;
+  _treeClosing.after   = after;
+  continueClosing();
+  }
+
+  void CapApp::continueClosing()
+  {
+  while (!_treeClosing.ids.empty())
+    {
+    int id = _treeClosing.ids.front();
+    if (asksBeforeClosing(id, _treeClosing.browser)) { _treeClosing.ask = true; return; }
+    _treeClosing.ids.erase(_treeClosing.ids.begin());
+    if (file(id)) closeFile(id, _treeClosing.browser);
+    }
+  std::function<void()> after = _treeClosing.after;
+  _treeClosing = TreeClosing();
+  if (after) after();
+  }
+
+  void CapApp::renderTreeClosing()
+  {
+  const char * title = "Save the tree?##treeClosing";
+  if (_treeClosing.ask) { ImGui::OpenPopup(title); _treeClosing.ask = false; }
+  if (!ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+  BrowserFile * tree = _treeClosing.ids.empty() ? nullptr : file(_treeClosing.ids.front());
+  if (!tree) { ImGui::CloseCurrentPopup(); ImGui::EndPopup(); continueClosing(); return; }
+  ImGui::Text("The tree %s has changes that are not saved.", tree->name.data());
+  ImGui::Text("Save them before closing it?");
+  ImGui::Spacing();
+  int id = tree->id;
+  if (ImGui::Button("Save", ImVec2(110, 0)))
+    {
+    ImGui::CloseCurrentPopup();
+    saveTree(id, false, [this, id]()
+      {
+      if (!_treeClosing.ids.empty() && _treeClosing.ids.front() == id)
+        {
+        _treeClosing.ids.erase(_treeClosing.ids.begin());
+        closeFile(id, _treeClosing.browser);
+        continueClosing();
+        }
+      });
+    }
+  ImGui::SameLine();
+  if (ImGui::Button("Don't Save", ImVec2(110, 0)))
+    {
+    ImGui::CloseCurrentPopup();
+    _treeClosing.ids.erase(_treeClosing.ids.begin());
+    closeFile(id, _treeClosing.browser);
+    continueClosing();
+    }
+  ImGui::SameLine();
+  if (ImGui::Button("Cancel", ImVec2(110, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape))
+    {
+    ImGui::CloseCurrentPopup();
+    _treeClosing = TreeClosing();
+    }
+  ImGui::EndPopup();
+  }
+
+  void CapApp::requestCloseBrowser(FileBrowser & browser)
+  {
+  if (&browser == &_gui.browser()) { _gui.setBrowserVisible(false); return; }   // the first one: hidden
+  std::vector<int> ids;
+  for (const auto & f : _files) if (browser.showsFile(f.id)) ids.push_back(f.id);
+  FileBrowser * b = &browser;
+  closeFilesAsking(ids, b, [this, b]() { _gui.closeBrowser(*b); });
+  }
+
+  bool CapApp::confirmTreesBeforeExit()
+  {
+  std::vector<int> ids;
+  for (const auto & f : _files) if (f.editable && f.modified) ids.push_back(f.id);
+  if (ids.empty()) return true;
+  closeFilesAsking(ids, nullptr, [this]() { _gui.requestExit(); });
+  return false;
+  }
+
+#ifdef CAP_WITH_ROOT
   void CapApp::exportRoot(int target, const String & folderPath)
   {
   BrowserFile * entry = file(target);
@@ -991,6 +1179,7 @@ namespace CAP
     output.setFolderName(FileSystem::stem(path));
     output.write();
     tree->path = path;
+    tree->modified = false;
     tree->name = FileSystem::stem(path);
     tree->file->setFolderName(tree->name);
     _configuration.directory = FileSystem::parent(path);
@@ -1461,6 +1650,7 @@ namespace CAP
   renderRenameCanvas();
   renderPresentation();
   renderComparison();
+  renderTreeClosing();
   if (_showImGuiDemo) ImGui::ShowDemoWindow(&_showImGuiDemo);
   }
 
@@ -1778,5 +1968,45 @@ namespace CAP
 #endif
   }
 
+  } // namespace GUI
+} // namespace CAP
+
+namespace CAP
+{
+  namespace GUI
+  {
+  void CapApp::connectMapsDialog()
+  {
+  DetectorMapsDialog & maps = _gui.mapsDialog();
+  maps.fileDialog = &_gui.fileDialog();
+  maps.resolveHistogram = [this](const ObjectReference & reference) -> const MATH::Histogram *
+    {
+    BrowserFile * f = file(reference.file);
+    return f && f->file ? f->file->get<MATH::Histogram>(reference.path) : nullptr;
+    };
+  maps.showData = [this](MATH::DataPoints * data) { recordUndo(); show(data); };
+  maps.showFunction = [this](MATH::Function * f, double x0, double x1) { recordUndo(); show(f,float(x0),float(x1)); };
+  maps.showFunction2D = [this](MATH::Function * f, double x0, double x1, double y0, double y1)
+    { recordUndo(); show(f,float(x0),float(x1),float(y0),float(y1)); };
+  maps.setStatus = [this](const String & text) { _gui.setStatus(text); };
+  maps.editCurve = [this](MATH::BezierCurve * curve, const String & title, double x0, double x1, double y0, double y1,
+                          const std::function<void()> & changed)
+    {
+    if (_gui.nPanes() == 0) return;
+    recordUndo();
+    for (int p=0; p<_gui.nPanes(); p++) _gui.pane(p).stopEditingCurve();   // one curve edited at a time
+    CanvasPane & pane = _gui.currentPane();
+    pane.show(GraphItem(curve, float(x0), float(x1), title));
+    Graph & graph = pane.currentGraph();
+    graph.setXRange(float(x0), float(x1));
+    if (y0 < y1) graph.setYRange(float(y0), float(y1));
+    pane.editCurve(curve, changed);
+    };
+  maps.stopEditingCurve = [this](MATH::BezierCurve * curve)
+    {
+    for (int p=0; p<_gui.nPanes(); p++) if (_gui.pane(p).editedCurve() == curve) _gui.pane(p).stopEditingCurve();
+    };
+  if (!_mapsFile.isNull()) _gui.openMapsDialog(_mapsFile);
+  }
   } // namespace GUI
 } // namespace CAP

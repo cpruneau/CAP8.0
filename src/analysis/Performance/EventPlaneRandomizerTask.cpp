@@ -27,13 +27,14 @@ EventProcessor()
 
 void EventPlaneRandomizerTask::execute()
 {
-  double eventAngle= CAP::MATH::twoPi() * gRandom->Rndm();
+  double eventAngle= CAP::MATH::twoPi() * CAP::MATH::randomGenerator().random();
   Event & theEvent = event();
   for (auto & particle : theEvent.particles())
     {
     particle->position().rotateZ(eventAngle);
     particle->momentum().rotateZ(eventAngle);
     }
+  theEvent.invalidateSelections();    // particles changed in place: the selections are made again
 }
 
 } // namespace CAP

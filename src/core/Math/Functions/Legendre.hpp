@@ -62,13 +62,16 @@ namespace CAP
   using Function::evaluateAt;
 
   //! @brief First derivative P_n'(x). @param x variable @return derivative
-  double derivativeAt(double x) const;
+  double derivativeAt(double x) const override;
+  //! @brief The derivative is analytical. @return true
+  bool hasAnalyticalDerivative() const override { return true; }
   //! @brief Antiderivative (P_{n+1}(x) - P_{n-1}(x))/(2n+1), or x for n = 0; zero at x = -1 and x = 1 for n >= 1.
   //! @param x variable @return antiderivative
   double antiderivativeAt(double x) const;
   //! @brief Integral from low to high (negative if low > high). @param low lower bound @param high upper bound @return integral
   //! @throws MathException if a bound is not finite
-  double integralInRange(double low, double high) const;
+  double integralInRange(double low, double high) const override;
+  using Function::integralInRange;
 
   //! @brief Norm: integral from -1 to 1 of P_n^2 dx = 2/(2n+1). @return norm
   double norm() const { return 2.0/(2.0*_degree + 1.0); }
@@ -80,7 +83,7 @@ namespace CAP
   //!
   //! @brief Nodes and weights of the m-point Gauss-Legendre quadrature rule on [-1, 1].
   //!
-  //! The nodes are the m roots of P_m, in decreasing order; the rule integrates polynomials of degree <= 2m-1 exactly:
+  //! The nodes are the m roots of P_m, in decreasing order (see GaussLegendreIntegrator::rule(), which computes them); the rule integrates polynomials of degree <= 2m-1 exactly:
   //! integral from -1 to 1 of f(x) dx is approximately sum_i weights[i] f(nodes[i]).
   //! @param m number of points (>= 1) @param nodes output: the m nodes @param weights output: the m weights
   //! @throws MathException if m is 0

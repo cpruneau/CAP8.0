@@ -109,7 +109,6 @@ namespace CAP
   std::vector<ThermalHadron*> & stableHadrons = _thermalHadronGas.stableHadrons();
   _histograms.fill(_thermalHadronGas);
   _histograms.setLabels(hadrons,stableHadrons);
- // _histograms.drawMassSpectrum(*_thermalHadronGas);
   }
 
   //void ThermalModel::configureObjects(const Configuration & configuration)

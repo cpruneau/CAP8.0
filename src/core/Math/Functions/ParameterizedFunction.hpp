@@ -226,122 +226,8 @@ namespace CAP
   //!
   double evaluateAt(const std::vector<double> & x) const override;
 
-  //!
-  //! @brief First derivative of the function at x.
-  //!
-  //! The default implementation is numerical: a five-point central difference,
-  //! f'(x) = [f(x-2h) - 8 f(x-h) + 8 f(x+h) - f(x+2h)] / (12 h), with step
-  //! h = 1e-3 max(1, |x|), accurate to order h^4 for smooth functions (typically 1e-10 relative).
-  //! Derived classes should override it with the analytical derivative when one is known.
-  //! @param x value of the independent variable
-  //! @return f'(x)
-  //! @throws MathException (default implementation) if the rank is not 1
-  //!
-  virtual double derivativeAt(double x) const;
-
-  //!
-  //! @brief Gradient of the function at x, for any rank.
-  //!
-  //! The default implementation uses derivativeAt() for rank 1 (analytical when the derived class provides it),
-  //! and otherwise a five-point central difference along each axis, with step h = 1e-3 max(1, |x_i|).
-  //! Derived classes may override it with the analytical gradient.
-  //! @param x values of the rank() independent variables
-  //! @return vector of the rank() partial derivatives
-  //! @throws MathException if x.size() differs from the rank
-  //!
-  virtual VectorND gradientAt(const std::vector<double> & x) const;
-  //! @brief Gradient of a function of rank 1 (same as gradientAt({x})). @param x variable @return gradient @throws MathException if the rank is not 1
-  VectorND gradientAt(double x) const;
-  //! @brief Gradient of a function of rank 2. @param x1 first variable @param x2 second variable @return gradient @throws MathException if the rank is not 2
-  VectorND gradientAt(double x1, double x2) const;
-  //! @brief Gradient of a function of rank 3. @param x1 first variable @param x2 second variable @param x3 third variable @return gradient @throws MathException if the rank is not 3
-  VectorND gradientAt(double x1, double x2, double x3) const;
-
-  //!
-  //! @brief Integral of a function of rank 2 over the rectangle [x1Low, x1High] x [x2Low, x2High].
-  //!
-  //! By default, forwards to the vector version. Reversed bounds change the sign of the result.
-  //! @param x1Low lower bound of x1 @param x1High upper bound of x1
-  //! @param x2Low lower bound of x2 @param x2High upper bound of x2
-  //! @return integral of f dx1 dx2
-  //! @throws MathException if the rank is not 2, or (default implementation) if a bound is not finite
-  //!
-  virtual double integralInRange(double x1Low, double x1High, double x2Low, double x2High) const;
-
-  //!
-  //! @brief Integral of a function of rank 3 over the box [x1Low, x1High] x [x2Low, x2High] x [x3Low, x3High].
-  //!
-  //! By default, forwards to the vector version. Reversed bounds change the sign of the result.
-  //! @param x1Low lower bound of x1 @param x1High upper bound of x1
-  //! @param x2Low lower bound of x2 @param x2High upper bound of x2
-  //! @param x3Low lower bound of x3 @param x3High upper bound of x3
-  //! @return integral of f dx1 dx2 dx3
-  //! @throws MathException if the rank is not 3, or (default implementation) if a bound is not finite
-  //!
-  virtual double integralInRange(double x1Low, double x1High, double x2Low, double x2High, double x3Low, double x3High) const;
-
-  //!
-  //! @brief Integral of the function over the box [low[0], high[0]] x ... x [low[n-1], high[n-1]], for any rank n.
-  //!
-  //! For rank 1, forwards to integralInRange(low, high). Otherwise the default implementation is numerical:
-  //! iterated adaptive Simpson integration, one axis at a time, with a relative tolerance of about 1e-8.
-  //! Its cost grows quickly with the rank (typically 1e2 to 1e3 evaluations per axis, multiplied across axes),
-  //! so derived classes should override it with an analytical expression whenever possible.
-  //! Reversed bounds change the sign of the result.
-  //! @param low lower bounds, one per variable @param high upper bounds, one per variable
-  //! @return integral of f over the box
-  //! @throws MathException if low.size() or high.size() differs from the rank, or (default implementation) if a bound is not finite
-  //!
-  virtual double integralInRange(const std::vector<double> & low, const std::vector<double> & high) const;
-
-  //!
-  //! @brief Integral of the function from low to high.
-  //!
-  //! If low > high the result is the negative of the integral from high to low; it is zero if low == high.
-  //! The default implementation is numerical: adaptive Simpson integration with a relative
-  //! tolerance of about 1e-10. It requires finite bounds and a function without singularities
-  //! in [low, high]. Derived classes should override it with the analytical integral when one is known.
-  //! @param low lower bound of integration
-  //! @param high upper bound of integration
-  //! @return integral of f(x) dx from low to high
-  //! @throws MathException (default implementation) if a bound is not finite
-  //! @throws MathException (default implementation) if the rank is not 1
-  //!
-  virtual double integralInRange(double low, double high) const;
-
-  //!
-  //! @brief Expectation value of x over [low, high], using the function as a (not necessarily normalized) weight.
-  //!
-  //! E[x] = integral of x f(x) dx / integral of f(x) dx, both from low to high. The result is
-  //! the same whatever the order of the bounds. It is the mean of x for a distribution f
-  //! restricted to [low, high], and is meaningful when f does not change sign in the range.
-  //! The default implementation is numerical (adaptive Simpson, see integralInRange()).
-  //! Derived classes should override it with the analytical expression when one is known.
-  //! @param low lower bound of the range
-  //! @param high upper bound of the range
-  //! @return expectation value of x
-  //! @throws MathException if the integral of f over the range is zero, or (default implementation) if a bound is not finite
-  //! @throws MathException (default implementation) if the rank is not 1
-  //!
-  virtual double expectationValue(double low, double high) const;
-
-  //!
-  //! @brief Expectation value of x^power over [low, high], using the function as a (not necessarily normalized) weight.
-  //!
-  //! E[x^n] = integral of x^n f(x) dx / integral of f(x) dx, both from low to high. power = 1 gives
-  //! expectationValue(low, high) and power = 0 gives 1. The result does not depend on the order of the bounds.
-  //! Negative powers are allowed only if 0 is outside [low, high].
-  //! The default implementation is numerical (adaptive Simpson, see integralInRange()).
-  //! Derived classes should override it with the analytical expression when one is known.
-  //! @param low lower bound of the range
-  //! @param high upper bound of the range
-  //! @param power power n of x
-  //! @return expectation value of x^power
-  //! @throws MathException if the integral of f over the range is zero, if power < 0 and 0 is in the range,
-  //! or (default implementation) if a bound is not finite
-  //! @throws MathException (default implementation) if the rank is not 1
-  //!
-  virtual double expectationValue(double low, double high, int power) const;
+  // derivativeAt(), gradientAt(), integralInRange(), expectationValue(): see Function (numerical by default;
+  // the derived classes override them with analytical expressions when they are known)
 
   protected:
 
@@ -350,21 +236,7 @@ namespace CAP
   //! @brief Value of the parameter at index, without range check (for use by derived classes). @param index index of the parameter @return value of the parameter
   double parameterValue(unsigned int index) const { return _parameters[index].value(); }
 
-  //!
-  //! @brief Throw if power < 0 and the range [low, high] (in either order) contains 0, where x^power is singular.
-  //! @param low lower bound @param high upper bound @param power power of x @param source name of the calling function
-  //! @throws MathException if x^power is singular in the range
-  //!
-  static void checkPowerRange(double low, double high, int power, const char * source);
 
-  public:
-
-  //!
-  //! @brief Value of the function at x (same as evaluateAt()).
-  //! @param x value of the independent variable
-  //! @return f(x)
-  //!
-  double operator()(double x) const { return evaluateAt(x); }
 
   };
 

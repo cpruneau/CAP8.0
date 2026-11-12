@@ -1,61 +1,53 @@
 /* **********************************************************************
- * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani, Akash Raj
+ * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  * All rights reserved.
  *
  * For the licensing terms see LICENSE.
  *
- * Author: Claude Pruneau, Akash Raj,  Nov 2024
+ * Author: Claude Pruneau
  *
  * *********************************************************************/
+//! @file JetAnalyzer.hpp
+//! @brief JetAnalyzer: jets found with FastJet for several radii in one run, selected by jet filters, and their
+//! per-event, single-jet and constituent histograms.
 #ifndef CAP__JetAnalyzer
 #define CAP__JetAnalyzer
-#include "EventProcessor.hpp"
-#include "JetFilter.hpp"
+#include "JetTask.hpp"
+#include "JetHistos.hpp"
 
 namespace CAP
 {
 
 //!
-//! @brief Jet analyzer: clusters the accepted particles of each event into jets with FastJet (radius jetRadius,
-//! minimum pT jetPtMin) and fills jet and constituent histograms for each jet filter.
-//! @warning Work in progress: the Jets library is built only with FastJet, and this header does not compile as is
-//! (ManagedList is not defined; clusteredJets is initialized from an undeclared clusterSequence).
+//! @brief Analysis of jets: for each event filter, particle filter (the particles clustered), radius and jet filter
+//! (see JetTask), the jets accepted fill a folder of JetHistos: per event (number of jets, pT sum), per jet and per
+//! constituent.
 //!
-class JetAnalyzer
-:
-public EventProcessorSingle<JetSingleHistos,JetSingleDerivedHistos>,
-public ManagedList<JetFilter>
+//! Folders: \<event filter\>_\<particle filter\>_\<R label\>_\<jet filter\> (R label: R0p4 for 0.4). At the end of the
+//! run, the per-event histograms are divided by the number of events accepted by the event filter, and the per-jet and
+//! per-constituent histograms by the number of jets of their folder; the profiles are averages per jet.
+//!
+class JetAnalyzer : public JetTask<JetHistos>
 {
 public:
 
   //! @brief Default constructor.
   JetAnalyzer();
-  //! @brief Copy constructor. @param soure object to copy
-  JetAnalyzer(const JetAnalyzer & soure);
-  //! @brief Copy assignment. @param rhs object to copy @return this object
-  JetAnalyzer & operator=(const JetAnalyzer & rhs);
+  //! @brief Copy constructor. @param source task
+  JetAnalyzer(const JetAnalyzer & source) = default;
+  //! @brief Copy assignment. @param rhs task @return this task
+  JetAnalyzer & operator=(const JetAnalyzer & rhs) = default;
   //! @brief Destructor.
-  virtual ~JetAnalyzer() {}
-  //! @brief Add the default configuration of the task.
-  virtual void setDefaultConfiguration();
-  //! @brief Initialize the task.
-  virtual void initialize();
-  //! @brief Execute the task (process the current event).
-  virtual void execute();
+  virtual ~JetAnalyzer() { }
+  //! @brief Copy of the task. @return new task
+  virtual Task * clone() override { return new JetAnalyzer(*this); }
 
 protected:
 
-  //! Particles of the event given to the jet clustering.
-  std::vector<PseudoJet> pseudoJetsInput;
-  //! Jets found, sorted by decreasing pT.
-  std::vector<PseudoJet> clusteredJets = sorted_by_pt( clusterSequence->inclusive_jets(jetPtMin) );
-
-  //! Jet radius parameter R.
-  double jetRadius;
-  //! Minimum jet pT.
-  double jetPtMin;
-
-
+  //! @brief Fill the folder with the jets accepted. @param first folder @param jets all the jets
+  //! @param accepted jets accepted @param particles particles @param settings settings
+  virtual void fill(unsigned int first, const std::vector<Jet> & jets, const std::vector<const Jet*> & accepted,
+                    const std::vector<Particle*> & particles, const JetSettings & settings) override;
 };
 
 } // namespace CAP

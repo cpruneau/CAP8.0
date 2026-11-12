@@ -51,11 +51,7 @@ void GlobalAnalyzer::execute()
 {
   Event & theEvent = event();
   if (!filterEvent(theEvent)) return;
-  if (!filterParticles(theEvent.particles()))  return;
-
-  double n ,e, q, s, b, ptSum;
-  unsigned int baseIndex = 0;
-  unsigned int index = 0;
+  if (!filterParticles(theEvent))  return;
   theEvent.resetMult();
   theEvent.resetEnergy();
   theEvent.resetCharge();
@@ -64,52 +60,36 @@ void GlobalAnalyzer::execute()
   theEvent.resetPtSum();
   std::vector<GlobalHistos*> & folders = histograms();
   const bool fillHistograms = !folders.empty();
-  if (fillHistograms && folders.size()<nEventFilters()*nParticleFilters())
+  const unsigned int nef = nEventFilters();
+  const unsigned int npf = nParticleFilters();
+  if (fillHistograms && folders.size()<nef*npf)
     throw Exception("Fewer histogram folders than combinations of filters",__FUNCTION__);
-  //printValue("GlobalAnalyzer::execute()",4);
-  for (unsigned int iEventFilter = 0;iEventFilter<nEventFilters();iEventFilter++)
+  for (unsigned int iEventFilter = 0;iEventFilter<nef;iEventFilter++)
     {
-    //printValue("GlobalAnalyzer::execute() iEventFilter",iEventFilter);
-    baseIndex = iEventFilter*nParticleFilters();
-    if (_acceptedEventFilters[iEventFilter])
+    if (!_acceptedEventFilters[iEventFilter]) continue;
+    unsigned int baseIndex = iEventFilter*npf;
+    for (unsigned int iParticleFilter = 0; iParticleFilter<npf; iParticleFilter++)
       {
-      for (unsigned int iParticleFilter = 0; iParticleFilter<nParticleFilters(); iParticleFilter++)
+      if (!_acceptedParticleFilters[iParticleFilter]) continue;
+      // the global quantities of the selection, computed once per event with the selection itself (shared)
+      const ParticleSelection & s = selection(iParticleFilter);
+      double n = s.multiplicity(), e = s.energy(), q = s.charge(), st = s.strangeness(), b = s.baryon();
+      double ptSum = s.ptSum();
+      // quantities indexed by number, for the event filters of earlier versions (MULT_k: particle filter k of this
+      // task; they were stored by the index of the event filter, each particle filter overwriting the previous one)
+      if (iParticleFilter < 6)
         {
-        //printValue("GlobalAnalyzer::execute() iParticleFilter",iParticleFilter);
-        if (_acceptedParticleFilters[iParticleFilter])
-          {
-          index = baseIndex+iParticleFilter;
-         // std::vector<Particle*> & particlesSelected = acceptedParticles(iParticleFilter);
-          std::vector<Particle*> & particlesSelected = acceptedParticles(iParticleFilter);
-          n = 0;
-          e = 0;
-          q = 0;
-          s = 0;
-          b = 0;
-          ptSum = 0;
-          for (auto & particle : particlesSelected)
-            {
-            ParticleType & type = particle->type();
-            VectorLorentz & momentum = particle->momentum();
-            n++;
-            e += momentum.t();
-            q += type.charge();
-            s += type.strangeness();
-            b += type.baryonNumber();
-            ptSum += momentum.perp();
-            }
-          theEvent.setMult(iEventFilter,n);
-          theEvent.setEnergy(iEventFilter,e);
-          theEvent.setCharge(iEventFilter,q);
-          theEvent.setStrangeness(iEventFilter,s);
-          theEvent.setBaryon(iEventFilter,b);
-          theEvent.setPtSum(iEventFilter,ptSum);
-          if (fillHistograms) folders[index]->fill(n,ptSum,e,q,s,b,1.0);
-          }
+        theEvent.setMult(iParticleFilter,n);
+        theEvent.setEnergy(iParticleFilter,e);
+        theEvent.setCharge(iParticleFilter,q);
+        theEvent.setStrangeness(iParticleFilter,st);
+        theEvent.setBaryon(iParticleFilter,b);
+        theEvent.setPtSum(iParticleFilter,ptSum);
         }
+      if (fillHistograms) folders[baseIndex+iParticleFilter]->fill(n,ptSum,e,q,st,b,1.0);
       }
     }
-  _taskExecuted.increment();;
+  _taskExecuted.increment();
 }
 
 

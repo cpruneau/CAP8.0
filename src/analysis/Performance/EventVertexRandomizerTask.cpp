@@ -67,11 +67,12 @@ void EventVertexRandomizerTask::initialize()
 
 void EventVertexRandomizerTask::execute()
 {
-  double eventX = gRandom->Gaus(rConversion*xAvg, rConversion*xRms);
-  double eventY = gRandom->Gaus(rConversion*yAvg, rConversion*yRms);
-  double eventZ = gRandom->Gaus(rConversion*zAvg, rConversion*zRms);
-  double eventT = gRandom->Gaus(tConversion*tAvg, tConversion*tRms);
+  double eventX = CAP::MATH::randomGenerator().gauss(rConversion*xAvg, rConversion*xRms);
+  double eventY = CAP::MATH::randomGenerator().gauss(rConversion*yAvg, rConversion*yRms);
+  double eventZ = CAP::MATH::randomGenerator().gauss(rConversion*zAvg, rConversion*zRms);
+  double eventT = CAP::MATH::randomGenerator().gauss(tConversion*tAvg, tConversion*tRms);
   for (auto & particle : event().particles()) particle->shift(eventX,eventY,eventZ,eventT);
+  event().invalidateSelections();    // particles changed in place: the selections are made again
 }
 
 } // namespace CAP

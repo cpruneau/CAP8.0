@@ -48,7 +48,6 @@ namespace CAP
   void setLabels(vector<ThermalHadron> & hadrons,
                  vector<ThermalHadron*> & stableHadrons);
   
-  void drawMassSpectrum(const ThermalHadronGas & thermalGas);
   
   protected:
   

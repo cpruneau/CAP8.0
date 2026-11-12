@@ -42,6 +42,12 @@ namespace CAP
 //!   \<name\>:Function:Parameters (values separated by commas or spaces; empty: the defaults of the class). The function
 //!   must be non-negative on the range; it is tabulated on the range when the task is initialized.
 //!
+//! Anisotropic flow (for tests of flow analyses): \<name\>:Flow:Vn, a list of coefficients v_1, v_2, ... (empty, the
+//! default: none), modulates the azimuthal distribution about a reaction plane Psi drawn uniformly in [0, 2 pi) for each
+//! event: dN/dphi proportional to 1 + 2 sum_n v_n(pT) cos(n (phi - Psi)), with v_n(pT) = v_n (Flow:PtScale = 0, the
+//! default) or v_n min(pT/PtScale, 1) (a linear rise up to PtScale; pT = p sin(theta) in the spherical style). The
+//! azimuth is drawn by rejection in [PhiMin, PhiMax]; the sum of the |v_n| must be below 1/2.
+//!
 //! The random numbers are drawn by a Mersenne Twister seeded with \<name\>:Random:Seed if Random:SetSeed is true, and
 //! with a seed of its own otherwise. A particle is added to the event if the task has no particle filter or if one of
 //! its particle filters accepts it.
@@ -95,6 +101,11 @@ protected:
   void tabulate(double low, double high);
   //! @brief Density of the distribution at x (Gaussian or user function). @param x value @return density
   double density(double x) const;
+  //! @brief Azimuth of a particle of transverse momentum pT (with the flow, if any). @param pt transverse momentum
+  //! @return azimuth
+  double drawPhi(double pt);
+  //! @brief Reaction plane of the current event (flow). @return Psi
+  double reactionPlane() const { return _psi; }
   //! @brief Momentum of one particle of a type, in the cylindrical style. @param m mass @param momentum momentum set
   void generateCylindrical(double m, MATH::VectorLorentz & momentum);
   //! @brief Momentum of one particle of a type, in the spherical style. @param m mass @param momentum momentum set
@@ -140,6 +151,12 @@ protected:
   std::vector<double> _mass;
   //! Generated types.
   std::vector<ParticleType*> _types;
+  //! Flow coefficients v_1, v_2, ... (empty: no flow).
+  std::vector<double> _vn;
+  //! Transverse momentum of saturation of the flow coefficients (0: constant).
+  double _flowPtScale;
+  //! Reaction plane of the current event.
+  double _psi;
 
 };
 

@@ -94,6 +94,8 @@ namespace CAP
   using ParameterizedFunction::evaluateAt;
   //! @brief Derivative (rank 1): sum of those of the components. @param x x @return derivative
   double derivativeAt(double x) const override;
+  //! @brief Whether the derivative is analytical: all the components have analytical derivatives. @return true if so
+  bool hasAnalyticalDerivative() const override;
   //! @brief Integral (rank 1): sum of those of the components. @param low lower end @param high upper end @return integral
   double integralInRange(double low, double high) const override;
   //! @brief Integral over a box: sum (or product, for a product) of those of the components.

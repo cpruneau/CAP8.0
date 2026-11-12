@@ -36,9 +36,9 @@ namespace CAP
   double mass2 = mass*mass;
   double chemPotential = chemicalPotential(type);
 
-  double zeta      = _distanceField.randomX(gRandom->Rndm());
-  double sPhi      = _distanceField.randomY(gRandom->Rndm());
-  double sRapidity = _sRapidityRange * (gRandom->Rndm() - 0.5); // * _sRapidityRange;
+  double zeta      = _distanceField.randomX(CAP::MATH::randomGenerator().random());
+  double sPhi      = _distanceField.randomY(CAP::MATH::randomGenerator().random());
+  double sRapidity = _sRapidityRange * (CAP::MATH::randomGenerator().random() - 0.5); // * _sRapidityRange;
   double dhs       = _distanceField.interpolate(zeta,sPhi,0.0);
   double dDdPhi    = _distanceFieldDPhi.interpolate(zeta,sPhi, 0.0);
   double dDdZeta   = _distanceFieldDZeta.interpolate(zeta,sPhi, 0.0);
@@ -50,12 +50,12 @@ namespace CAP
   _position.setTXYZ(tau*std::cosh(sRapidity),rho*std::cos(sPhi),rho*std::sin(sPhi),tau*std::sinh(sRapidity));
 
   // pT = u/(1-u): its own random number, zeta must stay the hypersurface angle used by dSigmaP below
-  double u         = gRandom->Rndm();
+  double u         = CAP::MATH::randomGenerator().random();
   double zetac     = (u>0.9999999) ? 0.00000001 : 1.00-u;
   double pT        = u/zetac;
   double dPt       = 1.0/(zetac*zetac);
-  double pPhi      = twoPi() * gRandom->Rndm();
-  double pRapidity = _pRapidityRange * (gRandom->Rndm() - 0.5);
+  double pPhi      = twoPi() * CAP::MATH::randomGenerator().random();
+  double pRapidity = _pRapidityRange * (CAP::MATH::randomGenerator().random() - 0.5);
   double mT        = std::sqrt(mass2+pT*pT);
   double e         = mT * std::cosh(pRapidity);
   _momentum.setTXYZ(e,pT*std::cos(pPhi),pT*std::sin(pPhi),mT*std::sinh(pRapidity));

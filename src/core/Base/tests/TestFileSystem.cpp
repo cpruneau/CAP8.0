@@ -84,7 +84,13 @@ void writeFile(const String & path, const std::string & content)
 //! @brief Count a check, and report it if the statement does not throw.
 #define CHECK_THROWS(statement)     checkThrows([&]() { statement; }, #statement, __LINE__)
 //! @brief Count a check, and report it if the paths differ from the expected ones.
-#define CHECK_PATHS(paths, ...)     checkPaths((paths), std::vector<String>{__VA_ARGS__}, #paths, __LINE__)
+//! @brief checkPaths() with the expected paths as arguments (none: an empty list).
+template <typename... Expected>
+void checkPathsOf(const std::string & what, int line, const std::vector<String> & paths, const Expected &... expected)
+{
+  checkPaths(paths, std::vector<String>{ String(expected)... }, what, line);
+}
+#define CHECK_PATHS(...)            checkPathsOf(#__VA_ARGS__, __LINE__, __VA_ARGS__)
 
 //! @brief Run the checks. @return number of failed checks (0: all passed)
 int main()
