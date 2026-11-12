@@ -129,6 +129,8 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"area_nBins"),50);
   _configuration.addProperty(createKey(taskName,objectType,"area_min"),0.0);
   _configuration.addProperty(createKey(taskName,objectType,"area_max"),14.0);
+  // for RunCAP: one folder of histograms per event filter, no particle filter (not read here)
+  _configuration.addProperty(createKey(taskName,objectType,"FOLDER_RANK"),0);
 
   _managedHistograms.setDefaultObjectConfiguration(taskName,objectType, _configuration);
 

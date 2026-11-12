@@ -700,7 +700,7 @@ def _template_value(task, templates, key, default=None):
 
 def folder_rank(task, templates):
     """Number of particle filters per folder of a task of the folders design (HISTOGRAM:FOLDER_RANK of its template):
-    1 (default), one folder per event and particle filter; 2, per event filter and ordered pair of particle filters (a
+    0, one folder per event filter (GlauberAnalyzer); 1 (default), one folder per event and particle filter; 2, per event filter and ordered pair of particle filters (a
     pair analysis: n x m x m pair folders, listed here, and n x m single-particle folders, made by the task)."""
     try:
         return int(_template_value(task, templates, "HISTOGRAM:FOLDER_RANK", "1"))
@@ -1469,9 +1469,12 @@ def check_choices(tasks, library, templates):
                                  list_label(task, templates, l - 1).lower(), l - 1))
         used = [l for l in folder_lists(task, templates) if list_used(task, l)]
         if used:
-            if not choices(task).get("EVENT_FILTER") or not choices(task).get("PARTICLE_FILTER"):
+            per_particle = histogram_layout(task, templates) != "folders" or folder_rank(task, templates) > 0
+            if per_particle and (not choices(task).get("EVENT_FILTER") or not choices(task).get("PARTICLE_FILTER")):
                 errors.append("Task %s fills histograms per event filter and particle filter: choose at least one of each."
                               % task.name)
+            elif not per_particle and not choices(task).get("EVENT_FILTER"):
+                errors.append("Task %s fills histograms per event filter: choose at least one." % task.name)
             for l in used:
                 label = list_label(task, templates, l).lower()
                 flag = lambda name: _param_value(task, "%s:%s" % (list_key(l), name), "false") == "true"
