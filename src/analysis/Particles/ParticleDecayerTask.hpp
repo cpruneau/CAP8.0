@@ -50,7 +50,8 @@ public:
   //! with the particle factory, compute their momenta and positions (ParticleDecayer::decay2(), decay3(), decay4()), add them to
   //! the event, decay the unstable ones, and mark the parent as decayed.
   //! @param particle particle to decay @param event event receiving the products
-  //! @throws ParticleDecayException for a decay mode with fewer than 2 or more than 4 products
+  //! A one-product mode (K0 -> K0S or K0L) changes the type: the product keeps the momentum and the position.
+  //! @throws ParticleDecayException for a decay mode with no product or more than 4
   //!
   virtual void decayParticle(Particle & particle, Event & event);
 

@@ -58,9 +58,6 @@ namespace CAP
   ThermalHadron & findStableHadronFor(int pdgCode);
   virtual void findStableHadrons();
   int findStableHadronIndexFor(int pdgCode);
-  //! The hadron of the gas a decay product feeds: K0S and K0L (310, 130), which the gas does not hold, count as K0;
-  //! nullptr for a product that is not in the gas (leptons, photons), which feeds no stable hadron.
-  ThermalHadron * feedDownHadronFor(int pdgCode);
 
   ParticleType * stableParticleTypeAt(int index);
 

@@ -133,9 +133,9 @@ namespace CAP
     {
     throw Exception("branchingRatio<0.0||branchingRatio>1.0",__FUNCTION__);
     }
-  if (children.size()<2)
+  if (children.size()<1)   // one product: a change of type (K0 -> K0S, K0L)
     {
-    throw Exception("Decay mode with no or only one particle",__FUNCTION__);
+    throw Exception("Decay mode with no particle",__FUNCTION__);
     }
   ParticleDecayMode decayMode;
   decayMode.setBranchingRatio(branchingRatio);

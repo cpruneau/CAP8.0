@@ -6,7 +6,7 @@ T2 paths below are relative to `therminator2/build/src/`. T3 paths are relative 
 
 ## Status (12 November 2026)
 
-Fourth round: see below. Everything is fixed except the missing Λ and K⁰ decays of the database (a choice to make).
+Fourth round: see below. Everything is fixed, including the missing Λ and K⁰ decays of the database.
 
 Status of 24 October 2026:
 
@@ -160,16 +160,25 @@ which is used (`--as-needed`, the default of most Linux distributions), and the 
 their library is loaded. `src/CMakeLists.txt` now links with `--no-as-needed` on Linux. That also fixes the ctest
 `MathReflection` there.
 
-**The decay difference after decays (traced).** CAP's database has no decay modes for Λ, Λ̄, K⁰ and K̄⁰, so they never decay.
-Therminator 2 decays them: Λ → pπ⁻, nπ⁰, and K⁰ → π⁺π⁻, π⁰π⁰ with the K⁰S fraction, the rest left undecayed.
-- Σ, Ξ and Ω decay in both.
-- With Λ and K⁰ decays added, the thermal estimate gives 16% more π⁺ after decays. That accounts for the 14% difference
-  between Therminator 2 (1642.5 π⁺ per event) and CAP (1435.5) in the `test.xml` run.
-- `ParticleDb::findWeakDecays()` lists Λ and K⁰ among the weak decays that `DisableWeakDecays` switches off, so their
-  missing modes look like a gap in the database. They are not added here: making them decay changes the default
-  particle content of every analysis.
-- CAP's decayer cannot leave a particle undecayed (it normalizes the ratios), so a K⁰ would need K⁰S and K⁰L as one-body
-  decays, or the generator would emit K⁰S/K⁰L.
+**The pion difference after decays (traced, then fixed).** CAP's database had no decay modes for Λ, Λ̄, K⁰ and K̄⁰, so
+they never decayed; Therminator 2 decays them. With them, the thermal estimate gives 16% more π⁺ after decays, which
+accounts for the 14% difference between Therminator 2 (1642.5 π⁺ per event) and CAP (1435.5) in the `test.xml` run.
+They are now in `DB/ParticleData/ParticleDb.xml`:
+- Λ → pπ⁻ (0.641), nπ⁰ (0.359), and the same for Λ̄, with the PDG lifetime (Γ = 2.515×10⁻¹⁵ GeV).
+- K⁰, K̄⁰ → K⁰S or K⁰L (0.5 each), which then decay with their own modes and lifetimes. These are decay modes with one product
+  (a change of type: same momentum and position), which `ParticleDbXml` and `ParticleDecayerTask` now accept. Unlike
+  Therminator 2, CAP's decayer also decays the K⁰L, with cτ = 15.3 m.
+- Σ±, Ξ⁰, Ξ⁻ and Ω⁻ (and their antiparticles) had a width of 0, so they decayed after a proton lifetime (10⁶⁴ fm away).
+  They now have their PDG lifetimes.
+- `DisableWeakDecays` (`ParticleDb::disableWeakDecays()`) keeps all of these as they are.
+- The feed-down of `ThermalHadronGasFD` now follows the decay chains through the database, also through types the
+  gas does not hold (K⁰ → K⁰S → ππ). It agrees with an independent calculation from the database to 6 digits at T = 200 MeV.
+- New ctest `ParticleDecays`, 25 checks: K⁰ decays (0.580 π⁺ per K⁰, expected 0.578), Λ branching ratios, the Λ decay
+  length at 1 GeV/c (7.03×10¹³ fm, within 0.1%), conservation of charge and four-momentum, and the weak decays switched off.
+- Still in the database: 22 hadrons whose branching ratios sum to more than 1.05 since the PDG 2026 update.
+  - Σ(1940): 1.62. Its Σπ ratio of 0.86 replaced 0.15, and the other modes were not scaled.
+  - Δ(1920): 1.18; Δ(1930): 1.13.
+  - The decayer normalizes the ratios, so this changes the relative weights of the modes, not the number of decays.
 
 ### Earlier findings (fixed in the fourth round)
 - `ModelSettings::setSystemEnergy(double)` assigns a number to a `String`.
