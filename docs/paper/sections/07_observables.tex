@@ -45,11 +45,11 @@ particles. The invariant yield, and the invariant cross section $E\,d^3\sigma/dp
 is obtained from \code{n1\_ptXS}, filled with weight $1/\pT$, as $\code{n1\_ptXS}/(2\pi\,\Delta\pT\,\Delta y)$, with
 $\Delta\pT$ the width of the bin and $\Delta y$ the rapidity range accepted by the particle filter; the double
 differential $d^2N/d\pT\,dy$ is available from \code{n1\_ptY}. The azimuthal and (pseudo)rapidity densities are
-\begin{equation}
-  \rho_1(\eta,\varphi) = \frac{d^2N}{d\eta\,d\varphi}, \;\;
-  \frac{dN}{d\eta} = \int\! \rho_1\, d\varphi, \;\;
-  \frac{dN}{d\varphi} = \int\! \rho_1\, d\eta ,
-\end{equation}
+\begin{align}
+  \rho_1(\eta,\varphi) &= \frac{d^2N}{d\eta\,d\varphi}, \\ 
+  \frac{dN}{d\eta} &= \int\! \rho_1\, d\varphi,  \\ 
+  \frac{dN}{d\varphi} &= \int\! \rho_1\, d\eta ,
+\end{align}
 and likewise in rapidity. When \code{p2\_fill} is set, the same histograms are also filled with weight $\pT$, which
 gives the inclusive mean transverse momentum in each bin, $\avg{\pT}(\eta,\varphi) = \sum\pT/N$. Table~\ref{tab:single}
 lists the histograms.
@@ -109,10 +109,14 @@ pseudorapidity and azimuth, $\rho_1^{\alpha}\otimes \rho_1^{\beta}(\Delta \eta, 
 product'' of the single-particle densities $\rho_1^{\alpha}(\eta_1,\varphi_1)$ and $\rho_1^{\beta}(\eta_2,\varphi_2)$
 averaged at $\Delta \eta= \eta_1-\eta_2$ and $\Delta \varphi= \varphi_1-\varphi_2$ according to the technique described
 in Ref.~\cite{Adam:2017ucq}, and
-\begin{equation}
+\begin{align}
   R_2^{\alpha\beta}(\Delta \eta, \Delta \varphi) = \frac{C_2^{\alpha\beta}(\Delta \eta, \Delta \varphi)}{\rho_1^{\alpha}\otimes \rho_1^{\beta}(\Delta \eta, \Delta \varphi)},
-\end{equation}
-with $C_2^{\alpha\beta}(\Delta \eta, \Delta \varphi) = \rho_2^{\alpha\beta}(\Delta \eta, \Delta \varphi) - \rho_1^{\alpha}\otimes \rho_1^{\beta}(\Delta \eta, \Delta \varphi)$,
+\end{align}
+with 
+\begin{align}
+C_2^{\alpha\beta}(\Delta \eta, \Delta \varphi) =& \rho_2^{\alpha\beta}(\Delta \eta, \Delta \varphi) \nonumber \\
+& - \rho_1^{\alpha}\otimes \rho_1^{\beta}(\Delta \eta, \Delta \varphi),
+\end{align}
 and likewise for $(\Delta y,\Delta\varphi)$. $R_2$ is thereby averaged over the mean pseudorapidity
 $\bar\eta=(\eta_1+\eta_2)/2$ of the pairs, and corrected for the acceptance, since the pair density and the product of
 the single densities are reduced the same way. $D_2(\Delta y,\Delta\varphi)$ is $A_2$ divided, in each $\Delta y$ bin,
@@ -166,8 +170,8 @@ particles of a pair. With $S_{pp}$, $S_{pn}$ and $S_{np}$ the pair densities wei
 $p_{\mathrm{T},1}$ and $p_{\mathrm{T},2}$, and $\avg{\pT}_\alpha$ the inclusive mean transverse momentum of species
 $\alpha$ in the acceptance, the transverse-momentum covariance of the pairs in a bin is
 \begin{align}
-  \avg{\Delta p_{\mathrm{T},1}\Delta p_{\mathrm{T},2}} = {} & \frac{1}{\rho_2}\Big( S_{pp} - \avg{\pT}_\beta S_{pn} \nonumber \\
-   & - \avg{\pT}_\alpha S_{np} + \avg{\pT}_\alpha\avg{\pT}_\beta\,\rho_2 \Big),
+  \avg{\Delta p_{\mathrm{T},1}\Delta p_{\mathrm{T},2}} =&  \frac{1}{\rho_2} S_{pp} - \avg{\pT}_\beta S_{pn} - \avg{\pT}_\alpha S_{np}  \nonumber \\
+   & + \avg{\pT}_\alpha\avg{\pT}_\beta\,\rho_2 ),
   \label{eq:DptDpt}
 \end{align}
 with $\Delta\pT = \pT-\avg{\pT}$, and its dimensionless version is~\cite{Sharma:2008qr}
@@ -310,11 +314,11 @@ Table~\ref{tab:pair3d} lists the histograms.
 The task \code{NuDynAnalyzer} measures the fluctuations of the multiplicities $N_1$ and $N_2$ of two particle
 selections, as functions of an event variable $m$ (the multiplicity or another global quantity of the event, see
 Section~\ref{sec:global}), from the factorial moments
-\begin{equation}
-  f_1^{i} = \avg{N_i}, \;\;
-  f_2^{ii} = \avg{N_i(N_i-1)}, \;\;
-  f_2^{12} = \avg{N_1N_2},
-\end{equation}
+\begin{align}
+  f_1^{i} &= \avg{N_i}, \\
+  f_2^{ii} &= \avg{N_i(N_i-1)}, \\
+  f_2^{12} &= \avg{N_1N_2},
+\end{align}
 accumulated as profiles versus $m$. The derived calculator computes the factorial cumulants and their normalised
 versions,
 \begin{equation}
@@ -378,9 +382,11 @@ $D$ is the same sum with all harmonics zero. One call therefore gives all the or
 $\avg{\avg{2k}}_n$ are profiles weighted by $D$. For the differential correlators $\avg{2k'}_n$, a POI takes the first
 slot and RF the others. The block of the first slot uses the vectors $p_{h}$ of the POI, or, when it holds more than one
 slot, the vectors $q_{h,p}$ of the particles that are both POI and RF~\cite{Bilandzic:2010jr}:
+\begin{widetext}
 \begin{equation}
   N'(S) = \sum_{T\subseteq S\setminus\{1\}} (-1)^{|T|}\,|T|!\; X_{h_1+h_T,\,|T|+1}\; N(S\setminus\{1\}\setminus T),
 \end{equation}
+\end{widetext}
 with $X_{h,1} = p_h$ and $X_{h,p} = q_{h,p}$ for $p\ge 2$. Self-correlations are thus removed exactly, whatever the overlap
 of the two selections. The particle weights $w_i$ (the inverse of the efficiencies of Section~\ref{sec:efficiency})
 correct for a non-uniform acceptance.
@@ -514,18 +520,25 @@ underlying event of a bin of jet $p_T$ or $N$ is that of the events of its jets.
 
 The derived quantities are computed at the end of the run: the variances $\sigma^2_N = F_2 + \avg{N} - \avg{N}^2$ (with
 $F_2 = \avg{N(N-1)}$) of the total and of each charge, that of the net charge, the normalised two-particle densities
-\begin{equation}
-  R_2^{++} = \frac{\avg{N_+(N_+-1)}}{\avg{N_+}^2} - 1, \qquad
-  R_2^{+-} = \frac{\avg{N_+N_-}}{\avg{N_+}\avg{N_-}} - 1,
-\end{equation}
-$R_2^{--}$ likewise, and $\nu_{\rm dyn} = R_2^{++} + R_2^{--} - 2R_2^{+-}$. They are also corrected for the underlying
+\begin{align}
+  R_2^{++} &= \frac{\avg{N_+(N_+-1)}}{\avg{N_+}^2} - 1, \qquad \\
+  R_2^{--} &= \frac{\avg{N_-(N_--1)}}{\avg{N_-}^2} - 1, \qquad \\
+  R_2^{+-} &= \frac{\avg{N_+N_-}}{\avg{N_+}\avg{N_-}} - 1,
+\end{align}
+and 
+\begin{align}
+\nu_{\rm dyn} = R_2^{++} + R_2^{--} - 2R_2^{+-}.
+\end{align}
+They are also corrected for the underlying
 event. The particles of a jet are taken as the sum of those of the jet itself, $s$, and of the underlying event, $b$,
 independent, with $b$ distributed as in a cone. Then
+\begin{widetext}
 \begin{align}
   \avg{s} &= \avg{N} - \avg{b}, \qquad
-  F_2(s) = F_2(N) - 2\avg{s}\avg{b} - F_2(b), \nonumber\\
+  F_2(s) = F_2(N) - 2\avg{s}\avg{b} - F_2(b), \nonumber \\
   \avg{s_+s_-} &= \avg{N_+N_-} - \avg{s_+}\avg{b_-} - \avg{b_+}\avg{s_-} - \avg{b_+b_-},
 \end{align}
+\end{widetext}
 from which the variances, $R_2$ and $\nu_{\rm dyn}$ of $s$ follow. The moments are averages and are not scaled; the
 derived quantities are computed again by a job reading the folders (\code{HISTOGRAM:IMPORT}), for instance once the
 sub-samples are merged.

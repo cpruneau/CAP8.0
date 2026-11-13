@@ -40,7 +40,7 @@ The binning of a histogram is a \code{Partition}: a regular partition of a space
 time. Axis $k$ is divided into $n_k$ bins of equal width over $[a_k, b_k)$. A bin is addressed by its indices
 $(i_0, i_1, \dots)$ along the axes, by the coordinates of a point inside it, or by a single global index
 \begin{align}
-  g = i_0 + n_0\,\bigl(i_1 + n_1\,(i_2 + \dots)\bigr), \qquad 0 \le g < \prod_k n_k ,
+  g &= i_0 + n_0\,\bigl(i_1 + n_1\,(i_2 + \dots)\bigr), \qquad \\ \nonumber &\hspace{0.2in} 0 \le g < \prod_k n_k ,
 \end{align}
 which is how the bins are stored. Nothing in the classes is specific to one, two or three dimensions: the pair
 analyses of Section~\ref{sec:observables} use histograms of rank 2, the three-dimensional pair analysis
@@ -56,16 +56,10 @@ that average. The bin value and its uncertainty are
 \end{align}
 Filling with a weight $w$ adds $w$ to the value and $w^2$ to its squared uncertainty. Arithmetic (sums,
 differences, products, ratios, scaling) acts on the bin values and propagates the statistical uncertainties of
-uncorrelated operands; bins where a result is undefined, for instance a ratio with an empty denominator, are left
-empty. Values are stored in single or double precision, chosen per histogram, so that the large pair histograms of
-an analysis take half the memory when single precision suffices.
+uncorrelated operands; bins where a result is undefined, for instance a ratio with an empty denominator, are left empty. Values are stored in single or double precision, chosen per histogram, so that the large pair histograms of an analysis take half the memory when single precision suffices.
 
 The histogram library includes the operations the analyses need on their histograms: integrals over ranges,
-projections and reductions (for example from $(\eta_1,\varphi_1,\eta_2,\varphi_2)$ to $(\Delta\eta,\Delta\varphi)$),
-symmetrisation, shifts of the $\Delta\varphi$ range, and the computation of the correlation functions of
-Section~\ref{sec:observables}: products of single-particle densities, cumulants $C_2$, normalised cumulants $R_2$,
-the correlators $\avg{\Delta\pT\Delta\pT}$ and $G_2$, balance functions, and the factorial moments and $\nudyn$ of
-multiplicity distributions.
+projections and reductions (for example from $(\eta_1,\varphi_1,\eta_2,\varphi_2)$ to $(\Delta\eta,\Delta\varphi)$), symmetrisation, shifts of the $\Delta\varphi$ range, and the computation of the correlation functions of Section~\ref{sec:observables}: products of single-particle densities, cumulants $C_2$, normalised cumulants $R_2$, the correlators $\avg{\Delta\pT\Delta\pT}$ and $G_2$, balance functions, and the factorial moments and $\nudyn$ of multiplicity distributions.
 
 \paragraph{Profiles.}
 \code{Profile} derives from \code{Histogram} and holds, in each bin, the weighted mean of a quantity and its
@@ -160,10 +154,8 @@ being linear in their coefficients, their least-squares coefficients are obtaine
 (Section~\ref{sec:fourier}) describe functions of an angle, and the B\'ezier curves, smooth curves through knots
 moved with the mouse, describe efficiencies and resolutions in CapGui. Twelve probability distributions, discrete,
 continuous and multivariate, are presented in Section~\ref{sec:distributions}. The library also includes
-special functions without parameters (gamma, beta and incomplete gamma functions, Bessel, Legendre and Laguerre
-functions, spherical harmonics) and scalar
-fields, functions of any rank defined by their values on a regular mesh and interpolated multilinearly, which
-Therminator3 uses for its chemical potentials and viscosity (Section~\ref{sec:therminator}).
+special functions without parameters (gamma, beta and incomplete gamma functions, Bessel, Legendre and Laguerre functions, spherical harmonics) and scalar fields, functions of any rank defined by their values on a regular mesh and interpolated multilinearly, which Therminator3 uses for its chemical potentials and viscosity (Section~\ref{sec:therminator}).
+
 
 \begin{table*}[t]
   \centering
@@ -276,7 +268,7 @@ mean $\mu$ at $k$.
 The distributions of Table~\ref{tab:distributions} are parameterised functions whose first parameter is an amplitude
 $A$, the area under the curve or the sum over the counts:
 \begin{align}
-  f(\mathbf{x}; A, \boldsymbol{\theta}) = A\, p(\mathbf{x};\boldsymbol{\theta}),
+  f(\mathbf{x}| A, \boldsymbol{\theta}) = A\, p(\mathbf{x}|\boldsymbol{\theta}),
 \end{align}
 where $p$ is the probability density, or the probability of the counts, and $\boldsymbol{\theta}$ the parameters of
 the distribution. With $A = 1$, $f$ is the distribution itself; with $A$ the number of events, it is the expected
@@ -422,12 +414,15 @@ Monte Carlo beyond. \code{Differentiation} and \code{Interpolation} are configur
 \code{setDegree()}, \code{setStencil()}, \code{setStep()} and \code{setRichardson()} for the first, \code{setMethod()}
 and \code{setPoints()} for the second.
 
+
+\begin{widetext}
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{InterpolationClasses}
   \caption{Classes of interpolation (\code{core/Math/Interpolation}) and their users. Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
   \label{fig:interpolation}
 \end{figure}
+\end{widetext}
 
 \paragraph{Interpolation.}
 Figure~\ref{fig:interpolation} shows the classes of the folder.
@@ -442,9 +437,11 @@ points is centred on $x$ where possible and stays inside the table at its ends.
 \item \code{Spline}, \code{NaturalSpline}, \code{ClampedSpline} and \code{MonotoneSpline} give cubic splines.
 \end{itemize}
 The polynomials are evaluated by Neville's algorithm. Its table of interpolants
+\begin{widetext}
 \begin{equation}
 P_{i\dots i+m}(x)=\frac{(x-x_{i+m})\,P_{i\dots i+m-1}(x)+(x_i-x)\,P_{i+1\dots i+m}(x)}{x_i-x_{i+m}}
 \end{equation}
+\end{widetext}
 also gives an error estimate: the last correction. Outside the table, the first and last pieces are extended.
 
 \code{Linear} and the splines are \code{PiecewisePolynomial} objects. Such a function is made of pieces
@@ -468,7 +465,7 @@ The four kinds of spline differ in how the slopes $s_i$ are chosen. Natural, cla
 continuous second derivative at the interior points, which gives the tridiagonal system
 \begin{equation}
 \begin{aligned}
-h_i\,s_{i-1} + 2(h_{i-1}+h_i)\,s_i &+ h_{i-1}\,s_{i+1} \\
+h_i\,s_{i-1} + &2(h_{i-1}+h_i)\,s_i + h_{i-1}\,s_{i+1} \\
 &= 3\,(h_i\,\delta_{i-1}+h_{i-1}\,\delta_i),
 \end{aligned}
 \end{equation}
@@ -487,18 +484,18 @@ The free functions of \code{InterpolationTools} serve the other classes:
 \begin{itemize}
 \item \code{interpolatePolynomial}, \code{interpolateLocalPolynomial} and \code{localWindow} for polynomial
 interpolation;
-\item \code{inverseLinearInterpolation} for the abscissa where a nondecreasing table reaches a value, which inverts
-tabulated cumulative distributions;
-\item \code{interpolateMultilinear}, which weights the $2^r$ corners of the cell of a regular grid of rank $r$ by
-products of $1-u_k$ and $u_k$, the fractional positions $u_k$ in the cell. Scalar fields use it.
+\item \code{inverseLinearInterpolation} for the abscissa where a nondecreasing table reaches a value, which inverts tabulated cumulative distributions;
+\item \code{interpolateMultilinear}, which weights the $2^r$ corners of the cell of a regular grid of rank $r$ by products of $1-u_k$ and $u_k$, the fractional positions $u_k$ in the cell. Scalar fields use it.
 \end{itemize}
 
+\begin{widetext}
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{IntegralClasses}
+  \includegraphics[width=0.9\textwidth]{IntegralClasses}
   \caption{Classes of integration (\code{core/Math/Integral}) and their users. Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
   \label{fig:integral}
 \end{figure*}
+\end{widetext}
 
 \paragraph{Integrators.}
 Figure~\ref{fig:integral} shows the classes of the folder.
@@ -572,12 +569,14 @@ integrated with the parabola through the last three points);
 Section~\ref{sec:basicgen} build their cumulative distributions.
 \end{itemize}
 
-\begin{figure}[t]
+\begin{widetext}
+\begin{figure}[h]
   \centering
-  \includegraphics[width=\columnwidth]{DerivativeClasses}
+  \includegraphics[width=0.8\textwidth]{DerivativeClasses}
   \caption{Classes of differentiation (\code{core/Math/Derivative}). Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
   \label{fig:derivative}
 \end{figure}
+\end{widetext}
 
 \paragraph{Differentiation.}
 Figure~\ref{fig:derivative} shows the classes of the folder.
@@ -862,12 +861,14 @@ Kolmogorov--Smirnov test are provided, with one- or two-sided alternatives, toge
 distributions they need. Upper tails are computed directly, so that small $p$-values keep their precision.
 Figure~\ref{fig:stattests} shows the functions of the folder and their dependencies.
 
+\begin{widetext}
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\columnwidth]{StatisticalTestsClasses}
+  \includegraphics[width=0.8\textwidth]{StatisticalTestsClasses}
   \caption{Statistical tests (\code{core/Math/StatisticalTests}): the tests, their result and the distributions they use. Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
   \label{fig:stattests}
 \end{figure}
+\end{widetext}
 
 \paragraph{Linear algebra and kinematics.}
 \code{Matrix} provides the dense matrices of the fits (products, inverses, determinants), and \code{Vector2D},

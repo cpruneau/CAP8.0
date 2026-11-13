@@ -188,6 +188,7 @@ lists, sums, extrema and the usual mathematical functions). Others reach the fil
 writes it to an SVG or PDF file; and the canvases of the session are found by name or index, registered, saved one
 file per canvas or per graph, printed as a book, or shown in a Beamer presentation, compiled at once
 (Section~\ref{sec:latex}):
+\begin{widetext}
 \begin{verbatim}
 g = MersenneTwister(12345)
 h = Histogram("h", "Gaussian numbers", 40, -4, 4)
@@ -201,6 +202,7 @@ c.graph(0).add(pt)
 c.graph(0).logY = true
 c.save("pt.pdf")
 \end{verbatim}
+\end{widetext}
 
 \paragraph{Sessions.}
 \code{CapShell} runs an interactive session, with line editing and a history kept between sessions when the
