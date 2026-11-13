@@ -252,7 +252,7 @@ namespace CAP
     _model->thermalHadronGas().loadHadrons(db());
     _model->calculateMultiplicities();
     }
-  _histograms.create();
+  _histograms.create(_model->thermalHadronGas());
   }
 
   void Therminator3::execute()

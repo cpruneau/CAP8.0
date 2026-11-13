@@ -296,14 +296,11 @@
     </PARTICLE>
     <PARTICLE name="rho770plus" title="#rho^{+}" pdg="213" charge="1" mass="0.7751079" massUncertainty="0" width="0.1502" widthUncertainty="0" spin="1" isospin="1" isospin3="1" quarks="10" antiquarks="1" leptons="0">
       <DECAY branchingRatio="1" clebschGordan="true" products="pion0139plus pion0135zero"/>
-      <DECAY branchingRatio="1" clebschGordan="true" products="pion0139plus pion0135zero"/>
     </PARTICLE>
     <PARTICLE name="rho770minus" title="#rho^{-}" pdg="-213" charge="-1" mass="0.7751079" massUncertainty="0" width="0.1502" widthUncertainty="0" spin="1" isospin="1" isospin3="-1" quarks="1" antiquarks="10" leptons="0">
       <DECAY branchingRatio="1" clebschGordan="true" products="pion0139minus pion0135zero"/>
-      <DECAY branchingRatio="1" clebschGordan="true" products="pion0139minus pion0135zero"/>
     </PARTICLE>
     <PARTICLE name="rho770zero" title="#rho^{0}" pdg="113" charge="0" mass="0.7752612" massUncertainty="0" width="0.147391" widthUncertainty="0" spin="1" isospin="1" isospin3="0" quarks="11" antiquarks="11" leptons="0">
-      <DECAY branchingRatio="1" clebschGordan="true" products="pion0139plus pion0139minus"/>
       <DECAY branchingRatio="1" clebschGordan="true" products="pion0139plus pion0139minus"/>
     </PARTICLE>
     <PARTICLE name="f00600zero" title="f^{0}(600)" pdg="9000221" charge="0" mass="0.8" massUncertainty="0" width="0.8" widthUncertainty="0" spin="0" isospin="0" isospin3="0" quarks="11" antiquarks="11" leptons="0">

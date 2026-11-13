@@ -21,7 +21,7 @@ namespace CAP
   double type() const    { return _modelType; }
   double subtype() const { return _modelSubtype; }
   const String & systemName() const { return _systemName; }
-  const String & systemEnergy() const { return _systemEnergy; }
+  double systemEnergy() const { return _systemEnergy; }   // GeV
   double centrality() const { return _centralityMin; }
   double centralityMin() const { return _centralityMin; }
   double centralityMax() const { return _centralityMax; }
@@ -85,7 +85,7 @@ namespace CAP
   unsigned int    _modelType;
   unsigned int    _modelSubtype;
   String          _systemName;      //! collision system name
-  String          _systemEnergy;    //! collision _energy (GeV)
+  double          _systemEnergy;    //! collision energy (GeV)
   CentralityTypes _centralityType;  //! _modelType of impact parameter selection
                                    //! kFixedImpact, kImpactRange, kFixedCentrality, kCentralityRange
   double          _centralityMin;   //! collision centrality (%) or impact parameter min (fm)

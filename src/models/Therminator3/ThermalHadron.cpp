@@ -183,7 +183,10 @@ namespace CAP
   double betaMu    = beta*mu;
   double lambda    = std::exp(betaMu);
   double fugacity = 1.0;
-  double theta    = -1.0;
+  // the n-th term of the Bose-Einstein (all +) or Fermi-Dirac (alternating) series: theta = (-statistics())^(n-1),
+  // with statistics() = -1 for bosons, +1 for fermions
+  double sign     = _type->statistics();
+  double theta    = 1.0;
 
   _nDensity = 0.0;   //! equilibrium contribution
   _eDensity = 0;
@@ -203,7 +206,7 @@ namespace CAP
     argSq = arg*arg;
     K_1   = besselK1.evaluateAt(arg);
     K_2   = besselK2.evaluateAt(arg);
-    theta *= -1.0;   //pow(-sign, n-1);
+    if (n>1) theta *= -sign;
     fugacity *= lambda; // pow(lambda, n);
     _nDensity += theta*fugacity*K_2/nn;
     _eDensity += theta*fugacity*(3.0*K_2/argSq + K_1/arg);

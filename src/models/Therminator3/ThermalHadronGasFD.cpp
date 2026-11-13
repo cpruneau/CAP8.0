@@ -1,4 +1,5 @@
 #include "ThermalHadronGasFD.hpp"
+#include <algorithm>
 #include "ParticleDecayMode.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
@@ -70,24 +71,34 @@ namespace CAP
     if (iStableHadron>=0) hadron.setDecayProbability(iStableHadron, 1.0);
     }
 
-  // particles have been sorted in ascending order of _mass
-  // calculate  the probabilities
+  // the probabilities of a hadron need those of its decay products, which are lighter: the hadrons are taken in
+  // ascending order of mass (the database need not be sorted)
+  std::vector<ThermalHadron*> byMass;
+  for (auto & hadron : _hadrons) byMass.push_back(&hadron);
+  std::stable_sort(byMass.begin(),byMass.end(),
+                   [](const ThermalHadron * a, const ThermalHadron * b) { return a->type().mass() < b->type().mass(); });
   // singles
-  for (auto & hadron : _hadrons)
+  for (auto * hadronP : byMass)
     {
+    ThermalHadron & hadron = *hadronP;
     if (hadron.type().isStable()) continue;
     vector<double> temp(nStableHadrons,0.0);
     std::vector<ParticleDecayMode> & decayModes = hadron.type().decayModes();
+    // the branching ratios normalized to their sum, as the decayer does (ParticleType::setupDecayGenerator())
+    double brSum = 0.0;
+    for (auto & decayMode : decayModes) brSum += decayMode.branchingRatio();
+    if (!(brSum>0.0)) continue;
     for (auto & decayMode : decayModes)
       {
       const vector<int> & childrenCodes = decayMode.childrenPdgCodes();
       for (auto & childCode : childrenCodes)
         {
-        if (childCode == 22) continue; // dont care about photons
-        ThermalHadron & childHadron = findHadronFor(childCode);
+        ThermalHadron * childHadronP = feedDownHadronFor(childCode);   // photons and leptons feed no stable hadron
+        if (!childHadronP) continue;
+        ThermalHadron & childHadron = *childHadronP;
         for (unsigned int mStableHadron = 0; mStableHadron < nStableHadrons; mStableHadron++)
           {
-          temp[mStableHadron] += (decayMode.branchingRatio()*childHadron.decayProbability(mStableHadron));
+          temp[mStableHadron] += (decayMode.branchingRatio()/brSum*childHadron.decayProbability(mStableHadron));
           }
         }
       }
@@ -98,14 +109,19 @@ namespace CAP
     }
 
   // pairs
-  for (auto & hadron : _hadrons)
+  for (auto * hadronP : byMass)
     {
+    ThermalHadron & hadron = *hadronP;
     if (hadron.type().isStable()) continue;
 
     //printValue("(Pairs) Hadron name",hadron.type().name());
 
     vector<double> tempPair(nStableHadrons*nStableHadrons,0.0);
     std::vector<ParticleDecayMode> & decayModes = hadron.type().decayModes();
+    // the branching ratios normalized to their sum, as the decayer does (ParticleType::setupDecayGenerator())
+    double brSum = 0.0;
+    for (auto & decayMode : decayModes) brSum += decayMode.branchingRatio();
+    if (!(brSum>0.0)) continue;
 
     //printValue("-0- hadron name",hadron.type().name());
 
@@ -115,8 +131,9 @@ namespace CAP
       const vector<int> & childrenCodes = decayMode.childrenPdgCodes();
       for (auto & childCode : childrenCodes)
         {
-        if (childCode == 22) continue; // dont care about photons
-        ThermalHadron & childHadron = findHadronFor(childCode);
+        ThermalHadron * childHadronP = feedDownHadronFor(childCode);   // photons and leptons feed no stable hadron
+        if (!childHadronP) continue;
+        ThermalHadron & childHadron = *childHadronP;
         // printValue("(Pairs-1) Child Hadron name",childHadron.type().name());
         //printValue("-1- hadron _type",mStableHadron1);
 
@@ -125,7 +142,7 @@ namespace CAP
           {
           for (unsigned int mStableHadron2 = 0; mStableHadron2 < nStableHadrons; mStableHadron2++)
             {
-            double prob = decayMode.branchingRatio()*childHadron.decayProbabilityPair(mStableHadron1,mStableHadron2);
+            double prob = decayMode.branchingRatio()/brSum*childHadron.decayProbabilityPair(mStableHadron1,mStableHadron2);
             if (prob>0)
               {
               //              printValue("-1- mStableHadron1",mStableHadron1);
@@ -141,20 +158,22 @@ namespace CAP
       for (unsigned int iChild1=0; iChild1<childrenCodes.size(); iChild1++)
         {
         int childCode1 = childrenCodes[iChild1];
-        if (childCode1 == 22) continue; // dont care about photons
-        ThermalHadron & childHadron1 = findHadronFor(childCode1);
+        ThermalHadron * childHadron1P = feedDownHadronFor(childCode1);
+        if (!childHadron1P) continue;
+        ThermalHadron & childHadron1 = *childHadron1P;
         //printValue("(Pairs-2) Child 1 Hadron name",childHadron1.type().name());
         for (unsigned int iChild2=iChild1+1; iChild2<childrenCodes.size(); iChild2++)
           {
           int childCode2 = childrenCodes[iChild2];
-          if (childCode2 == 22) continue; // dont care about photons
-          ThermalHadron & childHadron2 = findHadronFor(childCode2);
+          ThermalHadron * childHadron2P = feedDownHadronFor(childCode2);
+          if (!childHadron2P) continue;
+          ThermalHadron & childHadron2 = *childHadron2P;
           //printValue("(Pairs-2) Child 2 Hadron name",childHadron2.type().name());
           for (unsigned int mStableHadron1 = 0; mStableHadron1 < nStableHadrons; mStableHadron1++)
             {
             for (unsigned int mStableHadron2 = 0; mStableHadron2 < nStableHadrons; mStableHadron2++)
               {
-              double prob = decayMode.branchingRatio()*childHadron1.decayProbability(mStableHadron1)*childHadron2.decayProbability(mStableHadron2);
+              double prob = decayMode.branchingRatio()/brSum*childHadron1.decayProbability(mStableHadron1)*childHadron2.decayProbability(mStableHadron2);
               if (prob>0)
                 {
                 //                printValue("-2- mStableHadron1",mStableHadron1);
@@ -290,6 +309,13 @@ namespace CAP
       }
     }
   return -1; //not found
+  }
+
+  ThermalHadron * ThermalHadronGasFD::feedDownHadronFor(int pdgCode)
+  {
+  if (pdgCode==310 || pdgCode==130) pdgCode = 311;
+  for (auto & hadron : _hadrons) if (hadron.type().pdgCode() == pdgCode) return &hadron;
+  return nullptr;
   }
 
   void ThermalHadronGasFD::calculateAllProperties()

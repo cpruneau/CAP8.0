@@ -84,17 +84,10 @@ namespace CAP
   return *this;
   }
 
+  // the results only: the temperature and the chemical potentials set by configure() are kept (ThermalModel calls
+  // reset() in initialize(), after configure())
   void ThermalHadronGas::reset()
   {
-  _temperature = 0.0;
-  _mu  = 0;
-  _muQ = 0;
-  _muS = 0;
-  _muC = 0;
-  _muB = 0;
-  _muT = 0;
-  _muBaryon        = 0;
-  _temperature     = 0;
   _nDensity        = 0;
   _eDensity        = 0;
   _sDensity        = 0;
@@ -111,6 +104,14 @@ namespace CAP
   void ThermalHadronGas::clear()
   {
   reset();
+  _temperature = 0;
+  _mu  = 0;
+  _muQ = 0;
+  _muS = 0;
+  _muC = 0;
+  _muB = 0;
+  _muT = 0;
+  _muBaryon = 0;
   for (auto & hadron : _hadrons) hadron.clear();
   _hadrons.clear();
   }

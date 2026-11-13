@@ -15,7 +15,9 @@ namespace CAP
   
   ThermalHistos::ThermalHistos()
   :
-  HistogramFolder()
+  HistogramFolder(),
+  _nHadrons(0),
+  _nStables(15)
   {
   appendClassName("ThermalHistos");
   setMinimumReportLevel(Object::kInfo);
@@ -23,11 +25,38 @@ namespace CAP
   setTitle("ThermalHistos");
   }
   
-  ThermalHistos::ThermalHistos(const ThermalHistos & source __attribute__((unused)))
+  // copies the configuration (the histograms are created by create())
+  ThermalHistos::ThermalHistos(const ThermalHistos & source)
+  :
+  HistogramFolder(source),
+  _nHadrons(source._nHadrons),
+  _nStables(source._nStables),
+  index_fill(source.index_fill),
+  index_nbins(source.index_nbins),
+  index_min(source.index_min),
+  index_max(source.index_max),
+  mass_fill(source.mass_fill),
+  mass_nbins(source.mass_nbins),
+  mass_min(source.mass_min),
+  mass_max(source.mass_max)
   {   }
   
-  ThermalHistos ThermalHistos::operator=(const ThermalHistos & rhs __attribute__((unused)))
+  ThermalHistos ThermalHistos::operator=(const ThermalHistos & rhs)
   {
+  if (this!=&rhs)
+    {
+    _histogramBaseName = rhs._histogramBaseName;
+    _nHadrons   = rhs._nHadrons;
+    _nStables   = rhs._nStables;
+    index_fill  = rhs.index_fill;
+    index_nbins = rhs.index_nbins;
+    index_min   = rhs.index_min;
+    index_max   = rhs.index_max;
+    mass_fill   = rhs.mass_fill;
+    mass_nbins  = rhs.mass_nbins;
+    mass_min    = rhs.mass_min;
+    mass_max    = rhs.mass_max;
+    }
   return *this;
   }
   
@@ -49,11 +78,25 @@ namespace CAP
   mass_max    = configuration.valueDouble(createKey(taskName,objectType,"mass_max"));
   }
   
+  void ThermalHistos::create(const ThermalHadronGas & hadronGas)
+  {
+  _nHadrons = hadronGas.hadrons().size();
+  _nStables = 0;
+  for (auto & hadron : hadronGas.hadrons()) if (hadron.type().isStable()) _nStables++;
+  create();
+  }
+
   void ThermalHistos::create()
   {
   if (reportStart(__FUNCTION__)) { printCR(); }
+  // versus the hadron index: one bin per hadron, at least; when the configured range is too short, bins of width 1
+  if (_nHadrons>0 && unsigned(index_nbins)<_nHadrons)
+    {
+    index_nbins = _nHadrons;
+    index_max   = index_min + double(_nHadrons);
+    }
   //stables
-  unsigned int n1 = 15;
+  unsigned int n1 = _nStables;
   double n1Min = -0.001;
   double n1Max = double(n1)-0.001;
   //int n2 = n1*n1;
@@ -80,7 +123,7 @@ namespace CAP
     h_bottomDensityVsIndex = createHistogram(createName(_histogramBaseName,"bottomDensity"), index_nbins,index_min,index_max,"#alpha","B");
     h_topDensityVsIndex    = createHistogram(createName(_histogramBaseName,"topDensity"),    index_nbins,index_min,index_max,"#alpha","T");
     
-    for (unsigned int iStable=0; iStable<n1-1; iStable++)
+    for (unsigned int iStable=0; iStable<n1; iStable++)
       {
       String name;
       name = "pair_"; name += iStable;
@@ -97,7 +140,7 @@ namespace CAP
     h_singleDensityVsIndex        = createHistogram(createName(_histogramBaseName,"singleDensityVsIndex"),     n1,n1Min,n1Max,"Stable Index","#rho_{1}");
     h_singleDensityWFDVsIndex     = createHistogram(createName(_histogramBaseName,"singleDensityFDVsIndex"),   n1,n1Min,n1Max,"Stable Index","#rho_{1}");
     h_singleDensityRatioVsIndex   = createHistogram(createName(_histogramBaseName,"singleDensityRatioVsIndex"),n1,n1Min,n1Max,"#alpha","#_rho^{TH+FD}(#alpha)/#_rho^{TH}(#alpha)");
-    h_relDensityWFDVsIndex        = createHistogram(createName(_histogramBaseName,"relWtoPiVsIndex"),          n1,n1Min,n1Max,"#alpha","#_rho(#alpha)/#_rho(#pi)");
+    h_relDensityWFDVsIndex        = createHistogram(createName(_histogramBaseName,"relWtoPiVsIndex"),          index_nbins,index_min,index_max,"#alpha","#_rho^{TH+FD}(#alpha)/#_rho^{TH+FD}(#pi)");
     }
   
   if (mass_fill)
@@ -210,8 +253,6 @@ namespace CAP
       h_densityWFDVsIndex       ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
       h_relNumberDensityVsIndex ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
       h_relDensityWFDVsIndex    ->setBinUncertaintyAt(unsigned((iHadron)-1),zero);
-      
-      iHadron++;
       }
     
     if (mass_fill)
@@ -230,6 +271,7 @@ namespace CAP
       h_relNumberDensityVsMass ->fill(_mass,NoInf(hadron.numberDensity(),pion.numberDensity(),gspin));
       h_relDensityWFDVsMass    ->fill(_mass,NoInf(hadron.numberDensityWFD(),pion.numberDensityWFD(),gspin));
       }
+    iHadron++;   // also when the index histograms are not filled: h_massVsIndex is
     }
   
   // Stable particles

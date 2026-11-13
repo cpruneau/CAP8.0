@@ -21,6 +21,8 @@
 //!   against a Therminator 2 run.
 //! - Copies of the Therminator3 task (copy constructor, assignment) own a copy of the model.
 //! - BWA with formation (subtype 6): every particle must stream back, during its delay, onto the hypersurface.
+//! - KrakowSFO (krakow.ini) and BWA subtypes 2-5 (bwa.ini, Delay 2 fm for 3 and 5): the average multiplicities
+//!   against Therminator 2's fmultiplicity files (IntegrateSamples = 2000000).
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -34,6 +36,7 @@
 #include "PhysicsConstants.hpp"
 #include "ModelBlastWave.hpp"
 #include "ModelBWA.hpp"
+#include "ModelKrakowSFO.hpp"
 #include "ModelHydro2D.hpp"
 #include "ModelHydro3D.hpp"
 #include "Therminator3.hpp"
@@ -102,6 +105,14 @@ public:
   }
   void setSubtype(unsigned int subtype, double amplitude, double delay)
   { this->_modelSubtype = subtype; this->_amp = amplitude; this->_delay = delay; }
+  //! Therminator 2's fomodel/krakow.ini (KrakowSFO) or fomodel/bwa.ini (BWA), lengths in fm.
+  void setKrakow(double tauC, double rho)
+  { this->_tauC = tauC/hbarc; this->_rhoMax = rho/hbarc; }
+  void setBwa(double tau, double rho, double velT, double amplitude, unsigned int subtype, double delay)
+  {
+  this->_tauI = tau/hbarc; this->_rhoMax = rho/hbarc; this->_tVelocity = velT; this->_tGamma = 1.0/std::sqrt(1.0-velT*velT);
+  setSubtype(subtype,amplitude,delay/hbarc);
+  }
   //! Hypersurface tau = tau0, rho = D cos(zeta) in [0,rhoMax] with tauI = 0: D(zeta) = tau0/sin(zeta),
   //! zeta from atan(tau0/rhoMax) to pi/2, and a constant transverse velocity vT in the radial direction.
   void setBlastWaveHypersurface(unsigned int nZeta)
@@ -325,6 +336,47 @@ int main()
       }
     std::printf("  draws above the accept/reject maximum: %lu\n", rhic.overflows());
     }
+
+  // ---------------------------------------------------------------- KrakowSFO and BWA 2-5 against Therminator 2
+  // Therminator 2 fmultiplicity files (IntegrateSamples = 2000000): pi+, K+, p, Lambda
+  {
+  struct Run { const char * name; int subtype; double delay; double t2[4]; };
+  const std::vector<Run> runs =
+    {
+    { "KrakowSFO",       0, 0.0, { 426.373, 133.074, 42.1574, 17.1928 } },
+    { "BWAVT",           2, 0.0, { 424.552, 132.691, 42.0932, 17.1777 } },
+    { "BWAVTDelay",      3, 2.0, { 423.234, 132.772, 42.1065, 17.1899 } },
+    { "BWAVLinear",      4, 0.0, { 433.616, 135.044, 42.7571, 17.3962 } },
+    { "BWAVLinearDelay", 5, 2.0, { 431.350, 134.985, 43.1590, 17.6507 } },
+    };
+  for (const Run & run : runs)
+    {
+    std::vector<double> n;
+    if (run.subtype==0)
+      {
+      TestModel<ModelKrakowSFO> model;
+      model.setUp(db,2000000);
+      model.setKrakow(10.55,7.53);
+      model.calculateMultiplicities();
+      for (auto & h : model.thermalHadronGas().hadrons()) n.push_back(h.avgMultiplicity());
+      }
+    else
+      {
+      TestModel<ModelBWA> model;
+      model.setUp(db,2000000);
+      model.setBwa(9.91,7.43,0.407,0.5,run.subtype,run.delay);
+      model.calculateMultiplicities();
+      for (auto & h : model.thermalHadronGas().hadrons()) n.push_back(h.avgMultiplicity());
+      }
+    std::printf("%s: average multiplicity (Therminator 2)\n", run.name);
+    for (unsigned int k=0; k<species.size(); k++)
+      {
+      double ratio = n[k]/run.t2[k];
+      std::printf("  %-7s %10.3f (%10.3f)  ratio %.4f\n", species[k].name, n[k], run.t2[k], ratio);
+      check(std::fabs(ratio-1.0)<0.025, std::string(run.name)+" multiplicity of "+species[k].name, __LINE__);
+      }
+    }
+  }
 
   // ---------------------------------------------------------------- BWA formation: back onto the hypersurface
   TestModel<ModelBWA> bwa;
