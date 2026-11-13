@@ -87,8 +87,9 @@ int main()
   ParticleDb db;
   db.loadFromXml(CAP_PARTICLE_DB);
 
-  // the branching ratios of the weak decays and of the rho(770) (once listed twice) sum to 1
-  for (int pdg : { 311, -311, 310, 130, 3122, -3122, 3222, 3112, 3312, 3322, 3334, 113, 213, -213 })
+  // the branching ratios of the weak decays and of the rho(770) (once listed twice) sum to 1,
+  // and of Sigma(1940), Delta(1920), Delta(1930) (rescaled after the PDG 2026 update)
+  for (int pdg : { 311, -311, 310, 130, 3122, -3122, 3222, 3112, 3312, 3322, 3334, 113, 213, -213, 23224, 23114, 23214, 22224, 12126 })
     {
     ParticleType * type = db.findPdgCode(pdg);
     double sum = 0;

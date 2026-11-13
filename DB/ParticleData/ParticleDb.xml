@@ -980,124 +980,124 @@
       <DECAY branchingRatio="0.1" clebschGordan="false" products="ne0939zero_bar rho770plus"/>
     </PARTICLE>
     <PARTICLE name="Delta1930plusplus" title="#Delta^{++}(1930)" pdg="12226" charge="2" mass="1.93" massUncertainty="0" width="0.35" widthUncertainty="0" spin="2.5" isospin="1.5" isospin3="1.5" quarks="30" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="false" products="pr0938plus pion0139plus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plus pion0139plus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plusplus pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="false" products="pr0938plus rho770plus"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="false" products="pr0938plus pion0139plus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plus pion0139plus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plusplus pion0135zero"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="false" products="pr0938plus rho770plus"/>
     </PARTICLE>
     <PARTICLE name="Delta1930plus" title="#Delta^{+}(1930)" pdg="12126" charge="1" mass="1.93" massUncertainty="0" width="0.35" widthUncertainty="0" spin="2.5" isospin="1.5" isospin3="0.5" quarks="21" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plusplus pion0139minus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232zero pion0139plus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plus pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="ne0939zero pion0139plus"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="pr0938plus pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="ne0939zero rho770plus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="pr0938plus rho770zero"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plusplus pion0139minus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232zero pion0139plus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plus pion0135zero"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="true" products="ne0939zero pion0139plus"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="true" products="pr0938plus pion0135zero"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="true" products="ne0939zero rho770plus"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="true" products="pr0938plus rho770zero"/>
     </PARTICLE>
     <PARTICLE name="Delta1930zero" title="#Delta^{0}(1930)" pdg="11216" charge="0" mass="1.93" massUncertainty="0" width="0.35" widthUncertainty="0" spin="2.5" isospin="1.5" isospin3="-0.5" quarks="12" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plus pion0139minus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232minus pion0139plus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232zero pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="pr0938plus pion0139minus"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="ne0939zero pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="pr0938plus rho770minus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="ne0939zero rho770zero"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plus pion0139minus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232minus pion0139plus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232zero pion0135zero"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="true" products="pr0938plus pion0139minus"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="true" products="ne0939zero pion0135zero"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="true" products="pr0938plus rho770minus"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="true" products="ne0939zero rho770zero"/>
     </PARTICLE>
     <PARTICLE name="Delta1930minus" title="#Delta^{-}(1930)" pdg="11116" charge="-1" mass="1.93" massUncertainty="0" width="0.35" widthUncertainty="0" spin="2.5" isospin="1.5" isospin3="-1.5" quarks="3" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232zero pion0139minus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232minus pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="false" products="ne0939zero pion0139minus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="false" products="ne0939zero rho770minus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232zero pion0139minus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232minus pion0135zero"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="false" products="ne0939zero pion0139minus"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="false" products="ne0939zero rho770minus"/>
     </PARTICLE>
     <PARTICLE name="Delta1930plusplus_bar" title="#bar{#Delta}^{--}(1950)" pdg="-12226" charge="-2" mass="1.93" massUncertainty="0" width="0.35" widthUncertainty="0" spin="2.5" isospin="1.5" isospin3="-1.5" quarks="0" antiquarks="30" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="false" products="pr0938plus_bar pion0139minus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plus_bar pion0139minus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plusplus_bar pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="false" products="pr0938plus_bar rho770minus"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="false" products="pr0938plus_bar pion0139minus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plus_bar pion0139minus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plusplus_bar pion0135zero"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="false" products="pr0938plus_bar rho770minus"/>
     </PARTICLE>
     <PARTICLE name="Delta1930plus_bar" title="#bar{#Delta}^{-}(1950)" pdg="-12126" charge="-1" mass="1.93" massUncertainty="0" width="0.35" widthUncertainty="0" spin="2.5" isospin="1.5" isospin3="-0.5" quarks="0" antiquarks="21" leptons="0">
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plusplus_bar pion0139plus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232zero_bar pion0139minus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plus_bar pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="ne0939zero_bar pion0139minus"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="pr0938plus_bar pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="ne0939zero_bar rho770minus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="pr0938plus_bar rho770zero"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plusplus_bar pion0139plus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232zero_bar pion0139minus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plus_bar pion0135zero"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="true" products="ne0939zero_bar pion0139minus"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="true" products="pr0938plus_bar pion0135zero"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="true" products="ne0939zero_bar rho770minus"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="true" products="pr0938plus_bar rho770zero"/>
     </PARTICLE>
     <PARTICLE name="Delta1930zero_bar" title="#bar{#Delta}^{0}(1950)" pdg="-11216" charge="0" mass="1.93" massUncertainty="0" width="0.35" widthUncertainty="0" spin="2.5" isospin="1.5" isospin3="0.5" quarks="0" antiquarks="12" leptons="0">
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232plus_bar pion0139plus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232minus_bar pion0139minus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232zero_bar pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="pr0938plus_bar pion0139plus"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="ne0939zero_bar pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="pr0938plus_bar rho770plus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="ne0939zero_bar rho770zero"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232plus_bar pion0139plus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232minus_bar pion0139minus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232zero_bar pion0135zero"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="true" products="pr0938plus_bar pion0139plus"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="true" products="ne0939zero_bar pion0135zero"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="true" products="pr0938plus_bar rho770plus"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="true" products="ne0939zero_bar rho770zero"/>
     </PARTICLE>
     <PARTICLE name="Delta1930minus_bar" title="#bar{#Delta}^{+}(1950)" pdg="-11116" charge="1" mass="1.93" massUncertainty="0" width="0.35" widthUncertainty="0" spin="2.5" isospin="1.5" isospin3="1.5" quarks="0" antiquarks="3" leptons="0">
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232zero_bar pion0139plus"/>
-      <DECAY branchingRatio="0.33" clebschGordan="true" products="Delta1232minus_bar pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="false" products="ne0939zero_bar pion0139plus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="false" products="ne0939zero_bar rho770plus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232zero_bar pion0139plus"/>
+      <DECAY branchingRatio="0.292" clebschGordan="true" products="Delta1232minus_bar pion0135zero"/>
+      <DECAY branchingRatio="0.0885" clebschGordan="false" products="ne0939zero_bar pion0139plus"/>
+      <DECAY branchingRatio="0.6195" clebschGordan="false" products="ne0939zero_bar rho770plus"/>
     </PARTICLE>
     <PARTICLE name="Delta1920plusplus" title="#Delta^{++}(1920)" pdg="22224" charge="2" mass="1.92" massUncertainty="0" width="0.2" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="1.5" quarks="30" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="false" products="pr0938plus pion0139plus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plus pion0139plus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plusplus pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="false" products="pr0938plus rho770plus"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="false" products="pr0938plus pion0139plus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plus pion0139plus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plusplus pion0135zero"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="false" products="pr0938plus rho770plus"/>
     </PARTICLE>
     <PARTICLE name="Delta1920plus" title="#Delta^{+}(1920)" pdg="22214" charge="1" mass="1.92" massUncertainty="0" width="0.2" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="0.5" quarks="21" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plusplus pion0139minus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232zero pion0139plus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plus pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="ne0939zero pion0139plus"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="pr0938plus pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="ne0939zero rho770plus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="pr0938plus rho770zero"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plusplus pion0139minus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232zero pion0139plus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plus pion0135zero"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="true" products="ne0939zero pion0139plus"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="true" products="pr0938plus pion0135zero"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="true" products="ne0939zero rho770plus"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="true" products="pr0938plus rho770zero"/>
     </PARTICLE>
     <PARTICLE name="Delta1920zero" title="#Delta^{0}(1920)" pdg="22114" charge="0" mass="1.92" massUncertainty="0" width="0.2" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="-0.5" quarks="12" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plus pion0139minus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232minus pion0139plus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232zero pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="pr0938plus pion0139minus"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="ne0939zero pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="pr0938plus rho770minus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="ne0939zero rho770zero"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plus pion0139minus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232minus pion0139plus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232zero pion0135zero"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="true" products="pr0938plus pion0139minus"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="true" products="ne0939zero pion0135zero"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="true" products="pr0938plus rho770minus"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="true" products="ne0939zero rho770zero"/>
     </PARTICLE>
     <PARTICLE name="Delta1920minus" title="#Delta^{-}(1920)" pdg="21114" charge="-1" mass="1.92" massUncertainty="0" width="0.2" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="-1.5" quarks="3" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232zero pion0139minus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232minus pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="false" products="ne0939zero pion0139minus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="false" products="ne0939zero rho770minus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232zero pion0139minus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232minus pion0135zero"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="false" products="ne0939zero pion0139minus"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="false" products="ne0939zero rho770minus"/>
     </PARTICLE>
     <PARTICLE name="Delta1920plusplus_bar" title="#bar{#Delta}^{--}(1920)" pdg="-22224" charge="-2" mass="1.92" massUncertainty="0" width="0.2" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="-1.5" quarks="0" antiquarks="30" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="false" products="pr0938plus_bar pion0139minus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plus_bar pion0139minus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plusplus_bar pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="false" products="pr0938plus_bar rho770minus"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="false" products="pr0938plus_bar pion0139minus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plus_bar pion0139minus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plusplus_bar pion0135zero"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="false" products="pr0938plus_bar rho770minus"/>
     </PARTICLE>
     <PARTICLE name="Delta1920plus_bar" title="#bar{#Delta}^{-}(1920)" pdg="-22214" charge="-1" mass="1.92" massUncertainty="0" width="0.2" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="-0.5" quarks="0" antiquarks="21" leptons="0">
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plusplus_bar pion0139plus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232zero_bar pion0139minus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plus_bar pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="ne0939zero_bar pion0139minus"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="pr0938plus_bar pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="ne0939zero_bar rho770minus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="pr0938plus_bar rho770zero"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plusplus_bar pion0139plus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232zero_bar pion0139minus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plus_bar pion0135zero"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="true" products="ne0939zero_bar pion0139minus"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="true" products="pr0938plus_bar pion0135zero"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="true" products="ne0939zero_bar rho770minus"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="true" products="pr0938plus_bar rho770zero"/>
     </PARTICLE>
     <PARTICLE name="Delta1920zero_bar" title="#bar{#Delta}^{0}(1920)" pdg="-22114" charge="0" mass="1.92" massUncertainty="0" width="0.2" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="0.5" quarks="0" antiquarks="12" leptons="0">
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232plus_bar pion0139plus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232minus_bar pion0139minus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232zero_bar pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="pr0938plus_bar pion0139plus"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="ne0939zero_bar pion0135zero"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="pr0938plus_bar rho770plus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="true" products="ne0939zero_bar rho770zero"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232plus_bar pion0139plus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232minus_bar pion0139minus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232zero_bar pion0135zero"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="true" products="pr0938plus_bar pion0139plus"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="true" products="ne0939zero_bar pion0135zero"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="true" products="pr0938plus_bar rho770plus"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="true" products="ne0939zero_bar rho770zero"/>
     </PARTICLE>
     <PARTICLE name="Delta1920minus_bar" title="#bar{#Delta}^{+}(1920)" pdg="-21114" charge="1" mass="1.92" massUncertainty="0" width="0.2" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="1.5" quarks="0" antiquarks="3" leptons="0">
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232zero_bar pion0139plus"/>
-      <DECAY branchingRatio="0.38" clebschGordan="true" products="Delta1232minus_bar pion0135zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="false" products="ne0939zero_bar pion0139plus"/>
-      <DECAY branchingRatio="0.7" clebschGordan="false" products="ne0939zero_bar rho770plus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232zero_bar pion0139plus"/>
+      <DECAY branchingRatio="0.322" clebschGordan="true" products="Delta1232minus_bar pion0135zero"/>
+      <DECAY branchingRatio="0.08475" clebschGordan="false" products="ne0939zero_bar pion0139plus"/>
+      <DECAY branchingRatio="0.5932" clebschGordan="false" products="ne0939zero_bar rho770plus"/>
     </PARTICLE>
     <PARTICLE name="Delta1700plusplus" title="#Delta^{++}(1700)" pdg="12224" charge="2" mass="1.7" massUncertainty="0" width="0.3" widthUncertainty="0" spin="1.5" isospin="1.5" isospin3="1.5" quarks="30" antiquarks="0" leptons="0">
       <DECAY branchingRatio="0.15" clebschGordan="false" products="pr0938plus pion0139plus"/>
@@ -2210,80 +2210,80 @@
       <DECAY branchingRatio="0.1" clebschGordan="true" products="pion0139plus Sigma1189plus_bar"/>
     </PARTICLE>
     <PARTICLE name="Sigma1940plus" title="#Sigma^{+}(1940)" pdg="23224" charge="1" mass="1.94" massUncertainty="0" width="0.22" widthUncertainty="0" spin="1.5" isospin="1" isospin3="1" quarks="120" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492zero_bar pr0938plus"/>
-      <DECAY branchingRatio="0.06" clebschGordan="true" products="Lambda1115zero pion0139plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Lambda1520zero pion0139plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0135zero Sigma1385plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0139plus Sigma1385zero"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0135zero Sigma1189plus"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0139plus Sigma1192zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232plusplus kaon0492minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232plus kaon0492zero_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="kaon0892zero_bar pr0938plus"/>
+      <DECAY branchingRatio="0.06173" clebschGordan="true" products="kaon0492zero_bar pr0938plus"/>
+      <DECAY branchingRatio="0.03704" clebschGordan="true" products="Lambda1115zero pion0139plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Lambda1520zero pion0139plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0135zero Sigma1385plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0139plus Sigma1385zero"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0135zero Sigma1189plus"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0139plus Sigma1192zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232plusplus kaon0492minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232plus kaon0492zero_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="kaon0892zero_bar pr0938plus"/>
     </PARTICLE>
     <PARTICLE name="Sigma1940minus" title="#Sigma^{-}(1940)" pdg="23114" charge="-1" mass="1.94" massUncertainty="0" width="0.22" widthUncertainty="0" spin="1.5" isospin="1" isospin3="-1" quarks="102" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492minus ne0939zero"/>
-      <DECAY branchingRatio="0.06" clebschGordan="true" products="Lambda1115zero pion0139minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Lambda1520zero pion0139minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0135zero Sigma1385minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0139minus Sigma1385zero"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0135zero Sigma1189minus"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0139minus Sigma1192zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232zero kaon0492minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232minus kaon0492zero_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="kaon0892minus ne0939zero"/>
+      <DECAY branchingRatio="0.06173" clebschGordan="true" products="kaon0492minus ne0939zero"/>
+      <DECAY branchingRatio="0.03704" clebschGordan="true" products="Lambda1115zero pion0139minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Lambda1520zero pion0139minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0135zero Sigma1385minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0139minus Sigma1385zero"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0135zero Sigma1189minus"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0139minus Sigma1192zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232zero kaon0492minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232minus kaon0492zero_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="kaon0892minus ne0939zero"/>
     </PARTICLE>
     <PARTICLE name="Sigma1940zero" title="#Sigma^{0}(1940)" pdg="23214" charge="0" mass="1.94" massUncertainty="0" width="0.22" widthUncertainty="0" spin="1.5" isospin="1" isospin3="0" quarks="111" antiquarks="0" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492zero_bar ne0939zero"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492minus pr0938plus"/>
-      <DECAY branchingRatio="0.06" clebschGordan="true" products="Lambda1115zero pion0135zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Lambda1520zero pion0135zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0139plus Sigma1385minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0139minus Sigma1385plus"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0139plus Sigma1189minus"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0139minus Sigma1189plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232plus kaon0492minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232zero kaon0492zero_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="kaon0892zero_bar ne0939zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="kaon0892minus pr0938plus"/>
+      <DECAY branchingRatio="0.06173" clebschGordan="true" products="kaon0492zero_bar ne0939zero"/>
+      <DECAY branchingRatio="0.06173" clebschGordan="true" products="kaon0492minus pr0938plus"/>
+      <DECAY branchingRatio="0.03704" clebschGordan="true" products="Lambda1115zero pion0135zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Lambda1520zero pion0135zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0139plus Sigma1385minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0139minus Sigma1385plus"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0139plus Sigma1189minus"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0139minus Sigma1189plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232plus kaon0492minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232zero kaon0492zero_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="kaon0892zero_bar ne0939zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="kaon0892minus pr0938plus"/>
     </PARTICLE>
     <PARTICLE name="Sigma1940plus_bar" title="#bar{#Sigma}^{-}(1940)" pdg="-23224" charge="-1" mass="1.94" massUncertainty="0" width="0.22" widthUncertainty="0" spin="1.5" isospin="1" isospin3="-1" quarks="0" antiquarks="120" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492zero pr0938plus_bar"/>
-      <DECAY branchingRatio="0.06" clebschGordan="true" products="Lambda1115zero_bar pion0139minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Lambda1520zero_bar pion0139minus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0135zero Sigma1385plus_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0139minus Sigma1385zero_bar"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0135zero Sigma1189plus_bar"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0139minus Sigma1192zero_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232plusplus_bar kaon0492plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232plus_bar kaon0492zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="kaon0892zero pr0938plus_bar"/>
+      <DECAY branchingRatio="0.06173" clebschGordan="true" products="kaon0492zero pr0938plus_bar"/>
+      <DECAY branchingRatio="0.03704" clebschGordan="true" products="Lambda1115zero_bar pion0139minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Lambda1520zero_bar pion0139minus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0135zero Sigma1385plus_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0139minus Sigma1385zero_bar"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0135zero Sigma1189plus_bar"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0139minus Sigma1192zero_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232plusplus_bar kaon0492plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232plus_bar kaon0492zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="kaon0892zero pr0938plus_bar"/>
     </PARTICLE>
     <PARTICLE name="Sigma1940minus_bar" title="#bar{#Sigma}^{+}(1940)" pdg="-23114" charge="1" mass="1.94" massUncertainty="0" width="0.22" widthUncertainty="0" spin="1.5" isospin="1" isospin3="1" quarks="0" antiquarks="102" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492plus ne0939zero_bar"/>
-      <DECAY branchingRatio="0.06" clebschGordan="true" products="Lambda1115zero_bar pion0139plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Lambda1520zero_bar pion0139plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0135zero Sigma1385minus_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0139plus Sigma1385zero_bar"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0135zero Sigma1189minus_bar"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0139plus Sigma1192zero_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232zero_bar kaon0492plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232minus_bar kaon0492zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="kaon0892plus ne0939zero_bar"/>
+      <DECAY branchingRatio="0.06173" clebschGordan="true" products="kaon0492plus ne0939zero_bar"/>
+      <DECAY branchingRatio="0.03704" clebschGordan="true" products="Lambda1115zero_bar pion0139plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Lambda1520zero_bar pion0139plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0135zero Sigma1385minus_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0139plus Sigma1385zero_bar"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0135zero Sigma1189minus_bar"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0139plus Sigma1192zero_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232zero_bar kaon0492plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232minus_bar kaon0492zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="kaon0892plus ne0939zero_bar"/>
     </PARTICLE>
     <PARTICLE name="Sigma1940zero_bar" title="#bar{#Sigma}^{0}(1940)" pdg="-23214" charge="0" mass="1.94" massUncertainty="0" width="0.22" widthUncertainty="0" spin="1.5" isospin="1" isospin3="0" quarks="0" antiquarks="111" leptons="0">
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492zero ne0939zero_bar"/>
-      <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492plus pr0938plus_bar"/>
-      <DECAY branchingRatio="0.06" clebschGordan="true" products="Lambda1115zero_bar pion0135zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Lambda1520zero_bar pion0135zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0139minus Sigma1385minus_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="pion0139plus Sigma1385plus_bar"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0139minus Sigma1189minus_bar"/>
-      <DECAY branchingRatio="0.86" clebschGordan="true" products="pion0139plus Sigma1189plus_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232plus_bar kaon0492plus"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="Delta1232zero_bar kaon0492zero"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="kaon0892zero ne0939zero_bar"/>
-      <DECAY branchingRatio="0.15" clebschGordan="true" products="kaon0892plus pr0938plus_bar"/>
+      <DECAY branchingRatio="0.06173" clebschGordan="true" products="kaon0492zero ne0939zero_bar"/>
+      <DECAY branchingRatio="0.06173" clebschGordan="true" products="kaon0492plus pr0938plus_bar"/>
+      <DECAY branchingRatio="0.03704" clebschGordan="true" products="Lambda1115zero_bar pion0135zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Lambda1520zero_bar pion0135zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0139minus Sigma1385minus_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="pion0139plus Sigma1385plus_bar"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0139minus Sigma1189minus_bar"/>
+      <DECAY branchingRatio="0.5309" clebschGordan="true" products="pion0139plus Sigma1189plus_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232plus_bar kaon0492plus"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="Delta1232zero_bar kaon0492zero"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="kaon0892zero ne0939zero_bar"/>
+      <DECAY branchingRatio="0.09259" clebschGordan="true" products="kaon0892plus pr0938plus_bar"/>
     </PARTICLE>
     <PARTICLE name="Sigma2250plus" title="#Sigma^{+}(2250)" pdg="4028" charge="1" mass="2.25" massUncertainty="0" width="0.1" widthUncertainty="0" spin="1.5" isospin="1" isospin3="1" quarks="120" antiquarks="0" leptons="0">
       <DECAY branchingRatio="0.1" clebschGordan="true" products="kaon0492zero_bar pr0938plus"/>
