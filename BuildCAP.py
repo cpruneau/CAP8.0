@@ -37,7 +37,7 @@ or PYTHIA8, CAP_HERWIG_PATH or HERWIG_DIR, CAP_SHERPA_PATH or SHERPA_DIR, CAP_TH
 CAP_FASTJET_PATH or FASTJET), then the package's configuration tool (pythia8-config, Herwig-config, Sherpa-config,
 fastjet-config). The status line under each location shows what would be used. Sherpa and Thermal-FIST are
 placeholders: CMake checks their location, but CAP has no interface to them yet. ROOT is optional (off by default): the
-"ROOT" option builds the Helpers library (.root files in CapGui, bin/CapRootConvert) and the readers of ROOT event trees
+"ROOT" option builds the RootConvert library (.root files in CapGui, bin/CapRootConvert) and the readers of ROOT event trees
 (Epos, the Pythia event reader); its location sits under it.
 
 The settings are saved in <CAP>/.BuildCAP.json; Save configuration and Load configuration write and read them to and
@@ -83,7 +83,7 @@ OPTIONAL_MODULES = [
     ("CAP_WITH_THERMALFIST",  "Thermal-FIST",    None, "Thermal-FIST hadron resonance gas model (placeholder: no CAP "
      "interface yet)", False, "THERMALFIST"),
     ("CAP_WITH_JETS",         "Jets",            "Jets", "Jet analysis with FastJet (in progress)", False, "FASTJET"),
-    ("CAP_WITH_ROOT",         "ROOT",            "Helpers", "ROOT files and trees: Helpers library (.root files in CapGui, "
+    ("CAP_WITH_ROOT",         "ROOT",            "RootConvert", "ROOT files and trees: RootConvert library (.root files in CapGui, "
      "bin/CapRootConvert), Epos and Pythia event readers", False, "ROOT"),
     ("CAP_WITH_LATEX",        "Latex",           "Latex", "LaTeX documents of results", True, None),
     ("CAP_WITH_GRAPHICS",     "Graphics",        "Graphics", "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)",

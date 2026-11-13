@@ -40,7 +40,7 @@ cd build
 cmake --install-prefix <your_cap_install_directory> ../src
 make install
 ```
-The core modules (Base, Math, Helpers, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
+The core modules (Base, Math, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
 Spherocity, SubSample, Performance, BasicEventGen, Glauber) are always built. Pythia8, Herwig and FastJet are found
 from `CAP_PYTHIA8_DIR`, `CAP_HERWIG_DIR`, `CAP_FASTJET_DIR` if set, else from a copy in `<your_cap_directory>`
 (`pythia8*`, `Herwig*`, `fastjet*`, or under `external/`), the environment, or `pythia8-config`, `Herwig-config`,

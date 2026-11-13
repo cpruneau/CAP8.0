@@ -17,7 +17,7 @@ option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
 option(CAP_WITH_GRAPHICS     "Build the Graphics module (2D drawing; macOS window and demo)"  ON)
 option(CAP_WITH_GUI          "Build bin/CapGui, the graphical interface (Dear ImGui; requires Graphics)" ON)
-option(CAP_WITH_ROOT         "Use ROOT (off: CAP needs no ROOT): the Helpers library (.root histogram files in CapGui, bin/CapRootConvert), the readers of ROOT event trees (Epos, Pythia)" OFF)
+option(CAP_WITH_ROOT         "Use ROOT (off: CAP needs no ROOT): the RootConvert library (.root histogram files in CapGui, bin/CapRootConvert), the readers of ROOT event trees (Epos, Pythia)" OFF)
 option(CAP_WITH_JETS         "Build the Jets module (requires FastJet)"                       OFF)
 option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader; requires CAP_WITH_ROOT)" OFF)
 option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      ON)
@@ -65,14 +65,14 @@ endif()
 ################################################################################################
 # ROOT is optional (CAP_WITH_ROOT, off by default). Without it, nothing in CAP includes a ROOT header or links a ROOT
 # library. With it, ROOT is located through $ROOTSYS (or CMAKE_PREFIX_PATH), and ${ROOT_LIBRARIES} is linked only by
-# the targets that need ROOT: Helpers, CapRootConvert, the Epos module and the Pythia event reader.
+# the targets that need ROOT: RootConvert, CapRootConvert, the Epos module and the Pythia event reader.
 ################################################################################################
 if(CAP_WITH_ROOT)
   list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
   find_package(ROOT REQUIRED COMPONENTS MathCore RIO Hist Tree)
   include(${ROOT_USE_FILE})
   add_compile_definitions(CAP_WITH_ROOT)
-  include_directories("core/Helpers")
+  include_directories("core/RootConvert")
 else()
   set(ROOT_LIBRARIES "")
 endif()
@@ -178,10 +178,10 @@ add_subdirectory(analysis/SubSample)
 set(CAP_LINKED_MODULES Base Math Particles SubSample Global Spherocity ParticleSingle ParticlePair
                        ParticlePair3D NuDyn ParticleFlow PtPt Performance BasicEventGen)
 set(CAP_OPTIONAL_BUILT "")
-if(CAP_WITH_ROOT)   # ROOT histograms and files: RootFileHelpers, RootConversion, RootFileConversion, RootChainManager, ...
-  add_subdirectory(core/Helpers)
-  list(APPEND CAP_LINKED_MODULES Helpers)
-  list(APPEND CAP_OPTIONAL_BUILT "Helpers (ROOT ${ROOT_VERSION})")
+if(CAP_WITH_ROOT)   # ROOT files and trees: RootFileHelpers, RootConversion, RootFileConversion, RootChainManager
+  add_subdirectory(core/RootConvert)
+  list(APPEND CAP_LINKED_MODULES RootConvert)
+  list(APPEND CAP_OPTIONAL_BUILT "RootConvert (ROOT ${ROOT_VERSION})")
 endif()
 
 ################################################################################################
