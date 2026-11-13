@@ -98,23 +98,72 @@ is done once for a set of parameters. The hadrons are emitted as they are produc
 \code{ParticleDecayerTask} placed after Therminator3 decays them.
 
 \paragraph{Freeze-out models.}
-The model is chosen by the key \code{HYDRO\_MODEL:TYPE}:
+The model is chosen by the key \code{HYDRO\_MODEL:TYPE}. All models share the sampling of the integrand. A point of
+the hypersurface is drawn uniformly in the coordinates that parametrise it, and the momentum is drawn as
+$\pT = \zeta/(1-\zeta)$ with $\zeta$ uniform in $[0,1)$, the rapidity $y$ uniform over a range $Y$
+(\code{pRapidityRange}), and the azimuth $\varphi_p$ uniform. The integrand is then
+\begin{equation}
+  I = \frac{g}{(2\pi)^3}\,\frac{\pT}{(1-\zeta)^2}\,(d\Sigma\cdot p)\,f(x,p),
+  \label{eq:t3-integrand}
+\end{equation}
+where $1/(1-\zeta)^2 = d\pT/d\zeta$, $p = (m_T\cosh y,\ \pT\cos\varphi_p,\ \pT\sin\varphi_p,\ m_T\sinh y)$ and $m_T = \sqrt{m^2+\pT^2}$. The mean
+multiplicity is $\avg{N} = V\avg{I}$, where $V$ is the volume of the sampled region of coordinates and momenta. The
+models differ by the hypersurface, the measure $d\Sigma\cdot p$ and the fluid velocity $u$ that enters $p\cdot u$.
+Positions are written as $x = (\tau\cosh\eta,\ \rho\cos\varphi,\ \rho\sin\varphi,\ \tau\sinh\eta)$, with the
+spatial rapidity $\eta$ uniform over \code{sRapidityRange}.
 \begin{itemize}
-  \item \code{HG}: a static fireball;
-  \item \code{BW}: the blast wave, emission at a constant proper time with a transverse velocity \code{tVelocity};
-  \item \code{BWA}: the variants of the blast wave of THERMINATOR~2, with $\tau = \tau_i + A\rho$, a constant or linear
-  profile of the transverse velocity, and an emission delay drawn from an exponential distribution; a further
-  variant, in which the particles stream freely during the delay, is new;
-  \item \code{SFO}: the Krak\'ow single freeze-out model, on the hypersurface $\tau^2 - \rho^2 = \tau_f^2$;
-  \item \code{HYDRO2D} and \code{HYDRO3D}: hypersurfaces of boost-invariant (2+1)-dimensional and of
-  (3+1)-dimensional hydrodynamics.
+  \item \code{BW}, the blast wave. Emission occurs at a constant proper time $\tau$ (\code{TauI}) from a cylinder of radius
+  $\rho_{\max}$, with a radial transverse velocity $v_T$ (\code{tVelocity}) that is the same everywhere:
+  \begin{align}
+    p\cdot u & = \gamma_T\bigl(m_T\cosh(\eta-y) \nonumber\\ & \quad - v_T\pT\cos(\varphi-\varphi_p)\bigr), \\
+    d\Sigma\cdot p & = \tau\rho\, m_T\cosh(\eta-y),
+  \end{align}
+  with $\gamma_T = (1-v_T^2)^{-1/2}$.
+  \item \code{HG}, a static fireball: the blast wave without flow, $v_T = 0$.
+  \item \code{BWA}, the variants of the blast wave of THERMINATOR~2 (\code{Subtype} 2 to 6). The hypersurface is tilted
+  in the $(\tau,\rho)$ plane, $\tau(\rho) = \tau_i + A\rho$ (\code{Amplitude}), so that
+  \begin{equation}
+    d\Sigma\cdot p = \tau\rho\bigl(m_T\cosh(\eta-y) - A\,\pT\cos(\varphi-\varphi_p)\bigr).
+  \end{equation}
+  The transverse velocity is either constant (subtypes 2 and 3) or rises with the radius as
+  $v_T(\rho) = (\rho/\rho_{\max})/(v + \rho/\rho_{\max})$, with $v$ = \code{tVelocity} (subtypes 4 to 6; Eq.~(42) of
+  Ref.~\cite{Chojnacki:2011hb}). In subtypes 3, 5 and 6 the emission is delayed by a time $\Delta$ drawn from an
+  exponential distribution of mean \code{Delay}. In subtype 6, which is new in \CAP{}, the particle also streams
+  freely during the delay, $\vec{x} \to \vec{x} + \Delta\,\vec{p}/E$.
+  \item \code{SFO}, the Krak\'ow single freeze-out model~\cite{Broniowski:2001we}. Emission occurs on the hyperboloid
+  $\tau^2 - \rho^2 = \tau_f^2$ (\code{TauC}), with the Hubble-like flow $u = x/\tau_f$ of the single freeze-out:
+  \begin{align}
+    p\cdot u & = \frac{m_T\,\tau\cosh(\eta-y) - \pT\rho\cos(\varphi-\varphi_p)}{\tau_f}, \\
+    d\Sigma\cdot p & = \tau_f\,\rho\,(p\cdot u),
+  \end{align}
+  where $\tau = \sqrt{\tau_f^2+\rho^2}$ is the proper time of the emission point.
+  \item \code{HYDRO2D}, a hypersurface of boost-invariant (2+1)-dimensional hydrodynamics. The surface is the distance
+  $D(\zeta,\varphi)$ from the point $(\tau_i, 0)$ of the $(\tau,\rho)$ plane, so that $\tau = \tau_i + D\sin\zeta$ and
+  $\rho = D\cos\zeta$. The fluid has a transverse velocity $v_T(\zeta,\varphi)$ at an azimuth $\varphi + \varphi_F$, and
+  \begin{align}
+    p\cdot u & = \gamma_T\bigl(m_T\cosh(y-\eta) \nonumber\\ & \quad - v_T\pT\cos(\varphi-\varphi_p+\varphi_F)\bigr), \\
+    d\Sigma\cdot p & = D\,\tau\,\bigl[D\cos\zeta\,(m_T\sin\zeta\,C + \pT\cos\zeta\,c) \nonumber\\
+    & \quad + \partial_\zeta D\,\cos\zeta\,(\pT\sin\zeta\,c - m_T\cos\zeta\,C) \nonumber\\
+    & \quad + \partial_\varphi D\,\pT\,s\bigr],
+  \end{align}
+  with $C = \cosh(y-\eta)$, $c = \cos(\varphi-\varphi_p)$ and $s = \sin(\varphi-\varphi_p)$.
+  \item \code{HYDRO3D}, a hypersurface of (3+1)-dimensional hydrodynamics. The parametrisation adds a polar angle
+  $\theta$: $\tau = \tau_i + D\sin\theta\sin\zeta$, $\rho = D\sin\theta\cos\zeta$, and $\eta = D\cos\theta/\Lambda$. The
+  fluid has transverse components $u_x$, $u_y$ and a longitudinal rapidity $Y_F$, so that
+  \begin{align}
+    p\cdot u & = \sqrt{1+u_x^2+u_y^2}\; m_T\cosh(Y_F-y) \nonumber\\
+    & \quad - \pT\,(u_x\cos\varphi_p + u_y\sin\varphi_p),
+  \end{align}
+  and $d\Sigma\cdot p$ follows from the derivatives of $D$ with respect to the three angles (Ref.~\cite{Chojnacki:2011hb}).
 \end{itemize}
-The parameters of the analytic models (temperature, chemical potentials, radius, proper times, velocity, ranges of
-rapidity) are keys of the task, whose defaults are those of the blast wave of THERMINATOR~2. The hydrodynamic
-hypersurfaces are read from the XML files of THERMINATOR~2: the distance of the hypersurface from the origin of the
-$(\tau,\rho)$ plane, and the fluid velocity, as functions of the angles that parametrise the hypersurface, together
-with the temperature, chemical potentials and initial proper time of the calculation, which override those of the
-configuration. The derivatives of the distance are read when the file provides them, and computed otherwise.
+In the hydrodynamic models a negative $d\Sigma\cdot p$, a particle entering the hypersurface, is set to zero, as is
+common practice; with \code{BackFlow}, only those particles are kept. The parameters of the analytic models
+(temperature, chemical potentials, radius, proper times, velocity, ranges of rapidity) are keys of the task, with
+lengths in fm and temperatures and chemical potentials in GeV; their defaults are those of the blast wave of
+THERMINATOR~2. The hydrodynamic hypersurfaces are read from the XML files of THERMINATOR~2: the distance $D$ and the
+fluid velocity as functions of the angles, together with the temperature, chemical potentials and initial proper time
+of the calculation, which override those of the configuration. The derivatives of the distance are read when the file
+provides them, and computed otherwise.
 \todo{the shear and bulk viscous corrections ($\delta f$, class \code{Viscosity}) and the negative-binomial
 fluctuations of the multiplicities are not finished; describe them when they are.}
 
@@ -126,8 +175,11 @@ multiplicities, in 2+1 and 3+1 dimensions, and, when THERMINATOR~2 is installed,
 A second task, \code{ThermalModel}, computes the densities, energy densities, pressures and entropy densities of a
 static ideal hadron-resonance gas at a given temperature and chemical potentials, with the feed-down of the
 resonances to the stable hadrons through their decays, and fills histograms of them; it generates no events.
-\todo{in \code{ThermalHadron::calculateAllProperties}, the series alternates in sign for all species (the
-boson/fermion sign is commented out) and $\mu_Q$ is not used: check before describing the results.}
+The densities are the series
+$n = \frac{g\,m^2T}{2\pi^2}\sum_{k\ge1}(\mp1)^{k+1}\lambda^k K_2(km/T)/k$, with the fugacity $\lambda = e^{\mu/T}$ and the
+upper sign for fermions, truncated at five terms. The feed-down to a stable hadron follows the decay chains of the
+particle database, with the branching ratios normalized to one, as the decayer draws them.
+\todo{$\mu_Q$ is not used by \code{ThermalHadron::calculateAllProperties}: add it or remove the key.}
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Pythia8}
