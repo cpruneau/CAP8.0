@@ -54,6 +54,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+# Classes register themselves when their library is loaded (CAP_REFLECTION: the tasks of Glauber, Therminator3, ...,
+# the classes of CapShell), and the programs reference no symbol of most of these libraries. On Linux, where the
+# linker drops such libraries by default (--as-needed), bin/CAP then threw UnknownClassException: link them all.
+if(UNIX AND NOT APPLE)
+  add_link_options("LINKER:--no-as-needed")
+endif()
 enable_testing()   # ctest runs the test programs of the modules
 # Tests of the model of RunCAP.py (filters, histogram folders), with the templates of DB/Templates
 find_package(Python3 COMPONENTS Interpreter)
