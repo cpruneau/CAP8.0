@@ -29,7 +29,7 @@ namespace CAP
   class ParticleDb;
 
   //!
-  //! @brief Decay mode of a particle type: branching ratio and products (2 to 4), identified by their PDG codes and
+  //! @brief Decay mode of a particle type: branching ratio and products (1 to 4; 1: a change of type, K0 -> K0S, K0L), identified by their PDG codes and
   //! types.
   //!
   //! The database keeps the branching ratio as declared in its files and whether it is completed by a Clebsch-Gordan

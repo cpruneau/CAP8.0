@@ -41,6 +41,9 @@ namespace CAP
                          const Configuration & configuration,
                          unsigned int index);
   virtual void create();
+  //! Creates the histograms with as many bins as the gas has hadrons and stable hadrons (create() alone assumes
+  //! HISTOGRAM:index_nbins hadrons and 15 stable hadrons).
+  virtual void create(const ThermalHadronGas & hadronGas);
   virtual void loadFrom(const Folder & inputFile);
   virtual void fill(const ThermalHadronGasFD & hadronGas);
   //virtual void fillRho1VsP(ThermalHadronGas & hadronGas, double _volume);
@@ -110,6 +113,8 @@ namespace CAP
   Profile * h_reltopDensityVsMass;
   
   
+  unsigned int _nHadrons;   //!< hadrons in the gas (bins of the histograms versus the hadron index)
+  unsigned int _nStables;   //!< stable hadrons in the gas (bins of the histograms versus the stable-hadron index)
   bool    index_fill;
   int     index_nbins;
   double  index_min;

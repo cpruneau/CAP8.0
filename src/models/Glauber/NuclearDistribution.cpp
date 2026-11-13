@@ -5,24 +5,27 @@
  * For the licensing terms see LICENSE.
  *
  * Author: Claude Pruneau,  Nov 10, 2026
- * Based on TGlauber.C written originally by B. Alver, M. Baker, 
+ * Based on TGlauber.C written originally by B. Alver, M. Baker,
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
 #include "GlauberExceptions.hpp"
 #include "NuclearDistribution.hpp"
+#include "MathConstants.hpp"
 #include "MersenneTwister.hpp"
 #include <algorithm>
-#include "PrintHelpers.hpp"
-using namespace std;
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
-
-
+#include <cmath>
 
 namespace CAP
 {
-  int NuclearDistribution::_instances = 0;
+  namespace
+  {
+  //! Coefficients of the spherical harmonics Y20 = c2 (3 cos^2 - 1) and Y40 = c4 (35 cos^4 - 30 cos^2 + 3).
+  const double kY20 = 0.31539156525252005;   // sqrt(5/(16 pi))
+  const double kY40 = 0.10578554691520431;   // 3/(16 sqrt(pi))
+  //! Reweighting of type 13 when r0, r1, r2 are not given (TGlauberMC, Pbpnrw).
+  const double kR0Type13 = 1.00866, kR1Type13 = -0.000461484, kR2Type13 = -0.000203571;
+  }
 
   NuclearDistribution::NuclearDistribution()
   :
@@ -38,211 +41,191 @@ namespace CAP
   _r1(0),
   _r2(0),
   _maxRadius(0),
-  _radiusGen(nullptr),
-  _cumulative()
+  _ready(false),
+  _grid(),
+  _cumulative(),
+  _boxHalfSize(0),
+  _densityMax(1.0)
   { }
 
-  NuclearDistribution::NuclearDistribution(const NuclearDistribution & src)
-  :
-  _type(src._type),
-  _radius(src._radius),
-  _skin(src._skin),
-  _w(src._w),
-  _a(src._a),
-  _b(src._b),
-  _beta2(src._beta2),
-  _beta4(src._beta4),
-  _r0(src._r0),
-  _r1(src._r1),
-  _r2(src._r2),
-  _maxRadius(src._maxRadius),
-  _radiusGen(src._radiusGen ? new Histogram(*src._radiusGen) : nullptr),
-  _cumulative(src._cumulative)
-  { }
-
-
-  NuclearDistribution & NuclearDistribution::operator=(const NuclearDistribution & rhs)
+  double NuclearDistribution::reweight(double r) const
   {
-  if (this!=&rhs)
-    {
-    _type   = rhs._type;
-    _radius = rhs._radius;
-    _skin   = rhs._skin;
-    _w      = rhs._w;
-    _a      = rhs._a;
-    _b      = rhs._b;
-    _beta2  = rhs._beta2;
-    _beta4  = rhs._beta4;
-    _r0     = rhs._r0;
-    _r1     = rhs._r1;
-    _r2     = rhs._r2;
-    _maxRadius = rhs._maxRadius;
-    delete _radiusGen;
-    _radiusGen  = rhs._radiusGen ? new Histogram(*rhs._radiusGen) : nullptr;
-    _cumulative = rhs._cumulative;
-    }
-  return *this;
+  double r0 = _r0, r1 = _r1, r2 = _r2;
+  if (_type==13 && r0==0.0 && r1==0.0 && r2==0.0) { r0 = kR0Type13; r1 = kR1Type13; r2 = kR2Type13; }
+  if (_type!=12 && _type!=13 && _type!=14) return 1.0;
+  double d = r0 + r1*r + r2*r*r;
+  return d>0.0 ? 1.0/d : 0.0;
   }
 
-
-  double NuclearDistribution::evaluate(double x, double theta __attribute__((unused)) )
+  double NuclearDistribution::deformedRadius(double c) const
   {
-  double result = -1.0;
-  double t0, t1, t2, t3, t4, t5, t6, tm, xx;
+  double c2 = c*c;
   switch (_type)
     {
-      case 0: // exponential profile
-      {
-      result = x*x*exp(-x/_radius);
-      break;
-      }
+      case 5:  return _radius + _w*c2;
+      case 7:  return _radius*(1.0 + _beta2*kY20*(3.0*c2-1.0) + _beta4*kY40*(35.0*c2*c2-30.0*c2+3.0));
+      case 8:
+      case 14: return _radius*(1.0 + _beta2*0.315*(3.0*c2-1.0) + _beta4*0.105*(35.0*c2*c2-30.0*c2+3.0));
+      default: return _radius;
+    }
+  }
 
-      case 1: // 3pF
-      {
-      //f1 = new TF1(name,"x*x* (1+[2]*(x/[0])**2) / (1+exp((x-[0])/[1]) )",0.0,maxRadius);
-      //f1->SetParameters(radius,skin,w);
-      t1 = x/_radius;
-      t2 = (x-_radius)/_skin;
-      result = x*x*(1+_w*t1*t1) / (1+std::exp(t2));
-      break;
-      }
-
-      case 2: // 3pG
-      {
-      //      f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x**2-[0]**2)/[1]**2))",0.0,maxRadius);
-      //      f1->SetParameters(radius,skin,w);
-      xx = x*x;
-      t1 = x/_radius;
-      t2 = (x - _radius)/_skin;
-      t3 = (xx - _radius*_radius)/_skin/_skin;
-      result = x*x*(1+_w*t1*t1) / (1+std::exp(t3));
-      break;
-      }
-
-      case 3: // useHulthen (see nucl-ex/0603010)
-      case 4: // same but constrain the neutron opposite to the proton event-by-event
-      {
-
-      //      f1 = new TF1(name,"x*x*([0]*[1]*([0]+[1])) /( 2*pi* (pow([0]-[1],2)) )* pow( (exp(-[0]*x)-exp(-[1]*x) )/x,2)",0.0,maxRadius);
-      //      f1->SetParameters(radius,a,b);
-      t0 = 0; // fix me...
-      tm = _radius - _a;
-      t1 = _radius*_a*t0;
-      t2 = 2*pi()*tm*tm;
-      t3 = std::exp(-_radius*x);
-      t4 = std::exp(-_skin*x);
-      t5 = (t3-t4)/x;
-      t6 = t5*t5;
-      result = x*x*t1 /t2*t6;
-      break;
-      }
-
-      case 5: // Ellipsoid (e.g., Uranium)
-      {
-      //      f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x-[0])/[1]))",0.0,maxRadius);
-      //      f1->SetParameters(radius,skin,0.0); // same as 3pF but setting W to zero
-      t1 = x / _radius;
-      t2 = (x - _radius)/_skin;
-      result = x*x/(1+std::exp(t2));
-      break;
-      }
-
-      case 6: // He3/H3 -- not implemented
-      break;
-
-      case 7: // Deformed nuclei, box method -- not implemented
-      break;
-
-      case 8: // Deformed nuclei, TF2 method
-      {
-      t2= 0;
-      //      f2 = new TF2(name,"x*x*TMath::Sin(y)/(1+exp((x-[0]*(1+[2]*0.315*(3*pow(std::cos(y),2)-1.0)+[3]*0.105*(35*pow(std::cos(y),4)-30*pow(std::cos(y),2)+3)))/[1]))",0.0,maxRadius, 0.0,CAP::MATH::pi());
-      //      f2->SetParameters(radius,skin,beta2,beta4);
-      result = x*x/(1+std::exp(t2));
-      break;
-      }
-
-      case 9: // Proton gaus
-      {
-      //      f1  = new TF1(name,"x*x*exp(-0.5*(x/[0])*(x/[0]))",0.0,maxRadius);
-      //      f1->SetParameter(0,skin);
-      t1 = x / _skin;
-      result = x*x*std::exp(-0.5*t1*t1);
-      break;
-      }
-
-      case 10: // Proton dgaus
-      {
-      //      f1 = new TF1(name,"x*x*((1-[0])/[1]^3*exp(-x*x/[1]/[1])+[0]/(0.4*[1])^3*exp(-x*x/(0.4*[1])^2))",0.0,maxRadius);
-      //      f1->SetParameter(0,0.5);
-      //      f1->SetParameter(1,skin);
-      xx = x*x;
-      t1 = x/_skin;
-      t2 = 0.4*_skin;
-      t3 = t2*t2*t2;
-      t4 = _skin*_skin*_skin; // fix me
-      result = -10; //xx*((1-_skin)/t4*std::exp(-t1*t1) + 0.5/t3*std::exp(-xx/(t2*t2));
-      break;
-      }
-
+  double NuclearDistribution::density(double r, double cosTheta) const
+  {
+  switch (_type)
+    {
+      case 0:  return std::exp(-r/_radius);
+      case 1:
       case 11:
-      {
-      // 3pF for proton
-      //      f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x-[0])/[1]))",0,maxRadius);
-      //      f1->SetParameters(radius,skin,w);
-      result =  -11.0; //xx*((1-[0])/[1]^3*std::exp(-t1*t1) + 0.5/t3*std::exp(-xx/(t2*t2));
-      break;
-      }
-
       case 12:
-      {
-      // reweighted
-      //      f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+std::exp((x-[0])/[1]))/([3]+[4]*x+[5]*x^2)",0,maxRadius);
-      //      f1->SetParameters(radius,skin,w,r0,r1,r2);
-      result =  -12.0;
-      break;
-      }
-
       case 13:
       {
-      // Pb for proton and neutrons reweighted
-      //      f1  = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+std::exp((x-[0])/[1]))/([3]+[4]*x+[5]*x^2)",0,maxRadius);
-      //      f1->SetParameters(radius,skin,w,1.00866,-0.000461484,-0.000203571);
-      result =  -13.0;
-      break;
+      double t = r/_radius;
+      return (1.0 + _w*t*t)/(1.0 + std::exp((r-_radius)/_skin))*reweight(r);
       }
-
-      case 14: // Deformed nuclei, TF2 method, reweighted
+      case 2:
       {
-      //      f2 = new TF2(name,"x*x*TMath::Sin(y)/(1+std::exp((x-[0]*(1+[2]*0.315*(3*pow(std::cos(y),2)-1.0)+[3]*0.105*(35*pow(std::cos(y),4)-30*pow(std::cos(y),2)+3)))/[1]))/([4]+[5]*x+[6]*x^2)",0.0,maxRadius,0.0,CAP::MATH::pi());
-      //      f2->SetParameters(radius,skin,beta2,beta4,r0,r1,r2);
-      result =  -14.0;
-      break;
+      double t = r/_radius;
+      return (1.0 + _w*t*t)/(1.0 + std::exp((r*r-_radius*_radius)/(_skin*_skin)));
       }
-
+      case 3:
+      case 4:
+      {
+      // Hulthen wave function squared; radius and skin are its two inverse lengths (fm^-1)
+      double a = _radius, b = _skin;
+      double norm = a*b*(a+b)/(CAP::MATH::twoPi()*(a-b)*(a-b));
+      double f = (r>1.0E-9) ? (std::exp(-a*r)-std::exp(-b*r))/r : (b-a);
+      return norm*f*f;
+      }
+      case 5:
+      case 7:
+      case 8:
+      case 14:
+      return 1.0/(1.0 + std::exp((r-deformedRadius(cosTheta))/_skin))*reweight(r);
+      case 9:
+      {
+      double t = r/_radius;
+      return std::exp(-0.5*t*t);
+      }
+      case 10:
+      {
+      double R = _radius, s = 0.4*_radius;
+      return 0.5/(R*R*R)*std::exp(-r*r/(R*R)) + 0.5/(s*s*s)*std::exp(-r*r/(s*s));
+      }
       case 15:
       {
-      // harmonic oscillator model
-      //      f1 = new TF1(name,"x^2*(1+[0]*(x^2/[1]^2))*std::exp(-x^2/[1]^2)",0.0,maxRadius);
-      //      f1->SetParameters(radius,skin);
-      result =  -15.0;
-      break;
+      double t2 = r*r/(_skin*_skin);
+      return (1.0 + _radius*t2)*std::exp(-t2);
       }
-
+      case 6:
+      throw RadialTypeGlauberException(_type,"Type 6: nucleon configurations are read from a file, not drawn from a density",
+                                       __FUNCTION__);
       default:
       throw RadialTypeGlauberException(_type,"Radial type not found", __FUNCTION__);
     }
-  return result;
+  }
+
+  double NuclearDistribution::evaluate(double x, double theta)
+  {
+  return x*x*density(x, std::cos(theta));
+  }
+
+  double NuclearDistribution::rangeMax() const
+  {
+  double range = _maxRadius>0.0 ? _maxRadius : 14.0;
+  if (isHulthen()) range = std::max(range, 14.0);   // the Hulthen tail is long (TGlauberMC: 0 to 14 fm)
+  return range;
+  }
+
+  void NuclearDistribution::createHistogram()
+  {
+  _grid.clear();
+  _cumulative.clear();
+  if (_type==6) throw RadialTypeGlauberException(_type,"Type 6 has no density",__FUNCTION__);
+  if (!isDeformed())
+    {
+    // radial distribution on a fine grid; random() inverts its cumulative distribution (linear inside a step)
+    const double range = rangeMax();
+    const int n = std::max(4000, int(1000.0*range));
+    _grid.resize(n+1);
+    _cumulative.assign(n+1,0.0);
+    double previous = 0.0;
+    for (int k=0; k<=n; k++)
+      {
+      double r = range*double(k)/double(n);
+      double f = std::max(0.0, r*r*density(r));
+      _grid[k] = r;
+      if (k>0) _cumulative[k] = _cumulative[k-1] + 0.5*(f+previous)*(r-_grid[k-1]);
+      previous = f;
+      }
+    if (!(_cumulative[n]>0.0)) throw Exception("Empty nuclear density distribution",__FUNCTION__);
+    for (double & c : _cumulative) c /= _cumulative[n];
+    }
+  else
+    {
+    // box around the deformed nucleus: the largest radius of the surface plus 12 skin depths
+    double surface = 0.0;
+    for (int k=0; k<=1000; k++) surface = std::max(surface, deformedRadius(double(k)/1000.0));
+    _boxHalfSize = std::min(rangeMax(), surface + 12.0*_skin);
+    // upper bound of the density in the box (1, but for the reweighting of type 14)
+    _densityMax = 0.0;
+    const double rMax = _boxHalfSize*std::sqrt(3.0);
+    for (int k=0; k<=2000; k++)
+      {
+      double r = rMax*double(k)/2000.0;
+      for (int j=0; j<=20; j++) _densityMax = std::max(_densityMax, density(r, double(j)/20.0));
+      }
+    _densityMax *= 1.01;
+    if (!(_densityMax>0.0)) throw Exception("Empty nuclear density distribution",__FUNCTION__);
+    }
+  _ready = true;
   }
 
   double NuclearDistribution::random()
   {
-  if (!_radiusGen) createHistogram();
-  // radius distributed as the histogram (uniform within the chosen bin), using the cumulative sums computed once
-  double u = CAP::MATH::randomGenerator().random()*_cumulative.back();
+  if (!_ready) createHistogram();
+  if (isDeformed())
+    {
+    double x, y, z;
+    randomPosition(x,y,z);
+    return std::sqrt(x*x+y*y+z*z);
+    }
+  double u = CAP::MATH::randomGenerator().random();
   unsigned int k = std::upper_bound(_cumulative.begin(),_cumulative.end(),u) - _cumulative.begin();
+  if (k<1) k = 1;
   if (k>=_cumulative.size()) k = _cumulative.size()-1;
-  return _radiusGen->binLowEdge(k,0) + CAP::MATH::randomGenerator().random()*_radiusGen->binWidth(k,0);
+  double c0 = _cumulative[k-1], c1 = _cumulative[k];
+  double f  = (c1>c0) ? (u-c0)/(c1-c0) : 0.5;
+  return _grid[k-1] + f*(_grid[k]-_grid[k-1]);
+  }
+
+  void NuclearDistribution::randomPosition(double & x, double & y, double & z)
+  {
+  if (!_ready) createHistogram();
+  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  if (!isDeformed())
+    {
+    double r      = random();
+    double phi    = CAP::MATH::twoPi()*generator.random();
+    double cosTh  = 2.0*generator.random()-1.0;
+    double sinTh  = std::sqrt(std::max(0.0,1.0-cosTh*cosTh));
+    x = r*sinTh*std::cos(phi);
+    y = r*sinTh*std::sin(phi);
+    z = r*cosTh;
+    return;
+    }
+  // deformed: uniform in the box, kept with a probability proportional to the density (TGlauberMC, box method)
+  const double h = _boxHalfSize;
+  for (long trial=0; trial<100000000L; trial++)
+    {
+    x = h*(2.0*generator.random()-1.0);
+    y = h*(2.0*generator.random()-1.0);
+    z = h*(2.0*generator.random()-1.0);
+    double r = std::sqrt(x*x+y*y+z*z);
+    double c = r>0.0 ? z/r : 1.0;
+    if (generator.random()*_densityMax < density(r,c)) return;
+    }
+  throw Exception("No position accepted in the box of a deformed nucleus",__FUNCTION__);
   }
 
   void NuclearDistribution::reset()
@@ -258,127 +241,12 @@ namespace CAP
   _r0 = 0;
   _r1 = 0;
   _r2 = 0;
-  delete _radiusGen;
-  _radiusGen = nullptr;
+  _maxRadius = 0;
+  _ready = false;
+  _grid.clear();
   _cumulative.clear();
+  _boxHalfSize = 0;
+  _densityMax = 1.0;
   }
 
-  void NuclearDistribution::createHistogram()
-  {
-  int nBins = 200*_maxRadius;
-  String nucProf = "nucProf";
-  nucProf += _instances;
-  _instances++;
-  if (_radiusGen) delete _radiusGen;
-  _radiusGen = new Histogram(nucProf,nucProf,nBins,0.0,_maxRadius);
-  double dr = _maxRadius/double(nBins);
-  double r  = 0;
-//  printValue("createHistogram() nBins",nBins);
-//  printValue("createHistogram() nucProf",nucProf);
-//  printValue("createHistogram() dr",dr);
-//  printValue("createHistogram() r",r);
-
-  for (int k=0; k<nBins; k++)
-    {
-    double v = evaluate(r);
-    double ev = 0;
-    _radiusGen->setBinAt(unsigned(k),1,v,ev);
-    r += dr;
-    }
-  _cumulative.assign(nBins,0.0);
-  double sum = 0.0;
-  for (int k=0; k<nBins; k++)
-    {
-    double v = _radiusGen->binValueAt(unsigned(k));
-    if (v>0.0) sum += v;
-    _cumulative[k] = sum;
-    }
-  if (!(sum>0.0)) throw Exception("Empty nuclear density distribution",__FUNCTION__);
-  //printValue("first ran",_radiusGen->random());
-  }
-
-
-}  // namespace CAP
-
-
-
-//switch ()
-//{
-//  case 0: // exponential profile
-//    distribution->setRadius(radius);
-//    //f1 = new TF1(name,"x*x*exp(-x/[0])",0.0,maxRadius);
-//    //f1->SetParameter(0,radius);
-//    break;
-//
-//  case 1: // 3pF
-//    f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x-[0])/[1]))",0.0,maxRadius);
-//    f1->SetParameters(radius,skin,w);
-//    break;
-//
-//  case 2: // 3pG
-//    f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x**2-[0]**2)/[1]**2))",0.0,maxRadius);
-//    f1->SetParameters(radius,skin,w);
-//    break;
-//
-//  case 3: // useHulthen (see nucl-ex/0603010)
-//  case 4: // same but constrain the neutron opposite to the proton event-by-event
-//    f1 = new TF1(name,"x*x*([0]*[1]*([0]+[1]))/(2*pi*(pow([0]-[1],2)))*pow((exp(-[0]*x)-exp(-[1]*x))/x,2)",0.0,maxRadius);
-//    f1->SetParameters(radius,a,b);
-//    break;
-//
-//  case 5: // Ellipsoid (e.g., Uranium)
-//    f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x-[0])/[1]))",0.0,maxRadius);
-//    f1->SetParameters(radius,skin,0.0); // same as 3pF but setting W to zero
-//    break;
-//
-//  case 6: // He3/H3 -- not implemented
-//    break;
-//
-//  case 7: // Deformed nuclei, box method -- not implemented
-//    break;
-//
-//  case 8: // Deformed nuclei, TF2 method
-//    f2 = new TF2(name,"x*x*TMath::Sin(y)/(1+exp((x-[0]*(1+[2]*0.315*(3*pow(std::cos(y),2)-1.0)+[3]*0.105*(35*pow(std::cos(y),4)-30*pow(std::cos(y),2)+3)))/[1]))",0.0,maxRadius, 0.0,CAP::MATH::pi());
-//    f2->SetParameters(radius,skin,beta2,beta4);
-//    break;
-//
-//  case 9: // Proton gaus
-//    f1  = new TF1(name,"x*x*exp(-0.5*(x/[0])*(x/[0]))",0.0,maxRadius);
-//    f1->SetParameter(0,skin);
-//    break;
-//
-//  case 10: // Proton dgaus
-//    f1 = new TF1(name,"x*x*((1-[0])/[1]^3*exp(-x*x/[1]/[1])+[0]/(0.4*[1])^3*exp(-x*x/(0.4*[1])^2))",0.0,maxRadius);
-//    f1->SetParameter(0,0.5);
-//    f1->SetParameter(1,skin);
-//    break;
-//
-//  case 11: // 3pF for proton
-//    f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x-[0])/[1]))",0,maxRadius);
-//    f1->SetParameters(radius,skin,w);
-//    break;
-//
-//  case 12: // reweighted
-//    f1 = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x-[0])/[1]))/([3]+[4]*x+[5]*x^2)",0,maxRadius);
-//    f1->SetParameters(radius,skin,w,r0,r1,r2);
-//    break;
-//
-//  case 13: // Pb for proton and neutrons reweighted
-//    f1  = new TF1(name,"x*x*(1+[2]*(x/[0])**2)/(1+exp((x-[0])/[1]))/([3]+[4]*x+[5]*x^2)",0,maxRadius);
-//    f1->SetParameters(radius,skin,w,1.00866,-0.000461484,-0.000203571);
-//    break;
-//
-//  case 14: // Deformed nuclei, TF2 method, reweighted
-//    f2 = new TF2(name,"x*x*TMath::Sin(y)/(1+exp((x-[0]*(1+[2]*0.315*(3*pow(std::cos(y),2)-1.0)+[3]*0.105*(35*pow(std::cos(y),4)-30*pow(std::cos(y),2)+3)))/[1]))/([4]+[5]*x+[6]*x^2)",0.0,maxRadius,0.0,CAP::MATH::pi());
-//    f2->SetParameters(radius,skin,beta2,beta4,r0,r1,r2);
-//    break;
-//
-//  case 15: // harmonic oscillator model
-//    f1 = new TF1(name,"x^2*(1+[0]*(x^2/[1]^2))*exp(-x^2/[1]^2)",0.0,maxRadius);
-//    f1->SetParameters(radius,skin);
-//    break;
-//
-//  default:
-//    throw RadialTypeGlauberException(radialDistType,"Radial type not found", __FUNCTION__);
-//}
-//}
+} // namespace CAP

@@ -38,9 +38,21 @@ void ParticleDecayerTask::decayParticle(Particle & parent, Event & event)
   switch (nChildren)
     {
       default:
-      case 1:
       throw ParticleDecayException(nChildren,"Invalid number of children",__FUNCTION__);
       break;
+
+      case 1:
+      {
+      // a change of type (K0 -> K0S or K0L): same momentum and position
+      Particle & child1 = Particle::factory().nextObject();
+      ParticleType & childType1 = decayMode.childType(0); child1.setType(&childType1); child1.setLive(true);
+      child1.momentum() = parentMomentum;
+      child1.position() = parentPosition;
+      event.addParticle(&child1); child1.setLive(true);
+      if (!child1.isStable() ) decayParticle(child1,event);
+      parent.setDecayed(true);
+      break;
+      }
 
       case 2:
       {

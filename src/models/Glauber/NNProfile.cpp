@@ -73,17 +73,10 @@ namespace CAP
   if (x<0) throw InvalidValueGlauberException(x,"Invalid value : x<0",__FUNCTION__);
   if (_omega==0) // in this limit _r is the radius of the hard sphere
     return (x<=_r) ? 1.0 : 0.0;
-  else if (_omega==1) // in this limit a Gaussian dist is used _r2 = r*r
-    {
-    //printValue("x",x);
-    double arg = x/_r;
-    double p = std::exp(-0.5*arg*arg)/CAP::MATH::sqrtTwoPi()/_r;
-//    printValue("x",x);
-//    printValue("p",p);
-    return p;
-    }
-  else // otherwise use the Gamma formula from RybczyRybczynski et al.
-    return _g*(1-CAP::MATH::Distributions::regularizedGammaP(_omegaInv,_gOverOmegaR2*x*x));
+  // otherwise the gamma profile of Rybczynski et al. (TGlauberMC getNNProf, arXiv:1307.0636): G (1 - P(1/omega,
+  // G b^2/(omega R^2))), P the regularized lower incomplete gamma function; omega = 1 gives G exp(-G b^2/R^2). Its
+  // integral over the plane is pi R^2 = sigma for any omega.
+  return _g*(1-CAP::MATH::Distributions::regularizedGammaP(_omegaInv,_gOverOmegaR2*x*x));
   }
 
   //!

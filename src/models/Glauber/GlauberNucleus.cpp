@@ -12,6 +12,11 @@
 #include "GlauberNucleus.hpp"
 #include "PrintHelpers.hpp"
 #include "MersenneTwister.hpp"
+#include "FileSystem.hpp"
+#include <cmath>
+#include <fstream>
+#include <map>
+#include <sstream>
 
 
 namespace CAP
@@ -26,15 +31,23 @@ namespace CAP
   _allowOverlap(true),
   _useLattice(false),
   _latticeType(0),
-  _nTrialsMax(20),
+  _nTrialsMax(1000),
   _nnDistanceMin(-1.0),
   _nnDistanceMinSq(-1.0),
-  _nodeDistance(0.01),
-  _recenteringMode(0),
+  _nodeDistance(0.0),
+  _recenteringMode(1),
   _overlapMode(0),
   _userSigmaMode(0),
+  _smearing(0.0),
+  _maxCenterShift(99.0),
+  _orientationPhi(0.0),
+  _orientationTheta(0.0),
+  _nNonSmeared(0),
   _protonDistribution(),
-  _neutronDistribution()
+  _neutronDistribution(),
+  _configurations(),
+  _configurationIndex(0),
+  _usedNodes()
   {   }
 
   GlauberNucleus::GlauberNucleus(const GlauberNucleus & src)
@@ -51,8 +64,16 @@ namespace CAP
   _recenteringMode(src._recenteringMode),
   _overlapMode(src._overlapMode),
   _userSigmaMode(src._userSigmaMode),
+  _smearing(src._smearing),
+  _maxCenterShift(src._maxCenterShift),
+  _orientationPhi(src._orientationPhi),
+  _orientationTheta(src._orientationTheta),
+  _nNonSmeared(src._nNonSmeared),
   _protonDistribution(src._protonDistribution),
-  _neutronDistribution(src._neutronDistribution)
+  _neutronDistribution(src._neutronDistribution),
+  _configurations(src._configurations),
+  _configurationIndex(src._configurationIndex),
+  _usedNodes()
   {   }
 
   GlauberNucleus GlauberNucleus::operator=(const GlauberNucleus & rhs)
@@ -71,8 +92,15 @@ namespace CAP
     _recenteringMode    = rhs._recenteringMode;
     _overlapMode        = rhs._overlapMode;
     _userSigmaMode      = rhs._userSigmaMode;
+    _smearing           = rhs._smearing;
+    _maxCenterShift     = rhs._maxCenterShift;
+    _orientationPhi     = rhs._orientationPhi;
+    _orientationTheta   = rhs._orientationTheta;
+    _nNonSmeared        = rhs._nNonSmeared;
     _protonDistribution = rhs._protonDistribution;
     _neutronDistribution = rhs._neutronDistribution;
+    _configurations     = rhs._configurations;
+    _configurationIndex = rhs._configurationIndex;
     }
   return *this;
   }
@@ -252,11 +280,9 @@ namespace CAP
   //!
   void GlauberNucleus::generateNucleons()
   {
+  _nucleons.clear();
   int nProtons  = _nucleusType.nProtons();
   int nNeutrons = _nucleusType.nNeutrons();
-//  printValue("name",name());
-//  printValue("nProtons",nProtons);
-//  printValue("nNeutrons",nNeutrons);
   for (int i=0; i<nProtons; ++i)
     {
     GlauberNucleon nucleon;
@@ -272,186 +298,399 @@ namespace CAP
   }
 
   //!
-  //! Generate random positions for all the nucleons
+  //! Rotate (x,y,z) so that the z axis goes to the unit vector u (TVector3::RotateUz of ROOT).
+  //!
+  void GlauberNucleus::rotateUz(double ux, double uy, double uz, double & x, double & y, double & z)
+  {
+  double up = ux*ux + uy*uy;
+  if (up>0.0)
+    {
+    up = std::sqrt(up);
+    double px = x, py = y, pz = z;
+    x = (ux*uz*px - uy*py)/up + ux*pz;
+    y = (uy*uz*px + ux*py)/up + uy*pz;
+    z = -up*px + uz*pz;
+    }
+  else if (uz<0.0)
+    {
+    x = -x;
+    z = -z;
+    }
+  }
+
+  //!
+  //! Rotate (x,y,z) about x, then y, then z (TGlauNucleon::RotateXYZ_3D of TGlauberMC).
+  //!
+  void GlauberNucleus::rotateXYZ3D(double psiX, double psiY, double psiZ, double & x, double & y, double & z)
+  {
+  double c = std::cos(psiX), s = std::sin(psiX);
+  double t = y;
+  y = c*t - s*z;
+  z = s*t + c*z;
+  c = std::cos(psiY); s = std::sin(psiY);
+  t = z;
+  z = c*t - s*x;
+  x = s*t + c*x;
+  c = std::cos(psiZ); s = std::sin(psiZ);
+  t = x;
+  x = c*t - s*y;
+  y = s*t + c*y;
+  }
+
+  //!
+  //! Whether (x,y,z) is closer than the minimum distance to one of the first n nucleons (those placed already).
+  //!
+  bool GlauberNucleus::isCloseToPlaced(int n, double x, double y, double z) const
+  {
+  if (_allowOverlap || _nnDistanceMinSq<=0.0) return false;
+  for (int j=0; j<n; ++j) if (_nucleons[j].isCloseTo(x,y,z,_nnDistanceMinSq)) return true;
+  return false;
+  }
+
+  //!
+  //! Generate random positions for all the nucleons (TGlauNucleus::ThrowNucleons of TGlauberMC v3.2): protons and
+  //! neutrons in a random order; the deuteron (types 3, 4), the configurations read from a file (type 6), a lattice
+  //! (setUseLattice() with a node distance), or each nucleon drawn from the density, at the minimum distance from
+  //! those placed before unless overlaps are allowed; deformed nuclei and configurations randomly oriented. The
+  //! nucleus is thrown again while its center is farther than maxCenterShift() from the origin, then recentered.
   //!
   void GlauberNucleus::positionNucleons()
   {
-  int nNucleons = _nucleons.size();
-
-  if (nNucleons<1) throw InvalidValueGlauberException(nNucleons,"Nucleus has nNucleons<1",__FUNCTION__);
-  else if (nNucleons == 1) // proton
+  const int n = int(_nucleons.size());
+  if (n<1) throw InvalidValueGlauberException(n,"Nucleus has nNucleons<1",__FUNCTION__);
+  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  const int nZ = _nucleusType.nProtons();
+  for (int i=0, iz=0; i<n; ++i)
     {
-    _nucleons[0].reset();
-    //_nucleons[0].setRndmPositionInSphere(_protonDistribution);
-    _nucleons[0].setRndmPositionInSphere(4.0);
+    double fraction = double(nZ-iz)/double(n-i);
+    if (generator.random()<fraction) { _nucleons[i].setTypeToProton(); ++iz; }
+    else _nucleons[i].setTypeToNeutron();
     }
-  else if (nNucleons == 2) // deuteron
+  const int type = _nucleusType.radialDistType();
+  const long maxThrows = 1000000;
+  for (long iThrow=0; iThrow<maxThrows; ++iThrow)
     {
-
-    if (_nucleusType.radialDistType() == 4)
-      {
-      // place neutron opposite of proton
-      _nucleons[0].reset();
-      _nucleons[1].reset();
-      //_nucleons[0].setRndmPositionInSphereHulten(_neutronDistribution);
-      _nucleons[1].position() = -_nucleons[0].position();
-      }
+    for (auto & nucleon : _nucleons) nucleon.reset();
+    _nNonSmeared = 0;
+    _orientationPhi   = twoPi()*generator.random();
+    _orientationTheta = std::acos(2.0*generator.random()-1.0);
+    if (n==2 && (type==3 || type==4))
+      positionDeuteron();
+    else if (type==6)
+      positionFromConfiguration();
+    else if (_useLattice && _nodeDistance>0.0)
+      positionOnLattice();
     else
-      {
-      // place proton and neutron both ramdomly
-      _nucleons[0].reset();
-      _nucleons[1].reset();
-      //_nucleons[0].setRndmPositionInSphereHulten(_protonDistribution);
-      //_nucleons[1].setRndmPositionInSphereHulten(_neutronDistribution);
-      }
+      positionContinuous();
+    VectorLorentz center;
+    findNucleusCenter(center);
+    if (center.modulus3() > _maxCenterShift) continue;
+    recenterNucleus();
+    return;
     }
-  else
-    {
-    // all other nuclei
-    for (auto & nucleon : _nucleons)
-      {
-      nucleon.reset();
-      bool overlaps = true;
-      int  iTrialOverlap = 0;
-      while (overlaps)
-        {
-        iTrialOverlap++;
-        if (iTrialOverlap>_nTrialsMax)
-          throw IterationsGlauberException(_nTrialsMax,iTrialOverlap,"Too Many Iterations In Overlap Test",__FUNCTION__);
-        switch (_nucleusType.radialDistType())
-          {
-            case 1: // large spherical nucleus use proton profile only
-            {
-            nucleon.setRndmPositionInSphere(_protonDistribution);
-            //nucleon.setRndmPositionInSphere(6.0);
-            break;
-            }
-            case 5:
-            case 7:
-            {
-            //use a cube and check the nucleon is within a desired radius
-            bool notInside = true;
-            int  insideTest = 0;
-            while (notInside)
-              {
-              insideTest++;
-              if (insideTest>_nTrialsMax)
-                throw IterationsGlauberException(_nTrialsMax,
-                                                 insideTest,
-                                                 "Too Many Iterations In Inside Test",
-                                                 __FUNCTION__);
-              nucleon.setRndmPositionInCube(_nucleusType.maxRadius());
-              //VectorLorentz & position = nucleon.position();
-              //              double r     = _position.Mag();
-              //              double theta = _position.Theta();
-              //              double Rtheta = 0;
-              //              if (_nucleusType.radialDistType == 5)
-              //                Rtheta = _nucleusType._radiusProton
-              //                  + _nucleusType._skinProton*TMath::Cos(theta)*TMath::Cos(theta);
-              //              else if (_nucleusType.radialDistType == 7)
-              //                Rtheta = _nucleusType._radiusProton*(1+_nucleusType.shapeBeta2*ROOT::MATH::sph_legendre(2,0,theta)+_nucleusType.shapeBeta4*ROOT::MATH::sph_legendre(4,0,theta));
-              double prob = 1.0;// 1.0/(1.0+exp((R-Rtheta)/_nucleusType._skinProton));
-              if (CAP::MATH::randomGenerator().random()<=prob) notInside = false;
-              }
-            }
-            break;
-
-            case 8:
-            case 14: // deformed nucleus
-            {
-            // throw using an r, theta two parameter function
-            if (nucleon.isProton())
-              nucleon.setRndmPositionInSphere(_protonDistribution);
-            else
-              nucleon.setRndmPositionInSphere(_neutronDistribution);
-            }
-            break;
-
-            default:
-            {
-            // all other types are thrown while distinguishing
-            // protons and neutrons
-            if (_useLattice)
-              {
-              // "grid/lattice" mode
-              throw GlauberException("Not implemented",__FUNCTION__);
-              }
-            else
-              {
-              // using a continuous mode
-              if (nucleon.isProton())
-                nucleon.setRndmPositionInSphere(_protonDistribution);
-              else
-                nucleon.setRndmPositionInSphere(_neutronDistribution);
-              }
-            break;
-            }
-          } // switch (_nucleusType.radialDistType)
-        if (_allowOverlap)
-          break;
-        else if (hasNucleonCloseTo(nucleon,_nnDistanceMinSq))
-          continue;
-        }
-//      if (nNucleons>2)
-//        {
-//        double xRot = CAP::MATH::randomGenerator().random()*twoPi();
-//        double yRot = CAP::MATH::randomGenerator().random()*twoPi();
-//        double zRot = CAP::MATH::randomGenerator().random()*twoPi();
-//        nucleon.rotateXYZ(xRot,yRot,zRot);
-//        }
-      }
-    }
-  if (_recenteringMode>0) recenterNucleus();
+  throw IterationsGlauberException(maxThrows,maxThrows,"Too many throws: the center of the nucleus stays too far from the origin",
+                                   __FUNCTION__);
   }
 
   //!
-  //!Recenter all the nucleus and all its nucleons
+  //! Deuteron (Hulthen): the distance between the nucleons drawn from the distribution, each at half of it from the
+  //! center; type 4 puts the second nucleon opposite to the first, type 3 draws it independently.
+  //!
+  void GlauberNucleus::positionDeuteron()
+  {
+  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  for (int i=0; i<2; ++i)
+    {
+    if (i==1 && _nucleusType.radialDistType()==4)
+      {
+      const VectorLorentz & first = _nucleons[0].position();
+      _nucleons[1].position().setTXYZ(0.0, -first.x(), -first.y(), -first.z());
+      break;
+      }
+    double r      = 0.5*_protonDistribution.random();
+    double phi    = twoPi()*generator.random();
+    double cosTh  = 2.0*generator.random()-1.0;
+    double sinTh  = std::sqrt(std::max(0.0,1.0-cosTh*cosTh));
+    _nucleons[i].position().setTXYZ(0.0, r*sinTh*std::cos(phi), r*sinTh*std::sin(phi), r*cosTh);
+    }
+  }
+
+  //!
+  //! Each nucleon drawn from the density of its kind (protons and neutrons differ for the types 11 and 13), rotated
+  //! with the nucleus when it is deformed, and drawn again while it is closer than the minimum distance to one of the
+  //! nucleons placed before (unless overlaps are allowed).
+  //!
+  void GlauberNucleus::positionContinuous()
+  {
+  const bool deformed = _protonDistribution.isDeformed();
+  const double ux = std::sin(_orientationTheta)*std::cos(_orientationPhi);
+  const double uy = std::sin(_orientationTheta)*std::sin(_orientationPhi);
+  const double uz = std::cos(_orientationTheta);
+  const int n = int(_nucleons.size());
+  for (int i=0; i<n; ++i)
+    {
+    GlauberNucleon & nucleon = _nucleons[i];
+    NuclearDistribution & distribution = nucleon.isProton() ? _protonDistribution : _neutronDistribution;
+    for (int trial=1; ; ++trial)
+      {
+      if (trial>_nTrialsMax)
+        throw IterationsGlauberException(_nTrialsMax,trial,"Too Many Iterations In Overlap Test",__FUNCTION__);
+      double x, y, z;
+      distribution.randomPosition(x,y,z);
+      if (deformed) rotateUz(ux,uy,uz,x,y,z);
+      if (isCloseToPlaced(i,x,y,z)) continue;
+      nucleon.position().setTXYZ(0.0,x,y,z);
+      break;
+      }
+    }
+  }
+
+  //!
+  //! Nucleons on the nodes of a lattice (TGlauberMC, grid mode): a free node drawn at random in a cube of 40 fm, kept
+  //! with a probability equal to the density at its radius, optionally smeared (each coordinate multiplied by a
+  //! Gaussian number of mean 1 and rms smearing(), kept if at the minimum distance from the nucleons placed before,
+  //! 99 attempts), then the whole nucleus rotated about x, y and z by random angles. Lattice types: 1 primitive cubic,
+  //! 2 body-centered cubic, 3 face-centered cubic, other values hexagonal close packing.
+  //!
+  void GlauberNucleus::positionOnLattice()
+  {
+  if (_protonDistribution.isDeformed())
+    throw GlauberException("The lattice placement is not available for deformed nuclei",__FUNCTION__);
+  if (!_allowOverlap && _nnDistanceMin>_nodeDistance)
+    throw GlauberException("The minimum distance between nucleons is larger than the distance between the nodes",__FUNCTION__);
+  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  const double d = _nodeDistance;
+  const double edge = 20.0;
+  const double edgeX = edge + d*generator.random() - 0.5*d;
+  const double edgeY = edge + d*generator.random() - 0.5*d;
+  const double edgeZ = edge + d*generator.random() - 0.5*d;
+  const long nSlots = long(2.0*edge/d) + 1;
+  if (nSlots*nSlots*nSlots > 200000000L)
+    throw GlauberException("The distance between the lattice nodes is too small",__FUNCTION__);
+  _usedNodes.assign(size_t(nSlots*nSlots*nSlots),0);
+  const double rotX = twoPi()*generator.random();
+  const double rotY = twoPi()*generator.random();
+  const double rotZ = twoPi()*generator.random();
+  const double sqrt3 = std::sqrt(3.0), sqrt6 = std::sqrt(6.0);
+  const int n = int(_nucleons.size());
+  for (int i=0; i<n; ++i)
+    {
+    GlauberNucleon & nucleon = _nucleons[i];
+    NuclearDistribution & distribution = nucleon.isProton() ? _protonDistribution : _neutronDistribution;
+    for (long trial=1; ; ++trial)
+      {
+      if (trial>100000000L) throw IterationsGlauberException(100000000L,trial,"No free lattice node accepted",__FUNCTION__);
+      long iNode = long((2.0*edge/d)*generator.random());
+      long jNode = long((2.0*edge/d)*generator.random());
+      long kNode = long((2.0*edge/d)*generator.random());
+      size_t index = size_t(iNode*nSlots*nSlots + jNode*nSlots + kNode);
+      if (_usedNodes[index]) continue;
+      double x, y, z;
+      switch (_latticeType)
+        {
+          case 1: // primitive cubic
+          x = d*iNode - edgeX;
+          y = d*jNode - edgeY;
+          z = d*kNode - edgeZ;
+          break;
+          case 2: // body-centered cubic
+          x = 0.5*d*(-iNode+jNode+kNode) - 0.5*edgeX;
+          y = 0.5*d*(+iNode-jNode+kNode) - 0.5*edgeY;
+          z = 0.5*d*(+iNode+jNode-kNode) - 0.5*edgeZ;
+          break;
+          case 3: // face-centered cubic
+          x = 0.5*d*(jNode+kNode) - edgeX;
+          y = 0.5*d*(iNode+kNode) - edgeY;
+          z = 0.5*d*(iNode+jNode) - edgeZ;
+          break;
+          default: // hexagonal close packing (the (k mod 2)/3 of TGlauberMC was an integer division, always 0)
+          x = 0.5*d*(2*iNode + ((jNode+kNode)%2)) - edgeX;
+          y = 0.5*d*(sqrt3*(jNode + (kNode%2)/3.0)) - edgeY;
+          z = 0.5*d*(kNode*2.0*sqrt6/3.0) - edgeZ;
+          break;
+        }
+      double r = std::sqrt(x*x+y*y+z*z);
+      if (r>distribution.rangeMax() || generator.random()>distribution.density(r)) continue;
+      if (_smearing>0.0)
+        {
+        bool smeared = false;
+        for (int attempt=0; attempt<99 && !smeared; ++attempt)
+          {
+          double xs = x*generator.gauss(1.0,_smearing);
+          double ys = y*generator.gauss(1.0,_smearing);
+          double zs = z*generator.gauss(1.0,_smearing);
+          if (!isCloseToPlaced(i,xs,ys,zs)) { x = xs; y = ys; z = zs; smeared = true; }
+          }
+        if (!smeared) ++_nNonSmeared;
+        }
+      _usedNodes[index] = 1;
+      nucleon.position().setTXYZ(0.0,x,y,z);
+      break;
+      }
+    }
+  // the nucleus rotated once all its nucleons are placed (TGlauberMC rotated each nucleon as it was placed, so that the
+  // distance test of the smearing compared positions of different frames)
+  for (auto & nucleon : _nucleons)
+    {
+    VectorLorentz & p = nucleon.position();
+    double x = p.x(), y = p.y(), z = p.z();
+    rotateXYZ3D(rotX,rotY,rotZ,x,y,z);
+    p.setTXYZ(0.0,x,y,z);
+    }
+  }
+
+  //!
+  //! Name of the file of nucleon configurations of a nucleus (type 6), in $CAP_DATABASE_PATH/Glauber/NucleonConfigurations.
+  //!
+  String GlauberNucleus::configurationFileName() const
+  {
+  const String & name = _nucleusType.name();
+  if (name=="He3") return "he3_plaintext.dat";
+  if (name=="H3")  return "h3_plaintext.dat";
+  if (name=="He4") return "he4_plaintext.dat";
+  if (name=="C")   return "carbon_plaintext.dat";
+  if (name=="O")   return "oxygen_plaintext.dat";
+  throw GlauberException(String("No file of nucleon configurations for the nucleus ")+name,__FUNCTION__);
+  }
+
+  //!
+  //! Read the nucleon configurations of the nucleus (once per file for the whole program): one per line, the x, y, z
+  //! of each nucleon (after two numbers for carbon; the numbers after them are ignored).
+  //!
+  void GlauberNucleus::readConfigurations()
+  {
+  static std::map<std::string, std::shared_ptr<const std::vector<double>>> cache;
+  String relative = String("Glauber/NucleonConfigurations/") + configurationFileName();
+  String path = FileSystem::configuredPath(relative, "CAP_DATABASE_PATH");
+  std::string key = path.str();
+  auto found = cache.find(key);
+  if (found==cache.end())
+    {
+    std::ifstream file(key);
+    if (!file) throw GlauberException(String("Cannot read the nucleon configurations ")+path+" (is CAP_DATABASE_PATH set?)",
+                                      __FUNCTION__);
+    const int n = int(_nucleons.size());
+    const int skip = (n==12) ? 2 : 0;
+    auto values = std::make_shared<std::vector<double>>();
+    std::string line;
+    while (std::getline(file,line))
+      {
+      std::istringstream words(line);
+      std::vector<double> numbers;
+      double v;
+      while (words >> v) numbers.push_back(v);
+      if (int(numbers.size()) < skip + 3*n) continue;
+      values->insert(values->end(), numbers.begin()+skip, numbers.begin()+skip+3*n);
+      }
+    if (values->empty()) throw GlauberException(String("No nucleon configuration in ")+path,__FUNCTION__);
+    found = cache.emplace(key, values).first;
+    }
+  _configurations = found->second;
+  // a random first configuration, so that two nuclei of the same kind do not use the same sequence
+  const long nConfigurations = long(_configurations->size()/(3*_nucleons.size()));
+  _configurationIndex = long(CAP::MATH::randomGenerator().random()*nConfigurations) % nConfigurations;
+  }
+
+  //!
+  //! Nucleons at the positions of the next configuration of the file, the configuration randomly oriented (type 6).
+  //!
+  void GlauberNucleus::positionFromConfiguration()
+  {
+  if (!_configurations) readConfigurations();
+  const int n = int(_nucleons.size());
+  const long nConfigurations = long(_configurations->size()/(3*n));
+  if (_configurationIndex>=nConfigurations) _configurationIndex = 0;
+  const double * xyz = _configurations->data() + 3*n*_configurationIndex;
+  const double ux = std::sin(_orientationTheta)*std::cos(_orientationPhi);
+  const double uy = std::sin(_orientationTheta)*std::sin(_orientationPhi);
+  const double uz = std::cos(_orientationTheta);
+  for (int i=0; i<n; ++i)
+    {
+    double x = xyz[3*i], y = xyz[3*i+1], z = xyz[3*i+2];
+    rotateUz(ux,uy,uz,x,y,z);
+    _nucleons[i].position().setTXYZ(0.0,x,y,z);
+    }
+  ++_configurationIndex;
+  }
+
+  //!
+  //! Recenter the nucleus (TGlauberMC fRecenter): 0 not at all; 1 all the nucleons shifted so that their center is at
+  //! the origin; 2 the last nucleon shifted so that the center is at the origin; 3 the nucleus rotated so that its
+  //! center is on the z axis, then shifted along z to the origin; 4 rotated only.
   //!
   void GlauberNucleus::recenterNucleus()
   {
-  VectorLorentz locatedCenter;
-  findNucleusCenter(locatedCenter);
-  if (locatedCenter.modulus3() < 0.02) return;
+  if (_recenteringMode<=0) return;
+  VectorLorentz center;
+  findNucleusCenter(center);
+  const double cx = center.x(), cy = center.y(), cz = center.z();
+  const int n = int(_nucleons.size());
   switch (_recenteringMode)
     {
       default:
-      case 1: // recenter the nucleus on its current center
-      {
-      VectorLorentz s = -locatedCenter;
-      shiftNucleus(s);
+      case 1:
+      for (auto & nucleon : _nucleons)
+        {
+        VectorLorentz & p = nucleon.position();
+        p.setTXYZ(0.0, p.x()-cx, p.y()-cy, p.z()-cz);
+        }
       break;
-      }
       case 2:
       {
-      // shift the first nucleon to make the center at (0,0,0,0)
-      VectorLorentz & firstPosition = _nucleons[0].position();
-      firstPosition -= locatedCenter;
+      VectorLorentz & p = _nucleons[n-1].position();
+      p.setTXYZ(0.0, p.x()-n*cx, p.y()-n*cy, p.z()-n*cz);
+      break;
+      }
+      case 3:
+      case 4:
+      {
+      // rotation about (center x z) by the angle between the center and z: the center goes onto the z axis
+      double length = std::sqrt(cx*cx+cy*cy+cz*cz);
+      double kx = cy, ky = -cx;                   // center x (0,0,1)
+      double kLength = std::sqrt(kx*kx+ky*ky);
+      if (length>0.0 && kLength>0.0)
+        {
+        kx /= kLength; ky /= kLength;
+        double angle = std::acos(std::max(-1.0,std::min(1.0,cz/length)));
+        double c = std::cos(angle), s = std::sin(angle);
+        for (auto & nucleon : _nucleons)
+          {
+          VectorLorentz & p = nucleon.position();
+          double x = p.x(), y = p.y(), z = p.z();
+          double kDotV = kx*x + ky*y;
+          // Rodrigues: v c + (k x v) s + k (k.v)(1-c), with k = (kx, ky, 0)
+          double rx = x*c + (ky*z)*s + kx*kDotV*(1-c);
+          double ry = y*c + (-kx*z)*s + ky*kDotV*(1-c);
+          double rz = z*c + (kx*y - ky*x)*s;
+          p.setTXYZ(0.0, rx, ry, rz);
+          }
+        }
+      if (_recenteringMode==3)
+        for (auto & nucleon : _nucleons)
+          {
+          VectorLorentz & p = nucleon.position();
+          p.setTXYZ(0.0, p.x(), p.y(), p.z()-length);
+          }
       break;
       }
     }
   }
 
   //!
-  //!Find the CM of all the nucleons of this nucleus
+  //!Find the center (mean position) of all the nucleons of this nucleus
   //!
   void GlauberNucleus::findNucleusCenter(VectorLorentz & center)
   {
-  VectorLorentz sum;
-  sum.setTXYZ(0.0,0.0,0.0,0.0);
-  double count = 1.0;
+  double x = 0.0, y = 0.0, z = 0.0;
   for (auto & nucleon : _nucleons)
     {
-    count += 1;
-    sum += nucleon.position();
+    const VectorLorentz & p = nucleon.position();
+    x += p.x();
+    y += p.y();
+    z += p.z();
     }
-  double x = sum.x()/count;
-  double y = sum.y()/count;
-  double z = sum.z()/count;
-//  printValue("GlauberNucleus::findNucleusCenter() count", count);
-//  printValue("GlauberNucleus::findNucleusCenter() x", x);
-//  printValue("GlauberNucleus::findNucleusCenter() y", y);
-//  printValue("GlauberNucleus::findNucleusCenter() z", z);
-  center.setTXYZ(0.0,x,y,z);
+  const double n = _nucleons.empty() ? 1.0 : double(_nucleons.size());
+  center.setTXYZ(0.0, x/n, y/n, z/n);
   }
 
   //!
@@ -616,408 +855,10 @@ namespace CAP
   _neutronDistribution.setR1(    _nucleusType.r1());
   _neutronDistribution.setR2(    _nucleusType.r2());
   _neutronDistribution.setMaxRadius(_nucleusType.maxRadius());
+  // TGlauberMC throws the reweighted nuclei again until their center is within 0.1 fm of the origin
+  int type = _nucleusType.radialDistType();
+  _maxCenterShift = (type==12 || type==13 || type==14) ? 0.1 : 99.0;
+  _configurations.reset();
   }
 
 } // namespace CAP
-
-
-//TVector3 & TGlauNucleus::ThrowNucleons(double xshift)
-//{
-//
-//  if (fNucleons==0)
-//    {
-//    fNucleons=new TObjArray(fN);
-//    fNucleons->SetOwner();
-//    for (Int_t i=0; i<fN; ++i)
-//      {
-//      TGlauNucleon *nucleon=new TGlauNucleon();
-//      nucleon->SetType(0);
-//      if (i<fZ)
-//        nucleon->SetType(1);
-//      fNucleons->add(*nucleon);
-//      }
-//    }
-//  if (1)
-//    { //randomize p and n in nucleus
-//      for (Int_t i=0,iz=0; i<fN; ++i)
-//        {
-//        TGlauNucleon *nucleon=(TGlauNucleon*)fNucleons->At(i);
-//        double frac=double(fZ-iz)/double(fN-i);
-//        double rn=CAP::MATH::randomGenerator().uniform(0,1);
-//        if (rn<frac)
-//          {
-//          nucleon->SetType(1);
-//          ++iz;
-//          }
-//        else
-//          {
-//          nucleon->SetType(0);
-//          }
-//        }
-//    }
-//
-//  cmscheck: /* start over here in case shift was too large */
-//
-//  fTrials = 0;
-//  fNonSmeared = 0;
-//  fPhiRot = CAP::MATH::randomGenerator().random()*2*TMath::Pi();
-//  const double cosThetaRot = 2*CAP::MATH::randomGenerator().random()-1;
-//  fThetaRot = TMath::ACos(cosThetaRot);
-//  fXRot = CAP::MATH::randomGenerator().random()*2*TMath::Pi();
-//  fYRot = CAP::MATH::randomGenerator().random()*2*TMath::Pi();
-//  fZRot = CAP::MATH::randomGenerator().random()*2*TMath::Pi();
-//
-//  const Bool_t hulthen = (fF==3||fF==4);
-//  TString tmpname(name());
-//  Bool_t _nucleonsfromfile = false;
-//  if ((tmpname=="He3") || (tmpname=="H3") ||
-//      (tmpname=="He4") || (tmpname=="C")   ||
-//      (tmpname=="O"))
-//    _nucleonsfromfile = true;
-//
-//  if (fN==1)
-//    { //special treatment for proton
-//      double r = fFunc1->GetRandom();
-//      double phi = CAP::MATH::randomGenerator().random() * 2 * TMath::Pi();
-//      double ctheta = 2*CAP::MATH::randomGenerator().random() - 1;
-//      double stheta = TMath::Sqrt(1-ctheta*ctheta);
-//      TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(0));
-//      nucleon->reset();
-//      nucleon->SetXYZ(r * stheta * TMath::Cos(phi),
-//                      r * stheta * TMath::Sin(phi),
-//                      r * ctheta);
-//      fTrials = 1;
-//
-//    } else if (fN==2  &&  hulthen) { //special treatment for Hulten
-//
-//      double r = fFunc1->GetRandom()/2;
-//      double phi = CAP::MATH::randomGenerator().random() * 2 * TMath::Pi();
-//      double ctheta = 2*CAP::MATH::randomGenerator().random() - 1;
-//      double stheta = TMath::Sqrt(1-ctheta*ctheta);
-//
-//      TGlauNucleon *nucleon1=(TGlauNucleon*)(fNucleons->At(0));
-//      TGlauNucleon *nucleon2=(TGlauNucleon*)(fNucleons->At(1));
-//      nucleon1->reset();
-//      nucleon1->SetXYZ(r * stheta * TMath::Cos(phi),
-//                       r * stheta * TMath::Sin(phi),
-//                       r * ctheta);
-//      nucleon2->reset();
-//      if (fF==4) { // place opposite of 1
-//        nucleon2->SetXYZ(-nucleon1->GetX(),
-//                         -nucleon1->GetY(),
-//                         -nucleon1->GetZ());
-//      } else {
-//        r = fFunc1->GetRandom()/2;
-//        phi = CAP::MATH::randomGenerator().random() * 2 * TMath::Pi();
-//        ctheta = 2*CAP::MATH::randomGenerator().random() - 1;
-//        stheta = TMath::Sqrt(1-ctheta*ctheta);
-//        nucleon2->SetXYZ(r * stheta * TMath::Cos(phi),
-//                         r * stheta * TMath::Sin(phi),
-//                         r * ctheta);
-//      }
-//      fTrials = 1;
-//
-//    }
-//    else if (fN > 2  &&  fN < 20  &&  _nucleonsfromfile)
-//      {
-//
-//      // if the first call, then read in the file configurations
-//      if (fNucCounter == -1) {
-//        // read in the ascii file into the array and step through the counter
-//        char filename[100] = "foo.dat";
-//        if (tmpname=="He3") {
-//          sprintf(filename,"he3_plaintext.dat");
-//        } else if (tmpname=="H3") {
-//          sprintf(filename,"h3_plaintext.dat");
-//        } else if (tmpname=="He4") {
-//          sprintf(filename,"he4_plaintext.dat");
-//        } else if (tmpname=="C") {
-//          sprintf(filename,"carbon_plaintext.dat");
-//        } else if (tmpname=="O") {
-//          sprintf(filename,"oxygen_plaintext.dat");
-//        }
-//        cout << "Reading in " << filename << " for nucleon configurations with fN = " << fN << endl;
-//        ifstream myfile;
-//        myfile.open(filename);
-//        if (!myfile) {
-//          cout << "ERROR:  no file for nucleon configurations found with name = " << filename << endl;
-//          gSystem->Exit(123);
-//        }
-//
-//        Int_t inputcounter = 0;
-//        while (myfile) {
-//          if (inputcounter > 5999) break;
-//          double foo;
-//          if (fN == 3) {
-//            myfile >> fNucArr[inputcounter][0][0] >> fNucArr[inputcounter][0][1] >> fNucArr[inputcounter][0][2]
-//            >> fNucArr[inputcounter][1][0] >> fNucArr[inputcounter][1][1] >> fNucArr[inputcounter][1][2]
-//            >> fNucArr[inputcounter][2][0] >> fNucArr[inputcounter][2][1] >> fNucArr[inputcounter][2][2]
-//            >> foo >> foo >> foo >> foo;
-//          } else if (fN == 4) {
-//            // no extra data with isospin information at the end of the nucleon configurations
-//            myfile >> fNucArr[inputcounter][0][0] >> fNucArr[inputcounter][0][1] >> fNucArr[inputcounter][0][2]
-//            >> fNucArr[inputcounter][1][0] >> fNucArr[inputcounter][1][1] >> fNucArr[inputcounter][1][2]
-//            >> fNucArr[inputcounter][2][0] >> fNucArr[inputcounter][2][1] >> fNucArr[inputcounter][2][2]
-//            >> fNucArr[inputcounter][3][0] >> fNucArr[inputcounter][3][1] >> fNucArr[inputcounter][3][2];
-//          } else if (fN == 12) {
-//            // no extra data with isospin information at the end of the nucleon configurations
-//            // two extra words at the beginning --> foo foo
-//            myfile >> foo >> foo
-//            >> fNucArr[inputcounter][0][0] >> fNucArr[inputcounter][0][1] >> fNucArr[inputcounter][0][2]
-//            >> fNucArr[inputcounter][1][0] >> fNucArr[inputcounter][1][1] >> fNucArr[inputcounter][1][2]
-//            >> fNucArr[inputcounter][2][0] >> fNucArr[inputcounter][2][1] >> fNucArr[inputcounter][2][2]
-//            >> fNucArr[inputcounter][3][0] >> fNucArr[inputcounter][3][1] >> fNucArr[inputcounter][3][2]
-//            >> fNucArr[inputcounter][4][0] >> fNucArr[inputcounter][4][1] >> fNucArr[inputcounter][4][2]
-//            >> fNucArr[inputcounter][5][0] >> fNucArr[inputcounter][5][1] >> fNucArr[inputcounter][5][2]
-//            >> fNucArr[inputcounter][6][0] >> fNucArr[inputcounter][6][1] >> fNucArr[inputcounter][6][2]
-//            >> fNucArr[inputcounter][7][0] >> fNucArr[inputcounter][7][1] >> fNucArr[inputcounter][7][2]
-//            >> fNucArr[inputcounter][8][0] >> fNucArr[inputcounter][8][1] >> fNucArr[inputcounter][8][2]
-//            >> fNucArr[inputcounter][9][0] >> fNucArr[inputcounter][9][1] >> fNucArr[inputcounter][9][2]
-//            >> fNucArr[inputcounter][10][0] >> fNucArr[inputcounter][10][1] >> fNucArr[inputcounter][10][2]
-//            >> fNucArr[inputcounter][11][0] >> fNucArr[inputcounter][11][1] >> fNucArr[inputcounter][11][2];
-//          } else if (fN == 16) {
-//            // no extra data with isospin information at the end of the nucleon configurations
-//            myfile >> fNucArr[inputcounter][0][0] >> fNucArr[inputcounter][0][1] >> fNucArr[inputcounter][0][2]
-//            >> fNucArr[inputcounter][1][0] >> fNucArr[inputcounter][1][1] >> fNucArr[inputcounter][1][2]
-//            >> fNucArr[inputcounter][2][0] >> fNucArr[inputcounter][2][1] >> fNucArr[inputcounter][2][2]
-//            >> fNucArr[inputcounter][3][0] >> fNucArr[inputcounter][3][1] >> fNucArr[inputcounter][3][2]
-//            >> fNucArr[inputcounter][4][0] >> fNucArr[inputcounter][4][1] >> fNucArr[inputcounter][4][2]
-//            >> fNucArr[inputcounter][5][0] >> fNucArr[inputcounter][5][1] >> fNucArr[inputcounter][5][2]
-//            >> fNucArr[inputcounter][6][0] >> fNucArr[inputcounter][6][1] >> fNucArr[inputcounter][6][2]
-//            >> fNucArr[inputcounter][7][0] >> fNucArr[inputcounter][7][1] >> fNucArr[inputcounter][7][2]
-//            >> fNucArr[inputcounter][8][0] >> fNucArr[inputcounter][8][1] >> fNucArr[inputcounter][8][2]
-//            >> fNucArr[inputcounter][9][0] >> fNucArr[inputcounter][9][1] >> fNucArr[inputcounter][9][2]
-//            >> fNucArr[inputcounter][10][0] >> fNucArr[inputcounter][10][1] >> fNucArr[inputcounter][10][2]
-//            >> fNucArr[inputcounter][11][0] >> fNucArr[inputcounter][11][1] >> fNucArr[inputcounter][11][2]
-//            >> fNucArr[inputcounter][12][0] >> fNucArr[inputcounter][12][1] >> fNucArr[inputcounter][12][2]
-//            >> fNucArr[inputcounter][13][0] >> fNucArr[inputcounter][13][1] >> fNucArr[inputcounter][13][2]
-//            >> fNucArr[inputcounter][14][0] >> fNucArr[inputcounter][14][1] >> fNucArr[inputcounter][14][2]
-//            >> fNucArr[inputcounter][15][0] >> fNucArr[inputcounter][15][1] >> fNucArr[inputcounter][15][2];
-//          }
-//          ++inputcounter;
-//        }
-//        myfile.close();
-//        fNucCounter=0;
-//      } // done reading in the file the first time
-//
-//      if (fNucCounter > 5999)
-//        fNucCounter = 0;
-//
-//      // change to loop over fN _nucleons!
-//      for (Int_t i = 0; i<fN; ++i) {
-//        TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(i));
-//        nucleon->reset();
-//        nucleon->SetXYZ(fNucArr[fNucCounter][i][0],
-//                        fNucArr[fNucCounter][i][1],
-//                        fNucArr[fNucCounter][i][2]);
-//        nucleon->RotateXYZ(fPhiRot,fThetaRot);
-//      }
-//
-//      ++fNucCounter;
-//      fTrials = 1;
-//      }
-//    else
-//      { // all other nuclei
-//
-//        const double startingEdge  = 20; // throw nucleons within a cube of this size (fm)
-//        const double startingEdgeX = startingEdge + fNodeDist*CAP::MATH::randomGenerator().random() - 0.5*fNodeDist;
-//        const double startingEdgeY = startingEdge + fNodeDist*CAP::MATH::randomGenerator().random() - 0.5*fNodeDist;
-//        const double startingEdgeZ = startingEdge + fNodeDist*CAP::MATH::randomGenerator().random() - 0.5*fNodeDist;
-//        const Int_t nslots = 2*startingEdge/fNodeDist+1;
-//        if (fNodeDist>0)
-//          {
-//          if (fMinDist>fNodeDist)
-//            {
-//            cout << "Minimum distance (nucleon hard core diameter) ["
-//            << fMinDist << "] cannot be larger than the nodal spacing of the grid ["
-//            << fNodeDist << "]." << endl;
-//            cout << "Quitting...." << endl;
-//            gSystem->Exit(123);
-//            }
-//          if (!fIsUsed)
-//            fIsUsed = new TBits(nslots*nslots*nslots);
-//          else
-//            fIsUsed->ResetAllBits();
-//          }
-//        for (Int_t i = 0; i<fN; ++i)
-//          {
-//          TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(i));
-//          nucleon->reset();
-//          while (1)
-//            {
-//            ++fTrials;
-//            Bool_t nucleon_inside = 0;
-//            double x=999, xsmeared=999;
-//            double y=999, ysmeared=999;
-//            double z=999, zsmeared=999;
-//            if (fF==5||fF==7)
-//              { // the extended way, throw in a box and test the weight
-//                while (!nucleon_inside)
-//                  {
-//                  x = (fR*2)*(CAP::MATH::randomGenerator().random() * 2 - 1);
-//                  y = (fR*2)*(CAP::MATH::randomGenerator().random() * 2 - 1);
-//                  z = (fR*2)*(CAP::MATH::randomGenerator().random() * 2 - 1);
-//                  double r = TMath::Sqrt(x*x+y*y);
-//                  double theta = TMath::ATan2(r,z);
-//                  double R = TMath::Sqrt(x*x+y*y+z*z);
-//                  double Rtheta = fR;
-//                  if (fF==5)
-//                    Rtheta= fR + fW*TMath::Cos(theta)*TMath::Cos(theta);
-//                  if (fF==7)
-//#ifdef HAVE_MATHMORE
-//                    Rtheta = fR*(1+fBeta2*ROOT::MATH::sph_legendre(2,0,theta)+fBeta4*ROOT::MATH::sph_legendre(4,0,theta));
-//#else
-//                  cerr << "Should not end here because you do not have libMathMore" << endl;
-//#endif
-//                  double prob = 1/(1+TMath::Exp((R-Rtheta)/fA));
-//                  if (CAP::MATH::randomGenerator().random()<prob)
-//                    nucleon_inside=1;
-//                  }
-//              } else if ((fF==8) || (fF==14)) { // use TF2
-//                double r;
-//                double theta;
-//                fFunc3->random(r,theta);
-//                double phi = 2*TMath::Pi()*CAP::MATH::randomGenerator().random();
-//                x = r * TMath::Sin(phi) * TMath::Sin(theta);
-//                y = r * TMath::Cos(phi) * TMath::Sin(theta);
-//                z = r *                   TMath::Cos(theta);
-//              } else { // all other types
-//                TF1 *ff = fFunc1;
-//                if ((fFunc2)  &&  (nucleon->type()==0))
-//                  ff = fFunc2;
-//                if (fNodeDist<=0) { // "continuous" mode
-//                  double r = ff->GetRandom();
-//                  double phi = 2*TMath::Pi()*CAP::MATH::randomGenerator().random();
-//                  double ctheta = 2*CAP::MATH::randomGenerator().random() - 1 ;
-//                  double stheta = TMath::Sqrt(1-ctheta*ctheta);
-//                  x = r * stheta * TMath::Cos(phi);
-//                  y = r * stheta * TMath::Sin(phi);
-//                  z = r * ctheta;
-//                } else { // "grid/lattice" mode
-//                  Int_t iNode = Int_t((2*startingEdge/fNodeDist)*CAP::MATH::randomGenerator().random());
-//                  Int_t jNode = Int_t((2*startingEdge/fNodeDist)*CAP::MATH::randomGenerator().random());
-//                  Int_t kNode = Int_t((2*startingEdge/fNodeDist)*CAP::MATH::randomGenerator().random());
-//                  Int_t index=iNode*nslots*nslots+jNode*nslots+kNode;
-//                  if (fIsUsed->TestBitNumber(index))
-//                    continue;
-//                  if (fLattice==1) {       // Primitive cubic system (PCS) -> https://en.wikipedia.org/wiki/Cubic_crystal_system
-//                    x = fNodeDist*(iNode) - startingEdgeX;
-//                    y = fNodeDist*(jNode) - startingEdgeY;
-//                    z = fNodeDist*(kNode) - startingEdgeZ;
-//                  } else if (fLattice==2) { //Body centered cubic (BCC) -> http://mathworld.wolfram.com/CubicClosePacking.html
-//                    x = 0.5*fNodeDist*(-iNode+jNode+kNode) - 0.5*startingEdgeX;
-//                    y = 0.5*fNodeDist*(+iNode-jNode+kNode) - 0.5*startingEdgeY;
-//                    z = 0.5*fNodeDist*(+iNode+jNode-kNode) - 0.5*startingEdgeZ;
-//                  } else if (fLattice==3) { //Face Centered Cubic (FCC) -> http://mathworld.wolfram.com/CubicClosePacking.html
-//                    x = 0.5*fNodeDist*(jNode+kNode) - startingEdgeX;
-//                    y = 0.5*fNodeDist*(iNode+kNode) - startingEdgeY;
-//                    z = 0.5*fNodeDist*(iNode+jNode) - startingEdgeZ;
-//                  } else {                  //Hexagonal close packing (HCP) -> https://en.wikipedia.org/wiki/Close-packing_of_equal_spheres
-//                    x = 0.5*fNodeDist*(2*iNode+((jNode+kNode)%2))          - startingEdgeX;
-//                    y = 0.5*fNodeDist*(TMath::Sqrt(3)*(jNode+(kNode%2)/3)) - startingEdgeY;
-//                    z = 0.5*fNodeDist*(kNode*2*TMath::Sqrt(6)/3)           - startingEdgeZ;
-//                  }
-//                  const double r2 = x*x + y*y + z*z;
-//                  const double r  = TMath::Sqrt(r2);
-//                  if ((r>fMaxR)||(r2*CAP::MATH::randomGenerator().random()>ff->Eval(r)))
-//                    continue;
-//                  if (fSmearing>0.0) {
-//                    Int_t nAttemptsToSmear = 0;
-//                    while (1) {
-//                      xsmeared = x*CAP::MATH::randomGenerator().gauss(1.0,fSmearing);
-//                      ysmeared = y*CAP::MATH::randomGenerator().gauss(1.0,fSmearing);
-//                      zsmeared = z*CAP::MATH::randomGenerator().gauss(1.0,fSmearing);
-//                      nAttemptsToSmear++;
-//                      if (TestMinDist(i,xsmeared,ysmeared,zsmeared)) {
-//                        x = xsmeared;
-//                        y = ysmeared;
-//                        z = zsmeared;
-//                        break;
-//                      }
-//                      if (nAttemptsToSmear>=99) {
-//                        cerr << "Could not place on this node :: [" << x <<","<< y <<","<< z <<"] r = " << TMath::Sqrt(x*x+y*y+z*z) << " fm; "
-//                        << "Node (" << iNode << "," << jNode << "," << kNode << ") not smeared !!!" << endl;
-//                        ++fNonSmeared;
-//                        break;
-//                      }
-//                    }
-//                  }
-//                  fIsUsed->SetBitNumber(index);
-//                } /* end "grid/lattice mode" */
-//              }
-//            nucleon->SetXYZ(x,y,z);
-//            if (fF==5||fF==7||fF==8||fF==14)
-//              nucleon->RotateXYZ(fPhiRot,fThetaRot); // Uranium etc.
-//            if (fNodeDist>0) {
-//              nucleon->rotateXYZ(fXRot,fYRot,fZRot);
-//              break;
-//            }
-//            if (TestMinDist(i,x,y,z))
-//              break;
-//            }
-//          }
-//      }
-//
-//  // calculate center of mass
-//  double sumx=0;
-//  double sumy=0;
-//  double sumz=0;
-//  for (Int_t i = 0; i<fN; ++i) {
-//    TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(i));
-//    sumx += nucleon->GetX();
-//    sumy += nucleon->GetY();
-//    sumz += nucleon->GetZ();
-//  }
-//  sumx = sumx/fN;
-//  sumy = sumy/fN;
-//  sumz = sumz/fN;
-//
-//  static TVector3 finalShift;
-//  finalShift.SetXYZ(sumx,sumy,sumz);
-//  if (finalShift.Mag()>fSmax)
-//    goto cmscheck;
-//  double fsumx = 0;
-//  double fsumy = 0;
-//  double fsumz = 0;
-//  if (fRecenter==1) {
-//    fsumx = sumx;
-//    fsumy = sumy;
-//    fsumz = sumz;
-//  } else if (fRecenter==2) {
-//    TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(fN-1));
-//    double x = nucleon->GetX() - fN*sumx;
-//    double y = nucleon->GetY() - fN*sumy;
-//    double z = nucleon->GetZ() - fN*sumz;
-//    nucleon->SetXYZ(x,y,z);
-//  } else if ((fRecenter==3)||(fRecenter==4)) {
-//    TVector3 zVec;
-//    zVec.SetXYZ(0,0,1);
-//    TVector3 shiftVec;
-//    shiftVec.SetXYZ(sumx,sumy,sumz);
-//    TVector3 orthVec;
-//    orthVec = shiftVec.Cross(zVec);
-//    TRotation myRot;
-//    myRot.Rotate(shiftVec.Angle(zVec),orthVec);
-//    TVector3 myNuc;
-//    for (Int_t i = 0; i<fN; ++i) {
-//      TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(i));
-//      myNuc.SetXYZ(nucleon->GetX(),nucleon->GetY(),nucleon->GetZ());
-//      myNuc.Transform(myRot);
-//      nucleon->SetXYZ(myNuc.X(), myNuc.Y(), myNuc.Z());
-//    }
-//    if (fRecenter==3)
-//      fsumz = shiftVec.Mag();
-//  }
-//
-//  // recenter and shift
-//  for (Int_t i = 0; i<fN; ++i) {
-//    TGlauNucleon *nucleon=(TGlauNucleon*)(fNucleons->At(i));
-//    nucleon->SetXYZ(nucleon->GetX()-fsumx + xshift,
-//                    nucleon->GetY()-fsumy,
-//                    nucleon->GetZ()-fsumz);
-//  }
-//
-//  return finalShift;
-//
-//}
-

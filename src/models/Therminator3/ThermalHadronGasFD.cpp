@@ -1,4 +1,7 @@
 #include "ThermalHadronGasFD.hpp"
+#include <algorithm>
+#include <functional>
+#include <map>
 #include "ParticleDecayMode.hpp"
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
@@ -46,142 +49,84 @@ namespace CAP
   _stableHadronPairs.clear();
   }
 
+  //!
+  //! Probabilities that a hadron of the gas yields each stable hadron (singles) and each pair of stable hadrons (pairs)
+  //! after its decays. They follow the decay chains through the database, also through the types the gas does not hold
+  //! (K0 -> K0S, K0L -> pions), with the branching ratios normalized to their sum, as the decayer draws them
+  //! (ParticleType::setupDecayGenerator()). Photons and the stable types that are not in the gas (leptons) feed nothing.
+  //!
   void ThermalHadronGasFD::calculateParticleDecayProbability()
   {
   _stableHadrons.clear();
-  // find all _stable hadrons and load _stable hadron array
   for (auto & hadron : _hadrons)
-    {
-    if (hadron.type().isStable())
-      {
-      printValue("calculateParticleDecayProbability() _stable",hadron.type().name());
-      _stableHadrons.push_back(&hadron);
-      }
-    }
+    if (hadron.type().isStable()) _stableHadrons.push_back(&hadron);
   unsigned int nStableHadrons = _stableHadrons.size();
   if (nStableHadrons<1) throw Exception("_stableHadrons.size() < 1",__FUNCTION__);
   printValue("nStableHadrons",nStableHadrons);
-  // create list of probability for each hadron and accumulate probabilities
-  // to _stable hadrons
-  for (auto & hadron : _hadrons)
-    {
-    hadron.createDecayProbabilityArray(nStableHadrons);
-    int iStableHadron = findStableHadronIndexFor(hadron.type().pdgCode());
-    if (iStableHadron>=0) hadron.setDecayProbability(iStableHadron, 1.0);
-    }
 
-  // particles have been sorted in ascending order of _mass
-  // calculate  the probabilities
-  // singles
-  for (auto & hadron : _hadrons)
+  std::map<const ParticleType*,unsigned int> stableIndex;
+  for (unsigned int k=0; k<nStableHadrons; k++) stableIndex[&_stableHadrons[k]->type()] = k;
+  std::map<const ParticleType*,std::vector<double>> singles, pairs;
+  const unsigned int n = nStableHadrons;
+  std::function<void(const ParticleType &)> compute = [&](const ParticleType & type)
     {
-    if (hadron.type().isStable()) continue;
-    vector<double> temp(nStableHadrons,0.0);
-    std::vector<ParticleDecayMode> & decayModes = hadron.type().decayModes();
-    for (auto & decayMode : decayModes)
+    if (singles.count(&type)) return;
+    std::vector<double> single(n,0.0), pair(n*n,0.0);
+    singles[&type] = single;   // guards against a loop in the decay tables
+    pairs[&type]   = pair;
+    auto stable = stableIndex.find(&type);
+    if (stable!=stableIndex.end())
+      single[stable->second] = 1.0;
+    else if (!type.isStable())
       {
-      const vector<int> & childrenCodes = decayMode.childrenPdgCodes();
-      for (auto & childCode : childrenCodes)
+      double brSum = 0.0;
+      for (auto & decayMode : type.decayModes()) brSum += decayMode.branchingRatio();
+      for (auto & decayMode : type.decayModes())
         {
-        if (childCode == 22) continue; // dont care about photons
-        ThermalHadron & childHadron = findHadronFor(childCode);
-        for (unsigned int mStableHadron = 0; mStableHadron < nStableHadrons; mStableHadron++)
+        if (!(brSum>0.0)) break;
+        double br = decayMode.branchingRatio()/brSum;
+        std::vector<const ParticleType*> children;
+        for (unsigned int c=0; c<unsigned(decayMode.nChildren()); c++)
           {
-          temp[mStableHadron] += (decayMode.branchingRatio()*childHadron.decayProbability(mStableHadron));
+          const ParticleType & child = decayMode.childType(c);
+          if (child.pdgCode()==22) continue;   // photons
+          compute(child);
+          children.push_back(&child);
           }
-        }
-      }
-    for (unsigned int iStableHadron1=0; iStableHadron1<nStableHadrons; iStableHadron1++)
-      {
-      hadron.setDecayProbability(iStableHadron1, temp[iStableHadron1]);
-      }
-    }
-
-  // pairs
-  for (auto & hadron : _hadrons)
-    {
-    if (hadron.type().isStable()) continue;
-
-    //printValue("(Pairs) Hadron name",hadron.type().name());
-
-    vector<double> tempPair(nStableHadrons*nStableHadrons,0.0);
-    std::vector<ParticleDecayMode> & decayModes = hadron.type().decayModes();
-
-    //printValue("-0- hadron name",hadron.type().name());
-
-
-    for (auto & decayMode : decayModes)
-      {
-      const vector<int> & childrenCodes = decayMode.childrenPdgCodes();
-      for (auto & childCode : childrenCodes)
-        {
-        if (childCode == 22) continue; // dont care about photons
-        ThermalHadron & childHadron = findHadronFor(childCode);
-        // printValue("(Pairs-1) Child Hadron name",childHadron.type().name());
-        //printValue("-1- hadron _type",mStableHadron1);
-
-        // pair decays from this child
-        for (unsigned int mStableHadron1 = 0; mStableHadron1 < nStableHadrons; mStableHadron1++)
+        for (auto child : children)
           {
-          for (unsigned int mStableHadron2 = 0; mStableHadron2 < nStableHadrons; mStableHadron2++)
+          const std::vector<double> & s = singles[child];
+          const std::vector<double> & p = pairs[child];
+          for (unsigned int k=0; k<n; k++)   single[k] += br*s[k];
+          for (unsigned int k=0; k<n*n; k++) pair[k]   += br*p[k];
+          }
+        // pairs from two different products
+        for (unsigned int c1=0; c1<children.size(); c1++)
+          for (unsigned int c2=c1+1; c2<children.size(); c2++)
             {
-            double prob = decayMode.branchingRatio()*childHadron.decayProbabilityPair(mStableHadron1,mStableHadron2);
-            if (prob>0)
-              {
-              //              printValue("-1- mStableHadron1",mStableHadron1);
-              //              printValue("-1- mStableHadron2",mStableHadron2);
-              //              printValue("-1- decayMode.branchingRatio()",decayMode.branchingRatio());
-              //              printValue("-1- childHadron.decayProbabilityPair(mStableHadron1,mStableHadron2)",childHadron.decayProbabilityPair(mStableHadron1,mStableHadron2));
-              tempPair[mStableHadron1*nStableHadrons+mStableHadron2] += prob;
-              }
+            const std::vector<double> & s1 = singles[children[c1]];
+            const std::vector<double> & s2 = singles[children[c2]];
+            for (unsigned int k1=0; k1<n; k1++)
+              for (unsigned int k2=0; k2<n; k2++)
+                pair[k1*n+k2] += br*s1[k1]*s2[k2];
             }
-          }
-        }
-      // pairs from mixed children
-      for (unsigned int iChild1=0; iChild1<childrenCodes.size(); iChild1++)
-        {
-        int childCode1 = childrenCodes[iChild1];
-        if (childCode1 == 22) continue; // dont care about photons
-        ThermalHadron & childHadron1 = findHadronFor(childCode1);
-        //printValue("(Pairs-2) Child 1 Hadron name",childHadron1.type().name());
-        for (unsigned int iChild2=iChild1+1; iChild2<childrenCodes.size(); iChild2++)
-          {
-          int childCode2 = childrenCodes[iChild2];
-          if (childCode2 == 22) continue; // dont care about photons
-          ThermalHadron & childHadron2 = findHadronFor(childCode2);
-          //printValue("(Pairs-2) Child 2 Hadron name",childHadron2.type().name());
-          for (unsigned int mStableHadron1 = 0; mStableHadron1 < nStableHadrons; mStableHadron1++)
-            {
-            for (unsigned int mStableHadron2 = 0; mStableHadron2 < nStableHadrons; mStableHadron2++)
-              {
-              double prob = decayMode.branchingRatio()*childHadron1.decayProbability(mStableHadron1)*childHadron2.decayProbability(mStableHadron2);
-              if (prob>0)
-                {
-                //                printValue("-2- mStableHadron1",mStableHadron1);
-                //                printValue("-2- mStableHadron2",mStableHadron2);
-                //                printValue("-2- decayMode.branchingRatio()",decayMode.branchingRatio());
-                //                printValue("-2- childHadron1.decayProbability(mStableHadron1)",childHadron1.decayProbability(mStableHadron1));
-                //                printValue("-2- childHadron2.decayProbability(mStableHadron2)",childHadron2.decayProbability(mStableHadron2));
-                tempPair[mStableHadron1*nStableHadrons+mStableHadron2] += prob;
-                }
-              }
-            }
-          }
         }
       }
-    for (unsigned int iStableHadron1=0; iStableHadron1<nStableHadrons; iStableHadron1++)
-      {
-      for (unsigned int iStableHadron2=0; iStableHadron2<nStableHadrons; iStableHadron2++)
-        {
-        double prob = tempPair[iStableHadron1*nStableHadrons+iStableHadron2];
-        //        printValue("iStableHadron1",iStableHadron1);
-        //        printValue("iStableHadron2",iStableHadron2);
-        //        printValue("prob",prob);
-        hadron.setDecayProbabilityPair(iStableHadron1,iStableHadron2,prob );
-        }
-      }
-    }
+    singles[&type] = single;
+    pairs[&type]   = pair;
+    };
 
+  for (auto & hadron : _hadrons)
+    {
+    compute(hadron.type());
+    hadron.createDecayProbabilityArray(n);
+    const std::vector<double> & single = singles[&hadron.type()];
+    const std::vector<double> & pair   = pairs[&hadron.type()];
+    for (unsigned int k=0; k<n; k++) hadron.setDecayProbability(k,single[k]);
+    for (unsigned int k1=0; k1<n; k1++)
+      for (unsigned int k2=0; k2<n; k2++)
+        hadron.setDecayProbabilityPair(k1,k2,pair[k1*n+k2]);
+    }
   }
 
   //!

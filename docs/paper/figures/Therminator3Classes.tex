@@ -17,7 +17,6 @@
   \node[ext=2.4cm] (HF) at (15.2,0.3) {\an{HistogramFolder}\m{(Particles)}};
   \node[ext=2.2cm] (PDb) at (11.4,0.3) {\cn{ParticleDb}\m{(Particles)}};
   \node[ext=2.4cm] (SF) at (1.6,-9.0) {\cn{ScalarField}\m{(LinearAlgebra)}};
-  \node[ext=1.6cm] (TObj) at (14.6,-9.0) {\cn{TObject}\m{(ROOT)}};
 
   % tasks
   \node[steer=4.4cm] (T3) at (4.2,-1.55)
@@ -54,8 +53,8 @@
 
   % hadrons and histograms
   \node[cls=3.2cm] (Gas) at (11.4,-3.9) {\cn{ThermalHadronGas}\m{the hadrons of a ParticleDb;}\m{integrated multiplicities (ascii)}};
-  \node[cls=2.7cm] (GasFD) at (11.4,-5.6) {\cn{ThermalHadronGasFD}\m{with the feed-down}\m{of the resonances}};
-  \node[cls=2.7cm] (Hadron) at (14.6,-5.6) {\cn{ThermalHadron}\m{a species: densities,}\m{energy, pressure, entropy}};
+  \node[cls=2.7cm] (GasFD) at (11.4,-5.6) {\cn{ThermalHadronGasFD}\m{feed-down of the resonances}\m{along their decay chains}};
+  \node[cls=2.7cm] (Hadron) at (14.6,-5.6) {\cn{ThermalHadron}\m{a species: densities,}\m{energy, pressure, entropy,}\m{multiplicity, integrand max.}};
   \node[cls=2.6cm] (Histos) at (15.2,-1.55) {\cn{ThermalHistos}\m{densities and spectra}\m{of the species}};
   \node[cls=2.6cm] (DHistos) at (15.2,-3.25) {\cn{ThermalDerivedHistos}\m{derived quantities}};
   \draw[inherit] (GasFD.north) -- (Gas.south);
@@ -63,11 +62,12 @@
   \draw[uses] (Gas.north) -- (Gas.north |- PDb.south);
   \draw[inherit] (Histos.north) -- (HF.south);
   \draw[inherit] (DHistos.north) -- (Histos.south);
-  \draw[inherit] (Hadron.south) -- (Hadron.south |- TObj.north);
-  \draw[uses] (T3.east |- 0,-3.1) -- (8.4,-3.1) -- ++(0,-0.35) -| ([xshift=-0.9cm]Gas.north) ;
-  \draw[uses] ([xshift=0.9cm]TM.south) -- ([xshift=0.9cm]TM.south |- GasFD.north) ;
-  \draw[uses] (TM.east |- 0,-1.95) -- (Histos.west |- 0,-1.95);
-  \draw[uses] (T3.north) -- ++(0,0.3) -| node[lbl, pos=0.1, above]{histograms} ([xshift=-0.6cm]Histos.north) ;
+  \draw[owns] (Model.north east) ++(-0.3,0) |- ++(0,0.35) -| ([xshift=-0.9cm]Gas.north);
+  \draw[owns] ([xshift=0.9cm]TM.south) -- ([xshift=0.9cm]TM.south |- Gas.north) ;
+  \draw[uses] (GasFD.south) -- ++(0,-0.6) -| (13.25,-1.0) node[lbl, pos=0.7, right]{decay modes} -| ([xshift=0.8cm]PDb.south) ;
+  \draw[owns] (TM.east |- 0,-1.95) -- (Histos.west |- 0,-1.95);
+  \draw[owns] (T3.north) -- ++(0,0.3) -| node[lbl, pos=0.1, above]{histograms} ([xshift=-0.6cm]Histos.north) ;
+  \draw[uses] (Models.south) -- ++(0,-0.3) -| node[lbl, pos=0.3, above]{hypersurface fields} ([xshift=-0.4cm]SF.north);
   \legendat{0.0}{-9.95}
 \end{tikzpicture}
 \end{document}

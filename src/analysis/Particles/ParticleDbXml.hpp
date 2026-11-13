@@ -32,7 +32,8 @@ namespace CAP
 //! - massUncertainty, width and widthUncertainty default to 0, clebschGordan to false; the other attributes are required.
 //! - branchingRatio is the declared ratio: with clebschGordan="true" the ratio used to generate decays is completed by
 //!   the isospin Clebsch-Gordan coefficient when read (see addDecayMode()).
-//! - products lists 2 to 4 particle names separated by spaces; a product may be defined anywhere in the file.
+//! - products lists 1 to 4 particle names separated by spaces; a product may be defined anywhere in the file. One
+//!   product is a change of type (K0 -> K0S or K0L), with the same momentum and position.
 //! - Unknown elements or attributes, duplicate particle names and unknown products are errors.
 //!
 //! Reading appends the particles to the database, then maps the antiparticles and sets up the decay generators.
@@ -67,7 +68,7 @@ public:
   //! the decay mode (so that the database is written back unchanged); the ratio used to generate decays is the
   //! declared one or, if clebschGordan is true, the declared one multiplied by the square of the isospin
   //! Clebsch-Gordan coefficient (and by 2 for two products of same spin and mass, different isospin3 and same
-  //! strangeness and charm). @param parent decaying particle type @param children products (2 to 4)
+  //! strangeness and charm). @param parent decaying particle type @param children products (1 to 4)
   //! @param declaredBranchingRatio ratio as given in the database @param clebschGordan whether to complete the ratio
   //! @throws Exception for fewer than 2 or more than 4 products
   //!

@@ -25,7 +25,7 @@ namespace CAP
 
   GlauberEventMoments::GlauberEventMoments()
   :
-  _doN(false),
+  _doN(true),
   _doDensity(false),
   _doArea(false),
   _dolength(false),
@@ -152,8 +152,8 @@ namespace CAP
     }
   else // _pass>0
     {
-    double xx = x - _meanX;
-    double yy = y - _meanY;
+    double xx = x - _firstMeanX;
+    double yy = y - _firstMeanY;
     double r  = std::sqrt(xx*xx+yy*yy);
     _xSum  +=  xx*weight;
     _ySum  +=  yy*weight;
@@ -230,14 +230,16 @@ namespace CAP
   if (_sum<1) return;
   const double undefined = -1.0E100;
 
-  _meanX  =  _xSum/_sum;
-  _meanY  =  _ySum/_sum;
+  // the second pass is about the center: its means are about 0, so the means of the first pass are kept
+  double meanX = _xSum/_sum, meanY = _ySum/_sum;
+  _meanX  =  meanX;
+  _meanY  =  meanY;
   _meanX2 =  _x2Sum/_sum;
   _meanY2 =  _y2Sum/_sum;
   _meanXY =  _xySum/_sum;
-  _varX   =  _meanX2 - _meanX*_meanX;
-  _varY   =  _meanY2 - _meanY*_meanY;
-  _varXY  =  _meanXY - _meanX*_meanY;
+  _varX   =  _meanX2 - meanX*meanX;
+  _varY   =  _meanY2 - meanY*meanY;
+  _varXY  =  _meanXY - meanX*meanY;
   _rmsX   = _varX>=0 ? std::sqrt(_varX) : -1.0E100;
   _rmsY   = _varY>=0 ? std::sqrt(_varY) : -1.0E100;
   double varDiff = _varY - _varX;
@@ -247,7 +249,8 @@ namespace CAP
     _eccX = varDiff/varSum;
     _eccY = 2.0*_varXY/varSum;
     _ecc  = std::sqrt(_eccX*_eccX + _eccY*_eccY);
-    _psi  = std::atan2(_eccY,_eccX);
+    // participant-plane angle as Psi2 of TGlauberMC: (atan2(<r^2 sin 2phi>, <r^2 cos 2phi>) + pi)/2, in [0, pi]
+    _psi  = 0.5*(std::atan2(_eccY,-_eccX) + pi());
     }
   else
     {
@@ -257,6 +260,16 @@ namespace CAP
     _psi  = undefined;
     }
 
+  if (_pass>0)
+    {
+    _meanX = _firstMeanX;
+    _meanY = _firstMeanY;
+    }
+  else
+    {
+    _firstMeanX = _meanX;
+    _firstMeanY = _meanY;
+    }
   if (_pass>0 && _doN)
     {
     double cp, sp;

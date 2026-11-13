@@ -23,6 +23,7 @@ namespace CAP
   _nnXSectOmega(0),
   _nnXSectLambda(0),
   _xMax(0),
+  _mean(0),
   _cdf()
   { }
 
@@ -32,6 +33,7 @@ namespace CAP
   _nnXSectOmega(src._nnXSectOmega),
   _nnXSectLambda(src._nnXSectLambda),
   _xMax(src._xMax),
+  _mean(src._mean),
   _cdf(src._cdf)
   { }
 
@@ -43,6 +45,7 @@ namespace CAP
     _nnXSectOmega  = rhs._nnXSectOmega;
     _nnXSectLambda = rhs._nnXSectLambda;
     _xMax          = rhs._xMax;
+    _mean          = rhs._mean;
     _cdf           = rhs._cdf;
     }
   return *this;
@@ -58,18 +61,33 @@ namespace CAP
   buildTable();
   }
 
+  void PTotProfile::setParametersWithMean(double nnXSect, double nnXSectOmega)
+  {
+  setParameters(nnXSect,nnXSectOmega,1.0);
+  if (!(_mean>0.0)) throw Exception("Invalid parameters of the cross-section distribution",__FUNCTION__);
+  setParameters(nnXSect,nnXSectOmega,nnXSect/_mean);
+  }
+
   void PTotProfile::buildTable()
   {
   // cumulative distribution of evaluate() on [0,_xMax], used by random() (inverse transform with linear interpolation)
   _cdf.clear();
   _xMax = 0.0;
+  _mean = 0.0;
   if (_nnXSect<=0.0 || _nnXSectLambda<=0.0 || _nnXSectOmega<=0.0) return;
   _xMax = _nnXSectLambda*_nnXSect*(1.0+8.0*_nnXSectOmega);   // the density falls as exp(-((x/lambda)/sigma-1)^2/omega^2)
   const int n = 4000;
   const double dx = _xMax/n;
   _cdf.assign(n+1,0.0);
-  for (int k=1; k<=n; k++) _cdf[k] = _cdf[k-1] + std::max(evaluate((k-0.5)*dx),0.0)*dx;
+  double sumX = 0.0;
+  for (int k=1; k<=n; k++)
+    {
+    double w = std::max(evaluate((k-0.5)*dx),0.0)*dx;
+    _cdf[k] = _cdf[k-1] + w;
+    sumX += (k-0.5)*dx*w;
+    }
   if (_cdf[n]<=0.0) { _cdf.clear(); _xMax = 0.0; return; }
+  _mean = sumX/_cdf[n];
   for (int k=1; k<=n; k++) _cdf[k] /= _cdf[n];
   }
 
@@ -114,6 +132,7 @@ namespace CAP
   _nnXSectOmega = 0;
   _nnXSectLambda = 0;
   _xMax = 0;
+  _mean = 0;
   _cdf.clear();
   }
   

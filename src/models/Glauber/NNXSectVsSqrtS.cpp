@@ -133,14 +133,12 @@ namespace CAP
 
       case 4:
       {
-      //!  s_nn  = A+B std::log^2(s) + C s^{-eta}
-      //!  A = 24.4\pm 1.4
-      //!  B = 0.01008 +- 0.1537
-      //!  C = 0.1.454 +- 1.768
-      //!  eta = 0.131 +- 0.0180
-      //!  chi^2/ndf  1.09
+      //!  s_nn  = A + B log^2(s) + C s^eta (Loizides, Kamin, d'Enterria, arXiv:1710.07098, section III)
+      //!  A = 24.4 +- 1.4, B = 0.1008 +- 0.1537, C = 1.454 +- 1.768, eta = 0.131 +- 0.0180, chi^2/ndf 1.09
+      //!  The paper prints C s^-eta and B = 0.1008 (the code had 0.01008); only C s^+eta reproduces the other fits
+      //!  (41.5, 67.2, 78.0 mb at 0.2, 5.02, 13 TeV).
       _a = 24.4;
-      _b = 0.01008;
+      _b = 0.1008;
       _c = 1.454;
       _eta = 0.131;
       break;
@@ -200,7 +198,7 @@ namespace CAP
     //!  chi^2/ndf  1.09
     double xx = x*x;
     double z = std::log(xx);
-    result = _a + _b*z*z + _c*power(xx,-_eta);
+    result = _a + _b*z*z + _c*power(xx,_eta);
     break;
     }
 

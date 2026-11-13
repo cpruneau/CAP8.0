@@ -147,8 +147,8 @@ void ParticleDbXml::readElement(ParticleDb & particleDb, const XmlElement & elem
         if (it==byName.end()) throw XmlException(context+": unknown product '"+productName+"'",__FUNCTION__);
         products.push_back(it->second);
         }
-      if (products.size()<2 || products.size()>4)
-        throw XmlException(context+": 2 to 4 products expected",__FUNCTION__);
+      if (products.size()<1 || products.size()>4)
+        throw XmlException(context+": 1 to 4 products expected",__FUNCTION__);
       addDecayMode(parent,products,branchingRatio,clebschGordan);
       }
     }
@@ -162,17 +162,20 @@ void ParticleDbXml::addDecayMode(ParticleType * parentType,
                                  double declaredBranchingRatio,
                                  bool clebschGordanFlag)
 {
-  if (children.size()<2 || children.size()>4)
+  // one product: a change of type, e.g. K0 -> K0S or K0L (the mass eigenstates, which decay)
+  if (children.size()<1 || children.size()>4)
     {
     String message = "Decay mode of "; message += parentType->name(); message += " with "; message += int(children.size());
-    message += " products (2 to 4 expected)";
+    message += " products (1 to 4 expected)";
     throw Exception(message,__FUNCTION__);
     }
-  ParticleType * childType1 = children[0];
-  ParticleType * childType2 = children[1];
+  if (clebschGordanFlag && children.size()<2)
+    throw Exception(String("Decay mode of ")+parentType->name()+": a Clebsch-Gordan coefficient needs two products",__FUNCTION__);
   double ratio = declaredBranchingRatio;
   if (clebschGordanFlag)
     {
+    ParticleType * childType1 = children[0];
+    ParticleType * childType2 = children[1];
     // complete branching ratio by Clebsch-Gordan coefficient
     double J  = parentType->isospin();
     double M  = parentType->isospin3();

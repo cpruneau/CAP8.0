@@ -81,6 +81,7 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:PATH"),"DEFAULT");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FILE_NAME"),"NONE");
   _configuration.addProperty(createKey(taskName,objectType,"EXPORT:FORCE_REWRITE"),true);
+  _configuration.addProperty(createKey(taskName,objectType,"BASE_NAME"),     "Thermal");
   _configuration.addProperty(createKey(taskName,objectType,"index_fill"),    true);
   _configuration.addProperty(createKey(taskName,objectType,"index_nbins"),   200);
   _configuration.addProperty(createKey(taskName,objectType,"index_min"),     0.0);
@@ -96,8 +97,8 @@ namespace CAP
   printValue("HISTOGRAM:index_max",_configuration.valueDouble(createKey(taskName,objectType,"index_max")));
   printValue("HISTOGRAM:mass_fill",_configuration.valueBool(createKey(taskName,objectType,"mass_fill")));
   printValue("HISTOGRAM:mass_nbins",_configuration.valueInt(createKey(taskName,objectType,"mass_nbins")));
-  printValue("HISTOGRAM:mass_min",_configuration.valueDouble(createKey(taskName,objectType,"mmass_min")));
-  printValue("HISTOGRAM:mass_max",_configuration.valueDouble(createKey(taskName,objectType,"mmass_max")));
+  printValue("HISTOGRAM:mass_min",_configuration.valueDouble(createKey(taskName,objectType,"mass_min")));
+  printValue("HISTOGRAM:mass_max",_configuration.valueDouble(createKey(taskName,objectType,"mass_max")));
   }
 
   void ThermalModel::execute()
@@ -146,7 +147,7 @@ namespace CAP
   EventProcessor::initialize();
   _thermalHadronGas.reset();
   _thermalHadronGas.loadHadrons(db());
-  _histograms.create();
+  _histograms.create(_thermalHadronGas);
    }
 
 

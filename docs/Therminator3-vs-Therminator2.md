@@ -4,7 +4,11 @@ Therminator2 (T2) source: `/Users/aa7526/Developer/therminator2` (version 2.0.3,
 Therminator3 (T3) source: `src/models/Therminator3/` (branch `std-functions`).
 T2 paths below are relative to `therminator2/build/src/`. T3 paths are relative to `src/models/Therminator3/`.
 
-## Status (24 October 2026)
+## Status (12 November 2026)
+
+Fourth round: see below. Everything is fixed, including the missing Λ and K⁰ decays of the database.
+
+Status of 24 October 2026:
 
 Every bug of §4 (1–15) is now fixed on branch `std-functions`, one commit each (hashes in the table of §4).
 
@@ -70,7 +74,7 @@ Therminator 2.0.3 was built from a scratch copy and run with `blastwave.ini`: In
 - **Full suite.** Build and install OK. `ctest`: 32/32 tests passed. `Therminator3Models` (22 checks, plus 8 more with `THERMINATOR2_DIR` set) took 126 s with the RHIC comparison and about 50 s without it.
 
 ### Not checked
-- KrakowSFO and BWA subtypes 2–5 have not been compared with Therminator 2 runs. Their integrands are the same as in Therminator 2, formula for formula.
+- KrakowSFO and BWA subtypes 2–5: compared in the fourth round (below).
 - HadronGas (new integrand) has no reference to compare with.
 
 ### Third round: XML configuration, test.xml, copies (25 October 2026)
@@ -97,7 +101,86 @@ Therminator 2.0.3 was built from a scratch copy and run with `blastwave.ini`: In
   - The `n1` histograms of the analyzer keep the `.ini` range (0–500), which is below these multiplicities, so their entries are all overflow.
 - **Full suite.** `ctest`: 32/32 tests passed. `Therminator3Models`, now including the copy check, took 130 s with the Therminator 2 comparison.
 
-### New findings (not fixed)
+### Fourth round (12 November 2026)
+After the ROOT removal, which switched Therminator3 to CAP's random generator, the checks were run again on Linux (gcc,
+Release build), with Therminator 2.0.3 built against ROOT 6.40 (`pip download ROOT`). The scratch copy of Therminator 2
+needed the build fixes of §1 item 12 and the missing `return` statements of item 1 (gcc rejects them with
+`-Werror=return-type`).
+
+**Re-check.** `TestTherminator3Models` passes with CAP's generator, including the RHIC Hydro2D comparison: the
+BlastWave and RHIC multiplicities agree within 1.2%, and the ⟨pT⟩ pulls are all below 1.8.
+
+**KrakowSFO and BWA subtypes 2–5 against Therminator 2.** Therminator 2 was run with `krakow.ini` and `bwa.ini` (Delay
+2 fm for subtypes 3 and 5), IntegrateSamples = 2×10⁶, 1000 events, a reduced particle list (π⁺, K⁺, p, Λ, no decays).
+
+| Model | ratio of N̄ (π⁺, K⁺, p, Λ) | largest ⟨pT⟩ pull |
+|---|---|---|
+| KrakowSFO | 0.994, 0.998, 1.001, 0.998 | +1.6 (Λ) |
+| BWAVT (2) | 0.996, 0.999, 1.000, 0.998 | +1.5 (π⁺) |
+| BWAVTDelay (3) | 1.004, 0.997, 0.997, 0.996 | −3.1 (Λ, see below) |
+| BWAVLinear (4) | 0.992, 0.996, 1.000, 0.997 | +2.0 (π⁺) |
+| BWAVLinearDelay (5) | 1.008, 1.000, 0.989, 0.985 | +0.7 (Λ) |
+
+- The one outlier, the Λ ⟨pT⟩ of BWAVTDelay, is on the Therminator 2 side. Therminator 2's own BWAVTDelay Λ ⟨pT⟩ (0.852, and
+  0.849 with another seed) is 3σ above its BWAVT one (0.835), although a delay does not change momenta.
+  - Its sampled Λ maximum is 1.5% lower with the delay (the extra draw shifts the random stream), and it has no safety factor (item 4).
+  - CAP gives 0.836 for both.
+- The multiplicities of the five models are now checked by `TestTherminator3Models` (43 checks), with the Therminator 2 values.
+
+**The ThermalModel task (RunThermalModel of `test.xml`) now runs.**
+- It ran into, in turn: the out-of-bound fill; an exception on decay products not in the gas; and results all at T = 0.
+- Its densities were also wrong; the fixes:
+  - **The gas was computed at T = 0.** `ThermalModel::initialize()` calls `ThermalHadronGas::reset()`, which reset the
+    temperature and chemical potentials read by `configure()`. `reset()` now clears the results only; `clear()` also
+    clears the parameters.
+  - **Bosons followed Fermi–Dirac statistics.** The series of `ThermalHadron::calculateAllProperties()` alternated in sign for all
+    hadrons. It now does so for fermions only: n(π⁺, T = 200 MeV) = 0.1064 fm⁻³, as computed independently, instead of 0.0871.
+  - **The ρ(770) decays were listed twice** in `DB/ParticleData/ParticleDb.xml`, so their branching ratios summed to 2. The
+    duplicates are removed. The decayer was not affected (it normalizes the ratios), but the feed-down was: +25% pions at
+    T = 165 MeV.
+  - **The feed-down depended on the order of the database.** It is now computed in ascending order of mass, so the
+    probabilities of the decay products are known before those of the parent. It also uses branching ratios
+    normalized to their sum, as the decayer does: 71 hadrons have sums outside [0.98, 1.02].
+  - **K0S, K0L, leptons and photons as decay products.** K0S and K0L count as K0, the hadron the gas holds. Leptons and photons
+    feed no stable hadron. `findHadronFor()` threw on them.
+  - **Histogram sizes.** The stable-hadron histograms had a fixed 15 bins; the gas has 20 stable hadrons.
+    `relWtoPiVsIndex` was filled per hadron but sized per stable hadron, which caused the out-of-bound fill. The
+    index histograms are now as large as the gas (395 hadrons, against the 200 bins of the template).
+    `ThermalHistos::create(gas)` sizes them.
+  - `HISTOGRAM:BASE_NAME` is now defined in `ThermalModel`, and `h_massVsIndex` is filled even with `index_fill` false.
+  - The copy constructors of `ThermalHistos` and `ThermalDerivedHistos` now copy their base class and configuration (gcc
+    warned).
+- With these fixes, the thermal densities followed by feed-down agree with an independent calculation from the database, and
+  with the same calculation from Therminator 2's `particles.data` and `decays.data`: within 1–4% at T = 165 MeV for π, K, p, n, Λ,
+  Σ, Ξ, Ω. CAP's database has 394 hadrons below 2.5 GeV, against 371 for Therminator 2.
+- `ModelSettings::setSystemEnergy(double)` assigned a number to a `String` (as one character). The energy is now a `double`.
+
+**bin/CAP on Linux knew no Therminator3 or Glauber task** (UnknownClassException). The linker drops libraries no symbol of
+which is used (`--as-needed`, the default of most Linux distributions), and the task classes register themselves when
+their library is loaded. `src/CMakeLists.txt` now links with `--no-as-needed` on Linux. That also fixes the ctest
+`MathReflection` there.
+
+**The pion difference after decays (traced, then fixed).** CAP's database had no decay modes for Λ, Λ̄, K⁰ and K̄⁰, so
+they never decayed; Therminator 2 decays them. With them, the thermal estimate gives 16% more π⁺ after decays, which
+accounts for the 14% difference between Therminator 2 (1642.5 π⁺ per event) and CAP (1435.5) in the `test.xml` run.
+They are now in `DB/ParticleData/ParticleDb.xml`:
+- Λ → pπ⁻ (0.641), nπ⁰ (0.359), and the same for Λ̄, with the PDG lifetime (Γ = 2.515×10⁻¹⁵ GeV).
+- K⁰, K̄⁰ → K⁰S or K⁰L (0.5 each), which then decay with their own modes and lifetimes. These are decay modes with one product
+  (a change of type: same momentum and position), which `ParticleDbXml` and `ParticleDecayerTask` now accept. Unlike
+  Therminator 2, CAP's decayer also decays the K⁰L, with cτ = 15.3 m.
+- Σ±, Ξ⁰, Ξ⁻ and Ω⁻ (and their antiparticles) had a width of 0, so they decayed after a proton lifetime (10⁶⁴ fm away).
+  They now have their PDG lifetimes.
+- `DisableWeakDecays` (`ParticleDb::disableWeakDecays()`) keeps all of these as they are.
+- The feed-down of `ThermalHadronGasFD` now follows the decay chains through the database, also through types the
+  gas does not hold (K⁰ → K⁰S → ππ). It agrees with an independent calculation from the database to 6 digits at T = 200 MeV.
+- New ctest `ParticleDecays`, 25 checks: K⁰ decays (0.580 π⁺ per K⁰, expected 0.578), Λ branching ratios, the Λ decay
+  length at 1 GeV/c (7.03×10¹³ fm, within 0.1%), conservation of charge and four-momentum, and the weak decays switched off.
+- Still in the database: 22 hadrons whose branching ratios sum to more than 1.05 since the PDG 2026 update.
+  - Σ(1940): 1.62. Its Σπ ratio of 0.86 replaced 0.15, and the other modes were not scaled.
+  - Δ(1920): 1.18; Δ(1930): 1.13.
+  - The decayer normalizes the ratios, so this changes the relative weights of the modes, not the number of decays.
+
+### Earlier findings (fixed in the fourth round)
 - `ModelSettings::setSystemEnergy(double)` assigns a number to a `String`.
 - **ThermalModel (RunThermalModel) fails in `ThermalHistos::fill()`** with an index-out-of-bound exception: a 15-bin histogram is filled at index 15.
   - It fails the same way with the original `test.ini` (`bin/CAP RunThermalModel projects/ test.ini`, before the conversion), so it is not caused by the conversion or by Therminator3.
@@ -166,6 +249,7 @@ I = (2s+1)/(2π)³ · pT · dpT/dζ · (dΣ·p) · 1/(exp((p·u − μ)/T) ± 1)
     - The `-lgcc` link flag does not exist on macOS.
     - Item 2 is real: the text output contains the event headers but no particle lines.
 13. **`CopyINIFile` (`therm2_events.cxx`) can empty the main settings file.** It builds the copy's name by replacing `"./"` with the event directory. When the settings file is given without `./` (`therm2_events events.ini`), source and destination are the same file, and the file is truncated to zero bytes.
+14. **`DecayTable::GetChannelCount()` returns the number of channels minus one** (`DecayTable.cxx:76`). The decayer loops with `<=`, but the copy constructor (`DecayTable.cxx:41`) loops with `<` and drops the last channel.
 
 ---
 

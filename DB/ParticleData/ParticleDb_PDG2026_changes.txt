@@ -301,3 +301,28 @@ Changes to DB/ParticleData/ParticleDb.xml (written to DB/ParticleData/ParticleDb
   decay     Sigma1940zero_bar      pion0139minus Sigma1189minus_bar (CG) + pion0139plus Sigma11 0.15 -> 0.86
   decay     Omega1672minus         Xi1321minus pion0135zero                                     0.08 -> 0.08547
   decay     Omega1672minus_bar     Xi1321minus_bar pion0135zero                                 0.08 -> 0.08547
+
+Rescaled (12 November 2026): the branching ratios of these hadrons summed to more than 1 after the update above (with
+the Clebsch-Gordan coefficients); all their modes are scaled by the same factor, so that they sum to 1
+  rescale   Delta1920minus           1.1800 -> 1
+  rescale   Delta1920minus_bar       1.1800 -> 1
+  rescale   Delta1920plus            1.1800 -> 1
+  rescale   Delta1920plus_bar        1.1800 -> 1
+  rescale   Delta1920plusplus        1.1800 -> 1
+  rescale   Delta1920plusplus_bar    1.1800 -> 1
+  rescale   Delta1920zero            1.1800 -> 1
+  rescale   Delta1920zero_bar        1.1800 -> 1
+  rescale   Delta1930minus           1.1300 -> 1
+  rescale   Delta1930minus_bar       1.1300 -> 1
+  rescale   Delta1930plus            1.1300 -> 1
+  rescale   Delta1930plus_bar        1.1300 -> 1
+  rescale   Delta1930plusplus        1.1300 -> 1
+  rescale   Delta1930plusplus_bar    1.1300 -> 1
+  rescale   Delta1930zero            1.1300 -> 1
+  rescale   Delta1930zero_bar        1.1300 -> 1
+  rescale   Sigma1940minus           1.6200 -> 1
+  rescale   Sigma1940minus_bar       1.6200 -> 1
+  rescale   Sigma1940plus            1.6200 -> 1
+  rescale   Sigma1940plus_bar        1.6200 -> 1
+  rescale   Sigma1940zero            1.6200 -> 1
+  rescale   Sigma1940zero_bar        1.6200 -> 1

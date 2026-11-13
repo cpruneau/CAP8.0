@@ -16,7 +16,9 @@ namespace CAP
   appendClassName("ThermalDerivedHistos");
   }
 
-  ThermalDerivedHistos::ThermalDerivedHistos(const ThermalDerivedHistos & source __attribute__((unused)))
+  ThermalDerivedHistos::ThermalDerivedHistos(const ThermalDerivedHistos & source)
+  :
+  ThermalHistos(source)
   { }
 
   ThermalDerivedHistos ThermalDerivedHistos::operator=(const ThermalDerivedHistos & rhs __attribute__((unused)))

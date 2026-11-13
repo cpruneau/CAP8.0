@@ -13,7 +13,7 @@
 # Optional packages (each turned on with a CMake option, see src/CMakeLists.txt or BuildCAP.py)
 #   PYTHIA8  :  available from https://pythia.org            (-DCAP_WITH_PYTHIA8=ON)
 #   FASTJET  :  available from https://fastjet.fr            (-DCAP_WITH_JETS=ON)
-#   root     :  available from https://root.cern             (-DCAP_WITH_ROOT=ON: .root histogram files, the Helpers
+#   root     :  available from https://root.cern             (-DCAP_WITH_ROOT=ON: .root histogram files, the RootConvert
 #               library, the Epos and Pythia readers of ROOT event trees). CAP does not need ROOT otherwise; with
 #               CAP_WITH_ROOT, cmake locates ROOT through $ROOTSYS.
 #

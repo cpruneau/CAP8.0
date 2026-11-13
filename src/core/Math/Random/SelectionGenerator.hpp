@@ -33,6 +33,7 @@ public:
   SelectionGenerator();
   //! @brief Constructor. @param probabilities probabilities or relative weights (see initializeWith())
   SelectionGenerator(const std::vector<double> & probabilities);
+  SelectionGenerator(const SelectionGenerator & source) = default;
   //! @brief Copy assignment. @param source generator to copy @return this generator
   SelectionGenerator & operator=(const SelectionGenerator & source);
 

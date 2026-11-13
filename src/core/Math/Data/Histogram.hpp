@@ -1399,7 +1399,7 @@ namespace CAP
   //////////////////////////////////////////////////////////////////////////
   // Histogram helper functions
   //
-  // Ported from Helpers/RootHistogramHelpers, which keeps the versions for ROOT TH1/TH2/TH3/TProfile (used by
+  // Ported from Helpers/RootHistogramHelpers (removed), which kept the versions for ROOT TH1/TH2/TH3/TProfile (used by
   // RootHistogramGroup). TH1, TH2, TH3 and TProfile arguments are Histogram objects of rank 1, 2 or 3. As in the ROOT
   // versions, bins are numbered from 1 along each axis wherever bin numbers appear in arguments or results; the content
   // of a bin is its value and its error the uncertainty of that value. Histograms have no under/overflow bins.

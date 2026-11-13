@@ -15,7 +15,7 @@ namespace CAP
   _modelType(kHG),
   _modelSubtype(0),
   _systemName("PbPb"),
-  _systemEnergy("5000.0"),
+  _systemEnergy(5000.0),
   _centralityType(kCentralityRange),
   _centralityMin(0.0),
   _centralityMax(1.0),
