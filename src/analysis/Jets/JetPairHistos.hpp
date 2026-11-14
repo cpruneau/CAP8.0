@@ -9,7 +9,7 @@
  * *********************************************************************/
 //! @file JetPairHistos.hpp
 //! @brief JetPairHistos: the histograms of the jet pairs of one combination of an event filter, a particle filter, a
-//! jet radius, a jet filter and a jet pair filter.
+//! jet settings, a jet filter and a jet pair filter.
 #ifndef CAP__JetPairHistos
 #define CAP__JetPairHistos
 #include <vector>

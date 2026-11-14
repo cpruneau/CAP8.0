@@ -63,7 +63,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 #: Kinds of objects of the library, in the order of the tabs of the Filters pane.
-KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "JET_PAIR_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
+KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "JET_SETTINGS", "JET_FILTER", "JET_PAIR_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
          "EVENT", "PARTICLE_DB"]
 #: Kinds of corrections (efficiencies and smearers).
 CORRECTION_KINDS = ("EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER")
@@ -71,13 +71,15 @@ CORRECTION_KINDS = ("EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", 
 SETTINGS_KINDS = CORRECTION_KINDS + ("PARTICLE_DB",)
 #: Kinds chosen by default by a new task (the first object of the library).
 DEFAULT_CHOICE_KINDS = ("EVENT", "PARTICLE_DB")
-KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle filters", "JET_FILTER": "Jet filters",
+KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle filters", "JET_SETTINGS": "Jet settings",
+               "JET_FILTER": "Jet filters",
                "JET_PAIR_FILTER": "Jet pair filters",
                "EVENT_EFFICIENCY": "Event efficiencies", "PARTICLE_EFFICIENCY": "Particle efficiencies",
                "EVENT_SMEARER": "Event smearers", "PARTICLE_SMEARER": "Particle smearers", "EVENT": "Events",
                "PARTICLE_DB": "Particle databases"}
 #: Element of an object of each kind in XML (workflows and selection files), and the root of a selection file.
-TAG_OF_KIND = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "JET_FILTER": "JetFilter",
+TAG_OF_KIND = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "JET_SETTINGS": "JetSettings",
+               "JET_FILTER": "JetFilter",
                "JET_PAIR_FILTER": "JetPairFilter",
                "EVENT_EFFICIENCY": "EventEfficiency",
                "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
@@ -103,8 +105,8 @@ SELECTIONS_ROOT = "CapSelections"
 #: Kinds defined by conditions (the others by parameters).
 CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "JET_PAIR_FILTER")
 #: Kinds of the optional modules: their creator is written only when the library has objects of the kind (the jet
-#: filters and jet pair filters need CAP built with Jets).
-OPTIONAL_KINDS = ("JET_FILTER", "JET_PAIR_FILTER")
+#: settings, jet filters and jet pair filters need CAP built with Jets).
+OPTIONAL_KINDS = ("JET_SETTINGS", "JET_FILTER", "JET_PAIR_FILTER")
 
 #: Forms of a condition and the TYPE written for them.
 RANGE, DUAL_RANGE, VALUE, FLAG = "range", "two ranges", "value", "flag"
@@ -150,8 +152,9 @@ PARTICLE_SUBTYPES = {"PT": ("transverse momentum pT", (RANGE, DUAL_RANGE)),
                      "CHARM": ("charm", (VALUE,)),
                      "LIVE": ("live (not decayed)", (FLAG,)),
                      "ENABLED": ("enabled", (FLAG,))}
-#: Jet filters (CAP::JetFilter): the jet and its rank in pT among the jets of the event found with the same particle
-#: filter and radius (1: leading).
+#: Jet filters (CAP::JetFilter): the jet and its rank in pT among all the jets of the event found with the same particle
+#: filter and jet settings (1: leading; the rank before the conditions of the filter). The jet filters are the only
+#: selection of the jets: the jet finder keeps all the jets above the pT floor of its settings.
 JET_SUBTYPES = {"PT": ("jet transverse momentum pT", (RANGE, DUAL_RANGE)),
                 "ETA": ("jet pseudorapidity eta", (RANGE, DUAL_RANGE)),
                 "PHI": ("jet azimuth phi in [0, 2 pi)", (RANGE, DUAL_RANGE)),
@@ -177,12 +180,20 @@ KIND_PARAMETERS = {
     "EVENT_SMEARER": [("BASE_NAME", "string", "")],
     # switch read by ParticleDb::configure(): true turns off the weak decays (K0S, K0L, Lambda, Sigma, Xi, Omega)
     "PARTICLE_DB": [("_dbDisableWeakDecays", "bool", "false")],
+    # definition of a jet finder (CAP::JetSettings): FastJet algorithm, radius, recombination scheme and pT floor (the
+    # technical minimum of FastJet, GeV/c: it does not change the rank of the jets above it)
+    "JET_SETTINGS": [("ALGORITHM", "string", "ANTIKT"), ("R", "double", "0.4"), ("RECOMBINATION", "string", "E"),
+                     ("PT_FLOOR", "double", "1.0")],
 }
+#: Parameters taking one of a few values: {(kind, name): values} (a list to choose from in the Filters pane).
+PARAMETER_CHOICES = {("JET_SETTINGS", "ALGORITHM"): ("ANTIKT", "KT", "CA"),
+                     ("JET_SETTINGS", "RECOMBINATION"): ("E", "PT")}
 
 #: Task creating the objects of the library, run first (CAP::FilterCreator), and its subtasks, one per kind.
 CREATOR_NAME, CREATOR_CLASS = "FilterCreator", "CAP::FilterCreator"
 CREATORS = {"EVENT_FILTER": ("EventFilters", "CAP::EventFilterCreator"),
             "PARTICLE_FILTER": ("ParticleFilters", "CAP::ParticleFilterCreator"),
+            "JET_SETTINGS": ("JetSettings", "CAP::JetSettingsCreator"),
             "JET_FILTER": ("JetFilters", "CAP::JetFilterCreator"),
             "JET_PAIR_FILTER": ("JetPairFilters", "CAP::JetPairFilterCreator"),
             "EVENT_EFFICIENCY": ("EventEfficiencies", "CAP::EventEfficiencyCreator"),
@@ -968,6 +979,77 @@ def update_histogram_lists(tasks, templates):
     return warnings
 
 
+#: Keys of the jet tasks written before the jet settings were objects of the library (JET_SETTINGS).
+_OLD_JET_KEYS = ("JET:R", "JET:ALGORITHM", "JET:RECOMBINATION", "JET:PT_MIN", "JET:PARTICLE_ETA_MAX")
+
+
+def jet_settings_name(parameters):
+    """Name of jet settings from their parameters: AntiKtR0p4 (E scheme), KtR0p6Pt (pT scheme), CAR1."""
+    algorithm = {"ANTIKT": "AntiKt", "KT": "Kt", "CA": "CA"}.get(parameters.get("ALGORITHM", "ANTIKT").upper(), "Jet")
+    radius = "R" + ("%g" % float(parameters.get("R", "0.4"))).replace(".", "p")
+    return algorithm + radius + ("Pt" if parameters.get("RECOMBINATION", "E").upper() == "PT" else "")
+
+
+def same_jet_settings(a, b):
+    """Whether two sets of parameters of jet settings define the same jet finder (numbers compared as numbers)."""
+    def key(p):
+        p = dict(default_parameters("JET_SETTINGS"), **p)
+        try:
+            return (p["ALGORITHM"].upper(), float(p["R"]), p["RECOMBINATION"].upper(), float(p["PT_FLOOR"]))
+        except ValueError:
+            return tuple(sorted(p.items()))
+    return key(a) == key(b)
+
+
+def update_jet_settings(tasks, library, templates):
+    """Jet tasks read from workflows written before the jet settings were objects of the library: their keys JET:R (a
+    list of radii), JET:ALGORITHM and JET:RECOMBINATION become jet settings of the library (one per radius, shared with
+    the other tasks defining the same ones), chosen by the task. JET:PT_MIN and JET:PARTICLE_ETA_MAX are dropped: the
+    jets are selected by the jet filters only (the pT floor of the settings is the smaller of PT_MIN and 1 GeV/c).
+    @return warnings"""
+    warnings = []
+    for task in _preorder(tasks):
+        if "JET_SETTINGS" not in task_kinds(task, templates):
+            continue
+        old = {p.key: p.value for p in task.params if p.key in _OLD_JET_KEYS}
+        if not old:
+            continue
+        task.params = [p for p in task.params if p.key not in _OLD_JET_KEYS]
+        floor = "1.0"
+        try:
+            floor = number_text(min(1.0, float(old.get("JET:PT_MIN", "1.0"))))
+        except ValueError:
+            pass
+        radii = [r for r in re.split(r"[,; ]+", old.get("JET:R", "0.4").strip()) if r]
+        chosen = choices(task).setdefault("JET_SETTINGS", [])
+        for r in radii:
+            parameters = {"ALGORITHM": old.get("JET:ALGORITHM", "ANTIKT").upper(), "R": r,
+                          "RECOMBINATION": old.get("JET:RECOMBINATION", "E").upper(), "PT_FLOOR": floor}
+            same = [o for o in library.objects["JET_SETTINGS"] if same_jet_settings(o.parameters, parameters)]
+            if same:
+                name = same[0].name
+            else:
+                name = base = jet_settings_name(parameters)
+                k = 1
+                while library.get("JET_SETTINGS", name) is not None:
+                    name, k = "%s_%d" % (base, k), k + 1
+                library.objects["JET_SETTINGS"].append(FilterDef("JET_SETTINGS", name, "", None, parameters))
+            if name not in chosen:
+                chosen.append(name)
+        dropped = [k for k in ("JET:PT_MIN", "JET:PARTICLE_ETA_MAX") if k in old]
+        warnings.append("Task %s: its jet finder (JET:R, ALGORITHM, RECOMBINATION) is now the jet settings %s of the "
+                        "library%s." % (task.name, ", ".join(chosen),
+                                        "; %s dropped: the jets are selected by the jet filters only (add PT or ETA "
+                                        "conditions to them if needed)" % " and ".join(dropped) if dropped else ""))
+    return warnings
+
+
+def is_old_jet_key_warning(warning):
+    """Whether a warning of RunCAP.load_workflow() is about a key of the former jet finder (see update_jet_settings())."""
+    return re.search(r"parameter JET:(?:R|ALGORITHM|RECOMBINATION|PT_MIN|PARTICLE_ETA_MAX) is not defined by class",
+                     warning) is not None
+
+
 def is_numbered_list_warning(warning):
     """Whether a warning of RunCAP.load_workflow() is about a key of the numbered lists (see update_histogram_lists())."""
     return re.search(r"parameter HISTOGRAM_[1-4]:(?:USE|CREATE|IMPORT) is not defined by class", warning) is not None
@@ -1365,14 +1447,36 @@ def check_library(library):
                                      "'%s' is not one" % c.selection if c.selection else "none chosen"))
             for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
                 value = o.parameters.get(pname, "")
+                allowed = PARAMETER_CHOICES.get((kind, pname))
                 if not _valid(ptype, value):
                     errors.append("%s %s: invalid %s value '%s' for %s." % (label.capitalize(), o.name, ptype, value, pname))
+                elif allowed and value.upper() not in allowed:
+                    errors.append("%s %s: %s is %s (%s expected)." % (label.capitalize(), o.name, pname, value or "empty",
+                                                                     ", ".join(allowed)))
+            if kind == "JET_SETTINGS":
+                errors += _jet_settings_problems(o)
     for path in library.links:
         if not os.path.isfile(path):
             errors.append("The linked selection file %s is missing: its objects are not in the workflow." % path)
     if any(library.objects[k] for k in MAPS_KINDS) and not maps_file(library):
         errors.append("The particle efficiencies and smearers are read from a maps file: choose it (Filters pane, "
                       "Detector maps).")
+    return errors
+
+
+def _jet_settings_problems(definition):
+    """Problems of the values of jet settings (CAP::JetSettings::configure()): a positive radius, a pT floor >= 0."""
+    errors = []
+    try:
+        if not float(definition.parameters.get("R", "0.4")) > 0:
+            errors.append("Jet settings %s: the radius R must be positive." % definition.name)
+    except ValueError:
+        pass                                            # reported as an invalid double
+    try:
+        if not float(definition.parameters.get("PT_FLOOR", "1")) >= 0:
+            errors.append("Jet settings %s: the pT floor must be positive or 0." % definition.name)
+    except ValueError:
+        pass
     return errors
 
 
@@ -1415,6 +1519,32 @@ def _parents(tasks, parent=None):
         yield from _parents(t.children, t)
 
 
+def _jet_task_problems(task, library):
+    """Problems of a jet task: at least one jet settings, and cones of the underlying event (UE:ETA_MAX) wider than
+    the radius of each of its settings."""
+    names = choices(task).get("JET_SETTINGS", [])
+    if not names:
+        return ["Task %s finds jets: choose at least one jet settings (Jet settings: algorithm, R, recombination, pT "
+                "floor)." % task.name]
+    errors = []
+    eta = _param_value(task, "UE:ETA_MAX")
+    if eta is not None:
+        try:
+            eta = float(eta)
+        except ValueError:
+            return errors
+        for name in names:
+            definition = library.get("JET_SETTINGS", name)
+            try:
+                radius = float(definition.parameters.get("R", "0.4")) if definition is not None else None
+            except ValueError:
+                continue
+            if radius is not None and not radius < eta:
+                errors.append("Task %s: UE:ETA_MAX (%g) is not above the radius of jet settings %s (%g): no cone of the "
+                              "underlying event would be kept." % (task.name, eta, name, radius))
+    return errors
+
+
 def check_choices(tasks, library, templates):
     """Problems of the choices of the tasks: objects not in the library, conditions a task cannot test, too many
     particle filters, analyzers without filters, duplicate folder names."""
@@ -1438,6 +1568,8 @@ def check_choices(tasks, library, templates):
                                 task.name, dict(EVENT_SUBTYPES, **GLAUBER_SUBTYPES)[c.subtype][0], name,
                                 "only the Glauber tasks can" if c.subtype in GLAUBER_SUBTYPES
                                 else "a Glauber task tests impact parameter, participants, collisions or spectators"))
+        if "JET_SETTINGS" in kinds:
+            errors += _jet_task_problems(task, library)
         if any(k in kinds for k in MAPS_KINDS):
             errors += check_maps_choices(task)
         if "EVENT" in kinds and _param_value(task, "EVENT:IMPORT", "false") == "true" \

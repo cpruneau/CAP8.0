@@ -5,6 +5,7 @@ add_compile_options(-Wall -Wextra -pedantic)
 add_library(Jets SHARED
 JetTasks.cpp
 Jet.cpp
+JetSettings.cpp
 JetClustering.cpp
 JetFilter.cpp
 JetHistos.cpp

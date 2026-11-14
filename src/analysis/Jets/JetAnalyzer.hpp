@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //! @file JetAnalyzer.hpp
-//! @brief JetAnalyzer: jets found with FastJet for several radii in one run, selected by jet filters, and their
+//! @brief JetAnalyzer: jets found with FastJet for several jet settings in one run, selected by jet filters, and their
 //! per-event, single-jet and constituent histograms.
 #ifndef CAP__JetAnalyzer
 #define CAP__JetAnalyzer
@@ -19,11 +19,11 @@ namespace CAP
 {
 
 //!
-//! @brief Analysis of jets: for each event filter, particle filter (the particles clustered), radius and jet filter
+//! @brief Analysis of jets: for each event filter, particle filter (the particles clustered), jet settings and jet filter
 //! (see JetTask), the jets accepted fill a folder of JetHistos: per event (number of jets, pT sum), per jet and per
 //! constituent.
 //!
-//! Folders: \<event filter\>_\<particle filter\>_\<R label\>_\<jet filter\> (R label: R0p4 for 0.4). At the end of the
+//! Folders: \<event filter\>_\<particle filter\>_\<jet settings\>_\<jet filter\> (names of the objects). At the end of the
 //! run, the per-event histograms are divided by the number of events accepted by the event filter, and the per-jet and
 //! per-constituent histograms by the number of jets of their folder; the profiles are averages per jet.
 //!

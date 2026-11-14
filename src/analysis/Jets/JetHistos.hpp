@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //! @file JetHistos.hpp
-//! @brief JetHistos: the histograms of the jets of one combination of an event filter, a particle filter, a jet radius
+//! @brief JetHistos: the histograms of the jets of one combination of an event filter, a particle filter, jet settings
 //! and a jet filter: per-event jet variables, single-jet variables and constituent variables.
 #ifndef CAP__JetHistos
 #define CAP__JetHistos
@@ -22,7 +22,7 @@ namespace CAP
 
 //!
 //! @brief Histograms of the jets accepted by a jet filter (JetAnalyzer), for one event filter, particle filter (the
-//! particles clustered) and jet radius.
+//! particles clustered) and jet settings.
 //!
 //! Per event (every event accepted by the event filter, also those without a jet):
 //!  - nJets: number of jets accepted; sumPt: scalar sum of their pT.
@@ -37,7 +37,7 @@ namespace CAP
 //! Normalization (normalize(), called by JetAnalyzer::finalize()): the per-event histograms (nJets, sumPt) are divided
 //! by the number of events accepted by the event filter; the per-jet and per-constituent histograms characterize the
 //! jets themselves and are divided by the number of jets filled in this folder (this event filter, particle filter,
-//! radius and jet filter): a constituent histogram is then a distribution per jet. The profiles are averages per jet.
+//! jet settings and jet filter): a constituent histogram is then a distribution per jet. The profiles are averages per jet.
 //!
 //! Binning (keys \<task\>:HISTOGRAM:\<name\>, see addDefaultConfiguration()): nJets_nbins/max, sumPt_nbins/max,
 //! pt_nbins/min/max, eta_nbins/min/max, phi_nbins, mass_nbins/max, mult_nbins/max, netQ_nbins/max (symmetric),

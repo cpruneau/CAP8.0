@@ -469,10 +469,12 @@ def load_stages_with_filters(path, templates):
         more += filters.update_writer_events(tasks, library)
         more += filters.update_iterator_events(tasks, templates)
         lists += filters.update_histogram_lists(tasks, templates)
+        lists += filters.update_jet_settings(tasks, library, templates)
         stages[stage] = tasks
     more += filters.update_database_files(library)
     if lists:                              # the keys moved: no warning of their own
-        warnings = [w for w in warnings if not filters.is_numbered_list_warning(w)]
+        warnings = [w for w in warnings
+                    if not filters.is_numbered_list_warning(w) and not filters.is_old_jet_key_warning(w)]
     library.job = jobs[next(s for s in STAGES if s in stages)]
     return stages, library, jobs, warnings + more + lists
 

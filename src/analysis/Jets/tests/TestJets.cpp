@@ -6,16 +6,18 @@
  *
  * *********************************************************************/
 //! @file TestJets.cpp
-//! @brief Tests of the jet module: the variables of a particle relative to a jet; jet finding (two sprays found as two
-//! jets with their constituents, the acceptance |eta| < etaMax - R, the rank counted among the jets accepted, several
-//! radii); the clustering done once per event and particle filter; the jet filters (kinematics, rank); and the filling
-//! of the histograms.
+//! @brief Tests of the jet module: the variables of a particle relative to a jet; the jet settings (configuration);
+//! jet finding (three sprays found as three jets with their constituents, no selection but the pT floor, the rank
+//! among all the jets of the settings, the settings carried by the jets, several radii); the clustering done once per
+//! event, particle filter and settings; the jet filters (kinematics, rank before the conditions); and the filling of
+//! the histograms.
 #include <cmath>
 #include <random>
 #include <cstdio>
 #include <string>
 #include <vector>
 #include "Jet.hpp"
+#include "JetSettings.hpp"
 #include "JetClustering.hpp"
 #include "JetFilter.hpp"
 #include "JetHistos.hpp"
@@ -84,6 +86,60 @@ int main()
   check(JetSettings::radiusLabel(0.4)=="R0p4" && JetSettings::radiusLabel(1.0)=="R1", "radius labels", __LINE__);
   }
 
+  // ----- jet settings: configuration
+  {
+  Configuration configuration;
+  auto set = [&](unsigned int k, const char * name, auto value)
+    { configuration.addProperty(createKey("T","JET_SETTINGS",k,name),value); };
+  set(0,"ALGORITHM",String("KT"));  set(0,"R",0.6);  set(0,"RECOMBINATION",String("PT"));  set(0,"PT_FLOOR",2.0);
+  JetSettings kt;
+  kt.configure("T","JET_SETTINGS",configuration,0);
+  check(kt.algorithm==JetSettings::Kt && near(kt.radius,0.6) && kt.recombination==JetSettings::PtScheme
+        && near(kt.ptFloor,2.0), "ALGORITHM, R, RECOMBINATION, PT_FLOOR read", __LINE__);
+  JetSettings defaults;
+  defaults.configure("T","JET_SETTINGS",configuration,1);          // no keys: the defaults
+  check(defaults.algorithm==JetSettings::AntiKt && near(defaults.radius,0.4) && defaults.recombination==JetSettings::EScheme
+        && near(defaults.ptFloor,1.0), "defaults: anti-kt, R = 0.4, E scheme, pT floor 1", __LINE__);
+  check(!kt.sameDefinition(defaults) && defaults.sameDefinition(JetSettings()), "same definition", __LINE__);
+  set(2,"ALGORITHM",String("SISCONE"));
+  set(3,"R",0.0);
+  set(4,"PT_FLOOR",-1.0);
+  for (unsigned int k : {2u, 3u, 4u})
+    {
+    JetSettings bad;
+    bool threw = false;
+    try { bad.configure("T","JET_SETTINGS",configuration,k); } catch (std::exception &) { threw = true; }
+    check(threw, "invalid algorithm, radius or pT floor: exception", __LINE__);
+    }
+  }
+
+  // ----- jet settings: made by JetSettingsCreator (OWNER true), used by name by the lists of the tasks (OWNER false)
+  {
+  Configuration configuration;
+  JetSettingsCreator creator;
+  creator.setName("JetSettings");
+  creator.setDefaultConfiguration();
+  auto key = [](const char * owner, unsigned int k, const char * name) { return createKey(owner,"JET_SETTINGS",k,name); };
+  configuration.addProperty(createKey("JetSettings","JET_SETTINGS","N"),2);
+  configuration.addProperty(createKey("Analyzer","JET_SETTINGS","N"),1);
+  configuration.addProperty(key("JetSettings",0,"NAME"),String("AntiKtR0p4"));
+  configuration.addProperty(key("JetSettings",0,"OWNER"),true);
+  configuration.addProperty(key("JetSettings",1,"NAME"),String("KtR0p6"));
+  configuration.addProperty(key("JetSettings",1,"OWNER"),true);
+  configuration.addProperty(key("JetSettings",1,"ALGORITHM"),String("KT"));
+  configuration.addProperty(key("JetSettings",1,"R"),0.6);
+  configuration.addProperty(key("Analyzer",0,"NAME"),String("KtR0p6"));
+  configuration.addProperty(key("Analyzer",0,"OWNER"),false);
+  creator.configure(configuration);
+  check(creator.nObjects()==2 && creator.objects()[1]->isNamed("KtR0p6") && near(creator.objects()[1]->radius,0.6),
+        "the creator makes the jet settings of the job", __LINE__);
+  ManagedObjects<JetSettings> used;
+  Configuration defaults;                                     // (the defaults of a task: before the keys of the job)
+  used.setDefaultObjectConfiguration("Analyzer","JET_SETTINGS",defaults);
+  used.configureObjects(configuration);
+  check(used.size()==1 && used.getObjects()[0]==creator.objects()[1], "a task uses them by name (the same object)", __LINE__);
+  }
+
   // ----- jet finding: three sprays
   std::vector<Particle> store(12);
   std::vector<Particle*> particles;
@@ -94,28 +150,30 @@ int main()
     p.setMomentum(momentumOf(pt,eta,phi));
     particles.push_back(&p);
     };
-  // A: 35 GeV at (0, 1); B: 20 GeV at (0.3, 1+pi); C: 50 GeV at (0.62, 5.5), inside |eta| < 0.9-0.2 only
+  // A: 35 GeV at (0, 1); B: 20 GeV at (0.3, 1+pi); C: 50 GeV at (0.62, 5.5)
   add(&plus,20.0,0.00,1.00);  add(&minus,10.0,0.05,1.05);  add(&neutral,5.0,-0.05,0.95);
   add(&plus,15.0,0.30,1.0+M_PI); add(&plus,5.0,0.32,1.02+M_PI);
   add(&minus,30.0,0.62,5.50);  add(&plus,20.0,0.63,5.52);
-  JetSettings settings;  settings.radius = 0.4;  settings.ptMin = 5.0;  settings.particleEtaMax = 0.9;
+  JetSettings settings;  settings.radius = 0.4;  settings.ptFloor = 5.0;
   std::vector<Jet> jets = JetClustering::cluster(particles,settings);
-  check(jets.size()==2, "R = 0.4: two jets within |eta| < 0.5 (the 50 GeV one at eta 0.62 is out)", __LINE__);
-  if (jets.size()==2)
+  check(jets.size()==3, "R = 0.4: three jets (no selection in pseudorapidity: that is the jet filters')", __LINE__);
+  if (jets.size()==3)
     {
-    check(jets[0].rank==1 && jets[1].rank==2, "ranks 1, 2 among the jets accepted", __LINE__);
-    check(near(jets[0].pt(),35.0,0.01) && jets[0].multiplicity()==3, "leading jet: 35 GeV, 3 constituents", __LINE__);
-    check(near(jets[1].pt(),20.0,0.01) && jets[1].multiplicity()==2, "subleading jet: 20 GeV, 2 constituents", __LINE__);
-    double pt = 0;  for (Particle * p : jets[0].constituents) pt += p->momentum().perp();
-    check(near(pt,35.0), "constituents of the leading jet: the particles of spray A", __LINE__);
+    check(jets[0].rank==1 && jets[1].rank==2 && jets[2].rank==3, "ranks 1, 2, 3 among all the jets", __LINE__);
+    check(near(jets[0].pt(),50.0,0.01) && near(jets[0].eta(),0.62,0.01), "leading jet: 50 GeV at eta 0.62", __LINE__);
+    check(near(jets[1].pt(),35.0,0.01) && jets[1].multiplicity()==3, "second jet: 35 GeV, 3 constituents", __LINE__);
+    check(near(jets[2].pt(),20.0,0.01) && jets[2].multiplicity()==2, "third jet: 20 GeV, 2 constituents", __LINE__);
+    double pt = 0;  for (Particle * p : jets[1].constituents) pt += p->momentum().perp();
+    check(near(pt,35.0), "constituents of the second jet: the particles of spray A", __LINE__);
+    check(jets[0].settings==&settings && jets[2].settings==&settings, "each jet carries its settings", __LINE__);
     }
   settings.radius = 0.2;
   jets = JetClustering::cluster(particles,settings);
-  check(jets.size()==3 && near(jets[0].pt(),50.0,0.01) && jets[0].rank==1, "R = 0.2: the 50 GeV jet in, leading", __LINE__);
-  settings.ptMin = 25.0;
+  check(jets.size()==3 && near(jets[0].pt(),50.0,0.01) && jets[0].rank==1, "R = 0.2: three jets, 50 GeV leading", __LINE__);
+  settings.ptFloor = 25.0;
   jets = JetClustering::cluster(particles,settings);
-  check(jets.size()==2, "minimum pT 25: two jets", __LINE__);
-  settings.algorithm = JetSettings::Kt;  settings.ptMin = 5.0;
+  check(jets.size()==2 && jets[1].rank==2, "pT floor 25: two jets, the ranks of the two hardest unchanged", __LINE__);
+  settings.algorithm = JetSettings::Kt;  settings.ptFloor = 5.0;
   check(JetClustering::cluster(particles,settings).size()==3, "kt algorithm: the same three jets", __LINE__);
   check(JetClustering::cluster(std::vector<Particle*>(),settings).empty(), "no particles: no jets", __LINE__);
 
@@ -130,8 +188,9 @@ int main()
   JetClustering::jets(event,nullptr,particles,s);
   check(JetClustering::nClusterings()==before+1, "the jets of an event found once", __LINE__);
   JetSettings s2 = s;  s2.radius = 0.2;
-  JetClustering::jets(event,nullptr,particles,s2);
-  check(JetClustering::nClusterings()==before+2, "another radius: found again", __LINE__);
+  const std::vector<Jet> & other = JetClustering::jets(event,nullptr,particles,s2);
+  check(JetClustering::nClusterings()==before+2, "other settings: found again", __LINE__);
+  check(!other.empty() && other.front().settings==&s2, "the jets of the other settings carry them", __LINE__);
   event.reset();
   JetClustering::jets(event,nullptr,particles,s);
   check(JetClustering::nClusterings()==before+3, "next event: found again", __LINE__);
@@ -174,6 +233,19 @@ int main()
   bool threw = false;
   try { bad.configure("T","JET_FILTER",configuration,2); } catch (std::exception &) { threw = true; }
   check(threw, "unknown jet quantity: exception", __LINE__);
+  // the rank is that before the conditions: RANK 1 with |eta| < 0.5 keeps the leading jet only if within |eta| < 0.5
+  JetSettings wide;  wide.radius = 0.4;
+  std::vector<Jet> all = JetClustering::cluster(particles,wide);       // 50 (eta 0.62, rank 1), 35 (eta 0, 2), 20 (3)
+  configuration.addProperty(createKey("T","JET_FILTER",3,"CONDITION:N"),1);
+  configuration.addProperty(createKey("T","JET_FILTER",3,"CONDITION",0,"TYPE"),String("DOUBLE_RANGE"));
+  configuration.addProperty(createKey("T","JET_FILTER",3,"CONDITION",0,"SUBTYPE"),String("ETA"));
+  configuration.addProperty(createKey("T","JET_FILTER",3,"CONDITION",0,"MINIMUM"),-0.5);
+  configuration.addProperty(createKey("T","JET_FILTER",3,"CONDITION",0,"MAXIMUM"),0.5);
+  JetFilter central;
+  central.configure("T","JET_FILTER",configuration,3);
+  std::vector<unsigned int> ranks;
+  for (const Jet & jet : all) if (central.accept(jet)) ranks.push_back(jet.rank);
+  check(ranks==std::vector<unsigned int>({2,3}), "ETA in [-0.5, 0.5): the jets of ranks 2 and 3 (ranks kept)", __LINE__);
   }
 
   // ----- histograms
@@ -270,19 +342,17 @@ int main()
 
   // ----- cones of the underlying event: leading jet at (0, 1); a jet at (0.3, 1 + pi/2 + 0.1) covers one side
   {
-  JetSettings s;  s.radius = 0.4;  s.particleEtaMax = 2.0;
   std::vector<Jet> two(2);
   two[0].momentum = momentumOf(40.0,0.0,1.0,0.0);              two[0].rank = 1;
   two[1].momentum = momentumOf(20.0,0.3,1.0+0.5*M_PI+0.1,0.0); two[1].rank = 2;
-  std::vector<Cone> t = UnderlyingEventCones::cones(two,s,UnderlyingEventCones::Transverse);
+  std::vector<Cone> t = UnderlyingEventCones::cones(two,0.4,2.0,UnderlyingEventCones::Transverse);
   check(t.size()==1 && near(t[0].phi,1.0-0.5*M_PI+2*M_PI) && near(t[0].eta,0.0), "transverse: the cone away from the jet",
         __LINE__);
-  std::vector<Cone> shifted = UnderlyingEventCones::cones(two,s,UnderlyingEventCones::TransverseShifted);
+  std::vector<Cone> shifted = UnderlyingEventCones::cones(two,0.4,2.0,UnderlyingEventCones::TransverseShifted);
   check(shifted.size()==3, "shifted by +-2R: three of four cones (one overlaps the jet)", __LINE__);
-  s.particleEtaMax = 0.9;
-  check(UnderlyingEventCones::cones(two,s,UnderlyingEventCones::TransverseShifted).empty(), "cones outside the acceptance",
+  check(UnderlyingEventCones::cones(two,0.4,0.9,UnderlyingEventCones::TransverseShifted).empty(), "cones outside the acceptance",
         __LINE__);
-  check(UnderlyingEventCones::cones(std::vector<Jet>(),s,UnderlyingEventCones::Transverse).empty(), "no jet: no cone",
+  check(UnderlyingEventCones::cones(std::vector<Jet>(),0.4,2.0,UnderlyingEventCones::Transverse).empty(), "no jet: no cone",
         __LINE__);
   check(UnderlyingEventCones::modeOf("transverse_shifted")==UnderlyingEventCones::TransverseShifted, "mode by name", __LINE__);
   std::vector<Particle> ps(4);

@@ -9,7 +9,6 @@
  * *********************************************************************/
 #include "JetClustering.hpp"
 #include <algorithm>
-#include <cmath>
 #include <map>
 #include <tuple>
 #include "fastjet/ClusterSequence.hh"
@@ -28,21 +27,19 @@ struct CacheEntry
   std::vector<Jet> jets;
 };
 
-typedef std::tuple<const Event*, const ParticleFilter*, JetSettings> CacheKey;
+// the jets of an event, particle filter and jet settings (the object: the jets point to it); its definition is in the
+// key too, so that settings changed between two calls are never served the jets of their former definition
+typedef std::tuple<const Event*, const ParticleFilter*, const JetSettings*, int, double, int, double> CacheKey;
 
-struct KeyLess
+CacheKey keyOf(const Event & event, const ParticleFilter * filter, const JetSettings & settings)
 {
-  bool operator()(const CacheKey & a, const CacheKey & b) const
-  {
-  if (std::get<0>(a)!=std::get<0>(b)) return std::get<0>(a)<std::get<0>(b);
-  if (std::get<1>(a)!=std::get<1>(b)) return std::get<1>(a)<std::get<1>(b);
-  return std::get<2>(a)<std::get<2>(b);
-  }
-};
+  return CacheKey(&event,filter,&settings,int(settings.algorithm),settings.radius,int(settings.recombination),
+                  settings.ptFloor);
+}
 
-std::map<CacheKey,CacheEntry,KeyLess> & cache()
+std::map<CacheKey,CacheEntry> & cache()
 {
-  static std::map<CacheKey,CacheEntry,KeyLess> theCache;
+  static std::map<CacheKey,CacheEntry> theCache;
   return theCache;
 }
 
@@ -74,13 +71,13 @@ std::vector<Jet> JetClustering::cluster(const std::vector<Particle*> & particles
   std::vector<Jet> jets;
   if (input.empty()) return jets;
   fastjet::ClusterSequence sequence(input,definition);
-  std::vector<fastjet::PseudoJet> found = fastjet::sorted_by_pt(sequence.inclusive_jets(settings.ptMin));
-  const double etaMax = settings.jetEtaMax();
+  // all the jets above the pT floor: no other selection here (that of the jets is the jet filters')
+  std::vector<fastjet::PseudoJet> found = fastjet::sorted_by_pt(sequence.inclusive_jets(settings.ptFloor));
   for (const fastjet::PseudoJet & pseudoJet : found)
     {
-    if (pseudoJet.perp()<settings.ptMin) continue;
-    if (std::fabs(pseudoJet.pseudorapidity())>=etaMax) continue;
+    if (pseudoJet.perp()<settings.ptFloor) continue;
     Jet jet;
+    jet.settings = &settings;
     jet.momentum.setTXYZ(pseudoJet.e(),pseudoJet.px(),pseudoJet.py(),pseudoJet.pz());
     for (const fastjet::PseudoJet & constituent : pseudoJet.constituents())
       {
@@ -97,7 +94,7 @@ std::vector<Jet> JetClustering::cluster(const std::vector<Particle*> & particles
 const std::vector<Jet> & JetClustering::jets(const Event & event, const ParticleFilter * filter,
                                              const std::vector<Particle*> & particles, const JetSettings & settings)
 {
-  CacheEntry & entry = cache()[CacheKey(&event,filter,settings)];
+  CacheEntry & entry = cache()[keyOf(event,filter,settings)];
   bool fresh = entry.epoch==event.epoch() && entry.eventIndex==event.eventIndex() && entry.epoch!=0;
   if (!fresh)
     {

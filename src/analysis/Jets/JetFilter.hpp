@@ -27,13 +27,16 @@ namespace CAP
 //! Quantities (condition SUBTYPE), with the forms DOUBLE_RANGE [minimum, maximum) and DOUBLE_DUAL_RANGE (PT, ETA, PHI,
 //! RANK, MULT, MASS) and INTEGER (RANK, MULT: the value, MINIMUM):
 //!  - PT, ETA, PHI (in [0, 2 pi)), MASS: of the jet;
-//!  - RANK: its rank in pT among the jets of the event found with the same particle filter and settings (1: leading,
-//!    2: subleading, ...; e.g. INTEGER 1 for the leading jet, DOUBLE_RANGE [1, 3) for the two leading jets);
+//!  - RANK: its rank in pT among all the jets of the event found with the same particle filter and jet settings (1:
+//!    leading, 2: subleading, ...; e.g. INTEGER 1 for the leading jet, DOUBLE_RANGE [1, 3) for the two leading jets).
+//!    The rank is that of the jet before any condition: with RANK 1 and ETA in [-2, 2), a filter keeps the leading jet
+//!    of the event if it lies within |eta| < 2 (not the leading one of those within |eta| < 2);
 //!  - MULT: its number of constituents.
 //!
 //! The filters are defined in the configuration by the keys \<owner\>:JET_FILTER_\<k\>:NAME, CONDITION:N and
 //! CONDITION_\<i\>:TYPE, SUBTYPE, MINIMUM, MAXIMUM (MINIMUM2, MAXIMUM2), made by JetFilterCreator (OWNER true) and
-//! used by name by the jet analyzers (OWNER false), as the particle filters.
+//! used by name by the jet analyzers (OWNER false), as the particle filters. The jet filters are the only selection of
+//! the jets: the jet finder (JetSettings) keeps all the jets above its pT floor.
 //!
 class JetFilter
 :

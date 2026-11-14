@@ -783,8 +783,11 @@ class FiltersPanel(ttk.Frame):
             r, c = divmod(i, per_row)
             ttk.Label(grid, text="%s (%s)" % (name, ptype)).grid(row=r, column=2 * c, sticky="w", padx=(0, 4), pady=1)
             var = tk.StringVar(self, value=definition.parameters.get(name, ""))
+            allowed = F.PARAMETER_CHOICES.get((definition.kind, name))
             if ptype == "bool":
                 widget = ttk.Combobox(grid, textvariable=var, values=("true", "false"), width=7, state="readonly")
+            elif allowed:
+                widget = ttk.Combobox(grid, textvariable=var, values=allowed, width=10, state="readonly")
             else:
                 widget = ttk.Entry(grid, textvariable=var, width=22 if ptype == "string" else 10)
                 if ptype in ("int", "double"):
@@ -792,8 +795,8 @@ class FiltersPanel(ttk.Frame):
                     widget.configure(validate="key", validatecommand=check)
             widget.grid(row=r, column=2 * c + 1, sticky="w", padx=(0, 18), pady=1)
 
-            def changed(*_args, n=name, t=ptype, v=var, w=widget):
-                if t != "bool":
+            def changed(*_args, n=name, t=ptype, v=var, w=widget, fixed=bool(allowed)):
+                if t != "bool" and not fixed:
                     w.configure(style="TEntry" if F._valid(t, v.get()) else "Invalid.TEntry")
                 definition.parameters[n] = v.get()
                 self._update_problems()

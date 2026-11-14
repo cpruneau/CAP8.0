@@ -19,12 +19,12 @@ namespace CAP
 {
 
 //!
-//! @brief Analysis of jet pairs: for each event filter, particle filter, radius and jet filter (see JetTask), the pairs
+//! @brief Analysis of jet pairs: for each event filter, particle filter, jet settings and jet filter (see JetTask), the pairs
 //! of the jets accepted by the jet filter (each pair once, the first jet of higher rank) accepted by each jet pair
 //! filter (JET_PAIR_FILTER: ranks of the two jets, |delta phi|, acoplanarity, |delta eta|, pT ratio, mass and pT of the
 //! pair) fill a folder of JetPairHistos.
 //!
-//! Folders: \<event filter\>_\<particle filter\>_\<R label\>_\<jet filter\>_\<pair filter\>. The pair filters: keys of a
+//! Folders: \<event filter\>_\<particle filter\>_\<jet settings\>_\<jet filter\>_\<pair filter\>. The pair filters: keys of a
 //! list of managed objects (\<task\>:JET_PAIR_FILTER:N, JET_PAIR_FILTER_\<k\>:NAME, ...), made by JetPairFilterCreator.
 //! At the end of the run, nPairs is divided by the number of events accepted by the event filter, the pair histograms by
 //! the number of pairs of their folder.
