@@ -73,12 +73,15 @@ def forms_of(kind, subtype):
 
 
 class ScrollFrame(ttk.Frame):
-    """Frame with a vertical scroll bar; widgets go in self.inner."""
+    """Frame with a vertical scroll bar; widgets go in self.inner. @param height height it asks for (pixels; Tk's
+    default if None): it grows with the window when packed to expand, and scrolls when shorter than its content."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, height=None):
         ttk.Frame.__init__(self, parent)
         background = ttk.Style().lookup("TFrame", "background")
         self.canvas = tk.Canvas(self, highlightthickness=0, borderwidth=0)
+        if height is not None:
+            self.canvas.configure(height=height)
         if background:
             self.canvas.configure(background=background)
         bar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.canvas.yview)
