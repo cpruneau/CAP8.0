@@ -164,6 +164,19 @@ class TestPanel(unittest.TestCase):
         entries[3].delete(0, tk.END)
         self.assertIn("invalid int value", self.panel.problems.get())
 
+    def test_groomer_parameters(self):
+        """A jet groomer shows the parameters of its method only; choosing another method shows those of that one."""
+        self.panel.add_object("JET_GROOMER")
+        d = self.library.objects["JET_GROOMER"][0]
+        boxes = lambda: widgets(self.inner(), tk.ttk.Combobox)
+        self.assertEqual((len(self.entries()) - 2, len(boxes())), (4, 3))   # Z_CUT BETA R0 MU; METHOD RECLUSTER MODE
+        method = [b for b in boxes() if b.get() == "SOFT_DROP"][0]
+        method.set("DYNAMICAL")
+        _root.update()
+        self.assertEqual(d.parameters["METHOD"], "DYNAMICAL")
+        self.assertEqual((len(self.entries()) - 2, len(boxes())), (1, 2))   # A; METHOD RECLUSTER
+        self.assertEqual(self.panel.problems.get(), "")
+
     def test_all_kinds(self):
         """Every kind with objects: filters, event corrections, events and particle databases (the particle
         efficiencies and smearers come from the maps file)."""

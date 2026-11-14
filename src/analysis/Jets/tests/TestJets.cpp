@@ -25,6 +25,8 @@
 #include "JetPairHistos.hpp"
 #include "JetUnderlyingEvent.hpp"
 #include "JetFluctuationHistos.hpp"
+#include "JetGroomer.hpp"
+#include "JetGroomingHistos.hpp"
 #include "Event.hpp"
 #include "Particle.hpp"
 #include "ParticleType.hpp"
@@ -363,6 +365,104 @@ int main()
     { ps[k].setType(types[k]);  ps[k].setMomentum(momentumOf(1.0,etas[k],t[0].phi+dphis[k]));  in.push_back(&ps[k]); }
   Multiplicities m = UnderlyingEventCones::count(in,t[0],0.4);
   check(m.n==3 && m.nPos==1 && m.nNeg==1 && m.n0==1, "particles within R of the cone axis", __LINE__);
+  }
+
+  // ----- grooming: prongs A (30 + 20 GeV, Delta R 0.02) at (0, 1) and B (30 GeV) at (0.2, 1), a soft particle C
+  // (1 GeV) at (0, 1.35): one anti-kt jet of R = 0.4; C/A: C joins last (Delta R ~ 0.35, z ~ 1/81), then A-B
+  // (Delta R ~ 0.2, z = 0.375), then the two particles of A (Delta R 0.02, z = 0.4)
+  {
+  std::vector<Particle> ps(4);
+  std::vector<Particle*> in;
+  const double pts[] = {30.0, 20.0, 30.0, 1.0}, etas[] = {0.0, 0.0, 0.2, 0.0}, phis[] = {1.0, 1.02, 1.0, 1.35};
+  for (unsigned int k=0; k<4; k++)
+    { ps[k].setType(&plus);  ps[k].setMomentum(momentumOf(pts[k],etas[k],phis[k]));  in.push_back(&ps[k]); }
+  JetSettings antiKt;  antiKt.radius = 0.4;
+  std::vector<Jet> one = JetClustering::cluster(in,antiKt);
+  check(one.size()==1 && one[0].multiplicity()==4, "grooming: one jet of four constituents", __LINE__);
+  const Jet & jet = one.front();
+  auto groomer = [](JetGroomer::Method method) { JetGroomer g;  g.method = method;  return g; };
+  JetGroomer sd = groomer(JetGroomer::SoftDrop);                       // zcut 0.1, beta 0: modified mass drop
+  GroomedJet g = sd.groom(jet);
+  check(g.status==GroomedJet::Groomed && near(g.zg,0.375,0.02) && near(g.rg,0.2,0.02) && g.constituents.size()==3,
+        "Soft Drop: C dropped, the A-B splitting kept (zg 0.375, Rg 0.2)", __LINE__);
+  check(near(g.pt(),80.0,0.1) && near(g.ktg,30.0*g.rg,1.0E-6) && g.nSD==2, "Soft Drop: pT 80, kTg = pT2 Rg, nSD 2",
+        __LINE__);
+  sd.zCut = 0.5;                                                       // no splitting passes
+  g = sd.groom(jet);
+  check(g.status==GroomedJet::NoSplitting && g.constituents.size()==1 && near(g.pt(),30.0,0.1) && !g.hasSplitting()
+        && g.nSD==0, "Soft Drop, grooming mode: the hardest constituent kept", __LINE__);
+  sd.mode = JetGroomer::Tagging;
+  check(sd.groom(jet).status==GroomedJet::Failed, "Soft Drop, tagging mode: the jet fails", __LINE__);
+  sd.zCut = 0.1;  sd.mode = JetGroomer::Grooming;  sd.beta = 2.0;    // zcut (dR/R0)^2: 0.1/16 at Delta R 0.1
+  check(near(sd.groom(jet).zg,0.375,0.02), "Soft Drop beta 2: the same splitting", __LINE__);
+  sd.beta = 0.0;  sd.mu = 0.5;                                         // mass drop: m_A << m_AB, passes
+  check(sd.groom(jet).status==GroomedJet::Groomed, "mass drop mu 0.5: passes", __LINE__);
+  JetGroomer trim = groomer(JetGroomer::Trimming);                     // R_SUB 0.2 f 0.03: C (1 < 2.4) dropped
+  trim.recluster = JetSettings::Kt;  trim.rSub = 0.1;
+  g = trim.groom(jet);
+  check(g.status==GroomedJet::Groomed && g.constituents.size()==3 && near(g.pt(),80.0,0.1) && !g.hasSplitting(),
+        "trimming: the soft subjet dropped", __LINE__);
+  trim.fCut = 0.9;
+  check(trim.groom(jet).status==GroomedJet::Failed, "trimming above every subjet: fails", __LINE__);
+  JetGroomer filter = groomer(JetGroomer::Filtering);
+  filter.rFilt = 0.1;  filter.nKeep = 1;
+  g = filter.groom(jet);
+  check(g.constituents.size()==2 && near(g.pt(),50.0,0.1), "filtering, N_KEEP 1: prong A only", __LINE__);
+  filter.nKeep = 3;
+  check(filter.groom(jet).constituents.size()==4, "filtering, N_KEEP 3: everything", __LINE__);
+  JetGroomer prune = groomer(JetGroomer::Pruning);                    // D_cut = m/pT ~ 0.1: C pruned, B kept
+  g = prune.groom(jet);
+  check(g.status==GroomedJet::Groomed && g.constituents.size()==3 && near(g.pt(),80.0,0.1),
+        "pruning: the soft wide-angle C pruned", __LINE__);
+  prune.zCut = 0.45;                                                   // B (z 0.375) pruned too
+  check(prune.groom(jet).constituents.size()==2, "pruning, z_cut 0.45: B pruned too", __LINE__);
+  JetGroomer dyg = groomer(JetGroomer::Dynamical);                    // kTDrop: kappa largest at A-B
+  g = dyg.groom(jet);
+  check(g.status==GroomedJet::Groomed && near(g.zg,0.375,0.02) && g.constituents.size()==3 && g.nSD==-1,
+        "dynamical grooming a = 1: the A-B splitting", __LINE__);
+  // zDrop: kappa = z (1 - z) pT_parent (dR/R)^0.1: A-B 0.234 x 80 x 0.93 = 17.5 against A 0.24 x 50 x 0.74 = 8.9
+  dyg.a = 0.1;
+  check(near(dyg.groom(jet).zg,0.375,0.02), "zDrop: kappa weighted by the pT of the parent, A-B still", __LINE__);
+  // without B: A-C (z 1/51, dR 0.35) and A (z 0.4, dR 0.02): kTDrop kappa 0.86 against 0.60 (the wide splitting),
+  // zDrop 0.97 against 8.9 (the symmetric one)
+  Jet noB;  noB.constituents = {&ps[0], &ps[1], &ps[3]};
+  for (Particle * p : noB.constituents) noB.momentum += p->momentum();
+  dyg.a = 1.0;
+  check(near(dyg.groom(noB).zg,1.0/51.0,0.01) && dyg.groom(noB).constituents.size()==3, "kTDrop without B: A-C",
+        __LINE__);
+  dyg.a = 0.1;
+  check(near(dyg.groom(noB).zg,0.4,0.01) && dyg.groom(noB).constituents.size()==2, "zDrop without B: the splitting of A",
+        __LINE__);
+  Jet single;  single.constituents = {&ps[0]};  single.momentum = ps[0].momentum();
+  check(dyg.groom(single).status==GroomedJet::NoSplitting, "one constituent: no splitting", __LINE__);
+  check(groomer(JetGroomer::SoftDrop).groom(Jet()).status==GroomedJet::Failed, "no constituent: fails", __LINE__);
+  // configuration
+  Configuration configuration;
+  auto set = [&](const char * name, auto value) { configuration.addProperty(createKey("T","JET_GROOMER",0,name),value); };
+  set("METHOD",String("PRUNING"));  set("RECLUSTER",String("KT"));  set("Z_CUT",0.15);  set("R_CUT_FACTOR",0.4);
+  JetGroomer read;
+  read.configure("T","JET_GROOMER",configuration,0);
+  check(read.method==JetGroomer::Pruning && read.recluster==JetSettings::Kt && near(read.zCut,0.15)
+        && near(read.rCutFactor,0.4) && near(read.beta,0.0), "groomer read from the configuration", __LINE__);
+  configuration.addProperty(createKey("T","JET_GROOMER",1,"METHOD"),String("RECURSIVE"));
+  bool threw = false;
+  try { read.configure("T","JET_GROOMER",configuration,1); } catch (std::exception &) { threw = true; }
+  check(threw, "unknown grooming method: exception", __LINE__);
+  // histograms: three jets groomed (Soft Drop, no splitting, failed)
+  Configuration binning;
+  JetGroomingHistos::addDefaultConfiguration(binning,"T");
+  JetGroomingHistos histos;
+  histos.configure("T","HISTOGRAM",binning,0);
+  histos.create();
+  JetGroomer sd2 = groomer(JetGroomer::SoftDrop);
+  histos.fill(sd2.groom(jet));
+  sd2.zCut = 0.5;  histos.fill(sd2.groom(jet));
+  sd2.mode = JetGroomer::Tagging;  histos.fill(sd2.groom(jet));
+  auto h = [&](const char * name) { return histos.histogram(createName("JetGroomed",name)); };
+  check(near(h("status")->integral(),3.0) && near(h("zg")->integral(),1.0) && near(h("pt")->integral(),2.0)
+        && near(h("nSD")->integral(),3.0), "status of 3 jets, zg of 1, pT of the 2 kept, nSD of 3", __LINE__);
+  histos.normalize(1.0);
+  check(near(sum(h("zg")),1.0/3.0,1.0E-6) && near(sum(h("status")),1.0,1.0E-6), "per jet groomed", __LINE__);
   }
 
   // ----- moments within jets and the derived quantities: jet A (N+ 2, N- 1), jet B (N+ 1, N- 2, N0 1), both at 20 GeV

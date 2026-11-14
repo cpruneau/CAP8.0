@@ -63,7 +63,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 #: Kinds of objects of the library, in the order of the tabs of the Filters pane.
-KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "JET_SETTINGS", "JET_FILTER", "JET_PAIR_FILTER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
+KINDS = ["EVENT_FILTER", "PARTICLE_FILTER", "JET_SETTINGS", "JET_FILTER", "JET_PAIR_FILTER", "JET_GROOMER", "EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER",
          "EVENT", "PARTICLE_DB"]
 #: Kinds of corrections (efficiencies and smearers).
 CORRECTION_KINDS = ("EVENT_EFFICIENCY", "PARTICLE_EFFICIENCY", "EVENT_SMEARER", "PARTICLE_SMEARER")
@@ -73,14 +73,14 @@ SETTINGS_KINDS = CORRECTION_KINDS + ("PARTICLE_DB",)
 DEFAULT_CHOICE_KINDS = ("EVENT", "PARTICLE_DB")
 KIND_LABELS = {"EVENT_FILTER": "Event filters", "PARTICLE_FILTER": "Particle filters", "JET_SETTINGS": "Jet settings",
                "JET_FILTER": "Jet filters",
-               "JET_PAIR_FILTER": "Jet pair filters",
+               "JET_PAIR_FILTER": "Jet pair filters", "JET_GROOMER": "Jet groomers",
                "EVENT_EFFICIENCY": "Event efficiencies", "PARTICLE_EFFICIENCY": "Particle efficiencies",
                "EVENT_SMEARER": "Event smearers", "PARTICLE_SMEARER": "Particle smearers", "EVENT": "Events",
                "PARTICLE_DB": "Particle databases"}
 #: Element of an object of each kind in XML (workflows and selection files), and the root of a selection file.
 TAG_OF_KIND = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter", "JET_SETTINGS": "JetSettings",
                "JET_FILTER": "JetFilter",
-               "JET_PAIR_FILTER": "JetPairFilter",
+               "JET_PAIR_FILTER": "JetPairFilter", "JET_GROOMER": "JetGroomer",
                "EVENT_EFFICIENCY": "EventEfficiency",
                "PARTICLE_EFFICIENCY": "ParticleEfficiency", "EVENT_SMEARER": "EventSmearer",
                "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}
@@ -105,8 +105,8 @@ SELECTIONS_ROOT = "CapSelections"
 #: Kinds defined by conditions (the others by parameters).
 CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "JET_PAIR_FILTER")
 #: Kinds of the optional modules: their creator is written only when the library has objects of the kind (the jet
-#: settings, jet filters and jet pair filters need CAP built with Jets).
-OPTIONAL_KINDS = ("JET_SETTINGS", "JET_FILTER", "JET_PAIR_FILTER")
+#: settings, jet filters, jet pair filters and jet groomers need CAP built with Jets).
+OPTIONAL_KINDS = ("JET_SETTINGS", "JET_FILTER", "JET_PAIR_FILTER", "JET_GROOMER")
 
 #: Forms of a condition and the TYPE written for them.
 RANGE, DUAL_RANGE, VALUE, FLAG = "range", "two ranges", "value", "flag"
@@ -185,9 +185,42 @@ KIND_PARAMETERS = {
     "JET_SETTINGS": [("ALGORITHM", "string", "ANTIKT"), ("R", "double", "0.4"), ("RECOMBINATION", "string", "E"),
                      ("PT_FLOOR", "double", "1.0")],
 }
+#: Jet groomers (CAP::JetGroomer): a method (METHOD) and its parameters (see JetGroomer.hpp and METHOD_PARAMETERS).
+KIND_PARAMETERS["JET_GROOMER"] = [
+    ("METHOD", "string", "SOFT_DROP"), ("RECLUSTER", "string", "CA"),
+    ("Z_CUT", "double", "0.1"), ("BETA", "double", "0"), ("R0", "double", "0"), ("MU", "double", "1"),
+    ("MODE", "string", "GROOM"),
+    ("R_SUB", "double", "0.2"), ("F_CUT", "double", "0.03"),
+    ("R_FILT", "double", "0.3"), ("N_KEEP", "int", "3"),
+    ("R_CUT_FACTOR", "double", "0.5"),
+    ("A", "double", "1")]
 #: Parameters taking one of a few values: {(kind, name): values} (a list to choose from in the Filters pane).
 PARAMETER_CHOICES = {("JET_SETTINGS", "ALGORITHM"): ("ANTIKT", "KT", "CA"),
-                     ("JET_SETTINGS", "RECOMBINATION"): ("E", "PT")}
+                     ("JET_SETTINGS", "RECOMBINATION"): ("E", "PT"),
+                     ("JET_GROOMER", "METHOD"): ("SOFT_DROP", "TRIMMING", "FILTERING", "PRUNING", "DYNAMICAL"),
+                     ("JET_GROOMER", "RECLUSTER"): ("CA", "KT", "ANTIKT"),
+                     ("JET_GROOMER", "MODE"): ("GROOM", "TAG")}
+#: Kinds whose parameters depend on one of them: {kind: (selector, {value: parameters used besides the selector})}.
+#: Only those are shown in the Filters pane and written to the workflows.
+SELECTOR_PARAMETERS = {"JET_GROOMER": ("METHOD", {
+    "SOFT_DROP": ("Z_CUT", "BETA", "R0", "MU", "MODE", "RECLUSTER"),
+    "TRIMMING": ("R_SUB", "F_CUT", "RECLUSTER"),
+    "FILTERING": ("R_FILT", "N_KEEP", "RECLUSTER"),
+    "PRUNING": ("Z_CUT", "R_CUT_FACTOR", "RECLUSTER"),
+    "DYNAMICAL": ("A", "RECLUSTER")})}
+
+
+def shown_parameters(kind, parameters):
+    """Parameters of an object of a kind that are used, as (name, type, default): all of KIND_PARAMETERS, or, for a kind
+    of SELECTOR_PARAMETERS, the selector and the parameters of its value (all if the value is unknown)."""
+    every = KIND_PARAMETERS.get(kind, [])
+    if kind not in SELECTOR_PARAMETERS:
+        return list(every)
+    selector, used = SELECTOR_PARAMETERS[kind]
+    value = (parameters.get(selector) or "").upper()
+    if value not in used:
+        return list(every)
+    return [p for p in every if p[0] == selector or p[0] in used[value]]
 
 #: Task creating the objects of the library, run first (CAP::FilterCreator), and its subtasks, one per kind.
 CREATOR_NAME, CREATOR_CLASS = "FilterCreator", "CAP::FilterCreator"
@@ -196,6 +229,7 @@ CREATORS = {"EVENT_FILTER": ("EventFilters", "CAP::EventFilterCreator"),
             "JET_SETTINGS": ("JetSettings", "CAP::JetSettingsCreator"),
             "JET_FILTER": ("JetFilters", "CAP::JetFilterCreator"),
             "JET_PAIR_FILTER": ("JetPairFilters", "CAP::JetPairFilterCreator"),
+            "JET_GROOMER": ("JetGroomers", "CAP::JetGroomerCreator"),
             "EVENT_EFFICIENCY": ("EventEfficiencies", "CAP::EventEfficiencyCreator"),
             "PARTICLE_EFFICIENCY": ("ParticleEfficiencies", "CAP::ParticleEfficiencyCreator"),
             "EVENT_SMEARER": ("EventSmearers", "CAP::EventSmearerCreator"),
@@ -1158,7 +1192,7 @@ def _write_object(task, kind, k, name, definition, owner, Param):
                 _set(task, cp + "MINIMUM2", "double", number_text(c.minimum2), Param)
                 _set(task, cp + "MAXIMUM2", "double", number_text(c.maximum2), Param)
     else:
-        for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
+        for pname, ptype, _ in shown_parameters(kind, definition.parameters):
             _set(task, prefix + pname, ptype, definition.parameters.get(pname, ""), Param)
 
 
@@ -1445,7 +1479,7 @@ def check_library(library):
                     errors.append("%s %s, condition %d: %s needs a particle filter of the library (%s)."
                                   % (label.capitalize(), o.name, i + 1, accepted[c.subtype][0],
                                      "'%s' is not one" % c.selection if c.selection else "none chosen"))
-            for pname, ptype, _ in KIND_PARAMETERS.get(kind, []):
+            for pname, ptype, _ in shown_parameters(kind, o.parameters):
                 value = o.parameters.get(pname, "")
                 allowed = PARAMETER_CHOICES.get((kind, pname))
                 if not _valid(ptype, value):
@@ -1455,6 +1489,8 @@ def check_library(library):
                                                                      ", ".join(allowed)))
             if kind == "JET_SETTINGS":
                 errors += _jet_settings_problems(o)
+            if kind == "JET_GROOMER":
+                errors += _jet_groomer_problems(o)
     for path in library.links:
         if not os.path.isfile(path):
             errors.append("The linked selection file %s is missing: its objects are not in the workflow." % path)
@@ -1477,6 +1513,26 @@ def _jet_settings_problems(definition):
             errors.append("Jet settings %s: the pT floor must be positive or 0." % definition.name)
     except ValueError:
         pass
+    return errors
+
+
+#: Parameters of the jet groomers that must be positive (> 0) or not negative (>= 0) (CAP::JetGroomer::configure()).
+_GROOMER_POSITIVE = ("MU", "R_SUB", "R_FILT", "N_KEEP", "R_CUT_FACTOR")
+_GROOMER_NOT_NEGATIVE = ("Z_CUT", "R0", "F_CUT", "A")
+
+
+def _jet_groomer_problems(definition):
+    """Problems of the values of a jet groomer: those of its method in range."""
+    errors = []
+    for pname, _, _ in shown_parameters("JET_GROOMER", definition.parameters):
+        try:
+            value = float(definition.parameters.get(pname, ""))
+        except ValueError:
+            continue                                    # reported as an invalid number, or a choice
+        if pname in _GROOMER_POSITIVE and not value > 0:
+            errors.append("Jet groomer %s: %s must be positive." % (definition.name, pname))
+        elif pname in _GROOMER_NOT_NEGATIVE and not value >= 0:
+            errors.append("Jet groomer %s: %s must be positive or 0." % (definition.name, pname))
     return errors
 
 
@@ -1527,6 +1583,8 @@ def _jet_task_problems(task, library):
         return ["Task %s finds jets: choose at least one jet settings (Jet settings: algorithm, R, recombination, pT "
                 "floor)." % task.name]
     errors = []
+    if task.cls.replace("CAP::", "") == "JetGroomingAnalyzer" and not choices(task).get("JET_GROOMER"):
+        errors.append("Task %s grooms jets: choose at least one jet groomer (Jet groomers)." % task.name)
     eta = _param_value(task, "UE:ETA_MAX")
     if eta is not None:
         try:
@@ -1681,7 +1739,7 @@ def object_element(o):
         if c.selection:
             attributes["selection"] = c.selection
         ET.SubElement(element, "Condition", attributes)
-    for pname, _, _ in KIND_PARAMETERS.get(o.kind, []):
+    for pname, _, _ in shown_parameters(o.kind, o.parameters):
         ET.SubElement(element, "Parameter", {"name": pname}).text = o.parameters.get(pname, "")
     return element
 

@@ -782,7 +782,8 @@ class FiltersPanel(ttk.Frame):
         grid = ttk.Frame(frame)
         grid.pack(fill=tk.X, pady=(6, 0))
         per_row = 3
-        for i, (name, ptype, _) in enumerate(F.KIND_PARAMETERS.get(definition.kind, [])):
+        selector = F.SELECTOR_PARAMETERS.get(definition.kind, (None,))[0]
+        for i, (name, ptype, _) in enumerate(F.shown_parameters(definition.kind, definition.parameters)):
             r, c = divmod(i, per_row)
             ttk.Label(grid, text="%s (%s)" % (name, ptype)).grid(row=r, column=2 * c, sticky="w", padx=(0, 4), pady=1)
             var = tk.StringVar(self, value=definition.parameters.get(name, ""))
@@ -802,6 +803,8 @@ class FiltersPanel(ttk.Frame):
                 if t != "bool" and not fixed:
                     w.configure(style="TEntry" if F._valid(t, v.get()) else "Invalid.TEntry")
                 definition.parameters[n] = v.get()
+                if n == selector:                      # other parameters: show those of the new value
+                    self.after_idle(self._redraw)
                 self._update_problems()
                 self.on_change()
             var.trace_add("write", changed)
