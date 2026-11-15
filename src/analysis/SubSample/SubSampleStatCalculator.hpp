@@ -45,6 +45,18 @@ namespace MATH { class Histogram; }
 //!   N theta - (N-1) mean are written apart, to \<name\>:JACKKNIFE:BIAS_FILE_NAME (default: the output file name with
 //!   _biasCorrected), with the same structure.
 //!
+//! Production in pT-hat bins (\<name\>:PTHAT:BINS = K > 0): each sub-sample is K jobs, in the directories
+//! \<sub-sample\>_pthat\<k\> (k = 00 ... K-1), run with PythiaEventGenerator PTHAT_MIN and PTHAT_MAX set to the edges of
+//! bin k and the raw histograms kept (JOB:NORMALIZE false); each file holds the cross section sigma_k,s of its run and
+//! its number of events N_k,s (CAP_SIGMA_GEN, CAP_N_ACCEPTED). First, the K bins of each sub-sample s are added with
+//! the weights sigma_k/N_k,s, sigma_k the cross section of bin k averaged over the sub-samples (weighted by N_k,s):
+//! H_s = sum_k sigma_k/N_k,s H_k,s, the differential cross section in mb, whatever the event filter or the jets of the
+//! folder (raw counts are additive); the profiles are averages weighted by sigma_k/N_k,s. With
+//! \<name\>:PTHAT:NORMALIZATION COVERED (default SIGMA), H_s is divided by the cross section of the range covered,
+//! sum_k sigma_k (per event of that range; for later stages computing ratios, correlation functions, ...). H_s is
+//! written to the directory \<sub-sample\>_CrossSection (with the cross sections of the bins: CAP_PTHAT_BIN_\<k\>,
+//! CAP_SIGMA_COVERED), and these are the sub-samples combined as above (equal weights).
+//!
 //! The result (the histograms of the first sub-sample, or of the stages, with the values and uncertainties so computed;
 //! the numbers of entries summed in SUBSAMPLE mode) and the summed accountants are written to
 //! \<name\>:HISTOGRAM:EXPORT:PATH/EXPORT:FILE_NAME.
@@ -100,12 +112,30 @@ public:
   static void leaveOneOut(const Folder & mean, const Folder & sample, double weight, double sumWeights, Folder & replica);
   //! @brief Paths of the histograms of a folder tree. @param folder folder @return paths
   static std::vector<String> histogramPaths(const Folder & folder);
+  //!
+  //! @brief Weighted sum of folders of raw histograms (pT-hat bins): the histograms sum_k w_k H_k / divisor
+  //! (uncertainties added in quadrature, entries summed), the profiles averages weighted by w_k.
+  //! @param bins folders (histograms matched by path; the first gives the structure) @param weights w_k
+  //! @param divisor divisor of the histograms (not of the profiles) @param result set to the sum
+  //!
+  static void weightedSum(const std::vector<const Folder *> & bins, const std::vector<double> & weights, double divisor,
+                          Folder & result);
+  //!
+  //! @brief The cross section of the run saved in a folder tree by PythiaEventGenerator (CAP_SIGMA_GEN, CAP_SIGMA_ERR,
+  //! CAP_N_ACCEPTED, CAP_PTHAT_MIN, CAP_PTHAT_MAX). @param folder folder @param sigma sigma (mb) @param error error
+  //! @param nAccepted events @param ptHatMin lower edge @param ptHatMax upper edge @return false if not found
+  //!
+  static bool crossSection(const Folder & folder, double & sigma, double & error, long & nAccepted, double & ptHatMin,
+                           double & ptHatMax);
   //! @}
 
 protected:
 
   //! @brief The sub-samples of the import path (see the class description). @return sub-samples
   std::vector<SubSample> findSubSamples();
+  //! @brief Add the pT-hat bins of each sub-sample (see the class description). @param nBins K @param normalization
+  //! SIGMA or COVERED @return the sub-samples so made @throws Exception if a bin or a cross section is missing
+  std::vector<SubSample> combinePtHatBins(unsigned int nBins, const String & normalization);
 
   Accountant _totalTaskExecuted;    //!< Sum of the numbers of executed tasks of the sub-samples.
   Accountant _eventAccepted;        //!< Numbers of accepted events of the current sub-sample.

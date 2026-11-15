@@ -35,6 +35,12 @@ namespace CAP
 //! $CAP_PYTHIA8_PATH/share/Pythia8/xmldoc, then that of the Pythia8 CAP was built with); which particles are saved is set by SaveFinalOnly, SavePhotons,
 //! SaveNeutrinos, SaveQuarks, SaveGaugeBosons.
 //!
+//! Production in pT-hat bins: PTHAT_MIN and PTHAT_MAX (GeV/c; negative: not set) set PhaseSpace:pTHatMin and
+//! PhaseSpace:pTHatMax (with a hard process, e.g. Option HardQCD:all = on). At the end of the run, the cross section
+//! PYTHIA estimates for the process generated (Info::sigmaGen(), mb), its uncertainty and the number of events accepted
+//! are saved in the folder of the task (CAP_SIGMA_GEN, CAP_SIGMA_ERR, CAP_N_ACCEPTED, CAP_PTHAT_MIN, CAP_PTHAT_MAX):
+//! SubSampleStatCalculator adds the bins with the weights sigma/N.
+//!
 class PythiaEventGenerator
 :
 public EventProcessor
@@ -55,8 +61,11 @@ public:
   virtual void initialize();
   //! @brief Execute the task (process the current event).
   virtual void execute();
-  //! @brief Finalize the task.
+  //! @brief Finalize the task (the cross section of the run is kept for saveHistograms()).
   virtual void finalize();
+  //! @brief Save the cross section of the run (sigmaGen, its uncertainty, the events accepted, the pT-hat range) in
+  //! the folder of the task. @param top folder of the job
+  virtual void saveHistograms(Folder & top);
 
 protected:
 
@@ -81,6 +90,11 @@ protected:
   bool saveQuarks;
   //! Whether gauge bosons are saved.
   bool saveGaugeBosons;
+  //! pT-hat range of the run (GeV/c; negative: not set).
+  double ptHatMin, ptHatMax;
+  //! Cross section of the run (mb; negative until the end of the run), its uncertainty, the events accepted.
+  double sigmaGen, sigmaErr;
+  long nAccepted;
 
 };
 

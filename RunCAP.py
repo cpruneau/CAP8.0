@@ -1723,7 +1723,7 @@ def run_gui(initial_file=None, hook=None):
             api = sys.modules[__name__]
             sequences = [(subsamples.directory_name(self.subsamples, k),
                           subsamples.subsample_commands(production, self.subsamples, api, k))
-                         for k in range(self.subsamples.count)]
+                         for k in range(self.subsamples.njobs())]
             runner = subsamples.ParallelRunner(sequences, self.subsamples.parallel, job_environment(), self.queue.put,
                                                [subsamples.combine_command(production, api)])
             self._start_runner(runner)
@@ -2081,7 +2081,7 @@ def subsamples_main(args):
             print("Slurm: copy %s/*.xml and %s to %s on the cluster, then: sbatch %s"
                   % (production.directory, subsamples.SBATCH_FILE, settings.slurm.directory, subsamples.SBATCH_FILE))
         else:
-            for k in range(settings.count):
+            for k in range(settings.njobs()):
                 for _, cmd, cwd in subsamples.subsample_commands(production, settings, api, k):
                     print("(cd %s && %s)" % (shell_text([cwd]), shell_text(cmd)))
         print("Then combine with: %s" % shell_text(subsamples.combine_command(production, api)[1]))

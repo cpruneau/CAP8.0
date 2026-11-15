@@ -10,12 +10,17 @@
 #include "FileListing.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <string>
 #include <map>
 #include <memory>
 #include "SubSampleStatCalculator.hpp"
 #include "FileSystem.hpp"
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
+#include "Profile.hpp"
+#include "StringParameter.hpp"
+#include "LongParameter.hpp"
 #include "HistogramFolder.hpp"
 #include "NameHelpers.hpp"
 #include "Exceptions.hpp"
@@ -306,6 +311,8 @@ _configuration.addProperty(createKey(taskName,"WEIGHTS"),                    Str
 _configuration.addProperty(createKey(taskName,"JACKKNIFE:WORKFLOW"),         String("NONE"));
 _configuration.addProperty(createKey(taskName,"JACKKNIFE:STAGES"),           String("NONE"));
 _configuration.addProperty(createKey(taskName,"JACKKNIFE:BIAS_FILE_NAME"),   String("NONE"));
+_configuration.addProperty(createKey(taskName,"PTHAT:BINS"),                 0);
+_configuration.addProperty(createKey(taskName,"PTHAT:NORMALIZATION"),        String("SIGMA"));
 }
 
 std::vector<String> SubSampleStatCalculator::histogramPaths(const Folder & folder)
@@ -313,6 +320,205 @@ std::vector<String> SubSampleStatCalculator::histogramPaths(const Folder & folde
 std::vector<String> result;
 for (const String & path : folder.paths())
   if (folder.get<Histogram>(path)) result.push_back(path);
+return result;
+}
+
+void SubSampleStatCalculator::weightedSum(const std::vector<const Folder *> & bins, const std::vector<double> & weights,
+                                          double divisor, Folder & result)
+{
+if (bins.empty() || bins.size() != weights.size()) throw Exception("as many weights as bins are needed", __FUNCTION__);
+if (!(divisor > 0.0)) throw Exception("the divisor must be > 0", __FUNCTION__);
+result = *bins[0];
+for (const String & path : histogramPaths(*bins[0]))
+  {
+  Histogram & out = *result.get<Histogram>(path);
+  const unsigned int n = out.nBinsTotal();
+  if (MATH::Profile * profile = dynamic_cast<MATH::Profile*>(&out))
+    {
+    // an average: its sums of weights and weighted values, each bin weighted by w_k
+    std::vector<long> entries(n, 0);
+    std::vector<double> sw(n, 0.0), sw2(n, 0.0), swy(n, 0.0), swy2(n, 0.0);
+    for (size_t i = 0; i < bins.size(); i++)
+      {
+      const MATH::Profile * p = dynamic_cast<const MATH::Profile*>(&matching(*bins[i], path, n, __FUNCTION__));
+      if (!p) throw Exception(String("profile ") + path + String(" is not a profile in a bin"), __FUNCTION__);
+      const double w = weights[i];
+      const std::vector<long> e = p->binEntries();
+      for (unsigned int k = 0; k < n; k++)
+        {
+        entries[k] += e[k];
+        sw[k]   += w * p->sumWeights(k);
+        sw2[k]  += w * w * p->sumWeights2(k);
+        swy[k]  += w * p->sumWeightedValues(k);
+        swy2[k] += w * p->sumWeightedValues2(k);
+        }
+      }
+    for (unsigned int k = 0; k < n; k++) profile->setSums(k, entries[k], sw[k], sw2[k], swy[k], swy2[k]);
+    continue;
+    }
+  std::vector<double> values(n, 0.0), errors2(n, 0.0);
+  std::vector<long> entries(n, 0);
+  for (size_t i = 0; i < bins.size(); i++)
+    {
+    std::vector<double> v, e;
+    std::vector<long> ne;
+    contents(matching(*bins[i], path, n, __FUNCTION__), v, e, ne);
+    const double w = weights[i];
+    for (unsigned int k = 0; k < n; k++)
+      {
+      values[k] += w * v[k];
+      errors2[k] += w * w * e[k] * e[k];
+      entries[k] += ne[k];
+      }
+    }
+  std::vector<double> errors(n);
+  for (unsigned int k = 0; k < n; k++) { values[k] /= divisor; errors[k] = std::sqrt(errors2[k]) / divisor; }
+  out.setPrecision(Histogram::kDouble);      // cross sections span many orders of magnitude
+  setContents(out, entries, values, errors);
+  }
+}
+
+bool SubSampleStatCalculator::crossSection(const Folder & folder, double & sigma, double & error, long & nAccepted,
+                                           double & ptHatMin, double & ptHatMax)
+{
+const String key = "CAP_SIGMA_GEN";
+for (const String & path : folder.paths())
+  {
+  if (!path.endsWith(key) || !folder.get<StringParameter>(path)) continue;
+  const String prefix(path.data(), path.length() - key.length());
+  auto number = [&](const char * name, double fallback)
+    {
+    const StringParameter * p = folder.get<StringParameter>(prefix + String(name));
+    if (!p) return fallback;
+    try { return std::stod(p->value().str()); } catch (const std::exception &) { return fallback; }
+    };
+  sigma = number("CAP_SIGMA_GEN", -1.0);
+  error = number("CAP_SIGMA_ERR", 0.0);
+  ptHatMin = number("CAP_PTHAT_MIN", -1.0);
+  ptHatMax = number("CAP_PTHAT_MAX", -1.0);
+  const LongParameter * n = folder.get<LongParameter>(prefix + String("CAP_N_ACCEPTED"));
+  nAccepted = n ? n->value() : 0;
+  return sigma >= 0.0;
+  }
+return false;
+}
+
+std::vector<SubSampleStatCalculator::SubSample> SubSampleStatCalculator::combinePtHatBins(unsigned int nBins,
+                                                                                          const String & normalization)
+{
+// the directories <sub-sample>_pthat<k>, by sub-sample
+std::map<String, std::vector<SubSample>> groups;
+for (const SubSample & s : findSubSamples())
+  {
+  const std::string name = FileSystem::name(s.path).str();
+  const size_t at = name.rfind("_pthat");
+  if (at == std::string::npos) continue;                     // e.g. the <sub-sample>_CrossSection of an earlier run
+  unsigned int k = 0;
+  try { k = (unsigned int) std::stoul(name.substr(at + 6)); } catch (const std::exception &) { continue; }
+  if (k >= nBins)
+    throw Exception(String("pT-hat bin ") + String(name) + String(" beyond PTHAT:BINS"), __FUNCTION__);
+  std::vector<SubSample> & group = groups[String(name.substr(0, at))];
+  group.resize(nBins);
+  group[k] = s;
+  }
+if (groups.empty()) throw Exception(String("no pT-hat bin (<sub-sample>_pthat<k>) in ") + _importPath, __FUNCTION__);
+for (const auto & item : groups)
+  for (unsigned int k = 0; k < nBins; k++)
+    if (item.second[k].path.isEmpty())
+      throw Exception(String("sub-sample ") + item.first + String(": pT-hat bin ") + String(std::to_string(k))
+                      + String(" missing"), __FUNCTION__);
+// the cross section of each bin, averaged over the sub-samples (weighted by their events)
+std::vector<double> sumSigmaN(nBins, 0.0), sumN(nBins, 0.0), sumError2N2(nBins, 0.0), low(nBins, -1.0), high(nBins, -1.0);
+std::map<String, std::vector<double>> events;
+for (const auto & item : groups)
+  {
+  std::vector<double> & n = events[item.first];
+  n.assign(nBins, 0.0);
+  for (unsigned int k = 0; k < nBins; k++)
+    {
+    const SubSample & s = item.second[k];
+    std::unique_ptr<CapFile> file(CapFile::openOldCapFile(s.path, s.file));
+    double sigma = -1.0, error = 0.0, ptMin = -1.0, ptMax = -1.0;
+    long accepted = 0;
+    if (!crossSection(file->folder(), sigma, error, accepted, ptMin, ptMax))
+      throw Exception(String("no cross section (CAP_SIGMA_GEN, PythiaEventGenerator) in ") + s.path, __FUNCTION__);
+    if (accepted <= 0) throw Exception(String("no event accepted in ") + s.path, __FUNCTION__);
+    n[k] = double(accepted);
+    sumSigmaN[k] += sigma * n[k];
+    sumError2N2[k] += error * error * n[k] * n[k];
+    sumN[k] += n[k];
+    low[k] = ptMin;
+    high[k] = ptMax;
+    }
+  }
+std::vector<double> sigma(nBins), sigmaError(nBins);
+double covered = 0.0;
+for (unsigned int k = 0; k < nBins; k++)
+  {
+  sigma[k] = sumSigmaN[k] / sumN[k];
+  sigmaError[k] = std::sqrt(sumError2N2[k]) / sumN[k];
+  covered += sigma[k];
+  }
+const bool perEvent = normalization == "COVERED";
+if (!perEvent && normalization != "SIGMA")
+  throw Exception(String("unknown PTHAT:NORMALIZATION ") + normalization + String(" (SIGMA or COVERED)"), __FUNCTION__);
+if (reportInfo(__FUNCTION__))
+  {
+  printCR();
+  printValue("pT-hat bins", int(nBins));
+  for (unsigned int k = 0; k < nBins; k++)
+    {
+    char text[160];
+    std::snprintf(text, sizeof(text), "[%g, %g) GeV/c: sigma = %.6g +- %.2g mb", low[k], high[k], sigma[k], sigmaError[k]);
+    printValue((String("pT-hat bin ") + String(std::to_string(k))).data(), String(text));
+    }
+  printValue("Cross section covered (mb)", covered);
+  printValue("Normalization", perEvent ? String("per event of the range covered") : String("cross section (mb)"));
+  }
+// the sum of the bins of each sub-sample, written to <sub-sample>_CrossSection
+std::vector<SubSample> result;
+for (const auto & item : groups)
+  {
+  std::vector<std::unique_ptr<CapFile>> files;
+  std::vector<const Folder *> folders;
+  std::vector<double> weights;
+  for (unsigned int k = 0; k < nBins; k++)
+    {
+    files.emplace_back(CapFile::openOldCapFile(item.second[k].path, item.second[k].file));
+    folders.push_back(&files.back()->folder());
+    weights.push_back(sigma[k] / events.at(item.first)[k]);
+    }
+  Folder sum;
+  weightedSum(folders, weights, perEvent ? covered : 1.0, sum);
+  // the cross section of the bins replaces that of the run of bin 0 (copied with its folder)
+  for (const String & path : sum.paths())
+    {
+    const String leaf = FileSystem::name(path);
+    if (leaf == "CAP_SIGMA_GEN" || leaf == "CAP_SIGMA_ERR" || leaf == "CAP_N_ACCEPTED" || leaf == "CAP_PTHAT_MIN"
+        || leaf == "CAP_PTHAT_MAX")
+      sum.remove(path);
+    }
+  for (unsigned int k = 0; k < nBins; k++)
+    {
+    char text[200];
+    std::snprintf(text, sizeof(text), "%.17g %.17g %.17g %.17g %.17g", low[k], high[k], sigma[k], sigmaError[k],
+                  events.at(item.first)[k]);
+    String key = String("CAP_PTHAT_BIN_") + String(std::to_string(k));
+    sum.add(new StringParameter(key, String(text)), key);
+    }
+  char text[64];
+  std::snprintf(text, sizeof(text), "%.17g", covered);
+  sum.add(new StringParameter("CAP_SIGMA_COVERED", String(text)), "CAP_SIGMA_COVERED");
+  sum.add(new StringParameter("CAP_NORMALIZATION", perEvent ? String("COVERED") : String("SIGMA")), "CAP_NORMALIZATION");
+  SubSample combined;
+  combined.path = FileSystem::join(_importPath, item.first + String("_CrossSection"));
+  combined.file = item.second[0].file;
+  FileSystem::createDirectory(FileSystem::expand(combined.path));
+  std::unique_ptr<CapFile> output(CapFile::openRecreateCapFile(combined.path, combined.file));
+  output->folder() = sum;
+  output->write(true);
+  result.push_back(combined);
+  }
 return result;
 }
 
@@ -403,6 +609,9 @@ if (mode != "SUBSAMPLE" && mode != "JACKKNIFE")
 if (weighting != "EVENTS" && weighting != "EQUAL")
   throw Exception(String("unknown WEIGHTS ") + weighting + String(" (EVENTS or EQUAL)"), __FUNCTION__);
 bool withStages = mode == "JACKKNIFE" && !workflowFile.isNull() && workflowFile != "NONE";
+const int nPtHatBins = _configuration.valueInt(createKey(taskName,"PTHAT:BINS"),true,0);
+const String normalization = upper(_configuration.valueString(createKey(taskName,"PTHAT:NORMALIZATION"),true,"SIGMA"));
+if (nPtHatBins > 0) weighting = "EQUAL";          // the sub-samples: the same events in each pT-hat bin
 std::vector<String> stages;
 XmlDocument workflow;
 if (withStages)
@@ -412,7 +621,8 @@ if (withStages)
   workflow = XmlDocument::read(FileSystem::expand(workflowFile));
   }
 
-std::vector<SubSample> samples = findSubSamples();
+std::vector<SubSample> samples = nPtHatBins > 0 ? combinePtHatBins((unsigned int) nPtHatBins, normalization)
+                                                 : findSubSamples();
 if (samples.size() < 2)
   throw Exception(String("fewer than 2 sub-samples in ") + _importPath, __FUNCTION__);
 if (reportInfo(__FUNCTION__))

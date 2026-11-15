@@ -14,6 +14,7 @@
 #include "Configuration.hpp"
 #include "PrintHelpers.hpp"
 #include "Task.hpp"
+#include "EventProcessor.hpp"
 #include "CapFile.hpp"
 #include "NameHelpers.hpp"
 #include <memory>
@@ -222,6 +223,11 @@ int main(int argc, char* argv[])
   catch (const std::exception &) { throw CAP::ConfigurationException(mainTask->name(),"Invalid JOB:SEED "+seedText,"main()"); }
   if (seed!=0) CAP::MATH::randomGenerator().setSeed(seed);
   CAP::printValue("Random seed",seed);
+  // Normalization of the histograms (<main>:JOB:NORMALIZE, default true): a job of a production in pT-hat bins keeps
+  // the raw histograms, added with the weights sigma/N of the bins by SubSampleStatCalculator.
+  bool normalize = jobConfiguration.valueBool(CAP::createKey(mainTask->name(),"JOB:NORMALIZE"),true,true);
+  CAP::EventProcessor::setNormalizeHistograms(normalize);
+  if (!normalize) CAP::printValue("Histograms normalized","no (raw counts kept)");
   mainTask->initialize();
   if (!inputName.isEmpty() && inputName!="NONE")
     {

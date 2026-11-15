@@ -216,9 +216,16 @@ namespace CAP
   //! @brief Value of the quantity used to classify the current event (multiplicity, energy or spherocity, according
   //! to the event class type). @return value @throws Exception for an unknown event class type
   double getEvtClassValue() const;
-  //! @brief Divide the histograms of each event filter by the number of events it accepted (see eventAccepted()).
+  //! @brief Divide the histograms of each event filter by the number of events it accepted (see eventAccepted()),
+  //! unless the job keeps the raw histograms (see setNormalizeHistograms()).
   virtual void scaleHistograms();
   using AnalysisTask::scaleHistograms;
+  //! @brief Whether the analyzers of the job normalize their histograms at the end of the run (default true). A job
+  //! of a production in pT-hat bins keeps the raw histograms (JOB:NORMALIZE false, see CAP.cxx): they are added with
+  //! the weights sigma/N of the bins by SubSampleStatCalculator. @param normalize true to normalize
+  static void setNormalizeHistograms(bool normalize);
+  //! @brief Whether the analyzers normalize their histograms. @return true if so
+  static bool normalizeHistograms();
 
   //! @brief Post-processing after the run: calculateDerived().
   virtual void postProcess();

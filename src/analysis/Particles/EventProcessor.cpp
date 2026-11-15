@@ -245,9 +245,16 @@ namespace CAP
   return 0;
   }
 
+  namespace { bool theNormalizeHistograms = true; }   // see setNormalizeHistograms()
+
+  void EventProcessor::setNormalizeHistograms(bool normalize) { theNormalizeHistograms = normalize; }
+
+  bool EventProcessor::normalizeHistograms() { return theNormalizeHistograms; }
+
   void EventProcessor::scaleHistograms()
   {
   if (reportDebug(__FUNCTION__)) { printCR();}
+  if (!normalizeHistograms()) return;          // raw histograms kept (a job of a production in pT-hat bins)
   std::vector<double> factors;
   factors.clear();
   double f;
