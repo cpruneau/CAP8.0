@@ -343,8 +343,9 @@ namespace CAP
     _renameText = pane.title().str();
     _renameRequested = true;
     };
-  pane.onCompare = [this](const MATH::DataPoints * a, const MATH::DataPoints * b, const String & la, const String & lb)
-    { showComparison(a, b, la, lb); };
+  pane.onCompare = [this](const MATH::DataPoints * a, const MATH::DataPoints * b, const String & la, const String & lb,
+                          bool ratio)
+    { showComparison(a, b, la, lb, ratio); };
   }
 
   // ------------------------------------------------------------------------------------------------ menus
@@ -1297,7 +1298,7 @@ namespace CAP
   }
 
   void CapApp::showComparison(const MATH::DataPoints * first, const MATH::DataPoints * second, const String & firstLabel,
-                              const String & secondLabel)
+                              const String & secondLabel, bool ratio)
   {
   const MATH::Histogram * a = dynamic_cast<const MATH::Histogram*>(first);
   const MATH::Histogram * b = dynamic_cast<const MATH::Histogram*>(second);
@@ -1308,10 +1309,15 @@ namespace CAP
                      "they cannot be compared bin by bin."));
     return;
     }
+  // second - first, or second / first (bins empty in either, or with a zero denominator, left empty)
   MATH::Histogram * difference = nullptr;
-  try { difference = new MATH::Histogram(*b - *a); }
-  catch (const std::exception & e) { _gui.showMessage("Compare", String("No difference: ") + String(e.what())); return; }
-  String differenceLabel = secondLabel + String(" - ") + firstLabel;
+  try { difference = new MATH::Histogram(ratio ? *b / *a : *b - *a); }
+  catch (const std::exception & e)
+    {
+    _gui.showMessage("Compare", String(ratio ? "No ratio: " : "No difference: ") + String(e.what()));
+    return;
+    }
+  String differenceLabel = secondLabel + String(ratio ? " / " : " - ") + firstLabel;
   difference->setName(differenceLabel);
   difference->setTitle(differenceLabel);
   _data.emplace_back(difference);

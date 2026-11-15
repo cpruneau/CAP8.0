@@ -211,13 +211,14 @@ namespace CAP
   void showProjections(const MATH::DataPoints * data);
   //!
   //! @brief Compare two histograms of the same binning (e.g. from two files): a new pane with the two histograms
-  //! overlaid and their difference (second - first; for maps, the two maps and their difference side by side), and
+  //! overlaid and their difference (second - first) or ratio (second / first; for maps, the two maps and their
+  //! difference or ratio side by side), and
   //! the Comparison window with the chi-square compatibility test and, for histograms of rank 1, the
   //! Kolmogorov-Smirnov test. @param first first histogram @param second second histogram @param firstLabel label of
-  //! the first @param secondLabel label of the second
+  //! the first @param secondLabel label of the second @param ratio true for the ratio, false for the difference
   //!
   void showComparison(const MATH::DataPoints * first, const MATH::DataPoints * second, const String & firstLabel,
-                      const String & secondLabel);
+                      const String & secondLabel, bool ratio=false);
   //! @brief Show the objects of a folder, one per graph of the current canvas (divided as needed).
   //! @param file file id @param folderPath folder in the file ("" for the top)
   void showFolder(int file, const String & folderPath);

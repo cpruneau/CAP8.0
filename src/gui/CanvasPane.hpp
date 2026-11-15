@@ -137,9 +137,10 @@ namespace CAP
   std::function<void(const MATH::DataPoints * data, unsigned int fit)> onResidualMap;
   //! Called by "Projections" in the context menu of a graph, for a histogram of rank 2 with fits.
   std::function<void(const MATH::DataPoints * data)> onProjections;
-  //! Called by "Compare" in the context menu of a graph, for two histograms of the same rank shown in it.
+  //! Called by "Compare" in the context menu of a graph, for two histograms of the same rank shown in it: their
+  //! difference (ratio false: second - first) or their ratio (ratio true: second / first).
   std::function<void(const MATH::DataPoints * first, const MATH::DataPoints * second,
-                     const String & firstLabel, const String & secondLabel)> onCompare;
+                     const String & firstLabel, const String & secondLabel, bool ratio)> onCompare;
   //! Called by "Save Graph As..." in the context menu of graph k.
   std::function<void(int graph)> onSaveGraph;
   //! Called by "Save Canvas As..." in the context menu of a graph.
