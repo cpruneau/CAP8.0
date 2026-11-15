@@ -868,13 +868,14 @@ def run_gui(initial_file=None, hook=None):
             root.after(200, self._place_sashes)
 
         def _place_sashes(self):
-            # initial heights: workflow 22%, filters 44%, tasks 18%, output 16%
+            # initial heights: workflow 20%, filters 38%, tasks (with the files and the 3 lines of the sub-samples)
+            # 30%, output 12%
             self.root.update_idletasks()
             h = self.panes.winfo_height()
             if h > 100:
-                self.panes.sashpos(0, int(h * 0.22))
-                self.panes.sashpos(1, int(h * 0.66))
-                self.panes.sashpos(2, int(h * 0.84))
+                self.panes.sashpos(0, int(h * 0.20))
+                self.panes.sashpos(1, int(h * 0.58))
+                self.panes.sashpos(2, int(h * 0.88))
 
         def _dialog(self, kind, **options):
             """File dialog of filedialog.<kind>. On macOS the file types are left out: Tk's native panel can abort
@@ -1157,7 +1158,11 @@ def run_gui(initial_file=None, hook=None):
 
         # ---------------------------------------------------------------------------------------------- parameters
         def _make_parameters(self, parent):
-            line = ttk.Frame(parent)
+            top = ttk.Frame(parent)
+            top.pack(fill=tk.X, pady=(0, 4))
+            left = ttk.Frame(top)
+            left.pack(side=tk.LEFT, fill=tk.Y)
+            line = ttk.Frame(left)
             line.pack(fill=tk.X, pady=(6, 4))
             self.stage_var = tk.StringVar(self.root, value=self.stage)
             self.stage_buttons = {}
@@ -1174,26 +1179,35 @@ def run_gui(initial_file=None, hook=None):
                 self.stage_buttons[stage] = b
             ttk.Label(line, text="Double-click a task to configure it.", foreground="gray40").pack(side=tk.LEFT,
                                                                                                 padx=10)
-            ttk.Button(line, text="Browse\u2026", width=8, command=self._browse_output).pack(side=tk.RIGHT)
-            self.output_dir = tk.StringVar(value=self.settings["output_dir"])
-            ttk.Entry(line, textvariable=self.output_dir, width=46).pack(side=tk.RIGHT, padx=4)
-            label = ttk.Label(line, text="Output directory:")
-            label.pack(side=tk.RIGHT)
+            # top right: the output directory, the output file below it
+            out = ttk.Frame(top)
+            out.pack(side=tk.RIGHT, anchor="ne")
+            label = ttk.Label(out, text="Output directory:")
+            label.grid(row=0, column=0, sticky="e", pady=(6, 2))
             ToolTip(label, "Directory of the files of the job (last argument of bin/CAP); the job runs in this "
-                           "directory")
-            files = ttk.Frame(parent)
-            files.pack(fill=tk.X, pady=(0, 4))
+                           "directory. Sub-samples and pT-hat bins go to <output directory>/<output file without "
+                           "extension>")
+            self.output_dir = tk.StringVar(value=self.settings["output_dir"])
+            ttk.Entry(out, textvariable=self.output_dir, width=46).grid(row=0, column=1, sticky="we", padx=4, pady=(6, 2))
+            ttk.Button(out, text="Browse\u2026", width=8, command=self._browse_output).grid(row=0, column=2, pady=(6, 2))
             self.job_vars = {}
-            for name, text, tip in (("OUTPUT_FILE", "Output file:", "File where the job writes the histograms of all its "
-                                     "tasks: a folder per task, holding a folder per combination of filters (default: "
-                                     "Workflow.cap)"),
-                                    ("INPUT_FILE", "Input file:", "File the histograms imported are read from (a derived "
-                                     "run reads the output file of its fill run)")):
-                label = ttk.Label(files, text=text)
-                label.pack(side=tk.LEFT, padx=(0 if name == "OUTPUT_FILE" else 16, 4))
-                ToolTip(label, tip)
+            files = ttk.Frame(left)
+            files.pack(side=tk.BOTTOM, anchor="w", pady=(0, 4))
+            for name, text, tip, where, row in (
+                    ("OUTPUT_FILE", "Output file:", "File where the job writes the histograms of all its tasks: a "
+                     "folder per task, holding a folder per combination of filters (default: Workflow.cap)", out, 1),
+                    ("INPUT_FILE", "Input file:", "File the histograms imported are read from (a derived run reads the "
+                     "output file of its fill run)", files, 0)):
+                label = ttk.Label(where, text=text)
                 var = tk.StringVar(self.root, value=self.library.job.get(name, ""))
-                ttk.Entry(files, textvariable=var, width=30).pack(side=tk.LEFT)
+                entry = ttk.Entry(where, textvariable=var, width=30)
+                if where is out:
+                    label.grid(row=row, column=0, sticky="e", pady=(0, 4))
+                    entry.grid(row=row, column=1, sticky="w", padx=4, pady=(0, 4))
+                else:
+                    label.pack(side=tk.LEFT, padx=(0, 4))
+                    entry.pack(side=tk.LEFT)
+                ToolTip(label, tip)
                 var.trace_add("write", lambda *a, n=name, v=var: self._set_job(n, v.get().strip()))
                 self.job_vars[name] = var
             self.subsample_bar = subsamples.make_bar(parent, self, self.subsamples, sys.modules[__name__], ToolTip)
@@ -1677,7 +1691,8 @@ def run_gui(initial_file=None, hook=None):
                 self._changed()
 
         def _production(self, title, write=True):
-            """Write the files of the sub-samples in the output directory (RunCAPSubSamples.write_production()).
+            """Write the files of the sub-samples in <output directory>/<output file stem> (production_directory(),
+            RunCAPSubSamples.write_production()).
             Returns the production, or None (error shown)."""
             if self._busy():
                 return None
@@ -1692,7 +1707,7 @@ def run_gui(initial_file=None, hook=None):
                 messagebox.showerror(title, "Enter the output directory.")
                 return None
             try:
-                production = subsamples.write_production(output_dir, self.subsamples, sys.modules[__name__],
+                production = subsamples.write_production(production_directory(output_dir, self.jobs), self.subsamples, sys.modules[__name__],
                                                          self.all_stages(), self.library, self.templates, self.jobs,
                                                          subsample_files=write)
             except (ValueError, OSError) as e:
@@ -2053,6 +2068,16 @@ def run_gui(initial_file=None, hook=None):
 # Command line
 # ------------------------------------------------------------------------------------------------------------------
 
+def production_directory(output_dir, jobs):
+    """Directory of the sub-samples (and pT-hat bins) of a workflow: <output dir>/<output file of event processing
+    without its extension> (that of the first stage with an output file; WRAPPER_NAME by default), so the folders of
+    the sub-runs of different outputs do not mix. jobs: the files of the job of each stage."""
+    output = next((jobs[s].get("OUTPUT_FILE", "").strip() for s in STAGES
+                   if jobs.get(s) and jobs[s].get("OUTPUT_FILE", "").strip()), "")
+    name = os.path.splitext(os.path.basename(output))[0] if output else ""
+    return os.path.join(output_dir, name or WRAPPER_NAME)
+
+
 def subsamples_main(args):
     """--subsamples FILE [DIR]: write the files of the sub-samples of the workflow FILE in DIR (by default the output
     directory of the settings) and print the commands that run them (with Slurm, the sbatch script to submit);
@@ -2067,7 +2092,7 @@ def subsamples_main(args):
         print(e, file=sys.stderr)
         return 1
     settings = subsamples.read_settings(args[1])
-    directory = args[2] if len(args) > 2 else load_settings()["output_dir"]
+    directory = production_directory(args[2] if len(args) > 2 else load_settings()["output_dir"], jobs)
     api = sys.modules[__name__]
     try:
         production = subsamples.write_production(directory, settings, api, stages, library, templates, jobs,
