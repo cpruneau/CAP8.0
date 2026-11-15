@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- CAP workflow written by RunCAP.py on 2026-11-14 19:31:14 -->
+<!-- CAP workflow written by RunCAP.py on 2026-11-15 13:42:10 -->
 <CAP version="1">
   <TASK name="Workflow" class="CAP::Task" severity="INFO" stage="EventProcessing">
     <GROUP name="JOB">
@@ -327,7 +327,7 @@
           <PARAMETER name="FORCE_REWRITE" type="bool">true</PARAMETER>
         </GROUP>
         <GROUP name="REQUESTED">
-          <PARAMETER name="N" type="long">10000</PARAMETER>
+          <PARAMETER name="N" type="long">100000</PARAMETER>
         </GROUP>
         <GROUP name="REPORT">
           <PARAMETER name="N" type="long">1000</PARAMETER>
@@ -648,6 +648,8 @@
         <PARAMETER name="SaveNeutrinos" type="bool">false</PARAMETER>
         <PARAMETER name="SaveQuarks" type="bool">false</PARAMETER>
         <PARAMETER name="SaveGaugeBosons" type="bool">false</PARAMETER>
+        <PARAMETER name="PTHAT_MIN" type="double">-1</PARAMETER>
+        <PARAMETER name="PTHAT_MAX" type="double">-1</PARAMETER>
         <PARAMETER name="Option0" type="string">Init:showProcesses=off</PARAMETER>
         <PARAMETER name="Option1" type="string">Init:showMultipartonInteractions=off</PARAMETER>
         <PARAMETER name="Option2" type="string">Init:showChangedSettings=off</PARAMETER>
@@ -1134,7 +1136,7 @@
         </GROUP>
         <GROUP name="UE">
           <PARAMETER name="MODE" type="string">TRANSVERSE</PARAMETER>
-          <PARAMETER name="ETA_MAX" type="double">3</PARAMETER>
+          <PARAMETER name="ETA_MAX" type="double">0.9</PARAMETER>
         </GROUP>
         <GROUP name="EVENT_FILTER_0">
           <PARAMETER name="NAME" type="string">ALL</PARAMETER>
@@ -1451,7 +1453,7 @@
       <Parameter name="_dbDisableWeakDecays">false</Parameter>
     </ParticleDb>
   </RUNCAP>
-  <SUBSAMPLES enabled="true" count="10" parallel="16" mode="SUBSAMPLE" stage="" where="LOCAL" prefix="sub_" seed="112133" weights="EVENTS">
+  <SUBSAMPLES enabled="true" count="10" parallel="16" mode="SUBSAMPLE" stage="" where="LOCAL" prefix="sub_" seed="112133" weights="EVENTS" pthat="" normalization="SIGMA">
     <SLURM host="" cap="" directory="" partition="" time="04:00:00" memory="4G" account="" />
   </SUBSAMPLES>
 </CAP>
