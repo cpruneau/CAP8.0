@@ -625,8 +625,9 @@ class ParallelRunner:
 # ----------------------------------------------------------------------------------------------------------------
 
 def make_bar(parent, app, settings, api, ToolTip):
-    """The row of the sub-samples in the RunCAP window: switch, count, jobs at once, mode, stage combined, where, and
-    the buttons (Slurm settings, Submit, Status, Fetch, Combine). app provides subsamples_changed(),
+    """The sub-samples in the RunCAP window, in three lines: where the jobs run (Local, with the jobs at once, or
+    Slurm); the switch, count, mode, stage combined, pT-hat bins and their normalization, and Combine; the Slurm
+    settings and the buttons Submit, Status, Fetch. app provides subsamples_changed(),
     run_subsamples(), combine_subsamples(), slurm_action(kind) and present_stages()."""
     import tkinter as tk
     from tkinter import ttk
@@ -660,76 +661,96 @@ def make_bar(parent, app, settings, api, ToolTip):
         slurm = settings.where == SLURM
         for b in (bar.submit, bar.status, bar.fetch):
             b.configure(state=tk.NORMAL if slurm else tk.DISABLED)
+        bar.slurm_label.configure(text=("%s:%s" % (settings.slurm.host, settings.slurm.directory)
+                                        if slurm and settings.slurm.host else ""))
         bar.parallel_entry.configure(state=tk.DISABLED if slurm else tk.NORMAL)
         bar.normalization_box.configure(state="readonly" if settings.pthat() else tk.DISABLED)
         present = app.present_stages()
         bar.stage_box.configure(values=["Last stage"] + [api.STAGE_TITLES[s] for s in present])
 
+    # three lines: where the jobs run; the sub-samples, their combination and the pT-hat bins; the jobs on Slurm
+    where_line, samples_line, slurm_line = ttk.Frame(bar), ttk.Frame(bar), ttk.Frame(bar)
+    for line in (where_line, samples_line, slurm_line):
+        line.pack(fill=tk.X, pady=(0, 2))
+
+    # line 1: where
+    ttk.Label(where_line, text="Run the sub-samples:").pack(side=tk.LEFT)
+    vars_["where"] = tk.StringVar(bar, value="Slurm" if settings.where == SLURM else "Local")
+    r = ttk.Radiobutton(where_line, text="Local", value="Local", variable=vars_["where"], command=changed)
+    r.pack(side=tk.LEFT, padx=(6, 0))
+    ToolTip(r, "On this computer, several at once")
+    ttk.Label(where_line, text="at once:").pack(side=tk.LEFT, padx=(4, 0))
+    vars_["parallel"] = tk.StringVar(bar, value=str(settings.parallel))
+    bar.parallel_entry = ttk.Entry(where_line, textvariable=vars_["parallel"], width=4)
+    bar.parallel_entry.pack(side=tk.LEFT, padx=(2, 12))
+    ToolTip(bar.parallel_entry, "Sub-samples run at the same time on this computer (default: number of cores)")
+    r = ttk.Radiobutton(where_line, text="Slurm", value="Slurm", variable=vars_["where"], command=changed)
+    r.pack(side=tk.LEFT)
+    ToolTip(r, "As a job array on a Slurm cluster (the settings and buttons of the line below)")
+
+    # line 2: the sub-samples, their combination and the pT-hat bins
     vars_["enabled"] = tk.BooleanVar(bar, value=settings.enabled)
-    b = ttk.Checkbutton(bar, text="Sub-samples:", variable=vars_["enabled"], command=changed)
+    b = ttk.Checkbutton(samples_line, text="Sub-samples:", variable=vars_["enabled"], command=changed)
     b.pack(side=tk.LEFT)
     ToolTip(b, "Run all stages runs the workflow as independent sub-samples (each with its own seeds, in "
-               "<output>/%s000, ...), then combines them (SubSampleStatCalculator)" % settings.prefix)
+               "<output>/<output file>/%s000, ...), then combines them (SubSampleStatCalculator)" % settings.prefix)
     vars_["count"] = tk.StringVar(bar, value=str(settings.count))
-    e = ttk.Entry(bar, textvariable=vars_["count"], width=5)
+    e = ttk.Entry(samples_line, textvariable=vars_["count"], width=5)
     e.pack(side=tk.LEFT, padx=(2, 8))
     ToolTip(e, "Number of sub-samples (each runs the number of events of the workflow)")
-    ttk.Label(bar, text="at once:").pack(side=tk.LEFT)
-    vars_["parallel"] = tk.StringVar(bar, value=str(settings.parallel))
-    bar.parallel_entry = ttk.Entry(bar, textvariable=vars_["parallel"], width=4)
-    bar.parallel_entry.pack(side=tk.LEFT, padx=(2, 8))
-    ToolTip(bar.parallel_entry, "Sub-samples run at the same time on this computer (default: number of cores)")
     vars_["mode"] = tk.StringVar(bar, value=MODE_TITLES[settings.mode])
-    box = ttk.Combobox(bar, textvariable=vars_["mode"], values=[MODE_TITLES[m] for m in MODES], state="readonly",
-                       width=22)
+    box = ttk.Combobox(samples_line, textvariable=vars_["mode"], values=[MODE_TITLES[m] for m in MODES],
+                       state="readonly", width=22)
     box.pack(side=tk.LEFT, padx=(0, 8))
     box.bind("<<ComboboxSelected>>", changed)
     ToolTip(box, "Sub-sample average: mean of the sub-samples with the uncertainty of the mean. Jackknife on results: "
                  "delete-one jackknife of their outputs. Jackknife through stages: the sub-samples run event processing "
                  "only; the later stages are run on the whole sample and on each replica (nonlinear observables). The "
                  "jackknife also writes the bias-corrected values (_biasCorrected)")
-    ttk.Label(bar, text="combine:").pack(side=tk.LEFT)
+    ttk.Label(samples_line, text="combine:").pack(side=tk.LEFT)
     vars_["stage"] = tk.StringVar(bar, value=api.STAGE_TITLES.get(settings.stage, "Last stage"))
-    bar.stage_box = ttk.Combobox(bar, textvariable=vars_["stage"], state="readonly", width=16)
-    bar.stage_box.pack(side=tk.LEFT, padx=(2, 8))
+    bar.stage_box = ttk.Combobox(samples_line, textvariable=vars_["stage"], state="readonly", width=16)
+    bar.stage_box.pack(side=tk.LEFT, padx=(2, 12))
     bar.stage_box.bind("<<ComboboxSelected>>", changed)
     ToolTip(bar.stage_box, "Stage whose output is combined")
-    ttk.Label(bar, text="pT-hat bins:").pack(side=tk.LEFT)
+    ttk.Label(samples_line, text="pT-hat bins:").pack(side=tk.LEFT)
     vars_["pthat"] = tk.StringVar(bar, value=settings.ptHatEdges)
-    e = ttk.Entry(bar, textvariable=vars_["pthat"], width=18)
+    e = ttk.Entry(samples_line, textvariable=vars_["pthat"], width=22)
     e.pack(side=tk.LEFT, padx=(2, 2))
     ToolTip(e, "Edges of the pT-hat bins of PYTHIA (GeV/c, e.g. 5 10 20 40 80 160; empty: none). Each sub-sample is then "
                "one job per bin (%s000_pthat00, ...), the same number of events in each, with PythiaEventGenerator "
                "PTHAT_MIN/PTHAT_MAX set to the edges of the bin (a hard process: HardQCD:all = on). The combination "
                "adds the bins with the weights sigma/N of each bin" % settings.prefix)
     vars_["normalization"] = tk.StringVar(bar, value=NORMALIZATION_TITLES[settings.normalization])
-    bar.normalization_box = ttk.Combobox(bar, textvariable=vars_["normalization"], state="readonly", width=9,
+    bar.normalization_box = ttk.Combobox(samples_line, textvariable=vars_["normalization"], state="readonly", width=9,
                                          values=[NORMALIZATION_TITLES[n] for n in (SIGMA, COVERED)])
     bar.normalization_box.pack(side=tk.LEFT, padx=(0, 8))
     bar.normalization_box.bind("<<ComboboxSelected>>", changed)
     ToolTip(bar.normalization_box, "pT-hat bins: the differential cross sections in mb, or per event of the pT-hat "
                                    "range covered (divided by the sum of the cross sections of the bins; for later "
                                    "stages computing ratios or correlation functions)")
-    vars_["where"] = tk.StringVar(bar, value="Slurm" if settings.where == SLURM else "Local")
-    for text in ("Local", "Slurm"):
-        r = ttk.Radiobutton(bar, text=text, value=text, variable=vars_["where"], command=changed)
-        r.pack(side=tk.LEFT)
-    s = ttk.Button(bar, text="Slurm…", width=7, command=lambda: SlurmDialog(bar, settings, app.subsamples_changed))
-    s.pack(side=tk.LEFT, padx=(4, 0))
+    c = ttk.Button(samples_line, text="Combine", width=8, command=app.combine_subsamples)
+    c.pack(side=tk.LEFT, padx=(8, 0))
+    ToolTip(c, "Combine the sub-samples of the output directory (<output file>/%s*) as set here, without running them"
+            % settings.prefix)
+
+    # line 3: the jobs on Slurm
+    ttk.Label(slurm_line, text="Slurm:").pack(side=tk.LEFT)
+    s = ttk.Button(slurm_line, text="Settings…", width=9,
+                   command=lambda: SlurmDialog(bar, settings, app.subsamples_changed))
+    s.pack(side=tk.LEFT, padx=(6, 0))
     ToolTip(s, "Cluster, directories, partition, time, memory and setup of the jobs on Slurm")
     for name, text, kind, tip in (("submit", "Submit", "submit", "Write the production in the output directory, copy "
                                    "it to the cluster and submit the job array (ssh with keys, no password)"),
                                   ("status", "Status", "status", "Jobs of the array in the queue, sub-samples done"),
                                   ("fetch", "Fetch", "fetch", "Copy the outputs of the sub-samples back to the "
                                    "output directory")):
-        b = ttk.Button(bar, text=text, width=7, command=lambda k=kind: app.slurm_action(k))
+        b = ttk.Button(slurm_line, text=text, width=7, command=lambda k=kind: app.slurm_action(k))
         b.pack(side=tk.LEFT, padx=(4, 0))
         ToolTip(b, tip)
         setattr(bar, name, b)
-    c = ttk.Button(bar, text="Combine", width=8, command=app.combine_subsamples)
-    c.pack(side=tk.LEFT, padx=(8, 0))
-    ToolTip(c, "Combine the sub-samples of the output directory (%s*) as set here, without running them" %
-            settings.prefix)
+    bar.slurm_label = ttk.Label(slurm_line, text="", foreground="gray40")
+    bar.slurm_label.pack(side=tk.LEFT, padx=(10, 0))
     for name in ("count", "parallel", "pthat"):
         vars_[name].trace_add("write", changed)
     bar.vars = vars_

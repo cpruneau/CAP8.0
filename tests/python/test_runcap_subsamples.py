@@ -299,7 +299,62 @@ class TestProduction(unittest.TestCase):
             self.assertIn("2 sub-samples", text)
             self.assertIn("sub_001.xml", text)
             self.assertIn("Then combine with:", text)
-            self.assertTrue(os.path.exists(os.path.join(d, "prod", "sub_001.xml")))
+            production = RunCAP.production_directory(os.path.join(d, "prod"), jobs)
+            self.assertEqual(os.path.dirname(production), os.path.join(d, "prod"))
+            self.assertTrue(os.path.exists(os.path.join(production, "sub_001.xml")))
+
+
+class TestProductionDirectory(unittest.TestCase):
+    """Sub-samples go to <output dir>/<output file without extension>."""
+
+    def test_named_after_output_file(self):
+        E, D = RunCAP.EVENTS, RunCAP.DERIVED
+        self.assertEqual(RunCAP.production_directory("/out", {E: {}, D: {}}),
+                         os.path.join("/out", RunCAP.WRAPPER_NAME))
+        jobs = {E: {"OUTPUT_FILE": "PythiaJets.cap"}, D: {"OUTPUT_FILE": "PythiaJetsDerived.cap"}}
+        self.assertEqual(RunCAP.production_directory("/out", jobs), os.path.join("/out", "PythiaJets"))
+        jobs[E] = {"OUTPUT_FILE": "sub/Run.root"}
+        self.assertEqual(RunCAP.production_directory("/out", jobs), os.path.join("/out", "Run"))
+        jobs[E] = {"OUTPUT_FILE": " "}        # event processing without output file: that of the next stage
+        self.assertEqual(RunCAP.production_directory("/out", jobs), os.path.join("/out", "PythiaJetsDerived"))
+
+
+class TestBar(unittest.TestCase):
+    """The sub-sample bar: three lines (where; sub-samples and pT-hat; Slurm)."""
+
+    def test_three_lines(self):
+        try:
+            import tkinter as tk
+            root = tk.Tk()
+        except Exception as e:
+            self.skipTest("no display: %s" % e)
+        root.withdraw()
+
+        class App:
+            changes = 0
+            def subsamples_changed(self, dirty=True):
+                App.changes += 1
+            def present_stages(self):
+                return [RunCAP.EVENTS]
+            combine_subsamples = run_subsamples = lambda self: None
+            def slurm_action(self, kind):
+                pass
+        s = S.SubSampleSettings()
+        bar = S.make_bar(root, App(), s, RunCAP, lambda *a: None)
+        self.assertEqual(len(bar.winfo_children()), 3)
+        self.assertEqual(str(bar.submit.cget("state")), "disabled")
+        bar.vars["where"].set("Slurm")
+        s.slurm.host = "me@login"
+        s.slurm.directory = "/scratch/me"
+        for child in bar.winfo_children()[0].winfo_children():
+            if isinstance(child, tk.Widget) and child.winfo_class() == "TRadiobutton" and child.cget("text") == "Slurm":
+                child.invoke()
+        self.assertEqual(s.where, S.SLURM)
+        self.assertEqual(str(bar.submit.cget("state")), "normal")
+        self.assertEqual(bar.slurm_label.cget("text"), "me@login:/scratch/me")
+        bar.vars["pthat"].set("5 10 20")
+        self.assertEqual(s.ptHatEdges, "5 10 20")
+        root.destroy()
 
 
 class TestUnusedGroups(unittest.TestCase):
