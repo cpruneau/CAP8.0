@@ -17,6 +17,11 @@
 #include "Exceptions.hpp"
 #include "MathConstants.hpp"
 #include "ParticleDb.hpp"
+#include "CapFile.hpp"
+#include "FileSystem.hpp"
+#include "Folder.hpp"
+#include "Histogram.hpp"
+#include <unistd.h>
 
 using namespace CAP;
 
@@ -45,6 +50,7 @@ public:
   MATH::VectorLorentz spherical(double m)    { MATH::VectorLorentz v; generateSpherical(m,v); return v; }
   const std::vector<ParticleType*> & types() const { return _types; }
   void setPsi(double psi)                    { _psi = psi; }
+  long multiplicity()                        { return drawMultiplicity(); }
 };
 
 //! Mean and standard error of a sample.
@@ -223,6 +229,85 @@ int main()
   check(throws(bad4,db), "unknown function: ConfigurationException", __LINE__);
   TestGen bad5; bad5.set("MomentumRange",String("Q"));
   check(throws(bad5,db), "unknown MomentumRange: ConfigurationException", __LINE__);
+  }
+
+  // multiplicity distributions: a function of the registry on [MultMin, MultMax], a histogram of a CAP file
+  {
+  TestGen gen;                                       // P(n) proportional to n on [1, 4]: <n> = 30/10 = 3
+  gen.set("Mult:Distribution",String("FUNCTION"));
+  gen.set("Mult:Function:Name",String("Linear"));
+  gen.set("Mult:Function:Parameters",String("0, 1"));
+  gen.set("MultMin",1);
+  gen.set("MultMax",4);
+  gen.setup(db);
+  Moments m;
+  std::vector<double> count(5,0.0);
+  bool inRange = true;
+  for (int i=0; i<n; i++)
+    {
+    long k = gen.multiplicity();
+    inRange = inRange && k>=1 && k<=4;
+    if (k>=0 && k<=4) count[k]++;
+    m.add(double(k));
+    }
+  check(inRange && std::fabs(m.mean()-3.0)<5*m.error(), "multiplicity f(n) = n on [1, 4]: <n> = 3", __LINE__);
+  check(std::fabs(count[1]/n-0.1)<0.005 && std::fabs(count[4]/n-0.4)<0.005, "multiplicity f(n) = n: P(1), P(4)", __LINE__);
+  TestGen uniform;                                   // the default: uniform on [MultMin, MultMax]
+  uniform.set("MultMin",3);
+  uniform.set("MultMax",5);
+  uniform.setup(db);
+  Moments u;
+  for (int i=0; i<n; i++) u.add(double(uniform.multiplicity()));
+  check(std::fabs(u.mean()-4.0)<5*u.error(), "multiplicity uniform on [3, 5]: <n> = 4", __LINE__);
+  }
+  {
+  char directory[] = "/tmp/cap_basicgen_XXXXXX";
+  if (!::mkdtemp(directory)) { std::printf("FAILED: mkdtemp\n"); return 1; }
+  String dir(directory);
+  {
+  CapFile file{FileSystem::join(dir,"mult.cap")};
+  Folder * folder = file.folder().addFolder("Ana");
+  MATH::Histogram * unit = folder->add(new MATH::Histogram("n","n",5,-0.5,4.5),"n");   // bins centred on 0 ... 4
+  for (int c=0; c<1; c++) unit->fill(1.0);
+  for (int c=0; c<3; c++) unit->fill(3.0);
+  MATH::Histogram * wide = folder->add(new MATH::Histogram("wide","wide",2,0.0,4.0),"wide");   // [0, 2), [2, 4)
+  wide->fill(1.0);
+  wide->fill(3.0);
+  file.write();
+  }
+  auto fromHistogram = [&](const char * name, TestGen & gen)
+    {
+    gen.set("Mult:Distribution",String("HISTOGRAM"));
+    gen.set("Mult:Histogram:Path",dir);
+    gen.set("Mult:Histogram:File",String("mult"));
+    gen.set("Mult:Histogram:Name",String(name));
+    };
+  TestGen gen;                                       // P(1) = 1/4, P(3) = 3/4: <n> = 2.5
+  fromHistogram("Ana/n",gen);
+  gen.setup(db);
+  Moments m;
+  bool only = true;
+  for (int i=0; i<n; i++) { long k = gen.multiplicity(); only = only && (k==1 || k==3); m.add(double(k)); }
+  check(only && std::fabs(m.mean()-2.5)<5*m.error(), "multiplicity from a histogram: n = 1 or 3, <n> = 2.5", __LINE__);
+  TestGen wide;                                      // the integers of each bin equally: 0 ... 3, <n> = 1.5
+  fromHistogram("Ana/wide",wide);
+  wide.setup(db);
+  Moments w;
+  bool range = true;
+  for (int i=0; i<n; i++) { long k = wide.multiplicity(); range = range && k>=0 && k<=3; w.add(double(k)); }
+  check(range && std::fabs(w.mean()-1.5)<5*w.error(), "histogram of wide bins: the integers of each bin", __LINE__);
+  TestGen missing; fromHistogram("Ana/none",missing);
+  check(throws(missing,db), "histogram not in the file: ConfigurationException", __LINE__);
+  TestGen noFile; fromHistogram("Ana/n",noFile); noFile.set("Mult:Histogram:File",String("nofile"));
+  check(throws(noFile,db), "file not found: ConfigurationException", __LINE__);
+  FileSystem::removeTree(dir);
+  }
+  {
+  TestGen bad1; bad1.set("Mult:Distribution",String("POISSON"));
+  check(throws(bad1,db), "unknown Mult:Distribution: ConfigurationException", __LINE__);
+  TestGen bad2; bad2.set("Mult:Distribution",String("FUNCTION")); bad2.set("Mult:Function:Name",String("Linear"));
+  bad2.set("Mult:Function:Parameters",String("0, 0"));
+  check(throws(bad2,db), "multiplicity function zero: ConfigurationException", __LINE__);
   }
 
   std::printf("TestBasicEventGen: %d checks, %d failures\n", nChecks, nFailures);
