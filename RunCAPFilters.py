@@ -845,8 +845,9 @@ FOLDER_LIST_SETTINGS = ("USE", "CREATE", "IMPORT")
 OBSOLETE_KEY = re.compile(r"^(?:HISTOGRAM_[1-4]:(?:EXPORT(?::.*)?|IMPORT:.*|SCALE|OWNER)|nLevels)$")
 #: Files of the job, keys of the task CAP runs (<task>:JOB:<name>, see CAP.cxx): the output file, where the histograms of
 #: all the tasks are written (a folder per task holding a folder per combination of filters; by default <task>.cap),
-#: and the input file, read for the histograms imported (a derived run reads the output file of its fill run).
-JOB_SETTINGS = ("OUTPUT_FILE", "INPUT_FILE")
+#: the input file, read for the histograms imported (a derived run reads the output file of its fill run), and the
+#: directory of the input file (empty: the output directory of the job).
+JOB_SETTINGS = ("OUTPUT_FILE", "INPUT_FILE", "INPUT_PATH")
 JOB_KEY = re.compile(r"^JOB:(%s)$" % "|".join(JOB_SETTINGS))
 
 

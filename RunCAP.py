@@ -868,13 +868,13 @@ def run_gui(initial_file=None, hook=None):
             root.after(200, self._place_sashes)
 
         def _place_sashes(self):
-            # initial heights: workflow 20%, filters 38%, tasks (with the files and the 3 lines of the sub-samples)
-            # 30%, output 12%
+            # initial heights: workflow 20%, filters 32%, tasks (with the files and the 3 lines of the sub-samples)
+            # 36%, output 12%
             self.root.update_idletasks()
             h = self.panes.winfo_height()
             if h > 100:
                 self.panes.sashpos(0, int(h * 0.20))
-                self.panes.sashpos(1, int(h * 0.58))
+                self.panes.sashpos(1, int(h * 0.52))
                 self.panes.sashpos(2, int(h * 0.88))
 
         def _dialog(self, kind, **options):
@@ -1158,11 +1158,7 @@ def run_gui(initial_file=None, hook=None):
 
         # ---------------------------------------------------------------------------------------------- parameters
         def _make_parameters(self, parent):
-            top = ttk.Frame(parent)
-            top.pack(fill=tk.X, pady=(0, 4))
-            left = ttk.Frame(top)
-            left.pack(side=tk.LEFT, fill=tk.Y)
-            line = ttk.Frame(left)
+            line = ttk.Frame(parent)
             line.pack(fill=tk.X, pady=(6, 4))
             self.stage_var = tk.StringVar(self.root, value=self.stage)
             self.stage_buttons = {}
@@ -1179,37 +1175,45 @@ def run_gui(initial_file=None, hook=None):
                 self.stage_buttons[stage] = b
             ttk.Label(line, text="Double-click a task to configure it.", foreground="gray40").pack(side=tk.LEFT,
                                                                                                 padx=10)
-            # top right: the output directory, the output file below it
-            out = ttk.Frame(top)
-            out.pack(side=tk.RIGHT, anchor="ne")
-            label = ttk.Label(out, text="Output directory:")
-            label.grid(row=0, column=0, sticky="e", pady=(6, 2))
-            ToolTip(label, "Directory of the files of the job (last argument of bin/CAP); the job runs in this "
-                           "directory. Sub-samples and pT-hat bins go to <output directory>/<output file without "
-                           "extension>")
-            self.output_dir = tk.StringVar(value=self.settings["output_dir"])
-            ttk.Entry(out, textvariable=self.output_dir, width=46).grid(row=0, column=1, sticky="we", padx=4, pady=(6, 2))
-            ttk.Button(out, text="Browse\u2026", width=8, command=self._browse_output).grid(row=0, column=2, pady=(6, 2))
+            # files of the job, below the stage buttons: a line for the input (directory, file), a line for the
+            # output (directory, folder of the sub-samples, file)
             self.job_vars = {}
-            files = ttk.Frame(left)
-            files.pack(side=tk.BOTTOM, anchor="w", pady=(0, 4))
-            for name, text, tip, where, row in (
-                    ("OUTPUT_FILE", "Output file:", "File where the job writes the histograms of all its tasks: a "
-                     "folder per task, holding a folder per combination of filters (default: Workflow.cap)", out, 1),
-                    ("INPUT_FILE", "Input file:", "File the histograms imported are read from (a derived run reads the "
-                     "output file of its fill run)", files, 0)):
-                label = ttk.Label(where, text=text)
-                var = tk.StringVar(self.root, value=self.library.job.get(name, ""))
-                entry = ttk.Entry(where, textvariable=var, width=30)
-                if where is out:
-                    label.grid(row=row, column=0, sticky="e", pady=(0, 4))
-                    entry.grid(row=row, column=1, sticky="w", padx=4, pady=(0, 4))
-                else:
-                    label.pack(side=tk.LEFT, padx=(0, 4))
-                    entry.pack(side=tk.LEFT)
+
+            def entry(line, name, text, tip, width, first=False):
+                label = ttk.Label(line, text=text)
+                label.pack(side=tk.LEFT, padx=(0 if first else 12, 4))
                 ToolTip(label, tip)
+                var = tk.StringVar(self.root, value=self.library.job.get(name, ""))
+                ttk.Entry(line, textvariable=var, width=width).pack(side=tk.LEFT)
                 var.trace_add("write", lambda *a, n=name, v=var: self._set_job(n, v.get().strip()))
                 self.job_vars[name] = var
+
+            def directory(line, var, text, tip, browse):
+                label = ttk.Label(line, text=text, width=16)
+                label.pack(side=tk.LEFT, padx=(0, 4))
+                ToolTip(label, tip)
+                ttk.Entry(line, textvariable=var, width=46).pack(side=tk.LEFT)
+                ttk.Button(line, text="Browse\u2026", width=8, command=browse).pack(side=tk.LEFT, padx=(4, 0))
+
+            grid = ttk.Frame(parent)
+            grid.pack(fill=tk.X, pady=(0, 4))
+            line = ttk.Frame(grid)
+            line.pack(fill=tk.X, pady=(0, 2))
+            self.input_dir = tk.StringVar(self.root, value=self.library.job.get("INPUT_PATH", ""))
+            self.input_dir.trace_add("write", lambda *a: self._set_job("INPUT_PATH", self.input_dir.get().strip()))
+            self.job_vars["INPUT_PATH"] = self.input_dir
+            directory(line, self.input_dir, "Input directory:", "Directory of the input file (empty: the output "
+                      "directory; an absolute input file name ignores it)", self._browse_input)
+            entry(line, "INPUT_FILE", "Input file:", "File the histograms imported are read from (a derived run reads "
+                  "the output file of its fill run)", 30)
+            line = ttk.Frame(grid)
+            line.pack(fill=tk.X)
+            self.output_dir = tk.StringVar(value=self.settings["output_dir"])
+            directory(line, self.output_dir, "Output directory:", "Directory of the files of the job (last argument "
+                      "of bin/CAP); the job runs in this directory. Sub-samples and pT-hat bins go to <output directory>/<output "
+                      "file without extension>", self._browse_output)
+            entry(line, "OUTPUT_FILE", "Output file:", "File where the job writes the histograms of all its tasks: a "
+                  "folder per task, holding a folder per combination of filters (default: Workflow.cap)", 30)
             self.subsample_bar = subsamples.make_bar(parent, self, self.subsamples, sys.modules[__name__], ToolTip)
             self.subsample_bar.pack(fill=tk.X, pady=(0, 4))
             box = ttk.Frame(parent)
@@ -1241,6 +1245,11 @@ def run_gui(initial_file=None, hook=None):
             for name, var in self.job_vars.items():
                 if var.get() != self.library.job.get(name, ""):
                     var.set(self.library.job.get(name, ""))
+
+        def _browse_input(self):
+            path = self._dialog("askdirectory", initialdir=self.input_dir.get() or self.output_dir.get() or CAP_DIR)
+            if path:
+                self.input_dir.set(path)
 
         def _browse_output(self):
             path = self._dialog("askdirectory", initialdir=self.output_dir.get() or CAP_DIR)

@@ -211,11 +211,14 @@ int main(int argc, char* argv[])
     }
   // Files of the job: the histograms of all its tasks are written to one output file (<main>:JOB:OUTPUT_FILE, by
   // default <main>.cap), a folder per task holding a folder per combination of filters; those imported are read from
-  // one input file (<main>:JOB:INPUT_FILE) organized in the same way. Both are in the histogram directory.
+  // one input file (<main>:JOB:INPUT_FILE) organized in the same way. Both are in the histogram directory, the input
+  // file in <main>:JOB:INPUT_PATH when set; an absolute name is used as is.
   const CAP::Configuration & jobConfiguration = mainTask->configuration();
   CAP::String outputName = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:OUTPUT_FILE"),
                                                         true,mainTask->name()+CAP::String(".cap"));
   CAP::String inputName  = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:INPUT_FILE"),true,"NONE");
+  // Directory of the input file (<main>:JOB:INPUT_PATH; empty: the histogram directory, that of the output file).
+  CAP::String inputPath  = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:INPUT_PATH"),true,"");
   // Seed of CAP::MATH::randomGenerator() (<main>:JOB:SEED, default 112133): the sub-samples of RunCAP.py are given different seeds.
   CAP::String seedText = jobConfiguration.valueString(CAP::createKey(mainTask->name(),"JOB:SEED"),true,"112133");
   long seed = 112133;
@@ -232,7 +235,7 @@ int main(int argc, char* argv[])
   if (!inputName.isEmpty() && inputName!="NONE")
     {
     CAP::String path;
-    CAP::String name = jobFile(inputName,histogramPath,path);
+    CAP::String name = jobFile(inputName,inputPath.isEmpty() ? histogramPath : inputPath,path);
     CAP::printValue("Input file of the job",CAP::CapFile::makeFileName(path,name));
     std::unique_ptr<CAP::CapFile> input(CAP::CapFile::openOldCapFile(path,name));
     mainTask->loadHistograms(*input);

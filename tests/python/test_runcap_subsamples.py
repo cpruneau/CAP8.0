@@ -318,6 +318,17 @@ class TestProductionDirectory(unittest.TestCase):
         jobs[E] = {"OUTPUT_FILE": " "}        # event processing without output file: that of the next stage
         self.assertEqual(RunCAP.production_directory("/out", jobs), os.path.join("/out", "PythiaJetsDerived"))
 
+    def test_input_path_written(self):
+        stages, lib, jobs = workflow()
+        jobs[RunCAP.DERIVED]["INPUT_PATH"] = "/data/fill"
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "w.xml")
+            RunCAP.write_stages(path, stages, lib, TEMPLATES, jobs)
+            self.assertIn('name="INPUT_PATH"', open(path).read())
+            _, _, read, _ = RunCAP.load_stages_with_filters(path, TEMPLATES)
+            self.assertEqual(read[RunCAP.DERIVED]["INPUT_PATH"], "/data/fill")
+            self.assertEqual(read[RunCAP.EVENTS].get("INPUT_PATH", ""), "")
+
 
 class TestBar(unittest.TestCase):
     """The sub-sample bar: three lines (where; sub-samples and pT-hat; Slurm)."""

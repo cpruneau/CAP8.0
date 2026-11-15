@@ -623,7 +623,7 @@ class TestKeys(unittest.TestCase):
                     for p in g.findall("PARAMETER")}
             self.assertEqual(keys, {"OUTPUT_FILE": "fill.cap"})
             _, lib2, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
-            self.assertEqual(lib2.job, {"OUTPUT_FILE": "fill.cap", "INPUT_FILE": ""})
+            self.assertEqual(lib2.job, {"OUTPUT_FILE": "fill.cap", "INPUT_FILE": "", "INPUT_PATH": ""})
             tree = ET.parse(path)
             tree.getroot().remove(tree.getroot().find("RUNCAP"))     # from the keys alone
             tree.write(path)

@@ -87,8 +87,8 @@ class TestStageFiles(unittest.TestCase):
             self.assertEqual(sorted(stages), sorted([RunCAP.EVENTS, RunCAP.DERIVED]))
             self.assertEqual([t.name for t in RunCAP.all_tasks(stages[RunCAP.EVENTS])], ["Run", "Gen", "Single", "Pair"])
             self.assertEqual([t.name for t in stages[RunCAP.DERIVED]], ["SingleDerived", "PairDerived"])
-            self.assertEqual(jobs2[RunCAP.EVENTS], jobs[RunCAP.EVENTS])
-            self.assertEqual(jobs2[RunCAP.DERIVED], jobs[RunCAP.DERIVED])
+            self.assertEqual(jobs2[RunCAP.EVENTS], dict(RunCAP.new_job(), **jobs[RunCAP.EVENTS]))
+            self.assertEqual(jobs2[RunCAP.DERIVED], dict(RunCAP.new_job(), **jobs[RunCAP.DERIVED]))
             self.assertEqual(lib2.objects, lib.objects)
             self.assertEqual(F.choices(stages[RunCAP.DERIVED][1])["PARTICLE_FILTER"], ["PiP", "PiM"])
             # the command of each stage runs its task
@@ -199,7 +199,7 @@ class TestStageButtons(unittest.TestCase):
                 app.show_stage(RunCAP.DERIVED)
                 self.assertEqual(app.stage, RunCAP.DERIVED)
                 self.assertEqual([t.name for t in app.workflow()], ["SingleDerived", "PairDerived"])
-                self.assertEqual(app.library.job, {"INPUT_FILE": "fill.cap", "OUTPUT_FILE": "fillDerived.cap"})
+                self.assertEqual(app.library.job, {"INPUT_FILE": "fill.cap", "OUTPUT_FILE": "fillDerived.cap", "INPUT_PATH": ""})
                 self.assertEqual(app.job_vars["INPUT_FILE"].get(), "fill.cap")
                 self.assertEqual([t.name for t in RunCAP.all_tasks(app.stage_tasks(RunCAP.EVENTS))],
                                  ["Run", "Gen", "Single", "Pair"])
