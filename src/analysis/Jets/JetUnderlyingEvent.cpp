@@ -33,12 +33,12 @@ UnderlyingEventCones::Mode UnderlyingEventCones::modeOf(const String & name)
                   "UnderlyingEventCones::modeOf()");
 }
 
-std::vector<Cone> UnderlyingEventCones::cones(const std::vector<Jet> & jets, const JetSettings & settings, Mode mode)
+std::vector<Cone> UnderlyingEventCones::cones(const std::vector<Jet> & jets, double radius, double etaMax, Mode mode)
 {
   std::vector<Cone> kept;
   if (jets.empty()) return kept;
   const Jet & leading = jets.front();
-  const double R = settings.radius, etaMax = settings.particleEtaMax-R;
+  const double R = radius, coneEtaMax = etaMax-R;
   std::vector<double> etas;
   if (mode==Transverse) etas = {leading.eta()};
   else                  etas = {leading.eta()+2.0*R, leading.eta()-2.0*R};
@@ -48,7 +48,7 @@ std::vector<Cone> UnderlyingEventCones::cones(const std::vector<Jet> & jets, con
       Cone cone;
       cone.eta = eta;
       cone.phi = std::fmod(leading.phi()+sign*0.5*M_PI+2.0*M_PI,2.0*M_PI);
-      if (!(std::fabs(cone.eta)<etaMax)) continue;
+      if (!(std::fabs(cone.eta)<coneEtaMax)) continue;
       bool overlap = false;
       for (const Jet & jet : jets)
         {

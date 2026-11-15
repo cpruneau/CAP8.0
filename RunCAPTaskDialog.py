@@ -62,12 +62,19 @@ class TaskDialog(tk.Toplevel):
         self.workflow = workflow or (lambda: [task])
         self.task, self.templates, self.library = task, templates, library
         self.helpers, self.rename_task, self.changed, self.show_filters = helpers, rename, changed, show_filters
-        self.geometry("1040x700")
-        self.minsize(820, 480)
+        self.minsize(820, 420)
         style = ttk.Style()
         style.configure("Invalid.TEntry", foreground="firebrick")
         style.configure("Invalid.TCombobox", foreground="firebrick")
         style.configure("Overridden.TLabel", font=("TkDefaultFont", 11, "bold"))
+        # the bar of the Close button is packed first, at the bottom: it keeps its place when the window is shorter
+        # than its content (the notebook shrinks; the parameters scroll)
+        bottom = ttk.Frame(self, padding=(8, 4, 8, 8))
+        bottom.pack(side=tk.BOTTOM, fill=tk.X)
+        ttk.Button(bottom, text="Close", command=self.destroy).pack(side=tk.RIGHT)
+        self.problems = tk.StringVar(self)
+        ttk.Label(bottom, textvariable=self.problems, foreground="firebrick", justify=tk.LEFT,
+                  wraplength=860).pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.notebook = ttk.Notebook(self, padding=4)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=6, pady=(6, 0))
         self.layout = F.histogram_layout(task, templates)
@@ -78,15 +85,17 @@ class TaskDialog(tk.Toplevel):
         if self.layout:
             self.histograms_tab = ttk.Frame(self.notebook, padding=6)
             self.notebook.add(self.histograms_tab, text="Histograms")
-        bottom = ttk.Frame(self, padding=(8, 4, 8, 8))
-        bottom.pack(fill=tk.X)
-        ttk.Button(bottom, text="Close", command=self.destroy).pack(side=tk.RIGHT)
-        self.problems = tk.StringVar(self)
-        ttk.Label(bottom, textvariable=self.problems, foreground="firebrick", justify=tk.LEFT,
-                  wraplength=860).pack(side=tk.LEFT, fill=tk.X, expand=True)
         self._names = None
         self._make_general()
         self.refresh()
+        self._fit_to_screen()
+
+    def _fit_to_screen(self):
+        """Size the window to its content (at least 1040 x 520), within the screen."""
+        self.update_idletasks()
+        width = min(max(self.winfo_reqwidth(), 1040), self.winfo_screenwidth() - 40)
+        height = min(max(self.winfo_reqheight(), 520), self.winfo_screenheight() - 100)
+        self.geometry("%dx%d" % (width, height))
 
     # -------------------------------------------------------------------------------------------------- common
     def refresh(self):
@@ -157,7 +166,7 @@ class TaskDialog(tk.Toplevel):
         columns.rowconfigure(0, weight=1)
         half = (len(params) + 1) // 2
         for c, column in enumerate((params[:half], params[half:])):
-            frame = ScrollFrame(columns)
+            frame = ScrollFrame(columns, height=140)     # short: the window fits the screen; it grows with it
             frame.grid(row=0, column=c, sticky="nsew", padx=(0, 6) if c == 0 else (6, 0))
             frame.inner.columnconfigure(1, weight=1)
             for r, p in enumerate(column):

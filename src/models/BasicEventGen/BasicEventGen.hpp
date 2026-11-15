@@ -24,8 +24,20 @@ namespace CAP
 //! @brief Simple event generator: independent particles of a few types, without correlations, emitted at the origin.
 //!
 //! For each event and each selected particle type (\<name\>:PdgSelected, a list of PDG codes separated by commas or
-//! spaces, e.g. "211, -211, 321, -321"), the number of particles is drawn uniformly between \<name\>:MultMin and
-//! MultMax (inclusive), and the momentum of each particle according to the style of generation, \<name\>:EventGenType:
+//! spaces, e.g. "211, -211, 321, -321"), the number of particles is drawn from the multiplicity distribution, the same
+//! for every type and drawn independently for each, set by \<name\>:Mult:Distribution:
+//! - "UNIFORM" (the default): uniform between MultMin and MultMax (inclusive);
+//! - "FUNCTION": P(n) proportional to f(n) for the integers n in [MultMin, MultMax], f a function of the function
+//!   registry of the Math library, named by \<name\>:Mult:Function:Name, with the parameters of
+//!   Mult:Function:Parameters (empty: the defaults of the class), e.g. "Exponential" or a registered composite
+//!   (a negative or non-finite f(n) counts as 0);
+//! - "HISTOGRAM": P(n) proportional to the contents of a histogram of one variable, n = the integers of each bin
+//!   (equally; the integer nearest to the centre of a bin holding none), read from the CAP file Mult:Histogram:File
+//!   (".cap" may be omitted) of the directory Mult:Histogram:Path ("DEFAULT": $CAP_HISTOS_IMPORT_PATH), at the path
+//!   Mult:Histogram:Name in it (e.g. "ParticleSingleAnalyzer/ALL_ALL/n1"); MultMin and MultMax are not used
+//!   (negative bins and contents count as 0).
+//!
+//! The momentum of each particle is drawn according to the style of generation, \<name\>:EventGenType:
 //!
 //! - 0, cylindrical (kCylindrical): rapidity uniform in [RapidityMin, RapidityMax], azimuth uniform in [PhiMin, PhiMax],
 //!   and transverse momentum drawn from the momentum distribution. The momenta are restricted either to a range of
@@ -62,6 +74,8 @@ public:
   enum EventGenType { kCylindrical=0, kSpherical=1 };
   //! Momentum distributions (\<name\>:Distribution).
   enum DistributionType { kExponential=0, kGaussian=1, kFunction=2 };
+  //! Multiplicity distributions (\<name\>:Mult:Distribution).
+  enum MultiplicityType { kMultUniform=0, kMultFunction=1, kMultHistogram=2 };
 
   //! @brief Default constructor.
   BasicEventGen();
@@ -84,6 +98,14 @@ public:
   //! @brief Parse a list of numbers separated by commas, semicolons or spaces. @param text list @param key key (for
   //! the messages) @return numbers @throws ConfigurationException if an entry is not a number
   static std::vector<double> parseNumbers(const String & text, const String & key);
+  //!
+  //! @brief A function of the function registry (a class with its default or given parameters, or a registered
+  //! composite) of one variable. @param name name @param parameters parameter values (empty: the defaults)
+  //! @param nameKey key of the name, @param parametersKey key of the parameters (for the messages)
+  //! @return the function (owned by the caller) @throws ConfigurationException if there is no such function
+  //!
+  static MATH::ParameterizedFunction * makeFunction(const String & name, const String & parameters,
+                                                    const String & nameKey, const String & parametersKey);
 
 protected:
 
@@ -106,6 +128,15 @@ protected:
   double drawPhi(double pt);
   //! @brief Reaction plane of the current event (flow). @return Psi
   double reactionPlane() const { return _psi; }
+  //! @brief Read the multiplicity distribution and tabulate its cumulative (Mult:Distribution).
+  //! @throws ConfigurationException if a setting is invalid, the histogram is missing or the distribution is zero
+  void readMultiplicity();
+  //! @brief Set the multiplicity table from values and their weights (cumulative of the positive weights).
+  //! @param values multiplicities @param weights weights @param key key (for the message) @throws ConfigurationException
+  //! if all weights are zero
+  void setMultiplicityTable(const std::vector<long> & values, const std::vector<double> & weights, const String & key);
+  //! @brief Number of particles of a type in an event. @return multiplicity
+  long drawMultiplicity();
   //! @brief Momentum of one particle of a type, in the cylindrical style. @param m mass @param momentum momentum set
   void generateCylindrical(double m, MATH::VectorLorentz & momentum);
   //! @brief Momentum of one particle of a type, in the spherical style. @param m mass @param momentum momentum set
@@ -119,6 +150,11 @@ protected:
   int    _multMin;
   //! Maximum number of particles of each type per event.
   int    _multMax;
+  //! Multiplicity distribution.
+  int    _multDistribution;
+  //! Multiplicities and cumulative of their probabilities (FUNCTION, HISTOGRAM).
+  std::vector<long> _multValues;
+  std::vector<double> _multCdf;
   //! Rapidity range (cylindrical).
   double _rapidityMin, _rapidityMax;
   //! Whether the cylindrical momenta are restricted in momentum (true) or in transverse momentum (false).

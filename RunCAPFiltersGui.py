@@ -73,12 +73,15 @@ def forms_of(kind, subtype):
 
 
 class ScrollFrame(ttk.Frame):
-    """Frame with a vertical scroll bar; widgets go in self.inner."""
+    """Frame with a vertical scroll bar; widgets go in self.inner. @param height height it asks for (pixels; Tk's
+    default if None): it grows with the window when packed to expand, and scrolls when shorter than its content."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, height=None):
         ttk.Frame.__init__(self, parent)
         background = ttk.Style().lookup("TFrame", "background")
         self.canvas = tk.Canvas(self, highlightthickness=0, borderwidth=0)
+        if height is not None:
+            self.canvas.configure(height=height)
         if background:
             self.canvas.configure(background=background)
         bar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.canvas.yview)
@@ -779,12 +782,16 @@ class FiltersPanel(ttk.Frame):
         grid = ttk.Frame(frame)
         grid.pack(fill=tk.X, pady=(6, 0))
         per_row = 3
-        for i, (name, ptype, _) in enumerate(F.KIND_PARAMETERS.get(definition.kind, [])):
+        selector = F.SELECTOR_PARAMETERS.get(definition.kind, (None,))[0]
+        for i, (name, ptype, _) in enumerate(F.shown_parameters(definition.kind, definition.parameters)):
             r, c = divmod(i, per_row)
             ttk.Label(grid, text="%s (%s)" % (name, ptype)).grid(row=r, column=2 * c, sticky="w", padx=(0, 4), pady=1)
             var = tk.StringVar(self, value=definition.parameters.get(name, ""))
+            allowed = F.PARAMETER_CHOICES.get((definition.kind, name))
             if ptype == "bool":
                 widget = ttk.Combobox(grid, textvariable=var, values=("true", "false"), width=7, state="readonly")
+            elif allowed:
+                widget = ttk.Combobox(grid, textvariable=var, values=allowed, width=10, state="readonly")
             else:
                 widget = ttk.Entry(grid, textvariable=var, width=22 if ptype == "string" else 10)
                 if ptype in ("int", "double"):
@@ -792,10 +799,12 @@ class FiltersPanel(ttk.Frame):
                     widget.configure(validate="key", validatecommand=check)
             widget.grid(row=r, column=2 * c + 1, sticky="w", padx=(0, 18), pady=1)
 
-            def changed(*_args, n=name, t=ptype, v=var, w=widget):
-                if t != "bool":
+            def changed(*_args, n=name, t=ptype, v=var, w=widget, fixed=bool(allowed)):
+                if t != "bool" and not fixed:
                     w.configure(style="TEntry" if F._valid(t, v.get()) else "Invalid.TEntry")
                 definition.parameters[n] = v.get()
+                if n == selector:                      # other parameters: show those of the new value
+                    self.after_idle(self._redraw)
                 self._update_problems()
                 self.on_change()
             var.trace_add("write", changed)

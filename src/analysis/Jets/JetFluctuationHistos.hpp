@@ -22,7 +22,7 @@ namespace CAP
 
 //!
 //! @brief Fluctuations and correlations of the multiplicities within the jets of one combination of an event filter, a
-//! particle filter, a radius and a jet filter (JetFluctuationAnalyzer).
+//! particle filter, jet settings and a jet filter (JetFluctuationAnalyzer).
 //!
 //! Each quantity is a profile in three versions: integrated (one bin, name \<q\>), versus the jet pT (\<q\>_vsPt), and
 //! versus the number of constituents N of the jet (\<q\>_vsMult). Base quantities, averages per jet of:

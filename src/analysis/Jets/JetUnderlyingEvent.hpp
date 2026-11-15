@@ -45,12 +45,12 @@ struct Cone
 };
 
 //!
-//! @brief Cones of the underlying event of an event, from its jets (found with one particle filter and settings).
+//! @brief Cones of the underlying event of an event, from its jets (found with one particle filter and jet settings).
 //!
 //! The axis is the leading jet (rank 1). Mode Transverse: two cones at phi_lead +- pi/2 and eta_lead. Mode
-//! TransverseShifted: four cones at phi_lead +- pi/2 and eta_lead +- 2R. A cone is kept if it lies within the acceptance
-//! of the particles, |eta| < particleEtaMax - R, and does not overlap any jet of the event (its distance to the axis of
-//! every jet, in eta and phi, at least 2R). None without jets.
+//! TransverseShifted: four cones at phi_lead +- pi/2 and eta_lead +- 2R. A cone is kept if it lies within a given
+//! acceptance of the particles, |eta| < etaMax - R (UE:ETA_MAX of JetFluctuationAnalyzer), and does not overlap any jet
+//! of the event (its distance to the axis of every jet, in eta and phi, at least 2R). None without jets.
 //!
 class UnderlyingEventCones
 {
@@ -62,9 +62,10 @@ public:
   //! @brief Mode from its name (TRANSVERSE, TRANSVERSE_SHIFTED). @param name name @return mode
   //! @throws Exception if unknown
   static Mode modeOf(const String & name);
-  //! @brief Cones of an event. @param jets jets of the event, by rank @param settings settings of the jets
-  //! @param mode placement @return cones kept
-  static std::vector<Cone> cones(const std::vector<Jet> & jets, const JetSettings & settings, Mode mode);
+  //! @brief Cones of an event. @param jets jets of the event, by rank @param radius R of the jets (that of the cones)
+  //! @param etaMax |eta| range of the particles (the cones are kept within |eta| < etaMax - R) @param mode placement
+  //! @return cones kept
+  static std::vector<Cone> cones(const std::vector<Jet> & jets, double radius, double etaMax, Mode mode);
   //! @brief Multiplicities of the particles within a distance R (eta, phi) of the axis of a cone. @param particles
   //! particles @param cone cone @param radius R @return multiplicities
   static Multiplicities count(const std::vector<Particle*> & particles, const Cone & cone, double radius);

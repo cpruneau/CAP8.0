@@ -225,7 +225,7 @@ namespace CAP
       }
     ImGui::EndMenu();
     }
-  // two histograms of the same rank: overlay, difference, compatibility tests
+  // two histograms of the same rank: overlay, difference or ratio, compatibility tests
   std::vector<size_t> histograms;
   for (size_t k=0; k<graph.items().size(); k++)
     {
@@ -242,7 +242,22 @@ namespace CAP
         if (a.data()->rank() != b.data()->rank()) continue;
         String entry = a.label() + String(" and ") + b.label() + String("##compare")
                        + String(std::to_string(i*1000 + j).c_str());
-        if (ImGui::MenuItem(entry.data())) onCompare(a.data(), b.data(), a.label(), b.label());
+        if (ImGui::BeginMenu(entry.data()))
+          {
+          String difference = String("Difference: ") + b.label() + String(" \xE2\x88\x92 ") + a.label();
+          String ratio      = String("Ratio: ") + b.label() + String(" / ") + a.label();
+          String pull       = String("Significance: (") + b.label() + String(" \xE2\x88\x92 ") + a.label()
+                              + String(") / \xE2\x88\x9A(\xCF\x83\xC2\xB2 + \xCF\x83\xC2\xB2)");
+          if (ImGui::MenuItem(difference.data())) onCompare(a.data(), b.data(), a.label(), b.label(), kDifference);
+          if (ImGui::MenuItem(ratio.data()))      onCompare(a.data(), b.data(), a.label(), b.label(), kRatio);
+          ImGui::SetItemTooltip("Bin by bin, with the uncertainties propagated; bins where either histogram is empty "
+                                "or the denominator is zero are left empty");
+          if (ImGui::MenuItem(pull.data()))       onCompare(a.data(), b.data(), a.label(), b.label(), kSignificance);
+          ImGui::SetItemTooltip("The difference of each bin divided by the uncertainties of the two bins added in "
+                                "quadrature (histograms uncorrelated): ~ N(0, 1) for compatible histograms; bins "
+                                "without uncertainty left empty");
+          ImGui::EndMenu();
+          }
         }
     ImGui::EndMenu();
     }

@@ -29,6 +29,14 @@ log in without a password: ssh keys) and submits the array; Status shows the que
 Fetch copies their output files back. Combine then runs the combination here. The script can also be submitted by hand,
 and Combine run on the outputs of jobs run elsewhere: it needs the directories <prefix>* holding the output files.
 
+pT-hat bins (PYTHIA): with bin edges p0 < p1 < ... < pK (GeV/c), each sub-sample is K jobs, <prefix>sss_pthat<kk>,
+generating the same number of events with PythiaEventGenerator PTHAT_MIN = p_k and PTHAT_MAX = p_k+1 (a hard process,
+e.g. Option HardQCD:all = on; not SoftQCD), each with a seed of its own, keeping the raw histograms (JOB:NORMALIZE
+false). The combination adds the bins of each sub-sample with the weights sigma_k/N_k (sigma_k the cross section PYTHIA
+gives for the bin): the differential cross sections in mb (or, with the normalization per event, divided by the cross
+section of the range covered), then combines the sub-samples as set above. The jobs run event processing only: the later
+stages are run by the combination (Jackknife through stages).
+
 The settings are saved in the workflow file (element SUBSAMPLES of the root, ignored by bin/CAP).
 """
 
@@ -47,6 +55,13 @@ MODES = (SUBSAMPLE, JACKKNIFE, JACKKNIFE_STAGES)
 MODE_TITLES = {SUBSAMPLE: "Sub-sample average", JACKKNIFE: "Jackknife on results",
                JACKKNIFE_STAGES: "Jackknife through stages"}
 LOCAL, SLURM = "LOCAL", "SLURM"
+#: Normalizations of a production in pT-hat bins: the differential cross sections (mb), or per event of the range
+#: covered (divided by the sum of the cross sections of the bins).
+SIGMA, COVERED = "SIGMA", "COVERED"
+NORMALIZATION_TITLES = {SIGMA: "dσ (mb)", COVERED: "per event"}
+#: Class of the generator whose pT-hat range is set per job, and its keys.
+PTHAT_GENERATOR = "PythiaEventGenerator"
+PTHAT_MIN_KEY, PTHAT_MAX_KEY = "PTHAT_MIN", "PTHAT_MAX"
 #: Parameters holding a seed (key Seed or SeedValue, alone or after a group) and their switches.
 SEED_KEY = re.compile(r"(?:^|:)(?:Seed|SeedValue)$")
 SET_SEED_KEY = re.compile(r"(?:^|:)SetSeed$")
@@ -86,13 +101,38 @@ class SubSampleSettings:
         self.prefix = "sub_"
         self.seed = 112133       # seed of gRandom of sub-sample 0 (sub-sample k: seed + k)
         self.weights = "EVENTS"
+        self.ptHatEdges = ""      # edges of the pT-hat bins (GeV/c, e.g. "5 10 20 40 80"); empty: no pT-hat bins
+        self.normalization = SIGMA
         self.slurm = SlurmSettings()
+
+    def edges(self):
+        """Edges of the pT-hat bins ([] without pT-hat bins). Raises ValueError if they are not numbers."""
+        return [float(x) for x in re.split(r"[,; ]+", self.ptHatEdges.strip()) if x] if self.ptHatEdges.strip() else []
+
+    def nbins(self):
+        """Number of pT-hat bins (1 without pT-hat bins: one job per sub-sample)."""
+        try:
+            return max(1, len(self.edges()) - 1)
+        except ValueError:
+            return 1
+
+    def pthat(self):
+        """Whether the sub-samples are made of pT-hat bins."""
+        try:
+            return len(self.edges()) >= 2
+        except ValueError:
+            return False
+
+    def njobs(self):
+        """Number of jobs: one per sub-sample and pT-hat bin."""
+        return self.count * (self.nbins() if self.pthat() else 1)
 
     def to_element(self):
         e = ET.Element("SUBSAMPLES", {"enabled": "true" if self.enabled else "false", "count": str(self.count),
                                       "parallel": str(self.parallel), "mode": self.mode, "stage": self.stage,
                                       "where": self.where, "prefix": self.prefix, "seed": str(self.seed),
-                                      "weights": self.weights})
+                                      "weights": self.weights, "pthat": self.ptHatEdges.strip(),
+                                      "normalization": self.normalization})
         s = ET.SubElement(e, "SLURM", {f: getattr(self.slurm, f) for f in SlurmSettings.FIELDS if f != "setup"})
         if self.slurm.setup.strip():
             ET.SubElement(s, "SETUP").text = self.slurm.setup.strip()
@@ -114,6 +154,8 @@ class SubSampleSettings:
         s.where = e.get("where", s.where) if e.get("where") in (LOCAL, SLURM) else s.where
         s.prefix = e.get("prefix", s.prefix) or s.prefix
         s.weights = e.get("weights", s.weights) if e.get("weights") in ("EVENTS", "EQUAL") else s.weights
+        s.ptHatEdges = e.get("pthat", "") or ""
+        s.normalization = e.get("normalization") if e.get("normalization") in (SIGMA, COVERED) else SIGMA
         slurm = e.find("SLURM")
         if slurm is not None:
             for f in SlurmSettings.FIELDS:
@@ -153,10 +195,53 @@ def check_settings(settings, api, stages):
             errors.append("The jackknife through stages starts from event processing: the workflow has none.")
         elif combined_stage(settings, api, stages) == api.EVENTS:
             errors.append("The jackknife through stages needs a later stage to combine (Derived Histos or Balance Fct).")
+    errors += check_pthat(settings, api, stages, present)
     if settings.where == SLURM:
         for name, title in (("host", "host"), ("cap", "CAP directory"), ("directory", "production directory")):
             if not getattr(settings.slurm, name).strip():
                 errors.append("Slurm: enter the %s (Slurm…)." % title)
+    return errors
+
+
+def _tasks_of(tasks):
+    for t in tasks:
+        yield t
+        yield from _tasks_of(t.children)
+
+
+def pthat_generators(tasks):
+    """The PYTHIA generators of tasks (and subtasks), whose pT-hat range is set per job."""
+    return [t for t in _tasks_of(tasks) if t.cls.replace("CAP::", "") == PTHAT_GENERATOR]
+
+
+def check_pthat(settings, api, stages, present):
+    """Problems of a production in pT-hat bins: edges, a PYTHIA generator with a hard process, the stages."""
+    if not settings.ptHatEdges.strip():
+        return []
+    try:
+        edges = settings.edges()
+    except ValueError:
+        return ["pT-hat bins: the edges must be numbers (GeV/c), e.g. 5 10 20 40 80."]
+    errors = []
+    if len(edges) < 2:
+        errors.append("pT-hat bins: at least two edges are needed (one bin).")
+    elif any(not b > a for a, b in zip(edges, edges[1:])) or not edges[0] > 0:
+        errors.append("pT-hat bins: the edges must be positive and increasing (the first one the hard pT-hat minimum).")
+    generators = pthat_generators(stages.get(api.EVENTS) or [])
+    if not generators:
+        errors.append("pT-hat bins: event processing has no %s." % PTHAT_GENERATOR)
+    for g in generators:
+        options = [(p.value or "").replace(" ", "").lower() for p in g.params if re.fullmatch(r"Option\d+", p.key)]
+        if any(o.startswith("softqcd:") and o.endswith("=on") for o in options):
+            errors.append("pT-hat bins: %s generates SoftQCD processes, which ignore the pT-hat range: use a hard "
+                          "process (e.g. HardQCD:all = on)." % g.name)
+        if not any(o.startswith("hardqcd:") and o.endswith("=on") for o in options):
+            errors.append("pT-hat bins: %s has no hard process switched on (e.g. an Option HardQCD:all = on)." % g.name)
+    if present and present[0] != api.EVENTS:
+        errors.append("pT-hat bins: the workflow has no event processing.")
+    elif len(present) > 1 and settings.mode != JACKKNIFE_STAGES and combined_stage(settings, api, stages) != api.EVENTS:
+        errors.append("pT-hat bins: the jobs run event processing only; the later stages are run on the combined "
+                      "bins: choose Jackknife through stages (or combine event processing).")
     return errors
 
 
@@ -173,7 +258,7 @@ def subsample_stages(settings, api, stages):
     with tasks up to the stage combined."""
     present = [s for s in api.STAGES if stages.get(s)]
     last = combined_stage(settings, api, stages)
-    if settings.mode == JACKKNIFE_STAGES:
+    if settings.mode == JACKKNIFE_STAGES or settings.pthat():
         return [present[0]]
     return present[:present.index(last) + 1]
 
@@ -219,8 +304,33 @@ def seeded_tasks(tasks, k):
     return copies, changed
 
 
-def directory_name(settings, k):
-    return "%s%03d" % (settings.prefix, k)
+def job_of(settings, j):
+    """Sub-sample and pT-hat bin of job j: (j // K, j % K), K the number of bins (1 without pT-hat bins)."""
+    n = settings.nbins() if settings.pthat() else 1
+    return j // n, j % n
+
+
+def directory_name(settings, j):
+    """Directory of job j: <prefix>sss, or <prefix>sss_pthat<kk> (sub-sample sss, pT-hat bin kk)."""
+    if not settings.pthat():
+        return "%s%03d" % (settings.prefix, j)
+    s, k = job_of(settings, j)
+    return "%s%03d_pthat%02d" % (settings.prefix, s, k)
+
+
+def pthat_tasks(tasks, settings, j):
+    """Set the pT-hat range of bin k of job j in the PYTHIA generators of tasks (copies), in place."""
+    _, k = job_of(settings, j)
+    edges = settings.edges()
+    for g in pthat_generators(tasks):
+        for key, value in ((PTHAT_MIN_KEY, edges[k]), (PTHAT_MAX_KEY, edges[k + 1])):
+            p = g.param(key)
+            if p is None:                       # templates of a build before the pT-hat bins
+                if not g.params:
+                    continue
+                p = type(g.params[0])(key, "double", "-1")
+                g.params.append(p)
+            p.value = "%.17g" % value
 
 
 def output_file(api, stages, library, templates, jobs, stage):
@@ -264,16 +374,20 @@ def write_production(directory, settings, api, stages, library, templates, jobs,
     production.names = api.write_stages(production.base, {s: stages[s] for s in api.STAGES if stages.get(s)}, library,
                                         templates, jobs, [settings.to_element()])
     production.outputs = [output_file(api, stages, library, templates, jobs, s) for s in production.stages]
-    for k in range(settings.count if subsample_files else 0):
+    for k in range(settings.njobs() if subsample_files else 0):     # k: job (sub-sample, pT-hat bin)
         seeded, changed = {}, []
         for s in production.stages:
             seeded[s], more = seeded_tasks(run[s], k)
+            if settings.pthat():
+                pthat_tasks(seeded[s], settings, k)
             changed += more
         if k == 0:
             production.seeds = changed
         seeded_jobs = {s: dict(jobs.get(s) or {}) for s in api.STAGES}
         for s in production.stages:
             seeded_jobs[s]["SEED"] = str(settings.seed + k)
+            if settings.pthat():
+                seeded_jobs[s]["NORMALIZE"] = "false"        # raw histograms, added with sigma/N by the combination
         path = os.path.join(production.directory, directory_name(settings, k) + ".xml")
         production.names = api.write_stages(path, seeded, library, templates, seeded_jobs)
         production.files.append(path)
@@ -302,6 +416,8 @@ def write_combination(path, directory, settings, api, stages, library, templates
               ("JACKKNIFE:WORKFLOW", workflow if replica else "NONE"),
               ("JACKKNIFE:STAGES", " ".join(api.STAGE_ROOTS[s] for s in replica) if replica else "NONE"),
               ("JOB:OUTPUT_FILE", "NONE")]
+    if settings.pthat():
+        params[-1:-1] = [("PTHAT:BINS", str(settings.nbins())), ("PTHAT:NORMALIZATION", settings.normalization)]
     root = ET.Element("CAP", {"version": "1"})
     task = ET.SubElement(root, "TASK", {"name": COMBINE_TASK, "class": "CAP::SubSampleStatCalculator",
                                         "severity": "INFO"})
@@ -345,7 +461,7 @@ def sbatch_script(settings, production):
     lines = ["#!/bin/bash",
              "# Sub-samples of a CAP workflow, written by RunCAP.py: one task of the array per sub-sample.",
              "#SBATCH --job-name=%s" % name,
-             "#SBATCH --array=0-%d" % (settings.count - 1),
+             "#SBATCH --array=0-%d" % (settings.njobs() - 1),
              "#SBATCH --output=%s/logs/%s%%03a.log" % (remote, settings.prefix),
              "#SBATCH --ntasks=1",
              "#SBATCH --cpus-per-task=1"]
@@ -360,6 +476,8 @@ def sbatch_script(settings, production):
               "export CAP_PROJECTS_PATH=$CAP_ROOT_PATH/projects/",
               "export LD_LIBRARY_PATH=$CAP_ROOT_PATH/lib:${LD_LIBRARY_PATH:-}",
               "export DYLD_LIBRARY_PATH=$CAP_ROOT_PATH/lib:${DYLD_LIBRARY_PATH:-}",
+              ("K=$(printf '%%03d_pthat%%02d' $((SLURM_ARRAY_TASK_ID / %d)) $((SLURM_ARRAY_TASK_ID %% %d)))"
+               % (settings.nbins(), settings.nbins())) if settings.pthat() else
               "K=$(printf '%%03d' $SLURM_ARRAY_TASK_ID)",
               "WORK=%s" % shlex.quote(remote),
               "OUT=$WORK/%s$K" % settings.prefix,
@@ -367,7 +485,7 @@ def sbatch_script(settings, production):
               "cd $OUT"]
     for s in production.stages:
         lines.append("$CAP_ROOT_PATH/bin/CAP %s $WORK/ %s$K.xml $OUT/" % (production.names[s], settings.prefix))
-    lines.append("echo \"Sub-sample $K done\"")
+    lines.append("echo \"Job $K done\"")
     return "\n".join(lines) + "\n"
 
 
@@ -396,7 +514,7 @@ def status_commands(production, settings):
     name = "CAP_" + os.path.basename(production.directory.rstrip("/"))
     files = " ".join("%s/%s*/%s" % (shlex.quote(remote), settings.prefix, f) for f in production.outputs[-1:])
     command = ("squeue --me --name=%s; echo; echo \"Sub-samples done: $(ls %s 2>/dev/null | wc -l) of %d\""
-               % (name, files, settings.count))
+               % (name, files, settings.njobs()))
     return [("Status of the job array", ssh(host, command), production.directory)]
 
 
@@ -533,6 +651,8 @@ def make_bar(parent, app, settings, api, ToolTip):
         title = vars_["stage"].get()
         settings.stage = next((s for s in api.STAGES if api.STAGE_TITLES[s] == title), "")
         settings.where = SLURM if vars_["where"].get() == "Slurm" else LOCAL
+        settings.ptHatEdges = vars_["pthat"].get().strip()
+        settings.normalization = {v: k for k, v in NORMALIZATION_TITLES.items()}.get(vars_["normalization"].get(), SIGMA)
         update()
         app.subsamples_changed()
 
@@ -541,6 +661,7 @@ def make_bar(parent, app, settings, api, ToolTip):
         for b in (bar.submit, bar.status, bar.fetch):
             b.configure(state=tk.NORMAL if slurm else tk.DISABLED)
         bar.parallel_entry.configure(state=tk.DISABLED if slurm else tk.NORMAL)
+        bar.normalization_box.configure(state="readonly" if settings.pthat() else tk.DISABLED)
         present = app.present_stages()
         bar.stage_box.configure(values=["Last stage"] + [api.STAGE_TITLES[s] for s in present])
 
@@ -573,6 +694,22 @@ def make_bar(parent, app, settings, api, ToolTip):
     bar.stage_box.pack(side=tk.LEFT, padx=(2, 8))
     bar.stage_box.bind("<<ComboboxSelected>>", changed)
     ToolTip(bar.stage_box, "Stage whose output is combined")
+    ttk.Label(bar, text="pT-hat bins:").pack(side=tk.LEFT)
+    vars_["pthat"] = tk.StringVar(bar, value=settings.ptHatEdges)
+    e = ttk.Entry(bar, textvariable=vars_["pthat"], width=18)
+    e.pack(side=tk.LEFT, padx=(2, 2))
+    ToolTip(e, "Edges of the pT-hat bins of PYTHIA (GeV/c, e.g. 5 10 20 40 80 160; empty: none). Each sub-sample is then "
+               "one job per bin (%s000_pthat00, ...), the same number of events in each, with PythiaEventGenerator "
+               "PTHAT_MIN/PTHAT_MAX set to the edges of the bin (a hard process: HardQCD:all = on). The combination "
+               "adds the bins with the weights sigma/N of each bin" % settings.prefix)
+    vars_["normalization"] = tk.StringVar(bar, value=NORMALIZATION_TITLES[settings.normalization])
+    bar.normalization_box = ttk.Combobox(bar, textvariable=vars_["normalization"], state="readonly", width=9,
+                                         values=[NORMALIZATION_TITLES[n] for n in (SIGMA, COVERED)])
+    bar.normalization_box.pack(side=tk.LEFT, padx=(0, 8))
+    bar.normalization_box.bind("<<ComboboxSelected>>", changed)
+    ToolTip(bar.normalization_box, "pT-hat bins: the differential cross sections in mb, or per event of the pT-hat "
+                                   "range covered (divided by the sum of the cross sections of the bins; for later "
+                                   "stages computing ratios or correlation functions)")
     vars_["where"] = tk.StringVar(bar, value="Slurm" if settings.where == SLURM else "Local")
     for text in ("Local", "Slurm"):
         r = ttk.Radiobutton(bar, text=text, value=text, variable=vars_["where"], command=changed)
@@ -593,7 +730,7 @@ def make_bar(parent, app, settings, api, ToolTip):
     c.pack(side=tk.LEFT, padx=(8, 0))
     ToolTip(c, "Combine the sub-samples of the output directory (%s*) as set here, without running them" %
             settings.prefix)
-    for name in ("count", "parallel"):
+    for name in ("count", "parallel", "pthat"):
         vars_[name].trace_add("write", changed)
     bar.vars = vars_
 
@@ -608,6 +745,8 @@ def make_bar(parent, app, settings, api, ToolTip):
         vars_["mode"].set(MODE_TITLES[new.mode])
         vars_["stage"].set(api.STAGE_TITLES.get(new.stage, "Last stage"))
         vars_["where"].set("Slurm" if new.where == SLURM else "Local")
+        vars_["pthat"].set(new.ptHatEdges)
+        vars_["normalization"].set(NORMALIZATION_TITLES[new.normalization])
         showing[0] = False
         update()
         app.subsamples_changed(dirty=False)

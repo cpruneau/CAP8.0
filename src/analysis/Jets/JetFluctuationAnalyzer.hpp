@@ -19,13 +19,15 @@ namespace CAP
 {
 
 //!
-//! @brief Analysis of the multiplicities within jets: for each event filter, particle filter, radius and jet filter (see
-//! JetTask), each jet accepted fills the moments of its multiplicities by charge sign (JetFluctuationHistos), with those
-//! of the cones of the underlying event of its event: cones of the radius of the jets, transverse to the leading jet of
-//! the same particle filter and radius (UnderlyingEventCones), kept if within the acceptance and away from every jet.
+//! @brief Analysis of the multiplicities within jets: for each event filter, particle filter, jet settings and jet
+//! filter (see JetTask), each jet accepted fills the moments of its multiplicities by charge sign (JetFluctuationHistos),
+//! with those of the cones of the underlying event of its event: cones of the radius of the jets, transverse to the
+//! leading jet of the same particle filter and jet settings (UnderlyingEventCones), kept if within the acceptance and
+//! away from every jet.
 //!
 //! Settings: UE:MODE, TRANSVERSE (two cones, phi_lead +- pi/2 at eta_lead, default) or TRANSVERSE_SHIFTED (four cones,
-//! phi_lead +- pi/2 at eta_lead +- 2R). The derived quantities (variances, R2, nu_dyn, and the same corrected for the
+//! phi_lead +- pi/2 at eta_lead +- 2R); UE:ETA_MAX, the |eta| range of the particles in which the cones must lie
+//! entirely (|eta_cone| < UE:ETA_MAX - R; 0.9 by default; set it to the pseudorapidity range of the particle filters). The derived quantities (variances, R2, nu_dyn, and the same corrected for the
 //! underlying event) are computed at the end of the run, and again by calculateDerived() in a job reading the folders
 //! (HISTOGRAM:IMPORT, e.g. after the sub-samples are merged).
 //!
@@ -43,7 +45,7 @@ public:
   virtual ~JetFluctuationAnalyzer() { }
   //! @brief Copy of the task. @return new task
   virtual Task * clone() override { return new JetFluctuationAnalyzer(*this); }
-  //! @brief Add the default configuration: that of JetTask and UE:MODE.
+  //! @brief Add the default configuration: that of JetTask, UE:MODE and UE:ETA_MAX.
   virtual void setDefaultConfiguration() override;
   //! @brief Read the configuration. @param configuration configuration
   virtual void configure(const Configuration & configuration) override;
@@ -53,6 +55,8 @@ public:
   virtual void calculateDerived() override;
   //! @brief Placement of the cones. @return mode
   UnderlyingEventCones::Mode mode() const { return _mode; }
+  //! @brief |eta| range of the particles for the cones (UE:ETA_MAX). @return range
+  double coneEtaMax() const { return _coneEtaMax; }
 
 protected:
 
@@ -62,6 +66,7 @@ protected:
                     const std::vector<Particle*> & particles, const JetSettings & settings) override;
 
   UnderlyingEventCones::Mode _mode = UnderlyingEventCones::Transverse;   //!< placement of the cones
+  double _coneEtaMax = 0.9;                                             //!< |eta| range of the particles (UE:ETA_MAX)
   std::vector<Multiplicities> _cones;                                   //!< work: multiplicities of the cones
 };
 

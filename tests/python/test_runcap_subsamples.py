@@ -190,6 +190,66 @@ class TestProduction(unittest.TestCase):
                               c["HISTOGRAM:EXPORT:FILE_NAME"]),
                              ("SUBSAMPLE", "NONE", "fillDerived.cap", "fillDerived_SubSample.cap"))
 
+    def test_pthat_bins(self):
+        """pT-hat bins: one job per sub-sample and bin (<prefix>sss_pthat<kk>), each with the edges of its bin in the
+        PYTHIA generator, a seed of its own, the raw histograms (JOB:NORMALIZE false) and event processing only; the
+        combination is told the number of bins and the normalization; the checks of the generator and of the stages."""
+        if "CAP::PythiaEventGenerator" not in TEMPLATES:
+            self.skipTest("Pythia not built (no template)")
+        stages, lib, jobs = workflow()
+        def generators(tasks):
+            for t in tasks:
+                yield from ([t] if t.cls == "CAP::BasicEventGen" else [])
+                yield from generators(t.children)
+        gen = next(generators(stages[RunCAP.EVENTS]))
+        pythia = TEMPLATES["CAP::PythiaEventGenerator"].clone()
+        pythia.name = "Pythia"
+        pythia.filters = dict(getattr(gen, "filters", {}) or {})
+        parent = next(t for t in S._tasks_of(stages[RunCAP.EVENTS]) if gen in t.children)
+        parent.children[parent.children.index(gen)] = pythia
+        s = S.SubSampleSettings()
+        s.count, s.mode, s.ptHatEdges, s.normalization = 2, S.JACKKNIFE_STAGES, "5 20 100", S.COVERED
+        self.assertEqual((s.pthat(), s.nbins(), s.njobs(), S.job_of(s, 3)), (True, 2, 4, (1, 1)))
+        errors = S.check_settings(s, RunCAP, stages)
+        self.assertTrue(any("no hard process" in e for e in errors), errors)
+        pythia.param("Option0").value = "HardQCD:all = on"
+        self.assertEqual(S.check_settings(s, RunCAP, stages), [])
+        with tempfile.TemporaryDirectory() as d:
+            p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs)
+            self.assertEqual([os.path.basename(f) for f in p.files],
+                             ["sub_000_pthat00.xml", "sub_000_pthat01.xml", "sub_001_pthat00.xml", "sub_001_pthat01.xml"])
+            self.assertEqual(p.stages, [RunCAP.EVENTS])
+            edges, seeds = [], []
+            for f in p.files:
+                keys = parameters(f)
+                self.assertEqual(keys["JOB:NORMALIZE"], "false")
+                seeds.append(keys["JOB:SEED"])
+                values = {e.get("name"): e.text for e in ET.parse(f).iter("PARAMETER")}
+                edges.append((float(values["PTHAT_MIN"]), float(values["PTHAT_MAX"])))
+            self.assertEqual(edges, [(5, 20), (20, 100), (5, 20), (20, 100)])
+            self.assertEqual(len(set(seeds)), 4)
+            c = parameters(p.combine)
+            self.assertEqual((c["PTHAT:BINS"], c["PTHAT:NORMALIZATION"], c["SUBSAMPLE:PATTERN"]), ("2", "COVERED", "sub_*"))
+            self.assertEqual(S.subsample_commands(p, s, RunCAP, 3)[0][2], os.path.join(d, "sub_001_pthat01"))
+            s.where = S.SLURM
+            s.slurm.host, s.slurm.cap, s.slurm.directory = "me@grid", "/wsu/CAP8.0", "/wsu/prod"
+            p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs)
+            with open(p.sbatch) as f:
+                text = f.read()
+            self.assertIn("#SBATCH --array=0-3", text)
+            self.assertIn("K=$(printf '%03d_pthat%02d' $((SLURM_ARRAY_TASK_ID / 2)) $((SLURM_ARRAY_TASK_ID % 2)))", text)
+        s.where = S.LOCAL
+        element = s.to_element()
+        back = S.SubSampleSettings.from_element(element)
+        self.assertEqual((back.ptHatEdges, back.normalization), ("5 20 100", S.COVERED))
+        s.mode = S.SUBSAMPLE                                     # the derived stage: on the combined bins only
+        self.assertTrue(any("Jackknife through stages" in e for e in S.check_settings(s, RunCAP, stages)))
+        s.mode, s.ptHatEdges = S.JACKKNIFE_STAGES, "20 5"
+        self.assertTrue(any("increasing" in e for e in S.check_settings(s, RunCAP, stages)))
+        pythia.param("Option1").value = "SoftQCD:inelastic = on"
+        s.ptHatEdges = "5 20"
+        self.assertTrue(any("SoftQCD" in e for e in S.check_settings(s, RunCAP, stages)))
+
     def test_combine_only(self):
         stages, lib, jobs = workflow()
         s = S.SubSampleSettings()

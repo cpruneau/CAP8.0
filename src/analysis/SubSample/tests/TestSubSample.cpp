@@ -23,6 +23,9 @@
 #include "FileSystem.hpp"
 #include "Folder.hpp"
 #include "Histogram.hpp"
+#include "LongParameter.hpp"
+#include "Profile.hpp"
+#include "StringParameter.hpp"
 #include "NameHelpers.hpp"
 #include "SubSampleStatCalculator.hpp"
 #include "TaskRegistration.hpp"
@@ -44,6 +47,7 @@ void check(bool ok, const std::string & what, int line)
   std::printf("FAILED (line %d): %s\n", line, what.c_str());
 }
 #define CHECK(x) check((x), #x, __LINE__)
+bool near(double a, double b, double tolerance = 1.0E-9) { return std::fabs(a - b) <= tolerance * std::max(1.0, std::fabs(b)); }
 
 bool close(double a, double b, double tolerance = 2e-6)
 {
@@ -382,6 +386,84 @@ int main()
     }
   catch (const std::exception &) { thrown = true; }
   CHECK(thrown);
+  }
+  // --- Production in pT-hat bins: 2 sub-samples x 2 bins of raw histograms, the cross sections of the runs
+  {
+  String bins = FileSystem::join(base, "pthat");
+  //                 sub-sample, bin: sigma (mb), events, raw counts of h, profile (entries, value) in bin 0
+  struct Run { unsigned int s, k; double sigma; long n; std::vector<double> counts; int entries; double value; };
+  std::vector<Run> runs = {{0, 0, 10.0, 100, {100, 50, 0, 0}, 4, 2.0}, {0, 1, 1.0, 50, {0, 0, 25, 25}, 2, 6.0},
+                           {1, 0, 12.0, 100, {80, 60, 0, 0}, 4, 2.0}, {1, 1, 1.0, 50, {0, 0, 20, 30}, 2, 6.0}};
+  for (const Run & r : runs)
+    {
+    char name[32];
+    std::snprintf(name, sizeof(name), "sub_%03u_pthat%02u", r.s, r.k);
+    String path = FileSystem::join(bins, name);
+    FileSystem::createDirectory(path);
+    CapFile file{FileSystem::join(path, "Histos.cap")};
+    Folder & top = file.folder();
+    Histogram * h = top.addFolder("Ana")->add(new Histogram("h", "h", 4, 0.0, 4.0), "h");
+    for (unsigned int b = 0; b < 4; b++) for (int c = 0; c < int(r.counts[b]); c++) h->fill(b + 0.5);
+    MATH::Profile * p = top.folder("Ana")->add(new MATH::Profile("p", "p", 2, 0.0, 2.0), "p");
+    for (int c = 0; c < r.entries; c++) p->fill(0.5, r.value);
+    Folder * generator = top.addFolder("Pythia");
+    generator->add(new StringParameter("CAP_SIGMA_GEN", String(std::to_string(r.sigma))), "CAP_SIGMA_GEN");
+    generator->add(new StringParameter("CAP_SIGMA_ERR", String("0.1")), "CAP_SIGMA_ERR");
+    generator->add(new StringParameter("CAP_PTHAT_MIN", String(r.k == 0 ? "5" : "20")), "CAP_PTHAT_MIN");
+    generator->add(new StringParameter("CAP_PTHAT_MAX", String(r.k == 0 ? "20" : "100")), "CAP_PTHAT_MAX");
+    generator->add(new LongParameter("CAP_N_ACCEPTED", r.n), "CAP_N_ACCEPTED");
+    file.write();
+    }
+  double sigma = 0.0, error = 0.0, lo = 0.0, hi = 0.0;
+  long accepted = 0;
+  {
+  CapFile file{FileSystem::join(FileSystem::join(bins, "sub_001_pthat00"), "Histos.cap")};
+  file.load();
+  CHECK(SubSampleStatCalculator::crossSection(file.folder(), sigma, error, accepted, lo, hi));
+  CHECK(sigma == 12.0 && accepted == 100 && lo == 5.0 && hi == 20.0);
+  }
+  auto runBins = [&](const char * normalization, const char * output)
+  {
+    TestCalculator task;
+    task.set("HISTOGRAM:IMPORT:PATH", bins);
+    task.set("HISTOGRAM:IMPORT:FILE_NAME", "Histos");
+    task.set("HISTOGRAM:EXPORT:PATH", base);
+    task.set("HISTOGRAM:EXPORT:FILE_NAME", output);
+    task.set("MODE", "SUBSAMPLE");
+    task.set("SUBSAMPLE:PATTERN", "sub_*");
+    task.set("PTHAT:BINS", "2");
+    task.set("PTHAT:NORMALIZATION", normalization);
+    task.configure(task.configuration());
+    task.setMinimumReportLevel(Object::kError);
+    task.execute();
+  };
+  try
+    {
+    // sigma of bin 0: (10 x 100 + 12 x 100)/200 = 11; weights 11/100 and 1/50
+    // sub-sample 0: [11, 5.5, 0.5, 0.5], sub-sample 1: [8.8, 6.6, 0.4, 0.6]; average [9.9, 6.05, 0.45, 0.55]
+    runBins("SIGMA", "CrossSection");
+    Folder out = load("CrossSection.cap");
+    std::vector<double> v = valuesOf(out, "Ana/h");
+    CHECK(v.size() >= 4 && near(v[0], 9.9) && near(v[1], 6.05) && near(v[2], 0.45) && near(v[3], 0.55));
+    std::vector<double> e = errorsOf(out, "Ana/h");
+    CHECK(e.size() >= 4 && near(e[0], 1.1, 1.0E-6));                      // the spread of the two sub-samples / sqrt 2
+    const MATH::Profile * p = out.get<MATH::Profile>("Ana/p");
+    CHECK(p != nullptr && near(p->binValueAt(0), (0.11 * 8 + 0.02 * 12) / (0.11 * 4 + 0.02 * 2), 1.0E-6));
+    CHECK(out.get<StringParameter>("CAP_SIGMA_COVERED") && out.get<StringParameter>("CAP_PTHAT_BIN_1"));
+    CHECK(!out.get<StringParameter>("Pythia/CAP_SIGMA_GEN"));             // that of a single run: removed
+    Folder s0 = [&]() { CapFile f{FileSystem::join(FileSystem::join(bins, "sub_000_CrossSection"), "Histos.cap")};
+                        f.load(); return f.folder(); }();
+    std::vector<double> v0 = valuesOf(s0, "Ana/h");
+    CHECK(v0.size() >= 4 && near(v0[0], 11.0) && near(v0[2], 0.5));     // the sum of the bins of sub-sample 0
+    runBins("COVERED", "PerEvent");                                       // divided by 11 + 1
+    std::vector<double> c = valuesOf(load("PerEvent.cap"), "Ana/h");
+    CHECK(c.size() >= 4 && near(c[0], 9.9 / 12.0) && near(c[3], 0.55 / 12.0));
+    }
+  catch (const std::exception & e) { std::printf("FAILED: pT-hat bins: %s\n", e.what()); nFailures++; }
+  FileSystem::removeTree(FileSystem::join(bins, "sub_001_pthat01"));    // a bin missing: an error
+  bool missing = false;
+  try { runBins("SIGMA", "Missing"); } catch (const std::exception &) { missing = true; }
+  CHECK(missing);
   }
   FileSystem::removeTree(base);
 

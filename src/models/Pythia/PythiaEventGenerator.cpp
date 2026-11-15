@@ -9,6 +9,10 @@
  * *********************************************************************/
 #include <cstdlib>
 #include "PythiaEventGenerator.hpp"
+#include <cstdio>
+#include "Folder.hpp"
+#include "StringParameter.hpp"
+#include "LongParameter.hpp"
 #include "Exceptions.hpp"
 
 namespace CAP
@@ -25,7 +29,10 @@ saveFinalOnly(true),
 savePhotons(false),
 saveNeutrinos(false),
 saveQuarks(false),
-saveGaugeBosons(false)
+saveGaugeBosons(false),
+ptHatMin(-1.0), ptHatMax(-1.0),
+sigmaGen(-1.0), sigmaErr(0.0),
+nAccepted(0)
 {
   appendClassName("PythiaEventGenerator");
   setMinimumReportLevel(Object::kInfo);
@@ -42,7 +49,10 @@ saveFinalOnly(source.saveFinalOnly),
 savePhotons(source.savePhotons),
 saveNeutrinos(source.saveNeutrinos),
 saveQuarks(source.saveQuarks),
-saveGaugeBosons(source.saveGaugeBosons)
+saveGaugeBosons(source.saveGaugeBosons),
+ptHatMin(source.ptHatMin), ptHatMax(source.ptHatMax),
+sigmaGen(source.sigmaGen), sigmaErr(source.sigmaErr),
+nAccepted(source.nAccepted)
 { }
 
 PythiaEventGenerator & PythiaEventGenerator::operator=(const PythiaEventGenerator & rhs)
@@ -55,6 +65,8 @@ PythiaEventGenerator & PythiaEventGenerator::operator=(const PythiaEventGenerato
     saveNeutrinos    = rhs.saveNeutrinos;
     saveQuarks       = rhs.saveQuarks;
     saveGaugeBosons  = rhs.saveGaugeBosons;
+    ptHatMin = rhs.ptHatMin;  ptHatMax = rhs.ptHatMax;
+    sigmaGen = rhs.sigmaGen;  sigmaErr = rhs.sigmaErr;  nAccepted = rhs.nAccepted;
     }
   return *this;
 }
@@ -83,6 +95,8 @@ void PythiaEventGenerator::setDefaultConfiguration()
   _configuration.addProperty(createKey(taskName,"SaveNeutrinos"),    false);
   _configuration.addProperty(createKey(taskName,"SaveQuarks"),       false);
   _configuration.addProperty(createKey(taskName,"SaveGaugeBosons"),  false);
+  _configuration.addProperty(createKey(taskName,"PTHAT_MIN"),        -1.0);
+  _configuration.addProperty(createKey(taskName,"PTHAT_MAX"),        -1.0);
   for (int k=0; k<kNPythiaOptions; k++)
     {
     String option = "Option"; option += k;
@@ -214,6 +228,23 @@ void PythiaEventGenerator::initialize()
     pythia->readString("PartonVertex:protonRadius = 0.7");
     pythia->readString("PartonVertex:emissionWidth = 0.1");
     }
+  // pT-hat range (a production in pT-hat bins, see RunCAP.py): before the free-form options
+  ptHatMin = _configuration.valueDouble(createKey(taskName,"PTHAT_MIN"),true,-1.0);
+  ptHatMax = _configuration.valueDouble(createKey(taskName,"PTHAT_MAX"),true,-1.0);
+  if (ptHatMin>=0.0 && ptHatMax>=0.0 && !(ptHatMax>ptHatMin))
+    throw ConfigurationException(createKey(taskName,"PTHAT_MAX"),"PTHAT_MAX must be above PTHAT_MIN",__FUNCTION__);
+  if (ptHatMin>=0.0)
+    {
+    String setting = "PhaseSpace:pTHatMin = "; setting += ptHatMin;
+    printValue("Pythia:PhaseSpace:pTHatMin",ptHatMin);
+    pythia->readString(setting.str());
+    }
+  if (ptHatMax>=0.0)
+    {
+    String setting = "PhaseSpace:pTHatMax = "; setting += ptHatMax;
+    printValue("Pythia:PhaseSpace:pTHatMax",ptHatMax);
+    pythia->readString(setting.str());
+    }
   // the free-form options come last, so that an explicit setting overrides the presets above
   for (int k=0; k<kNPythiaOptions; k++)
     {
@@ -316,10 +347,35 @@ void PythiaEventGenerator::finalize()
       printLine();
       printCR();
       }
+    sigmaGen  = pythia->info.sigmaGen();        // mb
+    sigmaErr  = pythia->info.sigmaErr();
+    nAccepted = pythia->info.nAccepted();
+    printValue("Pythia:sigmaGen (mb)",sigmaGen);
+    printValue("Pythia:sigmaErr (mb)",sigmaErr);
+    printValue("Pythia:nAccepted",nAccepted);
     delete pythia;
     pythia = nullptr;
     }
   EventProcessor::finalize();
+}
+
+void PythiaEventGenerator::saveHistograms(Folder & top)
+{
+  if (sigmaGen>=0.0)
+    {
+    Folder * folder = top.folder(name());
+    if (!folder) folder = top.addFolder(name());
+    auto text = [](double value) { char s[64]; std::snprintf(s,sizeof(s),"%.17g",value); return String(s); };
+    auto put = [&](const char * key, const String & value)
+      { if (!folder->get<StringParameter>(key)) folder->add(new StringParameter(key,value),key); };
+    put("CAP_SIGMA_GEN",text(sigmaGen));
+    put("CAP_SIGMA_ERR",text(sigmaErr));
+    put("CAP_PTHAT_MIN",text(ptHatMin));
+    put("CAP_PTHAT_MAX",text(ptHatMax));
+    if (!folder->get<LongParameter>("CAP_N_ACCEPTED"))
+      folder->add(new LongParameter("CAP_N_ACCEPTED",nAccepted),"CAP_N_ACCEPTED");
+    }
+  EventProcessor::saveHistograms(top);
 }
 
 } // namespace CAP

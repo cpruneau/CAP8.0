@@ -343,8 +343,9 @@ namespace CAP
     _renameText = pane.title().str();
     _renameRequested = true;
     };
-  pane.onCompare = [this](const MATH::DataPoints * a, const MATH::DataPoints * b, const String & la, const String & lb)
-    { showComparison(a, b, la, lb); };
+  pane.onCompare = [this](const MATH::DataPoints * a, const MATH::DataPoints * b, const String & la, const String & lb,
+                          int comparison)
+    { showComparison(a, b, la, lb, comparison); };
   }
 
   // ------------------------------------------------------------------------------------------------ menus
@@ -1297,7 +1298,7 @@ namespace CAP
   }
 
   void CapApp::showComparison(const MATH::DataPoints * first, const MATH::DataPoints * second, const String & firstLabel,
-                              const String & secondLabel)
+                              const String & secondLabel, int comparison)
   {
   const MATH::Histogram * a = dynamic_cast<const MATH::Histogram*>(first);
   const MATH::Histogram * b = dynamic_cast<const MATH::Histogram*>(second);
@@ -1308,10 +1309,36 @@ namespace CAP
                      "they cannot be compared bin by bin."));
     return;
     }
+  // second - first, second / first (bins empty in either, or with a zero denominator, left empty), or the difference
+  // divided by its uncertainty, sqrt(s1^2 + s2^2) (the uncertainties added in quadrature by the difference)
+  const bool ratio = comparison == CanvasPane::kRatio, significance = comparison == CanvasPane::kSignificance;
   MATH::Histogram * difference = nullptr;
-  try { difference = new MATH::Histogram(*b - *a); }
-  catch (const std::exception & e) { _gui.showMessage("Compare", String("No difference: ") + String(e.what())); return; }
-  String differenceLabel = secondLabel + String(" - ") + firstLabel;
+  try
+    {
+    difference = new MATH::Histogram(ratio ? *b / *a : *b - *a);
+    if (significance)
+      {
+      std::vector<double> values = difference->binValues(), errors = difference->binValueUncertainties();
+      std::vector<long> entries = difference->binEntries();
+      for (size_t k = 0; k < values.size(); k++)
+        {
+        const bool empty = entries[k] <= 0 || values[k] < -1.0E99 || !(errors[k] > 0.0);
+        values[k]  = empty ? 0.0 : values[k] / errors[k];
+        errors[k]  = empty ? 0.0 : 1.0;
+        entries[k] = empty ? 0 : 1;
+        }
+      difference->setWith(entries, values, errors);
+      }
+    }
+  catch (const std::exception & e)
+    {
+    delete difference;
+    _gui.showMessage("Compare", String(ratio ? "No ratio: " : significance ? "No significance: " : "No difference: ")
+                     + String(e.what()));
+    return;
+    }
+  String differenceLabel = significance ? String("(") + secondLabel + String(" - ") + firstLabel + String(")/#sigma")
+                                        : secondLabel + String(ratio ? " / " : " - ") + firstLabel;
   difference->setName(differenceLabel);
   difference->setTitle(differenceLabel);
   _data.emplace_back(difference);

@@ -10,9 +10,6 @@
 #include "Jet.hpp"
 #include <cmath>
 #include <cstdio>
-#include <string>
-#include <tuple>
-#include "Exceptions.hpp"
 
 namespace CAP
 {
@@ -21,40 +18,6 @@ namespace
 {
 const double kTwoPi = 2.0*M_PI;
 } // namespace
-
-bool JetSettings::operator<(const JetSettings & other) const
-{
-  return std::make_tuple(int(algorithm),radius,int(recombination),ptMin,particleEtaMax) <
-         std::make_tuple(int(other.algorithm),other.radius,int(other.recombination),other.ptMin,other.particleEtaMax);
-}
-
-JetSettings::Algorithm JetSettings::algorithmOf(const String & name)
-{
-  String n = name;
-  n.toUpper();
-  if (n=="ANTIKT" || n=="ANTI_KT" || n=="ANTI-KT") return AntiKt;
-  if (n=="KT")                                      return Kt;
-  if (n=="CA" || n=="CAMBRIDGE" || n=="CAMBRIDGEAACHEN" || n=="CAMBRIDGE_AACHEN") return CambridgeAachen;
-  throw Exception(String("Unknown jet algorithm: ")+name+" (ANTIKT, KT or CA)","JetSettings::algorithmOf()");
-}
-
-JetSettings::Recombination JetSettings::recombinationOf(const String & name)
-{
-  String n = name;
-  n.toUpper();
-  if (n=="E" || n=="E_SCHEME")    return EScheme;
-  if (n=="PT" || n=="PT_SCHEME")  return PtScheme;
-  throw Exception(String("Unknown recombination scheme: ")+name+" (E or PT)","JetSettings::recombinationOf()");
-}
-
-String JetSettings::radiusLabel(double radius)
-{
-  char text[32];
-  std::snprintf(text,sizeof(text),"%g",radius);
-  std::string s(text);
-  for (char & c : s) if (c=='.') c = 'p';
-  return String((std::string("R")+s).c_str());
-}
 
 double Jet::phi() const
 {

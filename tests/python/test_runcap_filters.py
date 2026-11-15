@@ -447,6 +447,88 @@ class TestKeys(unittest.TestCase):
             a = task("JetAnalyzer", "Jets")
             self.assertIn("JET_FILTER", F.task_kinds(a, TEMPLATES))
 
+    def test_jet_settings(self):
+        """Jet settings (JET_SETTINGS, optional module Jets): a list of named objects defined by parameters (algorithm,
+        R, recombination, pT floor), created by JetSettingsCreator only when the library has some, chosen by the jet
+        analyzers (at least one); workflows with the former keys JET:R, ... are converted."""
+        lib = library()
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        self.assertFalse([t for t in creator.children if t.cls == "CAP::JetSettingsCreator"])
+        lib.add(F.FilterDef("JET_SETTINGS", "AntiKtR0p4", "", None, {"R": "0.4"}))
+        lib.add(F.FilterDef("JET_SETTINGS", "KtR0p6Pt", "", None, {"ALGORITHM": "KT", "R": "0.6",
+                                                                   "RECOMBINATION": "PT", "PT_FLOOR": "2"}))
+        self.assertEqual(lib.get("JET_SETTINGS", "AntiKtR0p4").parameters,
+                         {"ALGORITHM": "ANTIKT", "R": "0.4", "RECOMBINATION": "E", "PT_FLOOR": "1.0"})
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        made = [t for t in creator.children if t.cls == "CAP::JetSettingsCreator"]
+        self.assertEqual(len(made), 1)
+        v = values(made[0])
+        self.assertEqual((v["JET_SETTINGS:N"], v["JET_SETTINGS_1:NAME"], v["JET_SETTINGS_1:ALGORITHM"],
+                          v["JET_SETTINGS_1:R"], v["JET_SETTINGS_1:RECOMBINATION"], v["JET_SETTINGS_1:PT_FLOOR"]),
+                         ("2", "KtR0p6Pt", "KT", "0.6", "PT", "2"))
+        kinds = [c.cls for c in creator.children]
+        self.assertLess(kinds.index("CAP::JetSettingsCreator"), kinds.index("CAP::ParticleFilterCreator") + 2)
+        self.assertEqual(F.check_library(lib), [])
+        lib.get("JET_SETTINGS", "KtR0p6Pt").parameters.update({"ALGORITHM": "SISCONE", "R": "0"})
+        problems = F.check_library(lib)
+        self.assertTrue(any("ALGORITHM is SISCONE" in e for e in problems), problems)
+        self.assertTrue(any("radius R must be positive" in e for e in problems), problems)
+        lib.get("JET_SETTINGS", "KtR0p6Pt").parameters.update({"ALGORITHM": "KT", "R": "0.6"})
+        self.assertEqual(F.jet_settings_name({"ALGORITHM": "KT", "R": "0.6", "RECOMBINATION": "PT"}), "KtR0p6Pt")
+        if "CAP::JetAnalyzer" not in TEMPLATES or "JET_SETTINGS:N" not in F._template_keys(task("JetAnalyzer", "J"),
+                                                                                             TEMPLATES):
+            return                                      # templates of a build before the jet settings
+        a = task("JetAnalyzer", "Jets")
+        self.assertIn("JET_SETTINGS", F.task_kinds(a, TEMPLATES))
+        self.assertTrue(any("choose at least one jet settings" in e for e in F._jet_task_problems(a, lib)))
+        F.choices(a)["JET_SETTINGS"] = ["AntiKtR0p4", "KtR0p6Pt"]
+        self.assertEqual(F._jet_task_problems(a, lib), [])
+        # the former keys of the jet finder: one jet settings per radius, shared with the existing ones
+        old = task("JetAnalyzer", "Old")
+        for key, value in (("JET:R", "0.4, 0.2"), ("JET:ALGORITHM", "ANTIKT"), ("JET:RECOMBINATION", "E"),
+                           ("JET:PT_MIN", "5"), ("JET:PARTICLE_ETA_MAX", "0.9")):
+            old.params.append(RunCAP.Param(key, "string", value))
+        warnings = F.update_jet_settings([old], lib, TEMPLATES)
+        self.assertEqual(F.choices(old)["JET_SETTINGS"], ["AntiKtR0p4", "AntiKtR0p2"])
+        self.assertFalse([p for p in old.params if p.key.startswith("JET:")])
+        self.assertEqual(lib.get("JET_SETTINGS", "AntiKtR0p2").parameters["PT_FLOOR"], "1")
+        self.assertTrue(warnings and "dropped" in warnings[0])
+
+    def test_jet_groomers(self):
+        """Jet groomers (JET_GROOMER, optional module Jets): a METHOD and its parameters only (shown, written and
+        checked), created by JetGroomerCreator when the library has some, at least one chosen by JetGroomingAnalyzer."""
+        lib = library()
+        lib.add(F.FilterDef("JET_GROOMER", "SD", "", None, {"METHOD": "SOFT_DROP", "Z_CUT": "0.1", "BETA": "0"}))
+        lib.add(F.FilterDef("JET_GROOMER", "Trim", "", None, {"METHOD": "TRIMMING", "R_SUB": "0.2", "F_CUT": "0.05",
+                                                             "RECLUSTER": "KT"}))
+        names = lambda o: [n for n, _, _ in F.shown_parameters(o.kind, o.parameters)]
+        self.assertEqual(names(lib.get("JET_GROOMER", "Trim")), ["METHOD", "RECLUSTER", "R_SUB", "F_CUT"])
+        self.assertIn("BETA", names(lib.get("JET_GROOMER", "SD")))
+        self.assertNotIn("R_SUB", names(lib.get("JET_GROOMER", "SD")))
+        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        made = [t for t in creator.children if t.cls == "CAP::JetGroomerCreator"]
+        self.assertEqual(len(made), 1)
+        v = values(made[0])
+        self.assertEqual((v["JET_GROOMER:N"], v["JET_GROOMER_1:METHOD"], v["JET_GROOMER_1:R_SUB"],
+                          v["JET_GROOMER_1:RECLUSTER"]), ("2", "TRIMMING", "0.2", "KT"))
+        self.assertNotIn("JET_GROOMER_1:BETA", v)                 # the parameters of the other methods: not written
+        self.assertEqual(F.check_library(lib), [])
+        lib.get("JET_GROOMER", "Trim").parameters.update({"R_SUB": "0", "BETA": "-7"})   # BETA: not used, not checked
+        problems = F.check_library(lib)
+        self.assertEqual(problems, ["Jet groomer Trim: R_SUB must be positive."])
+        lib.get("JET_GROOMER", "Trim").parameters["METHOD"] = "RECURSIVE"
+        self.assertTrue(any("METHOD is RECURSIVE" in e for e in F.check_library(lib)))
+        lib.get("JET_GROOMER", "Trim").parameters.update({"METHOD": "TRIMMING", "R_SUB": "0.2"})
+        if "CAP::JetGroomingAnalyzer" not in TEMPLATES:
+            return
+        a = task("JetGroomingAnalyzer", "Grooming")
+        self.assertTrue({"JET_SETTINGS", "JET_FILTER", "JET_GROOMER"} <= set(F.task_kinds(a, TEMPLATES)))
+        lib.add(F.FilterDef("JET_SETTINGS", "AntiKtR0p4", "", None, {}))
+        F.choices(a)["JET_SETTINGS"] = ["AntiKtR0p4"]
+        self.assertTrue(any("choose at least one jet groomer" in e for e in F._jet_task_problems(a, lib)))
+        F.choices(a)["JET_GROOMER"] = ["SD", "Trim"]
+        self.assertEqual(F._jet_task_problems(a, lib), [])
+
     def test_jet_pair_filters(self):
         """Jet pair filters (JET_PAIR_FILTER, optional module Jets): ranks of the two jets and pair variables, created
         by JetPairFilterCreator only when the library has some, and chosen by the jet pair analyzer."""

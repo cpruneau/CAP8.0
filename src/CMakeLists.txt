@@ -249,11 +249,19 @@ if(CAP_WITH_JETS)
   if(NOT CAP_FASTJET_LIBRARY)
     message(FATAL_ERROR "FastJet: no libfastjet in ${CAP_FASTJET_DIR}/lib (is FastJet built and installed?)")
   endif()
+  # the FastJet tools (fastjet::Pruner, for the jet grooming), built and installed with FastJet
+  find_library(CAP_FASTJET_TOOLS_LIBRARY NAMES fastjettools PATHS "${CAP_FASTJET_DIR}/lib" NO_DEFAULT_PATH)
+  if(NOT CAP_FASTJET_TOOLS_LIBRARY)
+    message(FATAL_ERROR "FastJet: no libfastjettools in ${CAP_FASTJET_DIR}/lib (is FastJet built and installed?)")
+  endif()
   set(CAP_FASTJET_INCLUDE_PATH "${CAP_FASTJET_DIR}/include")
   include_directories(SYSTEM "${CAP_FASTJET_INCLUDE_PATH}")   # external headers: their warnings are not shown
   add_library(FASTJET_LIB SHARED IMPORTED)
   set_target_properties(FASTJET_LIB PROPERTIES IMPORTED_LOCATION "${CAP_FASTJET_LIBRARY}"
                         INTERFACE_INCLUDE_DIRECTORIES "${CAP_FASTJET_INCLUDE_PATH}")
+  add_library(FASTJET_TOOLS_LIB SHARED IMPORTED)
+  set_target_properties(FASTJET_TOOLS_LIB PROPERTIES IMPORTED_LOCATION "${CAP_FASTJET_TOOLS_LIBRARY}"
+                        INTERFACE_LINK_LIBRARIES FASTJET_LIB)
   add_subdirectory(analysis/Jets)
   list(APPEND CAP_LINKED_MODULES Jets)
   list(APPEND CAP_OPTIONAL_BUILT "Jets (FastJet: ${CAP_FASTJET_DIR})")
