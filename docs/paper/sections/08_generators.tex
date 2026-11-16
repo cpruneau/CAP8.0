@@ -21,8 +21,21 @@ and four-body decays and decays the products in turn.
 \code{BasicEventGen} is a fast generator of simple events, meant for tests and demonstrations of the analyses rather
 than for physics: its particles are independent, without correlations, and emitted at the origin. The particle types
 are given by their PDG codes (\code{PdgSelected}, e.g.\ \code{211, -211, 321, -321}), and the number of particles of
-each type in an event is drawn uniformly between \code{MultMin} and \code{MultMax}. The momenta are generated in one
-of two styles (\code{EventGenType}):
+each type in an event is drawn, independently for each type, from a multiplicity distribution
+(\code{Mult:Distribution}):
+\begin{itemize}
+  \item \code{UNIFORM} (the default): uniform between \code{MultMin} and \code{MultMax};
+  \item \code{FUNCTION}: $P(n) \propto f(n)$ for the integers $n$ from \code{MultMin} to \code{MultMax}, with $f$ any
+  function of one variable of the function registry (Section~\ref{sec:functions}), named by
+  \code{Mult:Function:Name} with its parameters in \code{Mult:Function:Parameters}: a registered class, an exponential
+  or a negative binomial for instance, or a composite built in CapGui;
+  \item \code{HISTOGRAM}: $P(n)$ proportional to the contents of a histogram of one variable, read from a CAP file
+  (\code{Mult:Histogram:Path}, \code{Mult:Histogram:File}) at a path in it (\code{Mult:Histogram:Name}), for instance
+  the multiplicity distribution measured by \code{ParticleSingleAnalyzer} in another run, of a model or of data; each
+  bin gives its probability to the integers it contains.
+\end{itemize}
+The distribution is tabulated when the task is initialised and sampled by inverting its cumulative. The momenta are
+generated in one of two styles (\code{EventGenType}):
 \begin{itemize}
   \item cylindrical (0): the rapidity is uniform between \code{RapidityMin} and \code{RapidityMax}, the azimuth uniform
   between \code{PhiMin} and \code{PhiMax}, and the transverse momentum is drawn from the momentum distribution,
@@ -196,6 +209,21 @@ copied into the event of the task with their momenta and production vertices: by
 only, without photons, neutrinos, quarks, gluons and gauge bosons, each of which can be kept on request. Decays are
 those of Pythia, set by its own options. The particles whose PDG code is not in the particle database of \CAP{} are
 skipped and counted.
+
+\paragraph{Production in $\hat{p}_T$ bins.}
+The cross section of the hard processes falls steeply with their transverse momentum $\hat{p}_T$, so that a
+production of minimum-bias or inclusive hard events runs out of statistics at high $p_T$ long before it has enough at
+low $p_T$. \CAP{} therefore produces the hard processes in bins of $\hat{p}_T$, with edges
+$\hat{p}_{T,0} < \hat{p}_{T,1} < \dots < \hat{p}_{T,K}$, starting at a hard minimum $\hat{p}_{T,0}$ (with, e.g.,
+\code{HardQCD:all = on}), and the same number of events $N$ in each bin, which gives similar statistics over the whole
+range. The task sets \code{PhaseSpace:pTHatMin} and \code{PhaseSpace:pTHatMax} from its keys \code{PTHAT\_MIN} and
+\code{PTHAT\_MAX}, and saves, at the end of the run, the cross section of the process generated as estimated by
+Pythia, $\sigma_k$ (\code{Info::sigmaGen()}, in mb), its uncertainty, the number of events accepted and the range of
+$\hat{p}_T$ in the folder of the task. The jobs of a production in $\hat{p}_T$ bins keep their histograms unnormalised,
+as raw counts (\code{JOB:NORMALIZE} \code{false}), and \code{SubSampleStatCalculator} adds the bins with the weights
+$\sigma_k/N_k$ (Section~\ref{sec:subsample}): the result is the differential cross section, in mb, of each observable,
+$d\sigma/dX = \sum_k (\sigma_k/N_k)\, dN_k/dX$. RunCAP.py sets up such a production from the list of the edges of
+the bins (Section~\ref{sec:run}).
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Herwig 7}

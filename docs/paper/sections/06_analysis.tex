@@ -238,8 +238,30 @@ simply propagated from those of the bins:
 \end{itemize}
 The counts of events and of executed tasks of the jobs are summed and written with the result.
 
+\paragraph{Productions in $\hat{p}_T$ bins.}
+A production of Pythia in $K$ bins of $\hat{p}_T$ (Section~\ref{sec:pythia}) is made of sub-samples of $K$ jobs each,
+one per bin (\code{PTHAT:BINS} = $K$), whose histograms are raw counts. The combination proceeds in two steps. First,
+the $K$ bins of each sub-sample $s$ are added with the weights $\sigma_k/N_{k,s}$,
+\begin{align}
+  H_s = \sum_{k=0}^{K-1} \frac{\sigma_k}{N_{k,s}}\, H_{k,s},
+\end{align}
+with $N_{k,s}$ the number of events of bin $k$ in sub-sample $s$, and $\sigma_k$ the cross section of bin $k$ averaged
+over the sub-samples (weighted by their numbers of events), which is more precise than that of each job. $H_s$ is the
+differential cross section in mb, whatever the event filter or the jets of the folder, since raw counts are additive;
+the profiles are averaged with the same weights. With \code{PTHAT:NORMALIZATION} \code{COVERED}, rather than
+\code{SIGMA} (the default), $H_s$ is divided by the cross section of the range covered, $\sum_k\sigma_k$: it is then
+per event of that range, which suits the later stages computing ratios or correlation functions. Second, the
+sub-samples $H_s$ are combined as above, by their average or by the jackknife, so that the uncertainties of the result
+include the fluctuations of all the bins. Since the bins are added within each sub-sample only, the sub-samples remain
+independent, and the event filters, particle filters and jets of each folder are treated in the same way.
+
 RunCAP.py (Section~\ref{sec:run}) runs a workflow as sub-samples and combines them. Each sub-sample has its own seeds:
 in its workflow file, the seed parameters of the tasks (\code{Seed}, \code{SeedValue}) are increased by its number, and
 so is the seed of the job (\code{JOB:SEED}). The sub-samples run on the computer, several at once, or on a Slurm
 cluster, as a job array submitted over \code{ssh}, whose outputs are copied back and combined; jobs run in any other way
-are combined from their output directories.
+are combined from their output directories. With $\hat{p}_T$ bins, each sub-sample is run as one job per bin, with the
+edges of its bin, the same number of events in each, and seeds of its own. The jobs of a production are written in a
+folder of the output directory named after the output file of the workflow (without its extension), one sub-directory
+per job (\code{sub\_000}, \code{sub\_001}, \dots, or \code{sub\_000\_pthat00}, \dots{} with $\hat{p}_T$ bins),
+with the workflow file of each job, the files of the combination and the script of the Slurm job array, so that the
+productions of several workflows sharing an output directory do not mix.

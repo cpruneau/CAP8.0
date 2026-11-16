@@ -144,7 +144,7 @@ installed to build the interface.
 \label{sec:build}
 
 \CAP{} is built with CMake, in a build folder of the \CAP{} folder, and installed in its folders \code{lib} and
-\code{bin}. The script \code{BuildCAP.py} is a window from which the build is configured and run (Fig.~\todo{screenshot}).
+\code{bin}. The script \code{BuildCAP.py} is a window from which the build is configured and run (Fig.~\ref{fig:buildcap}).
 It lists the core modules, always built, and the optional modules (Therminator3, Latex, Graphics, CapGui, the
 conversion of ROOT files, Jets, Epos, PHSD, Pythia and Herwig), each with a check box, together with the locations of ROOT and of
 the external packages; a button shows which installation of each package CMake will use. A toolbar chooses the build
@@ -163,18 +163,35 @@ commands, verbatim that the window works without a prepared shell. After a build
 modules: the test programs of Base, Math, Graphics, Latex, Interpreter, Helpers and Therminator3, and the tests of
 the Python front ends.
 
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.85\textwidth]{BuildPythia}
+  \caption{The window of \code{BuildCAP.py}. The toolbar runs and stops the build, loads and saves its configuration,
+  and saves or clears the output; below it are the build folder (here an existing one, whose options are loaded), the
+  build type, the number of parallel jobs, and whether to install and to configure afresh. On the left, the core
+  modules, always built, and the folder where the libraries are installed; on the right, the optional modules, each
+  with a check box and a short description and, for those depending on an external package, its location, with a
+  \emph{Browse} button and the installation that CMake will use, found from the field, from the environment or next to
+  \CAP{} (green), or not found (red). Here Glauber, Pythia, Herwig, Jets (with FastJet), Latex, Graphics and CapGui are
+  selected; \emph{Detect packages again} searches the packages anew. The output of CMake and make is shown at the
+  bottom, as the build runs.}
+  \label{fig:buildcap}
+\end{figure*}
+
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Running: RunCAP.py}
 \label{sec:run}
 
 \paragraph{Workflows.}
 An analysis is described by a workflow file (Section~\ref{sec:xml}), which \code{RunCAP.py} composes, checks and
-runs (Fig.~\todo{screenshot}). Its window has four parts. The workflow editor lists, on the left, the task classes of
+runs (Fig.~\ref{fig:runcap}). Its window has four parts. The workflow editor lists, on the left, the task classes of
 the current build, read from their XML templates (which are regenerated when the program or the libraries are newer
 than them), and on the right the tasks of the workflow; tasks are added, removed, ordered and nested, a nested task
 being a subtask of the task above it, such as a generator and the analyzers inside an event iterator. A task can be
 added several times, each copy with its own parameters. The filter editor defines the event and particle filters, the
-efficiencies and the smearers of the workflow once, by their conditions or their parameters; they are created at the
+efficiencies and the smearers of the workflow once, by their conditions or their parameters, and so are, for the jet
+analyses, the jet settings, the jet filters, the jet-pair filters and the jet groomers (Section~\ref{sec:jets}); they are created at the
 start of the job by a filter-creator task, and each task chooses those it uses by name (Section~\ref{sec:filters}).
 The task list shows, for each task in the order of execution, the filters it uses, its number of histogram folders,
 and the first problem found in its configuration. A double click opens the window of a task, with its general
@@ -183,6 +200,23 @@ of folders, whether it is used, created, imported or exported, the prefix of the
 binning for all the folders or a binning per folder. The fields check the type of the values they accept. The values
 read from a workflow file are checked against the templates, so that a misspelled or obsolete parameter is reported
 when the file is loaded.
+
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.9\textwidth]{RunCap}
+  \caption{The window of \code{RunCAP.py}, running a jet study of Pythia in sub-samples and $\hat{p}_T$ bins. Top: the
+  task classes of the build (left) and the tasks of the event-processing stage of the workflow (right), an event
+  iterator holding the Pythia generator and the three jet analyzers. Middle: the filter editor, with the objects of the
+  workflow (event and particle filters, jet settings \code{AntiKtR0p4}, a jet filter and a jet-pair filter, with the
+  tasks using each) and, on the right, the conditions of the object selected, here a jet-pair filter on the rank of the
+  first jet. Below: the stage buttons, the input and output files of the job, and the three lines of the sub-samples,
+  ten sub-samples run sixteen at a time on the computer, each in the $\hat{p}_T$ bins whose edges are listed, combined
+  by their average as differential cross sections in mb; then the task list, with the filters each task uses and the
+  problems found in its configuration. Bottom: the output of the jobs, each line prefixed by its job
+  (\code{sub\_008\_pthat05}: sub-sample 8, $\hat{p}_T$ bin 5), and the progress of the production in the status bar.}
+  \label{fig:runcap}
+\end{figure*}
 
 \paragraph{Stages and jobs.}
 A workflow has up to three stages, which are the phases of Section~\ref{sec:phases}: event processing, derived
@@ -196,4 +230,22 @@ calculator, with the same filters and histogram settings, so that the folders of
 \CAP{} is shown as it runs, can be saved, and a job can be stopped. The same workflow file is run without the
 window, on a cluster for instance, with the command above, which \code{RunCAP.py -{}-print-command} prints;
 \code{RunCAP.py -{}-check} checks a file against the templates.
+
+\paragraph{Files of the job.}
+Below the stage buttons, two lines give the files of the job of the stage shown: the input directory and the input
+file, from which the histograms imported are read (a derived stage reads the output file of event processing), and the
+output directory, in which the job runs, and the output file, in which it writes the histograms of all its tasks. The
+input file is read from the output directory unless an input directory is given (\code{JOB:INPUT\_PATH}), for
+instance to compute the derived histograms of a production made elsewhere.
+
+\paragraph{Sub-samples.}
+Three lines below set up the runs in sub-samples (Section~\ref{sec:subsample}). The first chooses where they run: on
+the computer, with the number of sub-samples run at once, or on a Slurm cluster. The second sets the number of
+sub-samples, the estimate of the uncertainties (sub-sample average, jackknife on the results, or jackknife through the
+stages), the stage whose output is combined, and, for Pythia, the edges of the $\hat{p}_T$ bins and the normalisation
+of their sum, the differential cross section in mb or per event of the range covered (Section~\ref{sec:pythia}); a
+button combines sub-samples already run. The third holds the settings of the cluster (host, directories, partition,
+time, memory, and the commands that set up the environment of the jobs) and the buttons that submit the job array
+over \code{ssh}, show its status, and fetch its outputs. \emph{Run all stages} then writes the production in its
+folder of the output directory, runs or submits its jobs, and combines them.
 \todo{the scripts of \code{Grid} that submit many jobs and combine their outputs (Section~\ref{sec:subsample}).}

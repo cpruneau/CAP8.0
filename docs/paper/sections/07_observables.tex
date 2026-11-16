@@ -464,19 +464,38 @@ recovers $v_2 = 0.1$ and $v_3 = 0.05$ at all orders up to 8, with a hole in the 
 \label{sec:jets}
 
 The module Jets, built when \CAP{} is configured with FastJet~\cite{Cacciari:2011ma}, finds the jets of the events and
-measures their properties. The task \code{JetAnalyzer} clusters the particles accepted by each of its particle filters
-with the anti-$k_T$~\cite{Cacciari:2008gp}, $k_T$ or Cambridge/Aachen algorithm, for each radius $R$ of a list given in
-one run (\code{JET:R}, e.g. \code{0.2, 0.4, 0.6}). The jets kept are those above a minimum transverse momentum
-(\code{JET:PT\_MIN}) and fully inside the acceptance of the particles, $|\eta_{\rm jet}| < \eta_{\max} - R$
-(\code{JET:PARTICLE\_ETA\_MAX}). They are ranked by decreasing $p_T$, the leading jet having rank 1. The jets of an event
-are found once per particle filter and radius, and kept for the event, so that every jet task of the job uses the same
-jets without clustering them again (\code{JetClustering}).
+measures their properties. A jet analysis depends on four kinds of objects, independent of one another, each a list of
+named objects defined once in the library of RunCAP, created at the start of the job by the filter-creator task, and
+chosen by name by the tasks (Section~\ref{sec:filters}): the event filters; the particle filters, which give the
+particles clustered; the jet settings (\code{JET\_SETTINGS}), which define a jet finder; and the jet filters
+(\code{JET\_FILTER}), which select the jets. Each kind has a single role, so that the selection of the jets, for
+instance, is made by the jet filters only, and nowhere else.
 
-Jet filters (\code{JET\_FILTER}) select the jets, with conditions on their transverse momentum, pseudorapidity,
-azimuth, mass, number of constituents, and rank in the event: the leading jet, the subleading jet, or any range of
-ranks. They are defined in the library of RunCAP, as the event and particle filters, and are created by the task
-\code{JetFilterCreator}. The histograms of \code{JetAnalyzer} fill one folder per event filter, particle filter,
-radius and jet filter, named for instance \code{MB\_Charged\_R0p4\_Leading}. They hold:
+A jet settings object (\code{JetSettings}) holds the algorithm, anti-$k_T$~\cite{Cacciari:2008gp}, $k_T$ or
+Cambridge/Aachen (\code{ALGORITHM}: \code{ANTIKT}, \code{KT}, \code{CA}), the radius (\code{R}), the recombination
+scheme, the addition of the four-momenta or the $p_T$-weighted scheme of massless jets (\code{RECOMBINATION}:
+\code{E} or \code{PT}), and the $p_T$ floor of FastJet (\code{PT\_FLOOR}, 1~GeV/$c$ by default). The floor is a
+technical minimum, which spares the many very soft jets of an event; it selects nothing else, and does not change the
+order of the jets above it. A job holds as many jet settings as needed, so that the results of several algorithms,
+radii or recombination schemes are obtained in one run and compared on the same events. For each event, each particle
+filter and each jet settings, the particles accepted are clustered once (\code{JetClustering}); the jets are kept for
+the event and shared by every jet task of the job, which therefore never cluster the same particles twice. The jets
+are ordered by decreasing $p_T$ and each carries its settings and its rank among the jets of these settings, the
+leading jet having rank 1: a rank has a meaning only for a given finder, and is kept with the jet for that reason.
+
+Jet filters (\code{JetFilter}, created by \code{JetFilterCreator}) select the jets with conditions on their transverse
+momentum, pseudorapidity, azimuth, mass, number of constituents, and rank: the leading jet, the subleading jet, or any
+range of ranks. The rank is that of the jet among all the jets of its finder, before any condition: a filter requiring
+rank 1 and $|\eta| < 2$ keeps the leading jet of the event if it lies within $|\eta| < 2$, not the leading one of the
+jets within $|\eta|<2$. A fiducial cut, such as $|\eta_{\rm jet}| < \eta_{\max} - R$ for jets fully inside the
+acceptance of the particles, is thus a condition of a jet filter, chosen by the user, and not a hidden cut of the jet
+finder.
+
+The jet tasks share the base \code{JetTask}, which reads the jet settings and the jet filters, gets the jets of each
+event, and makes, names and normalises the folders: one folder per event filter, particle filter, jet settings and jet
+filter, named after the four objects, for instance \code{MB\_Charged\_AntiKtR0p4\_Leading}, and, for a task that
+selects further (the jet pairs, the groomers below), one per selection of the task. The task \code{JetAnalyzer} fills,
+in each folder:
 \begin{itemize}
   \item per event: the number of jets accepted and the scalar sum of their $p_T$ (events without a jet included);
   \item per jet: $p_T$, $\eta$, $\varphi$, the mass, the numbers of constituents in total and by charge sign
@@ -488,12 +507,11 @@ radius and jet filter, named for instance \code{MB\_Charged\_R0p4\_Leading}. The
 \end{itemize}
 The per-event histograms are normalised by the number of events accepted by the event filter. The per-jet and
 per-constituent histograms characterise the jets themselves: they are normalised by the number of jets of their folder,
-that is of their event filter, particle filter, radius and jet filter, so that a constituent distribution is a
-distribution per jet. The profiles are averages per jet.
+so that a constituent distribution is a distribution per jet. The profiles are averages per jet.
 
-The task \code{JetPairAnalyzer} studies pairs of jets. For each event filter, particle filter, radius and jet filter,
+The task \code{JetPairAnalyzer} studies pairs of jets. For each event filter, particle filter, jet settings and jet filter,
 it forms the pairs of the jets accepted, each pair once with its first jet of higher rank, and fills one folder per jet
-pair filter (\code{JET\_PAIR\_FILTER}), named for instance \code{MB\_Charged\_R0p4\_AllJets\_LeadSub}. The pair
+pair filter (\code{JET\_PAIR\_FILTER}), named for instance \code{MB\_Charged\_AntiKtR0p4\_AllJets\_LeadSub}. The pair
 filters, created by \code{JetPairFilterCreator}, test the ranks of the two jets (\code{RANK1}, \code{RANK2}: the leading
 and subleading jets, for instance), their azimuthal separation $|\Delta\varphi|$ in $[0,\pi]$, the acoplanarity
 $\pi - |\Delta\varphi|$, the separation $|\Delta\eta|$, the momentum balance $x_J = p_{T,2}/p_{T,1}$, and the mass and
@@ -503,8 +521,7 @@ pair, $p_{T,1}$, $p_{T,2}$ and their correlation, $\eta_1$, $\eta_2$, the azimut
 $\Delta\varphi = \varphi_1 - \varphi_2$ in $[-\pi/2, 3\pi/2)$, the acoplanarity, $\Delta\eta$, $x_J$, the asymmetry
 $A_J = (p_{T,1}-p_{T,2})/(p_{T,1}+p_{T,2})$, the mass, transverse momentum and rapidity of the pair, and $\Delta\varphi$
 versus $x_J$, normalised by the number of pairs of the folder; with the averages of $x_J$, $A_J$ and the acoplanarity
-versus $p_{T,1}$. Both tasks share the base \code{JetTask}, which reads the radii and the jet filters, gets the jets of
-each event, and makes, names and normalises the folders.
+versus $p_{T,1}$.
 
 
 The task \code{JetFluctuationAnalyzer} measures the fluctuations and correlations of the multiplicities within the jets.
@@ -512,9 +529,10 @@ For each jet accepted, it records the numbers of constituents $N$, $N_+$, $N_-$,
 and $Q^2$, the second factorial moments $N(N-1)$, $N_+(N_+-1)$, $N_-(N_--1)$, $N_0(N_0-1)$, and the number of pairs of
 opposite charges $N_+N_-$, as averages per jet: integrated, versus the jet $p_T$, and versus $N$. The underlying event
 is measured, event by event, in cones of the radius of the jets transverse to the leading jet of the same particle
-filter and radius: at $\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}$ (\code{UE:MODE} \code{TRANSVERSE}), or at
+filter and jet settings: at $\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}$ (\code{UE:MODE} \code{TRANSVERSE}), or at
 $\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}\pm 2R$ (\code{TRANSVERSE\_SHIFTED}). A cone is kept if it lies within
-the acceptance, $|\eta| < \eta_{\max} - R$, and does not overlap any jet (its axis at least $2R$ from that of every jet).
+the acceptance of the particles, $|\eta| < \eta_{\max} - R$ ($\eta_{\max}$ = \code{UE:ETA\_MAX}, to be set to the
+range of the particle filters), and does not overlap any jet (its axis at least $2R$ from that of every jet).
 The same moments of the particles of the cones fill profiles versus the variables of each jet of the event, so that the
 underlying event of a bin of jet $p_T$ or $N$ is that of the events of its jets.
 
@@ -542,6 +560,45 @@ independent, with $b$ distributed as in a cone. Then
 from which the variances, $R_2$ and $\nu_{\rm dyn}$ of $s$ follow. The moments are averages and are not scaled; the
 derived quantities are computed again by a job reading the folders (\code{HISTOGRAM:IMPORT}), for instance once the
 sub-samples are merged.
+
+\paragraph{Groomed jets.}
+Grooming removes the soft, wide-angle radiation of a jet, which comes in large part from the underlying event and
+from hadronisation, so that the groomed jet and the splitting it selects are more directly related to the hard
+branching of the parton. The task \code{JetGroomingAnalyzer} grooms each jet accepted by a jet filter (on its
+kinematics before grooming) with each groomer of a fifth list of objects, the jet groomers (\code{JET\_GROOMER},
+\code{JetGroomer}, created by \code{JetGroomerCreator}), and fills one folder per groomer, named for instance
+\code{MB\_Charged\_AntiKtR0p4\_Leading\_SD}. A groomer is a method (\code{METHOD}) with its parameters. All methods
+recluster the constituents of the jet (\code{RECLUSTER}: Cambridge/Aachen by default, $k_T$ or anti-$k_T$) with
+FastJet; the C/A tree orders the splittings by angle. With, for a splitting into subjets 1 and 2
+($p_{T,1}\ge p_{T,2}$), $z = p_{T,2}/(p_{T,1}+p_{T,2})$ and $\Delta R_{12}$ their distance in rapidity and azimuth:
+\begin{itemize}
+  \item \code{SOFT\_DROP}~\cite{Larkoski:2014wba}: going down the harder branch from the last clustering, the softer
+  subjet is dropped until a splitting satisfies $z > z_{\rm cut}\,(\Delta R_{12}/R_0)^\beta$ (\code{Z\_CUT},
+  \code{BETA}, \code{R0}, by default the radius of the jet settings), and, if \code{MU} $<1$, the mass drop
+  $\max(m_1,m_2) < \mu\, m$; the groomed jet is the parent of that splitting. A jet without such a splitting is
+  kept as its hardest constituent (\code{MODE} \code{GROOM}, infrared and collinear safe for $\beta>0$) or rejected
+  (\code{TAG}, for $\beta \le 0$). $\beta = 0$ gives the modified mass-drop tagger~\cite{Dasgupta:2013ihk};
+  \item \code{TRIMMING}~\cite{Krohn:2009th}: the constituents are reclustered into subjets of radius \code{R\_SUB}, and
+  those with $p_T <$ \code{F\_CUT} $p_{T,{\rm jet}}$ are dropped;
+  \item \code{FILTERING}~\cite{Butterworth:2008iy}: the constituents are reclustered into subjets of radius
+  \code{R\_FILT}, and the \code{N\_KEEP} hardest form the groomed jet;
+  \item \code{PRUNING}~\cite{Ellis:2009su,Ellis:2009me}: at each recombination $i,j\to p$ of the reclustering, the softer
+  of $i$ and $j$ is dropped if $\min(p_{T,i},p_{T,j})/p_{T,p} <$ \code{Z\_CUT} and
+  $\Delta R_{ij} > D_{\rm cut} = 2\,$\code{R\_CUT\_FACTOR}$\,m/p_T$, with $m$ and $p_T$ those of the jet (the pruner of
+  the FastJet tools);
+  \item \code{DYNAMICAL}~\cite{Mehtar-Tani:2019rrk}: along the primary branch, the splitting of largest hardness
+  $\kappa = z(1-z)\,p_{T,{\rm parent}}\,(\Delta R_{12}/R)^a$ is kept, the earlier, wider-angle emissions being dropped;
+  $a$ = \code{A} = 0.1, 1 and 2 give the zDrop, $k_T$Drop and TimeDrop conditions.
+\end{itemize}
+Each folder holds, per jet groomed, the outcome of the grooming (groomed, without a splitting satisfying the condition,
+or rejected); for Soft Drop and dynamical grooming, the variables of the splitting selected, the groomed momentum
+fraction $z_g$, the groomed radius $R_g = \Delta R_{12}$ and $k_{T,g} = p_{T,2}\,\Delta R_{12}$, and, for Soft Drop, the
+number $n_{\rm SD}$ of splittings of the primary branch satisfying the condition; and, for the groomed jets, their
+$p_T$, mass and number of constituents, the fraction of the transverse momentum removed, $1 - p_{T,g}/p_T$, and the
+groomed mass versus the mass before grooming. The histograms are normalised by the number of jets groomed, so that
+the distributions of $z_g$ and $R_g$, for instance, are per jet, the jets without a splitting included. Several groomers
+in a job compare, on the same jets, Soft Drop with several $(z_{\rm cut},\beta)$, or the grooming methods with one
+another.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Global observables and event shapes}

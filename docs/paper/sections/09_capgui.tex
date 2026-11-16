@@ -46,11 +46,27 @@ class \code{CapGuiApp}, listens to the menus, decides what each command does, an
 
 \paragraph{Panes and windows.}
 The main window holds a menu bar, the data browser, the plot tree, the canvases and a status bar, as panes that can be
-docked side by side, stacked as tabs, or dragged out into windows of their own. The canvases are those of a window of
+docked side by side, stacked as tabs, or dragged out into windows of their own (Fig.~\ref{fig:capguiwindow}). The canvases are those of a window of
 the plot file, arranged in its grid of $n\times m$ (Window $>$ Canvases); a canvas holds one or several graphs,
 arranged in a grid of its own (Window $>$ Graphs in Canvas), and a graph holds any number of objects, overlaid. The
 main window shows the window of the plot file holding the selection or, with View $>$ All Windows, the first window,
 each other window of the file being shown in a window of its own.
+
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{CapGuiGraphFitData}
+  \caption{CapGui with the output of a jet study of Pythia combined from sub-samples. Left: the file browser, with the
+  CAP file of the combination expanded: a folder per task, a folder per combination of filters and jet settings
+  (\code{ALL\_ALL\_R0p4\_JetFilter0}), and its histograms and profiles, with their types. Centre: a canvas showing the
+  jet $p_T$ distribution, in logarithmic scale, with an exponential fitted to it and the quality of the fit in the
+  legend; the toolbar above it holds the drawing tools and the options of the graph (logarithmic axes, fits, residual
+  panel). Right: the values of the histogram, bin by bin, with their statistical uncertainties, the values of the
+  fitted function and the pulls. Below: the fit pane, with the style of the fitted curve, its statistics ($\chi^2$,
+  degrees of freedom, $p$-value, method, number of evaluations and iterations, range), its parameters with their
+  uncertainties and bounds, and their correlation matrix.}
+  \label{fig:capguiwindow}
+\end{figure*}
 
 \paragraph{The data browser.}
 The browser shows the data files opened (CAP files, Section~\ref{sec:binary}, read lazily, and ROOT files) and the
@@ -74,8 +90,13 @@ and text boxes, added from a tool palette, stay on the screen only, as do fits (
 Section~\ref{sec:guifits}). The status bar shows the coordinates under the mouse.
 
 \paragraph{Comparisons.}
-Two histograms with the same binning are compared in a graph that overlays them above a panel showing their
-difference, together with the statistical tests of Section~\ref{sec:mathother}: the $\chi^2$ test of their
+Two histograms with the same binning are compared in a graph that overlays them above a panel showing, bin by bin,
+one of three comparisons: their difference $h_1 - h_2$; their ratio $h_1/h_2$, with the uncertainties propagated
+(bins where either histogram is empty, or the denominator zero, are left empty), to compare, for instance, a
+production weighted by the $\hat{p}_T$ cross sections with one that is not; or their difference in units of its
+uncertainty, $(h_1 - h_2)/\sqrt{\sigma_1^2+\sigma_2^2}$, the histograms being taken as uncorrelated, which is
+distributed as $\mathcal{N}(0,1)$ for compatible histograms (bins without uncertainty are left empty). They come with
+the statistical tests of Section~\ref{sec:mathother}: the $\chi^2$ test of their
 compatibility (of the counts, of the values, or of the shapes) and, in one dimension, the Kolmogorov--Smirnov test.
 A two-dimensional histogram is projected onto either axis, with its fits.
 
