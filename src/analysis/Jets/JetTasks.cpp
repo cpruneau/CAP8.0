@@ -11,7 +11,6 @@
 #include "JetFilter.hpp"
 #include "JetSettings.hpp"
 #include "JetPairAnalyzer.hpp"
-#include "JetFluctuationAnalyzer.hpp"
 #include "JetGroomer.hpp"
 #include "JetGroomingAnalyzer.hpp"
 #include "TaskRegistration.hpp"
@@ -23,7 +22,6 @@ CAP_REFLECTION(JetTasks)
   CAP::registerTask<CAP::JetFilterCreator>("CAP::JetFilterCreator");
   CAP::registerTask<CAP::JetPairAnalyzer>("CAP::JetPairAnalyzer");
   CAP::registerTask<CAP::JetPairFilterCreator>("CAP::JetPairFilterCreator");
-  CAP::registerTask<CAP::JetFluctuationAnalyzer>("CAP::JetFluctuationAnalyzer");
   CAP::registerTask<CAP::JetGroomerCreator>("CAP::JetGroomerCreator");
   CAP::registerTask<CAP::JetGroomingAnalyzer>("CAP::JetGroomingAnalyzer");
 }

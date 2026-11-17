@@ -24,7 +24,6 @@
 #include "JetPair.hpp"
 #include "JetPairHistos.hpp"
 #include "JetUnderlyingEvent.hpp"
-#include "JetFluctuationHistos.hpp"
 #include "JetGroomer.hpp"
 #include "JetGroomingHistos.hpp"
 #include "Event.hpp"
@@ -465,78 +464,82 @@ int main()
   check(near(sum(h("zg")),1.0/3.0,1.0E-6) && near(sum(h("status")),1.0,1.0E-6), "per jet groomed", __LINE__);
   }
 
-  // ----- moments within jets and the derived quantities: jet A (N+ 2, N- 1), jet B (N+ 1, N- 2, N0 1), both at 20 GeV
+  // ----- moments within jets and of the underlying event (JetHistos): jet A (N+ 2, N- 1) at 20.2 GeV, jet B (N+ 1,
+  //       N- 2, N0 1) at 20.7 GeV, in one event with cones (1, 0, 0) and (0, 0, 1) of N+, N-, N0; jet C (N+ 3) at 40 GeV in
+  //       an event without a cone
   {
   std::vector<Particle> ps(3);
   ps[0].setType(&plus);  ps[1].setType(&minus);  ps[2].setType(&neutral);
-  Jet a, b;
+  for (Particle & p : ps) p.setMomentum(momentumOf(5.0,0.0,1.0));
+  Jet a, b, c;
   a.momentum = momentumOf(20.2,0.0,1.0,0.0);  a.constituents = {&ps[0], &ps[0], &ps[1]};
   b.momentum = momentumOf(20.7,0.0,4.0,0.0);  b.constituents = {&ps[0], &ps[1], &ps[1], &ps[2]};
-  Multiplicities coneA, coneB;
-  coneA.add(1.0);  coneB.add(1.0);  coneB.add(-1.0);
+  c.momentum = momentumOf(40.5,0.0,2.0,0.0);  c.constituents = {&ps[0], &ps[0], &ps[0]};
+  Multiplicities coneP, coneN0;
+  coneP.add(1.0);  coneN0.add(0.0);
   Configuration binning;
-  JetFluctuationHistos::addDefaultConfiguration(binning,"T");
-  JetFluctuationHistos histos;
+  JetHistos::addDefaultConfiguration(binning,"T");
+  JetHistos histos;
   histos.configure("T","HISTOGRAM",binning,0);
   histos.create();
-  histos.fillEvent(1);  histos.fill(a,{coneA});
-  histos.fillEvent(1);  histos.fill(b,{coneB});
-  histos.calculateDerived();
-  using H = JetFluctuationHistos;
-  auto d = [&](unsigned int q, unsigned int axis, unsigned int bin) { return histos.derived(q,axis)->binValueAtGlobal(bin); };
-  auto j = [&](unsigned int q) { return histos.jetProfile(q,H::kIntegrated)->binValueAtGlobal(0); };
-  check(near(j(H::kN),3.5,1.0E-6) && near(j(H::kF2),9.0,1.0E-6) && near(j(H::kF2PosNeg),2.0,1.0E-6) && near(j(H::kQ2),1.0,1.0E-6),
-        "averages per jet: N, N(N-1), N+N-, Q^2", __LINE__);
-  check(near(d(H::kVarN,H::kIntegrated,0),0.25,1.0E-6) && near(d(H::kVarQ,H::kIntegrated,0),1.0,1.0E-6), "variances of N and Q",
+  histos.fill({&a, &b},{coneP, coneN0});
+  histos.fill({&c},{});
+  using H = JetHistos;
+  auto pt = [&](unsigned int m, unsigned int bin) { return histos.profile(m,H::kVsPt)->binValueAtGlobal(bin); };
+  auto mult = [&](unsigned int m, unsigned int bin) { return histos.profile(m,H::kVsMult)->binValueAtGlobal(bin); };
+  // versus pT: A and B in the bin of 20 GeV, C in that of 40 GeV
+  check(near(pt(H::kMultPos,20),1.5,1.0E-6) && near(pt(H::kMultNeg,20),1.5,1.0E-6) && near(pt(H::kMult0,20),0.5,1.0E-6)
+        && near(pt(H::kMult,20),3.5,1.0E-6), "<N+>, <N->, <N0>, <N> vs pT", __LINE__);
+  check(near(pt(H::kF2Pos,20),1.0,1.0E-6) && near(pt(H::kF2Neg,20),1.0,1.0E-6) && near(pt(H::kF20,20),0.0,1.0E-6)
+        && near(pt(H::kF2,20),9.0,1.0E-6), "second factorial moments vs pT: (2 + 0)/2, (0 + 2)/2, 0, (6 + 12)/2", __LINE__);
+  check(near(pt(H::kPosNeg,20),(2.0+2.0)/2.0,1.0E-6) && near(mult(H::kPosNeg,4),2.0,1.0E-6) && near(pt(H::kPosNeg,40),0.0,1.0E-6),
+        "<N+ N-> vs pT and vs N", __LINE__);
+  check(near(pt(H::kNetQ,20),0.0,1.0E-6) && near(pt(H::kNetQF2,20),1.0,1.0E-6), "<Q> = (1 - 1)/2, <Q(Q-1)> = (0 + 2)/2",
         __LINE__);
-  check(near(d(H::kR2PP,H::kIntegrated,0),1.0/2.25-1.0,1.0E-6) && near(d(H::kR2PM,H::kIntegrated,0),2.0/2.25-1.0,1.0E-6),
-        "R2++ and R2+-", __LINE__);
-  check(near(d(H::kNudyn,H::kIntegrated,0),2.0*(1.0/2.25)-2.0*(2.0/2.25),1.0E-6), "nu_dyn = R2++ + R2-- - 2 R2+-", __LINE__);
-  check(near(d(H::kSubN,H::kIntegrated,0),2.0,1.0E-6) && near(d(H::kSubF2,H::kIntegrated,0),2.0,1.0E-6),
-        "UE subtracted: <s> = <n> - <b>, F2(s) = F2(n) - 2<s><b> - F2(b)", __LINE__);
-  check(near(d(H::kSubF2PosNeg,H::kIntegrated,0),2.0-0.5*0.5-1.0*1.0-0.5,1.0E-6), "UE subtracted pairs +-", __LINE__);
-  check(near(d(H::kVarN,H::kVsPt,20),0.25,1.0E-6) && near(d(H::kVarN,H::kVsMult,3),0.0,1.0E-6) &&
-        near(d(H::kVarN,H::kVsMult,4),0.0,1.0E-6) && histos.derived(H::kVarN,H::kVsMult)->binEntriesAtGlobal(5)==0,
-        "versus pT and versus N (one jet per bin of N; empty bins left empty)", __LINE__);
-  histos.normalize(0.5);
-  check(near(sum(histos.histogram(createName("JetFluct","nCones"))),1.0,1.0E-6) && near(j(H::kN),3.5,1.0E-6),
-        "nCones per event, profiles not scaled", __LINE__);
-  JetFluctuationHistos copy(histos);
-  check(copy.hasDerived() && near(copy.derived(H::kVarN,H::kIntegrated)->binValueAtGlobal(0),0.25,1.0E-6), "copy", __LINE__);
-  }
-
-  // ----- UE subtraction, statistically: s+ = c + a, s- = c + e (c, a, e Poisson 1, 1, 0.5), background b+, b- Poisson
-  //       0.8, 0.7 in the jet and, independent, in a cone: R2+-(s) = 1/(2 x 1.5) = 1/3, var(s+) = 2
+  check(near(pt(H::kMultPos,40),3.0,1.0E-6) && near(pt(H::kF2Pos,40),6.0,1.0E-6) && near(pt(H::kNetQF2,40),6.0,1.0E-6),
+        "jet C at 40 GeV", __LINE__);
+  // versus N: A (N 3), B and C... C has N 3 too: bin 3 holds A and C, bin 4 holds B
+  check(near(mult(H::kMultPos,3),2.5,1.0E-6) && near(mult(H::kF2Pos,3),4.0,1.0E-6) && near(mult(H::kMultNeg,4),2.0,1.0E-6)
+        && near(mult(H::kF2Neg,4),2.0,1.0E-6) && near(mult(H::kMult0,4),1.0,1.0E-6), "moments vs N", __LINE__);
+  check(histos.profile(H::kMult,H::kVsMult)==nullptr && histos.profile(H::kF2,H::kVsMult)==nullptr
+        && histos.profile(H::kMass,H::kVsMult)==nullptr && histos.profile(H::kMass,H::kVsPt)!=nullptr,
+        "no trivial profiles vs N", __LINE__);
+  // the jet charge of jet C alone at 40 GeV: the second moment is the square of the first
+  double q1 = pt(H::kJetCharge,40), q2 = pt(H::kJetCharge2,40);
+  check(q1>0.0 && near(q2,q1*q1,1.0E-6), "<Q_kappa^2> = <Q_kappa>^2 for one jet", __LINE__);
+  // underlying event: the two cones, for each of the jets A and B; none for C
+  auto ue = [&](unsigned int m, unsigned int axis, unsigned int bin) { return histos.ueProfile(m,axis)->binValueAtGlobal(bin); };
+  check(near(ue(H::kUeMult,H::kVsPt,20),1.0,1.0E-6) && near(ue(H::kUeMultPos,H::kVsPt,20),0.5,1.0E-6)
+        && near(ue(H::kUeMult0,H::kVsPt,20),0.5,1.0E-6) && near(ue(H::kUeMultNeg,H::kVsPt,20),0.0,1.0E-6),
+        "UE multiplicities per cone vs pT", __LINE__);
+  check(histos.ueProfile(H::kUeMult,H::kVsPt)->binEntriesAtGlobal(40)==0, "no cone: the bin of C empty", __LINE__);
+  // second factorial moments of the cones: add a cone with N+ 2, N- 1 to an event of jet A: F2 (3 x 2, 2 x 1, 0)
   {
-  std::mt19937 random(12345);
-  std::poisson_distribution<int> c(1.0), a(1.0), e(0.5), bp(0.8), bm(0.7);
-  std::vector<Particle> ps(2);
-  ps[0].setType(&plus);  ps[1].setType(&minus);
-  Configuration binning;
-  JetFluctuationHistos::addDefaultConfiguration(binning,"T");
-  JetFluctuationHistos histos;
-  histos.configure("T","HISTOGRAM",binning,0);
-  histos.create();
-  Jet jet;
-  jet.momentum = momentumOf(30.0,0.0,1.0,0.0);
-  for (unsigned int k=0; k<400000; k++)
-    {
-    int pairs = c(random), nPos = pairs+a(random)+bp(random), nNeg = pairs+e(random)+bm(random);
-    jet.constituents.assign(nPos,&ps[0]);
-    jet.constituents.insert(jet.constituents.end(),nNeg,&ps[1]);
-    Multiplicities cone;
-    for (int i=bp(random); i>0; i--) cone.add(1.0);
-    for (int i=bm(random); i>0; i--) cone.add(-1.0);
-    histos.fill(jet,{cone});
-    }
-  histos.calculateDerived();
-  using H = JetFluctuationHistos;
-  auto d = [&](unsigned int q) { return histos.derived(q,H::kIntegrated)->binValueAtGlobal(0); };
-  check(near(d(H::kSubNPos),2.0,0.01) && near(d(H::kSubNNeg),1.5,0.01), "<s+> = 2, <s-> = 1.5", __LINE__);
-  check(near(d(H::kSubR2PM),1.0/3.0,0.03) && std::fabs(d(H::kR2PM)-1.0/3.0)>0.1, "R2+- of the jet itself: 1/3", __LINE__);
-  check(near(d(H::kSubVarNPos),2.0,0.02), "var(s+) = 2", __LINE__);
-  check(std::fabs(d(H::kSubR2PP))<0.01, "R2++(s) = 0 (s+ Poisson)", __LINE__);
-  check(near(d(H::kSubNudyn),-2.0/3.0,0.03), "nu_dyn(s) = 0 + 0 - 2/3", __LINE__);
+  JetHistos one;
+  one.configure("T","HISTOGRAM",binning,0);
+  one.create();
+  Multiplicities big;
+  big.add(1.0);  big.add(1.0);  big.add(-1.0);
+  one.fill({&a},{big, coneP});
+  auto u = [&](unsigned int m) { return one.ueProfile(m,H::kVsPt)->binValueAtGlobal(20); };
+  check(near(u(H::kUeF2),(6.0+0.0)/2.0,1.0E-6) && near(u(H::kUeF2Pos),(2.0+0.0)/2.0,1.0E-6) && near(u(H::kUeF2Neg),0.0,1.0E-6)
+        && near(one.ueProfile(H::kUeF2Pos,H::kVsMult)->binValueAtGlobal(3),1.0,1.0E-6),
+        "UE second factorial moments per cone, vs pT and vs N", __LINE__);
+  check(near(u(H::kUePosNeg),(2.0+0.0)/2.0,1.0E-6), "UE <N+ N-> per cone", __LINE__);
+  }
+  check(near(ue(H::kUeMultPos,H::kVsMult,4),0.5,1.0E-6) && near(ue(H::kUeMultPos,H::kVsMult,3),0.5,1.0E-6),
+        "UE vs N: the cones of A (N 3) and B (N 4)", __LINE__);
+  auto h = [&](const char * name) { return histos.histogram(createName("Jet",name)); };
+  check(near(h("nCones")->binValueAtGlobal(2),1.0) && near(h("nCones")->binValueAtGlobal(0),1.0), "cones: 2 and 0",
+        __LINE__);
+  histos.normalize(0.5);
+  check(near(sum(h("nCones")),1.0,1.0E-6) && near(pt(H::kMultPos,20),1.5,1.0E-6), "nCones per event, profiles not scaled",
+        __LINE__);
+  check(histos.histogram(createName("Jet","f2Pos_vsMult"))!=nullptr && histos.histogram(createName("Jet","ue_mult0_vsPt"))!=nullptr
+        && histos.histogram(createName("Jet","netQf2_vsPt"))!=nullptr, "names", __LINE__);
+  JetHistos copy(histos);
+  check(near(copy.profile(H::kF2Pos,H::kVsPt)->binValueAtGlobal(20),1.0,1.0E-6) && copy.ueProfile(H::kUeMult,H::kVsMult)!=nullptr,
+        "copy", __LINE__);
   }
 
   std::printf("TestJets: %d checks, %d failures\n", nChecks, nFailures);

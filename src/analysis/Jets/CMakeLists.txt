@@ -14,8 +14,6 @@ JetPair.cpp
 JetPairHistos.cpp
 JetPairAnalyzer.cpp
 JetUnderlyingEvent.cpp
-JetFluctuationHistos.cpp
-JetFluctuationAnalyzer.cpp
 JetGroomer.cpp
 JetGroomingHistos.cpp
 JetGroomingAnalyzer.cpp)

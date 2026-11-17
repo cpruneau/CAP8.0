@@ -462,6 +462,7 @@ def load_stages_with_filters(path, templates):
         if stage not in stages:
             continue
         tasks = stages[stage]
+        lists += filters.update_jet_fluctuation_tasks(tasks)
         library, extra = filters.extract_choices(tasks, templates, library)
         more += extra
         tasks = filters.remove_creator(tasks, library)
@@ -474,7 +475,8 @@ def load_stages_with_filters(path, templates):
     more += filters.update_database_files(library)
     if lists:                              # the keys moved: no warning of their own
         warnings = [w for w in warnings
-                    if not filters.is_numbered_list_warning(w) and not filters.is_old_jet_key_warning(w)]
+                    if not filters.is_numbered_list_warning(w) and not filters.is_old_jet_key_warning(w)
+                    and not filters.is_fluctuation_class_warning(w)]
     library.job = jobs[next(s for s in STAGES if s in stages)]
     return stages, library, jobs, warnings + more + lists
 

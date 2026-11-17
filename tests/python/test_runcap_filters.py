@@ -1148,5 +1148,43 @@ class TestMaps(unittest.TestCase):
         self.assertEqual(library2.get("PARTICLE_EFFICIENCY", "Eff").parameters, {})
 
 
+class TestJetFluctuationTasks(unittest.TestCase):
+    """The former JetFluctuationAnalyzer: removed, its settings of the underlying event given to JetAnalyzer."""
+
+    def test_dropped_next_to_an_analyzer(self):
+        P = RunCAP.Param
+        it = RunCAP.TaskConfig("It", "CAP::EventIterator")
+        jets = RunCAP.TaskConfig("JetAnalyzer", "CAP::JetAnalyzer", params=[P("UE:MODE", "string", "TRANSVERSE"),
+                                                                           P("UE:ETA_MAX", "double", "0.9")])
+        fluct = RunCAP.TaskConfig("Fluct", "CAP::JetFluctuationAnalyzer", known=False,
+                                  params=[P("UE:MODE", "string", "TRANSVERSE_SHIFTED"), P("UE:ETA_MAX", "double", "0.8")])
+        it.children = [jets, fluct]
+        warnings = F.update_jet_fluctuation_tasks([it])
+        self.assertEqual([t.name for t in it.children], ["JetAnalyzer"])
+        self.assertEqual(jets.param("UE:MODE").value, "TRANSVERSE_SHIFTED")
+        self.assertEqual(jets.param("UE:ETA_MAX").value, "0.8")
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("dropped", warnings[0])
+
+    def test_settings_of_the_analyzer_kept(self):
+        P = RunCAP.Param
+        jets = RunCAP.TaskConfig("J", "CAP::JetAnalyzer", params=[P("UE:ETA_MAX", "double", "0.9")])
+        jets.param("UE:ETA_MAX").value = "0.7"            # changed from its default: kept
+        fluct = RunCAP.TaskConfig("F", "CAP::JetFluctuationAnalyzer", params=[P("UE:ETA_MAX", "double", "0.8")])
+        tasks = [jets, fluct]
+        F.update_jet_fluctuation_tasks(tasks)
+        self.assertEqual([t.name for t in tasks], ["J"])
+        self.assertEqual(jets.param("UE:ETA_MAX").value, "0.7")
+
+    def test_alone_becomes_an_analyzer(self):
+        fluct = RunCAP.TaskConfig("F", "CAP::JetFluctuationAnalyzer", known=False)
+        tasks = [fluct]
+        warnings = F.update_jet_fluctuation_tasks(tasks)
+        self.assertEqual(tasks[0].cls, "CAP::JetAnalyzer")
+        self.assertIn("now a JetAnalyzer", warnings[0])
+        self.assertTrue(F.is_fluctuation_class_warning(
+            "Task F: class CAP::JetFluctuationAnalyzer is not in the current build (no template)"))
+
+
 if __name__ == "__main__":
     unittest.main()

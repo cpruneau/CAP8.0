@@ -23,6 +23,17 @@ namespace
 {
 const char * kClass[3] = {"c", "cPos", "cNeg"};
 const char * kClassTitle[3] = {"", "^{+}", "^{-}"};
+const char * kMomentName[JetHistos::kMoments] = {"mult", "multPos", "multNeg", "mult0", "f2", "f2Pos", "f2Neg", "f20",
+                                                  "posNeg", "netQ", "netQf2", "jetCharge", "jetCharge2", "mass"};
+const char * kMomentTitle[JetHistos::kMoments] = {"<N>", "<N_{+}>", "<N_{-}>", "<N_{0}>", "<N(N-1)>",
+                                                   "<N_{+}(N_{+}-1)>", "<N_{-}(N_{-}-1)>", "<N_{0}(N_{0}-1)>", "<N_{+}N_{-}>", "<Q>",
+                                                   "<Q(Q-1)>", "<Q_{#kappa}>", "<Q_{#kappa}^{2}>", "<m_{jet}>"};
+const char * kUeName[JetHistos::kUeMoments] = {"ue_mult", "ue_multPos", "ue_multNeg", "ue_mult0", "ue_f2",
+                                                "ue_f2Pos", "ue_f2Neg", "ue_posNeg"};
+const char * kUeTitle[JetHistos::kUeMoments] = {"<N>_{UE}", "<N_{+}>_{UE}", "<N_{-}>_{UE}", "<N_{0}>_{UE}",
+                                                 "<N(N-1)>_{UE}", "<N_{+}(N_{+}-1)>_{UE}", "<N_{-}(N_{-}-1)>_{UE}",
+                                                 "<N_{+}N_{-}>_{UE}"};
+const char * kAxisSuffix[JetHistos::kAxes] = {"_vsPt", "_vsMult"};
 } // namespace
 
 JetHistos::JetHistos()
@@ -30,6 +41,7 @@ JetHistos::JetHistos()
 HistogramFolder(),
 nJets_nbins(20), nJets_max(20.0),
 sumPt_nbins(100), sumPt_max(200.0),
+nCones_nbins(5), nCones_max(5.0),
 pt_nbins(100), pt_min(0.0), pt_max(100.0),
 eta_nbins(20), eta_min(-1.0), eta_max(1.0),
 phi_nbins(36),
@@ -43,12 +55,11 @@ jt_nbins(50), jt_max(5.0),
 theta_nbins(50), theta_max(1.0),
 r_nbins(20), r_max(1.0),
 _jetCount(0.0),
-h_nJets(nullptr), h_sumPt(nullptr),
+h_nJets(nullptr), h_sumPt(nullptr), h_nCones(nullptr),
 h_pt(nullptr), h_eta(nullptr), h_phi(nullptr), h_etaPhi(nullptr), h_mass(nullptr),
 h_mult(nullptr), h_multPos(nullptr), h_multNeg(nullptr), h_mult0(nullptr),
 h_netQ(nullptr), h_jetCharge(nullptr),
-p_mult(nullptr), p_multPos(nullptr), p_multNeg(nullptr), p_mult0(nullptr), p_netQ(nullptr),
-p_mass(nullptr), p_jetCharge(nullptr),
+_profiles(kAxes*kMoments,nullptr), _ueProfiles(kAxes*kUeMoments,nullptr),
 h_z(3,nullptr), h_jt(3,nullptr), h_theta(3,nullptr), h_r(3,nullptr), h_rho(3,nullptr)
 {
   appendClassName("JetHistos");
@@ -71,6 +82,7 @@ JetHistos & JetHistos::operator=(const JetHistos & rhs)
     HistogramFolder::operator=(rhs);
     nJets_nbins = rhs.nJets_nbins;  nJets_max = rhs.nJets_max;
     sumPt_nbins = rhs.sumPt_nbins;  sumPt_max = rhs.sumPt_max;
+    nCones_nbins = rhs.nCones_nbins;  nCones_max = rhs.nCones_max;
     pt_nbins = rhs.pt_nbins;  pt_min = rhs.pt_min;  pt_max = rhs.pt_max;
     eta_nbins = rhs.eta_nbins;  eta_min = rhs.eta_min;  eta_max = rhs.eta_max;
     phi_nbins = rhs.phi_nbins;
@@ -91,16 +103,18 @@ JetHistos & JetHistos::operator=(const JetHistos & rhs)
 void JetHistos::cloneB(const JetHistos & source)
 {
   h_nJets = histogramLike(source.h_nJets);   h_sumPt = histogramLike(source.h_sumPt);
+  h_nCones = histogramLike(source.h_nCones);
   h_pt = histogramLike(source.h_pt);         h_eta = histogramLike(source.h_eta);
   h_phi = histogramLike(source.h_phi);       h_etaPhi = histogramLike(source.h_etaPhi);
   h_mass = histogramLike(source.h_mass);     h_mult = histogramLike(source.h_mult);
   h_multPos = histogramLike(source.h_multPos);  h_multNeg = histogramLike(source.h_multNeg);
   h_mult0 = histogramLike(source.h_mult0);   h_netQ = histogramLike(source.h_netQ);
   h_jetCharge = histogramLike(source.h_jetCharge);
-  p_mult = histogramLike(source.p_mult);     p_multPos = histogramLike(source.p_multPos);
-  p_multNeg = histogramLike(source.p_multNeg);  p_mult0 = histogramLike(source.p_mult0);
-  p_netQ = histogramLike(source.p_netQ);     p_mass = histogramLike(source.p_mass);
-  p_jetCharge = histogramLike(source.p_jetCharge);
+  _profiles.assign(kAxes*kMoments,nullptr);
+  _ueProfiles.assign(kAxes*kUeMoments,nullptr);
+  for (unsigned int k=0; k<source._profiles.size() && k<_profiles.size(); k++) _profiles[k] = histogramLike(source._profiles[k]);
+  for (unsigned int k=0; k<source._ueProfiles.size() && k<_ueProfiles.size(); k++)
+    _ueProfiles[k] = histogramLike(source._ueProfiles[k]);
   h_z.resize(3); h_jt.resize(3); h_theta.resize(3); h_r.resize(3); h_rho.resize(3);
   for (unsigned int k=0; k<3; k++)
     {
@@ -115,6 +129,7 @@ void JetHistos::addDefaultConfiguration(Configuration & configuration, const Str
   auto add = [&](const char * name, auto value) { configuration.addProperty(createKey(taskName,"HISTOGRAM",name),value); };
   add("nJets_nbins",20);      add("nJets_max",20.0);
   add("sumPt_nbins",100);     add("sumPt_max",200.0);
+  add("nCones_nbins",5);      add("nCones_max",5.0);
   add("pt_nbins",100);        add("pt_min",0.0);       add("pt_max",100.0);
   add("eta_nbins",20);        add("eta_min",-1.0);     add("eta_max",1.0);
   add("phi_nbins",36);
@@ -136,6 +151,7 @@ void JetHistos::configure(const String & taskName, const String & objectType, co
   auto d = [&](const char * name) { return configuration.valueDouble(createKey(taskName,type,name)); };
   nJets_nbins = i("nJets_nbins");  nJets_max = d("nJets_max");
   sumPt_nbins = i("sumPt_nbins");  sumPt_max = d("sumPt_max");
+  nCones_nbins = i("nCones_nbins");  nCones_max = d("nCones_max");
   pt_nbins = i("pt_nbins");  pt_min = d("pt_min");  pt_max = d("pt_max");
   eta_nbins = i("eta_nbins");  eta_min = d("eta_min");  eta_max = d("eta_max");
   phi_nbins = i("phi_nbins");
@@ -149,6 +165,14 @@ void JetHistos::configure(const String & taskName, const String & objectType, co
   r_nbins = i("r_nbins");  r_max = d("r_max");
 }
 
+const char * JetHistos::momentName(unsigned int m)   { return m<kMoments ? kMomentName[m] : ""; }
+const char * JetHistos::ueMomentName(unsigned int m) { return m<kUeMoments ? kUeName[m] : ""; }
+
+String JetHistos::profileName(const char * name, unsigned int axis)
+{
+  return String(name)+String(kAxisSuffix[axis]);
+}
+
 void JetHistos::create()
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
@@ -156,6 +180,7 @@ void JetHistos::create()
   auto name = [this](const char * n) { return createName(_histogramBaseName,n); };
   h_nJets   = createHistogram(name("nJets"),nJets_nbins,0.0,nJets_max,"n_{jets}","Events");
   h_sumPt   = createHistogram(name("sumPt"),sumPt_nbins,0.0,sumPt_max,"#Sigma p_{T,jet} (GeV/c)","Events");
+  h_nCones  = createHistogram(name("nCones"),nCones_nbins,0.0,nCones_max,"n_{cones}","Events");
   h_pt      = createHistogram(name("pt"),pt_nbins,pt_min,pt_max,"p_{T,jet} (GeV/c)","Jets");
   h_eta     = createHistogram(name("eta"),eta_nbins,eta_min,eta_max,"#eta_{jet}","Jets");
   h_phi     = createHistogram(name("phi"),phi_nbins,0.0,twoPi,"#varphi_{jet}","Jets");
@@ -167,13 +192,18 @@ void JetHistos::create()
   h_mult0   = createHistogram(name("mult0"),mult_nbins,0.0,mult_max,"N_{0}","Jets");
   h_netQ    = createHistogram(name("netQ"),netQ_nbins,-netQ_max,netQ_max,"Q","Jets");
   h_jetCharge = createHistogram(name("jetCharge"),jetCharge_nbins,-jetCharge_max,jetCharge_max,"Q_{#kappa}","Jets");
-  p_mult    = createProfile(name("mult_vsPt"),pt_nbins,pt_min,pt_max,"p_{T,jet} (GeV/c)","<N>");
-  p_multPos = createProfile(name("multPos_vsPt"),pt_nbins,pt_min,pt_max,"p_{T,jet} (GeV/c)","<N_{+}>");
-  p_multNeg = createProfile(name("multNeg_vsPt"),pt_nbins,pt_min,pt_max,"p_{T,jet} (GeV/c)","<N_{-}>");
-  p_mult0   = createProfile(name("mult0_vsPt"),pt_nbins,pt_min,pt_max,"p_{T,jet} (GeV/c)","<N_{0}>");
-  p_netQ    = createProfile(name("netQ_vsPt"),pt_nbins,pt_min,pt_max,"p_{T,jet} (GeV/c)","<Q>");
-  p_mass    = createProfile(name("mass_vsPt"),pt_nbins,pt_min,pt_max,"p_{T,jet} (GeV/c)","<m_{jet}>");
-  p_jetCharge = createProfile(name("jetCharge_vsPt"),pt_nbins,pt_min,pt_max,"p_{T,jet} (GeV/c)","<Q_{#kappa}>");
+  for (unsigned int a=0; a<kAxes; a++)
+    {
+    const bool vsPt = a==kVsPt;
+    const int nBins = vsPt ? pt_nbins : mult_nbins;
+    const double low = vsPt ? pt_min : 0.0, high = vsPt ? pt_max : mult_max;
+    const char * axisTitle = vsPt ? "p_{T,jet} (GeV/c)" : "N";
+    for (unsigned int m=0; m<kMoments; m++)
+      _profiles[a*kMoments+m] = hasProfile(m,a)
+        ? createProfile(name(profileName(kMomentName[m],a).data()),nBins,low,high,axisTitle,kMomentTitle[m]) : nullptr;
+    for (unsigned int m=0; m<kUeMoments; m++)
+      _ueProfiles[a*kUeMoments+m] = createProfile(name(profileName(kUeName[m],a).data()),nBins,low,high,axisTitle,kUeTitle[m]);
+    }
   for (unsigned int k=0; k<3; k++)
     {
     String c = kClass[k], t = kClassTitle[k];
@@ -189,13 +219,19 @@ void JetHistos::loadFrom(const Folder & inputFile)
 {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   auto h = [&](const char * n) { return importHistogram(inputFile,createName(_histogramBaseName,n)); };
-  auto p = [&](const char * n) { return importProfile(inputFile,createName(_histogramBaseName,n)); };
-  h_nJets = h("nJets");  h_sumPt = h("sumPt");
+  auto p = [&](const String & n) { return importProfile(inputFile,createName(_histogramBaseName,n)); };
+  h_nJets = h("nJets");  h_sumPt = h("sumPt");  h_nCones = h("nCones");
   h_pt = h("pt");  h_eta = h("eta");  h_phi = h("phi");  h_etaPhi = h("etaPhi");  h_mass = h("mass");
   h_mult = h("mult");  h_multPos = h("multPos");  h_multNeg = h("multNeg");  h_mult0 = h("mult0");
   h_netQ = h("netQ");  h_jetCharge = h("jetCharge");
-  p_mult = p("mult_vsPt");  p_multPos = p("multPos_vsPt");  p_multNeg = p("multNeg_vsPt");  p_mult0 = p("mult0_vsPt");
-  p_netQ = p("netQ_vsPt");  p_mass = p("mass_vsPt");  p_jetCharge = p("jetCharge_vsPt");
+  _profiles.assign(kAxes*kMoments,nullptr);
+  _ueProfiles.assign(kAxes*kUeMoments,nullptr);
+  for (unsigned int a=0; a<kAxes; a++)
+    {
+    for (unsigned int m=0; m<kMoments; m++)
+      if (hasProfile(m,a)) _profiles[a*kMoments+m] = p(profileName(kMomentName[m],a));
+    for (unsigned int m=0; m<kUeMoments; m++) _ueProfiles[a*kUeMoments+m] = p(profileName(kUeName[m],a));
+    }
   for (unsigned int k=0; k<3; k++)
     {
     String c = kClass[k];
@@ -216,12 +252,13 @@ void JetHistos::fillConstituent(unsigned int k, double z, double jt, double thet
   h_rho[k]->fill(r,z);
 }
 
-void JetHistos::fill(const std::vector<const Jet*> & jets)
+void JetHistos::fill(const std::vector<const Jet*> & jets, const std::vector<Multiplicities> & cones)
 {
   double sumPt = 0.0;
   for (const Jet * jet : jets) sumPt += jet->pt();
   h_nJets->fill(double(jets.size()));
   h_sumPt->fill(sumPt);
+  h_nCones->fill(double(cones.size()));
   _jetCount += double(jets.size());
   for (const Jet * jet : jets)
     {
@@ -254,19 +291,29 @@ void JetHistos::fill(const std::vector<const Jet*> & jets)
     h_mult0->fill(n0);
     h_netQ->fill(netQ);
     h_jetCharge->fill(jetCharge);
-    p_mult->fill(pt,n);
-    p_multPos->fill(pt,nPos);
-    p_multNeg->fill(pt,nNeg);
-    p_mult0->fill(pt,n0);
-    p_netQ->fill(pt,netQ);
-    p_mass->fill(pt,mass);
-    p_jetCharge->fill(pt,jetCharge);
+    double v[kMoments];
+    v[kMult] = n;           v[kMultPos] = nPos;              v[kMultNeg] = nNeg;              v[kMult0] = n0;
+    v[kF2] = n*(n-1.0);     v[kF2Pos] = nPos*(nPos-1.0);     v[kF2Neg] = nNeg*(nNeg-1.0);     v[kF20] = n0*(n0-1.0);
+    v[kPosNeg] = nPos*nNeg;
+    v[kNetQ] = netQ;        v[kNetQF2] = netQ*(netQ-1.0);    v[kJetCharge] = jetCharge;       v[kJetCharge2] = jetCharge*jetCharge;
+    v[kMass] = mass;
+    const double x[kAxes] = {pt, n};
+    for (unsigned int a=0; a<kAxes; a++)
+      {
+      for (unsigned int m=0; m<kMoments; m++) if (Profile * prof = _profiles[a*kMoments+m]) prof->fill(x[a],v[m]);
+      for (const Multiplicities & cone : cones)
+        {
+        const double b[kUeMoments] = {cone.n, cone.nPos, cone.nNeg, cone.n0, cone.n*(cone.n-1.0),
+                                      cone.nPos*(cone.nPos-1.0), cone.nNeg*(cone.nNeg-1.0), cone.nPos*cone.nNeg};
+        for (unsigned int m=0; m<kUeMoments; m++) _ueProfiles[a*kUeMoments+m]->fill(x[a],b[m]);
+        }
+      }
     }
 }
 
 void JetHistos::scaleObject(double factor)
 {
-  for (Histogram * h : {h_nJets, h_sumPt}) if (h) h->scale(factor);
+  for (Histogram * h : {h_nJets, h_sumPt, h_nCones}) if (h) h->scale(factor);
 }
 
 void JetHistos::normalize(double eventFactor)
