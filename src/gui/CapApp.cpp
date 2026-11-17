@@ -346,6 +346,62 @@ namespace CAP
   pane.onCompare = [this](const MATH::DataPoints * a, const MATH::DataPoints * b, const String & la, const String & lb,
                           int comparison)
     { showComparison(a, b, la, lb, comparison); };
+  pane.rebinSource = [this](const MATH::DataPoints * data, std::vector<unsigned int> & factors)
+    { return rebinSourceOf(data, factors); };
+  pane.onRebin = [this, &pane](int graph, int item, const std::vector<unsigned int> & factors)
+    { rebinItem(pane, graph, item, factors); };
+  }
+
+  void CapApp::rebinItem(CanvasPane & pane, int graph, int item, const std::vector<unsigned int> & factors)
+  {
+  if (graph < 0 || graph >= pane.canvas().nGraphs()) return;
+  Graph & g = pane.canvas().graph(graph);
+  if (item < 0 || item >= int(g.items().size())) return;
+  GraphItem & shown = g.items()[std::size_t(item)];
+  const MATH::DataPoints * data = nullptr;
+  try { data = rebinnedData(pane, shown.data(), factors); }
+  catch (const std::exception & e) { _gui.showMessage("Rebin", String("Cannot rebin: ") + String(e.what())); return; }
+  if (!data || data == shown.data()) return;
+  recordUndo();
+  shown.setData(data);
+  const MATH::Histogram * h = dynamic_cast<const MATH::Histogram *>(data);
+  String bins;
+  if (h)
+    for (unsigned int a=0; a<h->rank(); a++)
+      {
+      if (a) bins += String(" x ");
+      bins += String(std::to_string(h->nBins(a)).c_str());
+      }
+  _gui.setStatus(shown.label() + String(": ") + bins + String(" bins"));
+  }
+
+  const MATH::DataPoints * CapApp::rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
+                                                const std::vector<unsigned int> & factors)
+  {
+  (void)pane;
+  std::vector<unsigned int> previous;
+  const MATH::DataPoints * source = rebinSourceOf(data, previous);
+  const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram *>(source);
+  if (!histogram) return nullptr;
+  std::vector<unsigned int> all = factors;
+  if (all.size() == 1 && histogram->rank() > 1) all.assign(histogram->rank(), factors[0]);
+  bool identity = all.size() == histogram->rank();
+  for (unsigned int f : all) if (f != 1) identity = false;
+  if (identity) return source;
+  for (const auto & record : _rebinned)   // made already
+    if (record.source == source && record.factors == all) return record.copy;
+  MATH::DataPoints * copy = histogram->rebinned(all);
+  _data.emplace_back(copy);
+  _rebinned.push_back(RebinRecord{copy, source, all});
+  return copy;
+  }
+
+  const MATH::DataPoints * CapApp::rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const
+  {
+  factors.clear();
+  for (const auto & record : _rebinned)
+    if (record.copy == data) { factors = record.factors; return record.source; }
+  return data;
   }
 
   // ------------------------------------------------------------------------------------------------ menus

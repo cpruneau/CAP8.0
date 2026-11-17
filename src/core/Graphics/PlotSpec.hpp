@@ -250,6 +250,29 @@ namespace CAP
   //! @brief Set the names of a canvas. @param canvas canvas @param info names
   void setCanvasInfo(const Canvas & canvas, const CanvasInfo & info) { _canvasInfo[&canvas] = info; }
 
+  //! @name Rebinned histograms
+  //! A histogram of a graph is shown rebinned when its element has the attribute rebin: the number of bins merged
+  //! along every axis ("2"), or along each axis ("2 4"), see MATH::Histogram::rebin(). The rebinned copies are made
+  //! and owned by the specification, and written back as the histogram they are made from with this attribute.
+  //! @{
+  //!
+  //! @brief A histogram rebinned, made from the histogram it shows (the original one if data is itself rebinned).
+  //! @param data histogram shown (rebinned or not) @param factors number of bins merged along each axis (one per
+  //! axis, or one for all)
+  //! @return the rebinned copy (owned by the specification), the original histogram if all the factors are 1, or
+  //! null if data is not a histogram
+  //! @throws Exception if a factor is 0 or their number is wrong
+  //!
+  const MATH::DataPoints * rebinned(const MATH::DataPoints * data, const std::vector<unsigned int> & factors);
+  //! @brief The histogram a rebinned copy is made from, and its factors. @param data data points shown
+  //! @param factors set to the factors (empty if data is not a rebinned copy) @return the original histogram (data
+  //! itself if it is not a rebinned copy)
+  const MATH::DataPoints * rebinSource(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const;
+  //! @brief Text of the factors of a rebinning: "2" if they are all the same, "2 4" otherwise. @param factors
+  //! factors @return text
+  static String rebinText(const std::vector<unsigned int> & factors);
+  //! @}
+
   //! Finds the input and the path of data points shown but not made by build() (e.g. added on screen); returns
   //! false if they are not found.
   std::function<bool(const MATH::DataPoints * data, String & input, String & path)> locateData;
@@ -295,6 +318,9 @@ namespace CAP
   std::map<const Canvas *, CanvasInfo> _canvasInfo;   //!< names of the canvases made
   //! Objects shown, by pointer: their input and path
   std::map<const MATH::DataPoints *, std::pair<String,String>> _dataNames;
+  //! A rebinned copy of a histogram shown: the copy, the histogram it is made from, and the factors
+  struct RebinRecord { std::unique_ptr<MATH::DataPoints> copy; const MATH::DataPoints * source; std::vector<unsigned int> factors; };
+  std::vector<RebinRecord> _rebinned;   //!< rebinned copies made (owned)
   //! Function made from the specification
   struct FunctionRecord { std::unique_ptr<MATH::ParameterizedFunction> function; String className; };
   std::vector<FunctionRecord> _functions;   //!< functions made (owned)

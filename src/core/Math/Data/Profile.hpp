@@ -122,6 +122,24 @@ public:
                   const std::vector<double> & coefficients) override;
   //! @}
 
+  //! @name Rebinning
+  //! @{
+  //!
+  //! @brief A profile with the bins of this one merged n by n along every axis: the binning of Histogram::rebin()
+  //! (the last bin of an axis covering m mod n bins when n does not divide m), the sums of the bins merged (entries,
+  //! weights, weighted values and their squares), so that each new bin holds the exact weighted mean of the entries
+  //! of the bins it covers. Averages are not scaled: the last, incomplete bin is the mean of its entries.
+  //! @param n number of bins merged (>= 1) @return rebinned profile @throws Exception if n is 0
+  //!
+  Profile rebin(unsigned int n) const;
+  //! @brief A profile with the bins merged factors[k] by factors[k] along axis k (see rebin(unsigned int)).
+  //! @param factors one per axis (each >= 1) @return rebinned profile
+  //! @throws Exception if the number of factors is not the rank, or a factor is 0
+  Profile rebin(const std::vector<unsigned int> & factors) const;
+  //! @brief Rebinned copy (a Profile), owned by the caller. @param factors one per axis @return new profile
+  Histogram * rebinned(const std::vector<unsigned int> & factors) const override;
+  //! @}
+
   //! @brief Print the profile.
   void print() const override;
 

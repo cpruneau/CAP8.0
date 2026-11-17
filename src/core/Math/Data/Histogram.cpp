@@ -749,6 +749,95 @@ namespace CAP
   }
 
   //////////////////////////////////////////////////////////////////////////
+  // Rebinning
+  //////////////////////////////////////////////////////////////////////////
+
+  Partition Histogram::rebinnedPartition(const std::vector<unsigned int> & factors) const
+  {
+  if (factors.size()!=rank())
+    throw Exception(String("Rebinning needs one factor per axis: ")+String(std::to_string(factors.size()).c_str())
+                    +String(" factors for rank ")+String(std::to_string(rank()).c_str()),__FUNCTION__);
+  Partition partition;
+  for (unsigned int a=0; a<rank(); a++)
+    {
+    unsigned int n = factors[a];
+    if (n==0) throw Exception("Rebinning factor 0",__FUNCTION__);
+    unsigned int m = nBins(a);
+    unsigned int nNew = m/n + (m%n ? 1 : 0);
+    double low = Partition::minimum(a), high = Partition::maximum(a);
+    double width = (high-low)/double(m);
+    double newHigh = (m%n) ? low + double(nNew)*double(n)*width : high;   // the same edge when n divides m
+    partition.addDimension(nNew,float(low),float(newHigh),dimensionTitle(a));
+    if (n==1)
+      for (const auto & label : binLabels(a)) partition.setBinLabel(label.first,label.second,a);
+    }
+  return partition;
+  }
+
+  unsigned int Histogram::rebinnedBin(unsigned int k, const std::vector<unsigned int> & factors,
+                                      const Partition & target) const
+  {
+  // axis 0 varies fastest (Partition::binIndex())
+  std::vector<unsigned int> indices(rank());
+  unsigned int rest = k;
+  for (unsigned int a=0; a<rank(); a++)
+    {
+    unsigned int m = nBins(a);
+    indices[a] = (rest%m)/factors[a];
+    rest /= m;
+    }
+  return (unsigned int) target.binIndex(indices,true);
+  }
+
+  Histogram Histogram::rebin(unsigned int n) const
+  {
+  return rebin(std::vector<unsigned int>(rank(),n));
+  }
+
+  Histogram Histogram::rebin(const std::vector<unsigned int> & factors) const
+  {
+  Partition partition = rebinnedPartition(factors);
+  Histogram result(partition);
+  result.setPrecision(precision());
+  result.setName(name());
+  result.setTitle(title());
+  unsigned int nTarget = partition.nBinsTotal();
+  std::vector<long>   entries(nTarget,0);
+  std::vector<double> values(nTarget,0.0), errors2(nTarget,0.0);
+  for (unsigned int k=0; k<nBinsTotal(); k++)
+    {
+    if (_entries[k]<=0) continue;
+    unsigned int t = rebinnedBin(k,factors,partition);
+    entries[t] += _entries[k];
+    values[t]  += value(k);
+    double e = valueUncertainty(k);
+    errors2[t] += e*e;
+    }
+  // the last bin of an axis where the factor does not divide the number of bins covers r < n bins: scaled by n/r
+  std::vector<unsigned int> indices(rank());
+  for (unsigned int t=0; t<nTarget; t++)
+    {
+    if (entries[t]<=0) continue;
+    double scale = 1.0;
+    unsigned int rest = t;
+    for (unsigned int a=0; a<rank(); a++)
+      {
+      unsigned int nNew = partition.nBins(a), i = rest%nNew;
+      rest /= nNew;
+      unsigned int r = nBins(a)%factors[a];
+      if (r!=0 && i==nNew-1) scale *= double(factors[a])/double(r);
+      }
+    result.setValue(t,entries[t],scale*values[t],scale*std::sqrt(errors2[t]));
+    }
+  return result;
+  }
+
+  Histogram * Histogram::rebinned(const std::vector<unsigned int> & factors) const
+  {
+  return new Histogram(rebin(factors));
+  }
+
+  //////////////////////////////////////////////////////////////////////////
   // Sums and integrals (ranges inclusive; last beyond the axis is clamped)
   //////////////////////////////////////////////////////////////////////////
 

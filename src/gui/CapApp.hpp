@@ -219,6 +219,23 @@ namespace CAP
   //!
   void showComparison(const MATH::DataPoints * first, const MATH::DataPoints * second, const String & firstLabel,
                       const String & secondLabel, int comparison=CanvasPane::kDifference);
+  //!
+  //! @brief Show a histogram of a graph rebinned (MATH::Histogram::rebin()), in place of the histogram shown
+  //! (undoable): the rebinning is made from the original histogram, so that factors of 1 show it again.
+  //! @param pane canvas pane @param graph graph of the pane @param item item of the graph (a histogram)
+  //! @param factors number of bins merged along each axis
+  //!
+  void rebinItem(CanvasPane & pane, int graph, int item, const std::vector<unsigned int> & factors);
+  //!
+  //! @brief The rebinned copy of a histogram (made from its original histogram if it is itself a copy), owned by the
+  //! application; the original histogram if all the factors are 1. @param pane pane showing it @param data histogram
+  //! @param factors factors @return histogram to show, or null @throws Exception if the factors are not valid
+  //!
+  virtual const MATH::DataPoints * rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
+                                                const std::vector<unsigned int> & factors);
+  //! @brief The original histogram of a rebinned copy and its factors. @param data histogram shown @param factors set
+  //! to its factors (empty: not rebinned) @return original histogram (data if not a copy)
+  virtual const MATH::DataPoints * rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const;
   //! @brief Show the objects of a folder, one per graph of the current canvas (divided as needed).
   //! @param file file id @param folderPath folder in the file ("" for the top)
   void showFolder(int file, const String & folderPath);
@@ -266,6 +283,9 @@ namespace CAP
   CapGui _gui;   //!< the window
   std::vector<std::unique_ptr<MATH::Function>>   _functions;   //!< functions created by the application (demo)
   std::vector<std::unique_ptr<MATH::DataPoints>> _data;   //!< data points created by the application (demo)
+  //! A rebinned copy made by the application (in _data): the copy, its original histogram, the factors
+  struct RebinRecord { const MATH::DataPoints * copy; const MATH::DataPoints * source; std::vector<unsigned int> factors; };
+  std::vector<RebinRecord> _rebinned;   //!< rebinned copies made by the application
   std::vector<BrowserFile> _files;        //!< open files, shown in the browser
   std::vector<BrowserFile> _closedFiles;  //!< closed or replaced files: kept, since graphs and undo states may show their objects
   int _nextFileId;   //!< identifier of the next file opened

@@ -59,7 +59,11 @@ differences, products, ratios, scaling) acts on the bin values and propagates th
 uncorrelated operands; bins where a result is undefined, for instance a ratio with an empty denominator, are left empty. Values are stored in single or double precision, chosen per histogram, so that the large pair histograms of an analysis take half the memory when single precision suffices.
 
 The histogram library includes the operations the analyses need on their histograms: integrals over ranges,
-projections and reductions (for example from $(\eta_1,\varphi_1,\eta_2,\varphi_2)$ to $(\Delta\eta,\Delta\varphi)$), symmetrisation, shifts of the $\Delta\varphi$ range, and the computation of the correlation functions of Section~\ref{sec:observables}: products of single-particle densities, cumulants $C_2$, normalised cumulants $R_2$, the correlators $\avg{\Delta\pT\Delta\pT}$ and $G_2$, balance functions, and the factorial moments and $\nudyn$ of multiplicity distributions.
+projections and reductions (for example from $(\eta_1,\varphi_1,\eta_2,\varphi_2)$ to $(\Delta\eta,\Delta\varphi)$), symmetrisation, shifts of the $\Delta\varphi$ range, and the computation of the correlation functions of Section~\ref{sec:observables}: products of single-particle densities, cumulants $C_2$, normalised cumulants $R_2$, the correlators $\avg{\Delta\pT\Delta\pT}$ and $G_2$, balance functions, and the factorial moments and $\nudyn$ of multiplicity distributions. A histogram of any rank is rebinned by merging its bins $n$ by $n$ along every axis, or by a factor per axis
+(\code{Histogram::rebin()}): an axis of $m$ bins becomes one of $\lceil m/n\rceil$ bins of $n$ times the width, the
+contents summed and the uncertainties added in quadrature; when $n$ does not divide $m$, the last bin covers only the
+$r = m \bmod n$ last bins, and its content is scaled by $n/r$ so that it counts as $n$ bins, as the others. A profile
+is rebinned by merging its sums, which gives the weighted mean of the entries of the bins merged.
 
 \paragraph{Profiles.}
 \code{Profile} derives from \code{Histogram} and holds, in each bin, the weighted mean of a quantity and its

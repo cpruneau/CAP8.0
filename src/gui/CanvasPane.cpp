@@ -189,6 +189,75 @@ namespace CAP
   ImGui::PopID();
   }
 
+  void CanvasPane::renderRebinMenu(int graphIndex, int itemIndex)
+  {
+  Graph & graph = _canvas.graph(graphIndex);
+  const MATH::DataPoints * data = graph.items()[std::size_t(itemIndex)].data();
+  std::vector<unsigned int> current;
+  const MATH::Histogram * source = dynamic_cast<const MATH::Histogram *>(rebinSource(data, current));
+  if (!source) return;
+  const unsigned int rank = source->rank();
+  if (current.empty()) current.assign(rank, 1);
+  // bins of an axis merged n by n: m/n, or m/n + 1 with the last one scaled by n/(m mod n)
+  auto count = [&](unsigned int axis, unsigned int n) { unsigned int m = source->nBins(axis); return m/n + (m % n ? 1u : 0u); };
+  auto binsText = [&](const std::vector<unsigned int> & factors)
+    {
+    std::string text;
+    for (unsigned int a=0; a<rank; a++) { if (a) text += " x "; text += std::to_string(count(a, factors[a])); }
+    return text + " bins";
+    };
+  auto apply = [&](const std::vector<unsigned int> & factors)
+    {
+    if (factors != current) onRebin(graphIndex, itemIndex, factors);
+    };
+  auto incomplete = [&](const std::vector<unsigned int> & factors)
+    {
+    for (unsigned int a=0; a<rank; a++) if (source->nBins(a) % factors[a]) return true;
+    return false;
+    };
+  static const unsigned int choices[] = { 2, 3, 4, 5, 6, 8, 10, 20, 25, 50 };
+  // the factors shown by a menu: all the axes (axis -1) or one of them, the other ones kept
+  auto factorsOf = [&](int axis, unsigned int n)
+    {
+    std::vector<unsigned int> f = axis < 0 ? std::vector<unsigned int>(rank, n) : current;
+    if (axis >= 0) f[std::size_t(axis)] = n;
+    return f;
+    };
+  auto entries = [&](int axis)
+    {
+    unsigned int largest = 0;
+    for (unsigned int a=0; a<rank; a++)
+      if (axis < 0 || int(a) == axis) largest = std::max(largest, source->nBins(a));
+    for (unsigned int n : choices)
+      {
+      if (n > largest) break;
+      std::vector<unsigned int> f = factorsOf(axis, n);
+      std::string text = std::to_string(n) + "  (" + binsText(f) + ")";
+      if (ImGui::MenuItem(text.c_str(), nullptr, f == current)) apply(f);
+      if (incomplete(f)) ImGui::SetItemTooltip("The last bin covers fewer bins than the others: its content is scaled to "
+                                               "count as %u bins (averages of profiles are not scaled)", n);
+      }
+    ImGui::Separator();
+    ImGui::SetNextItemWidth(80.0f);
+    std::string id = "##rebinOther" + std::to_string(axis);
+    ImGui::InputInt(id.c_str(), &_rebinOther);
+    if (_rebinOther < 1) _rebinOther = 1;
+    ImGui::SameLine();
+    std::string button = "Apply##rebinApply" + std::to_string(axis);
+    if (ImGui::Button(button.c_str())) { apply(factorsOf(axis, (unsigned int)_rebinOther)); ImGui::CloseCurrentPopup(); }
+    ImGui::SetItemTooltip("Merge the bins this number at a time");
+    };
+  std::vector<unsigned int> ones(rank, 1);
+  std::string original = "Original  (" + binsText(ones) + ")";
+  if (ImGui::MenuItem(original.c_str(), nullptr, current == ones)) apply(ones);
+  ImGui::Separator();
+  if (rank == 1) { entries(0); return; }
+  static const char * axisNames[] = { "X", "Y", "Z" };
+  if (ImGui::BeginMenu("All axes")) { entries(-1); ImGui::EndMenu(); }
+  for (unsigned int a=0; a<rank && a<3; a++)
+    if (ImGui::BeginMenu(axisNames[a])) { entries(int(a)); ImGui::EndMenu(); }
+  }
+
   void CanvasPane::renderContextMenu()
   {
   if (!ImGui::BeginPopup("graphContext")) return;
@@ -263,6 +332,20 @@ namespace CAP
     }
   if (onCompare && histograms.size() < 2 && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     ImGui::SetTooltip("Show two histograms in this graph (drag them from the browsers) to compare them");
+  if (onRebin && rebinSource && ImGui::BeginMenu("Rebin", !histograms.empty()))
+    {
+    for (size_t k : histograms)
+      {
+      String label = graph.items()[k].label().isNull() ? String("(unnamed)") : graph.items()[k].label();
+      String entry = label + String("##rebin") + String(std::to_string(k).c_str());
+      if (ImGui::BeginMenu(entry.data()))
+        {
+        renderRebinMenu(_contextGraph, int(k));
+        ImGui::EndMenu();
+        }
+      }
+    ImGui::EndMenu();
+    }
   bool fittable = false;
   for (const auto & item : graph.items()) if (item.isFittable()) fittable = true;
   if (onFit && ImGui::BeginMenu("Fit", fittable))

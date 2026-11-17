@@ -98,7 +98,9 @@ uncertainty, $(h_1 - h_2)/\sqrt{\sigma_1^2+\sigma_2^2}$, the histograms being ta
 distributed as $\mathcal{N}(0,1)$ for compatible histograms (bins without uncertainty are left empty). They come with
 the statistical tests of Section~\ref{sec:mathother}: the $\chi^2$ test of their
 compatibility (of the counts, of the values, or of the shapes) and, in one dimension, the Kolmogorov--Smirnov test.
-A two-dimensional histogram is projected onto either axis, with its fits.
+A two-dimensional histogram is projected onto either axis, with its fits. A histogram is rebinned from the context menu of its graph (\emph{Rebin}), by a factor along
+every axis or along one axis, the original binning being one choice of the menu; the rebinning is recorded in the plot
+file (attribute \code{rebin} of the histogram) and made again from the original histogram when the file is drawn.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Plot files}

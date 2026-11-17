@@ -984,6 +984,59 @@ namespace CAP
 
   //! @}
 
+  //! @name Rebinning
+  //! @{
+
+  //!
+  //! @brief A histogram with the bins of this one merged n by n along every axis.
+  //!
+  //! Along an axis of m bins of width w, the rebinned axis has m/n bins of width n*w if n divides m, and m/n+1 bins
+  //! otherwise; it starts at the same lower edge, so that its upper edge is lower edge + (number of bins)*n*w, beyond
+  //! the original one when n does not divide m. Each new bin holds the sum of the n bins it covers: entries and values
+  //! summed, uncertainties added in quadrature. The last bin of an axis where n does not divide m covers only the
+  //! r = m mod n last bins: their sum is scaled by n/r (value and uncertainty; the entries are summed), so that it
+  //! counts as n bins, as the other ones. In rank 2 and more, the scale factors of the axes multiply. The rebinned
+  //! histogram has the name, title, axis titles and precision of this one; the labels of the bins are kept along the
+  //! axes not rebinned (n = 1).
+  //!
+  //! A Profile holds averages: rebin() of a Profile (Profile::rebin()) merges the sums of the bins, without scale.
+  //! @param n number of bins merged (n >= 1; n = 1 gives a copy; n >= m gives one bin per axis)
+  //! @return rebinned histogram
+  //! @throws Exception if n is 0
+  //!
+  Histogram rebin(unsigned int n) const;
+
+  //!
+  //! @brief A histogram with the bins of this one merged factors[k] by factors[k] along axis k (see rebin(unsigned
+  //! int)): e.g. {2, 1} merges the bins of axis 0 two by two and keeps those of axis 1.
+  //! @param factors number of bins merged along each axis (one per axis, each >= 1)
+  //! @return rebinned histogram
+  //! @throws Exception if the number of factors is not the rank, or a factor is 0
+  //!
+  Histogram rebin(const std::vector<unsigned int> & factors) const;
+
+  //!
+  //! @brief Rebinned copy of the same class (a Profile for a Profile), owned by the caller (see rebin()).
+  //! @param factors number of bins merged along each axis @return new histogram
+  //!
+  virtual Histogram * rebinned(const std::vector<unsigned int> & factors) const;
+
+  //!
+  //! @brief Binning of a rebinned histogram (see rebin()).
+  //! @param factors number of bins merged along each axis
+  //! @return partition (axis titles kept; bin labels kept along the axes with factor 1)
+  //! @throws Exception if the number of factors is not the rank, or a factor is 0
+  //!
+  Partition rebinnedPartition(const std::vector<unsigned int> & factors) const;
+
+  //!
+  //! @brief Global bin of the rebinned histogram (see rebinnedPartition()) holding global bin k of this one.
+  //! @param k global bin of this histogram @param factors factors @param target rebinned binning @return global bin
+  //!
+  unsigned int rebinnedBin(unsigned int k, const std::vector<unsigned int> & factors, const Partition & target) const;
+
+  //! @}
+
   //! @name Sums and integrals
   //! Bin ranges are inclusive; last is clamped to the end of the axis.
   //! Range functions throw Exception on a rank mismatch and InvalidBoundsException on an invalid range.
