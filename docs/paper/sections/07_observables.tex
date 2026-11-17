@@ -497,17 +497,33 @@ filter, named after the four objects, for instance \code{MB\_Charged\_AntiKtR0p4
 selects further (the jet pairs, the groomers below), one per selection of the task. The task \code{JetAnalyzer} fills,
 in each folder:
 \begin{itemize}
-  \item per event: the number of jets accepted and the scalar sum of their $p_T$ (events without a jet included);
+  \item per event: the number of jets accepted, the scalar sum of their $p_T$ (events without a jet included), and the
+  number of cones of the underlying event;
   \item per jet: $p_T$, $\eta$, $\varphi$, the mass, the numbers of constituents in total and by charge sign
   ($N$, $N_+$, $N_-$, $N_0$), the net charge, and the jet charge $Q_\kappa = \sum_i q_i\,(p_{T,i}/p_{T,{\rm jet}})^\kappa$;
-  their averages are also profiles versus the jet $p_T$;
+  \item the moments of the multiplicities within the jets, as averages per jet versus the jet $p_T$ and versus the number
+  of constituents $N$: the first moments $\avg{N_+}$, $\avg{N_-}$, $\avg{N_0}$ and the second factorial moments
+  $\avg{N_+(N_+-1)}$, $\avg{N_-(N_--1)}$, $\avg{N_0(N_0-1)}$, the mixed moment $\avg{N_+N_-}$; for the net charge $Q$, $\avg{Q}$ and
+  $\avg{Q(Q-1)}$; for the jet charge, $\avg{Q_\kappa}$ and $\avg{Q_\kappa^2}$; and versus $p_T$ only, $\avg{N}$,
+  $\avg{N(N-1)}$ and the average mass;
+  \item the underlying event, in cones of the radius of the jets: the multiplicities $\avg{N}$, $\avg{N_+}$,
+  $\avg{N_-}$, $\avg{N_0}$, the second factorial moments $\avg{N(N-1)}$, $\avg{N_+(N_+-1)}$, $\avg{N_-(N_--1)}$
+  and $\avg{N_+N_-}$,
+  averaged over the cones of the event of each jet, versus the $p_T$ and the $N$ of the jet;
   \item per constituent, in total and by charge sign: the momentum fraction $z = p_{T,i}/p_{T,{\rm jet}}$, the
   momentum $j_T$ perpendicular to the jet axis, the angle $\theta$ to the axis, the distance $r$ to the axis in rapidity
   and azimuth, and the transverse momentum profile $\rho(r)$.
 \end{itemize}
 The per-event histograms are normalised by the number of events accepted by the event filter. The per-jet and
 per-constituent histograms characterise the jets themselves: they are normalised by the number of jets of their folder,
-so that a constituent distribution is a distribution per jet. The profiles are averages per jet.
+so that a constituent distribution is a distribution per jet. The profiles are averages per jet. The underlying event is measured, event by event, in cones of the radius of the jets transverse to
+the leading jet of the same particle filter and jet settings: at $\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}$
+(\code{UE:MODE} \code{TRANSVERSE}), or at $\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}\pm 2R$
+(\code{TRANSVERSE\_SHIFTED}). A cone is kept if it lies within the acceptance of the particles,
+$|\eta| < \eta_{\max} - R$ ($\eta_{\max}$ = \code{UE:ETA\_MAX}, to be set to the range of the particle filters), and does
+not overlap any jet (its axis at least $2R$ from that of every jet). Its multiplicities fill the profiles versus the
+variables of each jet of the event, so that the underlying event of a bin of jet $p_T$ or $N$ is that of the events of
+its jets, to be compared with the multiplicities within the jets of the same bin.
 
 The task \code{JetPairAnalyzer} studies pairs of jets. For each event filter, particle filter, jet settings and jet filter,
 it forms the pairs of the jets accepted, each pair once with its first jet of higher rank, and fills one folder per jet
@@ -523,43 +539,6 @@ $A_J = (p_{T,1}-p_{T,2})/(p_{T,1}+p_{T,2})$, the mass, transverse momentum and r
 versus $x_J$, normalised by the number of pairs of the folder; with the averages of $x_J$, $A_J$ and the acoplanarity
 versus $p_{T,1}$.
 
-
-The task \code{JetFluctuationAnalyzer} measures the fluctuations and correlations of the multiplicities within the jets.
-For each jet accepted, it records the numbers of constituents $N$, $N_+$, $N_-$, $N_0$, the net charge $Q = N_+ - N_-$
-and $Q^2$, the second factorial moments $N(N-1)$, $N_+(N_+-1)$, $N_-(N_--1)$, $N_0(N_0-1)$, and the number of pairs of
-opposite charges $N_+N_-$, as averages per jet: integrated, versus the jet $p_T$, and versus $N$. The underlying event
-is measured, event by event, in cones of the radius of the jets transverse to the leading jet of the same particle
-filter and jet settings: at $\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}$ (\code{UE:MODE} \code{TRANSVERSE}), or at
-$\varphi_{\rm lead}\pm\pi/2$ and $\eta_{\rm lead}\pm 2R$ (\code{TRANSVERSE\_SHIFTED}). A cone is kept if it lies within
-the acceptance of the particles, $|\eta| < \eta_{\max} - R$ ($\eta_{\max}$ = \code{UE:ETA\_MAX}, to be set to the
-range of the particle filters), and does not overlap any jet (its axis at least $2R$ from that of every jet).
-The same moments of the particles of the cones fill profiles versus the variables of each jet of the event, so that the
-underlying event of a bin of jet $p_T$ or $N$ is that of the events of its jets.
-
-The derived quantities are computed at the end of the run: the variances $\sigma^2_N = F_2 + \avg{N} - \avg{N}^2$ (with
-$F_2 = \avg{N(N-1)}$) of the total and of each charge, that of the net charge, the normalised two-particle densities
-\begin{align}
-  R_2^{++} &= \frac{\avg{N_+(N_+-1)}}{\avg{N_+}^2} - 1, \qquad \\
-  R_2^{--} &= \frac{\avg{N_-(N_--1)}}{\avg{N_-}^2} - 1, \qquad \\
-  R_2^{+-} &= \frac{\avg{N_+N_-}}{\avg{N_+}\avg{N_-}} - 1,
-\end{align}
-and 
-\begin{align}
-\nu_{\rm dyn} = R_2^{++} + R_2^{--} - 2R_2^{+-}.
-\end{align}
-They are also corrected for the underlying
-event. The particles of a jet are taken as the sum of those of the jet itself, $s$, and of the underlying event, $b$,
-independent, with $b$ distributed as in a cone. Then
-\begin{widetext}
-\begin{align}
-  \avg{s} &= \avg{N} - \avg{b}, \qquad
-  F_2(s) = F_2(N) - 2\avg{s}\avg{b} - F_2(b), \nonumber \\
-  \avg{s_+s_-} &= \avg{N_+N_-} - \avg{s_+}\avg{b_-} - \avg{b_+}\avg{s_-} - \avg{b_+b_-},
-\end{align}
-\end{widetext}
-from which the variances, $R_2$ and $\nu_{\rm dyn}$ of $s$ follow. The moments are averages and are not scaled; the
-derived quantities are computed again by a job reading the folders (\code{HISTOGRAM:IMPORT}), for instance once the
-sub-samples are merged.
 
 \paragraph{Groomed jets.}
 Grooming removes the soft, wide-angle radiation of a jet, which comes in large part from the underlying event and

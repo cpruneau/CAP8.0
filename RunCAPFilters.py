@@ -1079,6 +1079,53 @@ def update_jet_settings(tasks, library, templates):
     return warnings
 
 
+#: Settings of the former JetFluctuationAnalyzer moved to JetAnalyzer (the cones of the underlying event).
+_FLUCTUATION_CLASS = "CAP::JetFluctuationAnalyzer"
+_UE_KEYS = ("UE:MODE", "UE:ETA_MAX")
+
+
+def update_jet_fluctuation_tasks(tasks):
+    """Workflows written with the former JetFluctuationAnalyzer: its histograms (the moments of the multiplicities
+    within the jets and in the cones of the underlying event) are now made by JetAnalyzer. The task is removed, its
+    settings of the underlying event (UE:MODE, UE:ETA_MAX) given to the JetAnalyzer tasks next to it that keep the
+    defaults; with no JetAnalyzer next to it, it becomes a JetAnalyzer. @return warnings"""
+    warnings = []
+
+    def walk(siblings):
+        for task in list(siblings):
+            walk(task.children)
+            if task.cls != _FLUCTUATION_CLASS:
+                continue
+            ue = {p.key: p for p in task.params if p.key in _UE_KEYS}
+            analyzers = [t for t in siblings if t.cls == "CAP::JetAnalyzer"]
+            if not analyzers:
+                task.cls = "CAP::JetAnalyzer"
+                task.known = True
+                warnings.append("Task %s (JetFluctuationAnalyzer, removed from CAP) is now a JetAnalyzer: it makes the "
+                                "moments of the multiplicities within the jets and of the underlying event." % task.name)
+                continue
+            for analyzer in analyzers:
+                for key, p in ue.items():
+                    mine = analyzer.param(key)
+                    if mine is None:
+                        analyzer.params.append(copy.deepcopy(p))
+                    elif mine.value == mine.default:
+                        mine.value = p.value
+            siblings.remove(task)
+            siblings.extend(task.children)
+            warnings.append("Task %s (JetFluctuationAnalyzer, removed from CAP) dropped: its histograms are made by %s%s."
+                            % (task.name, ", ".join(a.name for a in analyzers),
+                               " (with its settings of the underlying event)" if ue else ""))
+    walk(tasks)
+    return warnings
+
+
+def is_fluctuation_class_warning(warning):
+    """Whether a warning of RunCAP.load_workflow() is about the former JetFluctuationAnalyzer (see
+    update_jet_fluctuation_tasks())."""
+    return "class %s is not in the current build" % _FLUCTUATION_CLASS in warning
+
+
 def is_old_jet_key_warning(warning):
     """Whether a warning of RunCAP.load_workflow() is about a key of the former jet finder (see update_jet_settings())."""
     return re.search(r"parameter JET:(?:R|ALGORITHM|RECOMBINATION|PT_MIN|PARTICLE_ETA_MAX) is not defined by class",

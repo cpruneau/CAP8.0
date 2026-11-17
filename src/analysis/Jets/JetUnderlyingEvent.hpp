@@ -49,7 +49,7 @@ struct Cone
 //!
 //! The axis is the leading jet (rank 1). Mode Transverse: two cones at phi_lead +- pi/2 and eta_lead. Mode
 //! TransverseShifted: four cones at phi_lead +- pi/2 and eta_lead +- 2R. A cone is kept if it lies within a given
-//! acceptance of the particles, |eta| < etaMax - R (UE:ETA_MAX of JetFluctuationAnalyzer), and does not overlap any jet
+//! acceptance of the particles, |eta| < etaMax - R (UE:ETA_MAX of JetAnalyzer), and does not overlap any jet
 //! of the event (its distance to the axis of every jet, in eta and phi, at least 2R). None without jets.
 //!
 class UnderlyingEventCones
