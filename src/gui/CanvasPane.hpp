@@ -143,6 +143,12 @@ namespace CAP
   //! comparison chosen (see Comparison).
   std::function<void(const MATH::DataPoints * first, const MATH::DataPoints * second,
                      const String & firstLabel, const String & secondLabel, int comparison)> onCompare;
+  //! The histogram a histogram shown is rebinned from, and its factors (empty if it is not rebinned), for "Rebin" in
+  //! the context menu of a graph.
+  std::function<const MATH::DataPoints *(const MATH::DataPoints * data, std::vector<unsigned int> & factors)> rebinSource;
+  //! Called by "Rebin" in the context menu of a graph: show item k of graph g rebinned by these factors (one per axis;
+  //! all 1: the original histogram).
+  std::function<void(int graph, int item, const std::vector<unsigned int> & factors)> onRebin;
   //! Called by "Save Graph As..." in the context menu of graph k.
   std::function<void(int graph)> onSaveGraph;
   //! Called by "Save Canvas As..." in the context menu of a graph.
@@ -162,6 +168,7 @@ namespace CAP
   int  _selectedGraph;   //!< index of the selected graph
   bool _showToolbar;   //!< the toolbar is shown
   int  _contextGraph;   //!< graph whose context menu is open
+  int  _rebinOther = 2;  //!< factor typed in "Rebin > Other" of the context menu
   int  _gridColumns;   //!< values edited in the Graphs popup
   int  _gridRows;   //!< values edited in the Graphs popup
   String _hoverText;   //!< data coordinates under the mouse, or empty
@@ -218,6 +225,8 @@ namespace CAP
   void renderToolbar();
   //! @brief Draw the context menu of a graph, if open.
   void renderContextMenu();
+  //! @brief Draw the Rebin menu of an item of the context menu. @param graph graph @param item item
+  void renderRebinMenu(int graph, int item);
   //! @brief Draw the dialog editing a part of a graph, if open (see GraphEditor).
   void renderEditor();
   //! Open the dialog editing the part pick of graph k.

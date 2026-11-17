@@ -177,6 +177,36 @@ namespace MATH
   return *p;
   }
 
+  Profile Profile::rebin(unsigned int n) const
+  {
+  return rebin(std::vector<unsigned int>(rank(),n));
+  }
+
+  Profile Profile::rebin(const std::vector<unsigned int> & factors) const
+  {
+  Partition partition = rebinnedPartition(factors);
+  Profile result(partition);
+  result.setName(name());
+  result.setTitle(title());
+  for (unsigned int k=0; k<_sumW.size(); k++)
+    {
+    if (_counts[k]==0 && _sumW[k]==0.0) continue;
+    unsigned int t = rebinnedBin(k,factors,partition);
+    result._counts[t] += _counts[k];
+    result._sumW[t]   += _sumW[k];
+    result._sumW2[t]  += _sumW2[k];
+    result._sumWY[t]  += _sumWY[k];
+    result._sumWY2[t] += _sumWY2[k];
+    }
+  for (unsigned int t=0; t<result._sumW.size(); t++) result.updateBin(t);
+  return result;
+  }
+
+  Histogram * Profile::rebinned(const std::vector<unsigned int> & factors) const
+  {
+  return new Profile(rebin(factors));
+  }
+
   void Profile::add(const Histogram & h, double coefficient)
   {
   const Profile & p = checkProfile(h,__FUNCTION__);

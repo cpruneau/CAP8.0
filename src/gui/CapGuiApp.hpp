@@ -166,6 +166,14 @@ namespace CAP
   void buildMenus() override;
   //! @brief Enable and check the items of the menus.
   void updateMenuStates() override;
+  //! @brief The rebinned copy of a histogram: made and owned by the plot file (GRAPHICS::PlotSpec::rebinned(), written
+  //! back with the attribute rebin) for a canvas of the plot file, by the application (CapApp) for the other panes.
+  //! @param pane pane @param data histogram @param factors factors @return histogram to show
+  const MATH::DataPoints * rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
+                                        const std::vector<unsigned int> & factors) override;
+  //! @brief The original histogram of a rebinned copy (of the plot file or of the application) and its factors.
+  //! @param data histogram shown @param factors set to its factors @return original histogram
+  const MATH::DataPoints * rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const override;
   //! @brief Open the plot files of the command line, or a new one; dock the tree; connect the browsers.
   void onStartup() override;
   //! @brief Clicks and folders of a browser add to the plot file. @param browser browser

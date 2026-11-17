@@ -164,6 +164,51 @@ int main()
   CHECK(bytes.find("<a:t>Gaussian</a:t>") != std::string::npos);
   CHECK(pptx.write(spec.outputPath("slides.pptx")));
 
+  // rebinned histograms (attribute rebin): made from the input, written back with the attribute
+  {
+  const char * rebinSpec = R"XML(<?xml version="1.0"?>
+<PlotHistos version="1">
+  <Input id="data" file="input.cap"/>
+  <Window title="Rebinned">
+    <Canvas name="rebinned" columns="3" rows="1">
+      <Graph><Histogram input="data" path="singles/flat" rebin="3"/></Graph>
+      <Graph><Histogram input="data" path="maps/xy" rebin="2 5"/></Graph>
+      <Graph><Histogram input="data" path="singles/gauss" rebin="0"/></Graph>
+    </Canvas>
+  </Window>
+</PlotHistos>
+)XML";
+  { std::ofstream f(FileSystem::join(top, "rebin.xml").data()); f << rebinSpec; }
+  PlotSpec r;
+  CHECK(r.read(FileSystem::join(top, "rebin.xml"), error));
+  CHECK(r.openInputs(error));
+  String rebinProblems;
+  std::vector<PlotSpec::WindowState> rw = r.buildAll(rebinProblems);
+  CHECK(rw.size() == 1 && rw[0].canvases.size() == 1);
+  Canvas & c = const_cast<Canvas &>(*rw[0].canvases[0]);   // owned by the specification
+  const MATH::Histogram * flat3 = dynamic_cast<const MATH::Histogram *>(c.graph(0).items()[0].data());
+  CHECK(flat3 && flat3->nBins(0) == 4);                                   // 10 bins by 3: 4 bins
+  const MATH::Histogram * xy = dynamic_cast<const MATH::Histogram *>(c.graph(1).items()[0].data());
+  CHECK(xy && xy->nBins(0) == 5 && xy->nBins(1) == 2);
+  CHECK(rebinProblems.str().find("rebin 0") != std::string::npos);        // a factor 0: shown as is, reported
+  CHECK(c.graph(2).items().size() == 1);
+  std::vector<unsigned int> factors;
+  const MATH::DataPoints * original = r.rebinSource(flat3, factors);
+  CHECK(factors == std::vector<unsigned int>{3} && dynamic_cast<const MATH::Histogram *>(original)->nBins(0) == 10);
+  std::string xml = r.toXml(rw).toString().str();
+  CHECK(xml.find("rebin=\"3\"") != std::string::npos && xml.find("rebin=\"2 5\"") != std::string::npos);
+  CHECK(xml.find("rebin=\"0\"") == std::string::npos);
+  // rebinned again from the original histogram; factors of 1 give the original back
+  const MATH::DataPoints * flat2 = r.rebinned(flat3, std::vector<unsigned int>{2});
+  CHECK(dynamic_cast<const MATH::Histogram *>(flat2)->nBins(0) == 5);
+  CHECK(r.rebinSource(flat2, factors) == original && factors == std::vector<unsigned int>{2});
+  CHECK(r.rebinned(flat2, std::vector<unsigned int>{1}) == original);
+  c.graph(0).items()[0].setData(original);
+  xml = r.toXml(rw).toString().str();
+  CHECK(xml.find("rebin=\"3\"") == std::string::npos);
+  CHECK(PlotSpec::rebinText(std::vector<unsigned int>{4, 4}) == "4" && PlotSpec::rebinText(std::vector<unsigned int>{2, 3}) == "2 3");
+  }
+
   // texts of the slides: ROOT syntax and LaTeX as Unicode, with superscripts and subscripts
   {
   auto runs = PptxPainter::textRuns("#pi^{+}");

@@ -651,6 +651,25 @@ namespace CAP
       if (rank > 2) { problems += path + String(": rank 3 and more cannot be drawn\n"); continue; }
       _dataNames[data] = std::make_pair(input.id, path);
       String label = data->name().isNull() ? path : data->name();
+      String rebin = e->attribute("rebin", "");
+      if (!rebin.isNull() && histogram)
+        {
+        std::vector<unsigned int> factors;
+        bool valid = true;
+        for (double v : numbers(rebin))
+          {
+          if (!(v >= 1.0) || v != std::floor(v)) { valid = false; break; }
+          factors.push_back((unsigned int)v);
+          }
+        const MATH::DataPoints * copy = nullptr;
+        if (valid)
+          {
+          try { copy = rebinned(data, factors); }
+          catch (const std::exception & ex) { problems += path + String(": rebin ") + rebin + String(": ") + String(ex.what()) + String("\n"); }
+          }
+        else problems += path + String(": invalid rebin ") + rebin + String("\n");
+        if (copy) data = copy;
+        }
       added = &graph.show(GraphItem(data, label), false);
       }
     else if (e->isNamed("Function"))
@@ -749,6 +768,50 @@ namespace CAP
   return found == _canvasInfo.end() ? nullptr : &found->second;
   }
 
+  const MATH::DataPoints * PlotSpec::rebinned(const MATH::DataPoints * data, const std::vector<unsigned int> & factors)
+  {
+  std::vector<unsigned int> previous;
+  const MATH::DataPoints * source = rebinSource(data, previous);
+  const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram *>(source);
+  if (!histogram) return nullptr;
+  std::vector<unsigned int> all = factors;
+  if (all.size() == 1 && histogram->rank() > 1) all.assign(histogram->rank(), factors[0]);
+  bool identity = true;
+  for (unsigned int f : all) if (f != 1) identity = false;
+  if (identity && all.size() == histogram->rank()) return source;
+  std::unique_ptr<MATH::DataPoints> copy(histogram->rebinned(all));   // throws for wrong factors
+  // named as the histogram it is made from (its input and path), found as that one is
+  auto found = _dataNames.find(source);
+  String input, path;
+  if (found != _dataNames.end()) _dataNames[copy.get()] = found->second;
+  else if (locateData && locateData(source, input, path)) _dataNames[copy.get()] = std::make_pair(input, path);
+  const MATH::DataPoints * result = copy.get();
+  _rebinned.push_back(RebinRecord{std::move(copy), source, all});
+  return result;
+  }
+
+  const MATH::DataPoints * PlotSpec::rebinSource(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const
+  {
+  factors.clear();
+  for (const auto & record : _rebinned)
+    if (record.copy.get() == data) { factors = record.factors; return record.source; }
+  return data;
+  }
+
+  String PlotSpec::rebinText(const std::vector<unsigned int> & factors)
+  {
+  if (factors.empty()) return String("");
+  bool same = true;
+  for (unsigned int f : factors) if (f != factors[0]) same = false;
+  std::string text;
+  for (std::size_t k=0; k<(same ? 1 : factors.size()); k++)
+    {
+    if (k) text += " ";
+    text += std::to_string(factors[k]);
+    }
+  return String(text.c_str());
+  }
+
   void PlotSpec::writeItems(XmlElement & element, const Graph & graph) const
   {
   for (const auto & item : graph.items())
@@ -762,6 +825,9 @@ namespace CAP
       XmlElement & e = element.addChild("Histogram");
       e.setAttribute("input", input);
       e.setAttribute("path", path);
+      std::vector<unsigned int> factors;
+      rebinSource(item.data(), factors);
+      if (!factors.empty()) e.setAttribute("rebin", rebinText(factors));
       GraphXml::writeItem(e, item);
       }
     else if (item.function())

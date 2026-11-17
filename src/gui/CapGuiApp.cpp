@@ -1696,6 +1696,32 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ canvases
 
+  const MATH::DataPoints * CapGuiApp::rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
+                                                   const std::vector<unsigned int> & factors)
+  {
+  // a canvas of the plot file: the copy belongs to the specification, which writes it back (attribute rebin) and
+  // makes it again when the canvas is drawn again
+  bool linked = false;
+  for (const auto & link : _links) if (link.pane == &pane) linked = true;
+  if (linked && _spec)
+    {
+    std::vector<unsigned int> previous;
+    CapApp::rebinSourceOf(data, previous);
+    if (previous.empty()) return _spec->rebinned(data, factors);
+    }
+  return CapApp::rebinnedData(pane, data, factors);
+  }
+
+  const MATH::DataPoints * CapGuiApp::rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const
+  {
+  if (_spec)
+    {
+    const MATH::DataPoints * source = _spec->rebinSource(data, factors);
+    if (!factors.empty()) return source;
+    }
+  return CapApp::rebinSourceOf(data, factors);
+  }
+
   int CapGuiApp::paneIndexOf(const CanvasPane * pane)
   {
   for (int k=0; k<_gui.nPanes(); k++) if (&_gui.pane(k) == pane) return k;
