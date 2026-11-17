@@ -87,7 +87,8 @@ endif()
 # ---- CapGui: the canvases, the plot files and the browser (see CapGuiApp.hpp); the analysis libraries are linked
 # in src/CMakeLists.txt (File > New from Data configures workflows, see PlotCatalog.hpp)
 add_executable(CapGui CapGuiMain.cpp PlotCatalog.cpp)
-set_target_properties(CapGui PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+set_target_properties(CapGui PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON
+                      OUTPUT_NAME DatumGui)                  # bin/DatumGui (bin/CapGui: a link to it)
 target_link_libraries(CapGui PRIVATE CapGuiCore)
 
 # ---- PlotHistos: the outputs of a plot file in batch mode, or CapGui on it (see PlotHistos.C)
@@ -106,11 +107,11 @@ target_link_libraries(PlotEditor PRIVATE CapGuiCore)
 cap_install(PlotEditor RUNTIME "${CAP_INSTALL_BIN_DIR}")
 
 if(APPLE)
-  # macOS: CapGui.app, an application bundle that can be opened from the Finder or the Dock. Started that way it gets
-  # none of the environment of SetupCAP.sh, so it finds the CAP libraries through its rpath. bin/CapGui is a symbolic
-  # link to the executable in the bundle, for use from a terminal.
-  set(MACOSX_BUNDLE_BUNDLE_NAME          "CapGui")
-  set(MACOSX_BUNDLE_GUI_IDENTIFIER       "CAP.CapGui")
+  # macOS: DatumGui.app, an application bundle that can be opened from the Finder or the Dock. Started that way it
+  # gets none of the environment of SetupDatum.sh, so it finds the libraries through its rpath. bin/DatumGui (and
+  # bin/CapGui, its former name) are symbolic links to the executable in the bundle, for use from a terminal.
+  set(MACOSX_BUNDLE_BUNDLE_NAME          "DatumGui")
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER       "Datum.DatumGui")
   set(CAP_GUI_VERSION "${PROJECT_VERSION}")
   if(CAP_GUI_VERSION STREQUAL "")
     set(CAP_GUI_VERSION "1.0")
@@ -122,11 +123,14 @@ if(APPLE)
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
     INSTALL_RPATH            "$ENV{CAP_LIB_PATH}")
   cap_install(CapGui BUNDLE "${CAP_INSTALL_BIN_DIR}")
-  install(CODE "
-    file(REMOVE \"${CAP_INSTALL_BIN_DIR}/CapGui\")
-    file(CREATE_LINK \"CapGui.app/Contents/MacOS/CapGui\" \"${CAP_INSTALL_BIN_DIR}/CapGui\" SYMBOLIC)
-    message(STATUS \"Installing: ${CAP_INSTALL_BIN_DIR}/CapGui -> CapGui.app/Contents/MacOS/CapGui\")")
+  foreach(link DatumGui CapGui)
+    install(CODE "
+      file(REMOVE \"${CAP_INSTALL_BIN_DIR}/${link}\")
+      file(CREATE_LINK \"DatumGui.app/Contents/MacOS/DatumGui\" \"${CAP_INSTALL_BIN_DIR}/${link}\" SYMBOLIC)
+      message(STATUS \"Installing: ${CAP_INSTALL_BIN_DIR}/${link} -> DatumGui.app/Contents/MacOS/DatumGui\")")
+  endforeach()
 else()
   set_target_properties(CapGui PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")
   cap_install(CapGui RUNTIME "${CAP_INSTALL_BIN_DIR}")
+  cap_install_alias(CapGui CapGui "${CAP_INSTALL_BIN_DIR}")
 endif()

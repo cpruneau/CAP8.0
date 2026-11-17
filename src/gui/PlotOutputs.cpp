@@ -189,7 +189,7 @@ namespace CAP
   return tex;
 #else
   (void)spec; (void)windows; (void)fileName;
-  error = "CAP is built without the Latex module (BuildCAP.py: Latex)";
+  error = "Datum is built without the Latex module (BuildDatum.py: Latex)";
   return String();
 #endif
   }

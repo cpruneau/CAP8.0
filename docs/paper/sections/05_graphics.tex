@@ -5,7 +5,7 @@
 Three libraries of the core turn the results of the analyses into figures and documents, and let them be explored
 without compiling a program. Graphics draws histograms, data points, functions and their fits on canvases, on the
 screen and in SVG, PDF and PowerPoint files; Latex writes \LaTeX{} documents and Beamer presentations of the canvases;
-and Interpreter runs a small command language, used interactively by CapShell. None of them uses ROOT: the drawing,
+and Interpreter runs a small command language, used interactively by DatumShell. None of them uses ROOT: the drawing,
 the vector file formats and the typesetting of the labels are implemented in \CAP{} itself, in standard C++17.
 
 % ---------------------------------------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ Four painters are provided. \code{SvgPainter} and \code{PdfPainter} write vector
 PDF painter writes the file directly, with the fourteen fonts that every PDF reader has, and can write books of
 several pages, one canvas per page. \code{PptxPainter} writes PowerPoint presentations, one slide per canvas, in which
 what the renderers draw becomes native shapes (free-form lines and polygons, preset markers, text boxes), so that the
-slides can be edited in PowerPoint, Keynote or LibreOffice. \code{ImGuiPainter} draws on the screen for CapGui
+slides can be edited in PowerPoint, Keynote or LibreOffice. \code{ImGuiPainter} draws on the screen for DatumGui
 (Section~\ref{sec:capgui}). Several canvases can be drawn on one page, each in its own rectangle.
 
 \paragraph{Canvases and graphs.}
@@ -45,7 +45,7 @@ and the titles of its dimensions), and the items get their colours and markers f
 $k$ taking colour and marker $k$. The title, the axis titles and the legend have automatic positions, which can be
 moved, and automatic sizes, which follow the size of the cell. Each drawing records where the parts of the graph
 went, so that the graph can tell what lies under a point of the canvas: an axis, the title, the legend, a data point
-or the residual panel; CapGui uses it for its mouse interactions.
+or the residual panel; DatumGui uses it for its mouse interactions.
 
 Data points of one variable are drawn as markers with error bars for their statistical uncertainties, and
 optionally their uncertainties along $x$ and a line joining them; systematic uncertainties are drawn as boxes around
@@ -69,7 +69,7 @@ be shown together, for instance a curve over a map.
 A graph can show its maps in a three-dimensional view: a box with the $x$, $y$ and $z$ axes, seen from a direction
 given by an azimuth and an elevation, in orthographic projection (\code{Projection3D}). Each map is drawn as a surface
 shaded by the palette, as a mesh with its hidden lines removed, or as lego boxes, the parts being drawn from the
-farthest to the nearest. The view is turned with the mouse in CapGui.
+farthest to the nearest. The view is turned with the mouse in DatumGui.
 
 \paragraph{Fits.}
 The fits attached to an object (Section~\ref{sec:fitting}) are drawn with it, each with its own line, over its range
@@ -103,8 +103,8 @@ notations being turned into Unicode characters, superscripts and subscripts, as 
 
 \paragraph{The canvases of a session.}
 The canvases of a session are listed, by name and by group (a window, a step of an analysis), in a registry
-(\code{CanvasRegistry}), from which every canvas, and through it every graph, is reached by a program, CapShell or
-CapGui; the registry writes them all, one file per canvas or per graph, or as a book of one page per canvas. A
+(\code{CanvasRegistry}), from which every canvas, and through it every graph, is reached by a program, DatumShell or
+DatumGui; the registry writes them all, one file per canvas or per graph, or as a book of one page per canvas. A
 figure is made in a few lines:
 \begin{widetext}
 \begin{verbatim}[language=C++]
@@ -137,8 +137,8 @@ The windows, canvases and graphs of a figure can also be described in an XML fil
 written by \code{PlotSpec}: its inputs (CAP files), its outputs, and for each graph the histograms and functions it
 shows and every setting of style that differs from the defaults. \code{PlotTemplate} makes plot files from the
 histograms of CAP files or of a workflow, laid out by task, histogram and combination of filters, and
-\code{PlotDocument} edits them, keeping their structure valid, with undo and redo. Plot files are what CapGui shows
-and saves, and what \code{PlotHistos} draws in batch; they are described with CapGui
+\code{PlotDocument} edits them, keeping their structure valid, with undo and redo. Plot files are what DatumGui shows
+and saves, and what \code{PlotHistos} draws in batch; they are described with DatumGui
 (Section~\ref{sec:plotfiles}).
 
 % ---------------------------------------------------------------------------------------------------------------
@@ -161,15 +161,15 @@ talk.compile(tex);                    // talk/correlations.pdf
 \end{verbatim}
 \end{widetext}
 The outputs of a plot file include such a document, either a Beamer presentation with one frame per canvas or an
-article with one section per window and one figure per canvas, written by CapGui and \code{PlotHistos}
+article with one section per window and one figure per canvas, written by DatumGui and \code{PlotHistos}
 (Section~\ref{sec:plotfiles}), next to the PDF book and the PowerPoint presentation of the same canvases.
 
 % ---------------------------------------------------------------------------------------------------------------
-\subsection{CapShell}
+\subsection{DatumShell}
 \label{sec:capshell}
 
 \paragraph{The language.}
-CapShell runs the command language of the Interpreter library, meant for exploring results and making figures
+DatumShell runs the command language of the Interpreter library, meant for exploring results and making figures
 without writing and compiling a program, as ROOT's prompt is used, but with a language of its own rather than C++.
 It has variables, made by assignment; integers, reals, texts, booleans, \code{none} and lists; arithmetic (integers
 stay integers through $+$, $-$, $\times$ and powers, and a division always gives a real), comparisons and logical
@@ -205,7 +205,7 @@ c.save("pt.pdf")
 \end{widetext}
 
 \paragraph{Sessions.}
-\code{CapShell} runs an interactive session, with line editing and a history kept between sessions when the
+\code{DatumShell} runs an interactive session, with line editing and a history kept between sessions when the
 \code{editline} library is present, runs files of commands and stops, or runs a file and continues interactively;
 commands are also read from the standard input, so that the program can be used in pipes and scripts. An error
 reports the file and the line where it occurred; in an interactive session, the session goes on.

@@ -787,7 +787,7 @@ def run_gui(path=None, hook=None):
 
         def _update_title(self):
             name = os.path.basename(self.path) if self.path else "no file"
-            self.root.title("CAP Particle DB \u2014 %s%s" % (name, " *" if self.dirty else ""))
+            self.root.title("Datum Particle DB \u2014 %s%s" % (name, " *" if self.dirty else ""))
 
         def _confirm_discard(self):
             if not self.dirty:

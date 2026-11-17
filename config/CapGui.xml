@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Configuration of the CAP graphical interface (bin/CapGui), read at startup.
+  Configuration of the Datum graphical interface (bin/DatumGui), read at startup.
   CapGui looks for: the file given on the command line (option -c file.xml), then $HOME/.CapGui.xml, then this file.
   Edit > Preferences > Save configuration writes the current settings to $HOME/.CapGui.xml.
 -->

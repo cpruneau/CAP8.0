@@ -12,21 +12,22 @@ acceptance, particle species, event classes, efficiencies and detector resolutio
 obtained from several models, each with its own event generator, and recomputed whenever the conditions of the
 measurement change.
 
-The Correlation Analysis Package (\CAP{}) was developed to provide such predictions, and to analyse data, with one
-set of tools. This paper describes its ninth version, \CAP{}~9, a redesign of the package with two goals. Ealier versions were never published.
+\CAP{}, formerly the Correlation Analysis Package (CAP), was developed to provide such predictions, and to analyse
+data, with one set of tools. This paper describes \CAP{}~1.0, the ninth version of the package and the first one
+published, a redesign with two goals.
 
 \paragraph{A modern object and class model.}
 Earlier versions of \CAP{} were built on ROOT~\cite{Brun:1997pa}, whose object model, dictionaries and global state
-shaped the code of every analysis. \CAP{}~9 is written in C++17 around its own object and class model, with as little
+shaped the code of every analysis. \CAP{}~1.0 is written in C++17 around its own object and class model, with as little
 legacy code as possible. It defines its own objects, histograms of any number of dimensions, data points, parameterised
 functions, fits, graphics and binary file format, none of which depends on ROOT (Fig.~\ref{fig:hierarchy}). Functions
 and histograms are stored in a versioned binary format that later versions of the package can still read, and
-analyses are configured with XML files. {\color{red}ROOT is still needed to build \CAP{}~9: a few files of the core, of the
+analyses are configured with XML files. {\color{red}ROOT is still needed to build \CAP{}~1.0: a few files of the core, of the
 helpers and of two generators use it for random numbers, system utilities and the conversion of \code{.root} files,
 and these uses are being removed.}
 
 \paragraph{Tools to simulate common observables.}
-\CAP{}~9 features a modular design enabling the  computation of a wide range of observables selected by users at run-time.  Many of the observables  featured  require a single pass through  events of a model or of data. Those are known within the context of CAP as basic observbles. There are also several observables that either require a second pass through the data or that can be combined  based on basic observables. Those are referred to as derived observables. In general, all observables whether integral or differential are internally represented in the form of histograms.  Observables featured in CAP include 
+\CAP{}~1.0 features a modular design enabling the  computation of a wide range of observables selected by users at run-time.  Many of the observables  featured  require a single pass through  events of a model or of data. Those are known within the context of \CAP{} as basic observables. There are also several observables that either require a second pass through the data or that can be combined  based on basic observables. Those are referred to as derived observables. In general, all observables whether integral or differential are internally represented in the form of histograms.  Observables featured in \CAP{} include 
 \begin{itemize}
   \item single-particle spectra, as functions of transverse momentum $\pT$, rapidity $y$, or pseudorapidity $\eta$,
     and azimuth $\varphi$;
@@ -48,16 +49,16 @@ is also included. Events can be selected by class, in ranges of multiplicity, en
 variable such as spherocity, and particles by species and kinematics; an analysis is carried out for every combination of event and
 particle filters in the same pass.
 
-\CAP{}~9 can also be used for fast performance studies. Simple smearers reproduce the experimental resolution in
+\CAP{}~1.0 can also be used for fast performance studies. Simple smearers reproduce the experimental resolution in
 $\pT$, rapidity and azimuth, and efficiencies that depend on the kinematics of single particles or of pairs can be
 applied to study the corrections they require. Comparing an analysis of generated particles with the same analysis
 of smeared and filtered particles shows the effect of the detector on each observable.
 
 Analyses are run as workflows of tasks described in XML files, built and launched with two Python front ends graphical user interfaces,
-\code{BuildCAP.py} and \code{RunCAP.py}. Each analysis runs in up to three phases: event processing fills the base
+\code{BuildDatum.py} and \code{RunDatum.py}. Each analysis runs in up to three phases: event processing fills the base
 histograms event by event; a later job computes the derived histograms (densities, cumulants, correlators) with the same filters
 and settings; a third computes the balance functions. Results can be examined, combined and fitted in a graphical
-interface, CapGui, which can show several windows, canvases and graphs side by side with a browser of the data, and
+interface, DatumGui, which can show several windows, canvases and graphs side by side with a browser of the data, and
 fits functions of one or two variables, simple or composite, over chosen possibly dis-joined ranges and regions.
 
 The paper is organised as follows. Section~\ref{sec:overview} gives an overview of the project: its folders, its

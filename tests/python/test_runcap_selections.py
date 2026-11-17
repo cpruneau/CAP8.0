@@ -21,7 +21,7 @@ CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file
 sys.path.insert(0, CAP_DIR)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import RunCAP                                   # noqa: E402
+import RunDatum                                   # noqa: E402
 import RunCAPFilters as F                       # noqa: E402
 from test_runcap_stages import TEMPLATES, events_stage, library      # noqa: E402
 
@@ -41,7 +41,7 @@ class TestSelectionConditions(unittest.TestCase):
         events = events_stage(lib)
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "w.xml")
-            RunCAP.write_stages(path, {RunCAP.EVENTS: events}, lib, TEMPLATES, {RunCAP.EVENTS: {"OUTPUT_FILE": "a.cap"}})
+            RunDatum.write_stages(path, {RunDatum.EVENTS: events}, lib, TEMPLATES, {RunDatum.EVENTS: {"OUTPUT_FILE": "a.cap"}})
             groups = []
             for e in ET.parse(path).iter("GROUP"):
                 if e.get("name", "").startswith("CONDITION_"):
@@ -50,7 +50,7 @@ class TestSelectionConditions(unittest.TestCase):
             self.assertEqual(sorted(v["SELECTION"] for v in written), ["Charged", "PiP"])
             legacy = [v for v in groups if v.get("SUBTYPE") == "MULT_0"]
             self.assertTrue(legacy and all("SELECTION" not in v for v in legacy))
-            stages, lib2, jobs, warnings = RunCAP.load_stages_with_filters(path, TEMPLATES)
+            stages, lib2, jobs, warnings = RunDatum.load_stages_with_filters(path, TEMPLATES)
             self.assertEqual(warnings, [])
             central = next(o for o in lib2.objects["EVENT_FILTER"] if o.name == "Central")
             self.assertEqual([(c.subtype, c.selection) for c in central.conditions],
@@ -75,7 +75,7 @@ class TestSelectionConditions(unittest.TestCase):
         for k in range(10):
             lib.add(F.FilterDef("PARTICLE_FILTER", "P%d" % k, "", [F.Condition("PT", F.RANGE, 0.1 * k, 0.1 * k + 0.1)]))
         events = events_stage(lib)
-        single = next(t for t in RunCAP.all_tasks(events) if t.name == "Single")
+        single = next(t for t in RunDatum.all_tasks(events) if t.name == "Single")
         F.choices(single)["PARTICLE_FILTER"] = ["P%d" % k for k in range(10)]
         self.assertFalse(any("particle filters" in e for e in F.check_choices(events, lib, TEMPLATES)))
 

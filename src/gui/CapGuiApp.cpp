@@ -377,7 +377,7 @@ namespace CAP
 
   void helpText()
   {
-  ImGui::TextWrapped("Every CapGui session is a plot file (the XML files of PlotHistos): windows of canvases, canvases of "
+  ImGui::TextWrapped("Every DatumGui session is a plot file (the XML files of PlotHistos): windows of canvases, canvases of "
                      "graphs, graphs of histograms and functions. The canvases on screen are the windows of the plot file "
                      "shown in the Plot Tree; what is changed on them is written to the file, and what is changed in the "
                      "tree draws them again.");
@@ -398,7 +398,7 @@ namespace CAP
                     "way around. Edit > Copy, Cut, Paste, Delete and Duplicate act on it; Copy puts its XML on the clipboard.");
   ImGui::BulletText("View > All Windows shows every window of the plot file; otherwise the window of the selection.");
   ImGui::BulletText("Shapes drawn on the canvases and fits are shown, not written to the plot file.");
-  ImGui::BulletText("PlotHistos plots.xml opens CapGui on a plot file; PlotHistos --all plots.xml writes its outputs.");
+  ImGui::BulletText("PlotHistos plots.xml opens DatumGui on a plot file; PlotHistos --all plots.xml writes its outputs.");
   }
   } // namespace
 
@@ -428,7 +428,7 @@ namespace CAP
   fileNew.addItem("File Browser", "file.newBrowser", "",             "A new file browser, with files and folders of its own");
   file.addItem("Open...",      "file.open",      "Ctrl+Shift+O", "Open a CAP file (or the histograms of a ROOT file) in the browser");
   file.addItem("Duplicate",    "data.duplicate", "",             "A new data file holding a copy of the folders and objects of the file selected");
-  file.addItem("Rename...",    "data.rename",    "",             "A new name for the folder or histogram selected in a data file made in CapGui (or its top folder); "
+  file.addItem("Rename...",    "data.rename",    "",             "A new name for the folder or histogram selected in a data file made in DatumGui (or its top folder); "
                                                                   "files read from disk keep their names");
   file.addSeparator();
   file.addItem("Close",        "file.closeTree", "",             "Close the file selected in the browser, with its folders (asks to save its changes)");
@@ -450,7 +450,7 @@ namespace CAP
   // Plots: the plot files (XML), the tabs of the Plot Tree
   Menu & plots = bar.addMenu("Plots");
   plots.addItem("New",                 "plot.new",       "Ctrl+N",       "A new, untitled plot file (a new tab of the Plot Tree)");
-  plots.addItem("New From Data File...", "plot.fromData", "",            "A new plot file with windows, canvases and graphs of the histograms and functions of a CAP file (or of a RunCAP workflow)");
+  plots.addItem("New From Data File...", "plot.fromData", "",            "A new plot file with windows, canvases and graphs of the histograms and functions of a CAP file (or of a RunDatum workflow)");
   plots.addItem("Open...",             "plot.open",      "Ctrl+O",       "Open a plot file (XML) in a new tab of the Plot Tree");
   plots.addItem("Duplicate",           "plot.duplicate", "",             "A copy of the plot file shown, in a new, untitled tab");
   plots.addItem("Rename...",           "plot.rename",    "",             "A new name for the plot file shown (a saved file is renamed in its folder)");
@@ -526,8 +526,8 @@ namespace CAP
   edit.addItem("Move Down",    "plot.down",        "", "Move the selection after the next element");
   edit.addSeparator();
   edit.addItem("Fit...", "edit.fit", "", "Fit a function to data points, a histogram or a function of the selected graph (shown on screen only)");
-  edit.addItem("Detector Maps...", "edit.maps", "", "The particle efficiencies and smearers of a maps file (RunCAP: Import)");
-  edit.addItem("Preferences...", "edit.preferences", "", "Settings of CapGui: window, fonts, graphs, LaTeX");
+  edit.addItem("Detector Maps...", "edit.maps", "", "The particle efficiencies and smearers of a maps file (RunDatum: Import)");
+  edit.addItem("Preferences...", "edit.preferences", "", "Settings of DatumGui: window, fonts, graphs, LaTeX");
 
   Menu & view = bar.addMenu("View");
   view.addItem("File Browser",   "view.browser",   "Ctrl+B", "Show or hide the file browser").setCheckable(true);
@@ -549,9 +549,9 @@ namespace CAP
     theme.addItem(t, String("view.theme.") + t, "", String("Use the ") + t + String(" theme")).setCheckable(true);
 
   Menu & help = bar.addMenu("Help");
-  help.addItem("CapGui Help",        "plot.help",      "F1", "How the canvases, the plot files and the browser work together");
+  help.addItem("DatumGui Help",        "plot.help",      "F1", "How the canvases, the plot files and the browser work together");
   help.addItem("Keyboard Shortcuts", "help.shortcuts", "",   "List of the keyboard shortcuts");
-  help.addItem("About CAP GUI",      "help.about",     "",   "Version and components");
+  help.addItem("About Datum",      "help.about",     "",   "Version and components");
   help.addSeparator();
   help.addItem("ImGui Demo (developers)", "help.imguiDemo", "", "Dear ImGui's demonstration window").setCheckable(true);
   }
@@ -899,7 +899,7 @@ namespace CAP
     _gui.fileDialog().open(FileDialog::kOpenFile, "Open a plot file", _configuration.directory, {".xml"}, "",
                            [this](const String & path) { openDocument(path); });
   else if (c == "plot.fromData")
-    _gui.fileDialog().open(FileDialog::kOpenFile, "CAP file or RunCAP workflow (.xml) whose histograms to plot",
+    _gui.fileDialog().open(FileDialog::kOpenFile, "CAP file or RunDatum workflow (.xml) whose histograms to plot",
                            _configuration.directory, {".cap", ".xml"}, "",
       [this](const String & path)
       {
@@ -1114,7 +1114,7 @@ namespace CAP
   else if (c == "data.rename")
     {
     if (!_gui.activeBrowser().requestRename())
-      _gui.setStatus("Select a folder or a histogram of a data file made in CapGui (files read from disk keep their names)");
+      _gui.setStatus("Select a folder or a histogram of a data file made in DatumGui (files read from disk keep their names)");
     }
   // ----- Plots
   else if (c == "plot.rename" && d) requestRename(1, Path());
@@ -2336,7 +2336,7 @@ namespace CAP
   if (_showHelp)
     {
     ImGui::SetNextWindowSize(ImVec2(760, 360), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("CapGui Help", &_showHelp)) helpText();
+    if (ImGui::Begin("DatumGui Help", &_showHelp)) helpText();
     ImGui::End();
     }
   if (_gridDialog) { ImGui::OpenPopup("Grid"); _gridDialog = false; }
@@ -2572,7 +2572,7 @@ namespace CAP
   _drawnAll = _allWindows;
   std::unique_ptr<GRAPHICS::PlotSpec> spec(new GRAPHICS::PlotSpec());
   String error, problems;
-  String title = String("CapGui: ") + d.displayName();
+  String title = String("DatumGui: ") + d.displayName();
   if (window < 0 || !spec->read(d.document(), d.directory(), error))
     {
     _gui.closePaneWindowsFrom(0);

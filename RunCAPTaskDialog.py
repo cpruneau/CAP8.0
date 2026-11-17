@@ -5,7 +5,7 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPTaskDialog -- the window of a task of a RunCAP.py workflow.
+RunCAPTaskDialog -- the window of a task of a RunDatum.py workflow.
 
 Tabs:
   * General: name, report level, class, and the parameters of the task (the keys of its filters and histogram folders
@@ -49,9 +49,9 @@ def _is_list_key(key):
 
 class TaskDialog(tk.Toplevel):
     """Window of a task.
-    @param task RunCAP.TaskConfig edited in place
+    @param task RunDatum.TaskConfig edited in place
     @param templates task templates; @param library RunCAPFilters.FilterLibrary of the workflow
-    @param helpers {"valid_value", "partial_value", "severities"} of RunCAP.py
+    @param helpers {"valid_value", "partial_value", "severities"} of RunDatum.py
     @param rename called with (task, new name): None if renamed, else the reason it is not
     @param changed called after any change; @param show_filters called with a kind to show the Filters pane
     @param workflow returns the top-level tasks of the workflow, whose problems concern the task too (e.g. its events
@@ -100,7 +100,7 @@ class TaskDialog(tk.Toplevel):
     # -------------------------------------------------------------------------------------------------- common
     def refresh(self):
         """Remake the parts that depend on the library and the choices (Filters, Histograms) and the title."""
-        self.title("CAP Workflow — task %s (%s)" % (self.task.name, self.task.cls))
+        self.title("Datum Workflow — task %s (%s)" % (self.task.name, self.task.cls))
         self._names = {k: self.library.names(k) for k in F.KINDS}
         if self.filters_box is not None:
             self._make_filters()

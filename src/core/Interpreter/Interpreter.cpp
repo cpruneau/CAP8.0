@@ -184,7 +184,7 @@ namespace CAP
   std::ostringstream out;
   if (topic.empty())
     {
-    out << "CAP command language\n"
+    out << "Datum command language\n"
            "  x = 3.5; t = \"text\"; l = [1, 2, 3]       variables: numbers, texts, lists, true/false, none\n"
            "  h = Histogram(\"h\", \"title\", 40, -4, 4)    an object of a registered class (classes() lists them)\n"
            "  h.fill(1.2); h.mean(0); h.name = \"g\"      its functions and members (help Histogram)\n"

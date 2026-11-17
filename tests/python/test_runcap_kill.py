@@ -4,7 +4,7 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Test of the Kill button of RunCAP.py: a job printing without pause is killed, and the window shows its end at once
+"""Test of the Kill button of RunDatum.py: a job printing without pause is killed, and the window shows its end at once
 (the output queued after the kill is not shown). Skipped without tkinter or a display.
 
 Run from the CAP directory:  python3 -m unittest discover -s tests/python
@@ -28,7 +28,7 @@ try:
 except Exception:                               # no tkinter, or no display
     HAVE_DISPLAY = False
 
-import RunCAP                                   # noqa: E402
+import RunDatum                                   # noqa: E402
 
 
 @unittest.skipUnless(HAVE_DISPLAY, "tkinter and a display are needed")
@@ -44,11 +44,11 @@ class TestKill(unittest.TestCase):
                     i += 1
                     print("<INFO> Task::execute() event %d, a line as long as those of a verbose CAP job" % i, flush=True)
                 """))
-        self.settings = RunCAP.SETTINGS_FILE
-        RunCAP.SETTINGS_FILE = os.path.join(self.directory, "settings.json")   # the user's settings are not touched
+        self.settings = RunDatum.SETTINGS_FILE
+        RunDatum.SETTINGS_FILE = os.path.join(self.directory, "settings.json")   # the user's settings are not touched
 
     def tearDown(self):
-        RunCAP.SETTINGS_FILE = self.settings
+        RunDatum.SETTINGS_FILE = self.settings
 
     def test_kill_verbose_job(self):
         result = {}
@@ -77,7 +77,7 @@ class TestKill(unittest.TestCase):
                 root.after(50, watch)
             root.after(500, start)
 
-        RunCAP.run_gui(hook=hook)
+        RunDatum.run_gui(hook=hook)
         self.assertIn("shown", result, "the end of the killed job was not shown within 30 s")
         self.assertLess(result["shown"], 5.0)
         self.assertIn("Kill requested", result["log"])

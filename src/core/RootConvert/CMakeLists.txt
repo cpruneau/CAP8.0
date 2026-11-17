@@ -31,8 +31,10 @@ add_test(NAME RootConversion COMMAND TestRootConversion)
 # Conversion of the histograms of ROOT files to CAP files and back (the RootConvert library is built only with CAP_WITH_ROOT)
 add_executable(CapRootConvert CapRootConvert.cxx)
 target_link_libraries(CapRootConvert RootConvert Base Math ${ROOT_LIBRARIES})
-set_target_properties(CapRootConvert PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}")   # runs without SetupCAP.sh
+set_target_properties(CapRootConvert PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}"   # runs without SetupDatum.sh
+                      OUTPUT_NAME DatumRootConvert)                                   # bin/CapRootConvert: a link
 cap_install(CapRootConvert RUNTIME "${CAP_INSTALL_BIN_DIR}")
+cap_install_alias(CapRootConvert CapRootConvert "${CAP_INSTALL_BIN_DIR}")
 
 cap_install(RootConvert LIBRARY "$ENV{CAP_LIB_PATH}")
 

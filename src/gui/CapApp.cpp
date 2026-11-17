@@ -261,7 +261,7 @@ namespace CAP
   _gui.beforePanesChange = [this]() { recordUndo(); };
   if (!_gui.initialize(_configuration.gui))
     {
-    std::fprintf(stderr, "CapGui: cannot open the window (is a display available?)\n");
+    std::fprintf(stderr, "DatumGui: cannot open the window (is a display available?)\n");
     return 1;
     }
   buildMenus();
@@ -465,7 +465,7 @@ namespace CAP
   edit.addItem("Clear All Canvases", "edit.clearAll",    "", "Clear all the graphs of all the canvases");
   edit.addSeparator();
   edit.addItem("Fit...", "edit.fit", "", "Fit a function to data points, a histogram or a function of the selected graph");
-  edit.addItem("Detector Maps...", "edit.maps", "", "The particle efficiencies and smearers of a maps file (RunCAP: Import)");
+  edit.addItem("Detector Maps...", "edit.maps", "", "The particle efficiencies and smearers of a maps file (RunDatum: Import)");
   edit.addSeparator();
   edit.addItem("Preferences...", "edit.preferences", "Ctrl+,", "Window, canvas and graph settings; save them as configuration");
 
@@ -530,7 +530,7 @@ namespace CAP
 
   addMenus(bar);
   Menu & help = bar.addMenu("Help");
-  help.addItem("About CAP GUI", "help.about", "", "Version and components");
+  help.addItem("About Datum", "help.about", "", "Version and components");
   help.addItem("Keyboard Shortcuts", "help.shortcuts", "F1", "List of the keyboard shortcuts");
   help.addSeparator();
   help.addItem("ImGui Demo (developers)", "help.imguiDemo", "", "Dear ImGui's demonstration window: all the widgets available").setCheckable(true);
@@ -780,7 +780,7 @@ namespace CAP
       }
 #else
     if (FileSystem::hasExtension(path, ".root"))
-      { error = "this CapGui is built without ROOT files (BuildCAP.py: ROOT files)"; return nullptr; }
+      { error = "this DatumGui is built without ROOT files (BuildDatum.py: ROOT files)"; return nullptr; }
 #endif
     auto file = std::make_shared<CapFile>(path, File::kReadOnly);
     file->load(File::Loading::kLazy);   // the tree at once; objects read when first shown
@@ -1930,9 +1930,9 @@ namespace CAP
   {
   if (!_showAbout) return;
   ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-  if (ImGui::Begin("About CAP GUI", &_showAbout, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
+  if (ImGui::Begin("About Datum", &_showAbout, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
     {
-    ImGui::Text("CAP graphical interface");
+    ImGui::Text("Datum graphical interface");
     ImGui::Separator();
     ImGui::Text("Display of functions and data points; CAP files and folders.");
     ImGui::Text("Built on Dear ImGui %s and GLFW; no ROOT classes.", IMGUI_VERSION);

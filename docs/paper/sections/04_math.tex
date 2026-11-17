@@ -156,7 +156,7 @@ conditioned in fits; the series of orthogonal polynomials map the range of a fit
 polynomials (for example $[-1,1]$ for Legendre and Chebyshev polynomials), where they are nearly orthogonal, and
 being linear in their coefficients, their least-squares coefficients are obtained exactly. The Fourier decompositions
 (Section~\ref{sec:fourier}) describe functions of an angle, and the B\'ezier curves, smooth curves through knots
-moved with the mouse, describe efficiencies and resolutions in CapGui. Twelve probability distributions, discrete,
+moved with the mouse, describe efficiencies and resolutions in DatumGui. Twelve probability distributions, discrete,
 continuous and multivariate, are presented in Section~\ref{sec:distributions}. The library also includes
 special functions without parameters (gamma, beta and incomplete gamma functions, Bessel, Legendre and Laguerre functions, spherical harmonics) and scalar fields, functions of any rank defined by their values on a regular mesh and interpolated multilinearly, which Therminator3 uses for its chemical potentials and viscosity (Section~\ref{sec:therminator}).
 
@@ -209,8 +209,8 @@ CAP::MATH::FunctionRegistry::registerComposite("Gauss+Linear", model);
 \paragraph{The function registry.}
 \code{FunctionRegistry} maps names to classes of parameterised functions and makes new functions by name. It is how
 fits are read back from files, which store the name of the class of the fitted function and its parameters, and
-how the Fit window of CapGui offers its functions. Programs register their own classes, and composites registered
-under a name are kept in a file shared by the programs and CapGui.
+how the Fit window of DatumGui offers its functions. Programs register their own classes, and composites registered
+under a name are kept in a file shared by the programs and DatumGui.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Special functions and probability distributions}
@@ -743,7 +743,7 @@ A fit is kept with the object it was made to, data points, a histogram or a func
 the fitted function at the best parameters, the result, a label, the box covered by the points used and the regions
 of the selection. The records are written to and read from CAP files with the object (Section~\ref{sec:binary}),
 the function being recreated through the registry, so that a fit made in a program is drawn and inspected in
-CapGui, and the reverse. The residuals of a fit, $y_i - f(\mathbf{x}_i)$ or the pulls, are computed for the points
+DatumGui, and the reverse. The residuals of a fit, $y_i - f(\mathbf{x}_i)$ or the pulls, are computed for the points
 used, and the fits of rank two of a histogram can be projected onto either axis with the histogram:
 \begin{widetext}
 \begin{verbatim}[language=C++]
@@ -880,4 +880,4 @@ Figure~\ref{fig:stattests} shows the functions of the folder and their dependenc
 the $(+,-,-,-)$ metric and $c=1$.
 
 \todo{decide whether to add a short paragraph on Basic (robust moments) and a figure
-of a fit with an excluded region drawn by CapGui.}
+of a fit with an excluded region drawn by DatumGui.}

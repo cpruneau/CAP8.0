@@ -4,7 +4,7 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of RunCAPFilters (filters of RunCAP.py workflows), with the templates of DB/Templates.
+"""Tests of RunCAPFilters (filters of RunDatum.py workflows), with the templates of DB/Templates.
 
 Run from the CAP directory:  python3 -m unittest discover -s tests/python
 """
@@ -19,11 +19,11 @@ import xml.etree.ElementTree as ET
 CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, CAP_DIR)
 
-import RunCAP                                   # noqa: E402
+import RunDatum                                   # noqa: E402
 import RunCAPFilters as F                       # noqa: E402
 
-TEMPLATES = RunCAP.load_templates(os.path.join(CAP_DIR, "DB", "Templates"))
-TEMPLATES.update(RunCAP.load_templates(os.path.join(CAP_DIR, "tests", "python", "templates")))   # legacy designs
+TEMPLATES = RunDatum.load_templates(os.path.join(CAP_DIR, "DB", "Templates"))
+TEMPLATES.update(RunDatum.load_templates(os.path.join(CAP_DIR, "tests", "python", "templates")))   # legacy designs
 
 
 def task(cls, name=None):
@@ -96,11 +96,11 @@ class TestKeys(unittest.TestCase):
 
     def setUp(self):
         self.tasks = workflow()
-        F.apply_choices(self.tasks, library(), TEMPLATES, RunCAP.Param)
+        F.apply_choices(self.tasks, library(), TEMPLATES, RunDatum.Param)
         self.gen, self.single, self.pair = self.tasks[0].children
 
     def creator(self):
-        creator = F.creator_task(library(), TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(library(), TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         return creator, {t.cls: values(t) for t in creator.children}
 
     def test_creator(self):
@@ -162,7 +162,7 @@ class TestKeys(unittest.TestCase):
         lib = library()
         F.set_maps_file(lib, "/other/Eff.root")
         self.assertEqual(F.maps_file(lib), "/other/Eff.root")
-        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(lib, TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         e = values(creator.children[3])
         self.assertEqual((e["PARTICLE_EFFICIENCY:IMPORT"], e["PARTICLE_EFFICIENCY:IMPORT:FILE_NAME"]),
                          ("true", "Eff.root"))
@@ -176,7 +176,7 @@ class TestKeys(unittest.TestCase):
         tasks = workflow()
         single = tasks[0].children[1]
         single.param("PARTICLE_EFFICIENCY:IMPORT").value = "true"
-        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunDatum.Param, RunDatum.TaskConfig)
         self.assertEqual(values(copies[1].children[1])["PARTICLE_EFFICIENCY:IMPORT"], "false")
         self.assertEqual(single.param("PARTICLE_EFFICIENCY:IMPORT").value, "true")
 
@@ -223,7 +223,7 @@ class TestKeys(unittest.TestCase):
     def test_owner_settings_migrate(self):
         """A workflow written before FilterCreator: the import of the particle database moves to FilterCreator."""
         gen = task("BasicEventGen")
-        P = RunCAP.Param
+        P = RunDatum.Param
         gen.params += [P("PARTICLE_DB_0:NAME", "string", "DefaultDb"), P("PARTICLE_DB_0:OWNER", "bool", "true")]
         gen.param("PARTICLE_DB:N").value = "1"
         gen.param("PARTICLE_DB:IMPORT:FILE_NAME").value = "pdg.xml"
@@ -239,13 +239,13 @@ class TestKeys(unittest.TestCase):
         ana.filters = {"EVENT_FILTER": ["B"]}
         gen.filters["EVENT"] = ["Event"]
         ana.filters["EVENT"] = ["Event"]
-        F.apply_choices([gen, ana], lib, TEMPLATES, RunCAP.Param)
+        F.apply_choices([gen, ana], lib, TEMPLATES, RunDatum.Param)
         self.assertEqual(values(gen)["EVENT_FILTER_0:OWNER"], "true")       # store of the Glauber tasks
         self.assertEqual(values(gen)["EVENT_0:OWNER"], "true")
         self.assertEqual(values(ana)["EVENT_0:OWNER"], "false")
         self.assertEqual(values(gen)["EVENT_FILTER_0:CONDITION_0:SUBTYPE"], "IMPACT")
         self.assertEqual(values(ana)["EVENT_FILTER_0:OWNER"], "false")
-        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(lib, TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         self.assertEqual(values(creator.children[0])["EVENT_FILTER:N"], "2")  # MB, Central: not B
 
     def test_single_folders(self):
@@ -272,7 +272,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(p["HISTOGRAM_4_0:NAME"], "Pair_MB_PiP_D")
 
     def test_reapply_replaces_keys(self):
-        F.apply_choices(self.tasks, library(), TEMPLATES, RunCAP.Param)
+        F.apply_choices(self.tasks, library(), TEMPLATES, RunDatum.Param)
         keys = [p.key for p in self.single.params]
         self.assertEqual(len(keys), len(set(keys)))
 
@@ -281,7 +281,7 @@ class TestKeys(unittest.TestCase):
         tasks = workflow()
         single = tasks[0].children[1]
         single.param("HISTOGRAM_2:USE").value = "false"
-        F.apply_choices(tasks, library(), TEMPLATES, RunCAP.Param)
+        F.apply_choices(tasks, library(), TEMPLATES, RunDatum.Param)
         s = values(single)
         self.assertEqual((s["HISTOGRAM_1:N"], s["HISTOGRAM_2:N"]), ("4", "0"))       # 2 event x 2 particle filters
         self.assertNotIn("HISTOGRAM_2_0:NAME", s)
@@ -327,7 +327,7 @@ class TestKeys(unittest.TestCase):
 
     def test_derived_workflow(self):
         tasks = workflow()
-        derived = F.derived_workflow(tasks, TEMPLATES, RunCAP.TaskConfig)
+        derived = F.derived_workflow(tasks, TEMPLATES, RunDatum.TaskConfig)
         self.assertEqual([(t.name, t.cls) for t in derived], [("EventIterator", "CAP::FileIterator")])
         self.assertEqual([t.name for t in derived[0].children], ["Single", "Pair"])      # no generator
         single = derived[0].children[0]
@@ -349,7 +349,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual([f.name for f in F.folders(a, TEMPLATES)],
                          ["Single_MB_PiP", "Single_MB_PiM", "Single_Central_PiP", "Single_Central_PiM"])
         tasks = [a]
-        F.apply_choices(tasks, library(), TEMPLATES, RunCAP.Param)
+        F.apply_choices(tasks, library(), TEMPLATES, RunDatum.Param)
         v = values(a)
         self.assertEqual((v["HISTOGRAM:N"], v["HISTOGRAM:USE"], v["HISTOGRAM:CREATE"], v["HISTOGRAM:IMPORT"]),
                          ("4", "true", "true", "false"))
@@ -374,7 +374,7 @@ class TestKeys(unittest.TestCase):
         a.param("HISTOGRAM:pt_nbins").value = "17"
         it.children.append(a)
         self.assertEqual(F.check_choices(tasks, library(), TEMPLATES), [])
-        derived = F.derived_workflow(tasks, TEMPLATES, RunCAP.TaskConfig)
+        derived = F.derived_workflow(tasks, TEMPLATES, RunDatum.TaskConfig)
         self.assertEqual([(t.name, t.cls) for t in derived],
                          [("Single2Derived", "CAP::ParticleSingleDerivedCalculator"), ("EventIterator", "CAP::FileIterator")])
         c = derived[0]
@@ -407,7 +407,7 @@ class TestKeys(unittest.TestCase):
         tasks = workflow()
         tasks[0].children.append(a)
         self.assertEqual(F.check_choices(tasks, library(), TEMPLATES), [])
-        derived = F.derived_workflow(tasks, TEMPLATES, RunCAP.TaskConfig)
+        derived = F.derived_workflow(tasks, TEMPLATES, RunDatum.TaskConfig)
         c = derived[0]
         self.assertEqual((c.name, c.cls, c.param("SOURCE_TASK").value),
                          ("Pair2Derived", "CAP::ParticlePairDerivedCalculator", "Pair2"))
@@ -435,7 +435,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(F.subtypes_for("JET_FILTER")["RANK"][1], (F.VALUE, F.RANGE))
         lib.add(F.FilterDef("JET_FILTER", "Leading", "leading jet", [F.Condition("RANK", F.VALUE, 1, 1),
                                                                      F.Condition("PT", F.RANGE, 10, 100)]))
-        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(lib, TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         jets = [t for t in creator.children if t.cls == "CAP::JetFilterCreator"]
         self.assertEqual(len(jets), 1)
         v = values(jets[0])
@@ -452,14 +452,14 @@ class TestKeys(unittest.TestCase):
         R, recombination, pT floor), created by JetSettingsCreator only when the library has some, chosen by the jet
         analyzers (at least one); workflows with the former keys JET:R, ... are converted."""
         lib = library()
-        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(lib, TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         self.assertFalse([t for t in creator.children if t.cls == "CAP::JetSettingsCreator"])
         lib.add(F.FilterDef("JET_SETTINGS", "AntiKtR0p4", "", None, {"R": "0.4"}))
         lib.add(F.FilterDef("JET_SETTINGS", "KtR0p6Pt", "", None, {"ALGORITHM": "KT", "R": "0.6",
                                                                    "RECOMBINATION": "PT", "PT_FLOOR": "2"}))
         self.assertEqual(lib.get("JET_SETTINGS", "AntiKtR0p4").parameters,
                          {"ALGORITHM": "ANTIKT", "R": "0.4", "RECOMBINATION": "E", "PT_FLOOR": "1.0"})
-        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(lib, TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         made = [t for t in creator.children if t.cls == "CAP::JetSettingsCreator"]
         self.assertEqual(len(made), 1)
         v = values(made[0])
@@ -487,7 +487,7 @@ class TestKeys(unittest.TestCase):
         old = task("JetAnalyzer", "Old")
         for key, value in (("JET:R", "0.4, 0.2"), ("JET:ALGORITHM", "ANTIKT"), ("JET:RECOMBINATION", "E"),
                            ("JET:PT_MIN", "5"), ("JET:PARTICLE_ETA_MAX", "0.9")):
-            old.params.append(RunCAP.Param(key, "string", value))
+            old.params.append(RunDatum.Param(key, "string", value))
         warnings = F.update_jet_settings([old], lib, TEMPLATES)
         self.assertEqual(F.choices(old)["JET_SETTINGS"], ["AntiKtR0p4", "AntiKtR0p2"])
         self.assertFalse([p for p in old.params if p.key.startswith("JET:")])
@@ -505,7 +505,7 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(names(lib.get("JET_GROOMER", "Trim")), ["METHOD", "RECLUSTER", "R_SUB", "F_CUT"])
         self.assertIn("BETA", names(lib.get("JET_GROOMER", "SD")))
         self.assertNotIn("R_SUB", names(lib.get("JET_GROOMER", "SD")))
-        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(lib, TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         made = [t for t in creator.children if t.cls == "CAP::JetGroomerCreator"]
         self.assertEqual(len(made), 1)
         v = values(made[0])
@@ -534,12 +534,12 @@ class TestKeys(unittest.TestCase):
         by JetPairFilterCreator only when the library has some, and chosen by the jet pair analyzer."""
         lib = library()
         self.assertEqual(F.subtypes_for("JET_PAIR_FILTER")["RANK2"][1], (F.VALUE, F.RANGE))
-        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(lib, TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         self.assertFalse([t for t in creator.children if t.cls == "CAP::JetPairFilterCreator"])
         lib.add(F.FilterDef("JET_PAIR_FILTER", "LeadSub", "leading-subleading, back to back",
                             [F.Condition("RANK1", F.VALUE, 1, 1), F.Condition("RANK2", F.VALUE, 2, 2),
                              F.Condition("DPHI", F.RANGE, 2.8, 3.2), F.Condition("PTRATIO", F.RANGE, 0.5, 1.0)]))
-        creator = F.creator_task(lib, TEMPLATES, RunCAP.TaskConfig, RunCAP.Param)
+        creator = F.creator_task(lib, TEMPLATES, RunDatum.TaskConfig, RunDatum.Param)
         pairs = [t for t in creator.children if t.cls == "CAP::JetPairFilterCreator"]
         self.assertEqual(len(pairs), 1)
         v = values(pairs[0])
@@ -568,7 +568,7 @@ class TestKeys(unittest.TestCase):
         lib = library()
         self.assertEqual(F.check_choices(tasks, lib, TEMPLATES), [])
         written = copy.deepcopy(tasks)
-        F.apply_choices(written, lib, TEMPLATES, RunCAP.Param)
+        F.apply_choices(written, lib, TEMPLATES, RunDatum.Param)
         v = values(written[0].children[-1])
         self.assertEqual((v["POI_FILTER:N"], v["POI_FILTER:USE"]), ("2", "true"))
         self.assertEqual((v["POI_FILTER_0:NAME"], v["POI_FILTER_0:OWNER"], v["POI_FILTER_1:NAME"]),
@@ -596,7 +596,7 @@ class TestKeys(unittest.TestCase):
         F.default_event_settings(single, TEMPLATES)
         gen.param("EVENT:EXPORT").value = "true"
         gen.param("EVENT:EXPORT:FILE_NAME").value = "events.cap"
-        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunDatum.Param, RunDatum.TaskConfig)
         g, s = values(copies[1].children[0]), values(copies[1].children[1])
         self.assertEqual((g["EVENT:CREATE"], g["EVENT:USE"], g["EVENT:EXPORT"]), ("true", "false", "true"))
         self.assertEqual((s["EVENT:CREATE"], s["EVENT:USE"]), ("false", "true"))
@@ -617,17 +617,17 @@ class TestKeys(unittest.TestCase):
         lib.job.update({"OUTPUT_FILE": "fill.cap"})
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "w.xml")
-            RunCAP.write_workflow(path, workflow(), lib, TEMPLATES)
+            RunDatum.write_workflow(path, workflow(), lib, TEMPLATES)
             top = ET.parse(path).getroot().find("TASK")
             keys = {p.get("name"): p.text for g in top.findall("GROUP") if g.get("name") == "JOB"
                     for p in g.findall("PARAMETER")}
             self.assertEqual(keys, {"OUTPUT_FILE": "fill.cap"})
-            _, lib2, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            _, lib2, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
             self.assertEqual(lib2.job, {"OUTPUT_FILE": "fill.cap", "INPUT_FILE": "", "INPUT_PATH": ""})
             tree = ET.parse(path)
             tree.getroot().remove(tree.getroot().find("RUNCAP"))     # from the keys alone
             tree.write(path)
-            _, lib3, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            _, lib3, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
             self.assertEqual(lib3.job["OUTPUT_FILE"], "fill.cap")
             self.assertEqual(warnings, [])
 
@@ -647,12 +647,12 @@ class TestKeys(unittest.TestCase):
         it = task("EventIterator")
         a = task("LegacySingleAnalyzer", "PSA")
         it.children = [a]
-        a.params += [RunCAP.Param("HISTOGRAM_1:EXPORT", "bool", "true"),
-                     RunCAP.Param("HISTOGRAM_1:EXPORT:FILE_NAME", "string", "x.cap")]
+        a.params += [RunDatum.Param("HISTOGRAM_1:EXPORT", "bool", "true"),
+                     RunDatum.Param("HISTOGRAM_1:EXPORT:FILE_NAME", "string", "x.cap")]
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "old.xml")
-            RunCAP.write_workflow(path, [it])
-            tasks, _, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            RunDatum.write_workflow(path, [it])
+            tasks, _, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
         self.assertIsNone(tasks[0].children[0].param("HISTOGRAM_1:EXPORT"))
         self.assertFalse([w for w in warnings if "HISTOGRAM_1:EXPORT" in w])
 
@@ -667,8 +667,8 @@ class TestKeys(unittest.TestCase):
         self.assertIn("Task BasicEventGen makes events but is set neither to create nor to import them", text)
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "old.xml")
-            RunCAP.write_workflow(path, tasks, library(), TEMPLATES)
-            read, lib, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            RunDatum.write_workflow(path, tasks, library(), TEMPLATES)
+            read, lib, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
         g = read[0].children[0]
         self.assertEqual((g.param("EVENT:CREATE").value, g.param("EVENT:USE").value), ("true", "false"))
         self.assertIn("Task BasicEventGen makes events: set to create them", "\n".join(warnings))
@@ -686,8 +686,8 @@ class TestKeys(unittest.TestCase):
         self.assertIn("Event iterator EventIterator does not use the events Event made by its tasks", text)
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "old.xml")
-            RunCAP.write_workflow(path, tasks, library(), TEMPLATES)
-            read, lib, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            RunDatum.write_workflow(path, tasks, library(), TEMPLATES)
+            read, lib, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
         self.assertEqual((F.choices(read[0]).get("EVENT"), read[0].param("EVENT:USE").value), (["Event"], "true"))
         self.assertIn("Event iterator EventIterator set to use the events of its tasks (Event)", "\n".join(warnings))
         self.assertEqual(F.check_choices(read, lib, TEMPLATES), [])
@@ -732,8 +732,8 @@ class TestKeys(unittest.TestCase):
         self.assertIn("Task Simulator reads one event and writes another", "\n".join(F.check_choices(tasks, lib, TEMPLATES)))
         with tempfile.TemporaryDirectory() as d:                                     # completed when read
             path = os.path.join(d, "old.xml")
-            RunCAP.write_workflow(path, tasks, lib, TEMPLATES)
-            read, lib2, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            RunDatum.write_workflow(path, tasks, lib, TEMPLATES)
+            read, lib2, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
         read_sim = read[0].children[1]
         self.assertEqual(F.choices(read_sim)["EVENT"], ["Event", "FastSimEvent"])
         self.assertIn("Task Simulator reads Event and writes FastSimEvent", "\n".join(warnings))
@@ -752,7 +752,7 @@ class TestKeys(unittest.TestCase):
     def test_use_migrates(self):
         """A workflow whose folders were written without USE (CAP did not read it): the lists are used."""
         a = task("LegacySingleAnalyzer", "PSA")
-        a.params += [RunCAP.Param("HISTOGRAM_1:N", "int", "1"), RunCAP.Param("HISTOGRAM_1_0:NAME", "string", "X")]
+        a.params += [RunDatum.Param("HISTOGRAM_1:N", "int", "1"), RunDatum.Param("HISTOGRAM_1_0:NAME", "string", "X")]
         F.extract_choices([a], TEMPLATES)
         self.assertTrue(F.list_used(a, 1))
         self.assertFalse(F.list_used(a, 2))
@@ -761,7 +761,7 @@ class TestKeys(unittest.TestCase):
         tasks = workflow()
         single = tasks[0].children[1]
         single.histograms = F.HistogramOptions(False, {("Central", "PiM"): {"pt_nbins": "7"}})
-        F.apply_choices(tasks, library(), TEMPLATES, RunCAP.Param)
+        F.apply_choices(tasks, library(), TEMPLATES, RunDatum.Param)
         s = values(single)
         default = s["HISTOGRAM:pt_nbins"]
         self.assertEqual(s["HISTOGRAM_1_0:NAME"], "Single_MB_PiP")
@@ -776,10 +776,10 @@ class TestReading(unittest.TestCase):
     def roundtrip(self, tasks, lib):
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "w.xml")
-            RunCAP.write_workflow(path, tasks, lib, TEMPLATES)
+            RunDatum.write_workflow(path, tasks, lib, TEMPLATES)
             root = ET.parse(path).getroot()
             self.assertEqual([e.tag for e in root], ["TASK", "RUNCAP"])
-            return RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            return RunDatum.load_workflow_with_filters(path, TEMPLATES)
 
     def test_roundtrip(self):
         tasks = workflow()
@@ -804,7 +804,7 @@ class TestReading(unittest.TestCase):
         lib.settings["PARTICLE_EFFICIENCY"]["IMPORT"] = "true"
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "w.xml")
-            RunCAP.write_workflow(path, workflow(), lib, TEMPLATES)
+            RunDatum.write_workflow(path, workflow(), lib, TEMPLATES)
             tree = ET.parse(path)
             top = tree.getroot().find("TASK")
             self.assertEqual(top.get("class"), "CAP::Task")                         # Workflow wrapper
@@ -812,22 +812,22 @@ class TestReading(unittest.TestCase):
             self.assertEqual(len(top.find("TASK").findall("TASK")), 8)
             tree.getroot().remove(tree.getroot().find("RUNCAP"))
             tree.write(path)
-            read, lib2, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            read, lib2, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
         self.assertEqual(warnings, [])
         self.assertEqual([t.name for t in read], ["EventIterator"])
         self.assertEqual(lib2, lib)
 
     def test_run_root_name(self):
         """CAP runs the task written at the root of the file (the wrapper holding FilterCreator and the tasks), also
-        for a workflow of one top-level task, as RunCAP's Run and --print-command give it."""
+        for a workflow of one top-level task, as RunDatum's Run and --print-command give it."""
         lib = library()
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "w.xml")
-            written = RunCAP.write_workflow(path, workflow(), lib, TEMPLATES)
-            tasks, lib2, _ = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            written = RunDatum.write_workflow(path, workflow(), lib, TEMPLATES)
+            tasks, lib2, _ = RunDatum.load_workflow_with_filters(path, TEMPLATES)
         self.assertEqual(len(tasks), 1)                                 # EventIterator alone, FilterCreator removed
         self.assertEqual(written, "Workflow")
-        self.assertEqual(RunCAP.run_root_name(tasks, lib2, TEMPLATES), "Workflow")
+        self.assertEqual(RunDatum.run_root_name(tasks, lib2, TEMPLATES), "Workflow")
 
     def test_writing_keeps_parameters(self):
         """Writing copies the tasks without copying their parameters (the GUI attaches widgets to them)."""
@@ -836,7 +836,7 @@ class TestReading(unittest.TestCase):
         kept = single.param("HISTOGRAM:pt_nbins")
         kept.widget_var = object()
         values_before = [(p.key, p.value) for p in single.params]
-        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunDatum.Param, RunDatum.TaskConfig)
         self.assertEqual(copies[0].cls, F.CREATOR_CLASS)
         self.assertIs(copies[1].children[1].param("HISTOGRAM:pt_nbins"), kept)
         self.assertEqual([(p.key, p.value) for p in single.params], values_before)
@@ -847,7 +847,7 @@ class TestReading(unittest.TestCase):
         it = task("EventIterator")
         a = task("LegacySingleAnalyzer", "PSA")
         it.children = [a]
-        P = RunCAP.Param
+        P = RunDatum.Param
         a.params += [P("EVENT_FILTER:N", "int", "1"), P("EVENT_FILTER_0:NAME", "string", "All"),
                      P("EVENT_FILTER_0:OWNER", "bool", "1"), P("EVENT_FILTER_0:CONDITION:N", "int", "1"),
                      P("EVENT_FILTER_0:CONDITION_0:TYPE", "string", "DOUBLE_RANGE"),
@@ -864,9 +864,9 @@ class TestReading(unittest.TestCase):
                      P("HISTOGRAM_2:N", "int", "1"), P("HISTOGRAM_2_0:NAME", "string", "SG_All_Ch_D")]
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "old.xml")
-            RunCAP.write_workflow(path, [it])
+            RunDatum.write_workflow(path, [it])
             self.assertIsNone(ET.parse(path).getroot().find("RUNCAP"))
-            tasks, lib, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            tasks, lib, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
         self.assertEqual(warnings, [])
         psa = tasks[0].children[0]
         self.assertEqual(psa.filters, {"EVENT_FILTER": ["All"], "PARTICLE_FILTER": ["Ch"]})
@@ -878,16 +878,16 @@ class TestReading(unittest.TestCase):
         it = task("EventIterator")
         a = task("LegacySingleAnalyzer", "PSA")
         it.children = [a]
-        a.params += [RunCAP.Param("HISTOGRAM_1:N", "int", "3")]
+        a.params += [RunDatum.Param("HISTOGRAM_1:N", "int", "3")]
         _, warnings = F.extract_choices([it], TEMPLATES)
         self.assertEqual(len(warnings), 1)
 
     def test_conflicting_definitions(self):
         """A task defining an object of the creator differently: the definition of the creator is kept."""
-        written = F.prepared_for_writing(workflow(), library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        written = F.prepared_for_writing(workflow(), library(), TEMPLATES, RunDatum.Param, RunDatum.TaskConfig)
         single = written[1].children[1]
         single.param("EVENT_FILTER_0:OWNER").value = "true"
-        single.params += [RunCAP.Param("EVENT_FILTER_0:CONDITION:N", "int", "0")]
+        single.params += [RunDatum.Param("EVENT_FILTER_0:CONDITION:N", "int", "0")]
         lib, warnings = F.extract_choices(written, TEMPLATES)
         self.assertEqual(len(lib.get("EVENT_FILTER", "MB").conditions), 1)
         self.assertTrue(any("MB" in w for w in warnings))
@@ -896,7 +896,7 @@ class TestReading(unittest.TestCase):
         it = task("EventIterator")
         a = task("BasicEventGen")
         it.children = [a]
-        a.params += [RunCAP.Param("EVENT_FILTER:N", "int", "1"), RunCAP.Param("EVENT_FILTER_0:NAME", "string", "X")]
+        a.params += [RunDatum.Param("EVENT_FILTER:N", "int", "1"), RunDatum.Param("EVENT_FILTER_0:NAME", "string", "X")]
         lib, warnings = F.extract_choices([it], TEMPLATES)
         self.assertEqual(lib.names("EVENT_FILTER"), ["X"])
         self.assertEqual(len(warnings), 1)
@@ -939,7 +939,7 @@ class TestChecks(unittest.TestCase):
         tasks = workflow()
         single = tasks[0].children[1]
         single.param("PARTICLE_EFFICIENCY:IMPORT").value = "true"
-        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        copies = F.prepared_for_writing(tasks, library(), TEMPLATES, RunDatum.Param, RunDatum.TaskConfig)
         self.assertEqual(values(copies[1].children[1])["PARTICLE_EFFICIENCY:IMPORT"], "false")
         self.assertEqual(single.param("PARTICLE_EFFICIENCY:IMPORT").value, "true")
 
@@ -1080,10 +1080,10 @@ class TestSelectionFiles(unittest.TestCase):
             F.choices(single)["PARTICLE_FILTER"] = ["PiP"]
             F.choices(single)["EVENT_FILTER"] = ["Central"]
             path = os.path.join(d, "workflow.xml")
-            RunCAP.write_workflow(path, [gen, single], library, TEMPLATES)
+            RunDatum.write_workflow(path, [gen, single], library, TEMPLATES)
             pip = F.FilterDef("PARTICLE_FILTER", "PiP", "changed", [F.Condition("PDG", F.VALUE, 211, 211)])
             F.write_selections(shared, [pip] + self.objects()[::2])
-            tasks, back, warnings = RunCAP.load_workflow_with_filters(path, TEMPLATES)
+            tasks, back, warnings = RunDatum.load_workflow_with_filters(path, TEMPLATES)
             self.assertEqual([w for w in warnings if "defined differently" in w or "selection" in w.lower()], [])
             self.assertEqual(back.get("PARTICLE_FILTER", "PiP").title, "changed")
             self.assertEqual(F.choices(tasks[1])["PARTICLE_FILTER"], ["PiP"])
@@ -1139,10 +1139,10 @@ class TestMaps(unittest.TestCase):
         """A workflow written with the parameters of an efficiency: they are ignored, with a warning."""
         lib = library()
         tasks = workflow()
-        copies = F.prepared_for_writing(tasks, lib, TEMPLATES, RunCAP.Param, RunCAP.TaskConfig)
+        copies = F.prepared_for_writing(tasks, lib, TEMPLATES, RunDatum.Param, RunDatum.TaskConfig)
         creator = copies[0]
         sub = next(c for c in creator.children if c.cls == "CAP::ParticleEfficiencyCreator")
-        F._set(sub, "PARTICLE_EFFICIENCY_0:pt_nbins", "int", "50", RunCAP.Param)
+        F._set(sub, "PARTICLE_EFFICIENCY_0:pt_nbins", "int", "50", RunDatum.Param)
         library2, warnings = F.extract_choices(copies, TEMPLATES)
         self.assertTrue(any("read from the maps file now" in w for w in warnings))
         self.assertEqual(library2.get("PARTICLE_EFFICIENCY", "Eff").parameters, {})
@@ -1152,11 +1152,11 @@ class TestJetFluctuationTasks(unittest.TestCase):
     """The former JetFluctuationAnalyzer: removed, its settings of the underlying event given to JetAnalyzer."""
 
     def test_dropped_next_to_an_analyzer(self):
-        P = RunCAP.Param
-        it = RunCAP.TaskConfig("It", "CAP::EventIterator")
-        jets = RunCAP.TaskConfig("JetAnalyzer", "CAP::JetAnalyzer", params=[P("UE:MODE", "string", "TRANSVERSE"),
+        P = RunDatum.Param
+        it = RunDatum.TaskConfig("It", "CAP::EventIterator")
+        jets = RunDatum.TaskConfig("JetAnalyzer", "CAP::JetAnalyzer", params=[P("UE:MODE", "string", "TRANSVERSE"),
                                                                            P("UE:ETA_MAX", "double", "0.9")])
-        fluct = RunCAP.TaskConfig("Fluct", "CAP::JetFluctuationAnalyzer", known=False,
+        fluct = RunDatum.TaskConfig("Fluct", "CAP::JetFluctuationAnalyzer", known=False,
                                   params=[P("UE:MODE", "string", "TRANSVERSE_SHIFTED"), P("UE:ETA_MAX", "double", "0.8")])
         it.children = [jets, fluct]
         warnings = F.update_jet_fluctuation_tasks([it])
@@ -1167,17 +1167,17 @@ class TestJetFluctuationTasks(unittest.TestCase):
         self.assertIn("dropped", warnings[0])
 
     def test_settings_of_the_analyzer_kept(self):
-        P = RunCAP.Param
-        jets = RunCAP.TaskConfig("J", "CAP::JetAnalyzer", params=[P("UE:ETA_MAX", "double", "0.9")])
+        P = RunDatum.Param
+        jets = RunDatum.TaskConfig("J", "CAP::JetAnalyzer", params=[P("UE:ETA_MAX", "double", "0.9")])
         jets.param("UE:ETA_MAX").value = "0.7"            # changed from its default: kept
-        fluct = RunCAP.TaskConfig("F", "CAP::JetFluctuationAnalyzer", params=[P("UE:ETA_MAX", "double", "0.8")])
+        fluct = RunDatum.TaskConfig("F", "CAP::JetFluctuationAnalyzer", params=[P("UE:ETA_MAX", "double", "0.8")])
         tasks = [jets, fluct]
         F.update_jet_fluctuation_tasks(tasks)
         self.assertEqual([t.name for t in tasks], ["J"])
         self.assertEqual(jets.param("UE:ETA_MAX").value, "0.7")
 
     def test_alone_becomes_an_analyzer(self):
-        fluct = RunCAP.TaskConfig("F", "CAP::JetFluctuationAnalyzer", known=False)
+        fluct = RunDatum.TaskConfig("F", "CAP::JetFluctuationAnalyzer", known=False)
         tasks = [fluct]
         warnings = F.update_jet_fluctuation_tasks(tasks)
         self.assertEqual(tasks[0].cls, "CAP::JetAnalyzer")

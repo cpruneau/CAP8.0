@@ -30,7 +30,7 @@ namespace
 void usage()
 {
   std::printf(
-    "Usage: CapGui [--basic | --edit] [plots.xml ...] [file.cap | folder ...] [--config gui.xml] [--maps maps.cap]\n"
+    "Usage: DatumGui [--basic | --edit] [plots.xml ...] [file.cap | folder ...] [--config gui.xml] [--maps maps.cap]\n"
     "  The canvases are the windows of a plot file (the XML files of PlotHistos): drag histograms from the\n"
     "  browser onto them or onto the Plot Tree, change them, save the plot file; Plots > Export writes the figures.\n"
     "  --basic   start from a new plot file (the default without plot files)\n"
@@ -58,7 +58,7 @@ int main(int argc, char ** argv)
     else if ((a == "--config" || a == "-c") && k + 1 < argc) { guiArguments.push_back(argv[k]); guiArguments.push_back(argv[++k]); }
     else if (a == "--maps" && k + 1 < argc) { guiArguments.push_back(argv[k]); guiArguments.push_back(argv[++k]); }
     else if (a.compare(0, 4, "-psn") == 0) continue;   // macOS: a process serial number given by the Finder
-    else if (a.size() > 1 && a[0] == '-') { std::fprintf(stderr, "CapGui: unknown option %s\n", a.c_str()); usage(); return 2; }
+    else if (a.size() > 1 && a[0] == '-') { std::fprintf(stderr, "DatumGui: unknown option %s\n", a.c_str()); usage(); return 2; }
     else if (FileSystem::hasExtension(String(a), ".xml")) plotFiles.push_back(String(a));
     else guiArguments.push_back(argv[k]);   // CAP files and folders: for the browser
     }

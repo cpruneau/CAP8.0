@@ -28,7 +28,7 @@ each type in an event is drawn, independently for each type, from a multiplicity
   \item \code{FUNCTION}: $P(n) \propto f(n)$ for the integers $n$ from \code{MultMin} to \code{MultMax}, with $f$ any
   function of one variable of the function registry (Section~\ref{sec:functions}), named by
   \code{Mult:Function:Name} with its parameters in \code{Mult:Function:Parameters}: a registered class, an exponential
-  or a negative binomial for instance, or a composite built in CapGui;
+  or a negative binomial for instance, or a composite built in DatumGui;
   \item \code{HISTOGRAM}: $P(n)$ proportional to the contents of a histogram of one variable, read from a CAP file
   (\code{Mult:Histogram:Path}, \code{Mult:Histogram:File}) at a path in it (\code{Mult:Histogram:Name}), for instance
   the multiplicity distribution measured by \code{ParticleSingleAnalyzer} in another run, of a model or of data; each
@@ -49,7 +49,7 @@ The momentum distribution, $dN/dx$ with $x = \pT$ or $p$ (\code{Distribution}), 
 $e^{-x/\lambda}$ (slope $\lambda$ = \code{Slope}, 0.5~GeV/$c$ by default), a Gaussian centred at zero,
 $e^{-x^2/2\sigma^2}$ (\code{Sigma}), or any function of one variable of the function registry
 (Section~\ref{sec:functions}), named by \code{Function:Name} with its parameters in \code{Function:Parameters}: a
-registered class, such as \code{Exponential} or \code{Polynomial}, or a composite built in CapGui. The Gaussian and
+registered class, such as \code{Exponential} or \code{Polynomial}, or a composite built in DatumGui. The Gaussian and
 the functions are tabulated on the range when the task is initialised and sampled by inverting their cumulative.
 New styles of generation are added as new values of \code{EventGenType}. For tests of flow analyses
 (Section~\ref{sec:flow}), \code{Flow:Vn} lists coefficients $v_1, v_2, \dots$ that modulate the azimuths about a
@@ -222,7 +222,7 @@ Pythia, $\sigma_k$ (\code{Info::sigmaGen()}, in mb), its uncertainty, the number
 $\hat{p}_T$ in the folder of the task. The jobs of a production in $\hat{p}_T$ bins keep their histograms unnormalised,
 as raw counts (\code{JOB:NORMALIZE} \code{false}), and \code{SubSampleStatCalculator} adds the bins with the weights
 $\sigma_k/N_k$ (Section~\ref{sec:subsample}): the result is the differential cross section, in mb, of each observable,
-$d\sigma/dX = \sum_k (\sigma_k/N_k)\, dN_k/dX$. RunCAP.py sets up such a production from the list of the edges of
+$d\sigma/dX = \sum_k (\sigma_k/N_k)\, dN_k/dX$. RunDatum.py sets up such a production from the list of the edges of
 the bins (Section~\ref{sec:run}).
 
 % ---------------------------------------------------------------------------------------------------------------

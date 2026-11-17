@@ -73,7 +73,7 @@ bool runReporting(Interpreter & interpreter, const std::string & source, int fir
 
 void usage()
 {
-  std::cout << "Usage: CapShell [-i] [file.caps ...]   or   CapShell -e \"commands\"\n";
+  std::cout << "Usage: DatumShell [-i] [file.caps ...]   or   DatumShell -e \"commands\"\n";
 }
 } // namespace
 
@@ -109,7 +109,7 @@ int main(int argc, char ** argv)
 #ifdef CAP_HAVE_EDITLINE
   if (terminal) { using_history(); read_history(history.c_str()); }
 #endif
-  if (terminal) std::cout << "CAP command line interpreter: help for the language, classes() for the classes, exit() to leave\n";
+  if (terminal) std::cout << "Datum command line interpreter: help for the language, classes() for the classes, exit() to leave\n";
   int count = 0, lineNumber = 1;
   std::string line;
   while (!interpreter.exitRequested())

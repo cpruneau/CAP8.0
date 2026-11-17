@@ -29,18 +29,18 @@
 
 void usage()
 {
-  std::cout << "CAP" << std::endl;
+  std::cout << "Datum (formerly CAP)" << std::endl;
   std::cout << "Version 1.0" << std::endl << std::endl << std::endl;
   std::cout << "Usage:" << std::endl;
-  std::cout << "CAP  configurationFile" << std::endl;
-  std::cout << "CAP  configurationPath configurationFile" << std::endl;
-  std::cout << "CAP  configurationPath configurationFile histogramPath" << std::endl<< std::endl;
+  std::cout << "Datum  configurationFile" << std::endl;
+  std::cout << "Datum  configurationPath configurationFile" << std::endl;
+  std::cout << "Datum  configurationPath configurationFile histogramPath" << std::endl<< std::endl;
   std::cout << "A configuration file ending with .xml is read as XML: the task named taskName (or the first TASK" << std::endl;
   std::cout << "element if taskName is -) is created from its TASK element." << std::endl << std::endl;
-  std::cout << "CAP  --xml-templates outputPath [className ...]" << std::endl;
+  std::cout << "Datum  --xml-templates outputPath [className ...]" << std::endl;
   std::cout << "Write the XML template (all parameters, defaults and types) of the given task classes, or of all" << std::endl;
   std::cout << "task classes, to outputPath/<ClassName>.xml." << std::endl << std::endl;
-  std::cout << "CAP  --function-catalog outputFile" << std::endl;
+  std::cout << "Datum  --function-catalog outputFile" << std::endl;
   std::cout << "Write the catalog of the functions of MATH::FunctionRegistry (names, ranks, parameters) to outputFile." << std::endl << std::endl << std::endl;
 }
 
@@ -291,7 +291,7 @@ int main(int argc, char* argv[])
 
 
 
-  CAP::printString("CAP completed successfully");
+  CAP::printString("Datum completed successfully");
   CAP::printLine();
   CAP::printLine();
   
@@ -328,7 +328,7 @@ int main(int argc, char* argv[])
   exception.print();
   }
   CAP::printLine();
-  CAP::printString("CAP FAILED");
+  CAP::printString("Datum FAILED");
   CAP::printLine();
   return 1;
 }

@@ -12,7 +12,7 @@ holds one family of observables (Section~\ref{sec:observables}). This section de
 \label{sec:tasks}
 
 \paragraph{Jobs.}
-A job is one run of the \code{CAP} program on one task tree, read from a workflow file (Section~\ref{sec:xml}):
+A job is one run of the \code{Datum} program on one task tree, read from a workflow file (Section~\ref{sec:xml}):
 {\footnotesize
 \begin{verbatim}
 CAP <task> <configuration directory>/
@@ -62,7 +62,7 @@ condition sets a range, two ranges, or a value of one quantity. Event filters se
 ...:CONDITION_0:SUBTYPE = MULT
 ...:CONDITION_0:SELECTION = Charged
 \end{verbatim}}
-\noindent Filters are usually not written by hand: they are defined in the filter editor of RunCAP.py (Section~\ref{sec:run}),
+\noindent Filters are usually not written by hand: they are defined in the filter editor of RunDatum.py (Section~\ref{sec:run}),
 stored in the \code{RUNCAP} element of the workflow file, and created at the start of a job by creator tasks
 (\code{EventFilterCreator}, \code{ParticleFilterCreator}), which put them in the store from which the other tasks take
 them by name. Creators also exist for the efficiencies and the smearers.
@@ -107,8 +107,8 @@ pseudorapidity and $\pT$. It is used in two ways: to simulate detection losses, 
 probability given by the efficiency, and to correct for them, by weighting each particle by the inverse of the
 efficiency. The single-particle analyzer weights the particles it counts in this way. A task uses one efficiency for
 all particles, one per particle filter, or one per event filter and particle filter (the event class and the particle
-type). The particle efficiencies and smearers are made and edited in CapGui (Detector Maps) and saved in a maps file;
-RunCAP does not define them: it names that file, lists its objects (\code{CAP --maps-list}), and lets each task choose
+type). The particle efficiencies and smearers are made and edited in DatumGui (Detector Maps) and saved in a maps file;
+RunDatum does not define them: it names that file, lists its objects (\code{CAP --maps-list}), and lets each task choose
 among them by name. An event efficiency (\code{EventEfficiency}) has the same role for events, as a
 function of their multiplicity.
 \todo{the pair analyzers do not weight pairs by the product of the particle efficiencies, and \code{EventEfficiency}
@@ -194,7 +194,7 @@ ParticlePair3DBFCalculator
   = PairBFCalculator<ParticlePair3DHistos,
                      ParticlePair3DBFHistos>
 \end{verbatim}}
-\noindent The analyses thus differ only by their histograms, not by how they are called. RunCAP.py (Section~\ref{sec:run}) shows
+\noindent The analyses thus differ only by their histograms, not by how they are called. RunDatum.py (Section~\ref{sec:run}) shows
 the three phases as the stages of a workflow; it makes the derived-histogram stage from the analyzers of the first
 stage, with the same filters and settings, and runs the stages as successive jobs.
 
@@ -209,7 +209,7 @@ task (binnings, ranges, and which histograms to fill) and keeps pointers to them
 them from a file, scale them and reset them. Histograms have short names, \code{n1\_pt} or \code{n2\_DetaDphi} for
 instance, since the folders tell the combinations apart. In the output file of a job, the folders of a task are the
 sub-folders of a folder named after the task, so that a histogram is reached by a path such as
-\code{PairAnalysis/ALL\_PiP\_PiM/R2\_DetaDphi}, both by programs and in the data browser of CapGui. Since folders of the same structure can be added
+\code{PairAnalysis/ALL\_PiP\_PiM/R2\_DetaDphi}, both by programs and in the data browser of DatumGui. Since folders of the same structure can be added
 (Section~\ref{sec:objects}), the outputs of several jobs are added folder by folder.
 
 % ---------------------------------------------------------------------------------------------------------------
@@ -255,7 +255,7 @@ sub-samples $H_s$ are combined as above, by their average or by the jackknife, s
 include the fluctuations of all the bins. Since the bins are added within each sub-sample only, the sub-samples remain
 independent, and the event filters, particle filters and jets of each folder are treated in the same way.
 
-RunCAP.py (Section~\ref{sec:run}) runs a workflow as sub-samples and combines them. Each sub-sample has its own seeds:
+RunDatum.py (Section~\ref{sec:run}) runs a workflow as sub-samples and combines them. Each sub-sample has its own seeds:
 in its workflow file, the seed parameters of the tasks (\code{Seed}, \code{SeedValue}) are increased by its number, and
 so is the seed of the job (\code{JOB:SEED}). The sub-samples run on the computer, several at once, or on a Slurm
 cluster, as a job array submitted over \code{ssh}, whose outputs are copied back and combined; jobs run in any other way

@@ -605,11 +605,11 @@ namespace CAP
   files.emplace_back("docProps/core.xml", header +
     "<cp:coreProperties xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\" "
     "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:dcterms=\"http://purl.org/dc/terms/\" "
-    "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><dc:title>CAP plots</dc:title><dc:creator>CAP</dc:creator>"
+    "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><dc:title>Datum plots</dc:title><dc:creator>Datum</dc:creator>"
     "</cp:coreProperties>");
   files.emplace_back("docProps/app.xml", header +
     "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\">"
-    "<Application>CAP</Application><Slides>" + std::to_string(n) + "</Slides></Properties>");
+    "<Application>Datum</Application><Slides>" + std::to_string(n) + "</Slides></Properties>");
 
   // presentation
   std::string presentation = header + "<p:presentation" + namespaces() + " saveSubsetFonts=\"1\">"

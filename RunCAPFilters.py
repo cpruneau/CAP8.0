@@ -5,7 +5,7 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPFilters -- the filters of a CAP workflow and the histogram folders of its analyzers (model of RunCAP.py, no GUI).
+RunCAPFilters -- the filters of a CAP workflow and the histogram folders of its analyzers (model of RunDatum.py, no GUI).
 
 A workflow has a library of named objects, shared by its tasks, of eight kinds:
   * event filters and particle filters: each a list of conditions (a range, two ranges, a value or a flag of one
@@ -369,7 +369,7 @@ def makes_events(task):
 
 def update_event_settings(tasks, templates):
     """Generators and readers that neither create nor import their events (workflows written before the events
-    settings were the tasks', when RunCAP wrote USE true and CREATE false for every task): they create them, and do
+    settings were the tasks', when RunDatum wrote USE true and CREATE false for every task): they create them, and do
     not use them. @return warnings"""
     warnings = []
     for task in _preorder(tasks):
@@ -408,7 +408,7 @@ def events_made_below(iterator, templates):
 def update_iterator_events(tasks, templates):
     """Each EventIterator uses the events made by its tasks: it resets them (and counts them) before each event, so
     that several generators can fill the same event (embedding). A generator does not reset its events. Applied when a
-    workflow is loaded and after each change in RunCAP.py. @return a warning for each iterator changed"""
+    workflow is loaded and after each change in RunDatum.py. @return a warning for each iterator changed"""
     warnings = []
     for task in _preorder(tasks):
         if task.cls != ITERATOR_OF_MODE[FILL]:
@@ -441,7 +441,7 @@ def default_event_settings(task, templates):
         if p is not None:
             p.value = "true" if value else "false"
 #: Settings of the lists of objects of a task (<KIND>:USE, IMPORT, CREATE, EXPORT and their files): FilterCreator
-#: creates, imports and exports the objects, so the tasks only choose them (they are hidden in RunCAP.py's windows).
+#: creates, imports and exports the objects, so the tasks only choose them (they are hidden in RunDatum.py's windows).
 LIST_SETTING_KEY = re.compile(r"^(?:%s):(?:USE|IMPORT|CREATE|EXPORT)(?::.*)?$" % "|".join(CHOICE_KINDS))
 _OBJECT_KEY = re.compile(r"^(%s)_(\d+):(.+)$" % "|".join(CHOICE_KINDS))
 _CONDITION_KEY = re.compile(r"^CONDITION_(\d+):(.+)$")
@@ -1121,19 +1121,19 @@ def update_jet_fluctuation_tasks(tasks):
 
 
 def is_fluctuation_class_warning(warning):
-    """Whether a warning of RunCAP.load_workflow() is about the former JetFluctuationAnalyzer (see
+    """Whether a warning of RunDatum.load_workflow() is about the former JetFluctuationAnalyzer (see
     update_jet_fluctuation_tasks())."""
     return "class %s is not in the current build" % _FLUCTUATION_CLASS in warning
 
 
 def is_old_jet_key_warning(warning):
-    """Whether a warning of RunCAP.load_workflow() is about a key of the former jet finder (see update_jet_settings())."""
+    """Whether a warning of RunDatum.load_workflow() is about a key of the former jet finder (see update_jet_settings())."""
     return re.search(r"parameter JET:(?:R|ALGORITHM|RECOMBINATION|PT_MIN|PARTICLE_ETA_MAX) is not defined by class",
                      warning) is not None
 
 
 def is_numbered_list_warning(warning):
-    """Whether a warning of RunCAP.load_workflow() is about a key of the numbered lists (see update_histogram_lists())."""
+    """Whether a warning of RunDatum.load_workflow() is about a key of the numbered lists (see update_histogram_lists())."""
     return re.search(r"parameter HISTOGRAM_[1-4]:(?:USE|CREATE|IMPORT) is not defined by class", warning) is not None
 
 
@@ -1246,7 +1246,7 @@ def _write_object(task, kind, k, name, definition, owner, Param):
 
 def creator_task(library, templates, TaskConfig, Param):
     """The task FilterCreator: one subtask per kind, creating all the objects of the library of that kind (OWNER
-    true), but the event filters on Glauber quantities. @param TaskConfig, Param classes of RunCAP.py"""
+    true), but the event filters on Glauber quantities. @param TaskConfig, Param classes of RunDatum.py"""
     def new(name, cls):
         template = templates.get(cls)
         t = template.clone() if template is not None else TaskConfig(name, cls)
@@ -1284,7 +1284,7 @@ def apply_choices(tasks, library, templates, Param):
     """Write in the parameters of the tasks the keys of their objects (by name, OWNER false: FilterCreator creates
     them) and of their histogram folders (the parameters managed by this model are replaced). The event filters on
     Glauber quantities are defined by the first Glauber task using them. The tasks are changed in place: apply it to
-    copies to keep the model. @param Param class of the parameters (RunCAP.Param)"""
+    copies to keep the model. @param Param class of the parameters (RunDatum.Param)"""
     glauber_owned = set()                               # (kind, name) defined by an earlier Glauber task
     for task in _preorder(tasks):
         strip_managed(task)
@@ -2031,16 +2031,18 @@ def prepared_for_writing(tasks, library, templates, Param, TaskConfig):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-# Particle efficiencies and smearers: read from a maps file (CapGui, Detector Maps)
+# Particle efficiencies and smearers: read from a maps file (DatumGui, Detector Maps)
 # ------------------------------------------------------------------------------------------------------------------
 
-#: Kinds read from a maps file: RunCAP does not define them, it lists those of the file (bin/CAP --maps-list) and the
+#: Kinds read from a maps file: RunDatum does not define them, it lists those of the file (bin/Datum --maps-list) and the
 #: tasks choose them by name. FilterCreator imports them (IMPORT from the file, CREATE off), each from the folder of
 #: its name (KinematicMapFolder in CAP: the folders are self-describing).
 MAPS_KINDS = ("PARTICLE_EFFICIENCY", "PARTICLE_SMEARER")
 MAPS_LABELS = {"PARTICLE_EFFICIENCY": "Particle efficiency", "PARTICLE_SMEARER": "Particle smearer"}
 #: Program listing the objects of a maps file.
-CAP_PROGRAM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "CAP")
+CAP_PROGRAM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "Datum")
+if not os.path.exists(CAP_PROGRAM) and os.path.exists(os.path.join(os.path.dirname(CAP_PROGRAM), "CAP")):
+    CAP_PROGRAM = os.path.join(os.path.dirname(CAP_PROGRAM), "CAP")      # built before the program was named Datum
 #: How a task uses the efficiencies (or smearers) it chooses, by the number of names chosen (see EventProcessor::
 #: objectFor() in CAP): none, one for all the particles, or one per event filter and particle filter.
 NO_MAPS, ONE_FOR_ALL, PER_FILTERS = "none", "one", "per filters"
@@ -2093,7 +2095,7 @@ def share_maps_file(library):
 
 
 def parse_maps_list(text):
-    """Objects of a maps file from the output of bin/CAP --maps-list: [MapsEntry]."""
+    """Objects of a maps file from the output of bin/Datum --maps-list: [MapsEntry]."""
     entries = []
     for line in text.splitlines():
         fields = line.rstrip("\n").split("\t")
@@ -2104,13 +2106,13 @@ def parse_maps_list(text):
 
 
 def list_maps(path, program=None):
-    """Objects of a maps file, read by bin/CAP --maps-list. @return [MapsEntry]
+    """Objects of a maps file, read by bin/Datum --maps-list. @return [MapsEntry]
     @throws RuntimeError if the file cannot be read"""
     program = program or CAP_PROGRAM
     if not os.path.isfile(path):
         raise RuntimeError("No maps file %s." % path)
     if not os.path.isfile(program):
-        raise RuntimeError("%s not found: build CAP first (BuildCAP)." % program)
+        raise RuntimeError("%s not found: build Datum first (BuildDatum)." % program)
     result = subprocess.run([program, "--maps-list", path], capture_output=True, text=True)
     entries = parse_maps_list(result.stdout)
     if result.returncode != 0:
@@ -2207,7 +2209,7 @@ def check_maps_choices(task):
     return problems
 
 
-#: Catalog of the functions of CAP (written by bin/CAP --function-catalog; see function_catalog()).
+#: Catalog of the functions of CAP (written by bin/Datum --function-catalog; see function_catalog()).
 FUNCTION_CATALOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DB", "FunctionCatalog.xml")
 
 

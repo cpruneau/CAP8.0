@@ -4,9 +4,9 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of the sub-samples of RunCAP.py (RunCAPSubSamples.py): settings saved in the workflow file, seeds of the
+"""Tests of the sub-samples of RunDatum.py (RunCAPSubSamples.py): settings saved in the workflow file, seeds of the
 sub-samples, stages run and combined in each mode, the files of a production (workflow files, combination, sbatch
-script), the parallel runner and, when bin/CAP is built, a production run and combined for real.
+script), the parallel runner and, when bin/Datum is built, a production run and combined for real.
 
 Run from the CAP directory:  python3 -m pytest tests/python
 """
@@ -24,13 +24,13 @@ CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file
 sys.path.insert(0, CAP_DIR)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import RunCAP                                   # noqa: E402
+import RunDatum                                   # noqa: E402
 import RunCAPFilters as F                       # noqa: E402
 import RunCAPSubSamples as S                    # noqa: E402
 from test_runcap_stages import TEMPLATES, events_stage, library      # noqa: E402
 
-#: bin/CAP used by the real run (CAP_TEST_EXE, or that of this CAP directory).
-CAP_TEST_EXE = os.environ.get("CAP_TEST_EXE") or RunCAP.CAP_EXE
+#: bin/Datum used by the real run (CAP_TEST_EXE, or that of this CAP directory).
+CAP_TEST_EXE = os.environ.get("CAP_TEST_EXE") or RunDatum.CAP_EXE
 
 
 def workflow(n_events=100):
@@ -38,10 +38,10 @@ def workflow(n_events=100):
     lib = library()
     events = events_stage(lib)
     events[0].param("EVENT:REQUESTED:N").value = str(n_events)
-    derived = F.derived_workflow(events, TEMPLATES, RunCAP.TaskConfig)
-    stages = {RunCAP.EVENTS: events, RunCAP.DERIVED: derived, RunCAP.BF: []}
-    jobs = {RunCAP.EVENTS: {"OUTPUT_FILE": "fill.cap", "INPUT_FILE": ""},
-            RunCAP.DERIVED: {"OUTPUT_FILE": "fillDerived.cap", "INPUT_FILE": "fill.cap"}, RunCAP.BF: {}}
+    derived = F.derived_workflow(events, TEMPLATES, RunDatum.TaskConfig)
+    stages = {RunDatum.EVENTS: events, RunDatum.DERIVED: derived, RunDatum.BF: []}
+    jobs = {RunDatum.EVENTS: {"OUTPUT_FILE": "fill.cap", "INPUT_FILE": ""},
+            RunDatum.DERIVED: {"OUTPUT_FILE": "fillDerived.cap", "INPUT_FILE": "fill.cap"}, RunDatum.BF: {}}
     return stages, lib, jobs
 
 
@@ -62,37 +62,37 @@ class TestSettings(unittest.TestCase):
     def test_saved_in_the_workflow(self):
         stages, lib, jobs = workflow()
         s = S.SubSampleSettings()
-        s.enabled, s.count, s.parallel, s.mode, s.stage, s.where = True, 25, 3, S.JACKKNIFE_STAGES, RunCAP.DERIVED, S.SLURM
+        s.enabled, s.count, s.parallel, s.mode, s.stage, s.where = True, 25, 3, S.JACKKNIFE_STAGES, RunDatum.DERIVED, S.SLURM
         s.slurm.host, s.slurm.cap, s.slurm.directory = "me@grid.wayne.edu", "/wsu/CAP8.0", "/wsu/prod/run1"
         s.slurm.setup = "module load root\nmodule load pythia"
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "w.xml")
-            RunCAP.write_stages(path, stages, lib, TEMPLATES, jobs, [s.to_element()])
+            RunDatum.write_stages(path, stages, lib, TEMPLATES, jobs, [s.to_element()])
             r = S.read_settings(path)
             self.assertEqual((r.enabled, r.count, r.parallel, r.mode, r.stage, r.where),
-                             (True, 25, 3, S.JACKKNIFE_STAGES, RunCAP.DERIVED, S.SLURM))
+                             (True, 25, 3, S.JACKKNIFE_STAGES, RunDatum.DERIVED, S.SLURM))
             self.assertEqual(vars(r.slurm), vars(s.slurm))
-            # the workflow reads as before (bin/CAP and RunCAP ignore the element)
-            loaded, lib2, jobs2, warnings = RunCAP.load_stages_with_filters(path, TEMPLATES)
+            # the workflow reads as before (bin/Datum and RunDatum ignore the element)
+            loaded, lib2, jobs2, warnings = RunDatum.load_stages_with_filters(path, TEMPLATES)
             self.assertEqual(warnings, [])
-            self.assertEqual(sorted(loaded), sorted([RunCAP.EVENTS, RunCAP.DERIVED]))
+            self.assertEqual(sorted(loaded), sorted([RunDatum.EVENTS, RunDatum.DERIVED]))
             # a file without the element: the defaults
             plain = os.path.join(d, "p.xml")
-            RunCAP.write_stages(plain, stages, lib, TEMPLATES, jobs)
+            RunDatum.write_stages(plain, stages, lib, TEMPLATES, jobs)
             self.assertFalse(S.read_settings(plain).enabled)
 
     def test_checks(self):
         stages, lib, jobs = workflow()
         s = S.SubSampleSettings()
-        self.assertEqual(S.check_settings(s, RunCAP, stages), [])
+        self.assertEqual(S.check_settings(s, RunDatum, stages), [])
         s.count = 1
-        self.assertTrue(any("2 sub-samples" in e for e in S.check_settings(s, RunCAP, stages)))
+        self.assertTrue(any("2 sub-samples" in e for e in S.check_settings(s, RunDatum, stages)))
         s.count, s.prefix = 4, "a b"
-        self.assertTrue(any("prefix" in e for e in S.check_settings(s, RunCAP, stages)))
-        s.prefix, s.mode, s.stage = "sub_", S.JACKKNIFE_STAGES, RunCAP.EVENTS
-        self.assertTrue(any("later stage" in e for e in S.check_settings(s, RunCAP, stages)))
-        s.mode, s.stage, s.where = S.SUBSAMPLE, RunCAP.BF, S.SLURM
-        errors = S.check_settings(s, RunCAP, stages)
+        self.assertTrue(any("prefix" in e for e in S.check_settings(s, RunDatum, stages)))
+        s.prefix, s.mode, s.stage = "sub_", S.JACKKNIFE_STAGES, RunDatum.EVENTS
+        self.assertTrue(any("later stage" in e for e in S.check_settings(s, RunDatum, stages)))
+        s.mode, s.stage, s.where = S.SUBSAMPLE, RunDatum.BF, S.SLURM
+        errors = S.check_settings(s, RunDatum, stages)
         self.assertTrue(any("no task" in e for e in errors))
         self.assertEqual(len([e for e in errors if e.startswith("Slurm")]), 3)
 
@@ -101,12 +101,12 @@ class TestSeedsAndStages(unittest.TestCase):
 
     def test_seeds(self):
         stages, lib, jobs = workflow()
-        events = stages[RunCAP.EVENTS]
-        gen = next(t for t in RunCAP.all_tasks(events) if t.name == "Gen")
+        events = stages[RunDatum.EVENTS]
+        gen = next(t for t in RunDatum.all_tasks(events) if t.name == "Gen")
         gen.param("Random:SetSeed").value = "false"
         seed = int(gen.param("Random:Seed").value)
         copies, changed = S.seeded_tasks(events, 3)
-        gen3 = next(t for t in RunCAP.all_tasks(copies) if t.name == "Gen")
+        gen3 = next(t for t in RunDatum.all_tasks(copies) if t.name == "Gen")
         self.assertEqual(changed, ["Gen:Random:Seed"])
         self.assertEqual(int(gen3.param("Random:Seed").value), seed + 3)
         self.assertEqual(gen3.param("Random:SetSeed").value, "true")
@@ -119,27 +119,27 @@ class TestSeedsAndStages(unittest.TestCase):
         """Parameters edited in the window of a task hold a Tk variable (widget_var), which cannot be copied."""
         import threading
         stages, lib, jobs = workflow()
-        events = stages[RunCAP.EVENTS]
-        for t in RunCAP.all_tasks(events):
+        events = stages[RunDatum.EVENTS]
+        for t in RunDatum.all_tasks(events):
             for p in t.params:
                 p.widget_var = threading.Lock()                 # not copyable, as a tkinter variable
         copies, changed = S.seeded_tasks(events, 1)
         self.assertEqual(changed, ["Gen:Random:Seed"])
-        self.assertFalse(any(hasattr(p, "widget_var") for t in RunCAP.all_tasks(copies) for p in t.params))
-        self.assertTrue(all(hasattr(p, "widget_var") for t in RunCAP.all_tasks(events) for p in t.params))
+        self.assertFalse(any(hasattr(p, "widget_var") for t in RunDatum.all_tasks(copies) for p in t.params))
+        self.assertTrue(all(hasattr(p, "widget_var") for t in RunDatum.all_tasks(events) for p in t.params))
         events[0].clone()
 
     def test_stages_of_the_modes(self):
         stages, lib, jobs = workflow()
         s = S.SubSampleSettings()
-        for mode, run, replica in ((S.SUBSAMPLE, [RunCAP.EVENTS, RunCAP.DERIVED], []),
-                                   (S.JACKKNIFE, [RunCAP.EVENTS, RunCAP.DERIVED], []),
-                                   (S.JACKKNIFE_STAGES, [RunCAP.EVENTS], [RunCAP.DERIVED])):
+        for mode, run, replica in ((S.SUBSAMPLE, [RunDatum.EVENTS, RunDatum.DERIVED], []),
+                                   (S.JACKKNIFE, [RunDatum.EVENTS, RunDatum.DERIVED], []),
+                                   (S.JACKKNIFE_STAGES, [RunDatum.EVENTS], [RunDatum.DERIVED])):
             s.mode = mode
-            self.assertEqual(S.subsample_stages(s, RunCAP, stages), run)
-            self.assertEqual(S.jackknife_stages(s, RunCAP, stages), replica)
-        s.mode, s.stage = S.SUBSAMPLE, RunCAP.EVENTS
-        self.assertEqual(S.subsample_stages(s, RunCAP, stages), [RunCAP.EVENTS])
+            self.assertEqual(S.subsample_stages(s, RunDatum, stages), run)
+            self.assertEqual(S.jackknife_stages(s, RunDatum, stages), replica)
+        s.mode, s.stage = S.SUBSAMPLE, RunDatum.EVENTS
+        self.assertEqual(S.subsample_stages(s, RunDatum, stages), [RunDatum.EVENTS])
 
 
 class TestProduction(unittest.TestCase):
@@ -149,15 +149,15 @@ class TestProduction(unittest.TestCase):
         s = S.SubSampleSettings()
         s.count, s.mode = 3, S.JACKKNIFE_STAGES
         with tempfile.TemporaryDirectory() as d:
-            p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs)
+            p = S.write_production(d, s, RunDatum, stages, lib, TEMPLATES, jobs)
             self.assertEqual([os.path.basename(f) for f in p.files], ["sub_000.xml", "sub_001.xml", "sub_002.xml"])
-            self.assertEqual(p.stages, [RunCAP.EVENTS])
+            self.assertEqual(p.stages, [RunDatum.EVENTS])
             self.assertEqual(p.seeds, ["Gen:Random:Seed"])
             self.assertEqual(p.outputs, ["fill.cap"])
             seeds = []
             for k, f in enumerate(p.files):
                 tops = ET.parse(f).getroot().findall("TASK")
-                self.assertEqual([t.get("stage") for t in tops], [RunCAP.EVENTS])       # event processing only
+                self.assertEqual([t.get("stage") for t in tops], [RunDatum.EVENTS])       # event processing only
                 keys = parameters(f)
                 self.assertEqual(keys["JOB:SEED"], str(s.seed + k))
                 self.assertEqual(keys["JOB:OUTPUT_FILE"], "fill.cap")
@@ -172,19 +172,19 @@ class TestProduction(unittest.TestCase):
             self.assertEqual(c["SUBSAMPLE:PATTERN"], "sub_*")
             self.assertEqual(c["JOB:OUTPUT_FILE"], "NONE")
             self.assertEqual(sorted(t.get("stage") for t in ET.parse(p.base).getroot().findall("TASK")),
-                             sorted([RunCAP.EVENTS, RunCAP.DERIVED]))
-            cmd = S.subsample_commands(p, s, RunCAP, 1)
+                             sorted([RunDatum.EVENTS, RunDatum.DERIVED]))
+            cmd = S.subsample_commands(p, s, RunDatum, 1)
             self.assertEqual(len(cmd), 1)
             self.assertEqual(cmd[0][1][1:4], ["Workflow", d + "/", "sub_001.xml"])
             self.assertEqual(cmd[0][2], os.path.join(d, "sub_001"))
-            self.assertEqual(S.combine_command(p, RunCAP)[1][1:4], [S.COMBINE_TASK, d + "/", S.COMBINE_FILE])
+            self.assertEqual(S.combine_command(p, RunDatum)[1][1:4], [S.COMBINE_TASK, d + "/", S.COMBINE_FILE])
             self.assertEqual(p.sbatch, "")
 
             # sub-sample average of the derived histograms: both stages run by each sub-sample
             s.mode = S.SUBSAMPLE
-            p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs)
-            self.assertEqual(p.stages, [RunCAP.EVENTS, RunCAP.DERIVED])
-            self.assertEqual([c[1][1] for c in S.subsample_commands(p, s, RunCAP, 0)], ["Workflow", "DerivedHistos"])
+            p = S.write_production(d, s, RunDatum, stages, lib, TEMPLATES, jobs)
+            self.assertEqual(p.stages, [RunDatum.EVENTS, RunDatum.DERIVED])
+            self.assertEqual([c[1][1] for c in S.subsample_commands(p, s, RunDatum, 0)], ["Workflow", "DerivedHistos"])
             c = parameters(p.combine)
             self.assertEqual((c["MODE"], c["JACKKNIFE:STAGES"], c["HISTOGRAM:IMPORT:FILE_NAME"],
                               c["HISTOGRAM:EXPORT:FILE_NAME"]),
@@ -201,24 +201,24 @@ class TestProduction(unittest.TestCase):
             for t in tasks:
                 yield from ([t] if t.cls == "CAP::BasicEventGen" else [])
                 yield from generators(t.children)
-        gen = next(generators(stages[RunCAP.EVENTS]))
+        gen = next(generators(stages[RunDatum.EVENTS]))
         pythia = TEMPLATES["CAP::PythiaEventGenerator"].clone()
         pythia.name = "Pythia"
         pythia.filters = dict(getattr(gen, "filters", {}) or {})
-        parent = next(t for t in S._tasks_of(stages[RunCAP.EVENTS]) if gen in t.children)
+        parent = next(t for t in S._tasks_of(stages[RunDatum.EVENTS]) if gen in t.children)
         parent.children[parent.children.index(gen)] = pythia
         s = S.SubSampleSettings()
         s.count, s.mode, s.ptHatEdges, s.normalization = 2, S.JACKKNIFE_STAGES, "5 20 100", S.COVERED
         self.assertEqual((s.pthat(), s.nbins(), s.njobs(), S.job_of(s, 3)), (True, 2, 4, (1, 1)))
-        errors = S.check_settings(s, RunCAP, stages)
+        errors = S.check_settings(s, RunDatum, stages)
         self.assertTrue(any("no hard process" in e for e in errors), errors)
         pythia.param("Option0").value = "HardQCD:all = on"
-        self.assertEqual(S.check_settings(s, RunCAP, stages), [])
+        self.assertEqual(S.check_settings(s, RunDatum, stages), [])
         with tempfile.TemporaryDirectory() as d:
-            p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs)
+            p = S.write_production(d, s, RunDatum, stages, lib, TEMPLATES, jobs)
             self.assertEqual([os.path.basename(f) for f in p.files],
                              ["sub_000_pthat00.xml", "sub_000_pthat01.xml", "sub_001_pthat00.xml", "sub_001_pthat01.xml"])
-            self.assertEqual(p.stages, [RunCAP.EVENTS])
+            self.assertEqual(p.stages, [RunDatum.EVENTS])
             edges, seeds = [], []
             for f in p.files:
                 keys = parameters(f)
@@ -230,10 +230,10 @@ class TestProduction(unittest.TestCase):
             self.assertEqual(len(set(seeds)), 4)
             c = parameters(p.combine)
             self.assertEqual((c["PTHAT:BINS"], c["PTHAT:NORMALIZATION"], c["SUBSAMPLE:PATTERN"]), ("2", "COVERED", "sub_*"))
-            self.assertEqual(S.subsample_commands(p, s, RunCAP, 3)[0][2], os.path.join(d, "sub_001_pthat01"))
+            self.assertEqual(S.subsample_commands(p, s, RunDatum, 3)[0][2], os.path.join(d, "sub_001_pthat01"))
             s.where = S.SLURM
             s.slurm.host, s.slurm.cap, s.slurm.directory = "me@grid", "/wsu/CAP8.0", "/wsu/prod"
-            p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs)
+            p = S.write_production(d, s, RunDatum, stages, lib, TEMPLATES, jobs)
             with open(p.sbatch) as f:
                 text = f.read()
             self.assertIn("#SBATCH --array=0-3", text)
@@ -243,18 +243,18 @@ class TestProduction(unittest.TestCase):
         back = S.SubSampleSettings.from_element(element)
         self.assertEqual((back.ptHatEdges, back.normalization), ("5 20 100", S.COVERED))
         s.mode = S.SUBSAMPLE                                     # the derived stage: on the combined bins only
-        self.assertTrue(any("Jackknife through stages" in e for e in S.check_settings(s, RunCAP, stages)))
+        self.assertTrue(any("Jackknife through stages" in e for e in S.check_settings(s, RunDatum, stages)))
         s.mode, s.ptHatEdges = S.JACKKNIFE_STAGES, "20 5"
-        self.assertTrue(any("increasing" in e for e in S.check_settings(s, RunCAP, stages)))
+        self.assertTrue(any("increasing" in e for e in S.check_settings(s, RunDatum, stages)))
         pythia.param("Option1").value = "SoftQCD:inelastic = on"
         s.ptHatEdges = "5 20"
-        self.assertTrue(any("SoftQCD" in e for e in S.check_settings(s, RunCAP, stages)))
+        self.assertTrue(any("SoftQCD" in e for e in S.check_settings(s, RunDatum, stages)))
 
     def test_combine_only(self):
         stages, lib, jobs = workflow()
         s = S.SubSampleSettings()
         with tempfile.TemporaryDirectory() as d:
-            p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs, subsample_files=False)
+            p = S.write_production(d, s, RunDatum, stages, lib, TEMPLATES, jobs, subsample_files=False)
             self.assertEqual(sorted(os.listdir(d)), sorted([S.BASE_FILE, S.COMBINE_FILE]))
             self.assertEqual(p.files, [])
 
@@ -265,14 +265,14 @@ class TestProduction(unittest.TestCase):
         s.slurm.host, s.slurm.cap, s.slurm.directory = "me@grid", "/wsu/CAP8.0", "/wsu/prod/run1"
         s.slurm.partition, s.slurm.setup = "primary", "module load root\nmodule load pythia"
         with tempfile.TemporaryDirectory() as d:
-            p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs)
+            p = S.write_production(d, s, RunDatum, stages, lib, TEMPLATES, jobs)
             with open(p.sbatch) as f:
                 text = f.read()
             for line in ("#SBATCH --array=0-19", "#SBATCH --partition=primary", "#SBATCH --time=04:00:00",
                          "#SBATCH --mem=4G", "#SBATCH --output=/wsu/prod/run1/logs/sub_%03a.log",
                          "module load root", "module load pythia", "export CAP_ROOT_PATH=/wsu/CAP8.0",
-                         "$CAP_ROOT_PATH/bin/CAP Workflow $WORK/ sub_$K.xml $OUT/",
-                         "$CAP_ROOT_PATH/bin/CAP DerivedHistos $WORK/ sub_$K.xml $OUT/"):
+                         "DATUM=$CAP_ROOT_PATH/bin/Datum", '[ -x "$DATUM" ] || DATUM=$CAP_ROOT_PATH/bin/CAP',
+                         "$DATUM Workflow $WORK/ sub_$K.xml $OUT/", "$DATUM DerivedHistos $WORK/ sub_$K.xml $OUT/"):
                 self.assertIn(line, text)
             self.assertNotIn("#SBATCH --account", text)
             submit = S.submit_commands(p, s)
@@ -290,16 +290,16 @@ class TestProduction(unittest.TestCase):
         s.count = 2
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "w.xml")
-            RunCAP.write_stages(path, stages, lib, TEMPLATES, jobs, [s.to_element()])
+            RunDatum.write_stages(path, stages, lib, TEMPLATES, jobs, [s.to_element()])
             out = io.StringIO()
             with redirect_stdout(out):
-                code = RunCAP.main(["--subsamples", path, os.path.join(d, "prod")])
+                code = RunDatum.main(["--subsamples", path, os.path.join(d, "prod")])
             self.assertEqual(code, 0)
             text = out.getvalue()
             self.assertIn("2 sub-samples", text)
             self.assertIn("sub_001.xml", text)
             self.assertIn("Then combine with:", text)
-            production = RunCAP.production_directory(os.path.join(d, "prod"), jobs)
+            production = RunDatum.production_directory(os.path.join(d, "prod"), jobs)
             self.assertEqual(os.path.dirname(production), os.path.join(d, "prod"))
             self.assertTrue(os.path.exists(os.path.join(production, "sub_001.xml")))
 
@@ -308,26 +308,26 @@ class TestProductionDirectory(unittest.TestCase):
     """Sub-samples go to <output dir>/<output file without extension>."""
 
     def test_named_after_output_file(self):
-        E, D = RunCAP.EVENTS, RunCAP.DERIVED
-        self.assertEqual(RunCAP.production_directory("/out", {E: {}, D: {}}),
-                         os.path.join("/out", RunCAP.WRAPPER_NAME))
+        E, D = RunDatum.EVENTS, RunDatum.DERIVED
+        self.assertEqual(RunDatum.production_directory("/out", {E: {}, D: {}}),
+                         os.path.join("/out", RunDatum.WRAPPER_NAME))
         jobs = {E: {"OUTPUT_FILE": "PythiaJets.cap"}, D: {"OUTPUT_FILE": "PythiaJetsDerived.cap"}}
-        self.assertEqual(RunCAP.production_directory("/out", jobs), os.path.join("/out", "PythiaJets"))
+        self.assertEqual(RunDatum.production_directory("/out", jobs), os.path.join("/out", "PythiaJets"))
         jobs[E] = {"OUTPUT_FILE": "sub/Run.root"}
-        self.assertEqual(RunCAP.production_directory("/out", jobs), os.path.join("/out", "Run"))
+        self.assertEqual(RunDatum.production_directory("/out", jobs), os.path.join("/out", "Run"))
         jobs[E] = {"OUTPUT_FILE": " "}        # event processing without output file: that of the next stage
-        self.assertEqual(RunCAP.production_directory("/out", jobs), os.path.join("/out", "PythiaJetsDerived"))
+        self.assertEqual(RunDatum.production_directory("/out", jobs), os.path.join("/out", "PythiaJetsDerived"))
 
     def test_input_path_written(self):
         stages, lib, jobs = workflow()
-        jobs[RunCAP.DERIVED]["INPUT_PATH"] = "/data/fill"
+        jobs[RunDatum.DERIVED]["INPUT_PATH"] = "/data/fill"
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "w.xml")
-            RunCAP.write_stages(path, stages, lib, TEMPLATES, jobs)
+            RunDatum.write_stages(path, stages, lib, TEMPLATES, jobs)
             self.assertIn('name="INPUT_PATH"', open(path).read())
-            _, _, read, _ = RunCAP.load_stages_with_filters(path, TEMPLATES)
-            self.assertEqual(read[RunCAP.DERIVED]["INPUT_PATH"], "/data/fill")
-            self.assertEqual(read[RunCAP.EVENTS].get("INPUT_PATH", ""), "")
+            _, _, read, _ = RunDatum.load_stages_with_filters(path, TEMPLATES)
+            self.assertEqual(read[RunDatum.DERIVED]["INPUT_PATH"], "/data/fill")
+            self.assertEqual(read[RunDatum.EVENTS].get("INPUT_PATH", ""), "")
 
 
 class TestBar(unittest.TestCase):
@@ -346,12 +346,12 @@ class TestBar(unittest.TestCase):
             def subsamples_changed(self, dirty=True):
                 App.changes += 1
             def present_stages(self):
-                return [RunCAP.EVENTS]
+                return [RunDatum.EVENTS]
             combine_subsamples = run_subsamples = lambda self: None
             def slurm_action(self, kind):
                 pass
         s = S.SubSampleSettings()
-        bar = S.make_bar(root, App(), s, RunCAP, lambda *a: None)
+        bar = S.make_bar(root, App(), s, RunDatum, lambda *a: None)
         self.assertEqual(len(bar.winfo_children()), 3)
         self.assertEqual(str(bar.submit.cget("state")), "disabled")
         bar.vars["where"].set("Slurm")
@@ -380,7 +380,7 @@ class TestUnusedGroups(unittest.TestCase):
             '<GROUP name="EVENT_FILTER"><PARAMETER name="USE" type="bool">true</PARAMETER></GROUP>'
             '<PARAMETER name="Unknown" type="int">3</PARAMETER></TASK>')
         warnings = []
-        t = RunCAP.task_from_element(element, TEMPLATES, warnings)
+        t = RunDatum.task_from_element(element, TEMPLATES, warnings)
         self.assertFalse(any(p.key.startswith(("PARTICLE_SMEARER", "EVENT_EFFICIENCY")) for p in t.params))
         self.assertEqual(t.param("EVENT_FILTER:USE").value, "true")
         self.assertIsNotNone(t.param("Unknown"))                     # other keys: kept, with a warning
@@ -395,14 +395,14 @@ class TestSources(unittest.TestCase):
         """A calculator of derived histograms whose analyzer was removed from event processing: an error when both
         stages run (also before the sub-samples), none when the derived stage runs alone."""
         stages, lib, jobs = workflow()
-        self.assertEqual(RunCAP.check_sources(stages), [])
-        events = stages[RunCAP.EVENTS]
+        self.assertEqual(RunDatum.check_sources(stages), [])
+        events = stages[RunDatum.EVENTS]
         iterator = events[0]
         iterator.children = [c for c in iterator.children if c.name != "Pair"]
-        errors = RunCAP.check_sources(stages)
+        errors = RunDatum.check_sources(stages)
         self.assertEqual(len(errors), 1)
         self.assertIn("task PairDerived reads the histograms of Pair", errors[0])
-        self.assertEqual(RunCAP.check_sources(stages, [RunCAP.DERIVED]), [])
+        self.assertEqual(RunDatum.check_sources(stages, [RunDatum.DERIVED]), [])
 
 
 class TestRunner(unittest.TestCase):
@@ -430,24 +430,24 @@ class TestRunner(unittest.TestCase):
             self.assertTrue(ok)
 
 
-@unittest.skipUnless(os.path.exists(CAP_TEST_EXE), "bin/CAP is not built")
+@unittest.skipUnless(os.path.exists(CAP_TEST_EXE), "bin/Datum is not built")
 class TestRealRun(unittest.TestCase):
 
     def test_run_and_combine(self):
-        """Three sub-samples of a small workflow, run by bin/CAP and combined by the jackknife through stages."""
+        """Three sub-samples of a small workflow, run by bin/Datum and combined by the jackknife through stages."""
         stages, lib, jobs = workflow(100)
         s = S.SubSampleSettings()
         s.count, s.parallel, s.mode = 3, 3, S.JACKKNIFE_STAGES
-        saved = RunCAP.CAP_EXE
-        RunCAP.CAP_EXE = CAP_TEST_EXE
+        saved = RunDatum.CAP_EXE
+        RunDatum.CAP_EXE = CAP_TEST_EXE
         try:
             with tempfile.TemporaryDirectory() as d:
-                p = S.write_production(d, s, RunCAP, stages, lib, TEMPLATES, jobs)
-                sequences = [(S.directory_name(s, k), S.subsample_commands(p, s, RunCAP, k)) for k in range(s.count)]
-                env = RunCAP.job_environment()
+                p = S.write_production(d, s, RunDatum, stages, lib, TEMPLATES, jobs)
+                sequences = [(S.directory_name(s, k), S.subsample_commands(p, s, RunDatum, k)) for k in range(s.count)]
+                env = RunDatum.job_environment()
                 env.setdefault("CAP_DATABASE_PATH", os.path.join(CAP_DIR, "DB") + "/")
                 q = queue.Queue()
-                ok, message = S.ParallelRunner(sequences, s.parallel, env, q.put, [S.combine_command(p, RunCAP)]).run()
+                ok, message = S.ParallelRunner(sequences, s.parallel, env, q.put, [S.combine_command(p, RunDatum)]).run()
                 self.assertTrue(ok, message)
                 outputs = [os.path.join(d, "sub_%03d" % k, "fill.cap") for k in range(3)]
                 contents = set()
@@ -458,7 +458,7 @@ class TestRealRun(unittest.TestCase):
                 self.assertTrue(os.path.getsize(os.path.join(d, "fillDerived_Jackknife.cap")) > 0)
                 self.assertTrue(os.path.getsize(os.path.join(d, "fillDerived_Jackknife_biasCorrected.cap")) > 0)
         finally:
-            RunCAP.CAP_EXE = saved
+            RunDatum.CAP_EXE = saved
 
 
 if __name__ == "__main__":

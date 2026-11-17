@@ -1,20 +1,20 @@
-% Section: CapGui
-\section{CapGui}
+% Section: DatumGui
+\section{DatumGui}
 \label{sec:capgui}
 
-CapGui is the graphical interface of \CAP{}: it opens the files written by the jobs, draws their histograms, data
+DatumGui is the graphical interface of \CAP{}: it opens the files written by the jobs, draws their histograms, data
 points and functions, fits them, and makes figures and documents of them. It is built on Dear ImGui~\cite{DearImGui}
 with its GLFW and OpenGL back ends, and uses no ROOT class; it reads ROOT files only when \CAP{} is built with
 ROOT-file support, to import their histograms.
 
-What CapGui shows is described by a \emph{plot file}: an XML file listing the input files, the windows of canvases,
+What DatumGui shows is described by a \emph{plot file}: an XML file listing the input files, the windows of canvases,
 the canvases of graphs, and the histograms and functions of each graph, with their styles
 (Section~\ref{sec:plotfiles}). Every session is a plot file, an untitled one at first, and the canvases on the screen
 are its windows: what is done on them is written to the file, and the file, once saved, draws the same canvases again,
-in CapGui or in batch. The program is started with plot files, CAP files and folders,
+in DatumGui or in batch. The program is started with plot files, CAP files and folders,
 {\footnotesize
 \begin{verbatim}
-CapGui [--basic|--edit] [plots.xml] [data ...]
+DatumGui [--basic|--edit] [plots.xml] [data ...]
 \end{verbatim}}
 \noindent where the data are CAP files and folders, shown in the browser; the BASIC mode starts from a new plot file,
 with the current folder in the browser, and the EDIT mode from the plot files given; the tools are the same. \code{PlotEditor} is another name of the program, and
@@ -22,21 +22,21 @@ with the current folder in the browser, and the EDIT mode from the plot files gi
 (theme, layout, fonts, the folders shown at start) are kept in an XML file, read from the home directory of the user
 or from the configuration directory of \CAP{}, and written back by the Preferences dialog.
 
-CapGui draws with the graphics library of \CAP{} (Section~\ref{sec:graphics}): \code{ImGuiPainter} implements the
+DatumGui draws with the graphics library of \CAP{} (Section~\ref{sec:graphics}): \code{ImGuiPainter} implements the
 abstract \code{Painter} for the screen, so that a canvas is drawn by the same code on the screen and, through the SVG,
 PDF and PowerPoint painters, in the files it exports, and what is seen is what is saved. Labels containing \LaTeX{}
 (or the TLatex notation of ROOT, translated first) are typeset by the system \code{latex} and \code{dvisvgm} in a
 background thread, cached in memory and on disk, and drawn as textures; plain text is shown until the image is ready,
 so that typesetting never blocks the interface.
 
-Figure~\ref{fig:gui} shows the classes of the interface. \code{CapGui} is the window: it holds the panes, the
+Figure~\ref{fig:gui} shows the classes of the interface. \code{DatumGui} is the window: it holds the panes, the
 file browsers, the dialogs and the menu bar, and only displays. The application, \code{CapApp} and its derived
 class \code{CapGuiApp}, listens to the menus, decides what each command does, and owns the window.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{GuiClasses}
-  \caption{Classes of CapGui (\code{src/gui}). Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
+  \caption{Classes of DatumGui (\code{src/gui}). Boxes: abstract classes (blue), classes (light blue), the entry classes of the folder (green), free functions (yellow), classes of other folders (grey, dashed). Open triangles point to the base class; dashed lines are dependencies, the diamond marking the owner.}
   \label{fig:gui}
 \end{figure*}
 
@@ -56,7 +56,7 @@ each other window of the file being shown in a window of its own.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{CapGuiGraphFitData}
-  \caption{CapGui with the output of a jet study of Pythia combined from sub-samples. Left: the file browser, with the
+  \caption{DatumGui with the output of a jet study of Pythia combined from sub-samples. Left: the file browser, with the
   CAP file of the combination expanded: a folder per task, a folder per combination of filters and jet settings
   (\code{ALL\_ALL\_R0p4\_JetFilter0}), and its histograms and profiles, with their types. Centre: a canvas showing the
   jet $p_T$ distribution, in logarithmic scale, with an exponential fitted to it and the quality of the fit in the
@@ -158,11 +158,11 @@ It makes new plot files, windows, canvases and browsers, a plot file from data (
 objects are gathered; it opens plot files, data files and folders of data; and it duplicates, saves, saves under
 another name, and closes. Duplicate, Save and Close act on what was used last, a canvas of a plot file or an entry
 of the browser: a window duplicated gets a copy of its canvases, an entry of a tree a copy of its object. A tree
-that was changed is marked in the browser, and is offered to be saved when it is closed or when CapGui quits, as a
+that was changed is marked in the browser, and is offered to be saved when it is closed or when DatumGui quits, as a
 plot file is; Save All saves every plot file and tree changed.
 
 \paragraph{New plot files from the data.}
-A plot file can be made from the content of a CAP file, or from a workflow of RunCAP before it is run (File $>$ New
+A plot file can be made from the content of a CAP file, or from a workflow of RunDatum before it is run (File $>$ New
 from Data). For a workflow, each stage is configured as the job would be, in a process of its own, without generating
 an event or reading a file, and its analysis tasks make their folders of histograms empty: the event and particle
 filters decide which folders and histograms exist, and the plot file is ready when the jobs have run. The histograms
@@ -189,7 +189,7 @@ PlotHistos --template plots.xml \
 \noindent writes the named figures, the PDF book, the PowerPoint presentation and the \LaTeX{} document of a plot file,
 or writes a plot file listing the histograms of a workflow whose names match a pattern.
 \noindent The CAP files given after a plot file replace its inputs, so that one plot file serves the outputs of
-several jobs. Without an output option, \code{PlotHistos} opens CapGui on the plot file, every window shown.
+several jobs. Without an output option, \code{PlotHistos} opens DatumGui on the plot file, every window shown.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Fits}
@@ -208,7 +208,7 @@ $n_{\max}$ (Section~\ref{sec:fourier}), the probability distributions of Section
 two-dimensional Gaussian and polynomials, and any class registered by a program. Composite functions are built in a dialog, either as a sum of registered functions or,
 in two variables, as a product $f(x)\,g(y)$ of functions of one variable; their components are labelled, and the
 parameters named after them (\code{signal.mean}, \code{background.a1}). A composite is either used for the session or
-registered under a name, which keeps it in the file of composites shared by CapGui and the programs. Each parameter
+registered under a name, which keeps it in the file of composites shared by DatumGui and the programs. Each parameter
 has a starting value and can be fixed or bounded; the starting values can be estimated from the data in the
 selection (Section~\ref{sec:fitting}), and after a fit the fitted values become the starting values of the next.
 
@@ -229,7 +229,7 @@ the edges of the bins, and the number of points used is shown as the regions are
 
 \paragraph{Results.}
 A fit is attached to the object as a fit record (Section~\ref{sec:fitting}), drawn with it, and saved with it when
-the object is written to a CAP file; the fits of a file are thus found again, in CapGui or in a program, with the
+the object is written to a CAP file; the fits of a file are thus found again, in DatumGui or in a program, with the
 object they were made to (they are not part of the plot file). The Fits pane, below the canvases, shows one tab per fit of the selected graph: the
 quality of the fit (the statistic, the number of degrees of freedom, $\chi^2/\nu$ and the $p$-value, the number of
 points used, the convergence and the method), the parameters with their uncertainties and bounds, flagged when one
@@ -244,7 +244,7 @@ canvas.
 \label{sec:guimaps}
 
 The particle efficiencies and smearers used by the jobs (Section~\ref{sec:efficiency}) are made and edited in the
-Detector Maps window and kept in a maps file, a CAP file holding any number of them, each named; RunCAP names the
+Detector Maps window and kept in a maps file, a CAP file holding any number of them, each named; RunDatum names the
 file and lets each task choose among its objects. The window lists the efficiencies and smearers of the file (added,
 renamed and removed there) and, for the one selected, each of its maps, the efficiency or the resolutions and biases
 of $\pT$, $\eta$ and $\varphi$, each of which is one of the following:

@@ -4,7 +4,7 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of the window of a task of RunCAP.py (RunCAPTaskDialog), skipped without tkinter or a display."""
+"""Tests of the window of a task of RunDatum.py (RunCAPTaskDialog), skipped without tkinter or a display."""
 
 import os
 import sys
@@ -13,12 +13,12 @@ import unittest
 CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, CAP_DIR)
 
-import RunCAP                                   # noqa: E402
+import RunDatum                                   # noqa: E402
 import RunCAPFilters as F                       # noqa: E402
 
-TEMPLATES = RunCAP.load_templates(os.path.join(CAP_DIR, "DB", "Templates"))
-TEMPLATES.update(RunCAP.load_templates(os.path.join(CAP_DIR, "tests", "python", "templates")))   # legacy designs
-HELPERS = {"valid_value": RunCAP.valid_value, "partial_value": RunCAP.partial_value, "severities": RunCAP.SEVERITIES}
+TEMPLATES = RunDatum.load_templates(os.path.join(CAP_DIR, "DB", "Templates"))
+TEMPLATES.update(RunDatum.load_templates(os.path.join(CAP_DIR, "tests", "python", "templates")))   # legacy designs
+HELPERS = {"valid_value": RunDatum.valid_value, "partial_value": RunDatum.partial_value, "severities": RunDatum.SEVERITIES}
 
 try:
     import tkinter as tk

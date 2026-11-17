@@ -358,7 +358,7 @@ void HerwigEventGenerator::finalize()
     }
   if (nFailed>0 && reportWarning(__FUNCTION__)) printValue("Herwig events that failed (skipped)",nFailed);
   if (nWeighted>0 && reportWarning(__FUNCTION__))
-    printValue("Weighted Herwig events (CAP ignores the weights)",nWeighted);
+    printValue("Weighted Herwig events (Datum ignores the weights)",nWeighted);
   if (herwig && herwig->generator)
     {
     if (_configuration.valueBool(createKey(name(),"Print:Statistics")))

@@ -4,7 +4,7 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of the Filters pane of RunCAP.py (RunCAPFiltersGui), skipped without tkinter or a display."""
+"""Tests of the Filters pane of RunDatum.py (RunCAPFiltersGui), skipped without tkinter or a display."""
 
 import os
 import sys
@@ -86,7 +86,7 @@ class TestPanel(unittest.TestCase):
     def test_remove_used_asks(self):
         self.panel.set_count("EVENT_FILTER", 2)
         self.used[("EVENT_FILTER", "EventFilter1")] = ["Ana"]
-        self.panel.refresh()                            # RunCAP refreshes the pane when tasks choose other objects
+        self.panel.refresh()                            # RunDatum refreshes the pane when tasks choose other objects
         answers = []
         original = messagebox.askyesno
         messagebox.askyesno = lambda *a, **k: answers.append(a) or False
@@ -250,7 +250,7 @@ class TestPanel(unittest.TestCase):
             self.assertIn(("PARTICLE_FILTER", ["PiP"]), self.removed)
 
     def test_maps_file(self):
-        """The maps file names the particle efficiencies and smearers of the library (as listed by bin/CAP); objects
+        """The maps file names the particle efficiencies and smearers of the library (as listed by bin/Datum); objects
         gone from the file are removed from the tasks; no file: none."""
         listed = [F.MapsEntry("PARTICLE_EFFICIENCY", "EffPi", "211", "EFFICIENCY=function"),
                   F.MapsEntry("PARTICLE_EFFICIENCY", "EffK", "", "EFFICIENCY=histogram"),

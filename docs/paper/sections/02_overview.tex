@@ -30,16 +30,16 @@ nucleus--nucleus collisions (Glauber), a thermal model (Therminator3), interface
 Herwig, optional), and readers of the events of EPOS and PHSD (Epos, PHSD).
 
 \paragraph{\code{src/gui}.}
-The sources of the graphical interface CapGui (Section~\ref{sec:capgui}).
+The sources of the graphical interface DatumGui (Section~\ref{sec:capgui}).
 
 \paragraph{Other folders.}
 
-The top-level folder of \CAP{} also holds the Python front ends (\code{BuildCAP.py}, \code{RunCAP.py} and the particle-database editor \code{ParticleDbEditor.py}) and the script \code{SetupCAP.sh}, which sets the environment
+The top-level folder of \CAP{} also holds the Python front ends (\code{BuildDatum.py}, \code{RunDatum.py} and the particle-database editor \code{ParticleDbEditor.py}) and the script \code{SetupDatum.sh}, which sets the environment
 variables of \CAP{}; \code{DB}, the data that jobs read: the particle database (\code{DB/ParticleData}, an XML file
 of the particles and their decay modes), the inputs of the thermal model (\code{DB/Therminator}), and the XML
 templates of the task classes (\code{DB/Templates}, Section~\ref{sec:xml}); \code{projects}, example workflows of
 the generators (Pythia, Therminator, Glauber, PHSD, and a Gaussian test); \code{external}, the sources of the
-libraries distributed with \CAP{} for CapGui (Dear ImGui, GLFW, NanoSVG); \code{Grid}, scripts submitting jobs to
+libraries distributed with \CAP{} for DatumGui (Dear ImGui, GLFW, NanoSVG); \code{Grid}, scripts submitting jobs to
 the computing clusters of the authors; \code{tests}, the tests of the Python front ends; and \code{docs}.
 The libraries and the programs are installed in \code{lib} and \code{bin}.
 
@@ -74,7 +74,7 @@ The libraries and the programs are installed in \code{lib} and \code{bin}.
     Pythia$^*$     & models   & Particles; Pythia8                 &  0.8 \\
     Herwig$^*$     & models   & Particles; Herwig, ThePEG          &  0.5 \\
     \midrule
-    CapGui$^*$ (program) & gui & Graphics; Dear ImGui, GLFW, OpenGL &  9.4 \\
+    DatumGui$^*$ (program) & gui & Graphics; Dear ImGui, GLFW, OpenGL &  9.4 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -90,13 +90,13 @@ the analyses and the models use Particles, and never each other, with one except
 single-particle histograms of ParticleSingle. The models and the analyses therefore meet only through the events
 and the tasks of Particles: a new generator works with every analysis, and a new analysis with every generator.
 
-Four programs sit on top. \code{CAP} runs the jobs: it links the analyses and the models, so that every task class
+Four programs sit on top. \code{Datum} runs the jobs: it links the analyses and the models, so that every task class
 they register can be named in a workflow, and creates the tasks of a job by name through the registry of classes
-(Section~\ref{sec:objects}). CapShell runs the command language of Interpreter. CapGui shows and fits the content of
+(Section~\ref{sec:objects}). DatumShell runs the command language of Interpreter. DatumGui shows and fits the content of
 CAP files (Section~\ref{sec:capgui}); it uses the core only, so that it reads the results of every analysis without
-linking any of them, since the files hold histograms and folders of the core. \code{CapRootConvert} converts
-histograms between ROOT and CAP files. The Python front ends are not linked to anything: \code{BuildCAP.py} runs
-CMake, and \code{RunCAP.py} writes workflow files and runs \code{CAP} on them.
+linking any of them, since the files hold histograms and folders of the core. \code{DatumRootConvert} converts
+histograms between ROOT and CAP files. The Python front ends are not linked to anything: \code{BuildDatum.py} runs
+CMake, and \code{RunDatum.py} writes workflow files and runs \code{Datum} on them.
 
 \begin{figure}[t]
   \centering
@@ -118,7 +118,7 @@ with GCC. ROOT~\cite{Brun:1997pa} is still required to build it. Its remaining u
 the work left to make \CAP{} independent of ROOT: random numbers (\code{gRandom}) in a few tasks of the analyses and
 models; system utilities and the \code{TString} class used by older code in Base; the reading of ROOT files by some
 tasks; and the Glauber and Therminator3 models, written for earlier versions of \CAP{}. The conversion of
-histograms from and to ROOT files (Helpers, \code{CapRootConvert}, and the reading of ROOT files by CapGui) will keep
+histograms from and to ROOT files (Helpers, \code{DatumRootConvert}, and the reading of ROOT files by DatumGui) will keep
 using ROOT, but as an option (\code{CAP\_WITH\_ROOT\_FILES}). The front ends need Python~3.7 or later with tkinter.
 \todo{\code{src/CMakeLists.txt} sets \code{CMAKE\_CXX\_STANDARD} to 14; the code is compiled as C++17 only because
 the flags of ROOT ask for it. Set the standard to 17 before submission.}
@@ -131,34 +131,34 @@ distributed with \CAP{} (a folder \code{pythia8*}, \code{Herwig*} or \code{fastj
 at the location given by an environment variable, and through the configuration tool of the package
 (\code{pythia8-config}, \code{Herwig-config}, \code{fastjet-config}), or uses the location given explicitly. A LaTeX installation with \code{dvisvgm} is used, when
 present, to typeset the texts of the figures (Section~\ref{sec:graphicscore}), and \code{pdflatex} to compile the
-presentations; without them, texts are drawn with plain fonts. CapShell uses the \code{editline} library, when
+presentations; without them, texts are drawn with plain fonts. DatumShell uses the \code{editline} library, when
 present, for line editing and history.
 
 \paragraph{Distributed with \CAP{}.}
-CapGui is built on Dear ImGui~\cite{DearImGui} and GLFW, whose sources are in \code{external} and are compiled with
+DatumGui is built on Dear ImGui~\cite{DearImGui} and GLFW, whose sources are in \code{external} and are compiled with
 \CAP{}, and on OpenGL, which every desktop system provides; the texts typeset by LaTeX are rasterised for the screen with NanoSVG. Nothing else needs to be
 installed to build the interface.
 
 % ---------------------------------------------------------------------------------------------------------------
-\subsection{Building: BuildCAP.py}
+\subsection{Building: BuildDatum.py}
 \label{sec:build}
 
 \CAP{} is built with CMake, in a build folder of the \CAP{} folder, and installed in its folders \code{lib} and
-\code{bin}. The script \code{BuildCAP.py} is a window from which the build is configured and run (Fig.~\ref{fig:buildcap}).
-It lists the core modules, always built, and the optional modules (Therminator3, Latex, Graphics, CapGui, the
+\code{bin}. The script \code{BuildDatum.py} is a window from which the build is configured and run (Fig.~\ref{fig:buildcap}).
+It lists the core modules, always built, and the optional modules (Therminator3, Latex, Graphics, DatumGui, the
 conversion of ROOT files, Jets, Epos, PHSD, Pythia and Herwig), each with a check box, together with the locations of ROOT and of
 the external packages; a button shows which installation of each package CMake will use. A toolbar chooses the build
 folder, the build type, the number of parallel jobs, and whether to install, and the output of CMake and make is shown
 in the lower half of the window and can be saved. Each command is printed before it runs, and the same build is made
 from a terminal with
 \begin{verbatim}
-source SetupCAP.sh
+source SetupDatum.sh
 cmake -S src -B build -DCAP_WITH_PYTHIA8=ON -DCAP_PYTHIA8_DIR=/opt/pythia8   # options as needed
 make -C build -j8 install
 \end{verbatim}
-\code{BuildCAP.py -{}-print-commands} prints the commands of the saved settings without opening the window. Several build
+\code{BuildDatum.py -{}-print-commands} prints the commands of the saved settings without opening the window. Several build
 folders can coexist, for instance one with Pythia and one without, or a release and a debug build. The environment
-of \code{SetupCAP.sh} (the paths of \CAP{}, its libraries, its programs, its database and its projects) is set for the
+of \code{SetupDatum.sh} (the paths of \CAP{}, its libraries, its programs, its database and its projects) is set for the
 commands, verbatim that the window works without a prepared shell. After a build, \code{ctest} runs the tests of the
 modules: the test programs of Base, Math, Graphics, Latex, Interpreter, Helpers and Therminator3, and the tests of
 the Python front ends.
@@ -167,24 +167,24 @@ the Python front ends.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.85\textwidth]{BuildPythia}
-  \caption{The window of \code{BuildCAP.py}. The toolbar runs and stops the build, loads and saves its configuration,
+  \caption{The window of \code{BuildDatum.py}. The toolbar runs and stops the build, loads and saves its configuration,
   and saves or clears the output; below it are the build folder (here an existing one, whose options are loaded), the
   build type, the number of parallel jobs, and whether to install and to configure afresh. On the left, the core
   modules, always built, and the folder where the libraries are installed; on the right, the optional modules, each
   with a check box and a short description and, for those depending on an external package, its location, with a
   \emph{Browse} button and the installation that CMake will use, found from the field, from the environment or next to
-  \CAP{} (green), or not found (red). Here Glauber, Pythia, Herwig, Jets (with FastJet), Latex, Graphics and CapGui are
+  \CAP{} (green), or not found (red). Here Glauber, Pythia, Herwig, Jets (with FastJet), Latex, Graphics and DatumGui are
   selected; \emph{Detect packages again} searches the packages anew. The output of CMake and make is shown at the
   bottom, as the build runs.}
   \label{fig:buildcap}
 \end{figure*}
 
 % ---------------------------------------------------------------------------------------------------------------
-\subsection{Running: RunCAP.py}
+\subsection{Running: RunDatum.py}
 \label{sec:run}
 
 \paragraph{Workflows.}
-An analysis is described by a workflow file (Section~\ref{sec:xml}), which \code{RunCAP.py} composes, checks and
+An analysis is described by a workflow file (Section~\ref{sec:xml}), which \code{RunDatum.py} composes, checks and
 runs (Fig.~\ref{fig:runcap}). Its window has four parts. The workflow editor lists, on the left, the task classes of
 the current build, read from their XML templates (which are regenerated when the program or the libraries are newer
 than them), and on the right the tasks of the workflow; tasks are added, removed, ordered and nested, a nested task
@@ -205,7 +205,7 @@ when the file is loaded.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.9\textwidth]{RunCap}
-  \caption{The window of \code{RunCAP.py}, running a jet study of Pythia in sub-samples and $\hat{p}_T$ bins. Top: the
+  \caption{The window of \code{RunDatum.py}, running a jet study of Pythia in sub-samples and $\hat{p}_T$ bins. Top: the
   task classes of the build (left) and the tasks of the event-processing stage of the workflow (right), an event
   iterator holding the Pythia generator and the three jet analyzers. Middle: the filter editor, with the objects of the
   workflow (event and particle filters, jet settings \code{AntiKtR0p4}, a jet filter and a jet-pair filter, with the
@@ -222,14 +222,14 @@ when the file is loaded.
 A workflow has up to three stages, which are the phases of Section~\ref{sec:phases}: event processing, derived
 histograms and balance functions. Each stage is run as a job of its own,
 \begin{verbatim}
-bin/CAP <stage task> <directory of the workflow>/ <workflow file> <output directory>/
+bin/Datum <stage task> <directory of the workflow>/ <workflow file> <output directory>/
 \end{verbatim}
 the stages running one after the other, each reading the output file of the previous one. The derived-histogram stage is
-made by \code{RunCAP.py} from the analyzers of the first stage, the first time it is shown: each analyzer gets its
+made by \code{RunDatum.py} from the analyzers of the first stage, the first time it is shown: each analyzer gets its
 calculator, with the same filters and histogram settings, so that the folders of the two jobs match. The output of
 \CAP{} is shown as it runs, can be saved, and a job can be stopped. The same workflow file is run without the
-window, on a cluster for instance, with the command above, which \code{RunCAP.py -{}-print-command} prints;
-\code{RunCAP.py -{}-check} checks a file against the templates.
+window, on a cluster for instance, with the command above, which \code{RunDatum.py -{}-print-command} prints;
+\code{RunDatum.py -{}-check} checks a file against the templates.
 
 \paragraph{Files of the job.}
 Below the stage buttons, two lines give the files of the job of the stage shown: the input directory and the input

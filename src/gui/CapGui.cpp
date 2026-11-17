@@ -102,7 +102,7 @@ namespace CAP
   {
   void glfwError(int code, const char * description)
   {
-  std::fprintf(stderr, "CapGui: GLFW error %d: %s\n", code, description);
+  std::fprintf(stderr, "DatumGui: GLFW error %d: %s\n", code, description);
   }
 
   //! First existing file among the candidates, or "" (see FileSystem::firstExisting()).

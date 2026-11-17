@@ -5,7 +5,7 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPSubSamples.py -- sub-samples of a workflow of RunCAP.py, and their combination (SubSampleStatCalculator).
+RunCAPSubSamples.py -- sub-samples of a workflow of RunDatum.py, and their combination (SubSampleStatCalculator).
 
 A workflow is run as N independent jobs, the sub-samples, each with its own seeds, in the directories
 <output>/<prefix>000, <prefix>001, ... of the output directory. Their outputs are then combined by the task
@@ -23,7 +23,7 @@ Seeds: in the workflow file of sub-sample k (<output>/<prefix>k.xml), every para
 turned on; the seed of gRandom (key JOB:SEED of the task CAP runs, see CAP.cxx) is the base seed + k.
 
 Where: the sub-samples run on this computer (Local: several at once, each running its stages in order), or on a Slurm
-cluster (Slurm): RunCAP writes the files of the production (the workflow files of the sub-samples and an sbatch script
+cluster (Slurm): RunDatum writes the files of the production (the workflow files of the sub-samples and an sbatch script
 of a job array, submit.sbatch) in the output directory; Submit copies them to the cluster (rsync over ssh, which must
 log in without a password: ssh keys) and submits the array; Status shows the queue and the number of sub-samples done;
 Fetch copies their output files back. Combine then runs the combination here. The script can also be submitted by hand,
@@ -37,7 +37,7 @@ gives for the bin): the differential cross sections in mb (or, with the normaliz
 section of the range covered), then combines the sub-samples as set above. The jobs run event processing only: the later
 stages are run by the combination (Jackknife through stages).
 
-The settings are saved in the workflow file (element SUBSAMPLES of the root, ignored by bin/CAP).
+The settings are saved in the workflow file (element SUBSAMPLES of the root, ignored by bin/Datum).
 """
 
 import copy
@@ -79,7 +79,7 @@ class SlurmSettings:
 
     def __init__(self):
         self.host = ""          # user@login node (ssh)
-        self.cap = ""           # CAP directory on the cluster (bin/CAP, lib, DB)
+        self.cap = ""           # CAP directory on the cluster (bin/Datum, lib, DB)
         self.directory = ""     # directory of the production on the cluster
         self.partition = ""
         self.time = "04:00:00"
@@ -459,7 +459,7 @@ def sbatch_script(settings, production):
     cap = slurm.cap.rstrip("/")
     name = "CAP_" + os.path.basename(production.directory.rstrip("/"))
     lines = ["#!/bin/bash",
-             "# Sub-samples of a CAP workflow, written by RunCAP.py: one task of the array per sub-sample.",
+             "# Sub-samples of a Datum workflow, written by RunDatum.py: one task of the array per sub-sample.",
              "#SBATCH --job-name=%s" % name,
              "#SBATCH --array=0-%d" % (settings.njobs() - 1),
              "#SBATCH --output=%s/logs/%s%%03a.log" % (remote, settings.prefix),
@@ -482,9 +482,11 @@ def sbatch_script(settings, production):
               "WORK=%s" % shlex.quote(remote),
               "OUT=$WORK/%s$K" % settings.prefix,
               "mkdir -p $OUT",
-              "cd $OUT"]
+              "cd $OUT",
+              "DATUM=$CAP_ROOT_PATH/bin/Datum",
+              "[ -x \"$DATUM\" ] || DATUM=$CAP_ROOT_PATH/bin/CAP      # built before the program was named Datum"]
     for s in production.stages:
-        lines.append("$CAP_ROOT_PATH/bin/CAP %s $WORK/ %s$K.xml $OUT/" % (production.names[s], settings.prefix))
+        lines.append("$DATUM %s $WORK/ %s$K.xml $OUT/" % (production.names[s], settings.prefix))
     lines.append("echo \"Job $K done\"")
     return "\n".join(lines) + "\n"
 
@@ -625,7 +627,7 @@ class ParallelRunner:
 # ----------------------------------------------------------------------------------------------------------------
 
 def make_bar(parent, app, settings, api, ToolTip):
-    """The sub-samples in the RunCAP window, in three lines: where the jobs run (Local, with the jobs at once, or
+    """The sub-samples in the RunDatum window, in three lines: where the jobs run (Local, with the jobs at once, or
     Slurm); the switch, count, mode, stage combined, pT-hat bins and their normalization, and Combine; the Slurm
     settings and the buttons Submit, Status, Fetch. app provides subsamples_changed(),
     run_subsamples(), combine_subsamples(), slurm_action(kind) and present_stages()."""
@@ -787,7 +789,7 @@ def SlurmDialog(parent, settings, changed):
     frame = ttk.Frame(window, padding=10)
     frame.pack(fill=tk.BOTH, expand=True)
     rows = (("host", "Login host (user@host):", "ssh must log in without a password (ssh keys)"),
-            ("cap", "CAP directory on the cluster:", "Holds bin/CAP, lib and DB (CAP built on the cluster)"),
+            ("cap", "CAP directory on the cluster:", "Holds bin/Datum, lib and DB (CAP built on the cluster)"),
             ("directory", "Production directory on the cluster:", "Where the workflow files, the outputs of the "
                                                                   "sub-samples and the logs go"),
             ("partition", "Partition:", ""), ("time", "Time limit:", "e.g. 04:00:00"),

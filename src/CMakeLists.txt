@@ -1,23 +1,35 @@
 ################################################################################################
 #
-# CMakeLists.txt for CAP package. Version 6.1
+# CMakeLists.txt of Datum 1.0 (formerly CAP)
 #
 # Creates  libraries with dictionary
 #
 ################################################################################################
 
 ################################################################################################
-# Build options (set with -D<option>=ON|OFF, or with the BuildCAP.py GUI).
+# Build options (set with -D<option>=ON|OFF, or with the BuildDatum.py GUI). The options keep the names of CAP
+# (CAP_WITH_...); DATUM_WITH_... and DATUM_..._DIR are accepted as other names of them.
 # The core modules (Base, Math, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
 # ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen) are always built.
 ################################################################################################
 cmake_minimum_required(VERSION 3.14)   # 3.14: generator expressions in install(CODE)
 
+foreach(module THERMINATOR3 LATEX GRAPHICS GUI ROOT JETS EPOS PHSD PYTHIA8 HERWIG GLAUBER SHERPA THERMALFIST)
+  if(DEFINED DATUM_WITH_${module})
+    set(CAP_WITH_${module} "${DATUM_WITH_${module}}" CACHE BOOL "Set from DATUM_WITH_${module}" FORCE)
+  endif()
+endforeach()
+foreach(prefix PYTHIA8_DIR HERWIG_DIR FASTJET_DIR SHERPA_DIR THERMALFIST_DIR)
+  if(DEFINED DATUM_${prefix})
+    set(CAP_${prefix} "${DATUM_${prefix}}" CACHE PATH "Set from DATUM_${prefix}" FORCE)
+  endif()
+endforeach()
+
 option(CAP_WITH_THERMINATOR3 "Build the Therminator3 module (thermal model event generator)" ON)
 option(CAP_WITH_LATEX        "Build the Latex module (LaTeX documents of results)"           ON)
 option(CAP_WITH_GRAPHICS     "Build the Graphics module (2D drawing; macOS window and demo)"  ON)
-option(CAP_WITH_GUI          "Build bin/CapGui, the graphical interface (Dear ImGui; requires Graphics)" ON)
-option(CAP_WITH_ROOT         "Use ROOT (off: CAP needs no ROOT): the RootConvert library (.root histogram files in CapGui, bin/CapRootConvert), the readers of ROOT event trees (Epos, Pythia)" OFF)
+option(CAP_WITH_GUI          "Build bin/DatumGui, the graphical interface (Dear ImGui; requires Graphics)" ON)
+option(CAP_WITH_ROOT         "Use ROOT (off: Datum needs no ROOT): the RootConvert library (.root histogram files in DatumGui, bin/DatumRootConvert), the readers of ROOT event trees (Epos, Pythia)" OFF)
 option(CAP_WITH_JETS         "Build the Jets module (requires FastJet)"                       OFF)
 option(CAP_WITH_EPOS         "Build the Epos module (EPOS event reader; requires CAP_WITH_ROOT)" OFF)
 option(CAP_WITH_PHSD         "Build the PHSD module (PHSD event reader)"                      ON)
@@ -37,15 +49,15 @@ set(CAP_THERMALFIST_DIR "" CACHE PATH "Thermal-FIST directory (the source tree, 
 
 if(APPLE)
     set (CMAKE_OSX_DEPLOYMENT_TARGET "26.0" CACHE STRING "Minimum OS X deployment version" FORCE)
-    project(CAP VERSION 1.0 DESCRIPTION "Correlation Analysis Package" LANGUAGES CXX)
+    project(Datum VERSION 1.0 DESCRIPTION "Datum (formerly CAP, the Correlation Analysis Package)" LANGUAGES CXX)
 #    set (CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Architectures" FORCE)
 #    set (CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET[arch=arm64] "11.0" CACHE STRING "arm 64 minimum deployment target" FORCE)
 else()
- project(CAP DESCRIPTION "Correlation Analysis Package" LANGUAGES CXX)
+ project(Datum VERSION 1.0 DESCRIPTION "Datum (formerly CAP, the Correlation Analysis Package)" LANGUAGES CXX)
 endif()
 
 ################################################################################################
-# Project CAP
+# Project Datum (formerly CAP; the CMake options, variables and the C++ namespace keep the names of CAP)
 ################################################################################################
 # Optimized build unless another type is asked for (-DCMAKE_BUILD_TYPE=Debug, RelWithDebInfo, ...): without a type,
 # CMake compiles without optimization, and CAP runs several times slower.
@@ -89,11 +101,17 @@ add_compile_options(-Wall -Wextra -pedantic)
 get_filename_component(CAP_TOP_DIR "${CMAKE_SOURCE_DIR}" DIRECTORY)   # the CAP8.0 directory
 
 ################################################################################################
-# Install directories: $CAP_LIB_PATH and $CAP_BIN_PATH (see SetupCAP.sh), by default <CAP>/lib and <CAP>/bin
+# Install directories: $CAP_LIB_PATH and $CAP_BIN_PATH (or DATUM_..., see SetupDatum.sh), by default <Datum>/lib and
+# <Datum>/bin
 ################################################################################################
+foreach(variable LIB_PATH BIN_PATH)
+  if("$ENV{CAP_${variable}}" STREQUAL "" AND NOT "$ENV{DATUM_${variable}}" STREQUAL "")
+    set(ENV{CAP_${variable}} "$ENV{DATUM_${variable}}")
+  endif()
+endforeach()
 if("$ENV{CAP_LIB_PATH}" STREQUAL "")
   set(ENV{CAP_LIB_PATH} "${CAP_TOP_DIR}/lib/")   # read by the install() commands of the modules
-  message(WARNING "CAP_LIB_PATH is not set (source SetupCAP.sh): the libraries will be installed in $ENV{CAP_LIB_PATH}")
+  message(WARNING "CAP_LIB_PATH is not set (source SetupDatum.sh): the libraries will be installed in $ENV{CAP_LIB_PATH}")
 endif()
 if("$ENV{CAP_BIN_PATH}" STREQUAL "")
   set(CAP_INSTALL_BIN_DIR "${CAP_TOP_DIR}/bin")
@@ -107,6 +125,17 @@ endif()
 # of the installed copy: a target linked and installed within the same second then makes the next install fail
 # ("install_name_tool: ... would duplicate path", "no LC_RPATH load command"). Removed first, it is always copied.
 ################################################################################################
+################################################################################################
+# cap_install_alias(<target> <old name> <destination>): the program installed under its former name too (a symbolic
+# link to it), so that scripts and habits using the names of CAP keep working (CAP -> Datum, CapShell -> DatumShell...).
+################################################################################################
+function(cap_install_alias target old destination)
+  install(CODE "
+    file(REMOVE \"${destination}/${old}\")
+    file(CREATE_LINK \"$<TARGET_FILE_NAME:${target}>\" \"${destination}/${old}\" SYMBOLIC)
+    message(STATUS \"Installing: ${destination}/${old} -> $<TARGET_FILE_NAME:${target}>\")")
+endfunction()
+
 function(cap_install target kind destination)
   if(kind STREQUAL "BUNDLE")
     set(installed "${destination}/$<TARGET_FILE_NAME:${target}>.app/Contents/MacOS/$<TARGET_FILE_NAME:${target}>")
@@ -321,8 +350,10 @@ endif()
 # CAP executable
 ################################################################################################
 add_executable(CAP CAP.cxx)
+set_target_properties(CAP PROPERTIES OUTPUT_NAME Datum)          # bin/Datum (bin/CAP: a link to it)
 target_link_libraries(CAP PUBLIC ${CAP_LINKED_MODULES})
 cap_install(CAP RUNTIME "${CAP_INSTALL_BIN_DIR}")
+cap_install_alias(CAP CAP "${CAP_INSTALL_BIN_DIR}")
 
 # CapGui (File > New from Data), PlotEditor and PlotHistos (--template) configure the tasks of workflows (without
 # running them): they need all the task classes

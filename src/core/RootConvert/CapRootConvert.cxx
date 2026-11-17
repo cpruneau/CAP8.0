@@ -24,8 +24,8 @@ int main(int argc, char ** argv)
 {
   if (argc != 3)
     {
-    std::printf("Usage: CapRootConvert input.root output.cap\n"
-                "       CapRootConvert input.cap output.root\n");
+    std::printf("Usage: DatumRootConvert input.root output.cap\n"
+                "       DatumRootConvert input.cap output.root\n");
     return 1;
     }
   String input(argv[1]), output(argv[2]);
@@ -49,13 +49,13 @@ int main(int argc, char ** argv)
       }
     else
       {
-      std::printf("CapRootConvert: convert a .root file to a .cap file, or a .cap file to a .root file\n");
+      std::printf("DatumRootConvert: convert a .root file to a .cap file, or a .cap file to a .root file\n");
       return 1;
       }
     }
   catch (const std::exception & e)
     {
-    std::printf("CapRootConvert: %s\n", e.what());
+    std::printf("DatumRootConvert: %s\n", e.what());
     return 2;
     }
   for (const auto & s : skipped) std::printf("skipped %s\n", s.data());

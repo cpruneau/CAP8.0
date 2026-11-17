@@ -56,7 +56,9 @@ Thumbs.db
 __pycache__/
 
 # build GUI: keep the script (matched by build*), ignore its per-user settings
+!BuildDatum.py
 !BuildCAP.py
+.BuildDatum.json
 .BuildCAP.json
 
 # local scratch/backup area
@@ -67,6 +69,8 @@ _orig_*/
 * 2/
 
 # workflow GUI: per-user settings, generated task templates, default job output
+.RunDatum.json
+.RunDatum.crash.log
 .RunCAP.json
 DB/Templates/
 DB/FunctionCatalog.xml

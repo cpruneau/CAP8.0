@@ -5,7 +5,7 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPFiltersGui -- the Filters pane of the main window of RunCAP.py: the library of filters, efficiencies and smearers of a workflow.
+RunCAPFiltersGui -- the Filters pane of the main window of RunDatum.py: the library of filters, efficiencies and smearers of a workflow.
 
 On the left, the tree of the library: one node per kind (event filters, particle filters, event efficiencies, particle
 efficiencies, event smearers, particle smearers, events, particle databases) holding its objects, with where each is
@@ -19,7 +19,7 @@ enabled), only the tests the C++ code accepts for that quantity being offered. T
 Selection files (RunCAPFilters: XML, root CapSelections) hold objects that several workflows share. Import copies
 their objects into the workflow; Link uses them from the file (the workflow writes <Include file=.../>), changes being
 written back to the file when the workflow is saved; Export writes the selected object, the objects of a kind, or all
-of them to a file. The particle efficiencies and smearers are not defined here: they are made in CapGui (Detector
+of them to a file. The particle efficiencies and smearers are not defined here: they are made in DatumGui (Detector
 Maps) and saved in a maps file, which the pane names and lists (MapsEditor).
 
 The tasks choose objects by name (RunCAPFilters): renaming an object renames it in the choices of the tasks, and
@@ -826,8 +826,8 @@ class FiltersPanel(ttk.Frame):
 
 class MapsEditor:
     """The editor of the particle efficiencies and smearers in the Filters pane: the maps file of the workflow (made
-    and edited in CapGui, Edit > Detector Maps) and the objects it holds (listed by bin/CAP --maps-list), which the
-    tasks choose by name. RunCAP does not edit them: Edit in CapGui opens the file there, Reload reads it again.
+    and edited in DatumGui, Edit > Detector Maps) and the objects it holds (listed by bin/Datum --maps-list), which the
+    tasks choose by name. RunDatum does not edit them: Edit in DatumGui opens the file there, Reload reads it again.
     @param panel FiltersPanel (library, callbacks); the editor is drawn in its editor area when shown"""
 
     def __init__(self, panel):
@@ -837,8 +837,8 @@ class MapsEditor:
         self.read_time = None
         self.frame = frame = ttk.Frame(panel.editor.inner)
         ttk.Label(frame, text="Particle efficiencies and smearers", style="Editor.TLabel").pack(anchor="w")
-        ttk.Label(frame, text="They are made and edited in CapGui (Edit > Detector Maps) and saved in a maps file. "
-                              "RunCAP reads them from it: each task chooses them by name in its window (one for all "
+        ttk.Label(frame, text="They are made and edited in DatumGui (Edit > Detector Maps) and saved in a maps file. "
+                              "RunDatum reads them from it: each task chooses them by name in its window (one for all "
                               "particles, or one per event filter and particle filter).",
                   foreground="gray40", wraplength=640, justify=tk.LEFT).pack(fill=tk.X, pady=(2, 6))
         line = ttk.Frame(frame)
@@ -849,7 +849,7 @@ class MapsEditor:
                                                                                  expand=True)
         ttk.Button(line, text="Choose…", command=self.choose).pack(side=tk.LEFT)
         ttk.Button(line, text="Reload", command=lambda: self.reload()).pack(side=tk.LEFT, padx=4)
-        ttk.Button(line, text="Edit in CapGui…", command=self.open_capgui).pack(side=tk.LEFT)
+        ttk.Button(line, text="Edit in DatumGui…", command=self.open_capgui).pack(side=tk.LEFT)
         ttk.Button(line, text="Clear", command=lambda: self.set_file("")).pack(side=tk.LEFT, padx=(4, 0))
         columns = ("kind", "name", "species", "maps", "used")
         self.table = ttk.Treeview(frame, columns=columns, show="headings", height=8)
@@ -956,18 +956,20 @@ class MapsEditor:
             self.set_file(name)
 
     def open_capgui(self):
-        """Open the maps file (or a new one) in the Detector Maps window of CapGui (bin/CapGui --maps)."""
+        """Open the maps file (or a new one) in the Detector Maps window of DatumGui (bin/DatumGui --maps)."""
         root = os.path.dirname(os.path.abspath(__file__))
-        program = os.path.join(root, "bin", "CapGui")
+        program = os.path.join(root, "bin", "DatumGui")
+        if not os.path.exists(program) and os.path.exists(os.path.join(root, "bin", "DatumGui")):
+            program = os.path.join(root, "bin", "DatumGui")              # built before it was named DatumGui
         if not os.path.isfile(program):
-            messagebox.showerror("CapGui", "bin/CapGui not found: build CAP with the GUI first (BuildCAP).",
+            messagebox.showerror("DatumGui", "bin/DatumGui not found: build Datum with the GUI first (BuildDatum).",
                                  parent=self.panel)
             return
         path = F.maps_file(self.library)
         command = [program, "--maps", path] if path else [program]
         if not path:
-            self.status.set("In CapGui: Edit > Detector Maps, then save the maps file and choose it here.")
+            self.status.set("In DatumGui: Edit > Detector Maps, then save the maps file and choose it here.")
         try:
             subprocess.Popen(command, cwd=root)
         except OSError as error:
-            messagebox.showerror("CapGui", "Cannot start CapGui: %s" % error, parent=self.panel)
+            messagebox.showerror("DatumGui", "Cannot start DatumGui: %s" % error, parent=self.panel)

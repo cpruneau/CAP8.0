@@ -25,7 +25,7 @@
 int loadCapLibraries()
 {
   const char * libPath = gSystem->Getenv("CAP_LIB_PATH");
-  if (!libPath) { std::cout << "<ERROR> CAP_LIB_PATH is not set: source SetupCAP.sh first" << std::endl; return -1; }
+  if (!libPath) { std::cout << "<ERROR> CAP_LIB_PATH is not set: source SetupDatum.sh first" << std::endl; return -1; }
   TSystemDirectory directory("lib",libPath);
   TList * files = directory.GetListOfFiles();
   if (!files) { std::cout << "<ERROR> cannot list " << libPath << std::endl; return -1; }

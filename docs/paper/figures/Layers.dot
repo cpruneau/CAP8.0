@@ -1,4 +1,4 @@
-// Layers of CAP: each layer uses only the layers below it (see the section "Layers and dependencies" of the paper).
+// Layers of Datum: each layer uses only the layers below it (see the section "Layers and dependencies" of the paper).
 // dot -Tpdf Layers.dot -o Layers.pdf
 digraph Layers {
   graph [fontname="Helvetica", margin=0];
@@ -7,15 +7,15 @@ digraph Layers {
   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="3" CELLPADDING="5">
     <TR>
       <TD BGCOLOR="#ffffff" BORDER="0" ALIGN="RIGHT"><I>Front ends</I></TD>
-      <TD COLSPAN="3" BGCOLOR="#fff8e6">BuildCAP.py (build)</TD>
-      <TD COLSPAN="3" BGCOLOR="#fff8e6">RunCAP.py (workflows, jobs)</TD>
+      <TD COLSPAN="3" BGCOLOR="#fff8e6">BuildDatum.py (build)</TD>
+      <TD COLSPAN="3" BGCOLOR="#fff8e6">RunDatum.py (workflows, jobs)</TD>
       <TD COLSPAN="2" BGCOLOR="#fff8e6">ParticleDbEditor.py</TD>
     </TR>
     <TR>
       <TD BORDER="0" ALIGN="RIGHT"><I>Applications</I></TD>
-      <TD COLSPAN="4" BGCOLOR="#f3e9f7"><B>CAP</B> (jobs: task trees read from XML)</TD>
-      <TD BGCOLOR="#f3e9f7">CapShell</TD>
-      <TD COLSPAN="2" BGCOLOR="#f3e9f7">CapGui</TD>
+      <TD COLSPAN="4" BGCOLOR="#f3e9f7"><B>Datum</B> (jobs: task trees read from XML)</TD>
+      <TD BGCOLOR="#f3e9f7">DatumShell</TD>
+      <TD COLSPAN="2" BGCOLOR="#f3e9f7">DatumGui</TD>
       <TD BGCOLOR="#f3e9f7">CapRootConvert</TD>
     </TR>
     <TR>
