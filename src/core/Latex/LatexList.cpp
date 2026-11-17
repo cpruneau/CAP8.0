@@ -1,7 +1,7 @@
 #include "LatexList.hpp"
 #include "LatexText.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexList::LatexList()
   :
@@ -89,4 +89,4 @@ namespace CAP
   return items;
   }
 
-} // namespace CAP
+} // namespace Datum

@@ -6,30 +6,30 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-VerifyParticleDb.py -- compare the CAP particle database with the Particle Data Group (PDG) database.
+VerifyParticleDb.py -- compare the Datum particle database with the Particle Data Group (PDG) database.
 
-Usage (from anywhere; the script locates CAP from its own position):
+Usage (from anywhere; the script locates Datum from its own position):
     python3 VerifyParticleDb.py                        # check DB/ParticleData/ParticleDb.xml
-    python3 VerifyParticleDb.py FILE.xml               # check another CAP particle database
+    python3 VerifyParticleDb.py FILE.xml               # check another Datum particle database
     python3 VerifyParticleDb.py --no-decays            # properties only (faster)
     python3 VerifyParticleDb.py --csv report.csv       # also write every comparison to a CSV file
     python3 VerifyParticleDb.py --all                  # also list the values that agree
     python3 VerifyParticleDb.py --sigma 3 --rel 1e-4   # tolerances (see below)
     python3 VerifyParticleDb.py --update OUT.xml       # write a copy with the PDG values (see "Update" below)
 
-For each particle of the CAP database (PARTICLE elements of the XML file), the PDG particle of the same Monte Carlo
+For each particle of the Datum database (PARTICLE elements of the XML file), the PDG particle of the same Monte Carlo
 code (pdg attribute) is looked up with the PDG Python API (import pdg; api = pdg.connect(); see https://pdg.lbl.gov/api)
 and compared:
   * mass (GeV): a mismatch if it differs from the PDG value by more than --sigma times the PDG error AND by more than
-    --rel relative (both must fail, so neither a tiny PDG error nor rounding in the CAP file is flagged on its own);
-  * width (GeV): the same test. A CAP width of 0 for a particle whose PDG width is below 1e-10 GeV (weak or
-    electromagnetic decays, long lifetimes) is the convention of the CAP database and reported as such, not as a
+    --rel relative (both must fail, so neither a tiny PDG error nor rounding in the Datum file is flagged on its own);
+  * width (GeV): the same test. A Datum width of 0 for a particle whose PDG width is below 1e-10 GeV (weak or
+    electromagnetic decays, long lifetimes) is the convention of the Datum database and reported as such, not as a
     mismatch; the PDG width of such particles is hbar/tau;
   * charge: must be equal;
   * spin J and isospin I: compared when the PDG gives a single value;
-  * decay modes (DECAY elements, unless --no-decays): each CAP mode is matched to the PDG exclusive branching
+  * decay modes (DECAY elements, unless --no-decays): each Datum mode is matched to the PDG exclusive branching
     fraction with the same final-state particles, ignoring the signs of the charges (the PDG gives charge-conjugate
-    modes together, e.g. K0L -> pi+- e-+ nu_e; the CAP modes of one such PDG mode are summed). The modes left (and
+    modes together, e.g. K0L -> pi+- e-+ nu_e; the Datum modes of one such PDG mode are summed). The modes left (and
     those with Clebsch-Gordan weights, clebschGordan="true", whose branching ratio is that of the isospin family,
     shared among the charge states) are matched by isospin family: the PDG gives e.g. Delta(1232) -> N pi for all the
     charge states. Modes the PDG gives only as a limit or without a value, and modes it does not list, are reported
@@ -38,14 +38,14 @@ and compared:
 The report lists, per category, the particles and the values that need a look; the summary gives the counts.
 
 Update (--update OUT.xml, OUT.xml may be the input file itself; every change is listed in OUT.xml.changes.txt):
-  * MC codes: when the PDG charge of a code differs from the charge of the CAP particle while its name (plus, zero,
-    minus, plusplus, _bar) agrees with its CAP charge, the codes of the charge states of that family (and sign) are
+  * MC codes: when the PDG charge of a code differs from the charge of the Datum particle while its name (plus, zero,
+    minus, plusplus, _bar) agrees with its Datum charge, the codes of the charge states of that family (and sign) are
     reassigned among them, each charge state getting the code the PDG gives that charge; the codes in IDENTITY_FIXES
     (particles carrying the code of another state, decided from their names, masses, widths and spins) are applied
     too. Names, charges and decay tables are unchanged;
-  * mass and width: the PDG value when the comparison fails (a width of 0 for a narrow particle is kept: CAP
+  * mass and width: the PDG value when the comparison fails (a width of 0 for a narrow particle is kept: Datum
     convention), the mass of the K0 for the K0S and K0L; spin J and isospin I: the PDG value when it is a single value;
-  * branching ratios of the modes matched to a PDG value and out of tolerance: the PDG value (the modes of a CAP group
+  * branching ratios of the modes matched to a PDG value and out of tolerance: the PDG value (the modes of a Datum group
     are scaled, keeping their ratios; Clebsch-Gordan modes get the value of their family). Modes the PDG gives no
     value for are unchanged; the decayer normalizes the branching ratios of each particle.
 The file is edited line by line (PARTICLE and DECAY elements), keeping its layout and order.
@@ -62,18 +62,18 @@ import warnings
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 
-CAP_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_DB = os.path.join(CAP_DIR, "DB", "ParticleData", "ParticleDb.xml")
-#: Width below which a particle is stable for CAP's purposes (weak and electromagnetic decays): CAP sets 0 by convention.
+DATUM_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_DB = os.path.join(DATUM_DIR, "DB", "ParticleData", "ParticleDb.xml")
+#: Width below which a particle is stable for Datum's purposes (weak and electromagnetic decays): Datum sets 0 by convention.
 NARROW_WIDTH = 1.0e-10
 
 
 # ------------------------------------------------------------------------------------------------------------------
-# CAP database
+# Datum database
 # ------------------------------------------------------------------------------------------------------------------
 
-class CapParticle:
-    """A PARTICLE element of the CAP database."""
+class DatumParticle:
+    """A PARTICLE element of the Datum database."""
 
     def __init__(self, element):
         self.name = element.get("name", "")
@@ -90,7 +90,7 @@ class CapParticle:
 
 def read_cap_db(path):
     root = ET.parse(path).getroot()
-    return [CapParticle(e) for e in root.iter("PARTICLE")]
+    return [DatumParticle(e) for e in root.iter("PARTICLE")]
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -243,10 +243,10 @@ class Report:
     def __init__(self):
         self.rows = []                       # (category, particle, pdg, quantity, cap, pdg value, detail)
         self.counts = defaultdict(int)
-        self.decay_updates = []              # (particle, "decay a b c + ...", CAP value, PDG value) out of tolerance
+        self.decay_updates = []              # (particle, "decay a b c + ...", Datum value, PDG value) out of tolerance
 
-    def add(self, category, particle, quantity, cap_value, pdg_value, detail=""):
-        self.rows.append((category, particle.name, particle.pdg, quantity, cap_value, pdg_value, detail))
+    def add(self, category, particle, quantity, datum_value, pdg_value, detail=""):
+        self.rows.append((category, particle.name, particle.pdg, quantity, datum_value, pdg_value, detail))
         self.counts[category] += 1
 
 
@@ -258,19 +258,19 @@ def fmt(v):
     return str(v)
 
 
-def compare_value(report, particle, quantity, cap_value, pdg_value, pdg_error, args):
+def compare_value(report, particle, quantity, datum_value, pdg_value, pdg_error, args):
     if pdg_value is None:
-        report.add("no PDG value", particle, quantity, cap_value, None)
+        report.add("no PDG value", particle, quantity, datum_value, None)
         return
-    diff = cap_value - pdg_value
+    diff = datum_value - pdg_value
     scale = max(abs(pdg_value), 1e-300)
     sigmas = abs(diff) / pdg_error if pdg_error else float("inf") if diff else 0.0
     rel = abs(diff) / scale
     detail = "diff %+.4g (%.3g rel, %s sigma)" % (diff, rel, "%.1f" % sigmas if math.isfinite(sigmas) else "inf")
     if (pdg_error and sigmas <= args.sigma) or rel <= args.rel:
-        report.add("ok", particle, quantity, cap_value, pdg_value, detail)
+        report.add("ok", particle, quantity, datum_value, pdg_value, detail)
     else:
-        report.add("MISMATCH", particle, quantity, cap_value, pdg_value, detail)
+        report.add("MISMATCH", particle, quantity, datum_value, pdg_value, detail)
 
 
 def heavy_flavour(code):
@@ -309,15 +309,15 @@ def check_particle(report, lookup, particle, codes_of_names, args):
     else:
         report.add("ok", particle, "charge", particle.charge, charge)
     # spin and isospin
-    for quantity, cap_value, text in (("spin J", particle.spin, getattr(pdg_particle, "quantum_J", None)),
+    for quantity, datum_value, text in (("spin J", particle.spin, getattr(pdg_particle, "quantum_J", None)),
                                       ("isospin I", particle.isospin, getattr(pdg_particle, "quantum_I", None))):
         pdg_value = quantum_number(text)
         if pdg_value is None:
-            report.add("no PDG value", particle, quantity, cap_value, text)
-        elif abs(pdg_value - cap_value) > 0.01:
-            report.add("MISMATCH", particle, quantity, cap_value, pdg_value)
+            report.add("no PDG value", particle, quantity, datum_value, text)
+        elif abs(pdg_value - datum_value) > 0.01:
+            report.add("MISMATCH", particle, quantity, datum_value, pdg_value)
         else:
-            report.add("ok", particle, quantity, cap_value, pdg_value)
+            report.add("ok", particle, quantity, datum_value, pdg_value)
     # decay modes
     if args.no_decays or not particle.decays:
         return
@@ -330,15 +330,15 @@ def check_particle(report, lookup, particle, codes_of_names, args):
     for mode in pdg_modes:
         if mode[0] is not None:
             by_signature[mode[0]].append(mode)
-    exact = defaultdict(lambda: [0.0, []])          # CAP modes without Clebsch-Gordan weights, by |codes|
-    by_family = defaultdict(lambda: [0.0, 0.0, []])  # remaining CAP modes, by families: sum, max of the CG modes, labels
-    all_family = defaultdict(lambda: [0.0, 0.0, []]) # all the CAP modes, by families (for the generic PDG modes)
+    exact = defaultdict(lambda: [0.0, []])          # Datum modes without Clebsch-Gordan weights, by |codes|
+    by_family = defaultdict(lambda: [0.0, 0.0, []])  # remaining Datum modes, by families: sum, max of the CG modes, labels
+    all_family = defaultdict(lambda: [0.0, 0.0, []]) # all the Datum modes, by families (for the generic PDG modes)
     for br, clebsch, products in particle.decays:
         codes = [codes_of_names.get(p) for p in products]
         label = " ".join(products)
         if None in codes:
             report.add("decay: unknown product", particle, "decay " + label, br, None,
-                       "products not in the CAP database: %s" % [p for p, c in zip(products, codes) if c is None])
+                       "products not in the Datum database: %s" % [p for p, c in zip(products, codes) if c is None])
             continue
         signature = tuple(sorted(abs(c) for c in codes))
         families = tuple(sorted(lookup.family_of_code(c, n) for c, n in zip(codes, products)))
@@ -383,7 +383,7 @@ def check_particle(report, lookup, particle, codes_of_names, args):
         br = total + cg
         quantity = "decay " + " + ".join(labels)
         generic = [m for m in pdg_modes if m[1] == families and m[0] is None]
-        if generic:      # e.g. f_1(1285) -> eta pi pi: all the CAP modes of the family (eta pi+ pi-, eta pi0 pi0)
+        if generic:      # e.g. f_1(1285) -> eta pi pi: all the Datum modes of the family (eta pi+ pi-, eta pi0 pi0)
             whole_total, whole_cg, whole_labels = all_family[families]
             compare("decay " + " + ".join(whole_labels), whole_total + whole_cg, generic, "family")
             continue
@@ -398,8 +398,8 @@ def check_particle(report, lookup, particle, codes_of_names, args):
 # Update
 # ------------------------------------------------------------------------------------------------------------------
 
-#: Particles of the CAP database carrying the MC code of another state: name -> PDG code of the state it is (with the
-#: reason). Decided from the names, titles, masses, widths and spins of the CAP entries (October 2026).
+#: Particles of the Datum database carrying the MC code of another state: name -> PDG code of the state it is (with the
+#: reason). Decided from the names, titles, masses, widths and spins of the Datum entries (October 2026).
 IDENTITY_FIXES = {
     "f01500zero":       (9030221,  "f_0(1500): 9000223 is the f_1(1510)"),
     "kaon1430zero":     (315,      "J=2, m=1.4256, width 0.0985: the K_2^*(1430); 10311 is the K_0^*(1430)"),
@@ -414,7 +414,7 @@ IDENTITY_FIXES = {
 
 
 def name_charge(name):
-    """Charge given by the name of a CAP particle (suffix plusplus, plus, zero, minus, minusminus, and _bar), or None."""
+    """Charge given by the name of a Datum particle (suffix plusplus, plus, zero, minus, minusminus, and _bar), or None."""
     anti = name.endswith("_bar")
     stem = name[:-4] if anti else name
     for suffix, q in (("plusplus", 2), ("minusminus", -2), ("plus", 1), ("minus", -1), ("zero", 0)):
@@ -494,10 +494,10 @@ def property_fixes(particles, codes, lookup, args, log):
         if width is not None and not (particle.width == 0.0 and width < NARROW_WIDTH):
             if differs(particle.width, width, width_error):
                 fixes[particle.name]["width"] = "%.6g" % width
-        for attribute, cap_value, text in (("spin", particle.spin, getattr(p, "quantum_J", None)),
+        for attribute, datum_value, text in (("spin", particle.spin, getattr(p, "quantum_J", None)),
                                            ("isospin", particle.isospin, getattr(p, "quantum_I", None))):
             value = quantum_number(text)
-            if value is not None and abs(value - cap_value) > 0.01:
+            if value is not None and abs(value - datum_value) > 0.01:
                 fixes[particle.name][attribute] = "%g" % value
         for attribute, text in fixes.get(particle.name, {}).items():
             old = {"mass": particle.mass, "width": particle.width, "spin": particle.spin, "isospin": particle.isospin}[attribute]
@@ -509,7 +509,7 @@ def decay_fixes(particles, report, log):
     """New branching ratios: {particle: {products: text}} from the out-of-tolerance comparisons (report.decay_updates)."""
     fixes = defaultdict(dict)
     decays = {p.name: p.decays for p in particles}
-    for name, quantity, cap_total, pdg_value in report.decay_updates:
+    for name, quantity, datum_total, pdg_value in report.decay_updates:
         labels = [l.strip() for l in quantity[len("decay "):].split(" + ")]
         clebsch = [l[:-5] for l in labels if l.endswith(" (CG)")]
         plain = [l for l in labels if not l.endswith(" (CG)")]
@@ -522,7 +522,7 @@ def decay_fixes(particles, report, log):
             fixes[name][label] = "%.6g" % (modes.get(label, 0.0) * scale)
         for label in clebsch:
             fixes[name][label] = "%.6g" % (cg_value * scale)
-        log.append("  decay     %-22s %-60s %.4g -> %.4g" % (name, quantity[6:66], cap_total, pdg_value))
+        log.append("  decay     %-22s %-60s %.4g -> %.4g" % (name, quantity[6:66], datum_total, pdg_value))
     return fixes
 
 
@@ -566,8 +566,8 @@ def write_updated(path_in, path_out, codes, properties, branchings):
 # ------------------------------------------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Compare the CAP particle database with the PDG database.")
-    parser.add_argument("database", nargs="?", default=DEFAULT_DB, help="CAP particle database (XML)")
+    parser = argparse.ArgumentParser(description="Compare the Datum particle database with the PDG database.")
+    parser.add_argument("database", nargs="?", default=DEFAULT_DB, help="Datum particle database (XML)")
     parser.add_argument("--sigma", type=float, default=3.0, help="tolerance in PDG errors (default 3)")
     parser.add_argument("--rel", type=float, default=1e-4, help="relative tolerance (default 1e-4)")
     parser.add_argument("--br-abs", type=float, default=0.005, help="absolute tolerance on branching ratios (0.005)")
@@ -587,7 +587,7 @@ def main():
     api = pdg.connect()
     particles = read_cap_db(args.database)
     codes_of_names = {p.name: p.pdg for p in particles}
-    print("CAP database: %s (%d particles, %d decay modes)" % (args.database, len(particles),
+    print("Datum database: %s (%d particles, %d decay modes)" % (args.database, len(particles),
                                                                sum(len(p.decays) for p in particles)))
     print("PDG database: %s" % str(api).splitlines()[0])
     print("Tolerances: %g sigma or %g relative (masses, widths); %g absolute or %g relative (branching ratios)\n"
@@ -617,9 +617,9 @@ def main():
         print("=" * 120)
         print("%s (%d)" % (category, len(rows)))
         print("=" * 120)
-        print("%-22s %9s  %-34s %14s %14s  %s" % ("particle", "pdg", "quantity", "CAP", "PDG", "detail"))
-        for _, name, code, quantity, cap_value, pdg_value, detail in rows:
-            print("%-22s %9d  %-34s %14s %14s  %s" % (name, code, quantity[:34], fmt(cap_value), fmt(pdg_value), detail))
+        print("%-22s %9s  %-34s %14s %14s  %s" % ("particle", "pdg", "quantity", "Datum", "PDG", "detail"))
+        for _, name, code, quantity, datum_value, pdg_value, detail in rows:
+            print("%-22s %9d  %-34s %14s %14s  %s" % (name, code, quantity[:34], fmt(datum_value), fmt(pdg_value), detail))
         print()
 
     print("Summary")
@@ -629,7 +629,7 @@ def main():
     if args.csv:
         with open(args.csv, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["category", "particle", "pdg", "quantity", "CAP", "PDG", "detail"])
+            writer.writerow(["category", "particle", "pdg", "quantity", "Datum", "PDG", "detail"])
             writer.writerows(report.rows)
         print("\nAll comparisons written to %s" % args.csv)
     if args.update:

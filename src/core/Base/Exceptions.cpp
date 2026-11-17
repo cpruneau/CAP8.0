@@ -2,7 +2,7 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 
@@ -247,5 +247,5 @@ namespace CAP
   printLine();
   }
 
-} // namespace CAP
+} // namespace Datum
 

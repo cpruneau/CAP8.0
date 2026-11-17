@@ -8,10 +8,11 @@
  *
  * *********************************************************************/
 #include "EnvironmentVariables.hpp"
+#include "FileSystem.hpp"
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 EnvironmentVariables::EnvironmentVariables()
@@ -26,26 +27,26 @@ void EnvironmentVariables::initialize()
 {
   // fetch required env variables from the system
   // store them for easy later retrieval
-  addVariable("CAP_DATABASE_PATH",      getenv("CAP_DATABASE_PATH"));
-  addVariable("CAP_PROJECTS_PATH",      getenv("CAP_PROJECTS_PATH"));
-  addVariable("CAP_DATA_IMPORT_PATH",   getenv("CAP_DATA_IMPORT_PATH"));
-  addVariable("CAP_DATA_EXPORT_PATH",   getenv("CAP_DATA_EXPORT_PATH"));
-  addVariable("CAP_HISTOS_IMPORT_PATH", getenv("CAP_HISTOS_IMPORT_PATH"));
-  addVariable("CAP_HISTOS_EXPORT_PATH", getenv("CAP_HISTOS_EXPORT_PATH"));
-  addVariable("CAP_CALIB_IMPORT_PATH",  getenv("CAP_CALIB_IMPORT_PATH"));
-  addVariable("CAP_CALIB_EXPORT_PATH",  getenv("CAP_CALIB_EXPORT_PATH"));
+  addVariable("DATUM_DATABASE_PATH",      FileSystem::environment("DATUM_DATABASE_PATH"));
+  addVariable("DATUM_PROJECTS_PATH",      FileSystem::environment("DATUM_PROJECTS_PATH"));
+  addVariable("DATUM_DATA_IMPORT_PATH",   FileSystem::environment("DATUM_DATA_IMPORT_PATH"));
+  addVariable("DATUM_DATA_EXPORT_PATH",   FileSystem::environment("DATUM_DATA_EXPORT_PATH"));
+  addVariable("DATUM_HISTOS_IMPORT_PATH", FileSystem::environment("DATUM_HISTOS_IMPORT_PATH"));
+  addVariable("DATUM_HISTOS_EXPORT_PATH", FileSystem::environment("DATUM_HISTOS_EXPORT_PATH"));
+  addVariable("DATUM_CALIB_IMPORT_PATH",  FileSystem::environment("DATUM_CALIB_IMPORT_PATH"));
+  addVariable("DATUM_CALIB_EXPORT_PATH",  FileSystem::environment("DATUM_CALIB_EXPORT_PATH"));
 }
 
 void EnvironmentVariables::print() const
 {
-  printValue("CAP_DATABASE_PATH",      valueString("CAP_DATABASE_PATH"));
-  printValue("CAP_PROJECTS_PATH",      valueString("CAP_PROJECTS_PATH"));
-  printValue("CAP_DATA_IMPORT_PATH",   valueString("CAP_DATA_IMPORT_PATH"));
-  printValue("CAP_DATA_EXPORT_PATH",   valueString("CAP_DATA_EXPORT_PATH"));
-  printValue("CAP_HISTOS_IMPORT_PATH", valueString("CAP_HISTOS_IMPORT_PATH"));
-  printValue("CAP_HISTOS_EXPORT_PATH", valueString("CAP_HISTOS_EXPORT_PATH"));
-  printValue("CAP_CALIB_IMPORT_PATH",  valueString("CAP_CALIB_IMPORT_PATH"));
-  printValue("CAP_CALIB_EXPORT_PATH",  valueString("CAP_CALIB_EXPORT_PATH"));
+  printValue("DATUM_DATABASE_PATH",      valueString("DATUM_DATABASE_PATH"));
+  printValue("DATUM_PROJECTS_PATH",      valueString("DATUM_PROJECTS_PATH"));
+  printValue("DATUM_DATA_IMPORT_PATH",   valueString("DATUM_DATA_IMPORT_PATH"));
+  printValue("DATUM_DATA_EXPORT_PATH",   valueString("DATUM_DATA_EXPORT_PATH"));
+  printValue("DATUM_HISTOS_IMPORT_PATH", valueString("DATUM_HISTOS_IMPORT_PATH"));
+  printValue("DATUM_HISTOS_EXPORT_PATH", valueString("DATUM_HISTOS_EXPORT_PATH"));
+  printValue("DATUM_CALIB_IMPORT_PATH",  valueString("DATUM_CALIB_IMPORT_PATH"));
+  printValue("DATUM_CALIB_EXPORT_PATH",  valueString("DATUM_CALIB_EXPORT_PATH"));
 }
 
 void  EnvironmentVariables::addVariable(const char* aKeyword, const char* aValue)
@@ -70,5 +71,5 @@ EnvironmentVariables * EnvironmentVariables::environmentVariables()
   return _envVariables;
 }
 
-} // namespace CAP
+} // namespace Datum
 

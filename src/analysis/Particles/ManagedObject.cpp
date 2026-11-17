@@ -10,7 +10,7 @@
 #include "ManagedObject.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   ManagedObject::ManagedObject()
@@ -32,4 +32,4 @@ namespace CAP
   return *this;
   }
 
-} // namespace CAP
+} // namespace Datum

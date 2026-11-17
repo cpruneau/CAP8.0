@@ -10,7 +10,7 @@
 //! @file TestExtremumSearch.cpp
 //! @brief Test program of the extremum searches (run by ctest).
 //
-// TestExtremumSearch -- tests of CAP::MATH::ExtremumSearch and its engines: domains and exclusions, the scan,
+// TestExtremumSearch -- tests of Datum::MATH::ExtremumSearch and its engines: domains and exclusions, the scan,
 // gradient, hill climbing and greedy engines on standard functions with known extrema (sphere, Rosenbrock,
 // Himmelblau), maxima, data points (histograms, points on a grid, scattered points), seeds and budgets. Prints each
 // failed check and exits with the number of failures (0: all passed).
@@ -28,8 +28,8 @@
 #include "MathExceptions.hpp"
 #include "Normal.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

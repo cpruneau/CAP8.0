@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file Palettes.hpp
 //! @brief Color, marker and shading palettes, and the library of the palettes of a session.
-#ifndef CAP__Palettes
-#define CAP__Palettes
+#ifndef DATUM__Palettes
+#define DATUM__Palettes
 #include <map>
 #include <vector>
 #include "Palette.hpp"
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -131,6 +131,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Palettes
+#endif // !DATUM__Palettes

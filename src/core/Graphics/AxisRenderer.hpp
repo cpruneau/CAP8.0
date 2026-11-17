@@ -1,8 +1,8 @@
-#ifndef CAP__AxisRenderer
-#define CAP__AxisRenderer
+#ifndef DATUM__AxisRenderer
+#define DATUM__AxisRenderer
 #include "Renderer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -27,6 +27,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__AxisRenderer
+#endif // !DATUM__AxisRenderer

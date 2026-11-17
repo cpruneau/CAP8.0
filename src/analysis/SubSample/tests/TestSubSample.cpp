@@ -18,7 +18,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Exceptions.hpp"
 #include "FileSystem.hpp"
 #include "Folder.hpp"
@@ -32,7 +32,7 @@
 #include "WorkflowHistograms.hpp"
 #include "XmlDocument.hpp"
 
-using namespace CAP;
+using namespace Datum;
 using MATH::Histogram;
 
 namespace
@@ -235,7 +235,7 @@ int main()
 
   // --- JACKKNIFE A: stages (square) on the whole sample and on each replica
   XmlDocument workflow = XmlDocument::parse(
-    "<CAP><TASK name=\"Square\" class=\"TestSquare\" stage=\"Square\"/></CAP>");
+    "<Datum><TASK name=\"Square\" class=\"TestSquare\" stage=\"Square\"/></Datum>");
   Folder whole;
   String error;
   bool ran = WorkflowHistograms::runStages(workflow, {String("Square")}, mean, whole, error);
@@ -284,7 +284,7 @@ int main()
   }
 
   // --- The task on files
-  char directory[] = "/tmp/cap_subsample_XXXXXX";
+  char directory[] = "/tmp/datum_subsample_XXXXXX";
   if (!::mkdtemp(directory)) { std::printf("FAILED: mkdtemp\n"); return 1; }
   String base(directory);
   String input = FileSystem::join(base, "jobs");
@@ -292,7 +292,7 @@ int main()
     {
     String path = FileSystem::join(input, String("job_") + String(std::to_string(i)));
     FileSystem::createDirectory(path);
-    CapFile file{FileSystem::join(path, "Histos.cap")};
+    DatumFile file{FileSystem::join(path, "Histos.cap")};          // files of CAP (.cap): read for the name Histos
     file.folder() = samples[i];
     Accountant executed("Executed", 1);
     executed.setValueAt(0, long(w[i]));
@@ -302,7 +302,7 @@ int main()
   FileSystem::createDirectory(FileSystem::join(input, "job_9"));     // no file: skipped
   FileSystem::createDirectory(FileSystem::join(input, "other"));     // not matching the pattern
   {
-  CapFile file{FileSystem::join(FileSystem::join(input, "other"), "Histos.cap")};
+  DatumFile file{FileSystem::join(FileSystem::join(input, "other"), "Histos.cap")};
   file.folder() = samples[0];
   file.write();
   }
@@ -323,28 +323,28 @@ int main()
   };
   auto load = [&](const char * name) -> Folder
   {
-    CapFile file{FileSystem::join(base, name)};
+    DatumFile file{FileSystem::join(base, name)};
     file.load();
     return file.folder();
   };
   try
     {
     run("SUBSAMPLE", "NONE", "NONE", "Average");
-    Folder out = load("Average.cap");
+    Folder out = load("Average.datum");
     CHECK(out.contains("Accountant_Executed_0") || out.contains("Accountant_Executed_N"));
     std::vector<double> a = valuesOf(out, "Ana/pairs/h"), ae = errorsOf(out, "Ana/pairs/h");
     std::vector<double> b = valuesOf(mean, "Ana/pairs/h"), be = errorsOf(mean, "Ana/pairs/h");
     bool ok = a.size() == nBins;
     for (unsigned int k = 0; k < nBins && ok; k++) ok = close(a[k], b[k]) && close(ae[k], be[k]);
     CHECK(ok);
-    CapFile file{FileSystem::join(base, "Average.cap")};
+    DatumFile file{FileSystem::join(base, "Average.datum")};
     file.load();
     Accountant total("Executed", 0);
     file.importAccountant(total);
     CHECK(total.size() == 1 && total.valueAt(0) == long(W));
 
     run("jackknife", "NONE", "NONE", "JackB");
-    Folder jb = load("JackB.cap"), bb = load("JackB_biasCorrected.cap");
+    Folder jb = load("JackB.datum"), bb = load("JackB_biasCorrected.datum");
     a = errorsOf(jb, "Ana/s"); b = errorsOf(jackB, "Ana/s");
     std::vector<double> c = valuesOf(bb, "Ana/s"), d = valuesOf(biasB, "Ana/s");
     ok = a.size() == nBins && c.size() == nBins;
@@ -352,9 +352,9 @@ int main()
     CHECK(ok);
 
     String workflowFile = FileSystem::join(base, "workflow.xml");
-    { std::ofstream text(workflowFile.str()); text << "<CAP><TASK name=\"Square\" class=\"TestSquare\" stage=\"Square\"/></CAP>\n"; }
+    { std::ofstream text(workflowFile.str()); text << "<Datum><TASK name=\"Square\" class=\"TestSquare\" stage=\"Square\"/></Datum>\n"; }
     run("JACKKNIFE", workflowFile.str().c_str(), "Square", "JackA");
-    Folder ja = load("JackA.cap"), ba = load("JackA_biasCorrected.cap");
+    Folder ja = load("JackA.datum"), ba = load("JackA_biasCorrected.datum");
     a = errorsOf(ja, "Square/h2"); b = errorsOf(jackA, "Square/h2");
     c = valuesOf(ba, "Square/h2"); d = valuesOf(biasA, "Square/h2");
     ok = a.size() == nBins && c.size() == nBins;
@@ -400,27 +400,36 @@ int main()
     std::snprintf(name, sizeof(name), "sub_%03u_pthat%02u", r.s, r.k);
     String path = FileSystem::join(bins, name);
     FileSystem::createDirectory(path);
-    CapFile file{FileSystem::join(path, "Histos.cap")};
+    DatumFile file{FileSystem::join(path, "Histos.cap")};
     Folder & top = file.folder();
     Histogram * h = top.addFolder("Ana")->add(new Histogram("h", "h", 4, 0.0, 4.0), "h");
     for (unsigned int b = 0; b < 4; b++) for (int c = 0; c < int(r.counts[b]); c++) h->fill(b + 0.5);
     MATH::Profile * p = top.folder("Ana")->add(new MATH::Profile("p", "p", 2, 0.0, 2.0), "p");
     for (int c = 0; c < r.entries; c++) p->fill(0.5, r.value);
     Folder * generator = top.addFolder("Pythia");
-    generator->add(new StringParameter("CAP_SIGMA_GEN", String(std::to_string(r.sigma))), "CAP_SIGMA_GEN");
-    generator->add(new StringParameter("CAP_SIGMA_ERR", String("0.1")), "CAP_SIGMA_ERR");
-    generator->add(new StringParameter("CAP_PTHAT_MIN", String(r.k == 0 ? "5" : "20")), "CAP_PTHAT_MIN");
-    generator->add(new StringParameter("CAP_PTHAT_MAX", String(r.k == 0 ? "20" : "100")), "CAP_PTHAT_MAX");
-    generator->add(new LongParameter("CAP_N_ACCEPTED", r.n), "CAP_N_ACCEPTED");
+    generator->add(new StringParameter("DATUM_SIGMA_GEN", String(std::to_string(r.sigma))), "DATUM_SIGMA_GEN");
+    generator->add(new StringParameter("DATUM_SIGMA_ERR", String("0.1")), "DATUM_SIGMA_ERR");
+    generator->add(new StringParameter("DATUM_PTHAT_MIN", String(r.k == 0 ? "5" : "20")), "DATUM_PTHAT_MIN");
+    generator->add(new StringParameter("DATUM_PTHAT_MAX", String(r.k == 0 ? "20" : "100")), "DATUM_PTHAT_MAX");
+    generator->add(new LongParameter("DATUM_N_ACCEPTED", r.n), "DATUM_N_ACCEPTED");
     file.write();
     }
   double sigma = 0.0, error = 0.0, lo = 0.0, hi = 0.0;
   long accepted = 0;
   {
-  CapFile file{FileSystem::join(FileSystem::join(bins, "sub_001_pthat00"), "Histos.cap")};
+  DatumFile file{FileSystem::join(FileSystem::join(bins, "sub_001_pthat00"), "Histos.cap")};
   file.load();
   CHECK(SubSampleStatCalculator::crossSection(file.folder(), sigma, error, accepted, lo, hi));
   CHECK(sigma == 12.0 && accepted == 100 && lo == 5.0 && hi == 20.0);
+  }
+  {
+  Folder old;                                    // the names written by CAP (before Datum 1.0)
+  Folder * generator = old.addFolder("Pythia");
+  generator->add(new StringParameter("CAP_SIGMA_GEN", String("3.5")), "CAP_SIGMA_GEN");
+  generator->add(new StringParameter("CAP_PTHAT_MIN", String("7")), "CAP_PTHAT_MIN");
+  generator->add(new LongParameter("CAP_N_ACCEPTED", 40), "CAP_N_ACCEPTED");
+  CHECK(SubSampleStatCalculator::crossSection(old, sigma, error, accepted, lo, hi));
+  CHECK(sigma == 3.5 && accepted == 40 && lo == 7.0 && hi == -1.0);
   }
   auto runBins = [&](const char * normalization, const char * output)
   {
@@ -442,21 +451,21 @@ int main()
     // sigma of bin 0: (10 x 100 + 12 x 100)/200 = 11; weights 11/100 and 1/50
     // sub-sample 0: [11, 5.5, 0.5, 0.5], sub-sample 1: [8.8, 6.6, 0.4, 0.6]; average [9.9, 6.05, 0.45, 0.55]
     runBins("SIGMA", "CrossSection");
-    Folder out = load("CrossSection.cap");
+    Folder out = load("CrossSection.datum");
     std::vector<double> v = valuesOf(out, "Ana/h");
     CHECK(v.size() >= 4 && near(v[0], 9.9) && near(v[1], 6.05) && near(v[2], 0.45) && near(v[3], 0.55));
     std::vector<double> e = errorsOf(out, "Ana/h");
     CHECK(e.size() >= 4 && near(e[0], 1.1, 1.0E-6));                      // the spread of the two sub-samples / sqrt 2
     const MATH::Profile * p = out.get<MATH::Profile>("Ana/p");
     CHECK(p != nullptr && near(p->binValueAt(0), (0.11 * 8 + 0.02 * 12) / (0.11 * 4 + 0.02 * 2), 1.0E-6));
-    CHECK(out.get<StringParameter>("CAP_SIGMA_COVERED") && out.get<StringParameter>("CAP_PTHAT_BIN_1"));
-    CHECK(!out.get<StringParameter>("Pythia/CAP_SIGMA_GEN"));             // that of a single run: removed
-    Folder s0 = [&]() { CapFile f{FileSystem::join(FileSystem::join(bins, "sub_000_CrossSection"), "Histos.cap")};
+    CHECK(out.get<StringParameter>("DATUM_SIGMA_COVERED") && out.get<StringParameter>("DATUM_PTHAT_BIN_1"));
+    CHECK(!out.get<StringParameter>("Pythia/DATUM_SIGMA_GEN"));             // that of a single run: removed
+    Folder s0 = [&]() { DatumFile f{FileSystem::join(FileSystem::join(bins, "sub_000_CrossSection"), "Histos.datum")};
                         f.load(); return f.folder(); }();
     std::vector<double> v0 = valuesOf(s0, "Ana/h");
     CHECK(v0.size() >= 4 && near(v0[0], 11.0) && near(v0[2], 0.5));     // the sum of the bins of sub-sample 0
     runBins("COVERED", "PerEvent");                                       // divided by 11 + 1
-    std::vector<double> c = valuesOf(load("PerEvent.cap"), "Ana/h");
+    std::vector<double> c = valuesOf(load("PerEvent.datum"), "Ana/h");
     CHECK(c.size() >= 4 && near(c[0], 9.9 / 12.0) && near(c[3], 0.55 / 12.0));
     }
   catch (const std::exception & e) { std::printf("FAILED: pT-hat bins: %s\n", e.what()); nFailures++; }

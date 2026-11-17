@@ -1,5 +1,5 @@
-#ifndef CAP_RootFileHelpers
-#define CAP_RootFileHelpers
+#ifndef DATUM_RootFileHelpers
+#define DATUM_RootFileHelpers
 #include <vector>
 #include "String.hpp"
 #include "TFile.h"
@@ -17,12 +17,12 @@
 #include "Accountant.hpp"
 #include "FileListing.hpp"   // listDirsIn(), listFilesInDir() (moved to Base: they do not need ROOT)
 
-namespace CAP
+namespace Datum
 {
 //!
 //! The TFile helpers below (openRootFile ..., importParameter, exportParameter, importAccountant, exportAccountant) are
-//! kept for code that still writes ROOT objects. Their CAP equivalents are members of CAP::CapFile (Base/CapFile.hpp):
-//! CapFile::openCapFile(), openOldCapFile(), openNewCapFile(), openRecreateCapFile(), openCapFiles(),
+//! kept for code that still writes ROOT objects. Their Datum equivalents are members of Datum::DatumFile (Base/DatumFile.hpp):
+//! DatumFile::openDatumFile(), openOldDatumFile(), openNewDatumFile(), openRecreateDatumFile(), openDatumFiles(),
 //! exportParameter(), importParameter(), exportAccountant() and importAccountant().
 //!
 TFile * openRootFile(const String & path, const String & name,const String & ioOption,bool verbose=0);
@@ -56,6 +56,6 @@ void createDirectory(const String path, bool verbose=false);
 
 String  substitute(const String & inputString, const String & subString, const String & newSubString);
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

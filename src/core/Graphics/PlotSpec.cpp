@@ -16,7 +16,7 @@
 #include <string>
 #include "PlotSpec.hpp"
 #include "CanvasRegistry.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "ColorTable.hpp"
 #include "DataPoints.hpp"
 #include "FileSystem.hpp"
@@ -27,7 +27,7 @@
 #include "PdfPainter.hpp"
 #include "SvgPainter.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -599,7 +599,7 @@ namespace CAP
   _inputs[k].file.reset();
   }
 
-  void PlotSpec::setInputFile(int k, const std::shared_ptr<CapFile> & file)
+  void PlotSpec::setInputFile(int k, const std::shared_ptr<DatumFile> & file)
   {
   if (k >= 0 && k < int(_inputs.size())) _inputs[k].file = file;
   }
@@ -610,9 +610,10 @@ namespace CAP
     {
     if (input.file) continue;
     String path = resolve(input.path);
+    if (DatumFile::isDatumFileName(path)) path = DatumFile::existingFileName("", path);   // x.cap for x.datum, and back
     try
       {
-      auto file = std::make_shared<CapFile>(path, File::kReadOnly);
+      auto file = std::make_shared<DatumFile>(path, File::kReadOnly);
       file->load(File::Loading::kLazy);
       input.file = file;
       }
@@ -1001,4 +1002,4 @@ namespace CAP
   }
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum

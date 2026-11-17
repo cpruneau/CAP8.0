@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file RombergIntegrator.hpp
 //! @brief RombergIntegrator: the trapezoidal rule with step halving and Richardson extrapolation.
-#ifndef CAP__MATH__RombergIntegrator
-#define CAP__MATH__RombergIntegrator
+#ifndef DATUM__MATH__RombergIntegrator
+#define DATUM__MATH__RombergIntegrator
 #include "Integrator.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -44,6 +44,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__RombergIntegrator
+#endif // DATUM__MATH__RombergIntegrator

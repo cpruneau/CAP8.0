@@ -8,13 +8,13 @@
  *
  * *********************************************************************/
 //! @file DataPane.hpp
-//! @brief DataPane: pane of the CapGui window showing data points or a histogram as a table.
-#ifndef CAP__GUI__DataPane
-#define CAP__GUI__DataPane
+//! @brief DataPane: pane of the DatumGui window showing data points or a histogram as a table.
+#ifndef DATUM__GUI__DataPane
+#define DATUM__GUI__DataPane
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -25,7 +25,7 @@ namespace CAP
   {
 
   //!
-  //! @brief Pane of the CapGui window showing the values of a set of data points (or of a histogram) as a table.
+  //! @brief Pane of the DatumGui window showing the values of a set of data points (or of a histogram) as a table.
   //!
   //! A heading line gives the name of the object, its kind and its number of points; the table has one row per
   //! point and the columns: index, each coordinate and its uncertainty, the value and its statistical and systematic
@@ -38,7 +38,7 @@ namespace CAP
   //! table has, after the uncertainties, the value f(x) of each fitted function at the point (dimmed outside the
   //! range of the fit) and, unless turned off (setShowPulls()), the pull (value - f(x))/(statistical uncertainty).
   //!
-  //! The data points are not owned: they must outlive the pane (in CapApp they belong to open, or retired, files).
+  //! The data points are not owned: they must outlive the pane (in DatumApp they belong to open, or retired, files).
   //!
   class DataPane
   {
@@ -75,6 +75,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__DataPane
+#endif // !DATUM__GUI__DataPane

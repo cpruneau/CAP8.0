@@ -8,16 +8,16 @@
  *
  * *********************************************************************/
 //! @file FitDialog.hpp
-//! @brief FitDialog: the Fit window of CapGui, fitting a function to an object of the selected graph.
-#ifndef CAP__GUI__FitDialog
-#define CAP__GUI__FitDialog
+//! @brief FitDialog: the Fit window of DatumGui, fitting a function to an object of the selected graph.
+#ifndef DATUM__GUI__FitDialog
+#define DATUM__GUI__FitDialog
 #include <memory>
 #include <utility>
 #include <vector>
 #include "String.hpp"
 #include "FitSelection.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -35,20 +35,20 @@ namespace CAP
   {
 
   //!
-  //! @brief The Fit window of CapGui: fits a function to an object of one or two variables of the selected graph, and attaches the
+  //! @brief The Fit window of DatumGui: fits a function to an object of one or two variables of the selected graph, and attaches the
   //! fit to it (see MATH::Fitter, MATH::FitRecord).
   //!
   //! The window chooses:
   //!  - the object fitted, of one or two variables: data points, a histogram (a map, for two), or a function (fitted
   //!    through samples of it over the range, on a grid for two variables);
-  //!  - the function, among those of MATH::FunctionRegistry: the functions of CAP (polynomials, Normal, LogNormal,
+  //!  - the function, among those of MATH::FunctionRegistry: the functions of Datum (polynomials, Normal, LogNormal,
   //!    Exponential, series of Legendre, Chebyshev, Hermite or Laguerre polynomials, Bessel functions J, Y, I, K),
   //!    classes registered by programs, and composites (sums of registered functions, MATH::ParameterizedComposite),
   //!    with the degree of a Polynomial, a Polynomial2D or a series; only the functions of the rank of the object are
   //!    offered; a series or a Polynomial2D is mapped onto the range of the fit;
   //!  - new composites, sums or products f(x) g(y), made in the window ("Composite..."). The user decides whether to
   //!    register one: registered, it is added to MATH::FunctionRegistry and written to
-  //!    MATH::FunctionRegistry::defaultCompositesFile(), read again when CapGui starts (and where programs can put
+  //!    MATH::FunctionRegistry::defaultCompositesFile(), read again when DatumGui starts (and where programs can put
   //!    theirs); otherwise it is offered for this session only, and can be registered later ("Register"). Either way
   //!    its fits are saved with the objects fitted and read back (the fit holds the whole function). A composite can
   //!    be removed, or its current parameters kept as its starting values;
@@ -67,7 +67,7 @@ namespace CAP
   //! the fit pane shows its results. The fitted values become the starting values of the next fit.
   //!
   //! The objects shown are not owned by the graphs (they belong to the application or to the files it opened): the
-  //! fit is attached to them in memory; saving them (e.g. in a CAP file) saves their fits.
+  //! fit is attached to them in memory; saving them (e.g. in a Datum file) saves their fits.
   //!
   class FitDialog
   {
@@ -168,6 +168,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__FitDialog
+#endif // !DATUM__GUI__FitDialog

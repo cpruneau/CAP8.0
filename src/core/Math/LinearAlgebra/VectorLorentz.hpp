@@ -1,5 +1,5 @@
-#ifndef CAP_VectorLorentz
-#define CAP_VectorLorentz
+#ifndef DATUM_VectorLorentz
+#define DATUM_VectorLorentz
 #include <algorithm>
 #include <limits>
 #include <cmath>
@@ -11,7 +11,7 @@
 #include "MathConstants.hpp"
 #include "Vector3D.hpp"
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -216,12 +216,12 @@ public:
 
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPL" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTML" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! @{
 
-  //! @brief Tag of VectorLorentz records in binary files. @return "CAPL"
-  static const char * binaryTag() { return "CAPL"; }
+  //! @brief Tag of VectorLorentz records in binary files. @return "DTML"
+  static const char * binaryTag() { return "DTML"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return ""
@@ -267,6 +267,6 @@ VectorLorentz operator* (double a, const VectorLorentz & v);
 std::ostream& operator<<(std::ostream& out, const VectorLorentz & v);
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

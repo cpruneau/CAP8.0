@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/PtPt
+# Project Datum/PtPt
 ################################################################################################
 
 ################################################################################################
@@ -14,5 +14,5 @@ PtPtHistos.cpp)
 target_link_libraries(PtPt Base  Particles  ${EXTRA_LIBS} )
 target_include_directories(PtPt  PUBLIC Base  Particles  PtPt ${EXTRA_INCLUDES} ) 
 
-cap_install(PtPt LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(PtPt LIBRARY "$ENV{DATUM_LIB_PATH}")
 

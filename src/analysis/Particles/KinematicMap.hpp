@@ -7,15 +7,15 @@
  * Author: Claude Pruneau,04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__KinematicMap
-#define CAP__KinematicMap
+#ifndef DATUM__KinematicMap
+#define DATUM__KinematicMap
 #include <memory>
 #include <vector>
 #include "Function.hpp"
 #include "Histogram.hpp"
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -125,6 +125,6 @@ protected:
   double _outsideValue;                               //!< value outside the range of the histogram
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__KinematicMap */
+#endif /* DATUM__KinematicMap */

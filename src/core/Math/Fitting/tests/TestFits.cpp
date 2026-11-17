@@ -10,8 +10,8 @@
 //! @file TestFits.cpp
 //! @brief Test program of the fits attached to data points and functions (FitRecord, clone(), Fitter::record()) (run by ctest).
 //
-// TestFits -- tests of CAP::MATH::FitRecord and FitList, the fits attached to DataPoints (and histograms) and to
-// Functions, ParameterizedFunction::clone() for every function of CAP, Fitter::record() and Fitter::samples(). Prints
+// TestFits -- tests of Datum::MATH::FitRecord and FitList, the fits attached to DataPoints (and histograms) and to
+// Functions, ParameterizedFunction::clone() for every function of Datum, Fitter::record() and Fitter::samples(). Prints
 // each failed check and exits with the number of failures (0: all passed).
 //
 #include <cmath>
@@ -34,8 +34,8 @@
 #include "Polynomial.hpp"
 #include "Quartic.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {
@@ -78,7 +78,7 @@ void checkClone(F & f, const char * name)
 //! @brief Run the checks. @return number of failed checks (0: all passed)
 int main()
 {
-  // ---- clone() of every function of CAP
+  // ---- clone() of every function of Datum
   {
     Constant constant(2.0);          checkClone(constant, "Constant");
     Linear linear(1.0, 2.0);         checkClone(linear, "Linear");

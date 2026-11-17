@@ -7,19 +7,19 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__LongParameter
-#define CAP__LongParameter
+#ifndef DATUM__LongParameter
+#define DATUM__LongParameter
 #include "Object.hpp"
 #include "BinaryIO.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
-//! @brief Named integer value (64 bits) that can be stored in folders and CAP binary files.
+//! @brief Named integer value (64 bits) that can be stored in folders and Datum binary files.
 //!
 //! LongParameter replaces TParameter<Long64_t> for the parameters (event counts, accountant entries, ...) saved in
-//! CapFile objects: see CapFile::exportParameter() and CapFile::importParameter(). Stored as "CAPI" records of the CAP
+//! DatumFile objects: see DatumFile::exportParameter() and DatumFile::importParameter(). Stored as "DTMI" records of the Datum
 //! binary format (see BinaryIO.hpp); the class is registered with Folder.
 //!
 class LongParameter : public Object
@@ -45,8 +45,8 @@ public:
 
   //! @name Binary files (independent of ROOT)
   //! @{
-  //! @brief Tag of the records of this class. @return "CAPI"
-  static const char * binaryTag() { return "CAPI"; }
+  //! @brief Tag of the records of this class. @return "DTMI"
+  static const char * binaryTag() { return "DTMI"; }
   //! @brief Version of the record format. @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in the record. @return name
@@ -63,6 +63,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

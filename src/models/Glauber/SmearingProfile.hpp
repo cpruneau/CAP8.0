@@ -9,11 +9,11 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__SmearingProfile
-#define CAP__SmearingProfile
+#ifndef DATUM__SmearingProfile
+#define DATUM__SmearingProfile
 #include "MathConstants.hpp"
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Gaussian smearing profile of a nucleon: r exp(-r^2/(2 sigma^2)).
@@ -46,9 +46,9 @@ namespace CAP
   double _twoNucleonSigmaSq;
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__SmearingProfile
+#endif // !DATUM__SmearingProfile
 
 
 

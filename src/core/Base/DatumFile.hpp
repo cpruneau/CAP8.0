@@ -7,22 +7,22 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__CapFile
-#define CAP__CapFile
+#ifndef DATUM__DatumFile
+#define DATUM__DatumFile
 #include "BinaryFile.hpp"
 #include "Folder.hpp"
 #include "Accountant.hpp"
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
 
 //!
-//! @brief CAP binary file: a BinaryFile holding one Folder (with its objects and optional sub-folders).
+//! @brief Datum binary file: a BinaryFile holding one Folder (with its objects and optional sub-folders).
 //!
 //! The folder is held in memory: objects are added, retrieved and organized with the Folder interface, reached with
-//! folder() or directly on the CapFile (add(), get(), addFolder(), cd(), ...; a CapFile also converts to Folder & where
-//! a folder is expected). read() loads the folder from the file and write() saves it, as one "CAPO" record of the CAP
+//! folder() or directly on the DatumFile (add(), get(), addFolder(), cd(), ...; a DatumFile also converts to Folder & where
+//! a folder is expected). read() loads the folder from the file and write() saves it, as one "DTMO" record of the Datum
 //! binary format (see BinaryIO.hpp and Folder).
 //!
 //! As a File, the name of the object is the path of the file; the name of the folder is folderName().
@@ -37,29 +37,29 @@ namespace CAP
 //!
 //! Example:
 //! @code
-//!   CAP::CapFile out("run42.cap", CAP::File::kWriteOnly);
+//!   Datum::DatumFile out("run42.cap", Datum::File::kWriteOnly);
 //!   out.setFolderName("run42");
-//!   out.addFolder("singles")->add(new CAP::MATH::Histogram("pt","p_T",100,0.0,10.0));
+//!   out.addFolder("singles")->add(new Datum::MATH::Histogram("pt","p_T",100,0.0,10.0));
 //!   out.write();
 //!
-//!   CAP::CapFile in("run42.cap", CAP::File::kReadOnly);
+//!   Datum::DatumFile in("run42.cap", Datum::File::kReadOnly);
 //!   in.read();
-//!   auto * pt = in.get<CAP::MATH::Histogram>("singles/pt");
+//!   auto * pt = in.get<Datum::MATH::Histogram>("singles/pt");
 //! @endcode
 //!
-class CapFile : public BinaryFile
+class DatumFile : public BinaryFile
 {
 public:
 
   //! @brief Constructor: an empty folder named "" attached to a file. @param path path of the file
   //! @param access access allowed (read/write by default)
-  CapFile(const String & path="", Access access=kReadWrite);
+  DatumFile(const String & path="", Access access=kReadWrite);
   //! @brief Destructor (the file is closed if open; the folder is not saved automatically).
-  virtual ~CapFile() {}
+  virtual ~DatumFile() {}
 
   //! @brief Replace the content (name, entries and sub-folders) of the folder by a copy of folder; the file is unchanged.
-  //! @param folder folder to copy @return this CapFile
-  CapFile & operator=(const Folder & folder);
+  //! @param folder folder to copy @return this DatumFile
+  DatumFile & operator=(const Folder & folder);
 
   //! @name Folder
   //! @{
@@ -181,65 +181,82 @@ public:
   //! - "RECREATE": an empty folder is returned; write() replaces any existing file.
   //! - "UPDATE": the folder of the file is loaded if the file exists (empty otherwise); write() replaces it.
   //!
-  //! Unlike a TFile, a CapFile only touches the disk on read(), write() and append(): call write() to save.
+  //! Unlike a TFile, a DatumFile only touches the disk on read(), write() and append(): call write() to save.
   //! The returned objects are created with new and belong to the caller.
   //! @{
 
+  //! @brief Extension of Datum files: ".datum". @return extension
+  static const char * extension() { return ".datum"; }
+  //! @brief Extension of the files written before Datum 1.0 (CAP files): ".cap", still read and written. @return extension
+  static const char * formerExtension() { return ".cap"; }
+  //! @brief Whether a file name has the extension of Datum files (".datum", or ".cap"). @param name file name
+  //! @return true if it has one of them
+  static bool isDatumFileName(const String & name);
+
   //!
-  //! @brief Full name of a CAP file: name if it starts with '/', otherwise path/name; ".cap" is appended if missing.
-  //! @param path directory (may be empty) @param name file name, with or without the ".cap" extension @return file name
+  //! @brief Full name of a Datum file: name if it starts with '/', otherwise path/name, with the extension ".datum"
+  //! appended if it has neither ".datum" nor ".cap".
+  //! @param path directory (may be empty) @param name file name, with or without its extension @return file name
   //!
   static String makeFileName(const String & path, const String & name);
 
   //!
-  //! @brief Open a CAP file. @param path directory @param name file name (".cap" appended if missing)
+  //! @brief Name of a Datum file to read: makeFileName(), or, if that file does not exist, the same name with the other
+  //! extension if that one exists (run.cap, written by CAP before Datum 1.0, for run or run.datum; and the reverse).
+  //! @param path directory (may be empty) @param name file name, with or without its extension @return file name
+  //!
+  static String existingFileName(const String & path, const String & name);
+
+  //!
+  //! @brief Open a Datum file. @param path directory @param name file name (".datum" appended if missing; a file to read or update
+  //! is looked for with ".cap" too, see existingFileName())
   //! @param ioOption "READ"/"OLD", "NEW"/"CREATE", "RECREATE" or "UPDATE" @param verbose print what is done
-  //! @return new CapFile (owned by the caller)
+  //! @return new DatumFile (owned by the caller)
   //! @throws FileException if the option is unknown, a file to read does not exist or cannot be loaded, or a new file exists
   //!
-  static CapFile * openCapFile(const String & path, const String & name, const String & ioOption, bool verbose=false);
-  //! @brief Open a CAP file (see openCapFile(path,name,ioOption,verbose)). @param name file name @param ioOption option
-  //! @param verbose print what is done @return new CapFile (owned by the caller)
-  static CapFile * openCapFile(const String & name, const String & ioOption, bool verbose=false);
-  //! @brief Open an existing CAP file and load it ("OLD"). @param path directory @param name file name @param verbose print
-  //! @return new CapFile (owned by the caller)
-  static CapFile * openOldCapFile(const String & path, const String & name, bool verbose=false);
-  //! @brief Open an existing CAP file and load it ("OLD"). @param name file name @param verbose print @return new CapFile
-  static CapFile * openOldCapFile(const String & name, bool verbose=false);
-  //! @brief Create a CAP file that must not exist yet ("NEW"). @param path directory @param name file name
-  //! @param verbose print @return new CapFile (owned by the caller)
-  static CapFile * openNewCapFile(const String & path, const String & name, bool verbose=false);
-  //! @brief Create a CAP file that must not exist yet ("NEW"). @param name file name @param verbose print @return new CapFile
-  static CapFile * openNewCapFile(const String & name, bool verbose=false);
-  //! @brief Create or replace a CAP file ("RECREATE"). @param path directory @param name file name @param verbose print
-  //! @return new CapFile (owned by the caller)
-  static CapFile * openRecreateCapFile(const String & path, const String & name, bool verbose=false);
-  //! @brief Create or replace a CAP file ("RECREATE"). @param name file name @param verbose print @return new CapFile
-  static CapFile * openRecreateCapFile(const String & name, bool verbose=false);
+  static DatumFile * openDatumFile(const String & path, const String & name, const String & ioOption, bool verbose=false);
+  //! @brief Open a Datum file (see openDatumFile(path,name,ioOption,verbose)). @param name file name @param ioOption option
+  //! @param verbose print what is done @return new DatumFile (owned by the caller)
+  static DatumFile * openDatumFile(const String & name, const String & ioOption, bool verbose=false);
+  //! @brief Open an existing Datum file and load it ("OLD"). @param path directory @param name file name @param verbose print
+  //! @return new DatumFile (owned by the caller)
+  static DatumFile * openOldDatumFile(const String & path, const String & name, bool verbose=false);
+  //! @brief Open an existing Datum file and load it ("OLD"). @param name file name @param verbose print @return new DatumFile
+  static DatumFile * openOldDatumFile(const String & name, bool verbose=false);
+  //! @brief Create a Datum file that must not exist yet ("NEW"). @param path directory @param name file name
+  //! @param verbose print @return new DatumFile (owned by the caller)
+  static DatumFile * openNewDatumFile(const String & path, const String & name, bool verbose=false);
+  //! @brief Create a Datum file that must not exist yet ("NEW"). @param name file name @param verbose print @return new DatumFile
+  static DatumFile * openNewDatumFile(const String & name, bool verbose=false);
+  //! @brief Create or replace a Datum file ("RECREATE"). @param path directory @param name file name @param verbose print
+  //! @return new DatumFile (owned by the caller)
+  static DatumFile * openRecreateDatumFile(const String & path, const String & name, bool verbose=false);
+  //! @brief Create or replace a Datum file ("RECREATE"). @param name file name @param verbose print @return new DatumFile
+  static DatumFile * openRecreateDatumFile(const String & name, bool verbose=false);
 
   //! @cond
-  // Overloads catching literal arguments. Without them, openOldCapFile("dir","name") would convert "name" to the bool
-  // verbose of openOldCapFile(name,verbose) (a standard conversion beats the conversion to String), and
-  // openCapFile("dir","name","OLD") would call openCapFile(name,ioOption,verbose).
-  static CapFile * openCapFile(const String & path, const String & name, const char * ioOption, bool verbose=false)
-  { return openCapFile(path,name,String(ioOption),verbose); }
-  static CapFile * openOldCapFile(const String & path, const char * name, bool verbose=false)
-  { return openOldCapFile(path,String(name),verbose); }
-  static CapFile * openNewCapFile(const String & path, const char * name, bool verbose=false)
-  { return openNewCapFile(path,String(name),verbose); }
-  static CapFile * openRecreateCapFile(const String & path, const char * name, bool verbose=false)
-  { return openRecreateCapFile(path,String(name),verbose); }
+  // Overloads catching literal arguments. Without them, openOldDatumFile("dir","name") would convert "name" to the bool
+  // verbose of openOldDatumFile(name,verbose) (a standard conversion beats the conversion to String), and
+  // openDatumFile("dir","name","OLD") would call openDatumFile(name,ioOption,verbose).
+  static DatumFile * openDatumFile(const String & path, const String & name, const char * ioOption, bool verbose=false)
+  { return openDatumFile(path,name,String(ioOption),verbose); }
+  static DatumFile * openOldDatumFile(const String & path, const char * name, bool verbose=false)
+  { return openOldDatumFile(path,String(name),verbose); }
+  static DatumFile * openNewDatumFile(const String & path, const char * name, bool verbose=false)
+  { return openNewDatumFile(path,String(name),verbose); }
+  static DatumFile * openRecreateDatumFile(const String & path, const char * name, bool verbose=false)
+  { return openRecreateDatumFile(path,String(name),verbose); }
   //! @endcond
 
   //!
-  //! @brief Open several CAP files. @param names file names @param ioOption option (see openCapFile) @param verbose print
-  //! @return new CapFile objects (owned by the caller)
+  //! @brief Open several Datum files. @param names file names @param ioOption option (see openDatumFile) @param verbose print
+  //! @return new DatumFile objects (owned by the caller)
   //! @throws FileException if the list is empty or a file cannot be opened (the files already opened are then deleted)
   //!
-  static std::vector<CapFile*> openCapFiles(const std::vector<String> & names, const String & ioOption, bool verbose=false);
-  //! @brief Open several CAP files in a directory (see openCapFiles(names,ioOption,verbose)). @param path directory
-  //! @param names file names @param ioOption option @param verbose print @return new CapFile objects (owned by the caller)
-  static std::vector<CapFile*> openCapFiles(const String & path, const std::vector<String> & names, const String & ioOption, bool verbose=false);
+  static std::vector<DatumFile*> openDatumFiles(const std::vector<String> & names, const String & ioOption, bool verbose=false);
+  //! @brief Open several Datum files in a directory (see openDatumFiles(names,ioOption,verbose)). @param path directory
+  //! @param names file names @param ioOption option @param verbose print @return new DatumFile objects (owned by the caller)
+  static std::vector<DatumFile*> openDatumFiles(const String & path, const std::vector<String> & names, const String & ioOption, bool verbose=false);
 
   //! @}
 
@@ -289,6 +306,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -16,7 +16,7 @@
 #include "TAxis.h"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -193,4 +193,4 @@ namespace CAP
   return p;
   }
 
-} // namespace CAP
+} // namespace Datum

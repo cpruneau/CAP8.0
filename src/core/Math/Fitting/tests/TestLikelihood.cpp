@@ -10,7 +10,7 @@
 //! @file TestLikelihood.cpp
 //! @brief Test program of the maximum likelihood fits: binned Poisson and unbinned likelihoods (run by ctest).
 //
-// TestLikelihood -- tests of CAP::MATH::PoissonLikelihood and UnbinnedLikelihood through Fitter, against exact
+// TestLikelihood -- tests of Datum::MATH::PoissonLikelihood and UnbinnedLikelihood through Fitter, against exact
 // properties: the Baker-Cousins statistic, the sum of a Poisson fit with a free amplitude, the unbinned estimators of
 // a Normal (sample mean and standard deviation, their uncertainties), the extended likelihood (number of events),
 // and the likelihood equation of a truncated exponential. Prints each failed check and exits with the number of
@@ -28,8 +28,8 @@
 #include "MathExceptions.hpp"
 #include "Normal.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

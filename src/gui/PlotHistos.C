@@ -10,15 +10,15 @@
 //! @file PlotHistos.C
 //! @brief bin/PlotHistos: plots of the histograms and functions described in an XML file, on screen or in batch.
 //
-// PlotHistos -- the histograms and functions of CAP files, plotted as an XML file describes them.
+// PlotHistos -- the histograms and functions of Datum files, plotted as an XML file describes them.
 //
-//   PlotHistos [options] plots.xml [file.cap ...]
+//   PlotHistos [options] plots.xml [file.datum ...]
 //
 // The XML file (see GRAPHICS::PlotSpec) describes windows of canvases (n x m per window), canvases of graphs (q x p
 // per canvas), and the histograms and functions of each graph, with every setting of margins, axes, canvases, graphs
-// and items. The CAP files given after it replace its inputs, in order.
+// and items. The Datum files given after it replace its inputs, in order.
 //
-// On screen (the default), CapGui opens the plot file with every window shown (the first one in the main window):
+// On screen (the default), DatumGui opens the plot file with every window shown (the first one in the main window):
 // everything changed on the canvases is written to the plot file (File > Save), and File > Export prints the canvases
 // and graphs that have file names, and writes the PDF book (one canvas per page), the PowerPoint presentation (one
 // canvas per slide) and the LaTeX document.
@@ -33,11 +33,11 @@
 //   --output folder      folder of the outputs (instead of the one of the XML file)
 //   --batch              no window: write what is asked and exit (the default when an output is asked)
 //   --show               show the windows even when outputs are asked (they are then written with File > Export)
-//   --config file.xml    configuration of CapGui
+//   --config file.xml    configuration of DatumGui
 //   --help               this text
 //
 // Template mode: PlotHistos --template plots.xml SOURCE... writes a plot file listing the histograms of the sources:
-// CAP files (their contents), or workflow files of RunCAP.py (the histograms their stages create, found by
+// Datum files (their contents), or workflow files of RunDatum.py (the histograms their stages create, found by
 // configuring the tasks without running them: the event and particle filters decide which are made). The file can
 // then be edited by hand, or, with --choose, in the Plot Template window, which selects the histograms and lays them
 // out before writing the file and showing it.
@@ -49,7 +49,7 @@
 #include <string>
 #include <vector>
 #include "FileSystem.hpp"
-#include "CapGuiApp.hpp"
+#include "DatumGuiApp.hpp"
 #include "PlotCatalog.hpp"
 #include "PlotOutputs.hpp"
 
@@ -58,9 +58,9 @@ namespace
 void usage()
 {
   std::printf(
-    "Usage: PlotHistos [options] plots.xml [file.cap ...]\n"
-    "  Plots the histograms and functions of CAP files as the XML file describes them: windows of canvases,\n"
-    "  canvases of graphs, graphs of histograms and functions, with their settings. The CAP files replace the\n"
+    "Usage: PlotHistos [options] plots.xml [file.datum ...]\n"
+    "  Plots the histograms and functions of Datum files as the XML file describes them: windows of canvases,\n"
+    "  canvases of graphs, graphs of histograms and functions, with their settings. The Datum files replace the\n"
     "  inputs of the XML file, in order.\n"
     "Options:\n"
     "  --print            print the canvases and graphs that have file names\n"
@@ -75,7 +75,7 @@ void usage()
     "  --config file.xml  configuration of DatumGui\n"
     "\n"
     "Usage: PlotHistos --template plots.xml [options] SOURCE ...\n"
-    "  Writes a plot file of the histograms of the sources: CAP files (what they hold), or workflow XML files of\n"
+    "  Writes a plot file of the histograms of the sources: Datum files (what they hold), or workflow XML files of\n"
     "  RunDatum.py (what their stages will write, from their tasks and filters, without running them).\n"
     "Options:\n"
     "  --choose              choose the histograms and the layout in the Plot Template window\n"
@@ -94,18 +94,18 @@ void usage()
 }
 
 //! An absolute path (relative to the current folder).
-CAP::String absolute(const CAP::String & path)
+Datum::String absolute(const Datum::String & path)
 {
-  CAP::String p = CAP::FileSystem::expand(path);
+  Datum::String p = Datum::FileSystem::expand(path);
   if (p.isNull() || p.str()[0] == '/') return p;
-  return CAP::FileSystem::normalize(CAP::FileSystem::join(CAP::FileSystem::current(), p));
+  return Datum::FileSystem::normalize(Datum::FileSystem::join(Datum::FileSystem::current(), p));
 }
 } // namespace
 
 //! @brief Plot as an XML file describes. @param argc number of arguments @param argv arguments @return exit status
 int main(int argc, char ** argv)
 {
-  using namespace CAP;
+  using namespace Datum;
   using GRAPHICS::PlotSpec;
   bool print = false, pdf = false, pptx = false, latex = false, batch = false, show = false;
   String save, output, specFile;
@@ -172,7 +172,7 @@ int main(int argc, char ** argv)
     if (choose)
       {
       guiArguments.push_back(nullptr);
-      GUI::CapGuiApp application(GUI::CapGuiApp::kBasic, {}, int(guiArguments.size()) - 1, guiArguments.data());
+      GUI::DatumGuiApp application(GUI::DatumGuiApp::kBasic, {}, int(guiArguments.size()) - 1, guiArguments.data());
       application.setCatalog(GUI::catalogPlots);
       application.startTemplate(catalog, options, templateFile);
       return application.run();
@@ -191,8 +191,8 @@ int main(int argc, char ** argv)
   if (!batch)
     {
     guiArguments.push_back(nullptr);
-    // on screen: CapGui on the plot file, every window shown; the files given replace its inputs
-    GUI::CapGuiApp application(GUI::CapGuiApp::kEdit, { specFile }, int(guiArguments.size()) - 1, guiArguments.data());
+    // on screen: DatumGui on the plot file, every window shown; the files given replace its inputs
+    GUI::DatumGuiApp application(GUI::DatumGuiApp::kEdit, { specFile }, int(guiArguments.size()) - 1, guiArguments.data());
     application.setCatalog(GUI::catalogPlots);
     application.setAllWindows(true);
     application.setInputFiles(dataFiles);

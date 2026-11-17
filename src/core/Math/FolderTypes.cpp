@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //!
-//! Registers the Math classes with binary support in the type registry of CAP::Folder (Base), so that folders
+//! Registers the Math classes with binary support in the type registry of Datum::Folder (Base), so that folders
 //! saved with these objects can be loaded. Runs when the Math library is loaded.
 //!
 #include "Folder.hpp"
@@ -27,7 +27,7 @@
 #include "Table2D.hpp"
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -59,4 +59,4 @@ namespace CAP
   }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

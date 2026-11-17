@@ -1,8 +1,8 @@
-#ifndef CAP_MATH_Constant
-#define CAP_MATH_Constant
+#ifndef DATUM_MATH_Constant
+#define DATUM_MATH_Constant
 #include "Polynomial.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -14,7 +14,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Constant f(2.5);
+  //!   Datum::MATH::Constant f(2.5);
   //!   double y = f(10.0);   // 2.5
   //! @endcode
   //!
@@ -50,6 +50,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

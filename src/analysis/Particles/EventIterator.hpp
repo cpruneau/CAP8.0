@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventIterator
-#define CAP__EventIterator
+#ifndef DATUM__EventIterator
+#define DATUM__EventIterator
 #include "EventProcessor.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -70,4 +70,4 @@ protected:
 };
 
 }
-#endif /* CAP__EventIterator */
+#endif /* DATUM__EventIterator */

@@ -9,15 +9,15 @@
  * *********************************************************************/
 //! @file FileSystem.hpp
 //! @brief FileSystem: functions asking the operating system about files and directories, and changing them.
-#ifndef CAP__FileSystem
-#define CAP__FileSystem
+#ifndef DATUM__FileSystem
+#define DATUM__FileSystem
 #include <cstdint>
 #include <ctime>
 #include <vector>
 #include "String.hpp"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -35,14 +35,14 @@ namespace CAP
 //!
 //! Example:
 //! @code
-//!   using namespace CAP;
-//!   String file = FileSystem::join("$CAP_HISTOS_EXPORT_PATH/PbPb", "run42", ".cap");   // ".../PbPb/run42.cap"
+//!   using namespace Datum;
+//!   String file = FileSystem::join("$DATUM_HISTOS_EXPORT_PATH/PbPb", "run42", ".datum");   // ".../PbPb/run42.datum"
 //!   if (FileSystem::isFile(FileSystem::expand(file))) ...
 //!   FileSystem::ListOptions options;
 //!   options.depth = -1;                        // the whole tree
-//!   options.extensions = {".cap"};
+//!   options.extensions = {".datum"};
 //!   for (const auto & entry : FileSystem::list("data", options)) std::cout << entry.path << std::endl;
-//!   std::vector<String> runs = FileSystem::glob("data/**/run*.cap");
+//!   std::vector<String> runs = FileSystem::glob("data/**/run*.datum");
 //! @endcode
 //!
 namespace FileSystem
@@ -89,7 +89,7 @@ namespace FileSystem
     bool                files       = true;   //!< list the files
     bool                directories = true;   //!< list the directories
     bool                hidden      = false;  //!< list (and descend into) hidden entries
-    std::vector<String> extensions;           //!< file extensions, e.g. {".cap"} (case-insensitive); empty: all
+    std::vector<String> extensions;           //!< file extensions, e.g. {".datum"} (case-insensitive); empty: all
     std::vector<String> include;              //!< glob patterns of file names; empty: all
     std::vector<String> exclude;              //!< glob patterns of names left out (files and directories)
     bool                followLinks = false;  //!< descend into directories reached through symbolic links
@@ -133,17 +133,17 @@ namespace FileSystem
   String join(const String & directory, const String & name);
   //! @brief Path of a file of a directory, with its extension: the extension (with or without its '.') is appended to
   //! the name unless the name already has it. @param directory directory @param name file name @param extension
-  //! extension, e.g. ".cap" @return path
+  //! extension, e.g. ".datum" @return path
   String join(const String & directory, const String & name, const String & extension);
   //! @brief Absolute path, without "." and ".." components and without a final '/'. @param path path @return path
   String normalize(const String & path);
-  //! @brief Directory part: "a/b/c.cap" gives "a/b", "c.cap" gives "", "/c" gives "/". @param path path @return directory
+  //! @brief Directory part: "a/b/c.datum" gives "a/b", "c.datum" gives "", "/c" gives "/". @param path path @return directory
   String parent(const String & path);
-  //! @brief Last component: "a/b/c.cap" and "a/b/c.cap/" give "c.cap". @param path path @return name
+  //! @brief Last component: "a/b/c.datum" and "a/b/c.datum/" give "c.datum". @param path path @return name
   String name(const String & path);
-  //! @brief Last component without its extension: "a/b/c.cap" gives "c". @param path path @return stem
+  //! @brief Last component without its extension: "a/b/c.datum" gives "c". @param path path @return stem
   String stem(const String & path);
-  //! @brief Extension of the last component, with its '.': "a/b/c.cap" gives ".cap", ".bashrc" gives "". @param path
+  //! @brief Extension of the last component, with its '.': "a/b/c.datum" gives ".datum", ".bashrc" gives "". @param path
   //! path @return extension, or ""
   String extension(const String & path);
   //! @brief Whether the last component has an extension (case-insensitive; with or without its '.'). @param path path
@@ -153,8 +153,13 @@ namespace FileSystem
   //! without '.'; empty to remove it) @return path
   String withExtension(const String & path, const String & extension);
   //! @brief Expand "~" (home directory) at the start, and environment variables written $NAME or ${NAME}. A variable
-  //! that is not defined is left as written. @param path path @return expanded path
+  //! that is not defined is left as written (DATUM_X and CAP_X stand for one another, see environment()).
+  //! @param path path @return expanded path
   String expand(const String & path);
+  //! @brief Value of an environment variable. The variables of Datum were named CAP_... before version 1.0: a variable
+  //! DATUM_X that is not set is read as CAP_X, and CAP_X (written in older workflows) as DATUM_X.
+  //! @param name name of the variable @return value, or nullptr if the variable is not set
+  const char * environment(const std::string & name);
   //! @brief Home directory of the user ($HOME). @return path, or "" if unknown
   String home();
   //! @brief Current working directory. @return path
@@ -163,16 +168,16 @@ namespace FileSystem
   //! @brief Resolve a path given in a configuration: expanded (see expand()); then an absolute path is returned as is,
   //! "." or a path starting with "./" is relative to the current directory, and any other path is relative to the
   //! directory held by the environment variable.
-  //! @param path path @param variable name of the environment variable, e.g. "CAP_HISTOS_IMPORT_PATH"
+  //! @param path path @param variable name of the environment variable, e.g. "DATUM_HISTOS_IMPORT_PATH"
   //! @return path @throws FileException if the path is relative to the variable and the variable is not defined
   //!
   String resolve(const String & path, const String & variable);
   //!
-  //! @brief Path given in the configuration of a task, with the convention of the CAP tasks: "DEFAULT" (or an empty
+  //! @brief Path given in the configuration of a task, with the convention of the Datum tasks: "DEFAULT" (or an empty
   //! path) is the directory held by the environment variable, any other path is resolved as by resolve(). Unlike
   //! resolve(), it never throws, since tasks resolve paths they may not use: if the variable is not defined,
   //! "DEFAULT" gives "" and a relative path is returned as given.
-  //! @param path path from the configuration @param variable environment variable, e.g. "CAP_HISTOS_IMPORT_PATH"
+  //! @param path path from the configuration @param variable environment variable, e.g. "DATUM_HISTOS_IMPORT_PATH"
   //! @return path
   //!
   String configuredPath(const String & path, const String & variable);
@@ -195,7 +200,7 @@ namespace FileSystem
   //! @brief Paths matching a pattern (expanded first, see expand()). Each component of the pattern may use * (any
   //! characters), ? (one character) and [abc], [a-z], [!abc] (one character of, or not of, a set); a component **
   //! matches any number of directories. Hidden entries match only a component that starts with '.'.
-  //! @param pattern pattern, e.g. "data/run*.cap", "data/\*\*/\*.cap" @return paths, sorted
+  //! @param pattern pattern, e.g. "data/run*.datum", "data/\*\*/\*.datum" @return paths, sorted
   //!
   std::vector<String> glob(const String & pattern);
   //! @brief Whether a name matches a glob pattern (*, ?, [abc], [a-z], [!abc]; no '/'). @param name name
@@ -227,6 +232,6 @@ namespace FileSystem
 
 } // namespace FileSystem
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

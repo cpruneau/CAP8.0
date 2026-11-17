@@ -1,8 +1,8 @@
-#ifndef CAP_ThermalDerivedHistos
-#define CAP_ThermalDerivedHistos
+#ifndef DATUM_ThermalDerivedHistos
+#define DATUM_ThermalDerivedHistos
 #include "ThermalHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   class ThermalDerivedHistos : public ThermalHistos
@@ -29,9 +29,9 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP_thermalHadronGasVsTempHistograms  */
+#endif /* DATUM_thermalHadronGasVsTempHistograms  */
 
 
 

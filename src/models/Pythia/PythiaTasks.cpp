@@ -10,15 +10,15 @@
 //! @file PythiaTasks.cpp
 //! @brief Task classes of the Pythia library, registered for Task::instantiateTask() (see TaskRegistration.hpp).
 #include "PythiaEventGenerator.hpp"
-#ifdef CAP_WITH_ROOT
+#ifdef DATUM_WITH_ROOT
 #include "PythiaEventReader.hpp"
 #endif
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(PythiaTasks)
+DATUM_REFLECTION(PythiaTasks)
 {
-  CAP::registerTask<CAP::PythiaEventGenerator>("CAP::PythiaEventGenerator");
-#ifdef CAP_WITH_ROOT
-  CAP::registerTask<CAP::PythiaEventReader>("CAP::PythiaEventReader");
+  Datum::registerTask<Datum::PythiaEventGenerator>("Datum::PythiaEventGenerator");
+#ifdef DATUM_WITH_ROOT
+  Datum::registerTask<Datum::PythiaEventReader>("Datum::PythiaEventReader");
 #endif
 }

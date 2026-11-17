@@ -3,11 +3,11 @@
  * Copied from file of same name in Therminator 2 package.
  *
  * *********************************************************************/
-#ifndef CAP__CRC32
-#define CAP__CRC32
+#ifndef DATUM__CRC32
+#define DATUM__CRC32
 #include <string>
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -18,12 +18,12 @@ namespace CAP
 //! (see <a href=http://en.wikipedia.org/wiki/Cyclic_redundancy_check>CRC @ Wikipedia</a>).
 //!
 //! Data are fed with update(), possibly in several pieces; finish() then completes the checksum. The class is not part
-//! of the Base library build (Crc32.cpp is not listed in CMakeLists.txt); the CAP binary format uses its own CRC
+//! of the Base library build (Crc32.cpp is not listed in CMakeLists.txt); the Datum binary format uses its own CRC
 //! (BinaryIO.hpp).
 //!
 //! Example:
 //! @code
-//!   CAP::Crc32 crc("hello",5);
+//!   Datum::Crc32 crc("hello",5);
 //!   unsigned int sum = crc.finish();
 //! @endcode
 //!
@@ -55,6 +55,6 @@ class Crc32
     static const unsigned int mCrc32Tab[]; //!< lookup table of the polynomial
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

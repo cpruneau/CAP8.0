@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventEfficiency
-#define CAP__EventEfficiency
+#ifndef DATUM__EventEfficiency
+#define DATUM__EventEfficiency
 #include "HistogramFolder.hpp"
 #include "Event.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -75,5 +75,5 @@ protected:
 
 }
 
-#endif /* CAP__EventEfficiency */
+#endif /* DATUM__EventEfficiency */
 

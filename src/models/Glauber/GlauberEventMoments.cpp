@@ -15,12 +15,12 @@
 #include "MathBasicFunctions.hpp"
 #include "MathConstants.hpp"
 
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
-using CAP::MATH::power;
+using Datum::MATH::pi;
+using Datum::MATH::twoPi;
+using Datum::MATH::power;
 
 
-namespace CAP
+namespace Datum
 {
 
   GlauberEventMoments::GlauberEventMoments()
@@ -388,4 +388,4 @@ namespace CAP
     }
 
   }
-} // namespace CAP
+} // namespace Datum

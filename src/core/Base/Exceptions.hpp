@@ -1,29 +1,29 @@
-#ifndef CAP_Exceptions
-#define CAP_Exceptions
+#ifndef DATUM_Exceptions
+#define DATUM_Exceptions
 #include <iostream>
 #include <exception>
 #include "String.hpp"
 
 //!
 //! @file Exceptions.hpp
-//! @brief Exception classes of CAP.
+//! @brief Exception classes of Datum.
 //!
-//! All CAP exceptions derive from Exception, itself a std::exception: catch CAP::Exception (or std::exception) to
+//! All Datum exceptions derive from Exception, itself a std::exception: catch Datum::Exception (or std::exception) to
 //! handle any of them, and call print() to report one. Each exception records a message, the function where it was
 //! thrown (source), and the name of its class.
 //!
 //! Example:
 //! @code
 //!   try { task->initialize(); }
-//!   catch (const CAP::Exception & e) { e.print(); }
+//!   catch (const Datum::Exception & e) { e.print(); }
 //! @endcode
 //!
 
-namespace CAP
+namespace Datum
 {
 
 //!
-//! @brief Base class of the CAP exceptions.
+//! @brief Base class of the Datum exceptions.
 //!
 class Exception : public std::exception
 {
@@ -37,7 +37,7 @@ public:
   virtual ~Exception() {}
   //! @brief Print the exception class, source and message.
   virtual void print() const;
-  //! Allows catching CAP exceptions through std::exception as well.
+  //! Allows catching Datum exceptions through std::exception as well.
   virtual const char * what() const noexcept override { return _message.data(); }
 
 protected:
@@ -292,6 +292,6 @@ public:
   const String  _name;  //!< name of the histogram, class or resource
   };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

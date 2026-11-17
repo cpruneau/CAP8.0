@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/Graphics
+# Project Datum/Graphics
 ################################################################################################
 
 
@@ -135,14 +135,14 @@ add_executable(TestGraph3D tests/TestGraph3D.cpp)
 target_link_libraries(TestGraph3D Graphics Math Base)
 add_test(NAME Graph3D COMMAND TestGraph3D)
 
-cap_install(Graphics LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Graphics LIBRARY "$ENV{DATUM_LIB_PATH}")
 
 # macOS demo program: bin/MacOsCanvasDemo opens a window showing a sample canvas
 if(APPLE)
   add_executable(MacOsCanvasDemo MacOsCanvasDemo.C)
   set_source_files_properties(MacOsCanvasDemo.C PROPERTIES LANGUAGE CXX)
   target_link_libraries(MacOsCanvasDemo Graphics Math Base)
-  cap_install(MacOsCanvasDemo RUNTIME "${CAP_INSTALL_BIN_DIR}")
+  datum_install(MacOsCanvasDemo RUNTIME "${DATUM_INSTALL_BIN_DIR}")
 endif()
 add_executable(TestPlotSpec tests/TestPlotSpec.cpp)
 target_link_libraries(TestPlotSpec Graphics Math Base)

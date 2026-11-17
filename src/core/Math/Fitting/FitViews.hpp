@@ -9,15 +9,15 @@
  * *********************************************************************/
 //! @file FitViews.hpp
 //! @brief Views of fits: maps of residuals, projections of fits of rank 2 (ProjectedFunction).
-#ifndef CAP__MATH__FitViews
-#define CAP__MATH__FitViews
+#ifndef DATUM__MATH__FitViews
+#define DATUM__MATH__FitViews
 #include <memory>
 #include <vector>
 #include "DataPointsVector.hpp"
 #include "Histogram.hpp"
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -104,6 +104,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__FitViews
+#endif // !DATUM__MATH__FitViews

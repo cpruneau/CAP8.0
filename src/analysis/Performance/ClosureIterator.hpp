@@ -7,21 +7,21 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ClosureIterator
-#define CAP__ClosureIterator
+#ifndef DATUM__ClosureIterator
+#define DATUM__ClosureIterator
 #include <vector>
 #include "Task.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @brief Task running closure tests (see ClosureCalculator) on all the generator-level files of a directory: for each
-//! CAP file (.cap) of IMPORT:PATH whose name holds the tag "_Gen" once, the detector-level file of the same name with
+//! Datum file (.datum) of IMPORT:PATH whose name holds the tag "_Gen" once, the detector-level file of the same name with
 //! the tag "_Reco" is compared with it, and the result written to the file named with the tag "_Closure" in
-//! EXPORT:PATH. A tag is "_Gen", "_Reco" or "_Closure" followed by "_", "." or the end of the name: "pp_Gen.cap" and
-//! "pp_Gen_run1.cap" are generator-level files ("pp_Reco.cap", "pp_Reco_run1.cap"), "pp_General_Gen.cap" too (only its
-//! last "_Gen" is a tag), but not "pp_General.cap"; a name with the tag twice is left out (ambiguous), as are the
+//! EXPORT:PATH. A tag is "_Gen", "_Reco" or "_Closure" followed by "_", "." or the end of the name: "pp_Gen.datum" and
+//! "pp_Gen_run1.datum" are generator-level files ("pp_Reco.datum", "pp_Reco_run1.datum"), "pp_General_Gen.datum" too (only its
+//! last "_Gen" is a tag), but not "pp_General.datum"; a name with the tag twice is left out (ambiguous), as are the
 //! names with the tag "_Reco" or "_Closure". Only the directory itself is searched (no sub-directory).
 //!
 //! A file that cannot be compared (no detector-level file, a folder missing, an output file that exists while
@@ -34,7 +34,7 @@ namespace CAP
 //! files), IMPORT:GEN_FOLDER, IMPORT:REC_FOLDER (folders compared in each file, "" for all), EXPORT:PATH,
 //! EXPORT:FORCE_REWRITE, and IncludedPattern0..4, ExcludedPattern0..4: the files must contain every included pattern
 //! and no excluded pattern (plain, case-sensitive substrings of the file name, extension included; a key whose value
-//! contains NONE is unused). Paths as in ClosureCalculator (DEFAULT: $CAP_HISTOS_IMPORT_PATH, $CAP_HISTOS_EXPORT_PATH).
+//! contains NONE is unused). Paths as in ClosureCalculator (DEFAULT: $DATUM_HISTOS_IMPORT_PATH, $DATUM_HISTOS_EXPORT_PATH).
 //!
 class ClosureIterator
 :
@@ -89,6 +89,6 @@ public:
   static String counterpart(const String & genFileName, const String & tag);
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ClosureIterator */
+#endif /* DATUM__ClosureIterator */

@@ -7,13 +7,13 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-//! @file CapGui.hpp
-//! @brief CapGui: main window of the CAP graphical interface (panes, browser, menus, status bar).
+//! @file DatumGui.hpp
+//! @brief DatumGui: main window of the Datum graphical interface (panes, browser, menus, status bar).
 //!
-//! @image html GuiClasses.png "Classes of CapGui (src/gui)" width=100%
-//! @image latex GuiClasses.pdf "Classes of CapGui (src/gui)" width=\textwidth
-#ifndef CAP__GUI__CapGui
-#define CAP__GUI__CapGui
+//! @image html GuiClasses.png "Classes of DatumGui (src/gui)" width=100%
+//! @image latex GuiClasses.pdf "Classes of DatumGui (src/gui)" width=\textwidth
+#ifndef DATUM__GUI__DatumGui
+#define DATUM__GUI__DatumGui
 #include <functional>
 #include <map>
 #include <memory>
@@ -32,22 +32,22 @@
 struct GLFWwindow;
 struct ImFont;
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
 
   //!
-  //! @brief Settings of the CapGui window (read from the XML configuration by CapApp).
+  //! @brief Settings of the DatumGui window (read from the XML configuration by DatumApp).
   //!
   struct GuiSettings
   {
-  String title      = "CAP";   //!< title of the window
+  String title      = "Datum";   //!< title of the window
   int    width      = 1400;   //!< width of the window (points)
   int    height     = 900;   //!< height of the window (points)
   String theme      = "light";   //!< light, dark or classic
   float  fontSize   = 15.0f;     //!< points
-  String fontFile;               //!< TrueType font; empty: the font distributed with CAP
+  String fontFile;               //!< TrueType font; empty: the font distributed with Datum
   bool   viewports  = true;      //!< windows (e.g. the file browser) can be dragged out of the main window
   int    columns    = 1;         //!< canvas panes per row
   int    rows       = 1;         //!< rows of canvas panes
@@ -58,7 +58,7 @@ namespace CAP
   };
 
   //!
-  //! @brief Main window of the CAP graphical interface: menu bar, canvas panes, file browser, status bar.
+  //! @brief Main window of the Datum graphical interface: menu bar, canvas panes, file browser, status bar.
   //!
   //! Data panes (addDataPane()) show data points as tables; they are docked beside the canvases and closed the same
   //! way, but are not part of the canvas layout. The fit pane (FitPane) shows the fits of the selected graph of the
@@ -72,24 +72,24 @@ namespace CAP
   //! The file browser is docked on the left of the canvases, or in a window of its own (setBrowserDocked()); it can
   //! also be docked elsewhere or dragged out with the mouse.
   //!
-  //! CapGui only displays: what the menu commands do is decided by the application (CapApp), registered as listener
+  //! DatumGui only displays: what the menu commands do is decided by the application (DatumApp), registered as listener
   //! on the menu bar. Built on Dear ImGui with GLFW and OpenGL; no ROOT class is used.
   //!
   //! @code
-  //!   CapGui gui;
+  //!   DatumGui gui;
   //!   gui.initialize(settings);
   //!   gui.menuBar().addMenu("File").addItem("Exit", "file.exit", "Ctrl+Q");
   //!   gui.menuBar().addListener(&app);
   //!   gui.run();          // returns when the window is closed
   //! @endcode
   //!
-  class CapGui
+  class DatumGui
   {
   public:
 
   //! @brief Constructor: nothing is shown until initialize().
-  CapGui();
-  ~CapGui();
+  DatumGui();
+  ~DatumGui();
 
   //! @brief Open the window. @param settings window settings @return false if the window could not be created
   bool initialize(const GuiSettings & settings);
@@ -98,7 +98,7 @@ namespace CAP
   //! @brief Close the window at the end of the current frame (onCloseRequest may refuse).
   void requestExit();
 
-  MenuBar & menuBar() { return _menuBar; }   //!< The menu bar (CapApp fills it)
+  MenuBar & menuBar() { return _menuBar; }   //!< The menu bar (DatumApp fills it)
   FileDialog & fileDialog() { return _fileDialog; }   //!< The file dialog (Open, Open Folder, Save As)
 
   //! @name File browser
@@ -332,7 +332,7 @@ namespace CAP
   struct PaneWindow
   {
   String title;           //!< title
-  std::string label;      //!< ImGui label: "title###CapPaneWindow<k>"
+  std::string label;      //!< ImGui label: "title###DatumPaneWindow<k>"
   int columns = 1;        //!< grid of the panes
   int rows = 1;           //!< grid of the panes
   int width = 1000;       //!< size (points)
@@ -360,6 +360,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__CapGui
+#endif // !DATUM__GUI__DatumGui

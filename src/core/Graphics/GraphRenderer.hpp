@@ -1,9 +1,9 @@
-#ifndef CAP__GraphRenderer
-#define CAP__GraphRenderer
+#ifndef DATUM__GraphRenderer
+#define DATUM__GraphRenderer
 #include "Renderer.hpp"
 #include "Graph.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -41,6 +41,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GraphRenderer
+#endif // !DATUM__GraphRenderer

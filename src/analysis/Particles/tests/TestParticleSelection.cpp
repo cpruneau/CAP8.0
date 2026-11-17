@@ -23,7 +23,7 @@
 #include "ParticleSelection.hpp"
 #include "ParticleType.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {

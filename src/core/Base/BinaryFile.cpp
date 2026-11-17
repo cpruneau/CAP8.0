@@ -14,7 +14,7 @@
 #include <iterator>
 
 
-namespace CAP
+namespace Datum
 {
 
   BinaryFile::BinaryFile(const String & path, Access access)
@@ -102,4 +102,4 @@ namespace CAP
   _loaded = true;
   }
 
-} // namespace CAP
+} // namespace Datum

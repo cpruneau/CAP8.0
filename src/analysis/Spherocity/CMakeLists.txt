@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/Spherocity
+# Project Datum/Spherocity
 ################################################################################################
 
 
@@ -18,5 +18,5 @@ target_include_directories(Spherocity  PUBLIC Spherocity Base  Particles  ${EXTR
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-cap_install(Spherocity LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Spherocity LIBRARY "$ENV{DATUM_LIB_PATH}")
 

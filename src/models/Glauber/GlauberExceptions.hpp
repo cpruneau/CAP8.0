@@ -9,11 +9,11 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP_GlauberExceptions
-#define CAP_GlauberExceptions
+#ifndef DATUM_GlauberExceptions
+#define DATUM_GlauberExceptions
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
   
   //! @brief Base class of the exceptions of the Glauber simulations.
@@ -99,6 +99,6 @@ namespace CAP
   int _iterations;  ///< number of iterations done
   };
   
-} // namespace CAP
+} // namespace Datum
 
 #endif

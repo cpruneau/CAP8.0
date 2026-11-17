@@ -2,27 +2,27 @@
 \section{DatumGui}
 \label{sec:capgui}
 
-DatumGui is the graphical interface of \CAP{}: it opens the files written by the jobs, draws their histograms, data
+DatumGui is the graphical interface of \Datum{}: it opens the files written by the jobs, draws their histograms, data
 points and functions, fits them, and makes figures and documents of them. It is built on Dear ImGui~\cite{DearImGui}
-with its GLFW and OpenGL back ends, and uses no ROOT class; it reads ROOT files only when \CAP{} is built with
+with its GLFW and OpenGL back ends, and uses no ROOT class; it reads ROOT files only when \Datum{} is built with
 ROOT-file support, to import their histograms.
 
 What DatumGui shows is described by a \emph{plot file}: an XML file listing the input files, the windows of canvases,
 the canvases of graphs, and the histograms and functions of each graph, with their styles
 (Section~\ref{sec:plotfiles}). Every session is a plot file, an untitled one at first, and the canvases on the screen
 are its windows: what is done on them is written to the file, and the file, once saved, draws the same canvases again,
-in DatumGui or in batch. The program is started with plot files, CAP files and folders,
+in DatumGui or in batch. The program is started with plot files, Datum files and folders,
 {\footnotesize
 \begin{verbatim}
 DatumGui [--basic|--edit] [plots.xml] [data ...]
 \end{verbatim}}
-\noindent where the data are CAP files and folders, shown in the browser; the BASIC mode starts from a new plot file,
+\noindent where the data are Datum files and folders, shown in the browser; the BASIC mode starts from a new plot file,
 with the current folder in the browser, and the EDIT mode from the plot files given; the tools are the same. \code{PlotEditor} is another name of the program, and
 \code{PlotHistos} draws a plot file without a window (Section~\ref{sec:plotbatch}). The settings of the interface
 (theme, layout, fonts, the folders shown at start) are kept in an XML file, read from the home directory of the user
-or from the configuration directory of \CAP{}, and written back by the Preferences dialog.
+or from the configuration directory of \Datum{}, and written back by the Preferences dialog.
 
-DatumGui draws with the graphics library of \CAP{} (Section~\ref{sec:graphics}): \code{ImGuiPainter} implements the
+DatumGui draws with the graphics library of \Datum{} (Section~\ref{sec:graphics}): \code{ImGuiPainter} implements the
 abstract \code{Painter} for the screen, so that a canvas is drawn by the same code on the screen and, through the SVG,
 PDF and PowerPoint painters, in the files it exports, and what is seen is what is saved. Labels containing \LaTeX{}
 (or the TLatex notation of ROOT, translated first) are typeset by the system \code{latex} and \code{dvisvgm} in a
@@ -30,8 +30,8 @@ background thread, cached in memory and on disk, and drawn as textures; plain te
 so that typesetting never blocks the interface.
 
 Figure~\ref{fig:gui} shows the classes of the interface. \code{DatumGui} is the window: it holds the panes, the
-file browsers, the dialogs and the menu bar, and only displays. The application, \code{CapApp} and its derived
-class \code{CapGuiApp}, listens to the menus, decides what each command does, and owns the window.
+file browsers, the dialogs and the menu bar, and only displays. The application, \code{DatumApp} and its derived
+class \code{DatumGuiApp}, listens to the menus, decides what each command does, and owns the window.
 
 \begin{figure*}[t]
   \centering
@@ -55,9 +55,9 @@ each other window of the file being shown in a window of its own.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{CapGuiGraphFitData}
+  \includegraphics[width=\textwidth]{DatumGuiGraphFitData}
   \caption{DatumGui with the output of a jet study of Pythia combined from sub-samples. Left: the file browser, with the
-  CAP file of the combination expanded: a folder per task, a folder per combination of filters and jet settings
+  Datum file of the combination expanded: a folder per task, a folder per combination of filters and jet settings
   (\code{ALL\_ALL\_R0p4\_JetFilter0}), and its histograms and profiles, with their types. Centre: a canvas showing the
   jet $p_T$ distribution, in logarithmic scale, with an exponential fitted to it and the quality of the fit in the
   legend; the toolbar above it holds the drawing tools and the options of the graph (logarithmic axes, fits, residual
@@ -69,12 +69,12 @@ each other window of the file being shown in a window of its own.
 \end{figure*}
 
 \paragraph{The data browser.}
-The browser shows the data files opened (CAP files, Section~\ref{sec:binary}, read lazily, and ROOT files) and the
-folders of the file system as trees, in which a CAP file opens when it is expanded; a filter selects objects by name,
+The browser shows the data files opened (Datum files, Section~\ref{sec:binary}, read lazily, and ROOT files) and the
+folders of the file system as trees, in which a Datum file opens when it is expanded; a filter selects objects by name,
 and each entry shows the type of the object (one- or two-dimensional histogram, profile, data points) with its title,
 binning and number of entries. An object is added to the plot by clicking on it, which puts it in the selected graph,
 or by dragging it onto a graph of a canvas or onto the plot tree; a folder adds all its objects, one graph each.
-Objects can also be copied, by dragging, into trees made in the session, organised in folders, and saved as a new CAP
+Objects can also be copied, by dragging, into trees made in the session, organised in folders, and saved as a new Datum
 file; a folder or a file can be exported to a ROOT file. The data table pane lists the points of the selected object
 with their coordinates, values and statistical and systematic uncertainties and, when the object has fits, the values
 of the fitted functions and the pulls.
@@ -107,7 +107,7 @@ file (attribute \code{rebin} of the histogram) and made again from the original 
 \label{sec:plotfiles}
 
 \paragraph{Structure.}
-A plot file names its inputs, the CAP files the histograms are taken from (by paths relative to the file), and its
+A plot file names its inputs, the Datum files the histograms are taken from (by paths relative to the file), and its
 outputs: a folder, the names of a PDF book, of a PowerPoint presentation and of a \LaTeX{} document, and a title and
 authors. Its windows hold canvases, which hold graphs, which hold the histograms (an input and a path in it) and the
 functions (a class of the registry with its parameters and range) they draw:
@@ -115,7 +115,7 @@ functions (a class of the registry with its parameters and range) they draw:
 {\footnotesize
 \begin{verbatim}
 <PlotHistos version="1">
-  <Input id="pairs" file="derived.cap"/>
+  <Input id="pairs" file="derived.datum"/>
   <Output directory="figures" pdf="plots.pdf" pptx="plots.pptx" latex="presentation.tex"/>
   <Window title="Single particles" columns="2" rows="1">
     <Canvas name="spectra" title="Transverse momentum spectra" file="spectra.pdf">
@@ -162,7 +162,7 @@ that was changed is marked in the browser, and is offered to be saved when it is
 plot file is; Save All saves every plot file and tree changed.
 
 \paragraph{New plot files from the data.}
-A plot file can be made from the content of a CAP file, or from a workflow of RunDatum before it is run (File $>$ New
+A plot file can be made from the content of a Datum file, or from a workflow of RunDatum before it is run (File $>$ New
 from Data). For a workflow, each stage is configured as the job would be, in a process of its own, without generating
 an event or reading a file, and its analysis tasks make their folders of histograms empty: the event and particle
 filters decide which folders and histograms exist, and the plot file is ready when the jobs have run. The histograms
@@ -182,20 +182,20 @@ section per window and one figure per canvas, compiled if asked for.
 The same outputs are made without a window by \code{PlotHistos}, which also makes plot files from the data:
 {\footnotesize
 \begin{verbatim}
-PlotHistos --all plots.xml [data.cap ...]
+PlotHistos --all plots.xml [data.datum ...]
 PlotHistos --template plots.xml \
            --select "*R2*" workflow.xml
 \end{verbatim}}
 \noindent writes the named figures, the PDF book, the PowerPoint presentation and the \LaTeX{} document of a plot file,
 or writes a plot file listing the histograms of a workflow whose names match a pattern.
-\noindent The CAP files given after a plot file replace its inputs, so that one plot file serves the outputs of
+\noindent The Datum files given after a plot file replace its inputs, so that one plot file serves the outputs of
 several jobs. Without an output option, \code{PlotHistos} opens DatumGui on the plot file, every window shown.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Fits}
 \label{sec:guifits}
 
-The Fit window gives access, without programming, to the fitting library of \CAP{} described in
+The Fit window gives access, without programming, to the fitting library of \Datum{} described in
 Section~\ref{sec:fitting}; it is a front end to the same classes that programs use, and a fit made in either is
 seen in the other.
 
@@ -229,7 +229,7 @@ the edges of the bins, and the number of points used is shown as the regions are
 
 \paragraph{Results.}
 A fit is attached to the object as a fit record (Section~\ref{sec:fitting}), drawn with it, and saved with it when
-the object is written to a CAP file; the fits of a file are thus found again, in DatumGui or in a program, with the
+the object is written to a Datum file; the fits of a file are thus found again, in DatumGui or in a program, with the
 object they were made to (they are not part of the plot file). The Fits pane, below the canvases, shows one tab per fit of the selected graph: the
 quality of the fit (the statistic, the number of degrees of freedom, $\chi^2/\nu$ and the $p$-value, the number of
 points used, the convergence and the method), the parameters with their uncertainties and bounds, flagged when one
@@ -244,7 +244,7 @@ canvas.
 \label{sec:guimaps}
 
 The particle efficiencies and smearers used by the jobs (Section~\ref{sec:efficiency}) are made and edited in the
-Detector Maps window and kept in a maps file, a CAP file holding any number of them, each named; RunDatum names the
+Detector Maps window and kept in a maps file, a Datum file holding any number of them, each named; RunDatum names the
 file and lets each task choose among its objects. The window lists the efficiencies and smearers of the file (added,
 renamed and removed there) and, for the one selected, each of its maps, the efficiency or the resolutions and biases
 of $\pT$, $\eta$ and $\varphi$, each of which is one of the following:

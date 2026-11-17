@@ -26,11 +26,11 @@
  *                                                                              *
  ********************************************************************************/
 
-#ifndef CAP__VISCOSITY_H_
-#define CAP__VISCOSITY_H_
+#ifndef DATUM__VISCOSITY_H_
+#define DATUM__VISCOSITY_H_
 #include "ScalarField.hpp"
 
-namespace CAP
+namespace Datum
 {
   enum eViscPi {i00, i0X, i0Y, i0Z,
     iXX, iXY, iXZ,
@@ -70,8 +70,8 @@ namespace CAP
 
   };
 
-} // namespace CAP
-#endif // !CAP__VISCOSITY_H_
+} // namespace Datum
+#endif // !DATUM__VISCOSITY_H_
 
 /*! @file Viscosity.h
  * @brief Definition of Viscosity class. Contains the bulk @f$ \Pi @f$ and shear _viscosity tensor @f$ \pi^{/mu/nu} @f$.

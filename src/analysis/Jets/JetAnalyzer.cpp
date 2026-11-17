@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "JetAnalyzer.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 JetAnalyzer::JetAnalyzer()
@@ -53,4 +53,4 @@ void JetAnalyzer::fill(unsigned int first, const std::vector<Jet> & jets, const 
   _folders[first]->fill(accepted,_cones);
 }
 
-} // namespace CAP
+} // namespace Datum

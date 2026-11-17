@@ -13,13 +13,13 @@
 //!
 //! @image html StatisticalTestsClasses.png "Functions of the folder StatisticalTests" width=100%
 //! @image latex StatisticalTestsClasses.pdf "Functions of the folder StatisticalTests" width=\textwidth
-#ifndef CAP__MATH__StatisticalTests
-#define CAP__MATH__StatisticalTests
+#ifndef DATUM__MATH__StatisticalTests
+#define DATUM__MATH__StatisticalTests
 #include <functional>
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -223,6 +223,6 @@ namespace CAP
   //! @}
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__StatisticalTests
+#endif // !DATUM__MATH__StatisticalTests

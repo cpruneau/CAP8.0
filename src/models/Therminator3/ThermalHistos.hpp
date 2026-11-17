@@ -6,12 +6,12 @@
  *
  * For the licensing terms see LICENSE.
  **********************************************************************/
-#ifndef CAP_ThermalHistos
-#define CAP_ThermalHistos
+#ifndef DATUM_ThermalHistos
+#define DATUM_ThermalHistos
 #include "HistogramFolder.hpp"
 #include "ThermalHadronGasFD.hpp"
 
-namespace CAP
+namespace Datum
 {
   
   
@@ -127,9 +127,9 @@ namespace CAP
   
   };
   
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP_ThermalHistos
+#endif // !DATUM_ThermalHistos
 
 
 

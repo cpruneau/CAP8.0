@@ -22,7 +22,7 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -143,4 +143,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

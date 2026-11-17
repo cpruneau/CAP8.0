@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAPFactory
-#define CAPFactory
+#ifndef DatumFactory
+#define DatumFactory
 #include "Exceptions.hpp"
 
 //!
-//! @class CAP::Factory
+//! @class Datum::Factory
 //! @brief Pool of reusable objects of type T.
 //!
 //! Generic base class for factory services.
@@ -25,7 +25,7 @@
 //! @tparam T type of the objects; it must have a default constructor
 //!
 
-namespace CAP
+namespace Datum
 {
 
 template < class T >
@@ -168,6 +168,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif /* Factoryhpp */

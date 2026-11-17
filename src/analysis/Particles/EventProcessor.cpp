@@ -10,7 +10,7 @@
 #include "EventProcessor.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   EventProcessor::EventProcessor()
   :
@@ -358,5 +358,5 @@ namespace CAP
   return analyzeThisEvent;
   }
 
-} // namespace CAP
+} // namespace Datum
 

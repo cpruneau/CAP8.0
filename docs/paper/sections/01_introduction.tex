@@ -12,22 +12,25 @@ acceptance, particle species, event classes, efficiencies and detector resolutio
 obtained from several models, each with its own event generator, and recomputed whenever the conditions of the
 measurement change.
 
-\CAP{}, formerly the Correlation Analysis Package (CAP), was developed to provide such predictions, and to analyse
-data, with one set of tools. This paper describes \CAP{}~1.0, the ninth version of the package and the first one
-published, a redesign with two goals.
+\Datum{}, formerly the Correlation Analysis Package (CAP), was developed to provide such predictions, and to analyse
+data, with one set of tools. This paper describes \Datum{}~1.0, the ninth version of the package and the first one
+published, a redesign with two goals. With its new name, the C++ namespace (\code{Datum}), the programs
+(\code{bin/Datum}, \code{bin/DatumGui}, \code{RunDatum.py}, \ldots), the environment variables (\code{DATUM\_\ldots}) and
+the data files (\code{.datum}) were renamed; the files written by CAP (\code{.cap} data files, workflows naming the
+classes \code{CAP::\ldots}) are still read, and the former names of the programs and variables still work.
 
 \paragraph{A modern object and class model.}
-Earlier versions of \CAP{} were built on ROOT~\cite{Brun:1997pa}, whose object model, dictionaries and global state
-shaped the code of every analysis. \CAP{}~1.0 is written in C++17 around its own object and class model, with as little
+Earlier versions of \Datum{} were built on ROOT~\cite{Brun:1997pa}, whose object model, dictionaries and global state
+shaped the code of every analysis. \Datum{}~1.0 is written in C++17 around its own object and class model, with as little
 legacy code as possible. It defines its own objects, histograms of any number of dimensions, data points, parameterised
 functions, fits, graphics and binary file format, none of which depends on ROOT (Fig.~\ref{fig:hierarchy}). Functions
 and histograms are stored in a versioned binary format that later versions of the package can still read, and
-analyses are configured with XML files. {\color{red}ROOT is still needed to build \CAP{}~1.0: a few files of the core, of the
+analyses are configured with XML files. {\color{red}ROOT is still needed to build \Datum{}~1.0: a few files of the core, of the
 helpers and of two generators use it for random numbers, system utilities and the conversion of \code{.root} files,
 and these uses are being removed.}
 
 \paragraph{Tools to simulate common observables.}
-\CAP{}~1.0 features a modular design enabling the  computation of a wide range of observables selected by users at run-time.  Many of the observables  featured  require a single pass through  events of a model or of data. Those are known within the context of \CAP{} as basic observables. There are also several observables that either require a second pass through the data or that can be combined  based on basic observables. Those are referred to as derived observables. In general, all observables whether integral or differential are internally represented in the form of histograms.  Observables featured in \CAP{} include 
+\Datum{}~1.0 features a modular design enabling the  computation of a wide range of observables selected by users at run-time.  Many of the observables  featured  require a single pass through  events of a model or of data. Those are known within the context of \Datum{} as basic observables. There are also several observables that either require a second pass through the data or that can be combined  based on basic observables. Those are referred to as derived observables. In general, all observables whether integral or differential are internally represented in the form of histograms.  Observables featured in \Datum{} include 
 \begin{itemize}
   \item single-particle spectra, as functions of transverse momentum $\pT$, rapidity $y$, or pseudorapidity $\eta$,
     and azimuth $\varphi$;
@@ -49,7 +52,7 @@ is also included. Events can be selected by class, in ranges of multiplicity, en
 variable such as spherocity, and particles by species and kinematics; an analysis is carried out for every combination of event and
 particle filters in the same pass.
 
-\CAP{}~1.0 can also be used for fast performance studies. Simple smearers reproduce the experimental resolution in
+\Datum{}~1.0 can also be used for fast performance studies. Simple smearers reproduce the experimental resolution in
 $\pT$, rapidity and azimuth, and efficiencies that depend on the kinematics of single particles or of pairs can be
 applied to study the corrections they require. Comparing an analysis of generated particles with the same analysis
 of smeared and filtered particles shows the effect of the detector on each observable.

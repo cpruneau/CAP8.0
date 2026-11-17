@@ -37,8 +37,8 @@
 #include "ParameterizedComposite.hpp"
 #include "Polynomial2D.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

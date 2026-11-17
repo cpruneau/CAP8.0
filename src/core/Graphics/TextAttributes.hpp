@@ -1,8 +1,8 @@
-#ifndef CAP__TextAttributes
-#define CAP__TextAttributes
+#ifndef DATUM__TextAttributes
+#define DATUM__TextAttributes
 #include "Attributes.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -69,6 +69,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__TextAttributes
+#endif // !DATUM__TextAttributes

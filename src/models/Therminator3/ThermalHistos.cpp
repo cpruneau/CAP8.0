@@ -8,7 +8,7 @@
 #include "ThermalHadronGas.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   
   
@@ -366,4 +366,4 @@ namespace CAP
   
   
   
-} // namespace CAP
+} // namespace Datum

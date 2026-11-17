@@ -1,7 +1,7 @@
 #include "Complex.hpp"
 #include "MathExceptions.hpp"
 
-using CAP::MATH::ComplexF;
-using CAP::MATH::ComplexD;
-using CAP::MATH::ComplexLD;
+using Datum::MATH::ComplexF;
+using Datum::MATH::ComplexD;
+using Datum::MATH::ComplexLD;
 

@@ -1,7 +1,7 @@
-#ifndef CAP_MathExceptions
-#define CAP_MathExceptions
+#ifndef DATUM_MathExceptions
+#define DATUM_MathExceptions
 #include "Exceptions.hpp"
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -64,6 +64,6 @@ namespace CAP
   // MathIterationException
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

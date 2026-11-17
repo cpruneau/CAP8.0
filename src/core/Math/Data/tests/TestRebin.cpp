@@ -23,8 +23,8 @@
 #include "Profile.hpp"
 #include "MathExceptions.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

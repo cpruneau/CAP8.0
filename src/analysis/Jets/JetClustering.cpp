@@ -15,7 +15,7 @@
 #include "Event.hpp"
 #include "Particle.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -115,4 +115,4 @@ unsigned long JetClustering::nClusterings()
   return clusteringCount();
 }
 
-} // namespace CAP
+} // namespace Datum

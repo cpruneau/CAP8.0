@@ -29,7 +29,7 @@ each type in an event is drawn, independently for each type, from a multiplicity
   function of one variable of the function registry (Section~\ref{sec:functions}), named by
   \code{Mult:Function:Name} with its parameters in \code{Mult:Function:Parameters}: a registered class, an exponential
   or a negative binomial for instance, or a composite built in DatumGui;
-  \item \code{HISTOGRAM}: $P(n)$ proportional to the contents of a histogram of one variable, read from a CAP file
+  \item \code{HISTOGRAM}: $P(n)$ proportional to the contents of a histogram of one variable, read from a Datum file
   (\code{Mult:Histogram:Path}, \code{Mult:Histogram:File}) at a path in it (\code{Mult:Histogram:Name}), for instance
   the multiplicity distribution measured by \code{ParticleSingleAnalyzer} in another run, of a model or of data; each
   bin gives its probability to the integers it contains.
@@ -62,13 +62,13 @@ random numbers are drawn by a Mersenne Twister, with the seed \code{Random:Seed}
 \label{sec:therminator}
 
 \paragraph{Origin.}
-Therminator3 is the thermal generator of \CAP{}. It is based on THERMINATOR~2~\cite{Chojnacki:2011hb} (release 2.0.3),
+Therminator3 is the thermal generator of \Datum{}. It is based on THERMINATOR~2~\cite{Chojnacki:2011hb} (release 2.0.3),
 itself an extension of THERMINATOR~\cite{Kisiel:2005hn}, by M.~Chojnacki, A.~Kisiel, W.~Broniowski and W.~Florkowski,
 from which it takes its physics: the statistical emission of hadrons from a freeze-out hypersurface, the freeze-out
 models, the format of the hydrodynamic hypersurfaces, and the method of generation. The code was redesigned for
-\CAP{}: the class structure is simplified, the configuration files of THERMINATOR~2 are replaced by the configuration
-keys of a task, its ROOT data structures by the scalar fields, particles and events of \CAP{}, and its particle tables
-by the particle database of \CAP{}; the decays of the resonances and the analysis of the events are left to the
+\Datum{}: the class structure is simplified, the configuration files of THERMINATOR~2 are replaced by the configuration
+keys of a task, its ROOT data structures by the scalar fields, particles and events of \Datum{}, and its particle tables
+by the particle database of \Datum{}; the decays of the resonances and the analysis of the events are left to the
 other tasks of the job.
 
 \paragraph{Class structure.}
@@ -141,7 +141,7 @@ spatial rapidity $\eta$ uniform over \code{sRapidityRange}.
   The transverse velocity is either constant (subtypes 2 and 3) or rises with the radius as
   $v_T(\rho) = (\rho/\rho_{\max})/(v + \rho/\rho_{\max})$, with $v$ = \code{tVelocity} (subtypes 4 to 6; Eq.~(42) of
   Ref.~\cite{Chojnacki:2011hb}). In subtypes 3, 5 and 6 the emission is delayed by a time $\Delta$ drawn from an
-  exponential distribution of mean \code{Delay}. In subtype 6, which is new in \CAP{}, the particle also streams
+  exponential distribution of mean \code{Delay}. In subtype 6, which is new in \Datum{}, the particle also streams
   freely during the delay, $\vec{x} \to \vec{x} + \Delta\,\vec{p}/E$.
   \item \code{SFO}, the Krak\'ow single freeze-out model~\cite{Broniowski:2001we}. Emission occurs on the hyperboloid
   $\tau^2 - \rho^2 = \tau_f^2$ (\code{TauC}), with the Hubble-like flow $u = x/\tau_f$ of the single freeze-out:
@@ -198,7 +198,7 @@ particle database, with the branching ratios normalized to one, as the decayer d
 \subsection{Pythia8}
 \label{sec:pythia}
 
-\code{PythiaEventGenerator} generates events with Pythia~8~\cite{Bierlich:2022pfr}, linked to \CAP{} when it is built
+\code{PythiaEventGenerator} generates events with Pythia~8~\cite{Bierlich:2022pfr}, linked to \Datum{} when it is built
 with Pythia (Section~\ref{sec:build}). The beams are set by their PDG codes and either the energy in the centre of mass
 or the energies of the two beams (proton--proton at 2.7~TeV by default), and the seed by \code{SeedValue}. Three
 presets set the many Pythia parameters of models of collective effects in small systems: QCD-based colour
@@ -207,13 +207,13 @@ reconnection (\code{UseQCDCR}, on by default), rope hadronisation (\code{UseRope
 \code{Option29}, applied after the presets so that they can modify them. The particles of each Pythia event are
 copied into the event of the task with their momenta and production vertices: by default the final-state particles
 only, without photons, neutrinos, quarks, gluons and gauge bosons, each of which can be kept on request. Decays are
-those of Pythia, set by its own options. The particles whose PDG code is not in the particle database of \CAP{} are
+those of Pythia, set by its own options. The particles whose PDG code is not in the particle database of \Datum{} are
 skipped and counted.
 
 \paragraph{Production in $\hat{p}_T$ bins.}
 The cross section of the hard processes falls steeply with their transverse momentum $\hat{p}_T$, so that a
 production of minimum-bias or inclusive hard events runs out of statistics at high $p_T$ long before it has enough at
-low $p_T$. \CAP{} therefore produces the hard processes in bins of $\hat{p}_T$, with edges
+low $p_T$. \Datum{} therefore produces the hard processes in bins of $\hat{p}_T$, with edges
 $\hat{p}_{T,0} < \hat{p}_{T,1} < \dots < \hat{p}_{T,K}$, starting at a hard minimum $\hat{p}_{T,0}$ (with, e.g.,
 \code{HardQCD:all = on}), and the same number of events $N$ in each bin, which gives similar statistics over the whole
 range. The task sets \code{PhaseSpace:pTHatMin} and \code{PhaseSpace:pTHatMax} from its keys \code{PTHAT\_MIN} and
@@ -229,7 +229,7 @@ the bins (Section~\ref{sec:run}).
 \subsection{Herwig 7}
 \label{sec:herwig}
 
-\code{HerwigEventGenerator} runs Herwig~7~\cite{Bellm:2015jjp} in the job, linked to \CAP{} when it is built with
+\code{HerwigEventGenerator} runs Herwig~7~\cite{Bellm:2015jjp} in the job, linked to \Datum{} when it is built with
 Herwig (Section~\ref{sec:external}). Herwig is configured as on its command line: \code{Herwig read} turns an input
 file (\code{.in}) of repository commands into a run file (\code{.run}) holding the event generator, and \code{Herwig
 run} generates its events. The task does both. Given an input file (\code{InputFile}, or a \code{.in} file given as
@@ -251,18 +251,18 @@ the command line. Each Herwig event is generated by \code{execute()}, and its fi
 the event of the task with their momenta (GeV) and production vertices (mm): photons and neutrinos are included unless
 \code{SavePhotons} or \code{SaveNeutrinos} is off, and a particle is added when it passes the first particle filter of
 the task. As for Pythia, the particles whose PDG code is not in the particle database are skipped and counted.
-Herwig's events are unweighted by default; weighted events, whose weight \CAP{} events cannot carry, are counted and
+Herwig's events are unweighted by default; weighted events, whose weight \Datum{} events cannot carry, are counted and
 reported, together with the events that Herwig failed to generate. At the end of the job, the task reports the cross
 section and Herwig writes its output file. Since Herwig keeps a global state, a job has a single
 \code{HerwigEventGenerator}. On macOS, Herwig and ThePEG must be built with \code{-fno-typed-cxx-new-delete} and linked
-to \code{libc++}, as is the \CAP{} module.
+to \code{libc++}, as is the \Datum{} module.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Event readers}
 \label{sec:readers}
 
 Readers take the events produced by other generators from their files, found from the key \code{DataImportPath}
-(the environment variable \code{CAP\_DATA\_IMPORT\_PATH} by default) and the name or pattern \code{DataImportFile}.
+(the environment variable \code{Datum\_DATA\_IMPORT\_PATH} by default) and the name or pattern \code{DataImportFile}.
 Particles whose PDG code is not in the particle database are skipped, and counted in the report of the task at the
 end of the job.
 \begin{itemize}
@@ -277,7 +277,7 @@ end of the job.
   event-plane angles and eccentricities of orders 2 to 5, followed by the PDG codes, charges, momenta and energies of
   the particles; the particles keep the energies of the file, since PHSD particles may be off their mass shell.
 \end{itemize}
-\todo{the program writing the Pythia ROOT trees read by \code{PythiaEventReader} is not part of \CAP{}: say where
+\todo{the program writing the Pythia ROOT trees read by \code{PythiaEventReader} is not part of \Datum{}: say where
 it comes from.}
 
 % ---------------------------------------------------------------------------------------------------------------
@@ -285,7 +285,7 @@ it comes from.}
 \label{sec:glauber}
 
 \paragraph{Class structure.}
-The Monte Carlo Glauber model~\cite{Miller:2007ri} of \CAP{} derives from TGlauberMC, the PHOBOS Glauber Monte
+The Monte Carlo Glauber model~\cite{Miller:2007ri} of \Datum{} derives from TGlauberMC, the PHOBOS Glauber Monte
 Carlo~\cite{Alver:2008aq}. The task \code{GlauberGenerator} makes the events: for each event, it places the
 nucleons of the two nuclei (\code{GlauberNucleus}, of a type \code{GlauberNucleusType} taken from the database
 \code{GlauberDb}, with the radial densities of \code{NuclearDistribution}), draws the impact parameter, and finds

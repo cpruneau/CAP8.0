@@ -1,12 +1,12 @@
-#ifndef CAP_MATH_Polynomial
-#define CAP_MATH_Polynomial
+#ifndef DATUM_MATH_Polynomial
+#define DATUM_MATH_Polynomial
 #include <vector>
 #include <initializer_list>
 #include <ostream>
 #include "String.hpp"
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -21,7 +21,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Polynomial p({1.0, -2.0, 3.0});   // 1 - 2x + 3x^2
+  //!   Datum::MATH::Polynomial p({1.0, -2.0, 3.0});   // 1 - 2x + 3x^2
   //!   double y = p.evaluateAt(2.0);                // 9
   //!   p.setCoefficient(3, 1.0);                    // now 1 - 2x + 3x^2 + x^3
   //!   unsigned int n = p.degree();                 // 3
@@ -248,6 +248,6 @@ namespace CAP
   std::ostream& operator<<(std::ostream& out, const Polynomial & p);
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__SpherocityAnalyzer
-#define CAP__SpherocityAnalyzer
+#ifndef DATUM__SpherocityAnalyzer
+#define DATUM__SpherocityAnalyzer
 #include "EventProcessorHistos.hpp"
 #include "SpherocityHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 //!
 //! @brief Task computing the transverse spherocity of the accepted particles of each event, per (event filter,
@@ -59,7 +59,7 @@ protected:
 
 };
 
-} //namespace CAP
+} //namespace Datum
 
 
-#endif /* CAP__SpherocityAnalyzer */
+#endif /* DATUM__SpherocityAnalyzer */

@@ -1,9 +1,9 @@
-#ifndef CAP__Marker
-#define CAP__Marker
+#ifndef DATUM__Marker
+#define DATUM__Marker
 #include "Drawable2D.hpp"
 #include "MarkerAttributes.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -29,6 +29,6 @@ namespace CAP
 
 
   } // namespace GRAPHICS
-}   // namespace CAP
+}   // namespace Datum
 
-#endif // !CAP__Marker
+#endif // !DATUM__Marker

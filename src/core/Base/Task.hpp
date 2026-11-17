@@ -7,15 +7,15 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Task
-#define CAP__Task
+#ifndef DATUM__Task
+#define DATUM__Task
 #include "ConfigurationManager.hpp"
 #include "Accountant.hpp"
 #include "Object.hpp"
 #include "Timer.hpp"
 #include "XmlDocument.hpp"
 #include <iostream>
-namespace CAP
+namespace Datum
 {
   class Folder;
 
@@ -45,26 +45,26 @@ namespace CAP
   //!
   //! Example of configuration:
   //! @code
-  //!   Analysis:TASK:CLASS = CAP::EventIterator
+  //!   Analysis:TASK:CLASS = Datum::EventIterator
   //!   Analysis:SUBTASK:N = 1
   //!   Analysis:SUBTASK_0:NAME = PtPt
-  //!   PtPt:TASK:CLASS = CAP::PtPtAnalyzer
+  //!   PtPt:TASK:CLASS = Datum::PtPtAnalyzer
   //! @endcode
   //!
   //! <b>XML configuration.</b> A task maps to a TASK element (see ConfigurationManager for the parameters): its name,
   //! class and severity are attributes, its parameters PARAMETER and GROUP elements, and its subtasks nested TASK
   //! elements. The keys <name>:SUBTASK:N and <name>:SUBTASK_<k>:NAME are implied by the nested TASK elements.
   //! @code
-  //!   <CAP version="1">
-  //!     <TASK name="Analysis" class="CAP::EventIterator" severity="INFO">
+  //!   <Datum version="1">
+  //!     <TASK name="Analysis" class="Datum::EventIterator" severity="INFO">
   //!       <PARAMETER name="nEventsRequested" type="long">1000</PARAMETER>
-  //!       <TASK name="PtPt" class="CAP::PtPtAnalyzer" severity="INFO">
+  //!       <TASK name="PtPt" class="Datum::PtPtAnalyzer" severity="INFO">
   //!         <GROUP name="HISTOGRAM">
   //!           <PARAMETER name="pt_nbins" type="int">100</PARAMETER>
   //!         </GROUP>
   //!       </TASK>
   //!     </TASK>
-  //!   </CAP>
+  //!   </Datum>
   //! @endcode
   //! createTask(parent, element) creates a task from its element: it instantiates the class, builds the template of
   //! its configuration with setDefaultConfiguration(), updates it with the values of the element and configures the
@@ -107,7 +107,7 @@ namespace CAP
   virtual void finalize();
   //!
   //! @brief Add the histograms of this task and of its subtasks to the folder written to the output file of the job
-  //! (one sub-folder per task that has histograms, named after it; see CAP.cxx). Here: those of the subtasks.
+  //! (one sub-folder per task that has histograms, named after it; see Datum.cxx). Here: those of the subtasks.
   //! @param top folder of the job
   //!
   virtual void saveHistograms(Folder & top);
@@ -230,7 +230,7 @@ namespace CAP
   //! @param element element made by createXmlElement()
   void defineXmlElement(XmlElement & element) override;
   //!
-  //! @brief Template of this task alone, as a standalone XML document: root element CAP (attribute type="template")
+  //! @brief Template of this task alone, as a standalone XML document: root element Datum (attribute type="template")
   //! holding the TASK element of this task filled with its default parameters and their types (see
   //! defineXmlElement(); subtasks are not included). Meant for editors of configurations: the template lists every
   //! parameter a task of this class accepts.
@@ -317,4 +317,4 @@ namespace CAP
 
 }
 
-#endif /* CAP__Task */
+#endif /* DATUM__Task */

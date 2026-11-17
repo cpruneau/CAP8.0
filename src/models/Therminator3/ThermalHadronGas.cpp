@@ -8,7 +8,7 @@
 
 //using namespace std;
 
-namespace CAP
+namespace Datum
 {
 
   ThermalHadronGas::ThermalHadronGas()
@@ -341,4 +341,4 @@ namespace CAP
                << hadron.avgMultiplicity()     << endl;
     }
   }
-}   // namespace CAP
+}   // namespace Datum

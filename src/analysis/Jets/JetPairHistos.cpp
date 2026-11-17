@@ -14,7 +14,7 @@
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 JetPairHistos::JetPairHistos()
@@ -197,4 +197,4 @@ void JetPairHistos::normalize(double eventFactor)
   for (Histogram * h : pairHistograms()) if (h) h->scale(1.0/_pairCount);
 }
 
-} // namespace CAP
+} // namespace Datum

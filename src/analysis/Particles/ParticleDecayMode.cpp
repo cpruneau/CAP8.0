@@ -18,7 +18,7 @@
 //#include "SelectionGenerator.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ParticleDecayMode::ParticleDecayMode()
@@ -120,4 +120,4 @@ void ParticleDecayMode::print()
   printCR();
 }
 
-} // namespace CAP
+} // namespace Datum

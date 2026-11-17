@@ -8,15 +8,15 @@
  *
  * *********************************************************************/
 //! @file Menu.hpp
-//! @brief Menu: menu of the CapGui menu bar (items, separators, sub-menus).
-#ifndef CAP__GUI__Menu
-#define CAP__GUI__Menu
+//! @brief Menu: menu of the DatumGui menu bar (items, separators, sub-menus).
+#ifndef DATUM__GUI__Menu
+#define DATUM__GUI__Menu
 #include <functional>
 #include <memory>
 #include <vector>
 #include "MenuItem.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -76,6 +76,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__Menu
+#endif // !DATUM__GUI__Menu

@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace CAP
+namespace Datum
 {
   namespace
   {
@@ -93,7 +93,7 @@ namespace CAP
       {
       // Hulthen wave function squared; radius and skin are its two inverse lengths (fm^-1)
       double a = _radius, b = _skin;
-      double norm = a*b*(a+b)/(CAP::MATH::twoPi()*(a-b)*(a-b));
+      double norm = a*b*(a+b)/(Datum::MATH::twoPi()*(a-b)*(a-b));
       double f = (r>1.0E-9) ? (std::exp(-a*r)-std::exp(-b*r))/r : (b-a);
       return norm*f*f;
       }
@@ -190,7 +190,7 @@ namespace CAP
     randomPosition(x,y,z);
     return std::sqrt(x*x+y*y+z*z);
     }
-  double u = CAP::MATH::randomGenerator().random();
+  double u = Datum::MATH::randomGenerator().random();
   unsigned int k = std::upper_bound(_cumulative.begin(),_cumulative.end(),u) - _cumulative.begin();
   if (k<1) k = 1;
   if (k>=_cumulative.size()) k = _cumulative.size()-1;
@@ -202,11 +202,11 @@ namespace CAP
   void NuclearDistribution::randomPosition(double & x, double & y, double & z)
   {
   if (!_ready) createHistogram();
-  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  Datum::MATH::RandomGenerator & generator = Datum::MATH::randomGenerator();
   if (!isDeformed())
     {
     double r      = random();
-    double phi    = CAP::MATH::twoPi()*generator.random();
+    double phi    = Datum::MATH::twoPi()*generator.random();
     double cosTh  = 2.0*generator.random()-1.0;
     double sinTh  = std::sqrt(std::max(0.0,1.0-cosTh*cosTh));
     x = r*sinTh*std::cos(phi);
@@ -249,4 +249,4 @@ namespace CAP
   _densityMax = 1.0;
   }
 
-} // namespace CAP
+} // namespace Datum

@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file Rect2D.hpp
 //! @brief Rect2D: axis-aligned rectangle of canvas coordinates (where the parts of a plot were drawn).
-#ifndef CAP__Rect2D
-#define CAP__Rect2D
+#ifndef DATUM__Rect2D
+#define DATUM__Rect2D
 #include <algorithm>
 #include "Point2D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -61,6 +61,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Rect2D
+#endif // !DATUM__Rect2D

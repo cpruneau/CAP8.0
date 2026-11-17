@@ -15,7 +15,7 @@
 #include "MathConstants.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ParticlePair3DAnalyzer::ParticlePair3DAnalyzer()
@@ -120,4 +120,4 @@ double ParticlePair3DAnalyzer::getMassFor(ParticleFilter* pf __attribute__((unus
 }
 
 
-} // namespace CAP
+} // namespace Datum

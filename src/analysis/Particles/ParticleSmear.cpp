@@ -14,7 +14,7 @@
 #include <cmath>
 #include <string>
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -158,4 +158,4 @@ namespace CAP
   smeared.setTruth(&generated);
   }
 
-} // namespace CAP
+} // namespace Datum

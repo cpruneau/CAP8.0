@@ -4,7 +4,7 @@
 #include <iostream>
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -334,4 +334,4 @@ namespace CAP
   std::vector<DataPoint2D> DataPoint2D::loadAllBinary(const String & fileName)       { return loadAllBinaryObjects<DataPoint2D>(fileName); }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

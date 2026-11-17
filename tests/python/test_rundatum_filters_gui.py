@@ -4,22 +4,22 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of the Filters pane of RunDatum.py (RunCAPFiltersGui), skipped without tkinter or a display."""
+"""Tests of the Filters pane of RunDatum.py (RunDatumFiltersGui), skipped without tkinter or a display."""
 
 import os
 import sys
 import tempfile
 import unittest
 
-CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, CAP_DIR)
+DATUM_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, DATUM_DIR)
 
-import RunCAPFilters as F                       # noqa: E402
+import RunDatumFilters as F                       # noqa: E402
 
 try:
     import tkinter as tk
     from tkinter import messagebox
-    import RunCAPFiltersGui as G
+    import RunDatumFiltersGui as G
     _root = tk.Tk()
     _root.withdraw()
 except Exception:                               # no tkinter, or no display

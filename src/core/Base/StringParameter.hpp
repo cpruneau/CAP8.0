@@ -7,20 +7,20 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__StringParameter
-#define CAP__StringParameter
+#ifndef DATUM__StringParameter
+#define DATUM__StringParameter
 #include "Object.hpp"
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class BinaryWriter;
 class BinaryReader;
 
 //!
-//! @brief A named text value saved in CAP files (e.g. the settings of the kinematic maps of an efficiency or smearer:
-//! source, variables, distribution, species). Stored as "CAPS" records of the CAP binary format (see BinaryIO.hpp); the
+//! @brief A named text value saved in Datum files (e.g. the settings of the kinematic maps of an efficiency or smearer:
+//! source, variables, distribution, species). Stored as "DTMS" records of the Datum binary format (see BinaryIO.hpp); the
 //! class is registered with Folder, as LongParameter.
 //!
 class StringParameter : public Object
@@ -46,8 +46,8 @@ public:
 
   //! @name Binary files (independent of ROOT)
   //! @{
-  //! @brief Tag of the records of this class. @return "CAPS"
-  static const char * binaryTag() { return "CAPS"; }
+  //! @brief Tag of the records of this class. @return "DTMS"
+  static const char * binaryTag() { return "DTMS"; }
   //! @brief Version of the record format. @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in the record. @return name
@@ -64,6 +64,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

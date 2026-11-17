@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file BesselFunction.hpp
 //! @brief BesselFunction: Bessel functions with an amplitude, a scale and a shift, for fits.
-#ifndef CAP__MATH__BesselFunction
-#define CAP__MATH__BesselFunction
+#ifndef DATUM__MATH__BesselFunction
+#define DATUM__MATH__BesselFunction
 #include "ParameterizedFunction.hpp"
 #include "Bessel.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -30,7 +30,7 @@ namespace CAP
   //! the argument is below n, upward recurrence otherwise; Y_n by upward recurrence; I_n and K_n as in Bessel.
   //!
   //! @code
-  //!   CAP::MATH::BesselJFunction f(2, 3.0, 1.5);   // 3 J_2(1.5 x)
+  //!   Datum::MATH::BesselJFunction f(2, 3.0, 1.5);   // 3 J_2(1.5 x)
   //!   double y = f.evaluateAt(1.0);
   //! @endcode
   //!
@@ -105,6 +105,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__BesselFunction
+#endif // !DATUM__MATH__BesselFunction

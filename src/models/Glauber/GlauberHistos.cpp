@@ -18,10 +18,10 @@
 #include "VectorLorentz.hpp"
 
 
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
+using Datum::MATH::pi;
+using Datum::MATH::twoPi;
 
-namespace CAP
+namespace Datum
 {
 
   GlauberHistos::GlauberHistos()
@@ -678,7 +678,7 @@ namespace CAP
   void GlauberHistos::drawEvent(GlauberEvent & /*event*/, const String & eventName)
   {
   // The event display (nuclei, nucleons and interaction points as ellipses in eventName.pdf) was drawn with ROOT
-  // (TCanvas, TEllipse); it is not available until it is redrawn with CAP's Graphics module.
+  // (TCanvas, TEllipse); it is not available until it is redrawn with Datum's Graphics module.
   static bool warned = false;
   if (!warned && reportWarning(__FUNCTION__))
     std::cout << "Event displays are not available (ROOT removed): " << eventName << " is not drawn" << std::endl;
@@ -1010,7 +1010,7 @@ namespace CAP
   //  TF1 radiusProf("rad","2.0*pi/[0]/[0]*TMath::Exp(-x*x/(2.*[0]*[0]))",0.0,5*ksg);
   //  radiusProf.SetParameter(0,ksg);
   //  const double minval = radiusProf.Eval(5.0*ksg);
-  //  double phi0         = CAP::MATH::randomGenerator().uniform(0,twoPi());
+  //  double phi0         = Datum::MATH::randomGenerator().uniform(0,twoPi());
   //  double kcphi0  = std::cos(phi0);
   //  double ksphi0  = std::sin(phi0);
   //  double x       = fEv.X0;
@@ -1034,4 +1034,4 @@ namespace CAP
 
 
 
-} // namespace CAP
+} // namespace Datum

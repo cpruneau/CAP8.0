@@ -18,8 +18,8 @@
 #include "Histogram.hpp"
 #include "Palettes.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {

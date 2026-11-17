@@ -25,7 +25,7 @@
 #include "DataPoints.hpp"
 #include "Histogram.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -886,4 +886,4 @@ namespace CAP
 
   } // namespace GraphEditor
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

@@ -12,7 +12,7 @@
 #include "NameHelpers.hpp"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 ParticlePairAnalyzer::ParticlePairAnalyzer()
@@ -111,4 +111,4 @@ void ParticlePairAnalyzer::finalize()
   EventProcessorHistos<ParticlePairHistos,2,ParticleSingleHistos>::finalize();
 }
 
-} // namespace CAP
+} // namespace Datum

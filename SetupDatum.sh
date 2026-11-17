@@ -19,8 +19,8 @@
 #    DATUM_USER_DATA_IMPORT_PATH,  DATUM_USER_DATA_EXPORT_PATH  : data and calibrations read and written
 # (the former names CAP_USER_... are still read).
 #
-# Every variable is defined under its new name, DATUM_..., and its former name, CAP_..., which the programs of this
-# version still use: workflows and scripts written for CAP keep working.
+# Every variable is defined under its name, DATUM_..., and under its former name, CAP_...: the programs read DATUM_...
+# (CAP_... when DATUM_... is not set), and scripts written for CAP (e.g. grid jobs) keep working.
 #
 ####################################################################################################
 
@@ -59,7 +59,7 @@ export PATH="$DATUM_BIN_PATH:$PATH"
 export DYLD_LIBRARY_PATH="$DATUM_LIB_PATH:$DYLD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="$DATUM_LIB_PATH:$LD_LIBRARY_PATH"
 
-# the former names, used by the programs of this version and by the workflows written for CAP
+# the former names, for the scripts and workflows written for CAP
 for name in USER_HISTO_IMPORT_PATH USER_HISTO_EXPORT_PATH USER_DATA_IMPORT_PATH USER_DATA_EXPORT_PATH \
             ROOT_PATH SRC_PATH BIN_PATH LIB_PATH GRID_PATH GRID_PATH_WSU GRID_PATH_ROM MACROS_PATH PROJECTS_PATH \
             DATABASE_PATH DATA_IMPORT_PATH DATA_EXPORT_PATH CALIB_IMPORT_PATH CALIB_EXPORT_PATH HISTOS_IMPORT_PATH \

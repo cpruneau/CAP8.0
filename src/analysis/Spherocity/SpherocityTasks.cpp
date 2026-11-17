@@ -12,7 +12,7 @@
 #include "SpherocityAnalyzer.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(SpherocityTasks)
+DATUM_REFLECTION(SpherocityTasks)
 {
-  CAP::registerTask<CAP::SpherocityAnalyzer>("CAP::SpherocityAnalyzer");
+  Datum::registerTask<Datum::SpherocityAnalyzer>("Datum::SpherocityAnalyzer");
 }

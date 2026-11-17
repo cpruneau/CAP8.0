@@ -16,12 +16,12 @@
 //! interpolation, degree 2 that of the parabola through three points, degree 3 the cubic through four, and so on;
 //! the error is of order h^p (finiteDifferenceAccuracy()). Differentiation and Derivative use these functions on
 //! functions; derivativesOfSamples() and derivativeOnGrid() on values already computed.
-#ifndef CAP__MATH__FiniteDifference
-#define CAP__MATH__FiniteDifference
+#ifndef DATUM__MATH__FiniteDifference
+#define DATUM__MATH__FiniteDifference
 #include <cstddef>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -66,7 +66,7 @@ namespace CAP
   //!
   //! @code
   //!   std::vector<double> x = {0, 0.5, 1, 1.5, 2}, y = {0, 0.25, 1, 2.25, 4};    // x^2
-  //!   std::vector<double> d = CAP::MATH::derivativesOfSamples(x, y);              // 0, 1, 2, 3, 4 (exact, degree 2)
+  //!   std::vector<double> d = Datum::MATH::derivativesOfSamples(x, y);              // 0, 1, 2, 3, 4 (exact, degree 2)
   //! @endcode
   //!
   std::vector<double> derivativesOfSamples(const std::vector<double> & x, const std::vector<double> & y,
@@ -84,6 +84,6 @@ namespace CAP
                                        unsigned int axis, double spacing, unsigned int order=1, unsigned int degree=2);
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__FiniteDifference
+#endif // DATUM__MATH__FiniteDifference

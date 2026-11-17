@@ -10,12 +10,12 @@
 //! @file SpecialFunctions.hpp
 //! @brief The gamma, beta and incomplete gamma functions as Function objects: GammaFunction, BetaFunction,
 //! IncompleteGammaFunction.
-#ifndef CAP_MATH_SpecialFunctions
-#define CAP_MATH_SpecialFunctions
+#ifndef DATUM_MATH_SpecialFunctions
+#define DATUM_MATH_SpecialFunctions
 #include <vector>
 #include "Function.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -25,9 +25,9 @@ namespace CAP
   //! integer n >= 1), for real x (std::tgamma; infinite or NaN at the poles x = 0, -1, -2, ...). Rank 1.
   //!
   //! @code
-  //!   CAP::MATH::GammaFunction gamma;
+  //!   Datum::MATH::GammaFunction gamma;
   //!   double g = gamma.evaluateAt(5.0);                        // 24
-  //!   double l = CAP::MATH::GammaFunction::logGamma(171.5);    // ln Gamma, no overflow
+  //!   double l = Datum::MATH::GammaFunction::logGamma(171.5);    // ln Gamma, no overflow
   //! @endcode
   //!
   class GammaFunction : public Function
@@ -53,7 +53,7 @@ namespace CAP
   //! overflow); otherwise from Gamma (infinite or NaN at the poles).
   //!
   //! @code
-  //!   CAP::MATH::BetaFunction beta;
+  //!   Datum::MATH::BetaFunction beta;
   //!   double b = beta.evaluateAt(2.0, 3.0);     // 1/12
   //! @endcode
   //!
@@ -86,9 +86,9 @@ namespace CAP
   //! Computed by series or continued fraction (Distributions::regularizedGammaP(), regularizedGammaQ()).
   //!
   //! @code
-  //!   CAP::MATH::IncompleteGammaFunction p;                       // P(a, x)
+  //!   Datum::MATH::IncompleteGammaFunction p;                       // P(a, x)
   //!   double v = p.evaluateAt(1.0, 2.0);                          // 1 - exp(-2)
-  //!   CAP::MATH::IncompleteGammaFunction upper(CAP::MATH::IncompleteGammaFunction::kUpper);
+  //!   Datum::MATH::IncompleteGammaFunction upper(Datum::MATH::IncompleteGammaFunction::kUpper);
   //! @endcode
   //!
   class IncompleteGammaFunction : public Function
@@ -125,6 +125,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_MATH_SpecialFunctions
+#endif // DATUM_MATH_SpecialFunctions

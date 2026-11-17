@@ -1,6 +1,6 @@
 //
-// MacOsCanvasDemo.C -- shows a CAP Graphics canvas in a native macOS window.
-// Built on macOS with the Graphics library and installed as <CAP>/bin/MacOsCanvasDemo: run that program; the
+// MacOsCanvasDemo.C -- shows a Datum Graphics canvas in a native macOS window.
+// Built on macOS with the Graphics library and installed as <Datum>/bin/MacOsCanvasDemo: run that program; the
 // window stays open until it is closed. (main() is left out when the file is read by ROOT's interpreter.)
 //
 #include <cmath>
@@ -14,11 +14,11 @@
 #include "DataPointColumns.hpp"
 #include "MacOsCanvas.hpp"
 
-using namespace CAP::GRAPHICS;
+using namespace Datum::GRAPHICS;
 
 void MacOsCanvasDemo()
 {
-  Canvas canvas("c1", "CAP demo", 800, 600);
+  Canvas canvas("c1", "Datum demo", 800, 600);
 
   // frame (outline only)
   Polygon frame;
@@ -40,7 +40,7 @@ void MacOsCanvasDemo()
   // data points y = exp(-x/3), red full circles
   std::vector<double> xs, ys;
   for (int i=0; i<=20; i++) { xs.push_back(0.5*i); ys.push_back(std::exp(-0.5*i/3.0)); }
-  CAP::MATH::DataPointColumns data(xs, ys);
+  Datum::MATH::DataPointColumns data(xs, ys);
   MarkerVector markers(&data);
   markers.setRanges(AxisRange(0,10), AxisRange(0,1));
   markers.setFrame(0.15, 0.15, 0.90, 0.90);

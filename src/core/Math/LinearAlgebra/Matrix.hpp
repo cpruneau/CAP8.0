@@ -1,11 +1,11 @@
-#ifndef CAP_MATH_Matrix
-#define CAP_MATH_Matrix
+#ifndef DATUM_MATH_Matrix
+#define DATUM_MATH_Matrix
 #include <vector>
 #include <ostream>
 #include "String.hpp"
 #include "BinaryIO.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -19,7 +19,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   using namespace CAP::MATH;
+  //!   using namespace Datum::MATH;
   //!   Matrix a(2, 2, {1.0, 2.0,
   //!                   3.0, 4.0});
   //!   Matrix b(2, 3, 1.0);           // 2 x 3, all elements 1
@@ -138,12 +138,12 @@ namespace CAP
 
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPM" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTMM" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! @{
 
-  //! @brief Tag of Matrix records in binary files. @return "CAPM"
-  static const char * binaryTag() { return "CAPM"; }
+  //! @brief Tag of Matrix records in binary files. @return "DTMM"
+  static const char * binaryTag() { return "DTMM"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return ""
@@ -195,6 +195,6 @@ namespace CAP
   std::ostream & operator<<(std::ostream & out, const Matrix & m);
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

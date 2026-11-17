@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <random>
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "MathConstants.hpp"
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
@@ -13,7 +13,7 @@
 #include "BinaryIO.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -1645,7 +1645,7 @@ namespace CAP
   for (const Histogram * h : source) target.push_back(safeClone(h));
   }
 
-  Histogram * loadHistogram(const CapFile & inputFile, const String & histoName)
+  Histogram * loadHistogram(const DatumFile & inputFile, const String & histoName)
   {
   const Histogram * h = inputFile.get<Histogram>(histoName);
   if (!h) throw FileException(inputFile.path(),String("No histogram named ")+histoName,__FUNCTION__);
@@ -4620,4 +4620,4 @@ namespace CAP
   }
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum

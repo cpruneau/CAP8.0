@@ -10,12 +10,12 @@
 //! @file JetClustering.hpp
 //! @brief JetClustering: the jets of a set of particles found by FastJet, and the jets of the events, found once per
 //! event, particle filter and jet settings and shared by the tasks.
-#ifndef CAP__JetClustering
-#define CAP__JetClustering
+#ifndef DATUM__JetClustering
+#define DATUM__JetClustering
 #include <vector>
 #include "Jet.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class Event;
@@ -60,6 +60,6 @@ public:
   static unsigned long nClusterings();
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetClustering */
+#endif /* DATUM__JetClustering */

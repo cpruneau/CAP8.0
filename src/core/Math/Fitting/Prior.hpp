@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file Prior.hpp
 //! @brief Prior: the prior density of a parameter in a Bayesian fit.
-#ifndef CAP__MATH__Prior
-#define CAP__MATH__Prior
+#ifndef DATUM__MATH__Prior
+#define DATUM__MATH__Prior
 #include <functional>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -67,6 +67,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__Prior
+#endif // !DATUM__MATH__Prior

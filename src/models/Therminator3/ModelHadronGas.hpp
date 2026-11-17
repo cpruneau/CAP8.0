@@ -1,8 +1,8 @@
-#ifndef CAP__ModelHadronGas
-#define CAP__ModelHadronGas
+#ifndef DATUM__ModelHadronGas
+#define DATUM__ModelHadronGas
 #include "Model.hpp"
 
-namespace CAP
+namespace Datum
 {
   class ModelHadronGas
   :
@@ -15,9 +15,9 @@ namespace CAP
   virtual double calculateIntegrand(ThermalHadron & hadron);
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__ModelthermalHadronGas
+#endif // !DATUM__ModelthermalHadronGas
 
 
 

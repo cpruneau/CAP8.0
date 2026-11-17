@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__PtPtAnalyzer
-#define CAP__PtPtAnalyzer
+#ifndef DATUM__PtPtAnalyzer
+#define DATUM__PtPtAnalyzer
 #include "EventProcessorHistos.hpp"
 #include "PtPtHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 //!
 //! @brief Task for the analysis of transverse momentum correlations from event-wise pT moments (sums of powers of pT
@@ -48,6 +48,6 @@ public:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__PtPtAnalyzer */
+#endif /* DATUM__PtPtAnalyzer */

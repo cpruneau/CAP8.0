@@ -9,10 +9,10 @@
  * *********************************************************************/
 //! @file Point2D.hpp
 //! @brief Point2D: point or vector of the plane.
-#ifndef CAP_GRAPHICS_Point2D
-#define CAP_GRAPHICS_Point2D
+#ifndef DATUM_GRAPHICS_Point2D
+#define DATUM_GRAPHICS_Point2D
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -21,7 +21,7 @@ namespace CAP
   //! @brief Point (or displacement) in two dimensions, used to place and draw graphics objects.
   //!
   //! Coordinates are floats: canvas (normalized) coordinates in [0,1], or device units once mapped by a Painter.
-  //! Data to be plotted are kept in the Math data point classes (CAP::MATH::DataPoints and its derived classes);
+  //! Data to be plotted are kept in the Math data point classes (Datum::MATH::DataPoints and its derived classes);
   //! Point2D only holds positions on the drawing.
   //!
   class Point2D
@@ -63,6 +63,6 @@ namespace CAP
   inline Point2D operator*(float a, const Point2D & p) { return p*a; }
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_GRAPHICS_Point2D
+#endif // DATUM_GRAPHICS_Point2D

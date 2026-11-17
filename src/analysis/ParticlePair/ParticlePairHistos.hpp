@@ -7,15 +7,15 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticlePairHistos
-#define CAP__ParticlePairHistos
+#ifndef DATUM__ParticlePairHistos
+#define DATUM__ParticlePairHistos
 #include "HistogramFolder.hpp"
 #include "PairDerivedCalculator.hpp"
 #include "Particle.hpp"
 #include "ParticleSingleHistos.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -287,10 +287,10 @@ public:
 
 //!
 //! @brief Derived histograms of the pair analysis (second phase): PairDerivedCalculator with the pair folders
-//! ParticlePairHistos, registered as the task class CAP::ParticlePairDerivedCalculator.
+//! ParticlePairHistos, registered as the task class Datum::ParticlePairDerivedCalculator.
 //!
 using ParticlePairDerivedCalculator = PairDerivedCalculator<ParticlePairHistos>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticlePairHistos  */
+#endif /* DATUM__ParticlePairHistos  */

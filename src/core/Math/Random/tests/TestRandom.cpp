@@ -19,7 +19,7 @@
 #include "RandomDistribution.hpp"
 #include "MathExceptions.hpp"
 
-using namespace CAP::MATH;
+using namespace Datum::MATH;
 
 namespace
 {

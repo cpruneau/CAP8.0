@@ -11,15 +11,15 @@
 #include <cstdio>
 #include <string>
 #include <unistd.h>
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "FileSystem.hpp"
 #include "Folder.hpp"
 #include "Histogram.hpp"
 #include "PlotSpec.hpp"
 #include "PlotTemplate.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {
@@ -128,11 +128,11 @@ int main()
   CHECK(count(split.root(), "Canvas") == 6);
   CHECK(count(split.root(), "Window") == 2);
 
-  // the file written is read by PlotSpec and its canvases are built from a CAP file
-  char buffer[] = "/tmp/CapTestPlotTemplate.XXXXXX";
+  // the file written is read by PlotSpec and its canvases are built from a Datum file
+  char buffer[] = "/tmp/DatumTestPlotTemplate.XXXXXX";
   String top(mkdtemp(buffer));
   {
-    CapFile out(FileSystem::join(top, "derived.cap"), File::kWriteOnly);
+    DatumFile out(FileSystem::join(top, "derived.cap"), File::kWriteOnly);
     fill(out.folder(), true);
     out.save();
   }
@@ -150,9 +150,9 @@ int main()
   for (const auto & w : windows) nCanvases += int(w.canvases.size());
   CHECK(nCanvases == 4);
 
-  // catalog of a CAP file read lazily
+  // catalog of a Datum file read lazily
   {
-    CapFile in(FileSystem::join(top, "derived.cap"), File::kReadOnly);
+    DatumFile in(FileSystem::join(top, "derived.cap"), File::kReadOnly);
     in.load(File::Loading::kLazy);
     PlotTemplate u;
     CHECK(u.addFolder(u.addInput("d", "derived.cap"), in.folder()) == 11);

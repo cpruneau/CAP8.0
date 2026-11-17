@@ -1,7 +1,7 @@
 #include "MathBasicIntegration.hpp"
 #include "CubicSpline.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 namespace MATH
@@ -172,4 +172,4 @@ double integrationSimpsonRule2D(const vector<double> & values, unsigned int nX, 
 
 } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum

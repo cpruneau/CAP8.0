@@ -14,21 +14,21 @@
 //! @image latex NumericalTools.pdf "Interpolation, integration and differentiation: classes and dependencies" width=\textwidth
 //! @image html InterpolationClasses.png "Classes of the folder Interpolation" width=100%
 //! @image latex InterpolationClasses.pdf "Classes of the folder Interpolation" width=\textwidth
-#ifndef CAP__MATH__Interpolation
-#define CAP__MATH__Interpolation
+#ifndef DATUM__MATH__Interpolation
+#define DATUM__MATH__Interpolation
 #include <memory>
 #include <vector>
 #include "Function.hpp"
 #include "PiecewisePolynomial.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
 
   //!
   //! @brief Interpolation of a table (x_i, y_i), x increasing at any spacing, by the method chosen by an enum: a
-  //! function of one variable, steering the interpolation tools of CAP (InterpolationTools.hpp, CubicSpline).
+  //! function of one variable, steering the interpolation tools of Datum (InterpolationTools.hpp, CubicSpline).
   //!
   //! Methods:
   //!  - Nearest: the value of the nearest point;
@@ -43,11 +43,11 @@ namespace CAP
   //! derivativeFunction(), integralInRange()); the other methods are differentiated and integrated numerically.
   //!
   //! @code
-  //!   CAP::MATH::Interpolation f(x, y);                                          // cubic spline
-  //!   CAP::MATH::Interpolation g(x, y, CAP::MATH::Interpolation::Linear);
-  //!   CAP::MATH::Interpolation h(x, y, CAP::MATH::Interpolation::LocalPolynomial, 5);
+  //!   Datum::MATH::Interpolation f(x, y);                                          // cubic spline
+  //!   Datum::MATH::Interpolation g(x, y, Datum::MATH::Interpolation::Linear);
+  //!   Datum::MATH::Interpolation h(x, y, Datum::MATH::Interpolation::LocalPolynomial, 5);
   //!   double v = f(2.5), s = g.integralInRange(0.0, 3.0);
-  //!   double w = CAP::MATH::Interpolation::value(x, y, 2.5, CAP::MATH::Interpolation::Linear);
+  //!   double w = Datum::MATH::Interpolation::value(x, y, 2.5, Datum::MATH::Interpolation::Linear);
   //! @endcode
   //!
   class Interpolation : public Function
@@ -142,6 +142,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__Interpolation
+#endif // DATUM__MATH__Interpolation

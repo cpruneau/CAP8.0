@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file BezierCurve.hpp
 //! @brief BezierCurve: a smooth curve through knots, made of cubic Bezier segments (Bernstein polynomials), drawn
-//! and edited with the mouse (e.g. efficiencies and resolutions of the detector maps of CapGui).
-#ifndef CAP_MATH_BezierCurve
-#define CAP_MATH_BezierCurve
+//! and edited with the mouse (e.g. efficiencies and resolutions of the detector maps of DatumGui).
+#ifndef DATUM_MATH_BezierCurve
+#define DATUM_MATH_BezierCurve
 #include <vector>
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -38,7 +38,7 @@ namespace CAP
   //! curves of several variables is a ParameterizedComposite (kProduct), e.g. eff(pT) f(eta) g(phi).
   //!
   //! @code
-  //!   CAP::MATH::BezierCurve efficiency({0.0, 0.5, 2.0, 10.0}, {0.0, 0.6, 0.9, 0.95}, 0.0, 1.0);
+  //!   Datum::MATH::BezierCurve efficiency({0.0, 0.5, 2.0, 10.0}, {0.0, 0.6, 0.9, 0.95}, 0.0, 1.0);
   //!   double e = efficiency(1.0);          // in [0, 1]
   //!   int k = efficiency.insertKnot(5.0);   // a knot on the curve (its shape barely changes)
   //!   efficiency.moveKnot(k, 5.0, 0.93);
@@ -130,6 +130,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_MATH_BezierCurve
+#endif // DATUM_MATH_BezierCurve

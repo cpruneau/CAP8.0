@@ -5,7 +5,7 @@
 #include <cmath>
 #include "Bessel.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   ThermalHadron::ThermalHadron()
@@ -198,7 +198,7 @@ namespace CAP
   double arg, argSq;
   double nn;
   double K_1, K_2;
-  const CAP::MATH::Bessel besselK1(CAP::MATH::Bessel::BesselK,1), besselK2(CAP::MATH::Bessel::BesselK,2);
+  const Datum::MATH::Bessel besselK1(Datum::MATH::Bessel::BesselK,1), besselK2(Datum::MATH::Bessel::BesselK,2);
   for (unsigned int n = 1; n<_truncateOrder; n++)
     {
     nn = n;
@@ -243,5 +243,5 @@ namespace CAP
   unsigned int ThermalHadron::truncateOrder() { return _truncateOrder;}
   void ThermalHadron::setTruncateOrder(unsigned int n) { _truncateOrder = n;}
 
-} // namespace CAP
+} // namespace Datum
 

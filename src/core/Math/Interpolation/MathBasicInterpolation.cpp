@@ -2,9 +2,9 @@
 #include "MathBasicInterpolation.hpp"
 #include "MathBasicSearch.hpp"
 
-using CAP::MATH::absolute;
+using Datum::MATH::absolute;
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -270,5 +270,5 @@ double interpolationNearestMono(const vector<double> & x, const vector<double> &
 
 } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum
 

@@ -16,7 +16,7 @@
 #include <mutex>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -140,4 +140,4 @@ void copyFile(const String & inputPath,  const String & inputFileName, const Str
     }
 }
 
-} // namespace CAP
+} // namespace Datum

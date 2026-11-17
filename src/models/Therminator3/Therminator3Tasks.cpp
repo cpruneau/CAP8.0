@@ -13,8 +13,8 @@
 #include "Therminator3.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(Therminator3Tasks)
+DATUM_REFLECTION(Therminator3Tasks)
 {
-  CAP::registerTask<CAP::ThermalModel>("CAP::ThermalModel");
-  CAP::registerTask<CAP::Therminator3>("CAP::Therminator3");
+  Datum::registerTask<Datum::ThermalModel>("Datum::ThermalModel");
+  Datum::registerTask<Datum::Therminator3>("Datum::Therminator3");
 }

@@ -12,8 +12,8 @@
 #include "GlobalAnalyzer.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(GlobalTasks)
+DATUM_REFLECTION(GlobalTasks)
 {
-  CAP::registerTask<CAP::GlobalAnalyzer>("CAP::GlobalAnalyzer");
-  CAP::registerTask<CAP::GlobalDerivedCalculator>("CAP::GlobalDerivedCalculator");
+  Datum::registerTask<Datum::GlobalAnalyzer>("Datum::GlobalAnalyzer");
+  Datum::registerTask<Datum::GlobalDerivedCalculator>("Datum::GlobalDerivedCalculator");
 }

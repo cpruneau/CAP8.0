@@ -10,15 +10,15 @@
 //! @file ParticleFlowHistos.hpp
 //! @brief ParticleFlowHistos: the histograms of the analysis of anisotropic flow by multi-particle cumulants and the
 //! scalar product method, for one event filter and one reference particle filter.
-#ifndef CAP__ParticleFlowHistos
-#define CAP__ParticleFlowHistos
+#ifndef DATUM__ParticleFlowHistos
+#define DATUM__ParticleFlowHistos
 #include <vector>
 #include "HistogramFolder.hpp"
 #include "DerivedCalculator.hpp"
 #include "Configuration.hpp"
 #include "FlowCorrelator.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class Particle;
@@ -204,10 +204,10 @@ protected:
 
 //!
 //! @brief Derived histograms of the flow analysis (second phase): DerivedCalculator with the folders
-//! ParticleFlowHistos, registered as the task class CAP::ParticleFlowDerivedCalculator.
+//! ParticleFlowHistos, registered as the task class Datum::ParticleFlowDerivedCalculator.
 //!
 using ParticleFlowDerivedCalculator = DerivedCalculator<ParticleFlowHistos,1>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticleFlowHistos */
+#endif /* DATUM__ParticleFlowHistos */

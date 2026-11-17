@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__PtPtDerivedHistos
-#define CAP__PtPtDerivedHistos
+#ifndef DATUM__PtPtDerivedHistos
+#define DATUM__PtPtDerivedHistos
 #include "HistogramFolder.hpp"
 #include "PtPtHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -68,9 +68,9 @@ protected:
   vector<ParticleFilter*> particleFilters;
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__PtPtDerivedHistos  */
+#endif /* DATUM__PtPtDerivedHistos  */
 
 
 

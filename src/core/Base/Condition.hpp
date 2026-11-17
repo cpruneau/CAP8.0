@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Condition
-#define CAP__Condition
+#ifndef DATUM__Condition
+#define DATUM__Condition
 #include "String.hpp"
 #include "Exceptions.hpp"
 
-using CAP::String;
+using Datum::String;
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -236,8 +236,8 @@ public:
   virtual void print() const;
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__Condition */
+#endif /* DATUM__Condition */
 
 

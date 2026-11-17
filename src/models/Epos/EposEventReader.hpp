@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EposEventReader
-#define CAP__EposEventReader
+#ifndef DATUM__EposEventReader
+#define DATUM__EposEventReader
 #include "RootChainManager.hpp"
 #include "EventProcessor.hpp"
 #include "Event.hpp"
@@ -21,14 +21,14 @@
 #include "ParticleSmear.hpp"
 #include <map>
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @brief Task reading EPOS events from ROOT trees (event number, multiplicity, impact parameter, PDG codes and
-//! momenta) and copying their particles into the current CAP event.
+//! momenta) and copying their particles into the current Datum event.
 //!
-//! Keys: \<name\>:DataImportPath (default $CAP_DATA_IMPORT_PATH), DataImportFile (a file name or a pattern, e.g.
+//! Keys: \<name\>:DataImportPath (default $DATUM_DATA_IMPORT_PATH), DataImportFile (a file name or a pattern, e.g.
 //! "epos_*.root", relative to DataImportPath unless absolute; the files are read as one chain), TreeName (name of the
 //! tree). The tree holds, per event, the branches Events (int), Mult (int), Impact (float), and the arrays of Mult
 //! values PID (int, PDG code), Px, Py, Pz, E (float, GeV). The energy of a particle is computed from its momentum and
@@ -108,4 +108,4 @@ protected:
 }
 
 
-#endif /* CAP__EposEventReader */
+#endif /* DATUM__EposEventReader */

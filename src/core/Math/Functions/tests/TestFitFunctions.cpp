@@ -10,7 +10,7 @@
 //! @file TestFitFunctions.cpp
 //! @brief Test program of the functions for fits: orthogonal series, Bessel functions, composites (run by ctest).
 //
-// TestFitFunctions -- tests of CAP::MATH::OrthogonalSeries (Legendre, Chebyshev, Hermite, Laguerre), BesselFunction
+// TestFitFunctions -- tests of Datum::MATH::OrthogonalSeries (Legendre, Chebyshev, Hermite, Laguerre), BesselFunction
 // (J, Y, I, K of any order), ParameterizedComposite, and their registration in FunctionRegistry (composites written
 // to and read from files, fits of composites stored in records). Prints each failed check and exits with the number
 // of failures (0: all passed).
@@ -40,8 +40,8 @@
 #include "OrthogonalSeries.hpp"
 #include "ParameterizedComposite.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

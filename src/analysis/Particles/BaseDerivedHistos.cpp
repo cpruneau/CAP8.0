@@ -17,7 +17,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 BaseDerivedHistos::BaseDerivedHistos()
@@ -51,4 +51,4 @@ BaseDerivedHistos & BaseDerivedHistos::operator=(const BaseDerivedHistos & rhs)
 
 
 
-} // namespace CAP
+} // namespace Datum

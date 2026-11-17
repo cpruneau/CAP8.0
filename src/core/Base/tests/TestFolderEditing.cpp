@@ -17,11 +17,11 @@
 #include <memory>
 #include <string>
 #include <unistd.h>
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Directory.hpp"
 #include "LongParameter.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {
@@ -109,11 +109,11 @@ int main()
   }
 
   // ---- copies from a lazily loaded file, then saved to a new file
-  char buffer[] = "/tmp/CapTestFolderEditing.XXXXXX";
+  char buffer[] = "/tmp/DatumTestFolderEditing.XXXXXX";
   Directory top{String(mkdtemp(buffer))};
   String inputPath = top.join("input.cap");
   {
-    CapFile out(inputPath, File::kWriteOnly);
+    DatumFile out(inputPath, File::kWriteOnly);
     out.setFolderName("run");
     out.add(new LongParameter("a", 1), "a");
     Folder * singles = out.addFolder("singles");
@@ -123,7 +123,7 @@ int main()
   }
   String outputPath = top.join("edited.cap");
   {
-    CapFile input(inputPath, File::kReadOnly);
+    DatumFile input(inputPath, File::kReadOnly);
     input.load(File::Loading::kLazy);
     CHECK(!input.isLoaded("singles/n"));
     Folder tree("edited");
@@ -133,12 +133,12 @@ int main()
     tree.copyEntry(input, "a", "first");
     tree.cd("/");
     CHECK(tree.isLoaded("copies/singles/n") && tree.isLoaded("copies/first"));   // decoded: independent of the file
-    CapFile output(outputPath, File::kWriteOnly);
+    DatumFile output(outputPath, File::kWriteOnly);
     output = tree;
     output.write();
   }
   {
-    CapFile reread(outputPath, File::kReadOnly);
+    DatumFile reread(outputPath, File::kReadOnly);
     reread.read();
     CHECK(value(reread, "copies/first")==1);
     CHECK(value(reread, "copies/singles/n")==10);

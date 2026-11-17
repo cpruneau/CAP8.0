@@ -22,7 +22,7 @@
 #include "GraphEditor.hpp"
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -252,4 +252,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

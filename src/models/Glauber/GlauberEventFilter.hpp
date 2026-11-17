@@ -9,13 +9,13 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberEventFilter
-#define CAP__GlauberEventFilter
+#ifndef DATUM__GlauberEventFilter
+#define DATUM__GlauberEventFilter
 #include "Filter.hpp"
 #include "GlauberEvent.hpp"
 #include "ManagedObject.hpp"
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Filter selecting Glauber events on the impact parameter, number of participants, number of binary
@@ -57,6 +57,6 @@ namespace CAP
   
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__GlauberEventFilter */
+#endif /* DATUM__GlauberEventFilter */

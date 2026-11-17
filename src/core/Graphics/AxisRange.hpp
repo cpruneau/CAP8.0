@@ -1,7 +1,7 @@
-#ifndef CAP__AxisRange
-#define CAP__AxisRange
+#ifndef DATUM__AxisRange
+#define DATUM__AxisRange
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -30,6 +30,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__AxisRange
+#endif // !DATUM__AxisRange

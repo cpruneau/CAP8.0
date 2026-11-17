@@ -13,7 +13,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   FileSystemEntry::FileSystemEntry(const String & path, const String & className)
@@ -45,4 +45,4 @@ namespace CAP
   printValue("Permissions",String((std::string(entry.readable ? "r" : "-")+(entry.writable ? "w" : "-")+(entry.executable ? "x" : "-")).c_str()));
   }
 
-} // namespace CAP
+} // namespace Datum

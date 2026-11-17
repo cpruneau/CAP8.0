@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file Palette.hpp
 //! @brief Palette: colors of the values of a color map, from the lowest to the highest.
-#ifndef CAP__Palette
-#define CAP__Palette
+#ifndef DATUM__Palette
+#define DATUM__Palette
 #include <vector>
 #include "String.hpp"
 #include "Color.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -63,6 +63,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Palette
+#endif // !DATUM__Palette

@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file SearchDomain.hpp
 //! @brief SearchDomain: where an extremum search may look.
-#ifndef CAP__MATH__SearchDomain
-#define CAP__MATH__SearchDomain
+#ifndef DATUM__MATH__SearchDomain
+#define DATUM__MATH__SearchDomain
 #include <limits>
 #include <utility>
 #include <vector>
 #include "Region.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -32,7 +32,7 @@ namespace CAP
   //! allowed if it is within the bounds and in no exclusion region.
   //!
   //! @code
-  //!   CAP::MATH::SearchDomain domain({-5.0, -5.0}, {5.0, 5.0});
+  //!   Datum::MATH::SearchDomain domain({-5.0, -5.0}, {5.0, 5.0});
   //!   domain.exclude(0, -1.0, 1.0);          // leave out -1 <= x <= 1
   //!   domain.setStart({3.0, 3.0});
   //! @endcode
@@ -99,6 +99,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__SearchDomain
+#endif // !DATUM__MATH__SearchDomain

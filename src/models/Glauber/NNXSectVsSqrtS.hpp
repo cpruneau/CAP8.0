@@ -9,10 +9,10 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__NNXSectVsSqrtS
-#define CAP__NNXSectVsSqrtS
+#ifndef DATUM__NNXSectVsSqrtS
+#define DATUM__NNXSectVsSqrtS
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Parameterization of the inelastic nucleon-nucleon cross section vs collision energy sqrt(s), with several
@@ -64,9 +64,9 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__NNXSectVsSqrtS
+#endif // !DATUM__NNXSectVsSqrtS
 
 
 

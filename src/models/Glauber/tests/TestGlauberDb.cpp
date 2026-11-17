@@ -18,7 +18,7 @@
 #include "GlauberDb.hpp"
 #include "GlauberExceptions.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {
@@ -57,7 +57,7 @@ int main()
 
   // the file delivered holds the built-in table
   GlauberDb file;
-  file.setFileName(CAP_NUCLEUS_DB);
+  file.setFileName(DATUM_NUCLEUS_DB);
   CHECK(sameAll(file.nuclei(), table));
 
   // written and read back
@@ -95,18 +95,18 @@ int main()
   // a nucleus added in a file; malformed files rejected
   GlauberDb custom;
   custom.loadFromXml(XmlDocument::parse(
-    "<CAP><NUCLEUS_DB><NUCLEUS name=\"Ru\" A=\"96\" Z=\"44\" radialType=\"8\" radius=\"5.085\" skin=\"0.46\" beta2=\"0.158\""
-    " maxRadius=\"12\" comment=\"isobar\"/></NUCLEUS_DB></CAP>"));
+    "<Datum><NUCLEUS_DB><NUCLEUS name=\"Ru\" A=\"96\" Z=\"44\" radialType=\"8\" radius=\"5.085\" skin=\"0.46\" beta2=\"0.158\""
+    " maxRadius=\"12\" comment=\"isobar\"/></NUCLEUS_DB></Datum>"));
   GlauberNucleusType ru;
   custom.findNucleus("Ru", ru);
   CHECK(ru.nProtons() == 44 && ru.beta2() == 0.158 && ru.beta4() == 0 && ru.maxRadius() == 12);
   thrown = false;
-  try { custom.loadFromXml(XmlDocument::parse("<CAP><NUCLEUS_DB><NUCLEUS name=\"X\" A=\"2\" Z=\"3\" radialType=\"1\"/></NUCLEUS_DB></CAP>")); }
+  try { custom.loadFromXml(XmlDocument::parse("<Datum><NUCLEUS_DB><NUCLEUS name=\"X\" A=\"2\" Z=\"3\" radialType=\"1\"/></NUCLEUS_DB></Datum>")); }
   catch (const std::exception &) { thrown = true; }
   CHECK(thrown);
   thrown = false;
-  try { custom.loadFromXml(XmlDocument::parse("<CAP><NUCLEUS_DB><NUCLEUS name=\"X\" A=\"2\" Z=\"1\" radialType=\"1\"/>"
-                                              "<NUCLEUS name=\"X\" A=\"2\" Z=\"1\" radialType=\"1\"/></NUCLEUS_DB></CAP>")); }
+  try { custom.loadFromXml(XmlDocument::parse("<Datum><NUCLEUS_DB><NUCLEUS name=\"X\" A=\"2\" Z=\"1\" radialType=\"1\"/>"
+                                              "<NUCLEUS name=\"X\" A=\"2\" Z=\"1\" radialType=\"1\"/></NUCLEUS_DB></Datum>")); }
   catch (const std::exception &) { thrown = true; }
   CHECK(thrown);
 

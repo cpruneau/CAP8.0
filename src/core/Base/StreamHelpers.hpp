@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024-2024
  *
  * *********************************************************************/
-#ifndef CAP__StreamHelpers
-#define CAP__StreamHelpers
+#ifndef DATUM__StreamHelpers
+#define DATUM__StreamHelpers
 #include <iostream>
 #include <fstream>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   std::ifstream & openInputAsciiFile(const String & name,
                                      bool verbose=true);
@@ -48,4 +48,4 @@ namespace CAP
 
 }
 
-#endif /* CAP__FileManager */
+#endif /* DATUM__FileManager */

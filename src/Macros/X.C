@@ -47,7 +47,7 @@ TCanvas * createCanvas(const TString & canvasName,int inc)
 
 int X(const TString & path="./")
 {
-  TString includeBasePath = getenv("CAP_SRC");
+  TString includeBasePath = getenv("DATUM_SRC");
   loadBase(includeBasePath);
 //  loadPlotting(includeBasePath);
 

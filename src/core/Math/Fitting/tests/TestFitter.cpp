@@ -10,7 +10,7 @@
 //! @file TestFitter.cpp
 //! @brief Test program of Fitter, Matrix::inverse()/solve(), ChiSquare::probability() and the parameter setters (run by ctest).
 //
-// TestFitter -- tests of CAP::MATH::Fitter against exact solutions: weighted straight line (closed form), exact
+// TestFitter -- tests of Datum::MATH::Fitter against exact solutions: weighted straight line (closed form), exact
 // polynomial, Normal and exponential data, a plane (normal equations), a noisy histogram, fixed and bounded
 // parameters, empty bins, scaled errors, and fits by a search engine. Also Matrix::inverse() and solve(), the
 // p-value of a chi square, and the public parameter setters of ParameterizedFunction. Prints each failed check and
@@ -30,8 +30,8 @@
 #include "Normal.hpp"
 #include "Polynomial.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

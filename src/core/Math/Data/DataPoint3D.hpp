@@ -7,15 +7,15 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP_MATH_DataPoint3D
-#define CAP_MATH_DataPoint3D
+#ifndef DATUM_MATH_DataPoint3D
+#define DATUM_MATH_DataPoint3D
 #include <ostream>
 #include <vector>
 #include "String.hpp"
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -32,8 +32,8 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::DataPoint3D p(1.0, 0.1, 2.0, 0.2, 5.0, 0.4, 0.3);  // x, xError, y, yError, z, zStatError, zSysError
-  //!   CAP::MATH::DataPoint3D q = 2.0*p;                              // z=10, zStatError=0.8, zSysError=0.6
+  //!   Datum::MATH::DataPoint3D p(1.0, 0.1, 2.0, 0.2, 5.0, 0.4, 0.3);  // x, xError, y, yError, z, zStatError, zSysError
+  //!   Datum::MATH::DataPoint3D q = 2.0*p;                              // z=10, zStatError=0.8, zSysError=0.6
   //! @endcode
   //!
   class DataPoint3D : public DataPoint
@@ -162,11 +162,11 @@ namespace CAP
   //! @}
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPT" records in the CAP binary format (see BinaryIO.hpp).
+  //! Saved as "DTMT" records in the Datum binary format (see BinaryIO.hpp).
   //! @{
 
-  //! @brief Tag of DataPoint3D records in binary files. @return "CAPT"
-  static const char * binaryTag() { return "CAPT"; }
+  //! @brief Tag of DataPoint3D records in binary files. @return "DTMT"
+  static const char * binaryTag() { return "DTMT"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return ""
@@ -191,6 +191,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

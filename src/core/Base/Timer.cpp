@@ -11,7 +11,7 @@
 #include "PrintHelpers.hpp"
 
 
-CAP::Timer::Timer()
+Datum::Timer::Timer()
 :
 startTime(),
 stopTime(),
@@ -30,7 +30,7 @@ deltaSeconds(0)
   start();
 }
 
-CAP::Timer::Timer(const CAP::Timer & timer)
+Datum::Timer::Timer(const Datum::Timer & timer)
 :
 startTime(timer.startTime),
 stopTime(timer.stopTime),
@@ -47,7 +47,7 @@ deltaMinutes(timer.deltaMinutes),
 deltaSeconds(timer.deltaSeconds)
 {   }
 
-CAP::Timer & CAP::Timer::operator=(const CAP::Timer & timer)
+Datum::Timer & Datum::Timer::operator=(const Datum::Timer & timer)
 {
   if (this!=&timer)
     {
@@ -69,12 +69,12 @@ CAP::Timer & CAP::Timer::operator=(const CAP::Timer & timer)
 }
 
 
-void CAP::Timer::start()
+void Datum::Timer::start()
 {
   startTime = high_resolution_clock::now();
   oldStop   = startTime;
 }
-void CAP::Timer::stop()
+void Datum::Timer::stop()
 {
   stopTime = high_resolution_clock::now();
   intervalDuration = chrono::duration_cast<duration<double>>(stopTime - oldStop);
@@ -95,7 +95,7 @@ void CAP::Timer::stop()
   oldStop  = stopTime;
 }
 
-void CAP::Timer::print()  const
+void Datum::Timer::print()  const
 {
   printValue("days",days);
   printValue("hours",hours);

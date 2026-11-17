@@ -10,7 +10,7 @@
 //! @file TestGraph3D.cpp
 //! @brief Test program of the 3D views of graphs: projection, surfaces, meshes, lego boxes, axes (run by ctest).
 //
-// TestGraph3D -- tests of the 3D views of CAP::GRAPHICS::Graph (Projection3D, GraphRenderer::draw3D()), through the
+// TestGraph3D -- tests of the 3D views of Datum::GRAPHICS::Graph (Projection3D, GraphRenderer::draw3D()), through the
 // SVG they produce. Prints each failed check and exits with the number of failures (0: all passed). With an
 // argument, also writes an example page to that SVG file.
 //
@@ -30,8 +30,8 @@
 #include "SvgPainter.hpp"
 #include "Painter.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {

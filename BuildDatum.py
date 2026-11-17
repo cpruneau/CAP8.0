@@ -8,7 +8,7 @@
 """
 BuildDatum.py -- graphical front end to configure and build Datum (formerly BuildCAP.py).
 
-Usage (from anywhere; the script locates CAP from its own position):
+Usage (from anywhere; the script locates Datum from its own position):
     python3 BuildDatum.py                  # open the GUI
     python3 BuildDatum.py --print-commands # print the commands for the saved settings and exit (no GUI)
 
@@ -21,27 +21,27 @@ The window has three parts:
   * the output of cmake and make (lower half), which can be saved to a file.
 
 Build steps (each command is printed in the output pane before it runs):
-    cmake -S <CAP>/src -B <CAP>/<build directory> -DCAP_WITH_<MODULE>=ON|OFF ... [-DCAP_PYTHIA8_DIR=...]
-    make -C <CAP>/<build directory> -j<N>
-    make -C <CAP>/<build directory> install        (if "Install" is checked)
+    cmake -S <Datum>/src -B <Datum>/<build directory> -DDATUM_WITH_<MODULE>=ON|OFF ... [-DDATUM_PYTHIA8_DIR=...]
+    make -C <Datum>/<build directory> -j<N>
+    make -C <Datum>/<build directory> install        (if "Install" is checked)
 
-The build directory is created under the CAP directory; several build directories (e.g. build, build-pythia) can
-coexist. The libraries are installed in the "Install libraries to" directory ($CAP_LIB_PATH, <CAP>/lib by default) and
-the CAP executable in <CAP>/bin. The environment of SetupDatum.sh is set for the commands, so the GUI does not need to be
+The build directory is created under the Datum directory; several build directories (e.g. build, build-pythia) can
+coexist. The libraries are installed in the "Install libraries to" directory ($DATUM_LIB_PATH, <Datum>/lib by default) and
+the Datum executable in <Datum>/bin. The environment of SetupDatum.sh is set for the commands, so the GUI does not need to be
 started from a shell where SetupDatum.sh was sourced.
 
 External packages (Pythia8, Herwig, Sherpa, Thermal-FIST, FastJet): when the location field is empty, CMake uses a
-copy next to CAP (../Herwig/install, ../Sherpa/install, ../Thermal-FIST, ../Fastjet/install) or distributed with CAP
-(<CAP>/pythia8*, <CAP>/Herwig*, ..., or the same names under <CAP>/external), then the environment (CAP_PYTHIA8_PATH
-or PYTHIA8, CAP_HERWIG_PATH or HERWIG_DIR, CAP_SHERPA_PATH or SHERPA_DIR, CAP_THERMALFIST_PATH or THERMALFIST_DIR,
-CAP_FASTJET_PATH or FASTJET), then the package's configuration tool (pythia8-config, Herwig-config, Sherpa-config,
+copy next to Datum (../Herwig/install, ../Sherpa/install, ../Thermal-FIST, ../Fastjet/install) or distributed with Datum
+(<Datum>/pythia8*, <Datum>/Herwig*, ..., or the same names under <Datum>/external), then the environment (DATUM_PYTHIA8_PATH
+or PYTHIA8, DATUM_HERWIG_PATH or HERWIG_DIR, DATUM_SHERPA_PATH or SHERPA_DIR, DATUM_THERMALFIST_PATH or THERMALFIST_DIR,
+DATUM_FASTJET_PATH or FASTJET), then the package's configuration tool (pythia8-config, Herwig-config, Sherpa-config,
 fastjet-config). The status line under each location shows what would be used. Sherpa and Thermal-FIST are
-placeholders: CMake checks their location, but CAP has no interface to them yet. ROOT is optional (off by default): the
-"ROOT" option builds the RootConvert library (.root files in DatumGui, bin/CapRootConvert) and the readers of ROOT event trees
+placeholders: CMake checks their location, but Datum has no interface to them yet. ROOT is optional (off by default): the
+"ROOT" option builds the RootConvert library (.root files in DatumGui, bin/DatumRootConvert) and the readers of ROOT event trees
 (Epos, the Pythia event reader); its location sits under it.
 
-The settings are saved in <CAP>/.BuildCAP.json; Save configuration and Load configuration write and read them to and
-from other files, by default in <CAP>/configurations (e.g. one per machine or per set of packages). Requires Python 3.7+ with tkinter (on macOS with Homebrew Python:
+The settings are saved in <Datum>/.BuildDatum.json; Save configuration and Load configuration write and read them to and
+from other files, by default in <Datum>/configurations (e.g. one per machine or per set of packages). Requires Python 3.7+ with tkinter (on macOS with Homebrew Python:
 brew install python-tk).
 """
 
@@ -58,12 +58,12 @@ import sys
 import threading
 import time
 
-CAP_DIR = os.path.dirname(os.path.abspath(__file__))
-SRC_DIR = os.path.join(CAP_DIR, "src")
-SETTINGS_FILE = os.path.join(CAP_DIR, ".BuildDatum.json")
-LEGACY_SETTINGS_FILE = os.path.join(CAP_DIR, ".BuildCAP.json")   # of BuildCAP.py, read if the new one does not exist
+DATUM_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(DATUM_DIR, "src")
+SETTINGS_FILE = os.path.join(DATUM_DIR, ".BuildDatum.json")
+LEGACY_SETTINGS_FILE = os.path.join(DATUM_DIR, ".BuildCAP.json")   # of BuildCAP.py, read if the new one does not exist
 #: Default directory of the configuration files (Save configuration, Load configuration), created when needed.
-CONFIGURATIONS_DIR = os.path.join(CAP_DIR, "configurations")
+CONFIGURATIONS_DIR = os.path.join(DATUM_DIR, "configurations")
 
 #: Modules always built (see src/CMakeLists.txt); none of them uses ROOT.
 CORE_MODULES = ["Base", "Math", "Particles", "Global", "ParticleSingle", "ParticlePair", "ParticlePair3D",
@@ -73,48 +73,48 @@ CORE_MODULES = ["Base", "Math", "Particles", "Global", "ParticleSingle", "Partic
 #: or a placeholder without code), description, default, external package (key of EXTERNALS, "ROOT", or None).
 #: A module with an external package shows, on the line below it, the location of that package.
 OPTIONAL_MODULES = [
-    ("CAP_WITH_GLAUBER",      "Glauber",         "Glauber", "Glauber Monte Carlo of nucleus-nucleus collisions", True, None),
-    ("CAP_WITH_THERMINATOR3", "Therminator3",    "Therminator3", "Thermal model event generator", True, None),
-    ("CAP_WITH_EPOS",         "Epos",            "Epos", "EPOS event reader (needs ROOT)", False, None),
-    ("CAP_WITH_PHSD",         "PHSD",            "PHSD", "PHSD event reader", True, None),
-    ("CAP_WITH_PYTHIA8",      "Pythia",          "Pythia", "Pythia8 event generator interface", False, "PYTHIA8"),
-    ("CAP_WITH_HERWIG",       "Herwig",          "Herwig", "Herwig 7 event generator interface", False, "HERWIG"),
-    ("CAP_WITH_SHERPA",       "Sherpa",          None, "Sherpa event generator (placeholder: no CAP interface yet)",
+    ("DATUM_WITH_GLAUBER",      "Glauber",         "Glauber", "Glauber Monte Carlo of nucleus-nucleus collisions", True, None),
+    ("DATUM_WITH_THERMINATOR3", "Therminator3",    "Therminator3", "Thermal model event generator", True, None),
+    ("DATUM_WITH_EPOS",         "Epos",            "Epos", "EPOS event reader (needs ROOT)", False, None),
+    ("DATUM_WITH_PHSD",         "PHSD",            "PHSD", "PHSD event reader", True, None),
+    ("DATUM_WITH_PYTHIA8",      "Pythia",          "Pythia", "Pythia8 event generator interface", False, "PYTHIA8"),
+    ("DATUM_WITH_HERWIG",       "Herwig",          "Herwig", "Herwig 7 event generator interface", False, "HERWIG"),
+    ("DATUM_WITH_SHERPA",       "Sherpa",          None, "Sherpa event generator (placeholder: no Datum interface yet)",
      False, "SHERPA"),
-    ("CAP_WITH_THERMALFIST",  "Thermal-FIST",    None, "Thermal-FIST hadron resonance gas model (placeholder: no CAP "
+    ("DATUM_WITH_THERMALFIST",  "Thermal-FIST",    None, "Thermal-FIST hadron resonance gas model (placeholder: no Datum "
      "interface yet)", False, "THERMALFIST"),
-    ("CAP_WITH_JETS",         "Jets",            "Jets", "Jet analysis with FastJet (in progress)", False, "FASTJET"),
-    ("CAP_WITH_ROOT",         "ROOT",            "RootConvert", "ROOT files and trees: RootConvert library (.root files in DatumGui, "
-     "bin/CapRootConvert), Epos and Pythia event readers", False, "ROOT"),
-    ("CAP_WITH_LATEX",        "Latex",           "Latex", "LaTeX documents of results", True, None),
-    ("CAP_WITH_GRAPHICS",     "Graphics",        "Graphics", "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)",
+    ("DATUM_WITH_JETS",         "Jets",            "Jets", "Jet analysis with FastJet (in progress)", False, "FASTJET"),
+    ("DATUM_WITH_ROOT",         "ROOT",            "RootConvert", "ROOT files and trees: RootConvert library (.root files in DatumGui, "
+     "bin/DatumRootConvert), Epos and Pythia event readers", False, "ROOT"),
+    ("DATUM_WITH_LATEX",        "Latex",           "Latex", "LaTeX documents of results", True, None),
+    ("DATUM_WITH_GRAPHICS",     "Graphics",        "Graphics", "2D drawing library (macOS window, bin/MacOsCanvasDemo; in progress)",
      True, None),
-    ("CAP_WITH_GUI",          "DatumGui",          None, "Graphical interface bin/DatumGui (Dear ImGui; needs Graphics)", True, None),
+    ("DATUM_WITH_GUI",          "DatumGui",          None, "Graphical interface bin/DatumGui (Dear ImGui; needs Graphics)", True, None),
 ]
 
 #: External packages: key, label, CMake prefix variable, file identifying a valid prefix, bundled globs (relative to
-#: the CAP directory; "../X" is a sibling folder of CAP, e.g. ~/Developer/X), environment variables, configuration tool.
+#: the Datum directory; "../X" is a sibling folder of Datum, e.g. ~/Developer/X), environment variables, configuration tool.
 EXTERNALS = {
-    "PYTHIA8": dict(label="Pythia8", var="CAP_PYTHIA8_DIR", file="include/Pythia8/Pythia.h",
-                    bundled=["pythia8*", "external/pythia8*"], env=["CAP_PYTHIA8_PATH", "PYTHIA8"],
+    "PYTHIA8": dict(label="Pythia8", var="DATUM_PYTHIA8_DIR", file="include/Pythia8/Pythia.h",
+                    bundled=["pythia8*", "external/pythia8*"], env=["DATUM_PYTHIA8_PATH", "CAP_PYTHIA8_PATH", "PYTHIA8"],
                     tool="pythia8-config"),
-    "HERWIG":  dict(label="Herwig", var="CAP_HERWIG_DIR", file="include/Herwig/API/HerwigAPI.h",
+    "HERWIG":  dict(label="Herwig", var="DATUM_HERWIG_DIR", file="include/Herwig/API/HerwigAPI.h",
                     bundled=["../Herwig/install", "Herwig*", "herwig*", "external/Herwig*", "external/herwig*"],
-                    env=["CAP_HERWIG_PATH", "HERWIG_DIR"], tool="Herwig-config"),
-    "SHERPA":  dict(label="Sherpa", var="CAP_SHERPA_DIR", file="include/SHERPA-MC/SHERPA/Main/Sherpa.H",
+                    env=["DATUM_HERWIG_PATH", "CAP_HERWIG_PATH", "HERWIG_DIR"], tool="Herwig-config"),
+    "SHERPA":  dict(label="Sherpa", var="DATUM_SHERPA_DIR", file="include/SHERPA-MC/SHERPA/Main/Sherpa.H",
                     bundled=["../Sherpa/install", "Sherpa*", "sherpa*", "external/Sherpa*", "external/sherpa*"],
-                    env=["CAP_SHERPA_PATH", "SHERPA_DIR"], tool="Sherpa-config"),
-    "THERMALFIST": dict(label="Thermal-FIST", var="CAP_THERMALFIST_DIR", file="include/HRGBase.h",
+                    env=["DATUM_SHERPA_PATH", "CAP_SHERPA_PATH", "SHERPA_DIR"], tool="Sherpa-config"),
+    "THERMALFIST": dict(label="Thermal-FIST", var="DATUM_THERMALFIST_DIR", file="include/HRGBase.h",
                     bundled=["../Thermal-FIST", "Thermal-FIST*", "external/Thermal-FIST*"],
-                    env=["CAP_THERMALFIST_PATH", "THERMALFIST_DIR"], tool=None),
-    "FASTJET": dict(label="FastJet", var="CAP_FASTJET_DIR", file="include/fastjet/ClusterSequence.hh",
-                    bundled=["../Fastjet/install", "fastjet*", "external/fastjet*"], env=["CAP_FASTJET_PATH", "FASTJET"],
+                    env=["DATUM_THERMALFIST_PATH", "CAP_THERMALFIST_PATH", "THERMALFIST_DIR"], tool=None),
+    "FASTJET": dict(label="FastJet", var="DATUM_FASTJET_DIR", file="include/fastjet/ClusterSequence.hh",
+                    bundled=["../Fastjet/install", "fastjet*", "external/fastjet*"], env=["DATUM_FASTJET_PATH", "CAP_FASTJET_PATH", "FASTJET"],
                     tool="fastjet-config"),
 }
 
 BUILD_TYPES = ["Release", "RelWithDebInfo", "Debug", "MinSizeRel"]
 
-#: Names that cannot be used as build directories (existing CAP folders).
+#: Names that cannot be used as build directories (existing Datum folders).
 RESERVED_NAMES = {"src", "lib", "bin", "DB", "doc", "projects", "publications", "Grid", "external"}
 
 #: Extra directories searched for cmake and root-config (a GUI started from the macOS Finder has a minimal PATH).
@@ -131,7 +131,7 @@ def default_settings():
         "build_type": "Release",
         "jobs": max(1, (os.cpu_count() or 2)),
         "install": True,
-        "install_lib_dir": os.path.join(CAP_DIR, "lib"),
+        "install_lib_dir": os.path.join(DATUM_DIR, "lib"),
         "reconfigure": False,
         "root_dir": "",
         "options": {m[0]: m[4] for m in OPTIONAL_MODULES},
@@ -148,6 +148,9 @@ def read_settings(filename):
         saved = json.load(f)
     if not isinstance(saved, dict):
         raise ValueError("not a BuildDatum configuration")
+    if isinstance(saved.get("options"), dict):           # CAP_WITH_...: the names of the options before Datum 1.0
+        saved["options"] = {("DATUM_" + k[len("CAP_"):] if k.startswith("CAP_") else k): v
+                            for k, v in saved["options"].items()}
     for k, v in saved.items():
         if isinstance(v, dict) and isinstance(s.get(k), dict):
             s[k].update(v)
@@ -217,7 +220,7 @@ def detect_root(root_dir=""):
 
 
 def detect_external(key, prefix=""):
-    """Prefix that CMake would use for an external package (same order as cap_resolve_prefix in src/CMakeLists.txt).
+    """Prefix that CMake would use for an external package (same order as datum_resolve_prefix in src/CMakeLists.txt).
 
     Returns (prefix, message); prefix is "" if not found.
     """
@@ -228,8 +231,8 @@ def detect_external(key, prefix=""):
         return "", "%s does not contain %s" % (prefix, ext["file"])
     candidates = []
     for pattern in ext["bundled"]:
-        where = "next to CAP" if pattern.startswith("../") else "distributed with CAP"
-        candidates += [(os.path.normpath(p), where) for p in sorted(glob.glob(os.path.join(CAP_DIR, pattern)))
+        where = "next to Datum" if pattern.startswith("../") else "distributed with Datum"
+        candidates += [(os.path.normpath(p), where) for p in sorted(glob.glob(os.path.join(DATUM_DIR, pattern)))
                        if os.path.isdir(p)]
     for env in ext["env"]:
         if os.environ.get(env):
@@ -255,10 +258,10 @@ def valid_build_dir_name(name):
     if not name:
         return "Enter a build directory name."
     if not re.fullmatch(r"[A-Za-z0-9._+-]+", name) or name in (".", ".."):
-        return "Use letters, digits, '.', '_', '+' or '-' only (one directory directly under CAP)."
+        return "Use letters, digits, '.', '_', '+' or '-' only (one directory directly under Datum)."
     if name in RESERVED_NAMES:
-        return "'%s' is a CAP folder; choose another name." % name
-    path = os.path.join(CAP_DIR, name)
+        return "'%s' is a Datum folder; choose another name." % name
+    path = os.path.join(DATUM_DIR, name)
     if os.path.exists(path) and not os.path.isdir(path):
         return "'%s' exists and is not a directory." % name
     if os.path.isdir(path) and os.listdir(path) and not os.path.exists(os.path.join(path, "CMakeCache.txt")):
@@ -267,17 +270,17 @@ def valid_build_dir_name(name):
 
 
 def existing_build_dirs():
-    return sorted(d for d in os.listdir(CAP_DIR)
-                  if os.path.isfile(os.path.join(CAP_DIR, d, "CMakeCache.txt")))
+    return sorted(d for d in os.listdir(DATUM_DIR)
+                  if os.path.isfile(os.path.join(DATUM_DIR, d, "CMakeCache.txt")))
 
 
 def read_cmake_cache(build_dir):
-    """CAP options and prefixes stored in the CMake cache of a build directory: {name: value}."""
+    """Datum options and prefixes stored in the CMake cache of a build directory: {name: value}."""
     values = {}
     try:
-        with open(os.path.join(CAP_DIR, build_dir, "CMakeCache.txt")) as f:
+        with open(os.path.join(DATUM_DIR, build_dir, "CMakeCache.txt")) as f:
             for line in f:
-                m = re.match(r"(CAP_WITH_\w+|CAP_\w+_DIR|CMAKE_BUILD_TYPE):\w+=(.*)$", line.strip())
+                m = re.match(r"(DATUM_WITH_\w+|DATUM_\w+_DIR|CMAKE_BUILD_TYPE):\w+=(.*)$", line.strip())
                 if m:
                     values[m.group(1)] = m.group(2)
     except OSError:
@@ -290,13 +293,13 @@ def build_environment(s):
     env = dict(os.environ)
     lib = s["install_lib_dir"].rstrip("/") + "/"
     env.update({
-        "CAP_ROOT_PATH": CAP_DIR,
-        "CAP_SRC_PATH": SRC_DIR + "/",
-        "CAP_BIN_PATH": os.path.join(CAP_DIR, "bin") + "/",
-        "CAP_LIB_PATH": lib,
-        "CAP_MACROS_PATH": os.path.join(SRC_DIR, "Macros") + "/",
-        "CAP_PROJECTS_PATH": os.path.join(CAP_DIR, "projects") + "/",
-        "CAP_DATABASE_PATH": os.path.join(CAP_DIR, "DB") + "/",
+        "DATUM_ROOT_PATH": DATUM_DIR,
+        "DATUM_SRC_PATH": SRC_DIR + "/",
+        "DATUM_BIN_PATH": os.path.join(DATUM_DIR, "bin") + "/",
+        "DATUM_LIB_PATH": lib,
+        "DATUM_MACROS_PATH": os.path.join(SRC_DIR, "Macros") + "/",
+        "DATUM_PROJECTS_PATH": os.path.join(DATUM_DIR, "projects") + "/",
+        "DATUM_DATABASE_PATH": os.path.join(DATUM_DIR, "DB") + "/",
     })
     path = env.get("PATH", "").split(os.pathsep)
     root, _ = detect_root(s.get("root_dir", ""))
@@ -309,21 +312,21 @@ def build_environment(s):
     env["PATH"] = os.pathsep.join(path)
     for var in ("DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"):
         env[var] = lib + (os.pathsep + env[var] if env.get(var) else "")
-    for var in [v for v in env if v.startswith("CAP_")]:   # the new names (DATUM_...) of the variables of SetupDatum.sh
-        env["DATUM_" + var[4:]] = env[var]
+    for var in [v for v in env if v.startswith("DATUM_")]:   # their former names (CAP_...), for the scripts of CAP
+        env["CAP_" + var[len("DATUM_"):]] = env[var]
     return env
 
 
 def build_commands(s):
     """List of (description, command) of a build with settings s (see the module documentation)."""
-    build_dir = os.path.join(CAP_DIR, s["build_dir"])
+    build_dir = os.path.join(DATUM_DIR, s["build_dir"])
     cmake = which("cmake") or "cmake"
     make = which("make") or "make"
     configure = [cmake, "-S", SRC_DIR, "-B", build_dir]
     if not os.path.exists(os.path.join(build_dir, "CMakeCache.txt")) or s.get("reconfigure"):
         configure += ["-G", "Unix Makefiles"]          # the generator can only be chosen for a new cache
     configure.append("-DCMAKE_BUILD_TYPE=%s" % s["build_type"])
-    known = {m[0] for m in OPTIONAL_MODULES}   # options of older settings files (e.g. CAP_WITH_ROOT_FILES) are dropped
+    known = {m[0] for m in OPTIONAL_MODULES}   # options of older settings files (e.g. DATUM_WITH_ROOT_FILES) are dropped
     for opt, value in sorted(s["options"].items()):
         if opt in known:
             configure.append("-D%s=%s" % (opt, "ON" if value else "OFF"))
@@ -350,7 +353,7 @@ def run_gui():
     from tkinter import ttk, filedialog, messagebox
     from tkinter.scrolledtext import ScrolledText
 
-    class BuildCAPApp:
+    class BuildDatumApp:
         def __init__(self, root):
             self.root = root
             self.settings = load_settings()
@@ -395,7 +398,7 @@ def run_gui():
             ttk.Button(bar, text="Save configuration\u2026", command=self.save_configuration).pack(side=tk.LEFT, padx=(4, 12))
             ttk.Button(bar, text="Save output\u2026", command=self.save_output).pack(side=tk.LEFT, padx=(4, 0))
             ttk.Button(bar, text="Clear", command=self.clear_output).pack(side=tk.LEFT, padx=(4, 12))
-            ttk.Label(bar, text="Datum: " + CAP_DIR, foreground="gray40").pack(side=tk.RIGHT)
+            ttk.Label(bar, text="Datum: " + DATUM_DIR, foreground="gray40").pack(side=tk.RIGHT)
             bar = ttk.Frame(self.root, padding=(6, 2, 6, 4))     # second row: build settings
             bar.pack(fill=tk.X)
             ttk.Label(bar, text="Build directory:").pack(side=tk.LEFT)
@@ -498,7 +501,7 @@ def run_gui():
                                                                           pady=(4, 0))
                 text = desc
                 if folder and not module_dir(folder):
-                    text += "  (CAP interface not written yet)"
+                    text += "  (Datum interface not written yet)"
                 description = ttk.Label(pane, text=text, foreground="gray35", justify=tk.LEFT)
                 description.grid(row=row, column=2, columnspan=3, sticky="w", padx=(6, 0), pady=(4, 0))
                 self.wrap_labels.append(description)
@@ -536,7 +539,7 @@ def run_gui():
                 button.configure(state=state)
 
         def _browse(self, var):
-            path = filedialog.askdirectory(initialdir=var.get() or CAP_DIR, mustexist=True)
+            path = filedialog.askdirectory(initialdir=var.get() or DATUM_DIR, mustexist=True)
             if path:
                 var.set(path)
 
@@ -627,7 +630,7 @@ def run_gui():
 
         def save_output(self):
             name = self.build_dir.get().strip() or "build"
-            directory = os.path.join(CAP_DIR, name) if os.path.isdir(os.path.join(CAP_DIR, name)) else CAP_DIR
+            directory = os.path.join(DATUM_DIR, name) if os.path.isdir(os.path.join(DATUM_DIR, name)) else DATUM_DIR
             filename = filedialog.asksaveasfilename(
                 title="Save the build output", initialdir=directory,
                 initialfile="%s_%s.log" % (name, datetime.datetime.now().strftime("%Y%m%d_%H%M%S")),
@@ -643,7 +646,7 @@ def run_gui():
 
         # ---------------------------------------------------------------------------------------------- configurations
         def load_configuration(self):
-            """Read a configuration file (written by Save configuration, or .BuildCAP.json) into the window."""
+            """Read a configuration file (written by Save configuration, or .BuildDatum.json) into the window."""
             filename = filedialog.askopenfilename(
                 title="Load a build configuration", initialdir=self._configurations_dir(),
                 filetypes=[("BuildDatum configurations", "*.json"), ("All files", "*")])
@@ -659,12 +662,12 @@ def run_gui():
 
         @staticmethod
         def _configurations_dir():
-            """<CAP>/configurations, created if needed (CAP itself if it cannot be created)."""
+            """<Datum>/configurations, created if needed (Datum itself if it cannot be created)."""
             try:
                 os.makedirs(CONFIGURATIONS_DIR, exist_ok=True)
                 return CONFIGURATIONS_DIR
             except OSError:
-                return CAP_DIR
+                return DATUM_DIR
 
         def save_configuration(self):
             """Write the settings of the window to a configuration file."""
@@ -695,7 +698,7 @@ def run_gui():
                 self.jobs.set(1)
             self.install.set(bool(s.get("install", True)))
             self.reconfigure.set(bool(s.get("reconfigure", False)))
-            self.install_lib_dir.set(s.get("install_lib_dir", "") or os.path.join(CAP_DIR, "lib"))
+            self.install_lib_dir.set(s.get("install_lib_dir", "") or os.path.join(DATUM_DIR, "lib"))
             self.root_dir.set(s.get("root_dir", ""))
             for opt, var in self.option_vars.items():
                 if opt in s.get("options", {}):
@@ -722,7 +725,7 @@ def run_gui():
                 s["jobs"] = 1
             s["install"] = bool(self.install.get())
             s["reconfigure"] = bool(self.reconfigure.get())
-            s["install_lib_dir"] = self.install_lib_dir.get().strip() or os.path.join(CAP_DIR, "lib")
+            s["install_lib_dir"] = self.install_lib_dir.get().strip() or os.path.join(DATUM_DIR, "lib")
             s["root_dir"] = self.root_dir.get().strip()
             s["options"] = {opt: bool(var.get()) for opt, var in self.option_vars.items()}
             s["prefixes"] = {key: var.get().strip() for key, var in self.prefix_vars.items()}
@@ -736,7 +739,7 @@ def run_gui():
                 return "cmake was not found (looked in PATH and %s)." % ", ".join(EXTRA_PATHS)
             if not which("make"):
                 return "make was not found."
-            if s["options"].get("CAP_WITH_ROOT") and not detect_root(s["root_dir"])[0]:
+            if s["options"].get("DATUM_WITH_ROOT") and not detect_root(s["root_dir"])[0]:
                 return "ROOT was not found: enter its installation directory (the one containing bin/root-config), or uncheck ROOT."
             missing = []
             for opt, _, _, _, _, key in OPTIONAL_MODULES:
@@ -756,11 +759,11 @@ def run_gui():
                 messagebox.showerror("Cannot build", error)
                 return
             save_settings({k: v for k, v in s.items() if k != "reconfigure"})
-            build_dir = os.path.join(CAP_DIR, s["build_dir"])
+            build_dir = os.path.join(DATUM_DIR, s["build_dir"])
             try:
                 os.makedirs(build_dir, exist_ok=True)
                 os.makedirs(s["install_lib_dir"], exist_ok=True)
-                os.makedirs(os.path.join(CAP_DIR, "bin"), exist_ok=True)
+                os.makedirs(os.path.join(DATUM_DIR, "bin"), exist_ok=True)
                 if s["reconfigure"] and os.path.exists(os.path.join(build_dir, "CMakeCache.txt")):
                     os.remove(os.path.join(build_dir, "CMakeCache.txt"))
             except OSError as e:
@@ -773,7 +776,7 @@ def run_gui():
             self.build_button.configure(state=tk.DISABLED)
             self.stop_button.configure(state=tk.NORMAL)
             stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.append("\n=== CAP build in %s (%s, %s) ===\n" % (build_dir, s["build_type"], stamp), "command")
+            self.append("\n=== Datum build in %s (%s, %s) ===\n" % (build_dir, s["build_type"], stamp), "command")
             self.worker = threading.Thread(target=self._run_commands, args=(commands, env), daemon=True)
             self.worker.start()
 
@@ -782,7 +785,7 @@ def run_gui():
                 self.queue.put(("status", description + "\u2026"))
                 self.queue.put(("text", "\n$ %s\n" % shell_text(cmd), "command"))
                 try:
-                    self.process = subprocess.Popen(cmd, cwd=CAP_DIR, env=env, stdout=subprocess.PIPE,
+                    self.process = subprocess.Popen(cmd, cwd=DATUM_DIR, env=env, stdout=subprocess.PIPE,
                                                     stderr=subprocess.STDOUT, text=True, bufsize=1,
                                                     errors="replace", start_new_session=True)
                 except OSError as e:
@@ -863,7 +866,7 @@ def run_gui():
             self.root.destroy()
 
     root = tk.Tk()
-    BuildCAPApp(root)
+    BuildDatumApp(root)
     root.mainloop()
 
 

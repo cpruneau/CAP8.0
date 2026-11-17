@@ -9,10 +9,10 @@
  * *********************************************************************/
 //! @file Distributions.hpp
 //! @brief Distributions: probabilities and cumulative distributions used by the statistical tests.
-#ifndef CAP__MATH__Distributions
-#define CAP__MATH__Distributions
+#ifndef DATUM__MATH__Distributions
+#define DATUM__MATH__Distributions
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -113,6 +113,6 @@ namespace CAP
   } // namespace Distributions
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__Distributions
+#endif // !DATUM__MATH__Distributions

@@ -8,9 +8,9 @@
  *
  * *********************************************************************/
 //! @file BinaryIO.hpp
-//! @brief Binary encoding of CAP objects: BinaryWriter, BinaryReader, CRC-32 and the CAP record format.
-#ifndef CAP__BinaryIO
-#define CAP__BinaryIO
+//! @brief Binary encoding of Datum objects: BinaryWriter, BinaryReader, CRC-32 and the Datum record format.
+#ifndef DATUM__BinaryIO
+#define DATUM__BinaryIO
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -23,7 +23,7 @@
 #include "String.hpp"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -237,7 +237,7 @@ inline std::vector<double> readDoubles(BinaryReader & r)
 //! @name Binary records and files
 //!
 //! Objects are saved as records, one after the other in a file or stream:
-//!   tag (4 bytes, "CAP" + one letter identifying the class), format version (1 byte), payload length (varint),
+//!   tag (4 bytes, "DTM" + one letter identifying the class; "CAP" + the letter in files written before Datum 1.0), format version (1 byte), payload length (varint),
 //!   payload, CRC-32 of the payload (4 bytes, little-endian).
 //! The payload always starts with the object's name (a string, empty if the class has no name).
 //! Records of other classes are skipped when reading, so one file can hold objects of several classes.
@@ -267,21 +267,33 @@ inline void writeBinaryRecord(std::ostream & out, const char * tag, unsigned int
   if (!out) throw FileException(where,"Error writing binary record","writeBinaryRecord()");
 }
 
+//! @brief Check the tag of a record and return it: "DTM" + one letter, or "CAP" + the letter in files written before
+//! Datum 1.0, returned as "DTM" + the letter. @param t first 4 bytes of the record @param tag output: the tag
+//! @return false if the bytes are not the tag of a record
+inline bool readBinaryTag(const char * t, std::string & tag)
+{
+  bool current = t[0]=='D' && t[1]=='T' && t[2]=='M';
+  bool former  = t[0]=='C' && t[1]=='A' && t[2]=='P';
+  if (!current && !former) return false;
+  tag.assign("DTM");
+  tag += t[3];
+  return true;
+}
+
 //!
 //! @brief Read the next record, of any class.
 //! @param in stream @param tag output: 4-character tag @param version output: format version @param payload output: payload
 //! @param where file or object name, for error messages
 //! @return false if the stream is at its end before the record starts
-//! @throws FileException if the data is not a CAP record, or is truncated or corrupted
+//! @throws FileException if the data is not a Datum record, or is truncated or corrupted
 //!
 inline bool readBinaryRecord(std::istream & in, std::string & tag, unsigned int & version, std::string & payload, const String & where)
 {
   char t[4];
   in.read(t,4);
   if (in.gcount()==0 && in.eof()) return false;
-  if (in.gcount()!=4 || t[0]!='C' || t[1]!='A' || t[2]!='P')
-    throw FileException(where,"Not a CAP binary record (bad tag)","readBinaryRecord()");
-  tag.assign(t,4);
+  if (in.gcount()!=4 || !readBinaryTag(t,tag))
+    throw FileException(where,"Not a Datum binary record (bad tag)","readBinaryRecord()");
   int v = in.get();
   if (v==EOF) throw FileException(where,"Truncated binary record","readBinaryRecord()");
   version = unsigned(v);
@@ -310,7 +322,7 @@ inline bool readBinaryRecord(std::istream & in, std::string & tag, unsigned int 
 //! @param r reader positioned at the start of the record @param tag output: 4-character tag @param version output:
 //! format version @param payload output: start of the payload (inside the reader's data) @param length output: payload
 //! length @param where file or object name, for error messages
-//! @throws FileException if the data is not a CAP record, or is truncated or corrupted
+//! @throws FileException if the data is not a Datum record, or is truncated or corrupted
 //!
 inline void readBinaryRecord(BinaryReader & r, std::string & tag, unsigned int & version, const char * & payload,
                              std::size_t & length, const String & where)
@@ -318,8 +330,7 @@ inline void readBinaryRecord(BinaryReader & r, std::string & tag, unsigned int &
   try
     {
     const char * t = r.readSpan(4);
-    if (t[0]!='C' || t[1]!='A' || t[2]!='P') throw FileException(where,"Not a CAP binary record (bad tag)","readBinaryRecord()");
-    tag.assign(t,4);
+    if (!readBinaryTag(t,tag)) throw FileException(where,"Not a Datum binary record (bad tag)","readBinaryRecord()");
     version = r.readUInt8();
     uint64_t n = r.readVarUInt();
     if (n > r.remaining()) throw FileException(where,"Truncated binary record","readBinaryRecord()");
@@ -478,6 +489,6 @@ std::vector<T> loadAllBinaryObjects(const String & fileName)
 
 //! @}
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

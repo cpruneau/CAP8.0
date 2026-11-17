@@ -16,7 +16,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 EventCountHistos::EventCountHistos()
@@ -102,4 +102,4 @@ void EventCountHistos::fill(long taskExecuted,
 
 }
 
-} // namespace CAP
+} // namespace Datum

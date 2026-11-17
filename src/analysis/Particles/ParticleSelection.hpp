@@ -5,11 +5,11 @@
  * For the licensing terms see LICENSE.
  *
  * *********************************************************************/
-#ifndef CAP__ParticleSelection
-#define CAP__ParticleSelection
+#ifndef DATUM__ParticleSelection
+#define DATUM__ParticleSelection
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
 class Particle;
 class ParticleFilter;
@@ -122,6 +122,6 @@ private:
   mutable bool _hasSpherocity;          //!< whether computed for this event
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticleSelection */
+#endif /* DATUM__ParticleSelection */

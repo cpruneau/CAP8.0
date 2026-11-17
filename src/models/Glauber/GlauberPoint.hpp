@@ -9,12 +9,12 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberPoint
-#define CAP__GlauberPoint
+#ifndef DATUM__GlauberPoint
+#define DATUM__GlauberPoint
 #include <cmath>
 #include <cmath>
 
-namespace CAP
+namespace Datum
 {
 using namespace std;
 
@@ -74,7 +74,7 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif
 

@@ -1,5 +1,5 @@
 ###############################################################################################
-# Project CAP/Therminator3
+# Project Datum/Therminator3
 ###############################################################################################
 
 add_compile_options(-Wall -Wextra -pedantic)
@@ -27,12 +27,12 @@ Viscosity.cpp)
 
 target_link_libraries(Therminator3 Base Math Particles  ${EXTRA_LIBS} )
 target_include_directories(Therminator3  PUBLIC  Base Math Particles  ${EXTRA_INCLUDES} )
-cap_install(Therminator3 LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Therminator3 LIBRARY "$ENV{DATUM_LIB_PATH}")
 
 # Tests (run with ctest in the build directory; not installed)
 add_executable(TestTherminator3Models tests/TestTherminator3Models.cpp)
 target_link_libraries(TestTherminator3Models Therminator3 Particles Math Base)
-target_compile_definitions(TestTherminator3Models PRIVATE CAP_PARTICLE_DB="${CMAKE_SOURCE_DIR}/../DB/ParticleData/ParticleDb.xml")
+target_compile_definitions(TestTherminator3Models PRIVATE DATUM_PARTICLE_DB="${CMAKE_SOURCE_DIR}/../DB/ParticleData/ParticleDb.xml")
 add_test(NAME Therminator3Models COMMAND TestTherminator3Models)
 # the comparison on Therminator 2's RHIC hypersurface runs when the directory of Therminator 2 is given:
 # cmake -S src -B build -DTHERMINATOR2_DIR=/path/to/therminator2

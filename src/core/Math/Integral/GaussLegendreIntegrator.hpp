@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file GaussLegendreIntegrator.hpp
 //! @brief GaussLegendreIntegrator: Gauss-Legendre quadrature, composite, in 1, 2 or n dimensions.
-#ifndef CAP__MATH__GaussLegendreIntegrator
-#define CAP__MATH__GaussLegendreIntegrator
+#ifndef DATUM__MATH__GaussLegendreIntegrator
+#define DATUM__MATH__GaussLegendreIntegrator
 #include "Integrator.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -27,7 +27,7 @@ namespace CAP
   //! applied once on n panels. A box is integrated by the product rule (m^n points per cell).
   //!
   //! rule() gives the nodes and weights on [-1, 1] (computed once per m, by Newton's method), and quadrature() and
-  //! productRule() apply the rule without refinement: the functions of CAP with polynomial pieces (Legendre, Laguerre,
+  //! productRule() apply the rule without refinement: the functions of Datum with polynomial pieces (Legendre, Laguerre,
   //! BezierCurve) and the averages of a function over the bins of a histogram (Fitter) use them.
   //!
   class GaussLegendreIntegrator : public Integrator
@@ -77,6 +77,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__GaussLegendreIntegrator
+#endif // DATUM__MATH__GaussLegendreIntegrator

@@ -1,8 +1,8 @@
-#ifndef CAP_MATH_Parabolic
-#define CAP_MATH_Parabolic
+#ifndef DATUM_MATH_Parabolic
+#define DATUM_MATH_Parabolic
 #include "Polynomial.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -14,7 +14,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Parabolic f(1.0, -4.0, 2.0);   // 1 - 4x + 2x^2
+  //!   Datum::MATH::Parabolic f(1.0, -4.0, 2.0);   // 1 - 4x + 2x^2
   //!   double y  = f(3.0);                       // 7
   //!   double xe = f.extremumX();                // 1  (minimum, since c2>0)
   //!   double ye = f.extremumValue();            // -1
@@ -65,6 +65,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

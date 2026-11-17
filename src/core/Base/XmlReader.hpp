@@ -7,11 +7,11 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__XmlReader
-#define CAP__XmlReader
+#ifndef DATUM__XmlReader
+#define DATUM__XmlReader
 #include "XmlDocument.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -73,6 +73,6 @@ protected:
   unsigned int _maximumDepth; //!< maximum nesting depth
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

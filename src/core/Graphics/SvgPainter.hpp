@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file SvgPainter.hpp
 //! @brief SvgPainter: painter writing SVG files.
-#ifndef CAP__SvgPainter
-#define CAP__SvgPainter
+#ifndef DATUM__SvgPainter
+#define DATUM__SvgPainter
 #include <sstream>
 #include "Painter.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -93,6 +93,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__SvgPainter
+#endif // !DATUM__SvgPainter

@@ -17,7 +17,7 @@
 #include <string>
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Exceptions.hpp"
 #include "FileDialog.hpp"
 #include "FileSystem.hpp"
@@ -28,7 +28,7 @@
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmear.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -72,7 +72,7 @@ namespace CAP
     }
 
     String withExtension(const String & name)
-    { return FileSystem::hasExtension(name,".cap") ? name : name+".cap"; }
+    { return DatumFile::makeFileName("",name); }
   }
 
   DetectorMapsDialog::DetectorMapsDialog()
@@ -100,7 +100,7 @@ namespace CAP
   {
   try
     {
-    std::unique_ptr<CapFile> file(CapFile::openOldCapFile(fileName));
+    std::unique_ptr<DatumFile> file(DatumFile::openOldDatumFile(fileName));
     const Folder & top = file->folder();
     std::vector<std::unique_ptr<KinematicMapFolder>> objects;
     for (const String & name : KinematicMapFolder::objectNames(top,kEfficiency))
@@ -145,7 +145,7 @@ namespace CAP
   String name = withExtension(fileName);
   try
     {
-    std::unique_ptr<CapFile> file(CapFile::openRecreateCapFile(name));
+    std::unique_ptr<DatumFile> file(DatumFile::openRecreateDatumFile(name));
     for (const auto & o : _objects) o->saveTo(file->folder());
     file->write();
     _fileName = name;
@@ -248,7 +248,7 @@ namespace CAP
     }
   ImGui::SameLine();
   if (ImGui::Button("Open...") && fileDialog)
-    fileDialog->open(FileDialog::kOpenFile,"Open a maps file",FileSystem::current(),{".cap"},"",
+    fileDialog->open(FileDialog::kOpenFile,"Open a maps file",FileSystem::current(),{DatumFile::extension(),DatumFile::formerExtension()},"",
                      [this](const String & path) { String e; if (!load(path,e)) _error = e.str(); });
   ImGui::SameLine();
   bool saveAs = ImGui::Button("Save As...");
@@ -261,8 +261,8 @@ namespace CAP
     }
   ImGui::EndDisabled();
   if (saveAs && fileDialog)
-    fileDialog->open(FileDialog::kSaveFile,"Save the maps file",FileSystem::current(),{".cap"},
-                     _fileName.isNull() ? String("maps.cap") : FileSystem::name(_fileName),
+    fileDialog->open(FileDialog::kSaveFile,"Save the maps file",FileSystem::current(),{DatumFile::extension(),DatumFile::formerExtension()},
+                     _fileName.isNull() ? String("maps.datum") : FileSystem::name(_fileName),
                      [this](const String & path) { String e; if (!save(path,e)) _error = e.str(); });
   ImGui::SameLine();
   ImGui::TextDisabled("%s%s",_fileName.isNull() ? "(not saved)" : _fileName.data(),_modified ? "  (modified)" : "");
@@ -965,4 +965,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

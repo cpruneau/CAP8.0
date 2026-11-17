@@ -12,7 +12,7 @@
 #include "GlauberExceptions.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 
@@ -111,5 +111,5 @@ void IterationsGlauberException::print() const
   printLine();
 }
 
-} // namespace CAP
+} // namespace Datum
 

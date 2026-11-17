@@ -12,8 +12,8 @@
 #include "PtPtAnalyzer.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(PtPtTasks)
+DATUM_REFLECTION(PtPtTasks)
 {
-  CAP::registerTask<CAP::PtPtAnalyzer>("CAP::PtPtAnalyzer");
-  CAP::registerTask<CAP::PtPtDerivedCalculator>("CAP::PtPtDerivedCalculator");
+  Datum::registerTask<Datum::PtPtAnalyzer>("Datum::PtPtAnalyzer");
+  Datum::registerTask<Datum::PtPtDerivedCalculator>("Datum::PtPtDerivedCalculator");
 }

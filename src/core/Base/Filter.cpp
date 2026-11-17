@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "Filter.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 FilterException::FilterException(const String & _message,
@@ -18,5 +18,5 @@ FilterException::FilterException(const String & _message,
 Exception(_message,_source,__FUNCTION__)
 {   }
 
-} // namespace CAP
+} // namespace Datum
 

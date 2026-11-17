@@ -9,10 +9,10 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__NNProfile
-#define CAP__NNProfile
+#ifndef DATUM__NNProfile
+#define DATUM__NNProfile
 
-namespace CAP
+namespace Datum
 {
   //!
     //! @brief Nucleon-nucleon collision probability vs transverse distance, with cross section fluctuations (gamma
@@ -100,7 +100,7 @@ namespace CAP
   double _gOverOmegaR2;
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__NNProfile
+#endif // !DATUM__NNProfile
 

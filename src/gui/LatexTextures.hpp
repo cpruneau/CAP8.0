@@ -9,15 +9,15 @@
  * *********************************************************************/
 //! @file LatexTextures.hpp
 //! @brief LatexTextures: OpenGL textures of the texts typeset by LaTeX, for ImGuiPainter.
-#ifndef CAP__GUI__LatexTextures
-#define CAP__GUI__LatexTextures
+#ifndef DATUM__GUI__LatexTextures
+#define DATUM__GUI__LatexTextures
 #include <cstdint>
 #include <map>
 #include <utility>
 
 struct NSVGrasterizer;
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS { struct LatexImage; }
 
@@ -77,6 +77,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__LatexTextures
+#endif // !DATUM__GUI__LatexTextures

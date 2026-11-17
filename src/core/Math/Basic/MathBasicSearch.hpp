@@ -1,5 +1,5 @@
-#ifndef CAP_MathBasicSearch
-#define CAP_MathBasicSearch
+#ifndef DATUM_MathBasicSearch
+#define DATUM_MathBasicSearch
 #include <vector>
 #include <cstdlib>
 #include <algorithm>
@@ -9,7 +9,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -18,6 +18,6 @@ long binarySearch(const vector<double> array, double value);
 
 } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

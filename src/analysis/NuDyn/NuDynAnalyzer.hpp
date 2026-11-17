@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__NuDynAnalyzer
-#define CAP__NuDynAnalyzer
+#ifndef DATUM__NuDynAnalyzer
+#define DATUM__NuDynAnalyzer
 #include "EventProcessorHistos.hpp"
 #include "NuDynHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -57,6 +57,6 @@ public:
  
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__NuDynAnalyzer */
+#endif /* DATUM__NuDynAnalyzer */

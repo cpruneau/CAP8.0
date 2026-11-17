@@ -12,7 +12,7 @@
 #include "EposEventReader.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(EposTasks)
+DATUM_REFLECTION(EposTasks)
 {
-  CAP::registerTask<CAP::EposEventReader>("CAP::EposEventReader");
+  Datum::registerTask<Datum::EposEventReader>("Datum::EposEventReader");
 }

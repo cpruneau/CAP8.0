@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file AnnealingSearch.hpp
 //! @brief AnnealingSearch: extremum search by simulated annealing.
-#ifndef CAP__MATH__AnnealingSearch
-#define CAP__MATH__AnnealingSearch
+#ifndef DATUM__MATH__AnnealingSearch
+#define DATUM__MATH__AnnealingSearch
 #include "SearchEngine.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -80,6 +80,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__AnnealingSearch
+#endif // !DATUM__MATH__AnnealingSearch

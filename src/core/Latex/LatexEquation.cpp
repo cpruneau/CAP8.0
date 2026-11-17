@@ -1,6 +1,6 @@
 #include "LatexEquation.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexEquation::LatexEquation()
   :

@@ -1,9 +1,9 @@
-#ifndef CAP_MATH_LogNormal
-#define CAP_MATH_LogNormal
+#ifndef DATUM_MATH_LogNormal
+#define DATUM_MATH_LogNormal
 #include <cmath>
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -23,7 +23,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::LogNormal f(1.0, 0.0, 0.5);   // probability density of x with ln x ~ N(0, 0.5^2)
+  //!   Datum::MATH::LogNormal f(1.0, 0.0, 0.5);   // probability density of x with ln x ~ N(0, 0.5^2)
   //!   double y  = f(1.0);                      // 1/(0.5 sqrt(2 pi))
   //!   double xm = f.mode();                    // exp(-0.25), position of the peak
   //! @endcode
@@ -154,6 +154,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__RootChainManager
-#define CAP__RootChainManager
+#ifndef DATUM__RootChainManager
+#define DATUM__RootChainManager
 #include "String.hpp"
 #include "TChain.h"
 #include "TTree.h"
 #include "TBranch.h"
 
-namespace CAP
+namespace Datum
 {
 
 class RootChainManager
@@ -59,4 +59,4 @@ protected:
 };
 
 }
-#endif /* CAP_RootTreeReader */
+#endif /* DATUM_RootTreeReader */

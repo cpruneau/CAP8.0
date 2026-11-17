@@ -1,5 +1,5 @@
-#ifndef CAP_MathBasicStatistics
-#define CAP_MathBasicStatistics
+#ifndef DATUM_MathBasicStatistics
+#define DATUM_MathBasicStatistics
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -313,6 +313,6 @@ template <typename T> T centeredMoments(int order,std::vector<T> values, std::ve
 
 } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

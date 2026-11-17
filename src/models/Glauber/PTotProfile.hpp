@@ -9,15 +9,15 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__PTotProfile
-#define CAP__PTotProfile
+#ifndef DATUM__PTotProfile
+#define DATUM__PTotProfile
 #include "MathConstants.hpp"
 #include <vector>
 using namespace std;
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
+using Datum::MATH::pi;
+using Datum::MATH::twoPi;
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -73,7 +73,7 @@ namespace CAP
   void buildTable();
   };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif
 

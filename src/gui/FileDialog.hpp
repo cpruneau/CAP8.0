@@ -9,15 +9,15 @@
  * *********************************************************************/
 //! @file FileDialog.hpp
 //! @brief FileDialog: dialog to choose a file to open, a folder, or a file to save to.
-#ifndef CAP__GUI__FileDialog
-#define CAP__GUI__FileDialog
+#ifndef DATUM__GUI__FileDialog
+#define DATUM__GUI__FileDialog
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -41,7 +41,7 @@ namespace CAP
   FileDialog();
 
   //! @brief Show the dialog. @param mode what is chosen @param title window title @param directory starting folder
-  //! @param extensions file name endings shown (e.g. {".cap", ".root"}; empty: all files)
+  //! @param extensions file name endings shown (e.g. {".datum", ".cap", ".root"}; empty: all files)
   //! @param fileName initial file name (kSaveFile) @param callback called with the chosen path
   void open(Mode mode, const String & title, const String & directory, const std::vector<String> & extensions,
             const String & fileName, const Callback & callback);
@@ -84,6 +84,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__FileDialog
+#endif // !DATUM__GUI__FileDialog

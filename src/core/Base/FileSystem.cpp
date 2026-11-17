@@ -21,7 +21,7 @@
 
 namespace fs = std::filesystem;
 
-namespace CAP
+namespace Datum
 {
 namespace FileSystem
 {
@@ -365,11 +365,20 @@ namespace FileSystem
       while (end<in.size() && (std::isalnum((unsigned char)in[end]) || in[end]=='_')) end++;
       variable = in.substr(start,end-start);
       }
-    const char * value = variable.empty() ? nullptr : std::getenv(variable.c_str());
+    const char * value = variable.empty() ? nullptr : environment(variable);
     out += value ? std::string(value) : in.substr(k,end-k);   // undefined: left as written
     k = end;
     }
   return String(out);
+  }
+
+  const char * environment(const std::string & name)
+  {
+  const char * value = std::getenv(name.c_str());
+  if (value) return value;
+  if (name.compare(0,6,"DATUM_")==0) return std::getenv(("CAP_"+name.substr(6)).c_str());
+  if (name.compare(0,4,"CAP_")==0)   return std::getenv(("DATUM_"+name.substr(4)).c_str());
+  return nullptr;
   }
 
   String home()
@@ -390,7 +399,7 @@ namespace FileSystem
   String p = expand(path);
   if (p.length()>0 && p[0]=='/') return p;
   if (p.equalTo(".") || p.beginsWith("./")) return join(current(),String(p.length()>1 ? p.subString(2) : String("")));
-  const char * value = std::getenv(variable.data());
+  const char * value = environment(variable.data());
   if (!value || !*value)
     throw FileException(path,String("Relative path and the environment variable ")+variable+" is not defined","FileSystem::resolve()");
   return join(String(value),p);
@@ -398,7 +407,7 @@ namespace FileSystem
 
   String configuredPath(const String & path, const String & variable)
   {
-  const char * value = std::getenv(variable.data());
+  const char * value = environment(variable.data());
   String directory(value ? value : "");
   if (path.isNull() || path.equalTo("DEFAULT")) return directory;
   String p = expand(path);
@@ -537,4 +546,4 @@ namespace FileSystem
   }
 
 } // namespace FileSystem
-} // namespace CAP
+} // namespace Datum

@@ -13,11 +13,11 @@
 #include "GlauberPoint.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   
-  using CAP::MATH::pi;
-  using CAP::MATH::twoPi;
+  using Datum::MATH::pi;
+  using Datum::MATH::twoPi;
   
   //!
   //!Default CTOR

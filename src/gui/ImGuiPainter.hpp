@@ -8,21 +8,21 @@
  *
  * *********************************************************************/
 //! @file ImGuiPainter.hpp
-//! @brief ImGuiPainter: painter drawing CAP Graphics objects with Dear ImGui.
-#ifndef CAP__GUI__ImGuiPainter
-#define CAP__GUI__ImGuiPainter
+//! @brief ImGuiPainter: painter drawing Datum Graphics objects with Dear ImGui.
+#ifndef DATUM__GUI__ImGuiPainter
+#define DATUM__GUI__ImGuiPainter
 #include "Painter.hpp"
 
 struct ImDrawList;
 struct ImFont;
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
 
   //!
-  //! @brief Painter drawing CAP Graphics objects (Canvas, Graph, ...) into an ImGui draw list.
+  //! @brief Painter drawing Datum Graphics objects (Canvas, Graph, ...) into an ImGui draw list.
   //!
   //! The canvas fills the rectangle given to the constructor (screen pixels, y down); normalized canvas coordinates
   //! (0,0 lower-left, 1,1 upper-right) are mapped onto it. Marker styles, line styles and text sizes follow
@@ -88,6 +88,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__ImGuiPainter
+#endif // !DATUM__GUI__ImGuiPainter

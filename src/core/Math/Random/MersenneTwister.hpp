@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file MersenneTwister.hpp
 //! @brief MersenneTwister: the MT19937 generator of uniform random numbers.
-#ifndef CAP__MersenneTwister
-#define CAP__MersenneTwister
+#ifndef DATUM__MersenneTwister
+#define DATUM__MersenneTwister
 #include <array>
 #include <cstdint>
 #include <vector>
 #include "RandomGenerator.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -30,7 +30,7 @@ namespace CAP
   //! distributions of RandomGenerator are available.
   //!
   //! @code
-  //!   CAP::MATH::MersenneTwister mt(4357);
+  //!   Datum::MATH::MersenneTwister mt(4357);
   //!   double u = mt.random();
   //!   std::vector<std::uint32_t> saved = mt.state();   // to continue the same sequence later: mt.setState(saved)
   //! @endcode
@@ -74,7 +74,7 @@ namespace CAP
   };
 
   //!
-  //! @brief The random number generator shared by all of CAP (it replaces ROOT's gRandom).
+  //! @brief The random number generator shared by all of Datum (it replaces ROOT's gRandom).
   //!
   //! A MersenneTwister seeded with 4357 (the default seed of ROOT's TRandom3) when first used; setSeed() it to change
   //! the sequence (0: a different seed at each run). Classes that need a generator of their own create one instead.
@@ -83,6 +83,6 @@ namespace CAP
   MersenneTwister & randomGenerator();
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MersenneTwister
+#endif // !DATUM__MersenneTwister

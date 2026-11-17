@@ -1,6 +1,6 @@
 #include "LatexSection.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexSection::LatexSection()
   :
@@ -33,5 +33,5 @@ namespace CAP
   skipLines(out,1);
   }
 
-} // namespace CAP
+} // namespace Datum
 

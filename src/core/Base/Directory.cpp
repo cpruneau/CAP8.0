@@ -17,7 +17,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -156,4 +156,4 @@ namespace CAP
   return String(text);
   }
 
-} // namespace CAP
+} // namespace Datum

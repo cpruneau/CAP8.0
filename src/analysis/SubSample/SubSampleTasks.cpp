@@ -12,7 +12,7 @@
 #include "SubSampleStatCalculator.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(SubSampleTasks)
+DATUM_REFLECTION(SubSampleTasks)
 {
-  CAP::registerTask<CAP::SubSampleStatCalculator>("CAP::SubSampleStatCalculator");
+  Datum::registerTask<Datum::SubSampleStatCalculator>("Datum::SubSampleStatCalculator");
 }

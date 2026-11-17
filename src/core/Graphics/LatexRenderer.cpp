@@ -31,7 +31,7 @@
 
 extern char ** environ;   //!< environment of the process (passed to latex and dvisvgm)
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -295,9 +295,9 @@ namespace CAP
   _batchDelay(0.01)
   {
   findTools();
-  const char * cache = std::getenv("CAP_LATEX_CACHE");
+  const char * cache = FileSystem::environment("DATUM_LATEX_CACHE");
   if (cache)                         _cacheDirectory = FileSystem::expand(cache);
-  else if (!FileSystem::home().isNull()) _cacheDirectory = FileSystem::join(FileSystem::home(), ".cache/CAP/latex");
+  else if (!FileSystem::home().isNull()) _cacheDirectory = FileSystem::join(FileSystem::home(), ".cache/Datum/latex");
   }
 
   LatexRenderer::~LatexRenderer()
@@ -384,7 +384,7 @@ namespace CAP
   {
   std::uint64_t h = 14695981039346656037ULL;
   auto add = [&h](const char * s, std::size_t n) { for (std::size_t k=0; k<n; k++) { h ^= std::uint8_t(s[k]); h *= 1099511628211ULL; } };
-  add("CAP-latex-1", 12);                 // version of the format of the images (with its terminating 0)
+  add("Datum-latex-1", 12);                 // version of the format of the images (with its terminating 0)
   add(preamble.data(), std::size_t(preamble.length())+1);
   add(text.data(), std::size_t(text.length()));
   return h;
@@ -429,7 +429,7 @@ namespace CAP
   bool LatexRenderer::findTools()
   {
   std::vector<String> candidates;
-  const char * bin = std::getenv("CAP_LATEX_BIN");
+  const char * bin = FileSystem::environment("DATUM_LATEX_BIN");
   if (bin) candidates.push_back(FileSystem::expand(bin));
   const char * path = std::getenv("PATH");
   if (path)
@@ -577,9 +577,9 @@ namespace CAP
 
   if (!valid.empty())
     {
-    char pattern[] = "/tmp/CapLatex.XXXXXX";
+    char pattern[] = "/tmp/DatumLatex.XXXXXX";
     const char * tmp = std::getenv("TMPDIR");
-    std::string templ = std::string(tmp && *tmp ? tmp : "/tmp") + "/CapLatex.XXXXXX";
+    std::string templ = std::string(tmp && *tmp ? tmp : "/tmp") + "/DatumLatex.XXXXXX";
     std::vector<char> buffer(templ.begin(), templ.end());
     buffer.push_back(0);
     char * directory = mkdtemp(buffer.data());
@@ -752,4 +752,4 @@ namespace CAP
   }
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum

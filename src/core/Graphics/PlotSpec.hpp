@@ -10,8 +10,8 @@
 //! @file PlotSpec.hpp
 //! @brief PlotSpec: windows, canvases and graphs of histograms and functions described in an XML file (PlotHistos);
 //! GraphXml: the style of graphs, items, axes and attributes read from and written to XML elements.
-#ifndef CAP__PlotSpec
-#define CAP__PlotSpec
+#ifndef DATUM__PlotSpec
+#define DATUM__PlotSpec
 #include <functional>
 #include <map>
 #include <memory>
@@ -22,9 +22,9 @@
 #include "Canvas.hpp"
 #include "Graph.hpp"
 
-namespace CAP
+namespace Datum
 {
-  class CapFile;
+  class DatumFile;
   namespace MATH
   {
   class DataPoints;
@@ -102,7 +102,7 @@ namespace CAP
   //!
   //! @code
   //!   <PlotHistos version="1">
-  //!     <Input id="data" file="results.cap"/>                   <!-- paths relative to the XML file -->
+  //!     <Input id="data" file="results.datum"/>                   <!-- paths relative to the XML file -->
   //!     <Output directory="figures" pdf="plots.pdf" pptx="plots.pptx" latex="presentation.tex" latexStyle="beamer"
   //!             title="Spectra" author="C. Pruneau" affiliation="Wayne State University"/>
   //!     <Window title="Spectra" width="1400" height="900" columns="2" rows="1">       <!-- n x m canvases -->
@@ -141,8 +141,8 @@ namespace CAP
   struct InputSpec
   {
   String id;     //!< identifier used by the items (input="...")
-  String path;   //!< path of the CAP file
-  std::shared_ptr<CapFile> file;   //!< contents (null until opened)
+  String path;   //!< path of the Datum file
+  std::shared_ptr<DatumFile> file;   //!< contents (null until opened)
   };
   //! A canvas of a window
   struct CanvasSpec
@@ -220,9 +220,9 @@ namespace CAP
   //! @brief Replace the path of input k (e.g. a file given on the command line); an input is added if k is the
   //! number of inputs. @param k index @param path path
   void setInputPath(int k, const String & path);
-  //! @brief Give the contents of input k, opened elsewhere (e.g. by CapGui, which shows it in its browser).
+  //! @brief Give the contents of input k, opened elsewhere (e.g. by DatumGui, which shows it in its browser).
   //! @param k index @param file contents
-  void setInputFile(int k, const std::shared_ptr<CapFile> & file);
+  void setInputFile(int k, const std::shared_ptr<DatumFile> & file);
   //! @brief Open the inputs not opened yet (objects read when first used). @param error set to the reason of a
   //! failure @return false if one cannot be opened
   bool openInputs(String & error);
@@ -336,6 +336,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__PlotSpec
+#endif // !DATUM__PlotSpec

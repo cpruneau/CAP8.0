@@ -15,8 +15,8 @@
 #include <string>
 #include "Reflection.hpp"
 
-using namespace CAP;
-using namespace CAP::REFLECTION;
+using namespace Datum;
+using namespace Datum::REFLECTION;
 
 namespace
 {
@@ -38,9 +38,9 @@ int main()
   Registry & registry = Registry::instance();
   const ClassInfo * histogramClass = registry.find("Histogram");
   const ClassInfo * twisterClass = registry.find("MersenneTwister");
-  CHECK(histogramClass && twisterClass && registry.find("CAP::Object"));
+  CHECK(histogramClass && twisterClass && registry.find("Datum::Object"));
   if (!histogramClass || !twisterClass) return 1;
-  CHECK(histogramClass->inheritsFrom(*registry.find("CAP::Object")) && histogramClass->inheritsFrom(*registry.find("Partition")));
+  CHECK(histogramClass->inheritsFrom(*registry.find("Datum::Object")) && histogramClass->inheritsFrom(*registry.find("Partition")));
 
   Value generator = twisterClass->create({ 12345 });
   Value h = histogramClass->create({ "h", "Gaussian numbers", 40, -4.0, 4.0 });

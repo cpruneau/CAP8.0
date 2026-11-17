@@ -12,7 +12,7 @@
 #include <sstream>
 #include "Interpreter.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace INTERPRETER
   {
@@ -488,4 +488,4 @@ namespace CAP
   void Help::execute(Interpreter & interpreter) const { interpreter.out() << interpreter.help(topic); }
 
   } // namespace INTERPRETER
-} // namespace CAP
+} // namespace Datum

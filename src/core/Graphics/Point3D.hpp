@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file Point3D.hpp
 //! @brief Point3D: point or vector of space.
-#ifndef CAP_GRAPHICS_Point3D
-#define CAP_GRAPHICS_Point3D
+#ifndef DATUM_GRAPHICS_Point3D
+#define DATUM_GRAPHICS_Point3D
 #include "Point2D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -21,7 +21,7 @@ namespace CAP
   //!
   //! @brief Point (or displacement) in three dimensions, used to place and draw objects in 3D views.
   //!
-  //! Coordinates are floats. Data to be plotted are kept in the Math data point classes (CAP::MATH::DataPoints and
+  //! Coordinates are floats. Data to be plotted are kept in the Math data point classes (Datum::MATH::DataPoints and
   //! its derived classes); Point3D only holds positions in the drawing space.
   //!
   class Point3D
@@ -72,6 +72,6 @@ namespace CAP
   inline Point3D operator*(float a, const Point3D & p) { return p*a; }
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_GRAPHICS_Point3D
+#endif // DATUM_GRAPHICS_Point3D

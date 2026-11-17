@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/Performance
+# Project Datum/Performance
 ################################################################################################
 
 
@@ -24,7 +24,7 @@ target_include_directories(Performance  PUBLIC Performance Base  Particles   ${E
 # optimization for big histogram access within the pair inner loop
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
-cap_install(Performance LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Performance LIBRARY "$ENV{DATUM_LIB_PATH}")
 
 ################################################################################################
 # Tests (run with ctest in the build directory; not installed)

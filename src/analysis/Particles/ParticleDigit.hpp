@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleDigit
-#define CAP__ParticleDigit
+#ifndef DATUM__ParticleDigit
+#define DATUM__ParticleDigit
 #include "String.hpp"
 #include "Factory.hpp"
 
 using namespace std;
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Particle reduced to its kinematic bins and values, used by the analyzers to fill histograms quickly.
@@ -79,4 +79,4 @@ namespace CAP
 
 }
 
-#endif /* CAP__ParticleDigit */
+#endif /* DATUM__ParticleDigit */

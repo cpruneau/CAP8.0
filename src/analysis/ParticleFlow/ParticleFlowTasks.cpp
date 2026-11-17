@@ -10,8 +10,8 @@
 #include "ParticleFlowAnalyzer.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(ParticleFlowTasks)
+DATUM_REFLECTION(ParticleFlowTasks)
 {
-  CAP::registerTask<CAP::ParticleFlowAnalyzer>("CAP::ParticleFlowAnalyzer");
-  CAP::registerTask<CAP::ParticleFlowDerivedCalculator>("CAP::ParticleFlowDerivedCalculator");
+  Datum::registerTask<Datum::ParticleFlowAnalyzer>("Datum::ParticleFlowAnalyzer");
+  Datum::registerTask<Datum::ParticleFlowDerivedCalculator>("Datum::ParticleFlowDerivedCalculator");
 }

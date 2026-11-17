@@ -13,10 +13,10 @@
 #include <cstring>
 #include <functional>
 #include <string>
-#include "CapGuiApp.hpp"
+#include "DatumGuiApp.hpp"
 #include "PlotOutputs.hpp"
 #include "PlotTemplate.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "ColorTable.hpp"
 #include "FileSystem.hpp"
 #include "FunctionRegistry.hpp"
@@ -28,7 +28,7 @@
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -105,7 +105,7 @@ namespace CAP
   }
 
   const char * kEditorWindow = "Plot Tree";
-  const char * kNodePayload = "CAP_PLOT_NODE";
+  const char * kNodePayload = "DATUM_PLOT_NODE";
 
   std::string pathKey(int tab, const Path & path)
   {
@@ -382,7 +382,7 @@ namespace CAP
                      "shown in the Plot Tree; what is changed on them is written to the file, and what is changed in the "
                      "tree draws them again.");
   ImGui::Spacing();
-  ImGui::BulletText("File acts on the data files (CAP) of the browser, the one selected: New, Open, Duplicate, Close,\n"
+  ImGui::BulletText("File acts on the data files (Datum) of the browser, the one selected: New, Open, Duplicate, Close,\n"
                     "Save (a new or changed file), Export (ROOT, or every histogram on a page of a PDF, LaTeX or\n"
                     "PowerPoint file).");
   ImGui::BulletText("Plots acts on the plot files (XML), a tab each in the Plot Tree: New, Open, Duplicate, Close, Save,\n"
@@ -404,29 +404,29 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ application
 
-  CapGuiApp::CapGuiApp(Mode mode, const std::vector<String> & plotFiles, int argc, char ** argv)
+  DatumGuiApp::DatumGuiApp(Mode mode, const std::vector<String> & plotFiles, int argc, char ** argv)
   :
-  CapApp(argc, argv),
+  DatumApp(argc, argv),
   _mode(mode),
   _plotFiles(plotFiles)
   { }
 
-  CapGuiApp::~CapGuiApp()
+  DatumGuiApp::~DatumGuiApp()
   {
   // the canvases refer to the functions of the specification: emptied first
   for (int k=0; k<_gui.nPanes(); k++) _gui.pane(k).canvas() = GRAPHICS::Canvas();
   }
 
-  void CapGuiApp::buildMenus()
+  void DatumGuiApp::buildMenus()
   {
   MenuBar & bar = _gui.menuBar();
-  // File: the CAP data files and trees of the browser (the one selected in the browser used last)
+  // File: the Datum data files and trees of the browser (the one selected in the browser used last)
   Menu & file = bar.addMenu("File");
   Menu & fileNew = file.addMenu("New", "A new top folder in the browser used last, or a new browser");
   fileNew.addItem("Top Folder",   "data.new",        "Ctrl+Shift+N", "A new data file in the browser used last: an entry with an empty "
-                                                                     "top folder; drag objects and folders onto it, save it as a CAP file");
+                                                                     "top folder; drag objects and folders onto it, save it as a Datum file");
   fileNew.addItem("File Browser", "file.newBrowser", "",             "A new file browser, with files and folders of its own");
-  file.addItem("Open...",      "file.open",      "Ctrl+Shift+O", "Open a CAP file (or the histograms of a ROOT file) in the browser");
+  file.addItem("Open...",      "file.open",      "Ctrl+Shift+O", "Open a Datum file (or the histograms of a ROOT file) in the browser");
   file.addItem("Duplicate",    "data.duplicate", "",             "A new data file holding a copy of the folders and objects of the file selected");
   file.addItem("Rename...",    "data.rename",    "",             "A new name for the folder or histogram selected in a data file made in DatumGui (or its top folder); "
                                                                   "files read from disk keep their names");
@@ -434,11 +434,11 @@ namespace CAP
   file.addItem("Close",        "file.closeTree", "",             "Close the file selected in the browser, with its folders (asks to save its changes)");
   file.addItem("Close All",    "data.closeAll",  "",             "Close all the data files of the browsers (asks to save their changes)");
   file.addSeparator();
-  file.addItem("Save",         "data.save",      "",             "Save the file selected, new or changed, to its CAP file");
-  file.addItem("Save As...",   "data.saveAs",    "",             "Save the file selected to a new CAP file");
+  file.addItem("Save",         "data.save",      "",             "Save the file selected, new or changed, to its Datum file");
+  file.addItem("Save As...",   "data.saveAs",    "",             "Save the file selected to a new Datum file");
   file.addSeparator();
   Menu & dataExport = file.addMenu("Export", "The file selected in other formats");
-#ifdef CAP_WITH_ROOT
+#ifdef DATUM_WITH_ROOT
   dataExport.addItem("ROOT...",       "data.exportRoot",  "", "All the objects of the file selected, converted, to a ROOT file");
 #endif
   dataExport.addItem("PDF...",        "data.exportPdf",   "", "Every histogram of the file selected drawn on a page of its own, in one PDF file");
@@ -450,7 +450,7 @@ namespace CAP
   // Plots: the plot files (XML), the tabs of the Plot Tree
   Menu & plots = bar.addMenu("Plots");
   plots.addItem("New",                 "plot.new",       "Ctrl+N",       "A new, untitled plot file (a new tab of the Plot Tree)");
-  plots.addItem("New From Data File...", "plot.fromData", "",            "A new plot file with windows, canvases and graphs of the histograms and functions of a CAP file (or of a RunDatum workflow)");
+  plots.addItem("New From Data File...", "plot.fromData", "",            "A new plot file with windows, canvases and graphs of the histograms and functions of a Datum file (or of a RunDatum workflow)");
   plots.addItem("Open...",             "plot.open",      "Ctrl+O",       "Open a plot file (XML) in a new tab of the Plot Tree");
   plots.addItem("Duplicate",           "plot.duplicate", "",             "A copy of the plot file shown, in a new, untitled tab");
   plots.addItem("Rename...",           "plot.rename",    "",             "A new name for the plot file shown (a saved file is renamed in its folder)");
@@ -556,9 +556,9 @@ namespace CAP
   help.addItem("ImGui Demo (developers)", "help.imguiDemo", "", "Dear ImGui's demonstration window").setCheckable(true);
   }
 
-  void CapGuiApp::updateMenuStates()
+  void DatumGuiApp::updateMenuStates()
   {
-  CapApp::updateMenuStates();
+  DatumApp::updateMenuStates();
   MenuBar & bar = _gui.menuBar();
   Tab * t = tab();
   bool any = t != nullptr, selected = t && t->hasSelection && !t->selected.empty();
@@ -619,13 +619,13 @@ namespace CAP
   if (MenuItem * item = bar.findItem("plot.allWindows")) item->setChecked(_allWindows);
   }
 
-  void CapGuiApp::connectToPlot(FileBrowser & browser)
+  void DatumGuiApp::connectToPlot(FileBrowser & browser)
   {
   browser.onShowObject = [this](const ObjectReference & object) { showObject(object); };
   browser.onShowFolder = [this](int fileId, const String & folderPath) { showFolder(ObjectReference{fileId, folderPath}); };
   }
 
-  void CapGuiApp::onStartup()
+  void DatumGuiApp::onStartup()
   {
   _gui.setSideWindow(kEditorWindow, 0.40f);
   std::function<void()> previous = _gui.onFrame;
@@ -689,7 +689,7 @@ namespace CAP
                                  : "The canvases are the plot file: change them, or the tree, and save the file");
   }
 
-  int CapGuiApp::newDocument()
+  int DatumGuiApp::newDocument()
   {
   Tab t;
   t.document.reset(new PlotDocument());
@@ -701,7 +701,7 @@ namespace CAP
   return _current;
   }
 
-  bool CapGuiApp::openDocument(const String & fileName)
+  bool DatumGuiApp::openDocument(const String & fileName)
   {
   String path = FileSystem::normalize(fileName);
   for (std::size_t k=0; k<_documents.size(); k++)
@@ -730,12 +730,12 @@ namespace CAP
   return true;
   }
 
-  void CapGuiApp::select(const Path & path)
+  void DatumGuiApp::select(const Path & path)
   {
   if (Tab * t = tab()) { t->selected = path; t->hasSelection = true; }
   }
 
-  void CapGuiApp::requestClose(int k)
+  void DatumGuiApp::requestClose(int k)
   {
   if (k < 0 || k >= int(_documents.size())) return;
   if (!_documents[std::size_t(k)].document->isDirty()) { closeTab(k); return; }
@@ -744,7 +744,7 @@ namespace CAP
   _closeDialog = true;
   }
 
-  void CapGuiApp::closeTab(int k)
+  void DatumGuiApp::closeTab(int k)
   {
   if (k < 0 || k >= int(_documents.size())) return;
   _documents.erase(_documents.begin() + k);
@@ -754,7 +754,7 @@ namespace CAP
   if (_documents.empty() && !_exitAfterClosing) newDocument();   // every session is a plot file
   }
 
-  void CapGuiApp::save(int k, bool ask, const std::function<void()> & after)
+  void DatumGuiApp::save(int k, bool ask, const std::function<void()> & after)
   {
   if (k < 0 || k >= int(_documents.size())) return;
   int id = _documents[std::size_t(k)].id;
@@ -778,7 +778,7 @@ namespace CAP
   _gui.fileDialog().open(FileDialog::kSaveFile, "Save the plot file", start, {".xml"}, name, write);
   }
 
-  void CapGuiApp::saveChangedDocuments(const std::function<void()> & after)
+  void DatumGuiApp::saveChangedDocuments(const std::function<void()> & after)
   {
   for (std::size_t k=0; k<_documents.size(); k++)
     if (_documents[k].document->isDirty())
@@ -794,7 +794,7 @@ namespace CAP
   if (after) after();
   }
 
-  bool CapGuiApp::currentWindow(Path & window)
+  bool DatumGuiApp::currentWindow(Path & window)
   {
   Tab * t = tab();
   if (!t) return false;
@@ -812,15 +812,15 @@ namespace CAP
   return true;
   }
 
-  bool CapGuiApp::browserIsCurrent()
+  bool DatumGuiApp::browserIsCurrent()
   {
-  if (_gui.lastFocus() != CapGui::kFocusBrowser) return false;
+  if (_gui.lastFocus() != DatumGui::kFocusBrowser) return false;
   String path;
   bool folder = false;
   return selectedEntry(path, folder) != nullptr;
   }
 
-  void CapGuiApp::duplicateCurrent()
+  void DatumGuiApp::duplicateCurrent()
   {
   if (browserIsCurrent())
     {
@@ -845,7 +845,7 @@ namespace CAP
   actionPerformed(ActionEvent{"plot.duplicate", nullptr});
   }
 
-  std::vector<String> CapGuiApp::objectsOf(const ObjectReference & object, bool folder, String & fileName)
+  std::vector<String> DatumGuiApp::objectsOf(const ObjectReference & object, bool folder, String & fileName)
   {
   std::vector<String> objects;
   BrowserFile * f = file(object.file);
@@ -869,7 +869,7 @@ namespace CAP
   return objects;
   }
 
-  bool CapGuiApp::drop(const Path & target, const ObjectReference & object, bool folder)
+  bool DatumGuiApp::drop(const Path & target, const ObjectReference & object, bool folder)
   {
   Tab * t = tab();
   if (!t) return false;
@@ -887,7 +887,7 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ commands
 
-  void CapGuiApp::actionPerformed(const ActionEvent & event)
+  void DatumGuiApp::actionPerformed(const ActionEvent & event)
   {
   const String & c = event.command;
   Tab * t = tab();
@@ -899,8 +899,8 @@ namespace CAP
     _gui.fileDialog().open(FileDialog::kOpenFile, "Open a plot file", _configuration.directory, {".xml"}, "",
                            [this](const String & path) { openDocument(path); });
   else if (c == "plot.fromData")
-    _gui.fileDialog().open(FileDialog::kOpenFile, "CAP file or RunDatum workflow (.xml) whose histograms to plot",
-                           _configuration.directory, {".cap", ".xml"}, "",
+    _gui.fileDialog().open(FileDialog::kOpenFile, "Datum file or RunDatum workflow (.xml) whose histograms to plot",
+                           _configuration.directory, {DatumFile::extension(), DatumFile::formerExtension(), ".xml"}, "",
       [this](const String & path)
       {
       GRAPHICS::PlotTemplate catalog;
@@ -988,7 +988,7 @@ namespace CAP
   else if (c == "plot.delete")
     {
     // a shape selected on the current canvas (the tree not in use) goes first
-    if (!_treeFocused && _gui.nPanes() > 0 && _gui.currentPane().hasSelectedShape()) CapApp::actionPerformed(ActionEvent{"edit.delete", nullptr});
+    if (!_treeFocused && _gui.nPanes() > 0 && _gui.currentPane().hasSelectedShape()) DatumApp::actionPerformed(ActionEvent{"edit.delete", nullptr});
     else if (selected)
       {
       Path p = t->selected;
@@ -1180,10 +1180,10 @@ namespace CAP
       });
     }
   else if (c.str().compare(0, 5, "plot.") == 0) { }
-  else CapApp::actionPerformed(event);
+  else DatumApp::actionPerformed(event);
   }
 
-  void CapGuiApp::setGrid(bool graphs, int columns, int rows)
+  void DatumGuiApp::setGrid(bool graphs, int columns, int rows)
   {
   Tab * t = tab();
   if (!t) return;
@@ -1207,7 +1207,7 @@ namespace CAP
   d.endEdit();
   }
 
-  void CapGuiApp::gridMenu(bool graphs)
+  void DatumGuiApp::gridMenu(bool graphs)
   {
   Tab * t = tab();
   int columns = 1, rows = 1;
@@ -1231,7 +1231,7 @@ namespace CAP
   if (gridPicker(std::max(1, currentColumns), std::max(1, currentRows), columns, rows)) setGrid(graphs, columns, rows);
   }
 
-  PlotDocument CapGuiApp::reducedDocument(const Path & window, const Path & canvas)
+  PlotDocument DatumGuiApp::reducedDocument(const Path & window, const Path & canvas)
   {
   PlotDocument reduced = *tab()->document;
   XmlElement & root = reduced.document().root();
@@ -1250,7 +1250,7 @@ namespace CAP
   return reduced;
   }
 
-  std::string CapGuiApp::viewKey(bool canvas)
+  std::string DatumGuiApp::viewKey(bool canvas)
   {
   Tab * t = tab();
   if (!t) return "";
@@ -1267,7 +1267,7 @@ namespace CAP
   return key + "|window|" + std::to_string(w[0]);
   }
 
-  bool CapGuiApp::saveView(bool canvas, const String & fileName)
+  bool DatumGuiApp::saveView(bool canvas, const String & fileName)
   {
   Tab * t = tab();
   if (!t) return false;
@@ -1281,7 +1281,7 @@ namespace CAP
   String error;
   if (extension == ".pdf" || extension == ".svg")
     {
-    CapApp::save(path, canvas ? _gui.currentPaneIndex() : -1);         // as on screen
+    DatumApp::save(path, canvas ? _gui.currentPaneIndex() : -1);         // as on screen
     return true;
     }
   if (extension == ".xml")
@@ -1306,7 +1306,7 @@ namespace CAP
   return false;
   }
 
-  void CapGuiApp::saveViewAs(bool canvas, bool ask)
+  void DatumGuiApp::saveViewAs(bool canvas, bool ask)
   {
   std::string key = viewKey(canvas);
   if (key.empty())
@@ -1333,7 +1333,7 @@ namespace CAP
     });
   }
 
-  void CapGuiApp::exportWindow(const String & kind, const String & path)
+  void DatumGuiApp::exportWindow(const String & kind, const String & path)
   {
   Path w;
   if (!currentWindow(w)) { _gui.setStatus("No window in the plot file"); return; }
@@ -1373,7 +1373,7 @@ namespace CAP
   _gui.showMessage("Export", done);
   }
 
-  void CapGuiApp::openWindows(const String & fileName)
+  void DatumGuiApp::openWindows(const String & fileName)
   {
   Tab * t = tab();
   if (!t) return;
@@ -1414,7 +1414,7 @@ namespace CAP
   _gui.setStatus(String(std::to_string(added).c_str()) + String(" windows added from ") + fileName + String(" (Undo removes them)"));
   }
 
-  void CapGuiApp::treeSaved(int id, const String & previousPath)
+  void DatumGuiApp::treeSaved(int id, const String & previousPath)
   {
   BrowserFile * tree = file(id);
   if (!tree) return;
@@ -1440,7 +1440,7 @@ namespace CAP
   if (changed) _drawnTab = -1;                          // drawn again from the file saved
   }
 
-  void CapGuiApp::entryRenamed(int id, const String & oldPath, const String & newPath)
+  void DatumGuiApp::entryRenamed(int id, const String & oldPath, const String & newPath)
   {
   BrowserFile * tree = file(id);
   if (!tree) return;
@@ -1489,7 +1489,7 @@ namespace CAP
   if (changed) _drawnTab = -1;                          // drawn again: the histograms under their new names
   }
 
-  void CapGuiApp::requestRename(int kind, const Path & path)
+  void DatumGuiApp::requestRename(int kind, const Path & path)
   {
   Tab * t = tab();
   if (!t) return;
@@ -1509,7 +1509,7 @@ namespace CAP
   _rename = RenameRequest{kind, t->id, path, text, false};
   }
 
-  void CapGuiApp::renderRenameDialog()
+  void DatumGuiApp::renderRenameDialog()
   {
   if (_rename.kind == 0) return;
   const char * title = "Rename##plotRename";
@@ -1560,14 +1560,14 @@ namespace CAP
   ImGui::EndPopup();
   }
 
-  BrowserFile * CapGuiApp::selectedDataFile()
+  BrowserFile * DatumGuiApp::selectedDataFile()
   {
   String path;
   bool folder = false;
   return selectedEntry(path, folder);
   }
 
-  void CapGuiApp::duplicateDataFile(int id)
+  void DatumGuiApp::duplicateDataFile(int id)
   {
   int copy = newTree(_gui.activeBrowser());
   BrowserFile * from = file(id);                       // after newTree (the list of files grew)
@@ -1587,13 +1587,13 @@ namespace CAP
   catch (const std::exception & e) { _gui.showMessage("Duplicate", String("Cannot copy:\n") + String(e.what())); }
   }
 
-  void CapGuiApp::exportDataFile(int id, const String & kind, const String & path)
+  void DatumGuiApp::exportDataFile(int id, const String & kind, const String & path)
   {
   BrowserFile * f = file(id);
   if (!f || !f->file) return;
   String name = f->editable ? f->name : FileSystem::stem(f->path);
   GRAPHICS::PlotTemplate catalog;
-  int input = catalog.addInput("data", f->path.isNull() ? name + String(".cap") : f->path);
+  int input = catalog.addInput("data", f->path.isNull() ? name + String(DatumFile::extension()) : f->path);
   if (catalog.addFolder(input, *f->file) == 0) { _gui.showMessage("Export", name + String(": no histogram to draw")); return; }
   GRAPHICS::PlotTemplate::Options options;
   options.grouping = GRAPHICS::PlotTemplate::Options::kByHistogram;
@@ -1619,14 +1619,14 @@ namespace CAP
                         + written + (problems.isNull() ? String("") : String("\n") + problems));
   }
 
-  bool CapGuiApp::makeOutputs(GRAPHICS::PlotSpec & spec, std::vector<GRAPHICS::PlotSpec::WindowState> & windows)
+  bool DatumGuiApp::makeOutputs(GRAPHICS::PlotSpec & spec, std::vector<GRAPHICS::PlotSpec::WindowState> & windows)
   {
   Tab * t = tab();
   if (!t) return false;
   return buildOutputs(*t->document, spec, windows);
   }
 
-  bool CapGuiApp::buildOutputs(PlotDocument & document, GRAPHICS::PlotSpec & spec,
+  bool DatumGuiApp::buildOutputs(PlotDocument & document, GRAPHICS::PlotSpec & spec,
                                std::vector<GRAPHICS::PlotSpec::WindowState> & windows)
   {
   String error, problems;
@@ -1645,7 +1645,7 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ editor
 
-  void CapGuiApp::renderFrame()
+  void DatumGuiApp::renderFrame()
   {
   // changes made while a widget is active (typing, dragging) are one step of undo
   bool active = ImGui::IsAnyItemActive();
@@ -1664,7 +1664,7 @@ namespace CAP
   if (treeShown && ImGui::Begin(kEditorWindow, &_showTree, ImGuiWindowFlags_NoCollapse))
     {
     _treeFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
-    if (_treeFocused) _gui.setLastFocus(CapGui::kFocusSide);
+    if (_treeFocused) _gui.setLastFocus(DatumGui::kFocusSide);
     if (ImGui::BeginTabBar("##documents", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs
                                           | ImGuiTabBarFlags_FittingPolicyScroll))
       {
@@ -1707,7 +1707,7 @@ namespace CAP
   syncSelection();
   }
 
-  void CapGuiApp::renderTree(Tab & t)
+  void DatumGuiApp::renderTree(Tab & t)
   {
   PlotDocument & d = *t.document;
   // toolbar
@@ -1753,7 +1753,7 @@ namespace CAP
     }
   }
 
-  void CapGuiApp::renderNode(Tab & t, const Path & path)
+  void DatumGuiApp::renderNode(Tab & t, const Path & path)
   {
   PlotDocument & d = *t.document;
   const XmlElement * e = d.element(path);
@@ -1800,7 +1800,7 @@ namespace CAP
   ImGui::PopID();
   }
 
-  void CapGuiApp::rowDragAndDrop(Tab & t, const Path & path)
+  void DatumGuiApp::rowDragAndDrop(Tab & t, const Path & path)
   {
   PlotDocument & d = *t.document;
   if (!path.empty() && ImGui::BeginDragDropSource())
@@ -1849,7 +1849,7 @@ namespace CAP
   ImGui::EndDragDropTarget();
   }
 
-  void CapGuiApp::rowMenu(Tab & t, const Path & path)
+  void DatumGuiApp::rowMenu(Tab & t, const Path & path)
   {
   PlotDocument & d = *t.document;
   if (!ImGui::BeginPopupContextItem("##rowmenu")) return;
@@ -1881,7 +1881,7 @@ namespace CAP
   ImGui::EndPopup();
   }
 
-  void CapGuiApp::rowControls(Tab & t, const Path & path)
+  void DatumGuiApp::rowControls(Tab & t, const Path & path)
   {
   PlotDocument & d = *t.document;
   const XmlElement * e = d.element(path);
@@ -1997,7 +1997,7 @@ namespace CAP
     }
   }
 
-  void CapGuiApp::renderInspector(Tab & t)
+  void DatumGuiApp::renderInspector(Tab & t)
   {
   PlotDocument & d = *t.document;
   const XmlElement * e = t.hasSelection ? d.element(t.selected) : nullptr;
@@ -2029,7 +2029,7 @@ namespace CAP
     }
   }
 
-  void CapGuiApp::editElement(Tab & t, const Path & p)
+  void DatumGuiApp::editElement(Tab & t, const Path & p)
   {
   PlotDocument & d = *t.document;
   const XmlElement * e = d.element(p);
@@ -2038,19 +2038,19 @@ namespace CAP
   switch (PlotDocument::kind(*e))
     {
     case PlotDocument::kRoot:
-      ImGui::TextWrapped("The plot file: inputs (CAP files), outputs, and windows of canvases. Drop histograms here to "
+      ImGui::TextWrapped("The plot file: inputs (Datum files), outputs, and windows of canvases. Drop histograms here to "
                          "add a canvas to the last window.");
       break;
     case PlotDocument::kInput:
       {
       textField(d, p, "id", "identifier", 200);
-      textField(d, p, "file", "file", -1, "path of the CAP file (relative to the plot file)");
+      textField(d, p, "file", "file", -1, "path of the Datum file (relative to the plot file)");
       ImGui::SameLine();
       if (ImGui::SmallButton("Browse..."))
         {
         int id = t.id;
         Path path = p;
-        _gui.fileDialog().open(FileDialog::kOpenFile, "CAP file of the input", d.directory(), {".cap"}, "",
+        _gui.fileDialog().open(FileDialog::kOpenFile, "Datum file of the input", d.directory(), {DatumFile::extension(), DatumFile::formerExtension()}, "",
           [this, id, path](const String & f)
           {
           for (auto & tt : _documents)
@@ -2155,7 +2155,7 @@ namespace CAP
         if (ImGui::SmallButton("Default margins")) { d.beginEdit(); for (const char * s : sides) d.setStyle(p, "Margins", s, ""); d.endEdit(); }
         ImGui::TreePop();
         }
-      // everything else, with the editors of CapGui: written back as the differences to the defaults
+      // everything else, with the editors of DatumGui: written back as the differences to the defaults
       GRAPHICS::Graph graph;
       GraphXml::readGraph(*e, graph);
       bool changed = false;
@@ -2288,7 +2288,7 @@ namespace CAP
   ImGui::PopID();
   }
 
-  void CapGuiApp::renderDialogs()
+  void DatumGuiApp::renderDialogs()
   {
   renderRenameDialog();
   if (_closeDialog) { ImGui::OpenPopup("Save changes?"); _closeDialog = false; }
@@ -2350,7 +2350,7 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ canvases
 
-  const MATH::DataPoints * CapGuiApp::rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
+  const MATH::DataPoints * DatumGuiApp::rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
                                                    const std::vector<unsigned int> & factors)
   {
   // a canvas of the plot file: the copy belongs to the specification, which writes it back (attribute rebin) and
@@ -2360,29 +2360,29 @@ namespace CAP
   if (linked && _spec)
     {
     std::vector<unsigned int> previous;
-    CapApp::rebinSourceOf(data, previous);
+    DatumApp::rebinSourceOf(data, previous);
     if (previous.empty()) return _spec->rebinned(data, factors);
     }
-  return CapApp::rebinnedData(pane, data, factors);
+  return DatumApp::rebinnedData(pane, data, factors);
   }
 
-  const MATH::DataPoints * CapGuiApp::rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const
+  const MATH::DataPoints * DatumGuiApp::rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const
   {
   if (_spec)
     {
     const MATH::DataPoints * source = _spec->rebinSource(data, factors);
     if (!factors.empty()) return source;
     }
-  return CapApp::rebinSourceOf(data, factors);
+  return DatumApp::rebinSourceOf(data, factors);
   }
 
-  int CapGuiApp::paneIndexOf(const CanvasPane * pane)
+  int DatumGuiApp::paneIndexOf(const CanvasPane * pane)
   {
   for (int k=0; k<_gui.nPanes(); k++) if (&_gui.pane(k) == pane) return k;
   return -1;
   }
 
-  std::vector<int> CapGuiApp::closeCanvases(const std::vector<int> & panes)
+  std::vector<int> DatumGuiApp::closeCanvases(const std::vector<int> & panes)
   {
   std::vector<int> rest;
   std::vector<Path> canvases;
@@ -2413,7 +2413,7 @@ namespace CAP
   return rest;
   }
 
-  bool CapGuiApp::currentCanvas(Path & canvas, Path & graph)
+  bool DatumGuiApp::currentCanvas(Path & canvas, Path & graph)
   {
   canvas.clear();
   graph.clear();
@@ -2430,7 +2430,7 @@ namespace CAP
   return false;
   }
 
-  void CapGuiApp::clearGraph(const Path & graph, CanvasPane * pane, int cell)
+  void DatumGuiApp::clearGraph(const Path & graph, CanvasPane * pane, int cell)
   {
   Tab * t = tab();
   if (!t || graph.empty()) return;
@@ -2442,7 +2442,7 @@ namespace CAP
   if (pane && !pane->keepShapes() && cell >= 0 && cell < pane->canvas().nGraphs()) pane->canvas().graph(cell).clearShapes();
   }
 
-  void CapGuiApp::showObject(const ObjectReference & object)
+  void DatumGuiApp::showObject(const ObjectReference & object)
   {
   Tab * t = tab();
   if (!t) return;
@@ -2462,7 +2462,7 @@ namespace CAP
   drop(target, object, false);
   }
 
-  void CapGuiApp::replaceGraph(const Path & graph, const ObjectReference & object, CanvasPane * pane, int cell)
+  void DatumGuiApp::replaceGraph(const Path & graph, const ObjectReference & object, CanvasPane * pane, int cell)
   {
   Tab * t = tab();
   if (!t) return;
@@ -2483,7 +2483,7 @@ namespace CAP
   d.endEdit();
   }
 
-  void CapGuiApp::showFolder(const ObjectReference & object)
+  void DatumGuiApp::showFolder(const ObjectReference & object)
   {
   // all the objects of a folder: a graph each, in the canvas of the selection or of the current pane (or a new canvas)
   Tab * t = tab();
@@ -2509,7 +2509,7 @@ namespace CAP
   d.endEdit();
   }
 
-  void CapGuiApp::dropOnPane(const Path & target, const ObjectReference & object, CanvasPane & pane, int cell)
+  void DatumGuiApp::dropOnPane(const Path & target, const ObjectReference & object, CanvasPane & pane, int cell)
   {
   Tab * t = tab();
   if (!t) return;
@@ -2522,7 +2522,7 @@ namespace CAP
   drop(target, object, false);
   }
 
-  PlotDocument::Path CapGuiApp::dropTarget()
+  PlotDocument::Path DatumGuiApp::dropTarget()
   {
   Tab * t = tab();
   if (!t || !t->hasSelection) return Path();
@@ -2534,7 +2534,7 @@ namespace CAP
   return t->selected;
   }
 
-  void CapGuiApp::layoutCanvases()
+  void DatumGuiApp::layoutCanvases()
   {
   Tab * t = tab();
   if (!t)
@@ -2692,7 +2692,7 @@ namespace CAP
   _seenHasSelection = !t->hasSelection;
   }
 
-  void CapGuiApp::recordCanvases()
+  void DatumGuiApp::recordCanvases()
   {
   Tab * t = tab();
   if (!t || !_spec || _links.empty() || _drawnTab != t->id || _drawnVersion != t->document->version()) return;
@@ -2731,7 +2731,7 @@ namespace CAP
     }
   }
 
-  void CapGuiApp::syncSelection()
+  void DatumGuiApp::syncSelection()
   {
   Tab * t = tab();
   if (!t || _gui.nPanes() == 0) return;
@@ -2776,7 +2776,7 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ new from data
 
-  void CapGuiApp::startTemplate(const GRAPHICS::PlotTemplate & catalog, const GRAPHICS::PlotTemplate::Options & options,
+  void DatumGuiApp::startTemplate(const GRAPHICS::PlotTemplate & catalog, const GRAPHICS::PlotTemplate::Options & options,
                                 const String & fileName)
   {
   _template = catalog;
@@ -2786,7 +2786,7 @@ namespace CAP
   _templateOpen = true;
   }
 
-  bool CapGuiApp::createFromTemplate()
+  bool DatumGuiApp::createFromTemplate()
   {
   if (_template.nSelected() == 0) { _gui.showMessage("Plot Template", "No histogram selected"); return false; }
   XmlDocument document = _template.makeSpec(_templateOptions);
@@ -2808,7 +2808,7 @@ namespace CAP
   return true;
   }
 
-  void CapGuiApp::renderTemplate()
+  void DatumGuiApp::renderTemplate()
   {
   if (!_templateOpen) return;
   ImGui::SetNextWindowSize(ImVec2(820, 640), ImGuiCond_FirstUseEver);
@@ -2885,4 +2885,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

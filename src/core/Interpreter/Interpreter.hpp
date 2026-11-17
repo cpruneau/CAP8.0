@@ -8,9 +8,9 @@
  *
  * *********************************************************************/
 //! @file Interpreter.hpp
-//! @brief Interpreter of the CAP command language: variables, functions, and the classes of the reflection registry.
-#ifndef CAP__INTERPRETER__Interpreter
-#define CAP__INTERPRETER__Interpreter
+//! @brief Interpreter of the Datum command language: variables, functions, and the classes of the reflection registry.
+#ifndef DATUM__INTERPRETER__Interpreter
+#define DATUM__INTERPRETER__Interpreter
 #include <functional>
 #include <iostream>
 #include <map>
@@ -20,13 +20,13 @@
 #include "Ast.hpp"
 #include "Lexer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace INTERPRETER
   {
 
   //!
-  //! @brief Interpreter of the CAP command language.
+  //! @brief Interpreter of the Datum command language.
   //!
   //! The language has variables (made by assignment), numbers (integers and reals), texts, booleans, none, lists,
   //! and the objects of the classes registered for the reflection (see Reflection.hpp): an object is made by calling
@@ -115,11 +115,11 @@ namespace CAP
   bool _exit;   //!< exit() was called
   };
 
-  //! @brief Add the standard built-in functions (see help): output, mathematics, lists, classes, CAP files, figures.
+  //! @brief Add the standard built-in functions (see help): output, mathematics, lists, classes, Datum files, figures.
   //! Called by the constructor of Interpreter. @param interpreter interpreter
   void addStandardBuiltins(Interpreter & interpreter);
 
   } // namespace INTERPRETER
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__INTERPRETER__Interpreter
+#endif // !DATUM__INTERPRETER__Interpreter

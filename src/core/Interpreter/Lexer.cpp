@@ -12,7 +12,7 @@
 #include <set>
 #include "Lexer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace INTERPRETER
   {
@@ -102,7 +102,7 @@ namespace CAP
       std::size_t start = k;
       while (k < n && (std::isalnum((unsigned char) source[k]) || source[k] == '_' || source[k] == ':'))
         {
-        // "::" inside a name (CAP::MATH::Histogram); a single ':' ends it
+        // "::" inside a name (Datum::MATH::Histogram); a single ':' ends it
         if (source[k] == ':' && !(k + 1 < n && source[k+1] == ':' && k + 2 < n && std::isalpha((unsigned char) source[k+2]))) break;
         k += source[k] == ':' ? 2 : 1;
         }
@@ -180,4 +180,4 @@ namespace CAP
   }
 
   } // namespace INTERPRETER
-} // namespace CAP
+} // namespace Datum

@@ -1,8 +1,8 @@
-#ifndef CAP__Renderer
-#define CAP__Renderer
+#ifndef DATUM__Renderer
+#define DATUM__Renderer
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -32,6 +32,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Renderer
+#endif // !DATUM__Renderer

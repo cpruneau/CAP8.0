@@ -1,5 +1,5 @@
 # Herwig 7 input file: minimum-bias proton-proton collisions at 13.6 TeV (from share/Herwig/LHC-MB.in), for the
-# CAP workflow RunHerwig.xml. HerwigEventGenerator reads it ("Herwig read", here) when LHC-MB-13.6TeV.run is missing
+# Datum workflow RunHerwig.xml. HerwigEventGenerator reads it ("Herwig read", here) when LHC-MB-13.6TeV.run is missing
 # or older; the run file is then used by the job.
 read snippets/PPCollider.in
 cd /Herwig/Generators

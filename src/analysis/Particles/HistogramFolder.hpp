@@ -7,12 +7,12 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__HistogramFolder
-#define CAP__HistogramFolder
+#ifndef DATUM__HistogramFolder
+#define DATUM__HistogramFolder
 #include <utility>
 #include <vector>
 #include "String.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Configuration.hpp"
 #include "Exceptions.hpp"
 #include "Folder.hpp"
@@ -20,14 +20,14 @@
 #include "Profile.hpp"
 #include <fstream>
 
-namespace CAP
+namespace Datum
 {
   using MATH::Histogram;
   using MATH::Profile;
   class Task;
 
   //!
-  //! @brief Group of histograms (CAP::MATH::Histogram) produced or used by a task, held in a Folder.
+  //! @brief Group of histograms (Datum::MATH::Histogram) produced or used by a task, held in a Folder.
   //!
   //! The group is a Folder: it owns its histograms, which are entries named after the histograms. Histograms are added
   //! with append() or the createHistogram() / createProfile() helpers, and retrieved with histogram(name) or
@@ -44,13 +44,13 @@ namespace CAP
   //! Profiles are MATH::Profile objects (createProfile(), importProfile()), filled with fill(x, value, weight); their
   //! bin values are the weighted means. They are stored, copied and saved as profiles.
   //!
-  //! This class replaces RootHistogramGroup (ROOT TH1/TH2/TH3, TFile) for classes converted to CAP histograms.
+  //! This class replaces RootHistogramGroup (ROOT TH1/TH2/TH3, TFile) for classes converted to Datum histograms.
   //!
   class HistogramFolder : public Folder
   {
   public:
 
-  //! @brief The histograms of the group (CAP::MATH::Histogram); also usable by derived classes.
+  //! @brief The histograms of the group (Datum::MATH::Histogram); also usable by derived classes.
   using Histogram = MATH::Histogram;
   using Profile   = MATH::Profile;
 
@@ -95,7 +95,7 @@ namespace CAP
   virtual void initialize() {}
   //! @brief Create the histograms of the group. @throws Exception here: derived classes implement it
   virtual void create();
-  //! @brief Load the histograms of the group from a folder. @param file folder (e.g. that of the group in a CapFile)
+  //! @brief Load the histograms of the group from a folder. @param file folder (e.g. that of the group in a DatumFile)
   //! @throws Exception here: derived classes implement it (typically with importHistogram())
   virtual void loadFrom(const Folder & file);
   //!
@@ -219,7 +219,7 @@ namespace CAP
   //!
   //! @brief Copy a histogram from the current folder of a file into the group (replacing one with the same name).
   //! A profile is copied as a profile.
-  //! @param file file (read with CapFile::read()) @param name name of the histogram @return the copy, owned by the group
+  //! @param file file (read with DatumFile::read()) @param name name of the histogram @return the copy, owned by the group
   //! @throws FileException if the file has no histogram with that name
   //!
   Histogram * importHistogram(const Folder & file, const String & name);
@@ -245,7 +245,7 @@ namespace CAP
   //!
   //! @brief Copy all the histograms and profiles of the current folder of a file into the group (replacing those with
   //! the same names). Other entries and sub-folders are ignored.
-  //! @param file file (read with CapFile::read()) @return number of histograms copied
+  //! @param file file (read with DatumFile::read()) @return number of histograms copied
   //!
   unsigned int importAllHistograms(const Folder & file);
 
@@ -253,7 +253,7 @@ namespace CAP
 
 
   //! @name Interface used by ManagedObjects
-  //! Histogram groups are stored in CAP files only: the text-file functions do nothing.
+  //! Histogram groups are stored in Datum files only: the text-file functions do nothing.
   //! @{
 
   //! @brief Does nothing. @param file text file
@@ -325,6 +325,6 @@ namespace CAP
   //! @brief Difference of two groups, histogram by histogram. @param lhs first @param rhs second @return lhs-rhs
   HistogramFolder operator-(const HistogramFolder & lhs, const HistogramFolder & rhs);
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__HistogramFolder */
+#endif /* DATUM__HistogramFolder */

@@ -4,7 +4,7 @@
 #include "LatexText.hpp"
 #include "LatexList.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexFrame::LatexFrame()
   :
@@ -86,5 +86,5 @@ namespace CAP
   }
 
 
-} // namespace CAP
+} // namespace Datum
 

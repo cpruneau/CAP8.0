@@ -7,14 +7,14 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-//! @file CapShell.cxx
-//! @brief CapShell: the CAP command line interpreter (see Interpreter.hpp for the language).
+//! @file DatumShell.cxx
+//! @brief DatumShell: the Datum command line interpreter (see Interpreter.hpp for the language).
 //!
 //! Usage:
-//!   CapShell                  interactive session (line editing and history in ~/.cap_history when libedit is there)
-//!   CapShell file.caps ...    run files of commands, then stop
-//!   CapShell -i file.caps     run a file, then continue interactively
-//!   CapShell -e "commands"    run commands, then stop
+//!   DatumShell                  interactive session (line editing and history in ~/.datum_history when libedit is there)
+//!   DatumShell file.caps ...    run files of commands, then stop
+//!   DatumShell -i file.caps     run a file, then continue interactively
+//!   DatumShell -e "commands"    run commands, then stop
 //! Commands are also read from the standard input when it is not a terminal.
 #include <cstdio>
 #include <cstdlib>
@@ -23,19 +23,19 @@
 #include <unistd.h>
 #include "Interpreter.hpp"
 #include "FileSystem.hpp"
-#ifdef CAP_HAVE_EDITLINE
+#ifdef DATUM_HAVE_EDITLINE
 #include <editline/readline.h>
 #endif
 
-using namespace CAP;
-using namespace CAP::INTERPRETER;
+using namespace Datum;
+using namespace Datum::INTERPRETER;
 
 namespace
 {
 //! Read a line (false at the end of the input).
 bool readLine(const std::string & prompt, bool terminal, std::string & line)
 {
-#ifdef CAP_HAVE_EDITLINE
+#ifdef DATUM_HAVE_EDITLINE
   if (terminal)
     {
     char * text = readline(prompt.c_str());
@@ -105,8 +105,8 @@ int main(int argc, char ** argv)
   if (ranSomething && !interactive) return ok ? 0 : 1;
 
   bool terminal = isatty(0);
-  std::string history = FileSystem::expand("~/.cap_history").str();
-#ifdef CAP_HAVE_EDITLINE
+  std::string history = FileSystem::expand("~/.datum_history").str();
+#ifdef DATUM_HAVE_EDITLINE
   if (terminal) { using_history(); read_history(history.c_str()); }
 #endif
   if (terminal) std::cout << "Datum command line interpreter: help for the language, classes() for the classes, exit() to leave\n";
@@ -133,7 +133,7 @@ int main(int argc, char ** argv)
     count++;
     }
   if (terminal) std::cout << std::endl;
-#ifdef CAP_HAVE_EDITLINE
+#ifdef DATUM_HAVE_EDITLINE
   if (terminal) write_history(history.c_str());
 #endif
   return (terminal || ok) ? 0 : 1;

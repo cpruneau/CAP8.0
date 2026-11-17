@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__PythiaEventGenerator
-#define CAP__PythiaEventGenerator
+#ifndef DATUM__PythiaEventGenerator
+#define DATUM__PythiaEventGenerator
 #include "Pythia.h"
 #include <map>
 #include "EventProcessor.hpp"
@@ -21,24 +21,24 @@
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmear.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @brief Event generator task running PYTHIA 8: each execute() generates one event and copies its particles into the
-//! current CAP event.
+//! current Datum event.
 //!
 //! PYTHIA settings are given by keys \<name\>:Beams:idA, Beams:idB, Beams:frameType, Beams:eCM, Beams:eA, Beams:eB,
 //! SetSeed, SeedValue, UseQCDCR, UseRopes, UseShoving (presets), Option0..Option29 (any PYTHIA setting string, applied
 //! after the presets so that it overrides them), Print:Banner,
 //! Print:Statistics and xmlInputPath (PYTHIA xml directory; default $PYTHIA8DATA, then
-//! $CAP_PYTHIA8_PATH/share/Pythia8/xmldoc, then that of the Pythia8 CAP was built with); which particles are saved is set by SaveFinalOnly, SavePhotons,
+//! $DATUM_PYTHIA8_PATH/share/Pythia8/xmldoc, then that of the Pythia8 Datum was built with); which particles are saved is set by SaveFinalOnly, SavePhotons,
 //! SaveNeutrinos, SaveQuarks, SaveGaugeBosons.
 //!
 //! Production in pT-hat bins: PTHAT_MIN and PTHAT_MAX (GeV/c; negative: not set) set PhaseSpace:pTHatMin and
 //! PhaseSpace:pTHatMax (with a hard process, e.g. Option HardQCD:all = on). At the end of the run, the cross section
 //! PYTHIA estimates for the process generated (Info::sigmaGen(), mb), its uncertainty and the number of events accepted
-//! are saved in the folder of the task (CAP_SIGMA_GEN, CAP_SIGMA_ERR, CAP_N_ACCEPTED, CAP_PTHAT_MIN, CAP_PTHAT_MAX):
+//! are saved in the folder of the task (DATUM_SIGMA_GEN, DATUM_SIGMA_ERR, DATUM_N_ACCEPTED, DATUM_PTHAT_MIN, DATUM_PTHAT_MAX):
 //! SubSampleStatCalculator adds the bins with the weights sigma/N.
 //!
 class PythiaEventGenerator
@@ -100,4 +100,4 @@ protected:
 
 }
 
-#endif /* CAP__PythiaEventGenerator */
+#endif /* DATUM__PythiaEventGenerator */

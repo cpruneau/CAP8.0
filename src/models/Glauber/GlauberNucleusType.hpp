@@ -9,12 +9,12 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP_GlauberNucleusType
-#define CAP_GlauberNucleusType
+#ifndef DATUM_GlauberNucleusType
+#define DATUM_GlauberNucleusType
 
 #include "GlauberExceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 using namespace std;
 
@@ -145,9 +145,9 @@ protected:
 
 };
 
-}  // namespace CAP
+}  // namespace Datum
 
-#endif // !CAP_GlauberNucleusType
+#endif // !DATUM_GlauberNucleusType
 
 
 

@@ -10,14 +10,14 @@
 //! @file JetPairHistos.hpp
 //! @brief JetPairHistos: the histograms of the jet pairs of one combination of an event filter, a particle filter, a
 //! jet settings, a jet filter and a jet pair filter.
-#ifndef CAP__JetPairHistos
-#define CAP__JetPairHistos
+#ifndef DATUM__JetPairHistos
+#define DATUM__JetPairHistos
 #include <vector>
 #include "HistogramFolder.hpp"
 #include "Configuration.hpp"
 #include "JetPair.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -91,6 +91,6 @@ protected:
   Profile * p_xJ;  Profile * p_aJ;  Profile * p_acop;
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetPairHistos */
+#endif /* DATUM__JetPairHistos */

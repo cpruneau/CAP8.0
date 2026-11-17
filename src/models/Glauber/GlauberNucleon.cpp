@@ -14,10 +14,10 @@
 #include "MersenneTwister.hpp"
 
 
-namespace CAP
+namespace Datum
 {
-  using CAP::MATH::pi;
-  using CAP::MATH::twoPi;
+  using Datum::MATH::pi;
+  using Datum::MATH::twoPi;
   
   GlauberNucleon::GlauberNucleon()
   :
@@ -284,18 +284,18 @@ namespace CAP
   
   void GlauberNucleon::setRndmPositionInCube(double halfSize)
   {
-  double x = halfSize*(2.0*CAP::MATH::randomGenerator().random()-1);
-  double y = halfSize*(2.0*CAP::MATH::randomGenerator().random()-1);
-  double z = halfSize*(2.0*CAP::MATH::randomGenerator().random()-1);
+  double x = halfSize*(2.0*Datum::MATH::randomGenerator().random()-1);
+  double y = halfSize*(2.0*Datum::MATH::randomGenerator().random()-1);
+  double z = halfSize*(2.0*Datum::MATH::randomGenerator().random()-1);
   _position.setTXYZ(0.0,x,y,z);
   }
   
   void GlauberNucleon::setRndmPositionInSphere(double maxRadiusSq)
   {
-  double phi    = twoPi()*CAP::MATH::randomGenerator().random();
-  double cosTh  = 2.0*CAP::MATH::randomGenerator().random()-1.0;
+  double phi    = twoPi()*Datum::MATH::randomGenerator().random();
+  double cosTh  = 2.0*Datum::MATH::randomGenerator().random()-1.0;
   double sinTh  = std::sqrt(1.0-cosTh*cosTh);
-  double r      = std::sqrt(maxRadiusSq)*CAP::MATH::randomGenerator().random();
+  double r      = std::sqrt(maxRadiusSq)*Datum::MATH::randomGenerator().random();
   double rSinTh = r*sinTh;
   double x      = rSinTh*std::cos(phi);
   double y      = rSinTh*std::sin(phi);
@@ -311,8 +311,8 @@ namespace CAP
   
   void GlauberNucleon::setRndmPositionInSphere(NuclearDistribution & d)
   {
-  double phi    = twoPi()*CAP::MATH::randomGenerator().random();
-  double cosTh  = 2.0*CAP::MATH::randomGenerator().random()-1.0;
+  double phi    = twoPi()*Datum::MATH::randomGenerator().random();
+  double cosTh  = 2.0*Datum::MATH::randomGenerator().random()-1.0;
   double sinTh  = std::sqrt(1.0-cosTh*cosTh);
   double r      = d.random();
   double rSinTh = r*sinTh;
@@ -341,6 +341,6 @@ namespace CAP
   printValue("nHardCollisionsCollisions", _nHard);
   }
   
-} // namespace CAP
+} // namespace Datum
 
 

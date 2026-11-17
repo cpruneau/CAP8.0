@@ -8,12 +8,12 @@
  *
  * *********************************************************************/
 //! @file Action.hpp
-//! @brief ActionEvent and ActionListener: actions of the menus of CapGui.
-#ifndef CAP__GUI__Action
-#define CAP__GUI__Action
+//! @brief ActionEvent and ActionListener: actions of the menus of DatumGui.
+#ifndef DATUM__GUI__Action
+#define DATUM__GUI__Action
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -36,7 +36,7 @@ namespace CAP
   //! @brief Receiver of actions: implement actionPerformed() and register with MenuItem::addListener() (or
   //! MenuBar::addListener() for all the items of a menu bar).
   //!
-  //! CapApp is the main listener: every menu command goes through it, so that the application (not the window)
+  //! DatumApp is the main listener: every menu command goes through it, so that the application (not the window)
   //! decides what each command does. A menu item can also carry its own callback (MenuItem::setCallback()), handy
   //! for one-off items; the callback runs first, then the listeners.
   //!
@@ -50,6 +50,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__Action
+#endif // !DATUM__GUI__Action

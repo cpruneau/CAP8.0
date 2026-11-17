@@ -5,7 +5,7 @@
 
 
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -254,4 +254,4 @@ std::ostream& operator<<(std::ostream& out, const Vector2D & v)
   std::vector<Vector2D> Vector2D::loadAllBinary(const String & fileName)       { return loadAllBinaryObjects<Vector2D>(fileName); }
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum

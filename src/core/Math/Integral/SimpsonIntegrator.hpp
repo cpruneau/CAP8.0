@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file SimpsonIntegrator.hpp
 //! @brief SimpsonIntegrator: Simpson's rule, adaptive (default) or on a fixed number of panels.
-#ifndef CAP__MATH__SimpsonIntegrator
-#define CAP__MATH__SimpsonIntegrator
+#ifndef DATUM__MATH__SimpsonIntegrator
+#define DATUM__MATH__SimpsonIntegrator
 #include "Integrator.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -65,6 +65,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__SimpsonIntegrator
+#endif // DATUM__MATH__SimpsonIntegrator

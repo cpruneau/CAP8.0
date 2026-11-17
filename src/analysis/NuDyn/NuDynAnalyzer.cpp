@@ -14,7 +14,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 NuDynAnalyzer::NuDynAnalyzer()
@@ -86,5 +86,5 @@ void NuDynAnalyzer::execute()
     }
 }
 
-} // namespace CAP
+} // namespace Datum
 

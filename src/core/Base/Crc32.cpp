@@ -32,7 +32,7 @@
 #include "Crc32.hpp"
 
 using namespace std;
-using CAP::Crc32;
+using Datum::Crc32;
 
 const unsigned int Crc32::mCrc32Tab[] = {
     0x00000000L, 0x77073096L, 0xEE0E612CL, 0x990951BAL,

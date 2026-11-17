@@ -12,8 +12,8 @@
 //!
 //! @image html FittingClasses.png "Classes of the folder Fitting" width=100%
 //! @image latex FittingClasses.pdf "Classes of the folder Fitting" width=\textwidth
-#ifndef CAP__MATH__Fitter
-#define CAP__MATH__Fitter
+#ifndef DATUM__MATH__Fitter
+#define DATUM__MATH__Fitter
 #include <memory>
 #include <vector>
 #include "String.hpp"
@@ -25,7 +25,7 @@
 #include "FitResult.hpp"
 #include "Matrix.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -66,9 +66,9 @@ namespace CAP
   //! fitted (Function::addFit(); a function is fitted through samples of it, see samples()).
   //!
   //! @code
-  //!   CAP::MATH::Normal model(100.0, 0.0, 1.0);          // starting values
-  //!   CAP::MATH::Fitter fitter(model, histogram);
-  //!   CAP::MATH::FitResult r = fitter.fit();
+  //!   Datum::MATH::Normal model(100.0, 0.0, 1.0);          // starting values
+  //!   Datum::MATH::Fitter fitter(model, histogram);
+  //!   Datum::MATH::FitResult r = fitter.fit();
   //!   if (r.converged) std::cout << r.values[1] << " +- " << r.errors[1] << "  chi2/ndf " << r.chiSquarePerDegreeOfFreedom;
   //! @endcode
   //!
@@ -150,7 +150,7 @@ namespace CAP
   //!
   void setBinAveraging(bool v) { _likelihood->setBinAveraging(v); }
   //!
-  //! @brief Starting values of the parameters of a function of CAP from data of rank 1 (the points with
+  //! @brief Starting values of the parameters of a function of Datum from data of rank 1 (the points with
   //! low <= x <= high): for Normal, the largest value, and the mean and standard deviation of x weighted by the
   //! values; for LogNormal, the same in ln x (and the area); for Exponential, a straight line fitted to ln y; for the
   //! polynomials (Constant to Quartic, Polynomial), a least-squares polynomial; for a series of orthogonal polynomials
@@ -175,7 +175,7 @@ namespace CAP
   //!
   static bool estimate(ParameterizedFunction & function, const DataPoints & data, const FitSelection & selection);
 
-  //! @brief Options of fitAndAttach() (as chosen in the Fit window of CapGui).
+  //! @brief Options of fitAndAttach() (as chosen in the Fit window of DatumGui).
   struct FitOptions
   {
     Statistic statistic = kChiSquare;   //!< chi square, or Poisson likelihood (counts)
@@ -306,6 +306,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__Fitter
+#endif // !DATUM__MATH__Fitter

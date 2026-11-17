@@ -10,8 +10,8 @@
 //! @file Reflection.hpp
 //! @brief Run-time reflection independent of ROOT: classes registered by name, with their constructors, data
 //! members and member functions, used through Value objects.
-#ifndef CAP__Reflection
-#define CAP__Reflection
+#ifndef DATUM__Reflection
+#define DATUM__Reflection
 #include <functional>
 #include <map>
 #include <memory>
@@ -25,7 +25,7 @@
 #include "String.hpp"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Run-time reflection: what ROOT's dictionaries give (classes found by name, their members and functions,
@@ -35,16 +35,16 @@ namespace CAP
   //! Registry. Arguments and results are Value objects: nothing, a boolean, an integer, a real, a text, or an object
   //! of a registered class.
   //! @code
-  //!   CAP_REFLECTION(Histogram)                                      // in a .cpp file of the library of the class
+  //!   DATUM_REFLECTION(Histogram)                                      // in a .cpp file of the library of the class
   //!   {
-  //!   REFLECTION::ClassBuilder<MATH::Histogram>("CAP::MATH::Histogram")
+  //!   REFLECTION::ClassBuilder<MATH::Histogram>("Datum::MATH::Histogram")
   //!     .constructor<String, String, unsigned int, double, double>()
   //!     .method("fill", static_cast<void (MATH::Histogram::*)(double, double)>(&MATH::Histogram::fill))
   //!     .method("nBins", &MATH::Histogram::nBins)
   //!     .property("name", &MATH::Histogram::name, &MATH::Histogram::setName);
   //!   }
   //!
-  //!   const REFLECTION::ClassInfo * c = REFLECTION::Registry::instance().find("CAP::MATH::Histogram");
+  //!   const REFLECTION::ClassInfo * c = REFLECTION::Registry::instance().find("Datum::MATH::Histogram");
   //!   REFLECTION::Value h = c->create({ "h", "a histogram", 10, 0.0, 1.0 });
   //!   h.call("fill", { 0.25, 1.0 });
   //!   long n = h.call("nBins", { 0 }).toInteger();
@@ -159,7 +159,7 @@ namespace CAP
   class ClassInfo
   {
   public:
-  //! @brief Class of a name and a C++ type. @param name full name (e.g. "CAP::MATH::Histogram") @param type its type
+  //! @brief Class of a name and a C++ type. @param name full name (e.g. "Datum::MATH::Histogram") @param type its type
   ClassInfo(const std::string & name, const std::type_info & type) : _name(name), _type(type) { }
 
   const std::string & name() const { return _name; }   //!< Full name of the class
@@ -237,7 +237,8 @@ namespace CAP
   public:
   //! @brief The registry. @return registry
   static Registry & instance();
-  //! @brief Class of a name. @param name full name, or the name without namespaces if it is unique @return class, or null
+  //! @brief Class of a name. @param name full name (CAP::X, written before Datum 1.0, is Datum::X), or the name without
+  //! namespaces if it is unique @return class, or null
   const ClassInfo * find(const std::string & name) const;
   //! @brief Class of a C++ type. @param type type @return class, or null
   const ClassInfo * find(const std::type_info & type) const;
@@ -432,7 +433,7 @@ namespace CAP
   class ClassBuilder
   {
   public:
-  //! @brief Builder of the class name. @param name full name of the class (e.g. "CAP::MATH::Histogram")
+  //! @brief Builder of the class name. @param name full name of the class (e.g. "Datum::MATH::Histogram")
   explicit ClassBuilder(const std::string & name) : _info(new ClassInfo(name, typeid(T))) { }
   //! @brief Register the class.
   ~ClassBuilder() { if (_info) Registry::instance().add(std::move(_info)); }
@@ -547,12 +548,12 @@ namespace CAP
   };
 
   } // namespace REFLECTION
-} // namespace CAP
+} // namespace Datum
 
-//! @brief Register classes when a library is loaded: CAP_REFLECTION(Tag) { ClassBuilder<...>(...)...; }
-#define CAP_REFLECTION(tag)                                                         \
-  static void capReflection_##tag();                                                \
-  namespace { const bool capReflectionDone_##tag = (capReflection_##tag(), true); } \
-  static void capReflection_##tag()
+//! @brief Register classes when a library is loaded: DATUM_REFLECTION(Tag) { ClassBuilder<...>(...)...; }
+#define DATUM_REFLECTION(tag)                                                         \
+  static void datumReflection_##tag();                                                \
+  namespace { const bool datumReflectionDone_##tag = (datumReflection_##tag(), true); } \
+  static void datumReflection_##tag()
 
-#endif // !CAP__Reflection
+#endif // !DATUM__Reflection

@@ -7,15 +7,15 @@
  * Author: Claude Pruneau,04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticlePerformanceHistos
-#define CAP__ParticlePerformanceHistos
+#ifndef DATUM__ParticlePerformanceHistos
+#define DATUM__ParticlePerformanceHistos
 #include "HistogramFolder.hpp"
 #include "DerivedCalculator.hpp"
 #include "Particle.hpp"
 #include "Configuration.hpp"
 #include "MathConstants.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -231,9 +231,9 @@ protected:
 };
 
 //! @brief Derived histograms of the performance analysis (resolutions, efficiencies): DerivedCalculator with the
-//! folders ParticlePerformanceHistos, registered as the task class CAP::PerformanceDerivedCalculator.
+//! folders ParticlePerformanceHistos, registered as the task class Datum::PerformanceDerivedCalculator.
 using PerformanceDerivedCalculator = DerivedCalculator<ParticlePerformanceHistos,1>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticlePerformanceHistos*/
+#endif /* DATUM__ParticlePerformanceHistos*/

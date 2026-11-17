@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 EventEfficiencyFilterCreator::EventEfficiencyFilterCreator()
@@ -271,4 +271,4 @@ EventEfficiencyFilter *  EventEfficiencyFilterCreator::createFilter(const String
   return filter;
 }
 
-} // namespace CAP
+} // namespace Datum

@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //! @file AutoReflectionCxx26.cpp
-//! @brief Example (not built): C++26 static reflection (P2996) filling the CAP reflection registry (Reflection.hpp)
+//! @brief Example (not built): C++26 static reflection (P2996) filling the Datum reflection registry (Reflection.hpp)
 //! from the declaration of a class, with no hand-written description.
 //!
 //! Needs GCC 16 (Apple clang and LLVM clang 23 do not have it yet) and code built with it, hence without the ROOT
@@ -21,8 +21,8 @@
 #include <set>
 #include "Reflection.hpp"
 
-using namespace CAP;
-using namespace CAP::REFLECTION;
+using namespace Datum;
+using namespace Datum::REFLECTION;
 
 //! Number of member functions of a class with the name of member function m.
 consteval int overloads(std::meta::info type, std::meta::info m)

@@ -8,12 +8,12 @@
  *
  * *********************************************************************/
 #include "PlotCatalog.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "FileSystem.hpp"
 #include "WorkflowHistograms.hpp"
 #include "XmlDocument.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -46,10 +46,10 @@ namespace CAP
       }
     else
       {
-      // a CAP file: its contents
+      // a Datum file: its contents
       try
         {
-        CapFile file(source, File::kReadOnly);
+        DatumFile file(source, File::kReadOnly);
         file.load(File::Loading::kLazy);
         String id = FileSystem::stem(source);
         int input = catalog.addInput(id, source);
@@ -62,4 +62,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

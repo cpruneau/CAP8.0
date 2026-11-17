@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__SpherocityDerivedHistos
-#define CAP__SpherocityDerivedHistos
+#ifndef DATUM__SpherocityDerivedHistos
+#define DATUM__SpherocityDerivedHistos
 #include "SpherocityHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
       
 //!
@@ -48,7 +48,7 @@ protected:
    
 };
 
-} // namespace CAP
+} // namespace Datum
 
 
 #endif

@@ -9,10 +9,10 @@
  * *********************************************************************/
 //! @file ModelValues.hpp
 //! @brief Values of a model at data points: at their coordinates, or averaged over the bins of a histogram.
-#ifndef CAP__MATH__ModelValues
-#define CAP__MATH__ModelValues
+#ifndef DATUM__MATH__ModelValues
+#define DATUM__MATH__ModelValues
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -41,6 +41,6 @@ namespace CAP
   double modelValue(const Function & function, const DataPoints & data, unsigned int index, bool binAveraging);
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__ModelValues
+#endif // !DATUM__MATH__ModelValues

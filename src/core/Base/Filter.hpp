@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Filter
-#define CAP__Filter
+#ifndef DATUM__Filter
+#define DATUM__Filter
 #include "Exceptions.hpp"
 #include "Object.hpp"
 #include "Condition.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -41,7 +41,7 @@ public:
 //!
 //! Example:
 //! @code
-//!   class PtFilter : public CAP::Filter<Particle>
+//!   class PtFilter : public Datum::Filter<Particle>
 //!   {
 //!   public:
 //!     bool accept(const Particle & p) const override { return _conditions[0]->accept(p.pt()); }
@@ -202,8 +202,8 @@ protected:
 
 }; // Filter<T>
 
-}// namespace CAP
+}// namespace Datum
 
 
-#endif /* CAP__Filter  */
+#endif /* DATUM__Filter  */
 

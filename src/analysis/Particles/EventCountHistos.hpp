@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventCountHistos
-#define CAP__EventCountHistos
+#ifndef DATUM__EventCountHistos
+#define DATUM__EventCountHistos
 #include "HistogramFolder.hpp"
 #include "Configuration.hpp"
 #include "EventFilter.hpp"
 #include "ParticleFilter.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -68,9 +68,9 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__EventCountHistos  */
+#endif /* DATUM__EventCountHistos  */
 
 
 

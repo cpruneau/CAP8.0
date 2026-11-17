@@ -1,5 +1,5 @@
-#ifndef CAP_MathBasicIntegration
-#define CAP_MathBasicIntegration
+#ifndef DATUM_MathBasicIntegration
+#define DATUM_MathBasicIntegration
 #include <vector>
 #include <cstdlib>
 #include <algorithm>
@@ -25,12 +25,12 @@ using namespace std;
 //!
 //! @code
 //!   std::vector<double> y = {0, 1, 4, 9, 16};                                   // x^2 at x = 0, 1, ..., 4
-//!   double t = CAP::MATH::integrationTrapezoidRule(y, 1.0);                      // 22
-//!   double s = CAP::MATH::integrationSimpsonRule(y, 1.0);                        // 64/3, exact
-//!   std::vector<double> c = CAP::MATH::cumulativeTrapezoidRule(y, 1.0);          // 0, 0.5, 3, 9.5, 22
+//!   double t = Datum::MATH::integrationTrapezoidRule(y, 1.0);                      // 22
+//!   double s = Datum::MATH::integrationSimpsonRule(y, 1.0);                        // 64/3, exact
+//!   std::vector<double> c = Datum::MATH::cumulativeTrapezoidRule(y, 1.0);          // 0, 0.5, 3, 9.5, 22
 //! @endcode
 //!
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -88,6 +88,6 @@ double integrationSimpsonRuleND(const vector<double> & values, const vector<unsi
 
 } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

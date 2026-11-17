@@ -19,14 +19,14 @@
 #include "ParticlePerformanceHistos.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(PerformanceTasks)
+DATUM_REFLECTION(PerformanceTasks)
 {
-  CAP::registerTask<CAP::CalibrationProducer>("CAP::CalibrationProducer");
-  CAP::registerTask<CAP::ClosureCalculator>("CAP::ClosureCalculator");
-  CAP::registerTask<CAP::ClosureIterator>("CAP::ClosureIterator");
-  CAP::registerTask<CAP::EventPlaneRandomizerTask>("CAP::EventPlaneRandomizerTask");
-  CAP::registerTask<CAP::EventVertexRandomizerTask>("CAP::EventVertexRandomizerTask");
-  CAP::registerTask<CAP::MeasurementSimulator>("CAP::MeasurementSimulator");
-  CAP::registerTask<CAP::PerformanceAnalyzer>("CAP::PerformanceAnalyzer");
-  CAP::registerTask<CAP::PerformanceDerivedCalculator>("CAP::PerformanceDerivedCalculator");
+  Datum::registerTask<Datum::CalibrationProducer>("Datum::CalibrationProducer");
+  Datum::registerTask<Datum::ClosureCalculator>("Datum::ClosureCalculator");
+  Datum::registerTask<Datum::ClosureIterator>("Datum::ClosureIterator");
+  Datum::registerTask<Datum::EventPlaneRandomizerTask>("Datum::EventPlaneRandomizerTask");
+  Datum::registerTask<Datum::EventVertexRandomizerTask>("Datum::EventVertexRandomizerTask");
+  Datum::registerTask<Datum::MeasurementSimulator>("Datum::MeasurementSimulator");
+  Datum::registerTask<Datum::PerformanceAnalyzer>("Datum::PerformanceAnalyzer");
+  Datum::registerTask<Datum::PerformanceDerivedCalculator>("Datum::PerformanceDerivedCalculator");
 }

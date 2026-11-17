@@ -18,7 +18,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   NuDynHistos::NuDynHistos()
@@ -208,5 +208,5 @@ namespace CAP
   calculateNudyn(h_R2_11_evt,h_R2_12_evt,h_R2_12_evt,h_R2_22_evt,h_nudyn_evt);
 }
 
-} // namespace CAP
+} // namespace Datum
 

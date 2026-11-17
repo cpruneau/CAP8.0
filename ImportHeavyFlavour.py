@@ -6,9 +6,9 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-ImportHeavyFlavour.py -- add the charm and beauty hadrons of the PDG to the CAP particle database.
+ImportHeavyFlavour.py -- add the charm and beauty hadrons of the PDG to the Datum particle database.
 
-Usage (from anywhere; the script locates CAP from its own position):
+Usage (from anywhere; the script locates Datum from its own position):
     python3 ImportHeavyFlavour.py                         # DB/ParticleData/ParticleDb.xml, decays from PYTHIA 8
     python3 ImportHeavyFlavour.py --database FILE.xml --output OUT.xml
     python3 ImportHeavyFlavour.py --pythia-xml PATH/ParticleData.xml --max-partonic 0.1
@@ -26,7 +26,7 @@ Decays: the channels of PYTHIA 8 (ParticleData.xml of the PYTHIA installation) t
 particles of the database (or added here), 2 to 4 of them, below the mass of the parent; partonic channels (quarks,
 gluons, diquarks, the 81 remnant code: decays left to PYTHIA's fragmentation) cannot be used: a hadron whose PYTHIA
 decays (the channels on) are partonic for more than --max-partonic (0.1 by default) gets no decay modes (stable for
-CAP's decayer). A particle without a PDG mass gets PYTHIA's (noted), and a particle with decay modes but no PDG width
+Datum's decayer). A particle without a PDG mass gets PYTHIA's (noted), and a particle with decay modes but no PDG width
 PYTHIA's width (or hbar c / c tau), else a nominal 1 keV (prompt decays: NOMINAL_WIDTH). The branching ratios are written as PYTHIA gives them, not renormalized (the
 decayer normalizes them). The antiparticles get the charge-conjugate channels.
 Every particle added, and every hadron left without decays and why, is listed in OUT.xml.import.txt.
@@ -41,8 +41,8 @@ import sys
 import warnings
 import xml.etree.ElementTree as ET
 
-CAP_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_DB = os.path.join(CAP_DIR, "DB", "ParticleData", "ParticleDb.xml")
+DATUM_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_DB = os.path.join(DATUM_DIR, "DB", "ParticleData", "ParticleDb.xml")
 NARROW_WIDTH = 1.0e-10
 HBARC_GEV_MM = 1.973269804e-13
 #: Width given to a particle with decay modes whose width neither the PDG nor PYTHIA gives (keV-scale electromagnetic
@@ -62,12 +62,12 @@ def find_pythia_xml():
     for env in ("PYTHIA8DATA",):
         if os.environ.get(env):
             candidates.append(os.path.join(os.environ[env], "ParticleData.xml"))
-    for env in ("CAP_PYTHIA8_PATH", "PYTHIA8"):
+    for env in ("DATUM_PYTHIA8_PATH", "CAP_PYTHIA8_PATH", "PYTHIA8"):
         if os.environ.get(env):
             candidates.append(os.path.join(os.environ[env], "share", "Pythia8", "xmldoc", "ParticleData.xml"))
     candidates += ["/usr/local/opt/pythia/share/Pythia8/xmldoc/ParticleData.xml",
                    "/opt/homebrew/opt/pythia/share/Pythia8/xmldoc/ParticleData.xml"]
-    candidates += sorted(glob.glob(os.path.join(CAP_DIR, "pythia8*", "share", "Pythia8", "xmldoc", "ParticleData.xml")))
+    candidates += sorted(glob.glob(os.path.join(DATUM_DIR, "pythia8*", "share", "Pythia8", "xmldoc", "ParticleData.xml")))
     for path in candidates:
         if os.path.exists(path):
             return path
@@ -146,14 +146,14 @@ def split_pdg_name(name):
     return base, bool(bar), sub or "", sup or "", paren or "", charge or ""
 
 
-def cap_name(pdg_particle, mass):
+def datum_name(pdg_particle, mass):
     """Name in the style of the database: base, subscript, star/prime, mass in MeV, charge word (e.g. Dstar2010plus)."""
     base, _, sub, sup, _, _ = split_pdg_name(pdg_particle.name)
     stem = base.replace("/", "") + sub + {"*": "star", "'": "prime", "": ""}[sup]
     return "%s%04d%s" % (stem, int(round(1000 * mass)), charge_word(pdg_particle.charge))
 
 
-def cap_title(pdg_particle):
+def datum_title(pdg_particle):
     base, bar, sub, sup, paren, charge = split_pdg_name(pdg_particle.name)
     symbol = GREEK.get(base, base)
     if bar:
@@ -219,8 +219,8 @@ def heavy_hadrons(api):
 # ------------------------------------------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Add the PDG charm and beauty hadrons to the CAP particle database.")
-    parser.add_argument("--database", default=DEFAULT_DB, help="CAP particle database (input)")
+    parser = argparse.ArgumentParser(description="Add the PDG charm and beauty hadrons to the Datum particle database.")
+    parser.add_argument("--database", default=DEFAULT_DB, help="Datum particle database (input)")
     parser.add_argument("--output", help="output file (default: the input file)")
     parser.add_argument("--pythia-xml", help="PYTHIA 8 ParticleData.xml (default: found from the environment)")
     parser.add_argument("--max-partonic", type=float, default=0.1,
@@ -284,11 +284,11 @@ def main():
                 name = existing[code].get("name")
                 kept_names[code] = name
             else:
-                name = cap_name(p, mass) + ("_bar" if code < 0 else "")
+                name = datum_name(p, mass) + ("_bar" if code < 0 else "")
                 if name in names:
                     name += "_%d" % abs(code)
             names.add(name)
-            entries[code] = {"name": name, "title": cap_title(q), "pdg": str(code), "charge": "%g" % charge,
+            entries[code] = {"name": name, "title": datum_title(q), "pdg": str(code), "charge": "%g" % charge,
                              "mass": "%.7g" % mass, "massUncertainty": "0", "width": None,
                              "widthUncertainty": "0", "spin": "%g" % (spin if spin is not None else 0),
                              "isospin": "%g" % (iso if iso is not None else 0),

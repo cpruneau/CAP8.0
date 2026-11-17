@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file OrthogonalSeries.hpp
 //! @brief OrthogonalSeries: series of orthogonal polynomials (Legendre, Chebyshev, Hermite, Laguerre), for fits.
-#ifndef CAP__MATH__OrthogonalSeries
-#define CAP__MATH__OrthogonalSeries
+#ifndef DATUM__MATH__OrthogonalSeries
+#define DATUM__MATH__OrthogonalSeries
 #include <vector>
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -35,10 +35,10 @@ namespace CAP
   //! the powers of x of a Polynomial of high degree. estimate() solves the least squares exactly.
   //!
   //! @code
-  //!   CAP::MATH::LegendreSeries f(4);            // c_0 P_0 + ... + c_4 P_4
+  //!   Datum::MATH::LegendreSeries f(4);            // c_0 P_0 + ... + c_4 P_4
   //!   f.adaptToRange(0.0, 10.0);                 // x in [0, 10] -> t in [-1, 1]
-  //!   CAP::MATH::Fitter::estimate(f, data, 0.0, 10.0);
-  //!   CAP::MATH::Fitter(f, data).fit();
+  //!   Datum::MATH::Fitter::estimate(f, data, 0.0, 10.0);
+  //!   Datum::MATH::Fitter(f, data).fit();
   //! @endcode
   //!
   class OrthogonalSeries : public ParameterizedFunction
@@ -144,6 +144,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__OrthogonalSeries
+#endif // !DATUM__MATH__OrthogonalSeries

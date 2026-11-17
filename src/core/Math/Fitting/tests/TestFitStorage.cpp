@@ -8,10 +8,10 @@
  *
  * *********************************************************************/
 //! @file TestFitStorage.cpp
-//! @brief Test program of the storage of fits in CAP files (FunctionRegistry, FitList::encodeBinary()) (run by ctest).
+//! @brief Test program of the storage of fits in Datum files (FunctionRegistry, FitList::encodeBinary()) (run by ctest).
 //
-// TestFitStorage -- tests of CAP::MATH::FunctionRegistry and of the fits saved with the objects they are attached to:
-// histograms (in a CapFile, read eagerly and lazily), profiles, DataPointsVector, DataPointColumns and ScalarField
+// TestFitStorage -- tests of Datum::MATH::FunctionRegistry and of the fits saved with the objects they are attached to:
+// histograms (in a DatumFile, read eagerly and lazily), profiles, DataPointsVector, DataPointColumns and ScalarField
 // records, fits of unregistered classes, records written before the fits were stored, and invalid data. Prints each
 // failed check and exits with the number of failures (0: all passed).
 //
@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 #include "BinaryIO.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "DataPointColumns.hpp"
 #include "DataPointsVector.hpp"
 #include "Fitter.hpp"
@@ -36,8 +36,8 @@
 #include "Profile.hpp"
 #include "ScalarField.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {
@@ -194,7 +194,7 @@ int main()
     CHECK(thrown);
   }
 
-  // ---- a histogram with two fits, in a CAP file read eagerly and lazily
+  // ---- a histogram with two fits, in a Datum file read eagerly and lazily
   Histogram h("h", "a gaussian", 24, -4.0, 4.0);
   for (double x : gaussianEvents(800, 0.3)) h.fill(x);
   {
@@ -214,13 +214,13 @@ int main()
   }
   const char * path = "TestFitStorage.cap";
   {
-    CapFile out(path, File::kWriteOnly);
+    DatumFile out(path, File::kWriteOnly);
     out.setFolderName("fits");
     out.addFolder("histograms")->add(new Histogram(h));
     out.write();
   }
   {
-    CapFile in(path, File::kReadOnly);
+    DatumFile in(path, File::kReadOnly);
     in.read();
     const Histogram * read = in.get<Histogram>("histograms/h");
     CHECK(read && sameFits(h, *read));
@@ -229,7 +229,7 @@ int main()
     CHECK(read && read->fit(1).function->parameter(1).minimum() == -2.0 && read->fit(1).function->parameter(1).maximum() == 2.0);
   }
   {
-    CapFile in(path, File::kReadOnly);
+    DatumFile in(path, File::kReadOnly);
     in.load(File::Loading::kLazy);
     CHECK(!in.isLoaded("histograms/h"));
     const Histogram * read = in.get<Histogram>("histograms/h");

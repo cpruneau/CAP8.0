@@ -7,15 +7,15 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__File
-#define CAP__File
+#ifndef DATUM__File
+#define DATUM__File
 #include <cstdint>
 #include <fstream>
 #include "String.hpp"
 #include "Exceptions.hpp"
 #include "FileSystemEntry.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -29,7 +29,7 @@ namespace CAP
 //! and provide the operations on their type of content:
 //!
 //!     File ─┬─ TxtFile ──── XmlFile     text: lines held in memory; XML
-//!           └─ BinaryFile ── CapFile    raw bytes; one Folder of CAP objects
+//!           └─ BinaryFile ── DatumFile    raw bytes; one Folder of Datum objects
 //!
 //! A file is opened in one of four modes, which must be allowed by its access (FileException otherwise):
 //!  - kRead   : read an existing file;
@@ -42,8 +42,8 @@ namespace CAP
 //!
 //! Example (with a derived class):
 //! @code
-//!   CAP::TxtFile notes("notes.txt");            // read and write allowed
-//!   notes.open(CAP::File::kAppend);
+//!   Datum::TxtFile notes("notes.txt");            // read and write allowed
+//!   notes.open(Datum::File::kAppend);
 //!   notes.stream() << "one more line" << std::endl;
 //!   notes.close();
 //! @endcode
@@ -134,7 +134,7 @@ public:
   //! @name Content in memory
   //!
   //! Each type of file has its structure in memory: lines (TxtFile), an XML document (XmlFile), bytes (BinaryFile),
-  //! a Folder of objects (CapFile). load() fills it from the file and save() writes it back; both open and close the
+  //! a Folder of objects (DatumFile). load() fills it from the file and save() writes it back; both open and close the
   //! file themselves. isLoaded() is true after load() or save(), until unload() (which frees the structure; the file is
   //! not changed) or a change of path.
   //! @{
@@ -172,6 +172,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

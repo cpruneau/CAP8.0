@@ -8,14 +8,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleDb
-#define CAP__ParticleDb
+#ifndef DATUM__ParticleDb
+#define DATUM__ParticleDb
 #include "Configuration.hpp"
 #include "ManagedObject.hpp"
 #include "Object.hpp"
 #include "ParticleType.hpp"
 
-namespace CAP
+namespace Datum
 {
   class ParticleType;
 
@@ -221,7 +221,7 @@ namespace CAP
 
   };
 
-} //namespace CAP
+} //namespace Datum
 
-#endif  // CAP__ParticleDb
+#endif  // DATUM__ParticleDb
 

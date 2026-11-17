@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventProcessorSingle
-#define CAP__EventProcessorSingle
+#ifndef DATUM__EventProcessorSingle
+#define DATUM__EventProcessorSingle
 #include "EventProcessor.hpp"
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Base class of the single-particle analyzers: an EventProcessor that manages one group of base histograms
@@ -249,6 +249,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__EventProcessorSingle */
+#endif /* DATUM__EventProcessorSingle */

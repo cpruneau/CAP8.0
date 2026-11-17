@@ -8,13 +8,13 @@
  *
  
  * *********************************************************************/
-#ifndef CAP__EventFilter
-#define CAP__EventFilter
+#ifndef DATUM__EventFilter
+#define DATUM__EventFilter
 #include "Event.hpp"
 #include "Filter.hpp"
 #include "ManagedObject.hpp"
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Filter selecting events by global quantities of particle selections: multiplicity, energy, net charge, net
@@ -97,6 +97,6 @@ namespace CAP
   
   };
   
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__EventFilter */
+#endif /* DATUM__EventFilter */

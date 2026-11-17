@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file Directory.hpp
 //! @brief Directory: listing, searching, creating and removing directories of the file system.
-#ifndef CAP__Directory
-#define CAP__Directory
+#ifndef DATUM__Directory
+#define DATUM__Directory
 #include <iostream>
 #include <vector>
 #include "FileSystemEntry.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -26,13 +26,13 @@ namespace CAP
 //! extensions, include and exclude patterns, order). Paths in the results are built from path() (relative if path()
 //! is relative).
 //!
-//! Not to be confused with Folder, the container of CAP objects held in memory (e.g. in a CapFile).
+//! Not to be confused with Folder, the container of Datum objects held in memory (e.g. in a DatumFile).
 //!
 //! Example:
 //! @code
-//!   CAP::Directory data("$CAP_HISTOS_IMPORT_PATH/PbPb");     // expanded at construction
-//!   for (const auto & file : data.files(".cap")) ...          // the CAP files of the directory
-//!   std::vector<CAP::String> runs = data.find("run*.cap");    // the whole tree
+//!   Datum::Directory data("$DATUM_HISTOS_IMPORT_PATH/PbPb");     // expanded at construction
+//!   for (const auto & file : data.files(".datum")) ...          // the Datum files of the directory
+//!   std::vector<Datum::String> runs = data.find("run*.datum");    // the whole tree
 //!   data.tree();                                               // print the tree, with sizes
 //! @endcode
 //!
@@ -53,9 +53,9 @@ public:
   //! @return entries @throws FileException if the directory does not exist or cannot be read
   std::vector<FileSystem::EntryInfo> list(const FileSystem::ListOptions & options = FileSystem::ListOptions()) const;
   //! @brief Names of the entries of the directory (directories first). @param options what to list @return names
-  //! (relative to this directory for a tree, e.g. "PbPb/run1.cap")
+  //! (relative to this directory for a tree, e.g. "PbPb/run1.datum")
   std::vector<String> names(const FileSystem::ListOptions & options = FileSystem::ListOptions()) const;
-  //! @brief Paths of the files of the directory. @param extension extension, e.g. ".cap" (empty: all) @param depth
+  //! @brief Paths of the files of the directory. @param extension extension, e.g. ".datum" (empty: all) @param depth
   //! 1: this directory only; -1: the whole tree @return paths
   std::vector<String> files(const String & extension="", int depth=1) const;
   //! @brief Sub-directories (not hidden ones). @return directories
@@ -110,6 +110,6 @@ public:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

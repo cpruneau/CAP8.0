@@ -14,7 +14,7 @@
 #include "Exceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 EposEventReader::EposEventReader()
@@ -35,7 +35,7 @@ void EposEventReader::setDefaultConfiguration()
 {
   EventProcessor::setDefaultConfiguration();
   String taskName = name();
-  const char * importPath = std::getenv("CAP_DATA_IMPORT_PATH");
+  const char * importPath = FileSystem::environment("DATUM_DATA_IMPORT_PATH");
   _configuration.addProperty(createKey(taskName,"DataImportPath"), String(importPath ? importPath : ""));
   _configuration.addProperty(createKey(taskName,"DataImportFile"), String(""));
   _configuration.addProperty(createKey(taskName,"TreeName"),       String(""));
@@ -141,4 +141,4 @@ void EposEventReader::finalize()
   EventProcessor::finalize();
 }
 
-} // namespace CAP
+} // namespace Datum

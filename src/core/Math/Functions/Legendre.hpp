@@ -1,10 +1,10 @@
-#ifndef CAP_MATH_Legendre
-#define CAP_MATH_Legendre
+#ifndef DATUM_MATH_Legendre
+#define DATUM_MATH_Legendre
 #include <vector>
 #include "String.hpp"
 #include "Function.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -26,7 +26,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   using namespace CAP::MATH;
+  //!   using namespace Datum::MATH;
   //!   Legendre p2(2);
   //!   double y = p2.evaluateAt(0.5);                // (3*0.25 - 1)/2 = -0.125
   //!   double d = p2.derivativeAt(0.5);              // 3x = 1.5
@@ -97,6 +97,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -12,7 +12,7 @@
 #include <string>
 
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -130,4 +130,4 @@ namespace CAP
   printValue("Lines",nLines());
   }
 
-} // namespace CAP
+} // namespace Datum

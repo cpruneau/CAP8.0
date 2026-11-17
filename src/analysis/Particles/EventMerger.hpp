@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventMerger
-#define CAP__EventMerger
+#ifndef DATUM__EventMerger
+#define DATUM__EventMerger
 #include "EventProcessor.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -54,4 +54,4 @@ protected:
 };
 
 }
-#endif /* CAP__EventMerger */
+#endif /* DATUM__EventMerger */

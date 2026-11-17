@@ -1,6 +1,6 @@
 #include "MathBasicSearch.hpp"
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -33,5 +33,5 @@ long binarySearch(const vector<double> array, double value)
 
 } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum
 

@@ -7,26 +7,26 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__XmlDocument
-#define CAP__XmlDocument
+#ifndef DATUM__XmlDocument
+#define DATUM__XmlDocument
 #include "XmlElement.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @brief XML document: the declaration (version, encoding) and one root element.
 //!
 //! Documents are read from text or files with parse() and read() (see XmlReader) and written with toString() and
-//! write() (see XmlWriter). They depend on the standard library and CAP's Base only (no ROOT).
+//! write() (see XmlWriter). They depend on the standard library and Datum's Base only (no ROOT).
 //!
 //! Example:
 //! @code
-//!   CAP::XmlDocument doc = CAP::XmlDocument::read("/data/hydro","model.xml");
-//!   const CAP::XmlElement * t = doc.root().findFirst("PARAMETER","name","Temperature");
+//!   Datum::XmlDocument doc = Datum::XmlDocument::read("/data/hydro","model.xml");
+//!   const Datum::XmlElement * t = doc.root().findFirst("PARAMETER","name","Temperature");
 //!   double temperature = t->textDouble();
 //!
-//!   CAP::XmlDocument out("RESULTS");
+//!   Datum::XmlDocument out("RESULTS");
 //!   out.root().addChild("VALUE").setAttribute("name","yield").setText(12.5);
 //!   out.write("/tmp","results.xml");
 //! @endcode
@@ -112,6 +112,6 @@ protected:
   XmlElement _root;     //!< root element
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

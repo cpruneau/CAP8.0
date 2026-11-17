@@ -18,7 +18,7 @@
 #include "MersenneTwister.hpp"
 #include "ClosureCalculator.hpp"
 #include "ClosureIterator.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "FileSystem.hpp"
 #include "Folder.hpp"
 #include "Histogram.hpp"
@@ -29,7 +29,7 @@
 #include "ParticleSmear.hpp"
 #include "ParticleType.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {
@@ -85,7 +85,7 @@ Histogram * histogram(const char * name, const std::vector<double> & values)
 
 int main()
 {
-  CAP::MATH::randomGenerator().setSeed(4357);
+  Datum::MATH::randomGenerator().setSeed(4357);
   ParticleType pion;
   pion.setName("pi+"); pion.setCharge(1.0); pion.setPdgCode(211); pion.setMass(0.13957);
   const double mass = 0.13957, genPt = 1.5, genEta = 0.5;
@@ -138,7 +138,7 @@ int main()
   for (unsigned int k=0; k<n; k++)
     {
     histos.fillGenerated(gen[k],1.0);
-    if (CAP::MATH::randomGenerator().random() > 0.8) continue;
+    if (Datum::MATH::randomGenerator().random() > 0.8) continue;
     histos.fill(reco[k],1.0);
     detected++;
     }
@@ -356,7 +356,7 @@ int main()
     FileSystem::createDirectory(out);
     auto write = [&](const char * name, const char * folder, const std::vector<double> & values)
       {
-      std::unique_ptr<CapFile> file(CapFile::openRecreateCapFile(in,name));
+      std::unique_ptr<DatumFile> file(DatumFile::openRecreateDatumFile(in,name));
       file->folder().addFolder(folder)->add(histogram("n1_pt",values),"n1_pt");
       file->write();
       };

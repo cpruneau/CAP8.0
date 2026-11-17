@@ -7,21 +7,21 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-//! @file CapApp.hpp
-//! @brief CapApp: the CAP graphical interface application (configuration, menus, files, undo).
-#ifndef CAP__GUI__CapApp
-#define CAP__GUI__CapApp
+//! @file DatumApp.hpp
+//! @brief DatumApp: the Datum graphical interface application (configuration, menus, files, undo).
+#ifndef DATUM__GUI__DatumApp
+#define DATUM__GUI__DatumApp
 #include <deque>
 #include <functional>
 #include <memory>
 #include <vector>
 #include "String.hpp"
 #include "Action.hpp"
-#include "CapGui.hpp"
+#include "DatumGui.hpp"
 #include "Graph.hpp"
 #include "Folder.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -33,19 +33,19 @@ namespace CAP
   {
 
   //!
-  //! @brief Configuration of the CAP graphical application, read from an XML file at startup.
+  //! @brief Configuration of the Datum graphical application, read from an XML file at startup.
   //!
   //! @code
-  //!   <CapGui version="1">
-  //!     <Window title="CAP" width="1400" height="900" theme="light" fontSize="15" viewports="true"/>
+  //!   <DatumGui version="1">
+  //!     <Window title="Datum" width="1400" height="900" theme="light" fontSize="15" viewports="true"/>
   //!     <Canvases columns="1" rows="1" toolbars="true"/>          <!-- n x m canvas panes -->
   //!     <Graphs columns="1" rows="1" legend="true" logX="false" logY="false" mode="add" keepShapes="true"
   //!             colorPalette="default" markerPalette="default" shadingPalette="viridis"/>  <!-- per new canvas -->
-  //!     <Files directory="" extensions=".cap .root .xml"/>
+  //!     <Files directory="" extensions=".datum .cap .root .xml"/>
   //!     <Browser visible="true" docked="true"/>                   <!-- docked: in the main window -->
   //!     <Demo enabled="false"/>                                <!-- true: demonstration objects at startup -->
   //!     <Latex enabled="true" bin="" preamble="\usepackage{amsmath,amssymb}" rootSyntax="true"/>  <!-- bin: "" to search -->
-  //!   </CapGui>
+  //!   </DatumGui>
   //! @endcode
   //! Missing elements or attributes keep their default values.
   //!
@@ -63,7 +63,7 @@ namespace CAP
   String markerPalette  = "default";   //!< current marker palette of the session
   String shadingPalette = "viridis";   //!< current shading palette of the session
   String directory;   //!< folder where the file dialogs start (empty: the current folder)
-  std::vector<String> extensions{".cap", ".root"};   // .root: only when CapGui is built with ROOT files   //!< types listed by the Open dialog (only those CapGui can open are used)
+  std::vector<String> extensions{".datum", ".cap", ".root"};   // .root: only when DatumGui is built with ROOT files   //!< types listed by the Open dialog (only those DatumGui can open are used)
   bool   demo         = false;  //!< show the demonstration objects at startup (otherwise the canvases start empty)
   bool   latex        = true;   //!< typeset the texts with '$' or '\' by LaTeX (see GRAPHICS::LatexRenderer)
   String latexBin;              //!< directory of latex and dvisvgm (empty: looked for)
@@ -78,23 +78,24 @@ namespace CAP
   };
 
   //!
-  //! @brief The CAP graphical application: main controller of the GUI.
+  //! @brief The Datum graphical application: main controller of the GUI.
   //!
-  //! CapApp reads the configuration, opens the CapGui window, builds its menus and listens to them: every command
+  //! DatumApp reads the configuration, opens the DatumGui window, builds its menus and listens to them: every command
   //! ("file.open", "edit.undo", "window.layout.2x2", ...) goes through actionPerformed(). It owns the objects shown
   //! (functions, data points, and later the contents of the files opened) and keeps the undo/redo history.
   //!
-  //! Command line: CapGui [--config file.xml] [file ...]
-  //! Without --config, the configuration is $HOME/.CapGui.xml if it exists, otherwise \<CAP\>/config/CapGui.xml.
+  //! Command line: DatumGui [--config file.xml] [file ...]
+  //! Without --config, the configuration is $HOME/.DatumGui.xml if it exists ($HOME/.CapGui.xml, that of CapGui, if it
+  //! exists), otherwise \<Datum\>/config/DatumGui.xml.
   //!
-  class CapApp : public ActionListener
+  class DatumApp : public ActionListener
   {
   public:
 
   //! @brief Constructor. @param argc number of arguments @param argv arguments: --config file.xml (or -c), then files or folders to open
-  CapApp(int argc, char ** argv);
+  DatumApp(int argc, char ** argv);
   //! @brief Destructor.
-  virtual ~CapApp();
+  virtual ~DatumApp();
 
   //! @brief Read the configuration, open the window, run until it is closed. @return exit code
   int run();
@@ -119,7 +120,7 @@ namespace CAP
   //! @name Files
   //! @{
 
-  //! @brief Open a CAP file and show its contents in a browser (a file already open is shared, not read again).
+  //! @brief Open a Datum file and show its contents in a browser (a file already open is shared, not read again).
   //! @param fileName file @param browser browser (default: the one used last) @return id of the open file, or -1
   //! if it cannot be read
   int  openFile(const String & fileName, FileBrowser * browser=nullptr);
@@ -149,13 +150,13 @@ namespace CAP
   void renameEntry(int target, const String & path, const String & name);
   //! @brief Rename the top folder of a tree. @param target tree @param name new name
   void renameTree(int target, const String & name);
-  //! @brief Called when an entry of a tree is renamed (CapGuiApp: the plot files showing it follow it).
+  //! @brief Called when an entry of a tree is renamed (DatumGuiApp: the plot files showing it follow it).
   //! @param id tree @param oldPath path before @param newPath path after
   virtual void entryRenamed(int id, const String & oldPath, const String & newPath) { (void)id; (void)oldPath; (void)newPath; }
   //! @brief Remove an entry of an editable tree (its objects are kept for the graphs showing them). @param target
   //! tree @param path entry
   void removeEntry(int target, const String & path);
-  //! @brief Save an editable tree to its CAP file, or to a file chosen by the user. @param target tree
+  //! @brief Save an editable tree to its Datum file, or to a file chosen by the user. @param target tree
   //! @param ask whether to ask for the file even if the tree has one @param after called once it is saved
   void saveTree(int target, bool ask=true, const std::function<void()> & after = std::function<void()>());
   //! @brief Save the changed trees, one after the other (a file is asked for the trees never saved; Cancel stops).
@@ -182,13 +183,13 @@ namespace CAP
   //! @brief Ask for a ROOT file, then write the histograms of a folder of a file or tree to it (see exportRootFile()).
   //! @param target file or tree @param folderPath folder ("" for the top)
   void exportRoot(int target, const String & folderPath);
-  //! @brief Ask for a file, then write a copy of a file or of one of its folders to a new CAP file (e.g. the histograms
+  //! @brief Ask for a file, then write a copy of a file or of one of its folders to a new Datum file (e.g. the histograms
   //! converted from a ROOT file). @param target file or tree @param folderPath folder ("" for the whole file)
   void saveCopy(int target, const String & folderPath);
-  //! @brief Write a copy of a file or folder to a new CAP file. @param target file or tree @param folderPath folder
-  //! @param fileName CAP file (".cap" added if missing) @return true on success
+  //! @brief Write a copy of a file or folder to a new Datum file. @param target file or tree @param folderPath folder
+  //! @param fileName Datum file (".datum" added if it has neither ".datum" nor ".cap") @return true on success
   bool saveCopyTo(int target, const String & folderPath, const String & fileName);
-  //! @brief Save an editable tree to a CAP file (".cap" added if missing); the tree then takes its name.
+  //! @brief Save an editable tree to a Datum file (".datum" added if it has neither ".datum" nor ".cap"); the tree then takes its name.
   //! @param target tree @param fileName file @return false if it cannot be saved (an open file, a write error)
   bool saveTreeTo(int target, const String & fileName);
   //! @brief Show an object of an open file in the current graph (added or replacing, see CanvasPane::Mode).
@@ -267,7 +268,7 @@ namespace CAP
   //! @}
 
   AppConfiguration & configuration() { return _configuration; }   //!< Configuration (read from the XML file, changed by Preferences)
-  CapGui & gui() { return _gui; }   //!< The window
+  DatumGui & gui() { return _gui; }   //!< The window
 
   protected:
 
@@ -285,7 +286,7 @@ namespace CAP
   String _configurationFile;   //!< configuration file read (or given with --config)
   String _mapsFile;            //!< maps file opened in the Detector Maps window at startup (--maps)
   AppConfiguration _configuration;   //!< configuration
-  CapGui _gui;   //!< the window
+  DatumGui _gui;   //!< the window
   std::vector<std::unique_ptr<MATH::Function>>   _functions;   //!< functions created by the application (demo)
   std::vector<std::unique_ptr<MATH::DataPoints>> _data;   //!< data points created by the application (demo)
   //! A rebinned copy made by the application (in _data): the copy, its original histogram, the factors
@@ -342,7 +343,7 @@ namespace CAP
   bool _customLayoutRequested;   //!< Custom layout dialog to open, for the canvases or the graphs
   bool _customGraphsRequested;   //!< Custom layout dialog to open, for the canvases or the graphs
 
-  //! @brief First configuration file found: $HOME/.CapGui.xml, $CAP_ROOT_PATH/config/CapGui.xml, the one of the sources. @return path, or ""
+  //! @brief First configuration file found: $HOME/.DatumGui.xml, $DATUM_ROOT_PATH/config/DatumGui.xml, the one of the sources. @return path, or ""
   String findConfigurationFile() const;
   //! @brief Create the menus of the menu bar (a program built on the application can make its own).
   virtual void buildMenus();
@@ -388,14 +389,14 @@ namespace CAP
   //! @brief Open file of an identifier. @param id identifier @return file, or null
   //!
   //! @brief Path a data file is known by in the plot files: its file, or, for a tree not saved yet, a path of its own
-  //! ("/@tree/<id>/<name>.cap", found by dataFile(); replaced in the plot files when the tree is saved, see treeSaved()).
+  //! ("/@tree/<id>/<name>.datum", found by dataFile(); replaced in the plot files when the tree is saved, see treeSaved()).
   //! @param f data file @return path
   //!
   static String dataPath(const BrowserFile & f);
   //! @brief The data file known by a path (dataPath()): a tree (preferred: its objects as changed) or a file read.
   //! @param path path @return file, or null
   BrowserFile * dataFile(const String & path);
-  //! @brief Called when a tree is saved to a file (CapGuiApp: the plot files using it follow it).
+  //! @brief Called when a tree is saved to a file (DatumGuiApp: the plot files using it follow it).
   //! @param id tree @param previousPath path it was known by before (dataPath())
   virtual void treeSaved(int id, const String & previousPath) { (void)id; (void)previousPath; }
   BrowserFile * file(int id);
@@ -418,6 +419,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__CapApp
+#endif // !DATUM__GUI__DatumApp

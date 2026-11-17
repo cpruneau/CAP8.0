@@ -13,7 +13,7 @@
 #include "Exceptions.hpp"
 #include "NameHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 JetSettings::JetSettings()
@@ -89,4 +89,4 @@ String JetSettings::radiusLabel(double radius)
   return String((std::string("R")+s).c_str());
 }
 
-} // namespace CAP
+} // namespace Datum

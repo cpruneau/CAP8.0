@@ -14,7 +14,7 @@
 #include <cstdlib>
 
 
-namespace CAP
+namespace Datum
 {
 
 PropertyException::PropertyException(const String & keyword, const String & message, const String & source)
@@ -573,4 +573,4 @@ String Property::normalizedValue(const String & value, Type type)
   return v;
 }
 
-} // namespace CAP
+} // namespace Datum

@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file MetropolisHastings.hpp
 //! @brief MetropolisHastings: Markov chain Monte Carlo sampler of a density; McmcResult: its samples and summaries.
-#ifndef CAP__MATH__MetropolisHastings
-#define CAP__MATH__MetropolisHastings
+#ifndef DATUM__MATH__MetropolisHastings
+#define DATUM__MATH__MetropolisHastings
 #include <functional>
 #include <utility>
 #include <vector>
 #include "Matrix.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -114,6 +114,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__MetropolisHastings
+#endif // !DATUM__MATH__MetropolisHastings

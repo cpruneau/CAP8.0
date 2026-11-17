@@ -13,7 +13,7 @@
 #include <vector>
 
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -150,4 +150,4 @@ namespace CAP
   return String(out.c_str());
   }
 
-} // namespace CAP
+} // namespace Datum

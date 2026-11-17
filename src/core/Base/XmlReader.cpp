@@ -10,7 +10,7 @@
 #include "XmlReader.hpp"
 #include <cstring>
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -296,4 +296,4 @@ namespace CAP
   return document;
   }
 
-} // namespace CAP
+} // namespace Datum

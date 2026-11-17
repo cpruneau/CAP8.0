@@ -11,16 +11,16 @@
 //! @brief Interpolation of tabulated values: polynomial (Neville), local polynomial of a chosen degree, inverse linear
 //! interpolation of a monotonic table, and multilinear interpolation on a regular grid of any rank.
 //!
-//! These functions are the interpolation tools of CAP: ScalarField, the tabulated random distributions, the sampled
+//! These functions are the interpolation tools of Datum: ScalarField, the tabulated random distributions, the sampled
 //! integration rules (Integral) and the derivatives of sampled values (Derivative) use them. Cubic splines and other
 //! piecewise polynomials are functions (see PiecewisePolynomial and CubicSpline). The older functions of
 //! MathBasicInterpolation.hpp are kept.
-#ifndef CAP__MATH__InterpolationTools
-#define CAP__MATH__InterpolationTools
+#ifndef DATUM__MATH__InterpolationTools
+#define DATUM__MATH__InterpolationTools
 #include <cstddef>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -35,7 +35,7 @@ namespace CAP
   //!
   //! @code
   //!   double x[3] = {0, 1, 2}, y[3] = {1, 2, 5};               // 1 + x^2
-  //!   double v = CAP::MATH::interpolatePolynomial(x, y, 3, 1.5);   // 3.25
+  //!   double v = Datum::MATH::interpolatePolynomial(x, y, 3, 1.5);   // 3.25
   //! @endcode
   //!
   double interpolatePolynomial(const double * x, const double * y, std::size_t n, double x0, double * error=nullptr);
@@ -97,6 +97,6 @@ namespace CAP
                                 const char * source="interpolateMultilinear");
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__InterpolationTools
+#endif // DATUM__MATH__InterpolationTools

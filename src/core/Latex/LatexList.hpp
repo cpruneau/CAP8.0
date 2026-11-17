@@ -1,8 +1,8 @@
-#ifndef CAP__LatexList
-#define CAP__LatexList
+#ifndef DATUM__LatexList
+#define DATUM__LatexList
 #include "LatexElement.hpp"
 
-namespace CAP
+namespace Datum
 {
   class LatexList : public LatexElement
   {
@@ -29,6 +29,6 @@ namespace CAP
   int _type;
 
   };
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexList
+#endif // !DATUM__LatexList

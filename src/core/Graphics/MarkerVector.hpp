@@ -1,17 +1,17 @@
-#ifndef CAP__MarkerVector
-#define CAP__MarkerVector
+#ifndef DATUM__MarkerVector
+#define DATUM__MarkerVector
 #include "Drawable2D.hpp"
 #include "MarkerAttributes.hpp"
 #include "AxisRange.hpp"
 #include "DataPoints.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
 
   //!
-  //! One marker per point of a data set (CAP::MATH::DataPoints).
+  //! One marker per point of a data set (Datum::MATH::DataPoints).
   //! Data values are mapped to the canvas through a frame: the data ranges xRange() x yRange()
   //! are mapped onto the frame box (normalized canvas units). By default both are [0,1],
   //! so data values are used directly as canvas coordinates. The data object is not owned.
@@ -55,6 +55,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-}   // namespace CAP
+}   // namespace Datum
 
-#endif // !CAP__MarkerVector
+#endif // !DATUM__MarkerVector

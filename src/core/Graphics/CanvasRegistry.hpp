@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file CanvasRegistry.hpp
 //! @brief CanvasRegistry: the canvases of a session, by index, name and group (not owned).
-#ifndef CAP__CanvasRegistry
-#define CAP__CanvasRegistry
+#ifndef DATUM__CanvasRegistry
+#define DATUM__CanvasRegistry
 #include <vector>
 #include "Canvas.hpp"
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -146,6 +146,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__CanvasRegistry
+#endif // !DATUM__CanvasRegistry

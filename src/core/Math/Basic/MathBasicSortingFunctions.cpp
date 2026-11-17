@@ -1,7 +1,7 @@
 
 #include "MathBasicSortingFunctions.hpp"
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -175,5 +175,5 @@ void bubbleLow(vector<double> valuesArray, vector<int> orderArray)
 
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 

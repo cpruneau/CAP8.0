@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/Particles
+# Project Datum/Particles
 ################################################################################################
 
 
@@ -44,7 +44,7 @@ ParticleType.cpp)
 target_link_libraries(Particles Base Math   ${EXTRA_LIBS} )
 target_include_directories(Particles  PUBLIC Base Math Particles  ${EXTRA_INCLUDES} )
 
-cap_install(Particles LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Particles LIBRARY "$ENV{DATUM_LIB_PATH}")
 
 
 ################################################################################################
@@ -61,5 +61,5 @@ target_link_libraries(TestParticleSmear Particles Base Math)
 add_test(NAME ParticleSmear COMMAND TestParticleSmear)
 add_executable(TestParticleDecays tests/TestParticleDecays.cpp)
 target_link_libraries(TestParticleDecays Particles Base Math)
-target_compile_definitions(TestParticleDecays PRIVATE CAP_PARTICLE_DB="${CMAKE_SOURCE_DIR}/../DB/ParticleData/ParticleDb.xml")
+target_compile_definitions(TestParticleDecays PRIVATE DATUM_PARTICLE_DB="${CMAKE_SOURCE_DIR}/../DB/ParticleData/ParticleDb.xml")
 add_test(NAME ParticleDecays COMMAND TestParticleDecays)

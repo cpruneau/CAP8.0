@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "AnalysisTask.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   AnalysisTask::AnalysisTask()
@@ -136,4 +136,4 @@ namespace CAP
   throw NoImplementationException("AnalysisTask",__FUNCTION__);
   }
 
-} // namespace CAP
+} // namespace Datum

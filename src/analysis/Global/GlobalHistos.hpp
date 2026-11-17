@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__GlobalHistos
-#define CAP__GlobalHistos
+#ifndef DATUM__GlobalHistos
+#define DATUM__GlobalHistos
 #include "HistogramFolder.hpp"
 #include "DerivedCalculator.hpp"
 #include "ParticleFilter.hpp"
 
-namespace CAP
+namespace Datum
 {
 //!
 //! @brief Histograms of global event observables for one (event filter, particle filter) combination.
@@ -179,13 +179,13 @@ protected:
 
 //!
 //! @brief Derived histograms of the global analysis (second phase): DerivedCalculator with the folders GlobalHistos,
-//! registered as the task class CAP::GlobalDerivedCalculator.
+//! registered as the task class Datum::GlobalDerivedCalculator.
 //!
 using GlobalDerivedCalculator = DerivedCalculator<GlobalHistos,1>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__GlobalHistos  */
+#endif /* DATUM__GlobalHistos  */
 
 
 

@@ -12,10 +12,10 @@
 #include "GlauberExceptions.hpp"
 #include "SmearingProfile.hpp"
 using namespace std;
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
+using Datum::MATH::pi;
+using Datum::MATH::twoPi;
 
-namespace CAP
+namespace Datum
 {
   SmearingProfile::SmearingProfile()
   :
@@ -56,7 +56,7 @@ namespace CAP
   return x*std::exp(-x*x/_twoNucleonSigmaSq);
   }
   
-}  // namespace CAP
+}  // namespace Datum
 
 
 

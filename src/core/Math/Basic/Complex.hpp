@@ -1,12 +1,12 @@
-#ifndef CAP_Complex
-#define CAP_Complex
+#ifndef DATUM_Complex
+#define DATUM_Complex
 #include <cmath>
 #include <iostream>
 #include "String.hpp"
 #include "MathConstants.hpp"
 
-//using CAP::MATH::
-namespace CAP
+//using Datum::MATH::
+namespace Datum
 {
 namespace MATH
 {
@@ -274,14 +274,14 @@ Complex<T> range(const Complex<T> & lb, const Complex<P> & ub, const Complex<Q> 
 {return maximum(lb,minimum(c,ub));}
 
 template <typename T>
-std::ostream& operator<<(std::ostream& out, const CAP::MATH::Complex<T>& c)
+std::ostream& operator<<(std::ostream& out, const Datum::MATH::Complex<T>& c)
 {
   out << "(" << c.Re()  << "," << c.Im() << "i)";
   return out;
 }
 
 template <typename T>
-std::istream& operator>>(std::istream& in, CAP::MATH::Complex<T>& c)
+std::istream& operator>>(std::istream& in, Datum::MATH::Complex<T>& c)
 {
   T x;
   T y;

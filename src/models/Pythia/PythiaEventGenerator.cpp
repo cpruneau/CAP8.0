@@ -14,8 +14,9 @@
 #include "StringParameter.hpp"
 #include "LongParameter.hpp"
 #include "Exceptions.hpp"
+#include "FileSystem.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //! Number of free-form PYTHIA option keys (<name>:Option0 ... <name>:Option29).
@@ -106,22 +107,22 @@ void PythiaEventGenerator::setDefaultConfiguration()
 
 //!
 //! Directory of the PYTHIA xml files: the xmlInputPath parameter, else $PYTHIA8DATA, else
-//! $CAP_PYTHIA8_PATH/share/Pythia8/xmldoc, else that of the Pythia8 CAP was built with (CAP_PYTHIA8_XMLDOC).
+//! $DATUM_PYTHIA8_PATH/share/Pythia8/xmldoc, else that of the Pythia8 Datum was built with (DATUM_PYTHIA8_XMLDOC).
 //!
 static String pythiaXmlPath(const String & configured)
 {
   if (!configured.isNull()) return configured;
   const char * data = std::getenv("PYTHIA8DATA");
   if (data && *data) return String(data);
-  const char * prefix = std::getenv("CAP_PYTHIA8_PATH");
+  const char * prefix = FileSystem::environment("DATUM_PYTHIA8_PATH");
   if (prefix && *prefix)
     {
     String path = prefix;
     path += "/share/Pythia8/xmldoc";
     return path;
     }
-#ifdef CAP_PYTHIA8_XMLDOC
-  return String(CAP_PYTHIA8_XMLDOC);
+#ifdef DATUM_PYTHIA8_XMLDOC
+  return String(DATUM_PYTHIA8_XMLDOC);
 #else
   return String("../share/Pythia8/xmldoc");
 #endif
@@ -228,7 +229,7 @@ void PythiaEventGenerator::initialize()
     pythia->readString("PartonVertex:protonRadius = 0.7");
     pythia->readString("PartonVertex:emissionWidth = 0.1");
     }
-  // pT-hat range (a production in pT-hat bins, see RunCAP.py): before the free-form options
+  // pT-hat range (a production in pT-hat bins, see RunDatum.py): before the free-form options
   ptHatMin = _configuration.valueDouble(createKey(taskName,"PTHAT_MIN"),true,-1.0);
   ptHatMax = _configuration.valueDouble(createKey(taskName,"PTHAT_MAX"),true,-1.0);
   if (ptHatMin>=0.0 && ptHatMax>=0.0 && !(ptHatMax>ptHatMin))
@@ -368,14 +369,14 @@ void PythiaEventGenerator::saveHistograms(Folder & top)
     auto text = [](double value) { char s[64]; std::snprintf(s,sizeof(s),"%.17g",value); return String(s); };
     auto put = [&](const char * key, const String & value)
       { if (!folder->get<StringParameter>(key)) folder->add(new StringParameter(key,value),key); };
-    put("CAP_SIGMA_GEN",text(sigmaGen));
-    put("CAP_SIGMA_ERR",text(sigmaErr));
-    put("CAP_PTHAT_MIN",text(ptHatMin));
-    put("CAP_PTHAT_MAX",text(ptHatMax));
-    if (!folder->get<LongParameter>("CAP_N_ACCEPTED"))
-      folder->add(new LongParameter("CAP_N_ACCEPTED",nAccepted),"CAP_N_ACCEPTED");
+    put("DATUM_SIGMA_GEN",text(sigmaGen));
+    put("DATUM_SIGMA_ERR",text(sigmaErr));
+    put("DATUM_PTHAT_MIN",text(ptHatMin));
+    put("DATUM_PTHAT_MAX",text(ptHatMax));
+    if (!folder->get<LongParameter>("DATUM_N_ACCEPTED"))
+      folder->add(new LongParameter("DATUM_N_ACCEPTED",nAccepted),"DATUM_N_ACCEPTED");
     }
   EventProcessor::saveHistograms(top);
 }
 
-} // namespace CAP
+} // namespace Datum

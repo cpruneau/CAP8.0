@@ -7,15 +7,15 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Manager
-#define CAP__Manager
+#ifndef DATUM__Manager
+#define DATUM__Manager
 #include <vector>
 #include "String.hpp"
 #include "Exceptions.hpp"
 #include "List.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 class ManagerException : public Exception
 {
@@ -273,8 +273,8 @@ int Manager<T>::getNObjectStore()
   return objectStore.size();
 }
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP_Manager */
+#endif /* DATUM_Manager */
 
 

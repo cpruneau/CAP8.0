@@ -17,7 +17,7 @@
 #include "LatexRenderer.hpp"
 #include "LatexTextures.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -274,4 +274,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

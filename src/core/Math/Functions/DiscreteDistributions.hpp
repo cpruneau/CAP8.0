@@ -10,11 +10,11 @@
 //! @file DiscreteDistributions.hpp
 //! @brief Distributions of counts: PoissonDistribution, BinomialDistribution, NegativeBinomialDistribution,
 //! HypergeometricDistribution.
-#ifndef CAP_MATH_DiscreteDistributions
-#define CAP_MATH_DiscreteDistributions
+#ifndef DATUM_MATH_DiscreteDistributions
+#define DATUM_MATH_DiscreteDistributions
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -165,6 +165,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_MATH_DiscreteDistributions
+#endif // DATUM_MATH_DiscreteDistributions

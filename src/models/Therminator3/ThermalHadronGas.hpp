@@ -9,12 +9,12 @@
  * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  *
  * *********************************************************************/
-#ifndef CAP_ThermalHadronGas
-#define CAP_ThermalHadronGas
+#ifndef DATUM_ThermalHadronGas
+#define DATUM_ThermalHadronGas
 #include "ThermalHadron.hpp"
 #include "ParticleDb.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -163,7 +163,7 @@ namespace CAP
   
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif  // CAP_ThermalHadronGas
+#endif  // DATUM_ThermalHadronGas
 

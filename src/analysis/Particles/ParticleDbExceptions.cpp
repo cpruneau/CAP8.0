@@ -2,7 +2,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ParticleDecayException::ParticleDecayException(const String & message, const String & source)
@@ -192,5 +192,5 @@ void InvalidFileParticleDbException::print() const
 }
 
 
-} // namespace CAP
+} // namespace Datum
 

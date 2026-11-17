@@ -14,7 +14,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ParticleSingleAnalyzer::ParticleSingleAnalyzer()
@@ -103,4 +103,4 @@ void ParticleSingleAnalyzer::finalize()
   EventProcessorHistos<ParticleSingleHistos,1>::finalize();
 }
 
-} // namespace CAP
+} // namespace Datum

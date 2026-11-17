@@ -8,9 +8,9 @@
  *
  * *********************************************************************/
 //! @file FitDialog.hpp
-//! @brief FitDialog: the Fit window of CapGui, fitting a function to an object of the selected graph.
-#ifndef CAP__GUI__DetectorMapsDialog
-#define CAP__GUI__DetectorMapsDialog
+//! @brief FitDialog: the Fit window of DatumGui, fitting a function to an object of the selected graph.
+#ifndef DATUM__GUI__DetectorMapsDialog
+#define DATUM__GUI__DetectorMapsDialog
 #include <functional>
 #include <map>
 #include <memory>
@@ -20,7 +20,7 @@
 #include "KinematicMapFolder.hpp"
 #include "BezierCurve.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -35,9 +35,9 @@ namespace CAP
   class FileDialog;
 
   //!
-  //! @brief The Detector Maps window of CapGui (Edit > Detector Maps...): views and edits the particle efficiencies
-  //! (ParticleEfficiency) and smearers (ParticleSmear) of a maps file, the CAP file that the jobs import (Import of the
-  //! efficiencies and smearers in the Filters pane of RunCAP).
+  //! @brief The Detector Maps window of DatumGui (Edit > Detector Maps...): views and edits the particle efficiencies
+  //! (ParticleEfficiency) and smearers (ParticleSmear) of a maps file, the Datum file that the jobs import (Import of the
+  //! efficiencies and smearers in the Filters pane of RunDatum).
   //!
   //! A maps file holds any number of efficiencies and smearers, each in a folder named after it (see
   //! KinematicMapFolder). The window lists them (add, rename, remove) and, for the selected one, each of its maps (the
@@ -72,7 +72,7 @@ namespace CAP
   //! @brief Read a maps file (replacing the list). @param fileName file @param error set to the reason of a failure
   //! @return false if it cannot be read
   bool load(const String & fileName, String & error);
-  //! @brief Write the list to a maps file. @param fileName file (".cap" added if missing) @param error set to the reason
+  //! @brief Write the list to a maps file. @param fileName file (".datum" added if it has neither ".datum" nor ".cap") @param error set to the reason
   //! of a failure @return false if it cannot be written
   bool save(const String & fileName, String & error);
   //! @brief Objects of the list. @return objects
@@ -187,6 +187,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__GUI__DetectorMapsDialog */
+#endif /* DATUM__GUI__DetectorMapsDialog */

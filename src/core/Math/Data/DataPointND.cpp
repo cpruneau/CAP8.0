@@ -11,7 +11,7 @@
 #include "MathExceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -153,4 +153,4 @@ namespace CAP
   std::vector<DataPointND> DataPointND::loadAllBinary(const String & fileName)      { return loadAllBinaryObjects<DataPointND>(fileName); }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

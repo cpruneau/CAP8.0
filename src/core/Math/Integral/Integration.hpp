@@ -9,18 +9,18 @@
  * *********************************************************************/
 //! @file Integration.hpp
 //! @brief Integration: an integrator that integrates with the method chosen by an enum (or automatically).
-#ifndef CAP__MATH__Integration
-#define CAP__MATH__Integration
+#ifndef DATUM__MATH__Integration
+#define DATUM__MATH__Integration
 #include <memory>
 #include "Integrator.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
 
   //!
-  //! @brief Integrator steering the integrators of CAP: it integrates with the method chosen by an enum, or chooses
+  //! @brief Integrator steering the integrators of Datum: it integrates with the method chosen by an enum, or chooses
   //! the method from the number of variables (Automatic).
   //!
   //! Automatic: adaptive Simpson for one variable, Simpson one variable at a time for 2 or 3, Monte Carlo beyond.
@@ -30,9 +30,9 @@ namespace CAP
   //! wherever an integrator is.
   //!
   //! @code
-  //!   CAP::MATH::Integration integration(CAP::MATH::Integration::Romberg);
+  //!   Datum::MATH::Integration integration(Datum::MATH::Integration::Romberg);
   //!   double s = integration.integral(f, 0.0, 1.0);
-  //!   integration.setMethod(CAP::MATH::Integration::MonteCarlo);
+  //!   integration.setMethod(Datum::MATH::Integration::MonteCarlo);
   //!   double v = integration.integral(g, low, high);                  // g of 6 variables
   //! @endcode
   //!
@@ -101,6 +101,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__Integration
+#endif // DATUM__MATH__Integration

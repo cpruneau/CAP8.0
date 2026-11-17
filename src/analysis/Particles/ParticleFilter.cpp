@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   
   ParticleFilter::ParticleFilter()
@@ -175,4 +175,4 @@ namespace CAP
     }
   }
   
-} // namespace CAP
+} // namespace Datum

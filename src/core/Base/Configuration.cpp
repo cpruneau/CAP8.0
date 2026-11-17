@@ -10,7 +10,7 @@
 #include "Configuration.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 
@@ -125,5 +125,5 @@ void Configuration::addSelectedValues(const char *  keyBaseName, const char *  d
 }
 
 
-} // namespace CAP
+} // namespace Datum
 

@@ -28,9 +28,9 @@
 #include "Normal.hpp"
 #include "StatisticalTests.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
-using namespace CAP::MATH::Distributions;
+using namespace Datum;
+using namespace Datum::MATH;
+using namespace Datum::MATH::Distributions;
 
 namespace
 {

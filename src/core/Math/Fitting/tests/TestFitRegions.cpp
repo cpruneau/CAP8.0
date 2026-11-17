@@ -35,8 +35,8 @@
 #include "Normal2D.hpp"
 #include "Region.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

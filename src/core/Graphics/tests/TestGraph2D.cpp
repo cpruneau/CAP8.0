@@ -10,7 +10,7 @@
 //! @file TestGraph2D.cpp
 //! @brief Test program of the graphs of rank-2 functions and data: Palette, Grid2D, ranges, color maps (run by ctest).
 //
-// TestGraph2D -- tests of the color maps of CAP::GRAPHICS::Graph: palettes, grids made from histograms, functions
+// TestGraph2D -- tests of the color maps of Datum::GRAPHICS::Graph: palettes, grids made from histograms, functions
 // and points, the x, y and z ranges, and the SVG drawn (cells, color scale, frame). Prints each failed check and
 // exits with the number of failures (0: all passed). With an argument, also writes an example page to that SVG file.
 //
@@ -35,8 +35,8 @@
 #include "SvgPainter.hpp"
 #include "Painter.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {

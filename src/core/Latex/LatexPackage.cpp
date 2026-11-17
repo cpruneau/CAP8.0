@@ -1,6 +1,6 @@
 #include "LatexPackage.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexPackage::LatexPackage()
   :

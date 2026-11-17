@@ -5,9 +5,9 @@
 #include <Math/ProbFuncMathCore.h>
 #include "MathExceptions.hpp"
 
-using CAP::MATH::absolute;
+using Datum::MATH::absolute;
 
-namespace CAP
+namespace Datum
 {
 
 namespace MATH
@@ -511,7 +511,7 @@ static double gammaStirling(double x)
     {
     y = std::pow( x, x - 0.5 ) / y;
     }
-  y = CAP::MATH::sqrtPi() * y * w;
+  y = Datum::MATH::sqrtPi() * y * w;
   return y;
 }
 

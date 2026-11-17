@@ -1,12 +1,12 @@
-#ifndef CAP_ThermalHadron
-#define CAP_ThermalHadron
+#ifndef DATUM_ThermalHadron
+#define DATUM_ThermalHadron
 #include <vector>
 #include "ParticleType.hpp"
 
 class ThermalHadronGas;
 class Model;
 
-namespace CAP
+namespace Datum
 {
 
   class ThermalHadron
@@ -102,7 +102,7 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif  // CAP_thermalHadronGas
+#endif  // DATUM_thermalHadronGas
 

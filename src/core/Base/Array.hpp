@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Array
-#define CAP__Array
+#ifndef DATUM__Array
+#define DATUM__Array
 #include "Object.hpp"
 
 //!
-//! @class CAP::Array
+//! @class Datum::Array
 //! @brief Array of objects of type T, enlarged as needed (work in progress).
 //!
 //! Intended as a simpler variant of Factory: a collection of objects of type T allocated once and reused from event to
@@ -24,7 +24,7 @@
 //! @tparam T type of the objects
 //!
 
-namespace CAP
+namespace Datum
 {
 
 template < class T >
@@ -100,6 +100,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif /* Array_hpp */

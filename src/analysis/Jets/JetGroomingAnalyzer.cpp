@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "JetGroomingAnalyzer.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 JetGroomingAnalyzer::JetGroomingAnalyzer()
@@ -72,4 +72,4 @@ void JetGroomingAnalyzer::fill(unsigned int first, const std::vector<Jet> & jets
     for (unsigned int x=0; x<list.size(); x++) _folders[first+x]->fill(list[x]->groom(*jet));
 }
 
-} // namespace CAP
+} // namespace Datum

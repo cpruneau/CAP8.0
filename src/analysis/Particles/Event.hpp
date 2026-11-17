@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Event
-#define CAP__Event
+#ifndef DATUM__Event
+#define DATUM__Event
 #include <memory>
 #include <vector>
 #include "String.hpp"
@@ -18,7 +18,7 @@
 #include "Configuration.hpp"
 #include "ParticleSelection.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class Event;
@@ -236,6 +236,6 @@ protected:
 
 };
 
-} //namespace CAP
+} //namespace Datum
 
 #endif /* Event */

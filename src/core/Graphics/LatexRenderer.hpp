@@ -9,8 +9,8 @@
  * *********************************************************************/
 //! @file LatexRenderer.hpp
 //! @brief LatexRenderer: texts typeset by the LaTeX installation of the system, as SVG paths.
-#ifndef CAP__LatexRenderer
-#define CAP__LatexRenderer
+#ifndef DATUM__LatexRenderer
+#define DATUM__LatexRenderer
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -23,7 +23,7 @@
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -70,13 +70,13 @@ namespace CAP
   //! Without LaTeX (available() false), or when disabled, image() returns no image and the painters draw the text
   //! with their fonts (plainText()); a text that LaTeX cannot typeset gives an image with its error.
   //!
-  //! The tools are looked for in $CAP_LATEX_BIN, in the PATH, then in the usual TeX installations
+  //! The tools are looked for in $DATUM_LATEX_BIN, in the PATH, then in the usual TeX installations
   //! (/Library/TeX/texbin, /usr/local/texlive/<year>/bin/<platform>, /usr/bin). The disk cache is
-  //! $CAP_LATEX_CACHE, otherwise ~/.cache/CAP/latex.
+  //! $DATUM_LATEX_CACHE, otherwise ~/.cache/Datum/latex.
   //!
   //! @code
-  //!   auto & latex = CAP::GRAPHICS::LatexRenderer::instance();
-  //!   const CAP::GRAPHICS::LatexImage * image = latex.image("$\\Delta\\rho_{2}$");
+  //!   auto & latex = Datum::GRAPHICS::LatexRenderer::instance();
+  //!   const Datum::GRAPHICS::LatexImage * image = latex.image("$\\Delta\\rho_{2}$");
   //!   if (image && image->ok) ... image->svg, image->width ...
   //! @endcode
   //!
@@ -253,6 +253,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexRenderer
+#endif // !DATUM__LatexRenderer

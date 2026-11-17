@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Properties
-#define CAP__Properties
+#ifndef DATUM__Properties
+#define DATUM__Properties
 #include <vector>
 #include "String.hpp"
 #include "Property.hpp"
 
-namespace CAP
+namespace Datum
 {
   
   //!
@@ -34,7 +34,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::Properties p;
+  //!   Datum::Properties p;
   //!   p.addProperty("Analysis:PtPt","nBins",100);
   //!   int n = p.valueInt("PtPt:nBins");               // 100 (trailing path components)
   //!   double x = p.valueDouble("missing",true,2.5);   // 2.5 (default)
@@ -199,6 +199,6 @@ namespace CAP
   
   };
   
-} // namespace CAP
+} // namespace Datum
 
 #endif /* Properties_hpp */

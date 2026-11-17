@@ -11,7 +11,7 @@
 #include <cmath>
 #include <cstdio>
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -81,4 +81,4 @@ double angleToJet(const MATH::VectorLorentz & p, const MATH::VectorLorentz & jet
   return std::acos(c);
 }
 
-} // namespace CAP
+} // namespace Datum

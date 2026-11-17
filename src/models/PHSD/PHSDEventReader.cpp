@@ -14,7 +14,7 @@
 #include "FileSystem.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 PHSDEventReader::PHSDEventReader()
@@ -66,7 +66,7 @@ void PHSDEventReader::setDefaultConfiguration()
 {
   EventProcessor::setDefaultConfiguration();
   String taskName = name();
-  const char * importPath = std::getenv("CAP_DATA_IMPORT_PATH");
+  const char * importPath = FileSystem::environment("DATUM_DATA_IMPORT_PATH");
   _configuration.addProperty(createKey(taskName,"DataImportPath"),  String(importPath ? importPath : ""));
   _configuration.addProperty(createKey(taskName,"DataImportFile"),  String("*.dat"));
   _configuration.addProperty(createKey(taskName,"DataImportDepth"), 2);
@@ -198,4 +198,4 @@ void PHSDEventReader::finalize()
   EventProcessor::finalize();
 }
 
-} // namespace CAP
+} // namespace Datum

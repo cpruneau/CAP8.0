@@ -1,8 +1,8 @@
-#ifndef CAP__MarkerRenderer
-#define CAP__MarkerRenderer
+#ifndef DATUM__MarkerRenderer
+#define DATUM__MarkerRenderer
 #include "Renderer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -27,6 +27,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MarkerRenderer
+#endif // !DATUM__MarkerRenderer

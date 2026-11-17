@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/Global
+# Project Datum/Global
 ################################################################################################
 
 
@@ -18,5 +18,5 @@ target_include_directories(Global  PUBLIC Global Base  Particles  ${EXTRA_INCLUD
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-cap_install(Global LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Global LIBRARY "$ENV{DATUM_LIB_PATH}")
 

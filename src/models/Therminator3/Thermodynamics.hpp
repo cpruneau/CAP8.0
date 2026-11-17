@@ -1,10 +1,10 @@
-#ifndef CAP__THERMODYNAMICS_H_
-#define CAP__THERMODYNAMICS_H_
+#ifndef DATUM__THERMODYNAMICS_H_
+#define DATUM__THERMODYNAMICS_H_
 #include "ScalarField.hpp"
 #include "Chemistry.hpp"
 #include "Viscosity.hpp"
 
-namespace CAP
+namespace Datum
 {
   class Thermodynamics
   :
@@ -70,7 +70,7 @@ namespace CAP
   };
 
 
-} //namespace CAP
+} //namespace Datum
 
 
 #endif

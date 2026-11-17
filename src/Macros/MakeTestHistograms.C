@@ -6,29 +6,29 @@
  *
  * *********************************************************************/
 //! @file MakeTestHistograms.C
-//! @brief ROOT macro creating test histograms in a HistogramFolder and saving them in a CAP file.
+//! @brief ROOT macro creating test histograms in a HistogramFolder and saving them in a Datum file.
 //!
-//! Create test histograms in a HistogramFolder, fill them, and save the folder in a CAP file, to try the graphical
-//! interface (bin/CapGui) on known contents.
+//! Create test histograms in a HistogramFolder, fill them, and save the folder in a Datum file, to try the graphical
+//! interface (bin/DatumGui) on known contents.
 //!
 //! The histograms are created in step 1 and filled in step 2: replace the example of step 2 by your own filling code
 //! (it uses TRandom3 random numbers). Step 3 saves the folder in the file.
 //!
-//! Usage (after sourcing SetupCAP.sh):
+//! Usage (after sourcing SetupDatum.sh):
 //!   root -l -b -q 'MakeTestHistograms.C("myTest.cap")'           // 100000 entries per histogram
 //!   root -l -b -q 'MakeTestHistograms.C("myTest", 1000000)'      // ".cap" is added if missing
-//!   CapGui myTest.cap                                             // look at it
+//!   DatumGui myTest.cap                                             // look at it
 //!
 #include <cmath>
 #include <iostream>
 #include "TRandom3.h"
 #include "TString.h"
 
-//! @brief Create, fill and save the test histograms. @param fileName CAP file (".cap" is added if missing)
+//! @brief Create, fill and save the test histograms. @param fileName Datum file (".cap" is added if missing)
 //! @param nEntries entries per histogram @return 0 if the file was written
 int MakeTestHistograms(const char * fileName="TestHistograms.cap", long nEntries=100000)
 {
-  using namespace CAP;
+  using namespace Datum;
   using MATH::Histogram;
   using MATH::Profile;
 
@@ -64,11 +64,11 @@ int MakeTestHistograms(const char * fileName="TestHistograms.cap", long nEntries
     dphi->fill(random.Uniform() < 0.3 ? random.Gaus(0.0, 0.4) : random.Uniform(-M_PI/2, 3*M_PI/2));
     }
 
-  // ---------------------------------------------------------------- 3. save the folders in the CAP file
+  // ---------------------------------------------------------------- 3. save the folders in the Datum file
   try
     {
-    String path = CapFile::makeFileName("", fileName);    // ".cap" appended if missing
-    CapFile file(path, File::kWriteOnly);
+    String path = DatumFile::makeFileName("", fileName);    // ".cap" appended if missing
+    DatumFile file(path, File::kWriteOnly);
     file.setFolderName(histograms.name());
     histograms.saveTo(file);                               // copies of the histograms, at the top of the file
     Folder * subFolder = file.addFolder(pairs.name());

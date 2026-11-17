@@ -7,16 +7,16 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Object
-#define CAP__Object
+#ifndef DATUM__Object
+#define DATUM__Object
 #include "String.hpp"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
-//! @brief Base class of most CAP classes: a named object with message reporting.
+//! @brief Base class of most Datum classes: a named object with message reporting.
 //!
 //! The object class defines the notion of object from which many constructs inherit.
 //! An object has a name and a title, a class name (used in messages and, for tasks, to create objects by name) and a
@@ -293,8 +293,8 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 
-#endif // !CAP__Object
+#endif // !DATUM__Object
 

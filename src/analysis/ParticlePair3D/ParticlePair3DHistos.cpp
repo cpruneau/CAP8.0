@@ -19,7 +19,7 @@
 #include "Configuration.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   ParticlePair3DHistos::ParticlePair3DHistos()
@@ -236,7 +236,7 @@ namespace CAP
   configuration.addProperty(createKey(taskName,type,"rapidity_max"),  10.0);
   configuration.addProperty(createKey(taskName,type,"phi_nbins"),     36);
   configuration.addProperty(createKey(taskName,type,"phi_min"),       0.0);
-  configuration.addProperty(createKey(taskName,type,"phi_max"),       CAP::MATH::twoPi());
+  configuration.addProperty(createKey(taskName,type,"phi_max"),       Datum::MATH::twoPi());
   configuration.addProperty(createKey(taskName,type,"phiEta_nbins"),  720);
   configuration.addProperty(createKey(taskName,type,"phiEtaPt_nbins"), 7200);
   configuration.addProperty(createKey(taskName,type,"phiY_nbins"),    720);
@@ -711,7 +711,7 @@ namespace CAP
 
     for (int iParticle1=0; iParticle1<nPart1; iParticle1++)
       {
-      phi1 = CAP::MATH::twoPi() * CAP::MATH::randomGenerator().random();
+      phi1 = Datum::MATH::twoPi() * Datum::MATH::randomGenerator().random();
       part1_ptY->random(y1,pt1);
       h_n1_1_pt_mc->fill(pt1);
       h_n1_1_y_mc->fill(y1);
@@ -724,7 +724,7 @@ namespace CAP
       {
       for (int iParticle2=0; iParticle2<nPart2; iParticle2++)
         {
-        phi2 = CAP::MATH::twoPi() * CAP::MATH::randomGenerator().random();
+        phi2 = Datum::MATH::twoPi() * Datum::MATH::randomGenerator().random();
         part2_ptY->random(y2,pt2);
         h_n1_2_pt_mc->fill(pt2);
         h_n1_2_y_mc->fill(y2);
@@ -916,7 +916,7 @@ namespace CAP
     }
 }
 
-}  //  namespace CAP
+}  //  namespace Datum
 
 
 

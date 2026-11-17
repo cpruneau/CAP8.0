@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file Derivative.hpp
 //! @brief Derivative: the derivative of a function, as a function.
-#ifndef CAP__MATH__Derivative
-#define CAP__MATH__Derivative
+#ifndef DATUM__MATH__Derivative
+#define DATUM__MATH__Derivative
 #include <memory>
 #include <vector>
 #include "Function.hpp"
 #include "Differentiation.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -36,11 +36,11 @@ namespace CAP
   //! a std::shared_ptr share the ownership of f instead.
   //!
   //! @code
-  //!   CAP::MATH::Normal g(1.0, 0.0, 1.0);
-  //!   CAP::MATH::Derivative dg(g);                                            // g', analytical
+  //!   Datum::MATH::Normal g(1.0, 0.0, 1.0);
+  //!   Datum::MATH::Derivative dg(g);                                            // g', analytical
   //!   double s = dg(1.0);                                                     // -exp(-1/2)/sqrt(2 pi)
-  //!   CAP::MATH::Derivative d2(g, 2, 0, CAP::MATH::Differentiation(CAP::MATH::Differentiation::Cubic));   // g''
-  //!   CAP::MATH::Derivative dxy(field, {0, 1});                               // d2f/dx dy
+  //!   Datum::MATH::Derivative d2(g, 2, 0, Datum::MATH::Differentiation(Datum::MATH::Differentiation::Cubic));   // g''
+  //!   Datum::MATH::Derivative dxy(field, {0, 1});                               // d2f/dx dy
   //! @endcode
   //!
   class Derivative : public Function
@@ -112,6 +112,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__Derivative
+#endif // DATUM__MATH__Derivative

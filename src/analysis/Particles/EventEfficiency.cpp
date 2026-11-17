@@ -15,7 +15,7 @@
 #include "Task.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 EventEfficiency::EventEfficiency()
@@ -138,4 +138,4 @@ void EventEfficiency::loadFrom(const Folder & inputFile)
   h_efficiency_mult  = importHistogram(inputFile,createName(baseName(),"MULT"));
 }
 
-} // namespace CAP
+} // namespace Datum

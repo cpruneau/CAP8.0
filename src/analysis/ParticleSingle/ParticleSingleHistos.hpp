@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleSingleHistos
-#define CAP__ParticleSingleHistos
+#ifndef DATUM__ParticleSingleHistos
+#define DATUM__ParticleSingleHistos
 #include "HistogramFolder.hpp"
 #include "DerivedCalculator.hpp"
 #include "Particle.hpp"
 #include "MathConstants.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -171,13 +171,13 @@ public:
 
 //!
 //! @brief Derived histograms of the single-particle analysis (second phase): DerivedCalculator with the folders ParticleSingleHistos,
-//! registered as the task class CAP::ParticleSingleDerivedCalculator.
+//! registered as the task class Datum::ParticleSingleDerivedCalculator.
 //!
 using ParticleSingleDerivedCalculator = DerivedCalculator<ParticleSingleHistos,1>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticleSingleHistos  */
+#endif /* DATUM__ParticleSingleHistos  */
 
 
 

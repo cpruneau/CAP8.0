@@ -2,7 +2,7 @@
 #include <vector>
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -1444,4 +1444,4 @@ namespace CAP
 
 
   } // Math
-} // namespace CAP
+} // namespace Datum

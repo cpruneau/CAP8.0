@@ -1,6 +1,6 @@
 #include "LatexAuthor.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexAuthor::LatexAuthor()
   :

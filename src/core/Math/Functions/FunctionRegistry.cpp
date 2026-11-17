@@ -42,7 +42,7 @@
 #include "FileSystem.hpp"
 #include "XmlDocument.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -52,7 +52,7 @@ namespace CAP
 
   std::string key(const String & name) { return std::string(name.data(), std::size_t(name.length())); }
 
-  //! The registrations, with the functions of CAP registered at first use.
+  //! The registrations, with the functions of Datum registered at first use.
   struct Registry
   {
     std::mutex mutex;
@@ -258,7 +258,7 @@ namespace CAP
   {
   std::ofstream out(fileName.data());
   if (!out) return false;
-  out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<CAP type=\"function-catalog\" version=\"1\">\n";
+  out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Datum type=\"function-catalog\" version=\"1\">\n";
   std::vector<String> all = names();
   for (const String & name : compositeNames())
     if (std::find(all.begin(),all.end(),name)==all.end()) all.push_back(name);
@@ -282,7 +282,7 @@ namespace CAP
     if (!defaultWritten) writeVariant(out,*standard,true);
     out << "  </FUNCTION>\n";
     }
-  out << "</CAP>\n";
+  out << "</Datum>\n";
   return bool(out);
   }
 
@@ -465,8 +465,8 @@ namespace CAP
 
   String FunctionRegistry::defaultCompositesFile()
   {
-  return FileSystem::join(FileSystem::home(), ".CapFunctions.xml");
+  return FileSystem::join(FileSystem::home(), ".DatumFunctions.xml");
   }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

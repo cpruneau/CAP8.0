@@ -5,7 +5,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   ThermalModel::ThermalModel()
@@ -130,9 +130,9 @@ namespace CAP
   exportPathA    = _configuration.valueString(createKey(taskName,typeName,"EXPORT:PATH"));
   forceRewrite   = _configuration.valueBool(  createKey(taskName,typeName,"EXPORT:FORCE_REWRITE"));
 
-  // "DEFAULT", absolute, "./..." or relative to $CAP_HISTOS_IMPORT_PATH / $CAP_HISTOS_EXPORT_PATH
-  importPath = FileSystem::configuredPath(importPathA,"CAP_HISTOS_IMPORT_PATH");
-  exportPath = FileSystem::configuredPath(exportPathA,"CAP_HISTOS_EXPORT_PATH");
+  // "DEFAULT", absolute, "./..." or relative to $DATUM_HISTOS_IMPORT_PATH / $DATUM_HISTOS_EXPORT_PATH
+  importPath = FileSystem::configuredPath(importPathA,"DATUM_HISTOS_IMPORT_PATH");
+  exportPath = FileSystem::configuredPath(exportPathA,"DATUM_HISTOS_EXPORT_PATH");
 
   String _typeName = "ThermalHadronGas";
 
@@ -159,12 +159,12 @@ namespace CAP
     {
     int temperature = 1000* _thermalHadronGas.temperature();
     exportFileName = exportBaseName + temperature;
-    std::unique_ptr<CapFile> outputFile(forceRewrite ? CapFile::openRecreateCapFile(exportPath,exportFileName,true)
-                                                     : CapFile::openNewCapFile(exportPath,exportFileName,true));
+    std::unique_ptr<DatumFile> outputFile(forceRewrite ? DatumFile::openRecreateDatumFile(exportPath,exportFileName,true)
+                                                     : DatumFile::openNewDatumFile(exportPath,exportFileName,true));
     _histograms.saveTo(*outputFile);
     outputFile->write();
     }
   //if (_thermalHadronGas) delete _thermalHadronGas;
   }
 
-} // namespace CAP;
+} // namespace Datum;

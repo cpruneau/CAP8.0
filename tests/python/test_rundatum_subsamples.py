@@ -4,11 +4,11 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of the sub-samples of RunDatum.py (RunCAPSubSamples.py): settings saved in the workflow file, seeds of the
+"""Tests of the sub-samples of RunDatum.py (RunDatumSubSamples.py): settings saved in the workflow file, seeds of the
 sub-samples, stages run and combined in each mode, the files of a production (workflow files, combination, sbatch
 script), the parallel runner and, when bin/Datum is built, a production run and combined for real.
 
-Run from the CAP directory:  python3 -m pytest tests/python
+Run from the Datum directory:  python3 -m pytest tests/python
 """
 
 import io
@@ -20,17 +20,17 @@ import unittest
 import xml.etree.ElementTree as ET
 from contextlib import redirect_stdout
 
-CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, CAP_DIR)
+DATUM_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, DATUM_DIR)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import RunDatum                                   # noqa: E402
-import RunCAPFilters as F                       # noqa: E402
-import RunCAPSubSamples as S                    # noqa: E402
-from test_runcap_stages import TEMPLATES, events_stage, library      # noqa: E402
+import RunDatumFilters as F                       # noqa: E402
+import RunDatumSubSamples as S                    # noqa: E402
+from test_rundatum_stages import TEMPLATES, events_stage, library      # noqa: E402
 
-#: bin/Datum used by the real run (CAP_TEST_EXE, or that of this CAP directory).
-CAP_TEST_EXE = os.environ.get("CAP_TEST_EXE") or RunDatum.CAP_EXE
+#: bin/Datum used by the real run (DATUM_TEST_EXE, or that of this Datum directory).
+DATUM_TEST_EXE = os.environ.get("DATUM_TEST_EXE") or RunDatum.DATUM_EXE
 
 
 def workflow(n_events=100):
@@ -46,7 +46,7 @@ def workflow(n_events=100):
 
 
 def parameters(path):
-    """{key: value} of the parameters of the first TASK element of a CAP file."""
+    """{key: value} of the parameters of the first TASK element of a Datum file."""
     def visit(element, prefix, out):
         for child in element:
             if child.tag == "GROUP":
@@ -168,7 +168,7 @@ class TestProduction(unittest.TestCase):
             self.assertEqual(c["JACKKNIFE:STAGES"], "DerivedHistos")
             self.assertEqual(c["JACKKNIFE:WORKFLOW"], p.base)
             self.assertEqual(c["HISTOGRAM:IMPORT:FILE_NAME"], "fill.cap")
-            self.assertEqual(c["HISTOGRAM:EXPORT:FILE_NAME"], "fillDerived_Jackknife.cap")
+            self.assertEqual(c["HISTOGRAM:EXPORT:FILE_NAME"], "fillDerived_Jackknife.datum")
             self.assertEqual(c["SUBSAMPLE:PATTERN"], "sub_*")
             self.assertEqual(c["JOB:OUTPUT_FILE"], "NONE")
             self.assertEqual(sorted(t.get("stage") for t in ET.parse(p.base).getroot().findall("TASK")),
@@ -188,21 +188,21 @@ class TestProduction(unittest.TestCase):
             c = parameters(p.combine)
             self.assertEqual((c["MODE"], c["JACKKNIFE:STAGES"], c["HISTOGRAM:IMPORT:FILE_NAME"],
                               c["HISTOGRAM:EXPORT:FILE_NAME"]),
-                             ("SUBSAMPLE", "NONE", "fillDerived.cap", "fillDerived_SubSample.cap"))
+                             ("SUBSAMPLE", "NONE", "fillDerived.cap", "fillDerived_SubSample.datum"))
 
     def test_pthat_bins(self):
         """pT-hat bins: one job per sub-sample and bin (<prefix>sss_pthat<kk>), each with the edges of its bin in the
         PYTHIA generator, a seed of its own, the raw histograms (JOB:NORMALIZE false) and event processing only; the
         combination is told the number of bins and the normalization; the checks of the generator and of the stages."""
-        if "CAP::PythiaEventGenerator" not in TEMPLATES:
+        if "Datum::PythiaEventGenerator" not in TEMPLATES:
             self.skipTest("Pythia not built (no template)")
         stages, lib, jobs = workflow()
         def generators(tasks):
             for t in tasks:
-                yield from ([t] if t.cls == "CAP::BasicEventGen" else [])
+                yield from ([t] if t.cls == "Datum::BasicEventGen" else [])
                 yield from generators(t.children)
         gen = next(generators(stages[RunDatum.EVENTS]))
-        pythia = TEMPLATES["CAP::PythiaEventGenerator"].clone()
+        pythia = TEMPLATES["Datum::PythiaEventGenerator"].clone()
         pythia.name = "Pythia"
         pythia.filters = dict(getattr(gen, "filters", {}) or {})
         parent = next(t for t in S._tasks_of(stages[RunDatum.EVENTS]) if gen in t.children)
@@ -270,8 +270,8 @@ class TestProduction(unittest.TestCase):
                 text = f.read()
             for line in ("#SBATCH --array=0-19", "#SBATCH --partition=primary", "#SBATCH --time=04:00:00",
                          "#SBATCH --mem=4G", "#SBATCH --output=/wsu/prod/run1/logs/sub_%03a.log",
-                         "module load root", "module load pythia", "export CAP_ROOT_PATH=/wsu/CAP8.0",
-                         "DATUM=$CAP_ROOT_PATH/bin/Datum", '[ -x "$DATUM" ] || DATUM=$CAP_ROOT_PATH/bin/CAP',
+                         "module load root", "module load pythia", "export DATUM_ROOT_PATH=/wsu/CAP8.0",
+                         "DATUM=$DATUM_ROOT_PATH/bin/Datum", '[ -x "$DATUM" ] || DATUM=$DATUM_ROOT_PATH/bin/CAP',
                          "$DATUM Workflow $WORK/ sub_$K.xml $OUT/", "$DATUM DerivedHistos $WORK/ sub_$K.xml $OUT/"):
                 self.assertIn(line, text)
             self.assertNotIn("#SBATCH --account", text)
@@ -373,7 +373,7 @@ class TestUnusedGroups(unittest.TestCase):
     def test_dropped_on_load(self):
         """Keys of corrections in a calculator (written by older versions): dropped with one warning per task."""
         element = ET.fromstring(
-            '<TASK name="SingleDerived" class="CAP::ParticleSingleDerivedCalculator">'
+            '<TASK name="SingleDerived" class="Datum::ParticleSingleDerivedCalculator">'
             '<GROUP name="PARTICLE_SMEARER"><PARAMETER name="USE" type="bool">false</PARAMETER>'
             '<GROUP name="IMPORT"><PARAMETER name="PATH" type="string">DEFAULT</PARAMETER></GROUP></GROUP>'
             '<GROUP name="EVENT_EFFICIENCY"><PARAMETER name="CREATE" type="bool">false</PARAMETER></GROUP>'
@@ -430,7 +430,7 @@ class TestRunner(unittest.TestCase):
             self.assertTrue(ok)
 
 
-@unittest.skipUnless(os.path.exists(CAP_TEST_EXE), "bin/Datum is not built")
+@unittest.skipUnless(os.path.exists(DATUM_TEST_EXE), "bin/Datum is not built")
 class TestRealRun(unittest.TestCase):
 
     def test_run_and_combine(self):
@@ -438,14 +438,14 @@ class TestRealRun(unittest.TestCase):
         stages, lib, jobs = workflow(100)
         s = S.SubSampleSettings()
         s.count, s.parallel, s.mode = 3, 3, S.JACKKNIFE_STAGES
-        saved = RunDatum.CAP_EXE
-        RunDatum.CAP_EXE = CAP_TEST_EXE
+        saved = RunDatum.DATUM_EXE
+        RunDatum.DATUM_EXE = DATUM_TEST_EXE
         try:
             with tempfile.TemporaryDirectory() as d:
                 p = S.write_production(d, s, RunDatum, stages, lib, TEMPLATES, jobs)
                 sequences = [(S.directory_name(s, k), S.subsample_commands(p, s, RunDatum, k)) for k in range(s.count)]
                 env = RunDatum.job_environment()
-                env.setdefault("CAP_DATABASE_PATH", os.path.join(CAP_DIR, "DB") + "/")
+                env.setdefault("DATUM_DATABASE_PATH", os.path.join(DATUM_DIR, "DB") + "/")
                 q = queue.Queue()
                 ok, message = S.ParallelRunner(sequences, s.parallel, env, q.put, [S.combine_command(p, RunDatum)]).run()
                 self.assertTrue(ok, message)
@@ -455,10 +455,10 @@ class TestRealRun(unittest.TestCase):
                     with open(f, "rb") as h:
                         contents.add(h.read())
                 self.assertEqual(len(contents), 3)                     # different seeds: different events
-                self.assertTrue(os.path.getsize(os.path.join(d, "fillDerived_Jackknife.cap")) > 0)
-                self.assertTrue(os.path.getsize(os.path.join(d, "fillDerived_Jackknife_biasCorrected.cap")) > 0)
+                self.assertTrue(os.path.getsize(os.path.join(d, "fillDerived_Jackknife.datum")) > 0)
+                self.assertTrue(os.path.getsize(os.path.join(d, "fillDerived_Jackknife_biasCorrected.datum")) > 0)
         finally:
-            RunDatum.CAP_EXE = saved
+            RunDatum.DATUM_EXE = saved
 
 
 if __name__ == "__main__":

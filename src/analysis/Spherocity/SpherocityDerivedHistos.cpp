@@ -18,7 +18,7 @@
 #include "Configuration.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 SpherocityDerivedHistos::SpherocityDerivedHistos()
@@ -81,4 +81,4 @@ void SpherocityDerivedHistos::calculateDerivedHistograms(SpherocityHistos & base
 }
 
 
-} // namespace CAP
+} // namespace Datum

@@ -11,10 +11,10 @@
  * *********************************************************************/
 #include "GlauberPlotter.hpp"
 
-using CAP::MATH::pi;
+using Datum::MATH::pi;
 
 
-namespace CAP
+namespace Datum
 {
   void draw(const GlauberEvent & event)
   {
@@ -73,4 +73,4 @@ namespace CAP
 
 
 
-} // namespace CAP
+} // namespace Datum

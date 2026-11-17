@@ -16,8 +16,8 @@
 #include <string>
 #include "Reflection.hpp"
 
-using namespace CAP;
-using namespace CAP::REFLECTION;
+using namespace Datum;
+using namespace Datum::REFLECTION;
 
 namespace
 {
@@ -84,7 +84,7 @@ private:
 double perimeter(const Circle & c) { return 2*M_PI*c.radius(); }
 } // namespace
 
-CAP_REFLECTION(TestClasses)
+DATUM_REFLECTION(TestClasses)
 {
   ClassBuilder<Named>("Test::Named")
     .constructor<>()

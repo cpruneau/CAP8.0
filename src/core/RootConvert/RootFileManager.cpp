@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "Manager.hpp"
 
-namespace CAP
+namespace Datum
 {
 RootFileManager::RootFileManager()
 :
@@ -45,4 +45,4 @@ RootFileManager & RootFileManager::operator=(const RootFileManager & manager)
 //}
 
 
-} // namespace CAP
+} // namespace Datum

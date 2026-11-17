@@ -1,6 +1,6 @@
 #include "LatexFigureGroup.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexFigureGroup::LatexFigureGroup()
   :
@@ -29,5 +29,5 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum
 

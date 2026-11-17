@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ParticlePairFilter::ParticlePairFilter()
@@ -31,4 +31,4 @@ bool ParticlePairFilter::accept(const Particle & particle1, const Particle & par
   if (particle2.isDecayed() )          return false;
   return true;
 }
-} // namespace CAP
+} // namespace Datum

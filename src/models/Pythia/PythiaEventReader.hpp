@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__PythiaEventReader
-#define CAP__PythiaEventReader
+#ifndef DATUM__PythiaEventReader
+#define DATUM__PythiaEventReader
 #include <map>
 #include "EventProcessor.hpp"
 #include "RootChainManager.hpp"
@@ -22,13 +22,13 @@
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmear.hpp"
 
-namespace CAP
+namespace Datum
 {
 //!
 //! @brief Task reading PYTHIA 8 events from ROOT trees (TClonesArray of TParticle) and copying their particles into
-//! the current CAP event.
+//! the current Datum event.
 //!
-//! The input is set by \<name\>:DataImportPath (default $CAP_DATA_IMPORT_PATH), \<name\>:DataImportFile (file name,
+//! The input is set by \<name\>:DataImportPath (default $DATUM_DATA_IMPORT_PATH), \<name\>:DataImportFile (file name,
 //! wildcards allowed) and \<name\>:TreeName; initialize() maps the branches of the tree onto the members of the reader.
 //! Which particles are kept is set by SaveFinalOnly, SavePhotons, SaveNeutrinos, SaveQuarks, SaveGaugeBosons.
 //!
@@ -180,4 +180,4 @@ protected:
 
 }
 
-#endif /* CAP__PythiaEventReader */
+#endif /* DATUM__PythiaEventReader */

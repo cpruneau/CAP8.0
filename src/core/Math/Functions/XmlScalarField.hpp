@@ -7,12 +7,12 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__XmlScalarField
-#define CAP__XmlScalarField
+#ifndef DATUM__XmlScalarField
+#define DATUM__XmlScalarField
 #include "XmlElement.hpp"
 #include "ScalarField.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -52,6 +52,6 @@ public:
   static MATH::ScalarField read(const XmlElement & element, const String & name);
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

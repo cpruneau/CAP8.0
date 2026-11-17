@@ -10,11 +10,11 @@
 //! @file FlowCumulants.hpp
 //! @brief FlowCumulants: multi-particle cumulants c_n{2k} and differential cumulants d_n{2k} of any order from
 //! event-averaged correlators, and the flow coefficients v_n{2k}, v'_n{2k}.
-#ifndef CAP__FlowCumulants
-#define CAP__FlowCumulants
+#ifndef DATUM__FlowCumulants
+#define DATUM__FlowCumulants
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -76,6 +76,6 @@ namespace CAP
   //! @}
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__FlowCumulants */
+#endif /* DATUM__FlowCumulants */

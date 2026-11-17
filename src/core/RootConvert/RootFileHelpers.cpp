@@ -9,7 +9,7 @@
 #include "TParameter.h"
 #include "TSystemDirectory.h"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -295,4 +295,4 @@ String substitute(const String & inputString,
 
 
 
-} // namespace CAP
+} // namespace Datum

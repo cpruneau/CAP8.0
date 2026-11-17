@@ -13,7 +13,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   
   ParticleDigit::ParticleDigit()

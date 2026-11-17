@@ -1,8 +1,8 @@
-#ifndef CAP__LatexFigure
-#define CAP__LatexFigure
+#ifndef DATUM__LatexFigure
+#define DATUM__LatexFigure
 #include "LatexElement.hpp"
 
-namespace CAP
+namespace Datum
 {
   class LatexFigure : public LatexElement
   {
@@ -46,6 +46,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexFigure
+#endif // !DATUM__LatexFigure

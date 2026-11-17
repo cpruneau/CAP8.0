@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file Shape.hpp
 //! @brief Shape: rectangle, ellipse, triangle, polygon, line (with arrows) or text box drawn over a graph.
-#ifndef CAP__Shape
-#define CAP__Shape
+#ifndef DATUM__Shape
+#define DATUM__Shape
 #include <vector>
 #include "Geom2D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -112,6 +112,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Shape
+#endif // !DATUM__Shape

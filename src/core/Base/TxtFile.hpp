@@ -7,12 +7,12 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__TxtFile
-#define CAP__TxtFile
+#ifndef DATUM__TxtFile
+#define DATUM__TxtFile
 #include <vector>
 #include "File.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -25,14 +25,14 @@ namespace CAP
 //!
 //! Example:
 //! @code
-//!   CAP::TxtFile out("summary.txt", CAP::File::kWriteOnly);
+//!   Datum::TxtFile out("summary.txt", Datum::File::kWriteOnly);
 //!   out.addLine("run 42");
 //!   out.addLine("events 1000");
 //!   out.write();
 //!
-//!   CAP::TxtFile in("summary.txt", CAP::File::kReadOnly);
+//!   Datum::TxtFile in("summary.txt", Datum::File::kReadOnly);
 //!   in.read();
-//!   CAP::String first = in.line(0);    // "run 42"
+//!   Datum::String first = in.line(0);    // "run 42"
 //! @endcode
 //!
 class TxtFile : public File
@@ -99,6 +99,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file PptxPainter.hpp
 //! @brief PptxPainter: a Painter writing PowerPoint presentations (.pptx), one slide per canvas, as native shapes.
-#ifndef CAP__PptxPainter
-#define CAP__PptxPainter
+#ifndef DATUM__PptxPainter
+#define DATUM__PptxPainter
 #include <sstream>
 #include <string>
 #include <vector>
 #include "Painter.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -119,6 +119,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__PptxPainter
+#endif // !DATUM__PptxPainter

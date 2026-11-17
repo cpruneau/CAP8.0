@@ -5,12 +5,12 @@
  * For the licensing terms see LICENSE.
  *
  * *********************************************************************/
-#ifndef CAP__ParticleDbXml
-#define CAP__ParticleDbXml
+#ifndef DATUM__ParticleDbXml
+#define DATUM__ParticleDbXml
 #include "ParticleDb.hpp"
 #include "XmlDocument.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -18,7 +18,7 @@ namespace CAP
 //! one file, the decay modes of a particle nested in its PARTICLE element.
 //!
 //! @code
-//!   <CAP version="1" type="particleDb">
+//!   <Datum version="1" type="particleDb">
 //!     <PARTICLE_DB>
 //!       <PARTICLE name="Lambda1115zero" title="#Lambda" pdg="3122" charge="0" mass="1.115683" massUncertainty="0"
 //!                 width="0" widthUncertainty="0" spin="0.5" isospin="0" isospin3="0" quarks="111" antiquarks="0" leptons="0"/>
@@ -27,7 +27,7 @@ namespace CAP
 //!         <DECAY branchingRatio="0.06" clebschGordan="false" products="Sigma1189plus pion0135zero"/>
 //!       </PARTICLE>
 //!     </PARTICLE_DB>
-//!   </CAP>
+//!   </Datum>
 //! @endcode
 //! - massUncertainty, width and widthUncertainty default to 0, clebschGordan to false; the other attributes are required.
 //! - branchingRatio is the declared ratio: with clebschGordan="true" the ratio used to generate decays is completed by
@@ -85,6 +85,6 @@ private:
   static XmlDocument createDocument(const ParticleDb & particleDb);
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticleDbXml */
+#endif /* DATUM__ParticleDbXml */

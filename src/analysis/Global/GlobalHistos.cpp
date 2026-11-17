@@ -16,7 +16,7 @@
 #include "Exceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   
   GlobalHistos::GlobalHistos()
@@ -338,4 +338,4 @@ namespace CAP
     }
   }
   
-} // namespace CAP
+} // namespace Datum

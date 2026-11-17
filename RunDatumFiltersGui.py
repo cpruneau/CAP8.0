@@ -5,7 +5,7 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPFiltersGui -- the Filters pane of the main window of RunDatum.py: the library of filters, efficiencies and smearers of a workflow.
+RunDatumFiltersGui -- the Filters pane of the main window of RunDatum.py: the library of filters, efficiencies and smearers of a workflow.
 
 On the left, the tree of the library: one node per kind (event filters, particle filters, event efficiencies, particle
 efficiencies, event smearers, particle smearers, events, particle databases) holding its objects, with where each is
@@ -14,15 +14,15 @@ workflow links. On the right, the editor of what is selected: an object (its nam
 parameters), a kind (the settings of its list in FilterCreator, and its objects), a linked file, or the maps file.
 A condition tests one quantity: a range [minimum, maximum), two ranges, a value (PDG code, charge, ...) or a flag (live,
 enabled), only the tests the C++ code accepts for that quantity being offered. The problems of the library
-(RunCAPFilters.check_library()) are listed at the bottom.
+(RunDatumFilters.check_library()) are listed at the bottom.
 
-Selection files (RunCAPFilters: XML, root CapSelections) hold objects that several workflows share. Import copies
+Selection files (RunDatumFilters: XML, root DatumSelections) hold objects that several workflows share. Import copies
 their objects into the workflow; Link uses them from the file (the workflow writes <Include file=.../>), changes being
 written back to the file when the workflow is saved; Export writes the selected object, the objects of a kind, or all
 of them to a file. The particle efficiencies and smearers are not defined here: they are made in DatumGui (Detector
 Maps) and saved in a maps file, which the pane names and lists (MapsEditor).
 
-The tasks choose objects by name (RunCAPFilters): renaming an object renames it in the choices of the tasks, and
+The tasks choose objects by name (RunDatumFilters): renaming an object renames it in the choices of the tasks, and
 removing objects removes them from the choices (after a confirmation when tasks use them), through the callbacks given
 to FiltersPanel.
 """
@@ -33,7 +33,7 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-import RunCAPFilters as F
+import RunDatumFilters as F
 
 MAX_OBJECTS = {"EVENT_FILTER": 20, "PARTICLE_FILTER": 20}
 MAX_OTHERS = 10
@@ -104,7 +104,7 @@ class ScrollFrame(ttk.Frame):
 class FiltersPanel(ttk.Frame):
     """The Filters pane: on the left, the tree of the library (kinds, their objects, the linked selection files); on
     the right, the editor of what is selected there.
-    @param library RunCAPFilters.FilterLibrary edited in place
+    @param library RunDatumFilters.FilterLibrary edited in place
     @param on_change called after any change of the library
     @param on_rename called with (kind, old name, new name) when an object is renamed
     @param on_remove called with (kind, names) when objects are removed
@@ -489,7 +489,7 @@ class FiltersPanel(ttk.Frame):
         return filedialog.askopenfilename(**options)
 
     def import_file(self, path=None):
-        """Copy the objects of a selection file (or of the RUNCAP element of a workflow) into the workflow; objects of
+        """Copy the objects of a selection file (or of the RUNDATUM element of a workflow) into the workflow; objects of
         the same kind and name are replaced, or kept, as asked."""
         path = path or self._ask_selection_file("Import a selection file")
         if not path:
@@ -948,7 +948,7 @@ class MapsEditor:
         root = os.path.dirname(os.path.abspath(__file__))
         options = dict(parent=self.panel, title="Maps file (efficiencies and smearers)",
                        initialdir=os.path.dirname(current) if current else root,
-                       filetypes=[("CAP files", "*.cap *.root"), ("All files", "*")])
+                       filetypes=[("Datum files", "*.datum *.cap *.root"), ("All files", "*")])
         if sys.platform == "darwin":
             options.pop("filetypes")
         name = filedialog.askopenfilename(**options)
@@ -959,8 +959,8 @@ class MapsEditor:
         """Open the maps file (or a new one) in the Detector Maps window of DatumGui (bin/DatumGui --maps)."""
         root = os.path.dirname(os.path.abspath(__file__))
         program = os.path.join(root, "bin", "DatumGui")
-        if not os.path.exists(program) and os.path.exists(os.path.join(root, "bin", "DatumGui")):
-            program = os.path.join(root, "bin", "DatumGui")              # built before it was named DatumGui
+        if not os.path.exists(program) and os.path.exists(os.path.join(root, "bin", "CapGui")):
+            program = os.path.join(root, "bin", "CapGui")              # built before it was named DatumGui
         if not os.path.isfile(program):
             messagebox.showerror("DatumGui", "bin/DatumGui not found: build Datum with the GUI first (BuildDatum).",
                                  parent=self.panel)

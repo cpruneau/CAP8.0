@@ -10,7 +10,7 @@
 //! @file TestLatexRenderer.cpp
 //! @brief Test program of LatexRenderer and of the LaTeX texts of SvgPainter (run by ctest).
 //
-// TestLatexRenderer -- tests of CAP::GRAPHICS::LatexRenderer.
+// TestLatexRenderer -- tests of Datum::GRAPHICS::LatexRenderer.
 //
 // The pieces that do not need LaTeX (kinds of texts, checks, documents, keys, reading SVG) are always tested; the
 // typesetting, the caches and SvgPainter only if latex and dvisvgm are installed (otherwise these checks are skipped,
@@ -29,8 +29,8 @@
 #include "LatexRenderer.hpp"
 #include "SvgPainter.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {
@@ -171,7 +171,7 @@ int main()
     return nFailures;
     }
 
-  char buffer[] = "/tmp/CapTestLatex.XXXXXX";
+  char buffer[] = "/tmp/DatumTestLatex.XXXXXX";
   String cache(mkdtemp(buffer));
   latex.setCacheDirectory(cache);
   latex.clearMemoryCache();
@@ -239,7 +239,7 @@ int main()
     CHECK(broken && !broken->ok && contains(broken->error, "preamble"));
   }
 
-  // ---- labels of CAP in ROOT syntax: all typeset, in one run
+  // ---- labels of Datum in ROOT syntax: all typeset, in one run
   {
     std::vector<String> labels = {"p_{T}", "#Delta#varphi", "#varphi_{1}", "#Delta#eta", "#Delta y", "#alpha", "#eta_{2}",
       "p_{T,2}", "#Delta#phi", "p_{T} (GeV/c)", "Q_{inv}", "#theta_{1}", "M (GeV/c^{2})", "#rho_{1}(pT)", "p_{T}(GeV)",

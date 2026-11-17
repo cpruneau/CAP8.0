@@ -14,7 +14,7 @@
 #include <fstream>
 #include <sstream>
 
-namespace CAP
+namespace Datum
 {
 
   XmlDocument::XmlDocument(const String & rootName)
@@ -81,4 +81,4 @@ namespace CAP
   return FileSystem::join(path,name,".xml");
   }
 
-} // namespace CAP
+} // namespace Datum

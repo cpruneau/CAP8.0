@@ -10,7 +10,7 @@
 //! @file TestFileSystem.cpp
 //! @brief Test program of the FileSystem functions (run by ctest).
 //
-// TestFileSystem -- tests of the CAP::FileSystem functions and of File::exists() / File::fileSize().
+// TestFileSystem -- tests of the Datum::FileSystem functions and of File::exists() / File::fileSize().
 //
 // Builds a small tree in a temporary directory, checks every function (including the errors), then removes the tree.
 // Prints each failed check and exits with the number of failures (0: all passed). Run with ctest, or directly.
@@ -27,8 +27,8 @@
 #include "FileSystem.hpp"
 #include "BinaryFile.hpp"
 
-using namespace CAP;
-namespace FS = CAP::FileSystem;
+using namespace Datum;
+namespace FS = Datum::FileSystem;
 
 namespace
 {
@@ -102,7 +102,7 @@ int main()
   //       deep/  run3.cap
   //     .config/  settings.xml
   //     link -> data
-  char buffer[] = "/tmp/CapTestFileSystem.XXXXXX";
+  char buffer[] = "/tmp/DatumTestFileSystem.XXXXXX";
   String root(mkdtemp(buffer));
   auto at = [&](const char * relative) { return FS::join(root, relative); };
   writeFile(at("a.cap"), "0123456789");
@@ -184,25 +184,25 @@ int main()
   CHECK_EQUAL(FS::normalize(FS::join(root, "data/deep/../run1.cap")), FS::normalize(at("data/run1.cap")));
   CHECK(!FS::normalize(at("data/")).endsWith("/"));
   CHECK(FS::normalize("relative").beginsWith("/"));
-  setenv("CAP_TEST_DIR", "/test/dir", 1);
-  unsetenv("CAP_TEST_UNDEFINED");
-  CHECK_EQUAL(FS::expand("$CAP_TEST_DIR/run.cap"), "/test/dir/run.cap");
-  CHECK_EQUAL(FS::expand("${CAP_TEST_DIR}x/run.cap"), "/test/dirx/run.cap");
-  CHECK_EQUAL(FS::expand("$CAP_TEST_UNDEFINED/run.cap"), "$CAP_TEST_UNDEFINED/run.cap");
+  setenv("DATUM_TEST_DIR", "/test/dir", 1);
+  unsetenv("DATUM_TEST_UNDEFINED");
+  CHECK_EQUAL(FS::expand("$DATUM_TEST_DIR/run.cap"), "/test/dir/run.cap");
+  CHECK_EQUAL(FS::expand("${DATUM_TEST_DIR}x/run.cap"), "/test/dirx/run.cap");
+  CHECK_EQUAL(FS::expand("$DATUM_TEST_UNDEFINED/run.cap"), "$DATUM_TEST_UNDEFINED/run.cap");
   CHECK_EQUAL(FS::expand("~/x"), FS::join(FS::home(), "x"));
   CHECK_EQUAL(FS::expand("a~b"), "a~b");
-  CHECK_EQUAL(FS::resolve("/abs/x", "CAP_TEST_DIR"), "/abs/x");
-  CHECK_EQUAL(FS::resolve("sub/x", "CAP_TEST_DIR"), "/test/dir/sub/x");
-  CHECK_EQUAL(FS::resolve("./x", "CAP_TEST_DIR"), FS::join(FS::current(), "x"));
-  CHECK_EQUAL(FS::resolve("$CAP_TEST_DIR/y", "CAP_TEST_UNDEFINED"), "/test/dir/y");
-  CHECK_THROWS(FS::resolve("sub/x", "CAP_TEST_UNDEFINED"));
-  CHECK_EQUAL(FS::configuredPath("DEFAULT", "CAP_TEST_DIR"), "/test/dir");
-  CHECK_EQUAL(FS::configuredPath("", "CAP_TEST_DIR"), "/test/dir");
-  CHECK_EQUAL(FS::configuredPath("sub/x", "CAP_TEST_DIR"), "/test/dir/sub/x");
-  CHECK_EQUAL(FS::configuredPath("/abs/x", "CAP_TEST_DIR"), "/abs/x");
-  CHECK_EQUAL(FS::configuredPath("./x", "CAP_TEST_DIR"), FS::join(FS::current(), "x"));
-  CHECK_EQUAL(FS::configuredPath("DEFAULT", "CAP_TEST_UNDEFINED"), "");            // never throws
-  CHECK_EQUAL(FS::configuredPath("sub/x", "CAP_TEST_UNDEFINED"), "sub/x");
+  CHECK_EQUAL(FS::resolve("/abs/x", "DATUM_TEST_DIR"), "/abs/x");
+  CHECK_EQUAL(FS::resolve("sub/x", "DATUM_TEST_DIR"), "/test/dir/sub/x");
+  CHECK_EQUAL(FS::resolve("./x", "DATUM_TEST_DIR"), FS::join(FS::current(), "x"));
+  CHECK_EQUAL(FS::resolve("$DATUM_TEST_DIR/y", "DATUM_TEST_UNDEFINED"), "/test/dir/y");
+  CHECK_THROWS(FS::resolve("sub/x", "DATUM_TEST_UNDEFINED"));
+  CHECK_EQUAL(FS::configuredPath("DEFAULT", "DATUM_TEST_DIR"), "/test/dir");
+  CHECK_EQUAL(FS::configuredPath("", "DATUM_TEST_DIR"), "/test/dir");
+  CHECK_EQUAL(FS::configuredPath("sub/x", "DATUM_TEST_DIR"), "/test/dir/sub/x");
+  CHECK_EQUAL(FS::configuredPath("/abs/x", "DATUM_TEST_DIR"), "/abs/x");
+  CHECK_EQUAL(FS::configuredPath("./x", "DATUM_TEST_DIR"), FS::join(FS::current(), "x"));
+  CHECK_EQUAL(FS::configuredPath("DEFAULT", "DATUM_TEST_UNDEFINED"), "");            // never throws
+  CHECK_EQUAL(FS::configuredPath("sub/x", "DATUM_TEST_UNDEFINED"), "sub/x");
   CHECK_EQUAL(FS::firstExisting({"", at("missing"), at("notes.txt"), at("a.cap")}), at("notes.txt"));
   CHECK_EQUAL(FS::firstExisting({at("missing")}), "");
 
@@ -260,8 +260,8 @@ int main()
   CHECK_PATHS(FS::glob(FS::join(root, ".*/*.xml")), at(".config/settings.xml"));
   CHECK_PATHS(FS::glob(at("notes.txt")), at("notes.txt"));
   CHECK_PATHS(FS::glob(at("missing")));
-  setenv("CAP_TEST_ROOT", root.data(), 1);
-  CHECK_PATHS(FS::glob("$CAP_TEST_ROOT/data/deep/*"), at("data/deep/run3.cap"));
+  setenv("DATUM_TEST_ROOT", root.data(), 1);
+  CHECK_PATHS(FS::glob("$DATUM_TEST_ROOT/data/deep/*"), at("data/deep/run3.cap"));
   {
     String here = FS::current();
     CHECK(chdir(root.data())==0);

@@ -22,8 +22,8 @@
 #include "FileSystem.hpp"
 #include "Histogram.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {
@@ -69,7 +69,7 @@ int main(int argc, char ** argv)
   registry.add(spectra, "Gaussian spectrum", "Window 1");
   registry.add(pair, "Side by side", "Window 2");
 
-  char buffer[] = "/tmp/CapTestCanvasPresentation.XXXXXX";
+  char buffer[] = "/tmp/DatumTestCanvasPresentation.XXXXXX";
   String directory = argc > 1 ? String(argv[1]) : String(mkdtemp(buffer));
   CanvasPresentation talk("Results of the week");
   talk.setAuthor("C. Pruneau", "", "Wayne State University");

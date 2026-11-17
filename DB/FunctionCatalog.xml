@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CAP type="function-catalog" version="1">
+<Datum type="function-catalog" version="1">
   <FUNCTION name="BesselI" rank="1" composite="false">
     <VARIANT nParameters="4" default="true">
       <PARAMETER name="amplitude" value="1" type="Free"/>
@@ -4692,4 +4692,4 @@
       <PARAMETER name="background.exponent" value="1" type="Free"/>
     </VARIANT>
   </FUNCTION>
-</CAP>
+</Datum>

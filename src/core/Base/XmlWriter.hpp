@@ -7,13 +7,13 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__XmlWriter
-#define CAP__XmlWriter
+#ifndef DATUM__XmlWriter
+#define DATUM__XmlWriter
 #include <ostream>
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class XmlElement;
@@ -32,7 +32,7 @@ class XmlElement;
 //! Example:
 //! @code
 //!   std::ofstream out("db.xml");
-//!   CAP::XmlWriter w(out);
+//!   Datum::XmlWriter w(out);
 //!   w.declaration();
 //!   w.startElement("PARTICLES");
 //!   w.startElement("PARTICLE").attribute("name","pi+").attribute("mass",0.13957);
@@ -114,6 +114,6 @@ protected:
   bool              _rootClosed;   //!< whether the root element was closed
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

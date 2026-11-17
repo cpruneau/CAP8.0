@@ -14,7 +14,7 @@
 #include <cmath>
 
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -432,4 +432,4 @@ namespace CAP
   HistogramFolder operator+(const HistogramFolder & lhs, const HistogramFolder & rhs) { HistogramFolder r(lhs); r += rhs; return r; }
   HistogramFolder operator-(const HistogramFolder & lhs, const HistogramFolder & rhs) { HistogramFolder r(lhs); r -= rhs; return r; }
 
-} // namespace CAP
+} // namespace Datum

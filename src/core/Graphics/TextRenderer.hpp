@@ -1,8 +1,8 @@
-#ifndef CAP__TextRenderer
-#define CAP__TextRenderer
+#ifndef DATUM__TextRenderer
+#define DATUM__TextRenderer
 #include "Renderer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -27,6 +27,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__TextRenderer
+#endif // !DATUM__TextRenderer

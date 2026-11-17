@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleFilter
-#define CAP__ParticleFilter
+#ifndef DATUM__ParticleFilter
+#define DATUM__ParticleFilter
 #include "Particle.hpp"
 #include "Filter.hpp"
 #include "ManagedObject.hpp"
 #include "Configuration.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -65,5 +65,5 @@ namespace CAP
 
 }
 
-#endif /* CAP__ParticleFilter */
+#endif /* DATUM__ParticleFilter */
 

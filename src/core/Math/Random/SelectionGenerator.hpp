@@ -7,22 +7,22 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__SelectionGenerator
-#define CAP__SelectionGenerator
+#ifndef DATUM__SelectionGenerator
+#define DATUM__SelectionGenerator
 #include <vector>
 #include "MersenneTwister.hpp"
 
-namespace CAP
+namespace Datum
 {
 //!
 //! @brief Random selection of an index according to given probabilities.
 //!
 //! The generator is initialized with n probabilities (or relative weights: they are normalized to a sum of 1).
-//! generate() then returns an index k in [0, n-1] with probability p_k, using CAP::MATH::randomGenerator().
+//! generate() then returns an index k in [0, n-1] with probability p_k, using Datum::MATH::randomGenerator().
 //!
 //! Example:
 //! @code
-//!   CAP::SelectionGenerator g({0.7, 0.2, 0.1});
+//!   Datum::SelectionGenerator g({0.7, 0.2, 0.1});
 //!   int k = g.generate();   // 0 with probability 0.7, ...
 //! @endcode
 //!

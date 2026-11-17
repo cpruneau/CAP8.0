@@ -9,14 +9,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticlePartition
-#define CAP__ParticlePartition
+#ifndef DATUM__ParticlePartition
+#define DATUM__ParticlePartition
 #include <iostream>
 #include <vector>
 #include "ParticleType.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 class ParticleType;
@@ -84,7 +84,7 @@ public:
 
 };
 
-} //namespace CAP
+} //namespace Datum
 
-#endif  // CAP__ParticlePartition
+#endif  // DATUM__ParticlePartition
 

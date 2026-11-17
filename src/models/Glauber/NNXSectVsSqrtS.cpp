@@ -14,12 +14,12 @@
 #include "MathConstants.hpp"
 #include "NNXSectVsSqrtS.hpp"
 using namespace std;
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
-using CAP::MATH::absolute;
-using CAP::MATH::power;
+using Datum::MATH::pi;
+using Datum::MATH::twoPi;
+using Datum::MATH::absolute;
+using Datum::MATH::power;
 
-namespace CAP
+namespace Datum
 {
   //!
   //! nn_xSection vs std::sqrt{s}
@@ -221,7 +221,7 @@ namespace CAP
   }
 
 
-}  // namespace CAP
+}  // namespace Datum
 
 
 

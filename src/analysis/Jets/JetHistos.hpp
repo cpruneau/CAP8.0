@@ -11,15 +11,15 @@
 //! @brief JetHistos: the histograms of the jets of one combination of an event filter, a particle filter, jet settings
 //! and a jet filter: per-event jet variables, single-jet variables, moments of the multiplicities within the jets and
 //! in the cones of the underlying event, and constituent variables.
-#ifndef CAP__JetHistos
-#define CAP__JetHistos
+#ifndef DATUM__JetHistos
+#define DATUM__JetHistos
 #include <vector>
 #include "HistogramFolder.hpp"
 #include "Configuration.hpp"
 #include "Jet.hpp"
 #include "JetUnderlyingEvent.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -159,6 +159,6 @@ protected:
   std::vector<Histogram*> h_z, h_jt, h_theta, h_r, h_rho;
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetHistos */
+#endif /* DATUM__JetHistos */

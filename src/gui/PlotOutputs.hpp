@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file PlotOutputs.hpp
 //! @brief PlotOutputs: the printed figures, PDF book, PowerPoint presentation and LaTeX document of the canvases of
-//! a plot file (CapGui's File > Export, and PlotHistos in batch mode).
-#ifndef CAP__GUI__PlotOutputs
-#define CAP__GUI__PlotOutputs
+//! a plot file (DatumGui's File > Export, and PlotHistos in batch mode).
+#ifndef DATUM__GUI__PlotOutputs
+#define DATUM__GUI__PlotOutputs
 #include <vector>
 #include "PlotSpec.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -54,6 +54,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__PlotOutputs
+#endif // !DATUM__GUI__PlotOutputs

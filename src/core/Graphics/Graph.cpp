@@ -23,7 +23,7 @@
 #include "Histogram.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -732,7 +732,7 @@ namespace CAP
   void niceLinear(double & low, double & high)
   {
   double step;
-  CAP::GRAPHICS::niceLinear(low, high, step);
+  Datum::GRAPHICS::niceLinear(low, high, step);
   }
 
   //! Round a log range [low,high] (> 0) outward to whole decades.
@@ -951,7 +951,7 @@ namespace CAP
       }
   if (best > 0) return best;
   double low = minimum, high = maximum, step;
-  CAP::GRAPHICS::niceLinear(low, high, step);
+  Datum::GRAPHICS::niceLinear(low, high, step);
   int n = int(std::lround(span/step));
   return n < 1 ? 1 : (n > 12 ? 12 : n);
   }
@@ -983,4 +983,4 @@ namespace CAP
   }
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum

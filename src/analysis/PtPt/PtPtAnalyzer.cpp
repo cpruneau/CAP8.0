@@ -14,7 +14,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 PtPtAnalyzer::PtPtAnalyzer()
@@ -55,5 +55,5 @@ void PtPtAnalyzer::execute()
 //    }
 }
 
-} // namespace CAP
+} // namespace Datum
 

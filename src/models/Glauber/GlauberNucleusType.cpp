@@ -13,7 +13,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   
   GlauberNucleusType::GlauberNucleusType()
@@ -124,5 +124,5 @@ namespace CAP
   printValue("radialDistType", _radialDistType);
   }
   
-} // namespace CAP
+} // namespace Datum
 

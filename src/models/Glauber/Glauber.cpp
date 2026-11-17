@@ -11,7 +11,7 @@
  * *********************************************************************/
 #include "Glauber.hpp"
 
-namespace CAP
+namespace Datum
 {
   
     //!
@@ -210,7 +210,7 @@ bool GlauberMC::calculateEvent(double impactPar)
       _nnXSectEvent = _nnXSect;
   }
   // "ball" diameter = distance at which two balls interact
-  double d2 = (double)_nnXSectEvent/(CAP::MATH::pi()*10); // in fm^2
+  double d2 = (double)_nnXSectEvent/(Datum::MATH::pi()*10); // in fm^2
   double bh = TMath::Sqrt(d2*_hardFracXSect);
 
     double xmin=0,xmax=0;
@@ -230,11 +230,11 @@ bool GlauberMC::calculateEvent(double impactPar)
       double dx = nucleonB->getX()-nucleonA->getX();
       double dy = nucleonB->getY()-nucleonA->getY();
       double dij = dx*dx+dy*dy;
-      if (_gGribovAA  &&  fPTot)	d2 = 0.5*(xsecA[j]+xsecB[i])/(CAP::MATH::pi()*10);
+      if (_gGribovAA  &&  fPTot)	d2 = 0.5*(xsecA[j]+xsecB[i])/(Datum::MATH::pi()*10);
       if (dij>d2) continue;
       double bij = TMath::Sqrt(dij);
       double val = fNNProf->Eval(bij);
-      double ran = CAP::MATH::randomGenerator().random();
+      double ran = Datum::MATH::randomGenerator().random();
       if (ran>val) continue;
       nucleonB->collide();
       nucleonA->collide();
@@ -416,7 +416,7 @@ bool GlauberMC::CalcResults(double impactPar)
       sinPhi[n] /= eventStat.nParticipants;
       rn[n] /= eventStat.nParticipants;
       if (rn[n]>0) {
-	fPsiN[n] = (TMath::ATan2(sinPhi[n],cosPhi[n]) + CAP::MATH::pi())/n;
+	fPsiN[n] = (TMath::ATan2(sinPhi[n],cosPhi[n]) + Datum::MATH::pi())/n;
         fEccN[n] = TMath::Sqrt(sinPhi[n]*sinPhi[n]+cosPhi[n]*cosPhi[n])/rn[n];
       } else {
 	fPsiN[n] = -1;
@@ -450,7 +450,7 @@ bool GlauberMC::CalcResults(double impactPar)
     const Int_t nbins=200;
     const double ell=10;
     const double da=2*ell*2*ell/nbins/nbins;
-    const double d2 = (double)_nnXSectEvent/(CAP::MATH::pi()*10); // in fm^2
+    const double d2 = (double)_nnXSectEvent/(Datum::MATH::pi()*10); // in fm^2
     const double r2 = d2/4.;
     const double mx = eventStat.meanX;
     const double my = eventStat.meanY;
@@ -516,13 +516,13 @@ bool GlauberMC::CalcResults(double impactPar)
   }
 
   if (_calcength) {
-    const double krhs = TMath::Sqrt(_nnXSectEvent/40./CAP::MATH::pi());
+    const double krhs = TMath::Sqrt(_nnXSectEvent/40./Datum::MATH::pi());
     const double ksg  = krhs/TMath::Sqrt(5);
     const double kDL  = 0.1;
     TF1 rad("rad","2*pi/[0]/[0]*TMath::Exp(-x*x/(2.*[0]*[0]))",0.0,5*ksg); 
     rad.setParameter(0,ksg);
     const double minval = rad.Eval(5*ksg);
-    eventStat.Phi0         = CAP::MATH::randomGenerator().uniform(0,TMath::TwoPi());
+    eventStat.Phi0         = Datum::MATH::randomGenerator().uniform(0,TMath::TwoPi());
     double kcphi0  = TMath::Cos(eventStat.Phi0);
     double ksphi0  = TMath::Sin(eventStat.Phi0);
     double x       = eventStat.X0;
@@ -609,7 +609,7 @@ void GlauberMC::Draw(Option_t* option)
     double d = sx2;
     sx2 = sy2;
     sy2 = d;
-    phase = CAP::MATH::pi()/2.;
+    phase = Datum::MATH::pi()/2.;
   }
   double x1 = (0.5*(sy2-sx2)+TMath::Sqrt(TMath::Power(sy2-sx2,2.)-4*TMath::Power(getSxy(),2)));
   double ang = TMath::ATan2(-getSxy(),x1)+phase;
@@ -620,7 +620,7 @@ void GlauberMC::Draw(Option_t* option)
 
 double GlauberMC::totXSect() const
 {
-  return (1.*eventStatents/_nTotalEvents)*CAP::MATH::pi()*_impactParMax*_impactParMax/100;
+  return (1.*eventStatents/_nTotalEvents)*Datum::MATH::pi()*_impactParMax*_impactParMax/100;
 }
 
 double GlauberMC::totXSectErr() const
@@ -649,7 +649,7 @@ TObjArray *GlauberMC::allNucleons()
 
 bool GlauberMC::nextEvent(double impactPar)
 {
-  if (impactPar<0) impactPar = TMath::Sqrt((_impactParMax*_impactParMax-_impactParMin*_impactParMin)*CAP::MATH::randomGenerator().random()+_impactParMin*_impactParMin);
+  if (impactPar<0) impactPar = TMath::Sqrt((_impactParMax*_impactParMax-_impactParMin*_impactParMin)*Datum::MATH::randomGenerator().random()+_impactParMin*_impactParMin);
   _nucleusA.generateNucleons(-impactPar/2.);
   _nucleusB.generateNucleons(impactPar/2.);
   return calculateEvent(impactPar);
@@ -657,7 +657,7 @@ bool GlauberMC::nextEvent(double impactPar)
 
 bool GlauberMC::readNextEvent(bool calc, const char *fname)
 {
-  static CapFile *inf = 0;
+  static DatumFile *inf = 0;
   static Int_t iev  = 0;
   if (fname) {
     cout << "readNextEvent: setting up file " << fname << endl;

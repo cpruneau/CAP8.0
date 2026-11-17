@@ -11,7 +11,7 @@
 #include "ParticleFilter.hpp"
 #include "EventFilter.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -178,4 +178,4 @@ void ParticleSelection::resetSlots()
 slots() = Slots();
 }
 
-} // namespace CAP
+} // namespace Datum

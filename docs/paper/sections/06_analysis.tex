@@ -15,7 +15,7 @@ holds one family of observables (Section~\ref{sec:observables}). This section de
 A job is one run of the \code{Datum} program on one task tree, read from a workflow file (Section~\ref{sec:xml}):
 {\footnotesize
 \begin{verbatim}
-CAP <task> <configuration directory>/
+Datum <task> <configuration directory>/
     <workflow file> <output directory>/
 \end{verbatim}}
 The program creates the tree of tasks named on the command line, configures, initialises and executes it, and
@@ -63,7 +63,7 @@ condition sets a range, two ranges, or a value of one quantity. Event filters se
 ...:CONDITION_0:SELECTION = Charged
 \end{verbatim}}
 \noindent Filters are usually not written by hand: they are defined in the filter editor of RunDatum.py (Section~\ref{sec:run}),
-stored in the \code{RUNCAP} element of the workflow file, and created at the start of a job by creator tasks
+stored in the \code{RUNDATUM} element of the workflow file, and created at the start of a job by creator tasks
 (\code{EventFilterCreator}, \code{ParticleFilterCreator}), which put them in the store from which the other tasks take
 them by name. Creators also exist for the efficiencies and the smearers.
 
@@ -108,7 +108,7 @@ probability given by the efficiency, and to correct for them, by weighting each 
 efficiency. The single-particle analyzer weights the particles it counts in this way. A task uses one efficiency for
 all particles, one per particle filter, or one per event filter and particle filter (the event class and the particle
 type). The particle efficiencies and smearers are made and edited in DatumGui (Detector Maps) and saved in a maps file;
-RunDatum does not define them: it names that file, lists its objects (\code{CAP --maps-list}), and lets each task choose
+RunDatum does not define them: it names that file, lists its objects (\code{Datum --maps-list}), and lets each task choose
 among them by name. An event efficiency (\code{EventEfficiency}) has the same role for events, as a
 function of their multiplicity.
 \todo{the pair analyzers do not weight pairs by the product of the particle efficiencies, and \code{EventEfficiency}

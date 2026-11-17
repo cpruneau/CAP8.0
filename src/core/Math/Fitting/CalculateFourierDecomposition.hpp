@@ -10,14 +10,14 @@
 //! @file CalculateFourierDecomposition.hpp
 //! @brief CalculateFourierDecomposition: the Fourier decomposition of a function or of data points of an angle, up to
 //! a chosen order, by averages or by a fit, with its chi square.
-#ifndef CAP_MATH_CalculateFourierDecomposition
-#define CAP_MATH_CalculateFourierDecomposition
+#ifndef DATUM_MATH_CalculateFourierDecomposition
+#define DATUM_MATH_CalculateFourierDecomposition
 #include <vector>
 #include "DataPointsVector.hpp"
 #include "FitResult.hpp"
 #include "FourierDecomposition.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -56,10 +56,10 @@ namespace CAP
   //! covariance and correlations. The largest and the rms difference at the points are also given.
   //!
   //! @code
-  //!   CAP::MATH::CalculateFourierDecomposition calculator(4, CAP::MATH::FourierDecomposition::kFlow);
-  //!   calculator.setMethod(CAP::MATH::CalculateFourierDecomposition::kFit);
-  //!   CAP::MATH::FourierDecomposition d = calculator.calculate(histogram);   // or a function: calculate(f)
-  //!   const CAP::MATH::FitResult & r = calculator.result();
+  //!   Datum::MATH::CalculateFourierDecomposition calculator(4, Datum::MATH::FourierDecomposition::kFlow);
+  //!   calculator.setMethod(Datum::MATH::CalculateFourierDecomposition::kFit);
+  //!   Datum::MATH::FourierDecomposition d = calculator.calculate(histogram);   // or a function: calculate(f)
+  //!   const Datum::MATH::FitResult & r = calculator.result();
   //!   std::cout << "v2 = " << d.flow(2) << " +- " << r.errors[d.harmonicIndex(2)]
   //!             << ", chi2/ndf = " << r.chiSquarePerDegreeOfFreedom << ", p = " << r.pValue;
   //! @endcode
@@ -200,6 +200,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_MATH_CalculateFourierDecomposition
+#endif // DATUM_MATH_CalculateFourierDecomposition

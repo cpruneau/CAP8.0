@@ -1,9 +1,9 @@
-#ifndef CAP_MATH_Normal
-#define CAP_MATH_Normal
+#ifndef DATUM_MATH_Normal
+#define DATUM_MATH_Normal
 #include <cmath>
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -21,7 +21,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Normal g(10.0, 1.0, 0.5);   // amplitude 10, mean 1, width 0.5
+  //!   Datum::MATH::Normal g(10.0, 1.0, 0.5);   // amplitude 10, mean 1, width 0.5
   //!   double peak = g(1.0);                  // 10
   //!   double y    = g(1.5);                  // 10 exp(-1/2), one sigma from the mean
   //!   g.setNormalized();                     // unit area: standard normal density shape
@@ -153,6 +153,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

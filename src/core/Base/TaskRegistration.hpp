@@ -10,21 +10,21 @@
 //! @file TaskRegistration.hpp
 //! @brief Registration of the task classes in the reflection registry, for Task::instantiateTask() (kept out of the
 //! ROOT dictionaries).
-#ifndef CAP__TaskRegistration
-#define CAP__TaskRegistration
+#ifndef DATUM__TaskRegistration
+#define DATUM__TaskRegistration
 #include "Reflection.hpp"
 #include "Task.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
   //! @brief Register a task class, so that workflows can create its tasks by class name (Task::instantiateTask())
-  //! and Task::taskClassNames() lists it. Called once per class, in a CAP_REFLECTION block of its library:
+  //! and Task::taskClassNames() lists it. Called once per class, in a DATUM_REFLECTION block of its library:
   //! @code
-  //!   CAP_REFLECTION(ParticlesTasks)
+  //!   DATUM_REFLECTION(ParticlesTasks)
   //!   {
-  //!   CAP::registerTask<CAP::EventIterator>("CAP::EventIterator");
+  //!   Datum::registerTask<Datum::EventIterator>("Datum::EventIterator");
   //!   }
   //! @endcode
   //! @tparam T task class (deriving from Task, with a public default constructor) @param name full class name
@@ -38,6 +38,6 @@ namespace CAP
   builder.template constructor<>();
   }
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__TaskRegistration
+#endif // !DATUM__TaskRegistration

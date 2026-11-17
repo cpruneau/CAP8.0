@@ -1,8 +1,8 @@
-#ifndef CAP_MATH_Cubic
-#define CAP_MATH_Cubic
+#ifndef DATUM_MATH_Cubic
+#define DATUM_MATH_Cubic
 #include "Polynomial.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -14,7 +14,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Cubic f(1.0, 0.0, -3.0, 1.0);   // 1 - 3x^2 + x^3
+  //!   Datum::MATH::Cubic f(1.0, 0.0, -3.0, 1.0);   // 1 - 3x^2 + x^3
   //!   double y  = f(2.0);                        // -3
   //!   double xi = f.inflectionX();               // 1
   //! @endcode
@@ -68,6 +68,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

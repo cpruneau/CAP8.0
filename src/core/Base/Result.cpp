@@ -10,8 +10,8 @@
 #include <ostream>
 #include "Factory.hpp"
 #include "Particle.hpp"
-using CAP::Factory;
-using CAP::Particle;
+using Datum::Factory;
+using Datum::Particle;
 
 
 

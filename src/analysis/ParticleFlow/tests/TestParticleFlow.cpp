@@ -28,7 +28,7 @@
 #include "Particle.hpp"
 #include "NameHelpers.hpp"
 
-using namespace CAP;
+using namespace Datum;
 typedef std::complex<double> Complex;
 
 namespace

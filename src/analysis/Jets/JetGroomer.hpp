@@ -10,8 +10,8 @@
 //! @file JetGroomer.hpp
 //! @brief JetGroomer: grooming of a jet (Soft Drop / modified mass drop, trimming, filtering, pruning, dynamical
 //! grooming); GroomedJet: the result; JetGroomerCreator: the task creating the jet groomers of a job (JET_GROOMER).
-#ifndef CAP__JetGroomer
-#define CAP__JetGroomer
+#ifndef DATUM__JetGroomer
+#define DATUM__JetGroomer
 #include <vector>
 #include "ManagedObject.hpp"
 #include "ObjectCreator.hpp"
@@ -20,7 +20,7 @@
 #include "VectorLorentz.hpp"
 #include "Jet.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class Particle;
@@ -152,6 +152,6 @@ public:
   Task * clone() override { return new JetGroomerCreator(*this); }
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetGroomer */
+#endif /* DATUM__JetGroomer */

@@ -32,7 +32,7 @@
 #include "ThePEG/EventRecord/Particle.h"
 #include "ThePEG/Repository/EventGenerator.h"
 
-namespace CAP
+namespace Datum
 {
 
 //! Number of free-form command keys (<name>:Option0 ... <name>:Option19).
@@ -374,4 +374,4 @@ void HerwigEventGenerator::finalize()
   EventProcessor::finalize();
 }
 
-} // namespace CAP
+} // namespace Datum

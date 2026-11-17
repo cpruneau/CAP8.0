@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ConfigurationManager
-#define CAP__ConfigurationManager
+#ifndef DATUM__ConfigurationManager
+#define DATUM__ConfigurationManager
 #include "Object.hpp"
 #include "Configuration.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class XmlElement;
@@ -40,7 +40,7 @@ class XmlElement;
 //! - createXmlElement(): the empty element of the object;
 //! - defineXmlElement(): fill it with the template, i.e., the default parameters and their types;
 //! - fillXmlElement(): fill it with the current parameters;
-//! - writeXml(), exportXmlDictionary(): write the filled or defined element to a file (root element CAP);
+//! - writeXml(), exportXmlDictionary(): write the filled or defined element to a file (root element Datum);
 //! - readXmlElement(), readXml(): update the parameters from an element or a file, and configure() the object.
 //!
 //! Values read are checked against the type of the template parameter (a ConfigurationException is thrown for a value
@@ -129,7 +129,7 @@ public:
   //! @throws ConfigurationException for a value of the wrong type, an unknown type or an unexpected element
   //!
   virtual void readXmlElement(const XmlElement & element);
-  //! @brief Write the current parameters to the XML file path/name(.xml), as an element of the root element CAP.
+  //! @brief Write the current parameters to the XML file path/name(.xml), as an element of the root element Datum.
   //! @param path directory @param name file name @throws FileException if the file cannot be written
   virtual void writeXml(const String & path, const String & name) const;
   //! @brief Write the template of the configuration (see defineXmlElement()) to the XML file path/name(.xml).
@@ -406,6 +406,6 @@ protected:
   String _configurationPath;  //!< path prepended to the keys of the single-key functions
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif /* ConfigurationManager_hpp */

@@ -4,11 +4,11 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of the event-filter conditions on the selection of a named particle filter (RunCAPFilters): written with
+"""Tests of the event-filter conditions on the selection of a named particle filter (RunDatumFilters): written with
 their SELECTION key and read back, checked against the library, renamed with the particle filter; and of the end of
 the limit of 8 particle filters per task.
 
-Run from the CAP directory:  python3 -m pytest tests/python
+Run from the Datum directory:  python3 -m pytest tests/python
 """
 
 import os
@@ -17,13 +17,13 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
-CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, CAP_DIR)
+DATUM_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, DATUM_DIR)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import RunDatum                                   # noqa: E402
-import RunCAPFilters as F                       # noqa: E402
-from test_runcap_stages import TEMPLATES, events_stage, library      # noqa: E402
+import RunDatumFilters as F                       # noqa: E402
+from test_rundatum_stages import TEMPLATES, events_stage, library      # noqa: E402
 
 
 def selection_library():

@@ -7,8 +7,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-//! @file CapGui.cpp
-//! @brief Implementation of CapGui.
+//! @file DatumGui.cpp
+//! @brief Implementation of DatumGui.
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -19,12 +19,12 @@
 #include "imgui_internal.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-//! Silence the deprecation warnings of OpenGL on macOS (also defined by CMake for CapImGui).
+//! Silence the deprecation warnings of OpenGL on macOS (also defined by CMake for DatumImGui).
 #ifndef GL_SILENCE_DEPRECATION
 #define GL_SILENCE_DEPRECATION
 #endif
 #include <GLFW/glfw3.h>
-#include "CapGui.hpp"
+#include "DatumGui.hpp"
 #include "CanvasRegistry.hpp"
 #include "ImGuiPainter.hpp"
 #include "LatexRenderer.hpp"
@@ -33,17 +33,17 @@
 #include "PdfPainter.hpp"
 #include <functional>
 
-#ifndef CAP_SOURCE_ROOT
-//! Top directory of the CAP sources (set by the build; empty if not).
-#define CAP_SOURCE_ROOT ""
+#ifndef DATUM_SOURCE_ROOT
+//! Top directory of the Datum sources (set by the build; empty if not).
+#define DATUM_SOURCE_ROOT ""
 #endif
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
 
-  CapGui::CapGui()
+  DatumGui::DatumGui()
   :
   onNewPane(),
   beforePanesChange(),
@@ -84,7 +84,7 @@ namespace CAP
   _browsers.emplace_back(new FileBrowser(1));          // the first browser, always there
   }
 
-  CapGui::~CapGui()
+  DatumGui::~DatumGui()
   {
   if (_window)
     {
@@ -112,12 +112,12 @@ namespace CAP
   }
   } // namespace
 
-  bool CapGui::initialize(const GuiSettings & settings)
+  bool DatumGui::initialize(const GuiSettings & settings)
   {
   _settings = settings;
   glfwSetErrorCallback(glfwError);
 #ifdef __APPLE__
-  glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);   // keep the current folder (CapGui.app starts in the home folder)
+  glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);   // keep the current folder (DatumGui.app starts in the home folder)
 #endif
   if (!glfwInit()) return false;
 
@@ -154,13 +154,13 @@ namespace CAP
   return true;
   }
 
-  void CapGui::loadFonts()
+  void DatumGui::loadFonts()
   {
   ImGuiIO & io = ImGui::GetIO();
   std::vector<std::string> candidates;
   candidates.push_back(_settings.fontFile.str());
-  candidates.push_back(FileSystem::expand("$CAP_ROOT_PATH/external/imgui/misc/fonts/Roboto-Medium.ttf").str());
-  candidates.push_back(std::string(CAP_SOURCE_ROOT) + "/external/imgui/misc/fonts/Roboto-Medium.ttf");
+  candidates.push_back(FileSystem::expand("$DATUM_ROOT_PATH/external/imgui/misc/fonts/Roboto-Medium.ttf").str());
+  candidates.push_back(std::string(DATUM_SOURCE_ROOT) + "/external/imgui/misc/fonts/Roboto-Medium.ttf");
   std::string file = firstExisting(candidates);
   _font = nullptr;
   if (!file.empty()) _font = io.Fonts->AddFontFromFileTTF(file.c_str(), _settings.fontSize);
@@ -202,13 +202,13 @@ namespace CAP
   // Courier without a system font: the monospaced font distributed with Dear ImGui
   if (!ImGuiPainter::fontFor(82))
     {
-    std::string cousine = firstExisting({ FileSystem::expand("$CAP_ROOT_PATH/external/imgui/misc/fonts/Cousine-Regular.ttf").str(),
-                                          std::string(CAP_SOURCE_ROOT) + "/external/imgui/misc/fonts/Cousine-Regular.ttf" });
+    std::string cousine = firstExisting({ FileSystem::expand("$DATUM_ROOT_PATH/external/imgui/misc/fonts/Cousine-Regular.ttf").str(),
+                                          std::string(DATUM_SOURCE_ROOT) + "/external/imgui/misc/fonts/Cousine-Regular.ttf" });
     if (!cousine.empty()) ImGuiPainter::setFont(8, io.Fonts->AddFontFromFileTTF(cousine.c_str(), _settings.fontSize));
     }
   }
 
-  void CapGui::setTheme(const String & theme)
+  void DatumGui::setTheme(const String & theme)
   {
   _settings.theme = theme;
   if      (theme == "dark")    ImGui::StyleColorsDark();
@@ -222,7 +222,7 @@ namespace CAP
   if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) style.Colors[ImGuiCol_WindowBg].w = 1.0f;
   }
 
-  CanvasPane & CapGui::newPane()
+  CanvasPane & DatumGui::newPane()
   {
   char name[32];
   std::snprintf(name, sizeof(name), "Canvas %d", ++_paneCounter);
@@ -239,7 +239,7 @@ namespace CAP
   return pane;
   }
 
-  void CapGui::setLayout(int nColumns, int nRows)
+  void DatumGui::setLayout(int nColumns, int nRows)
   {
   nColumns = nColumns < 1 ? 1 : (nColumns > 6 ? 6 : nColumns);
   nRows    = nRows    < 1 ? 1 : (nRows    > 6 ? 6 : nRows);
@@ -256,7 +256,7 @@ namespace CAP
   if (_currentPane >= nPanes()) _currentPane = 0;
   }
 
-  void CapGui::setPaneCount(int n)
+  void DatumGui::setPaneCount(int n)
   {
   n = n < 1 ? 1 : (n > 36 ? 36 : n);
   auto nMain = [this]() { int m = 0; for (const auto & p : _panes) if (p->host() < 0) m++; return m; };
@@ -271,7 +271,7 @@ namespace CAP
   if (_currentPane >= nPanes()) _currentPane = 0;
   }
 
-  CanvasPane & CapGui::addPane()
+  CanvasPane & DatumGui::addPane()
   {
   std::string beside = _panes.empty() ? std::string() : std::string(currentPane().windowId());
   CanvasPane & pane = newPane();
@@ -280,11 +280,11 @@ namespace CAP
   return pane;
   }
 
-  int CapGui::addPaneWindow(const String & title, int columns, int rows, int width, int height)
+  int DatumGui::addPaneWindow(const String & title, int columns, int rows, int width, int height)
   {
   PaneWindow window;
   window.title   = title;
-  window.label   = title.str() + "###CapPaneWindow" + std::to_string(_paneWindows.size());
+  window.label   = title.str() + "###DatumPaneWindow" + std::to_string(_paneWindows.size());
   window.columns = std::max(1, columns);
   window.rows    = std::max(1, rows);
   window.width   = std::max(200, width);
@@ -293,12 +293,12 @@ namespace CAP
   return int(_paneWindows.size()) - 1;
   }
 
-  void CapGui::setPaneWindow(int k, const String & title, int columns, int rows, int width, int height)
+  void DatumGui::setPaneWindow(int k, const String & title, int columns, int rows, int width, int height)
   {
   while (int(_paneWindows.size()) <= k) addPaneWindow(title, columns, rows, width, height);
   PaneWindow & w = _paneWindows[std::size_t(k)];
   w.title = title;
-  w.label = title.str() + "###CapPaneWindow" + std::to_string(k);
+  w.label = title.str() + "###DatumPaneWindow" + std::to_string(k);
   columns = std::max(1, columns);
   rows = std::max(1, rows);
   if (w.columns != columns || w.rows != rows) { w.columns = columns; w.rows = rows; w.layoutPending = true; }
@@ -307,7 +307,7 @@ namespace CAP
   if (!shown) { w.width = std::max(200, width); w.height = std::max(150, height); w.placed = false; }
   }
 
-  void CapGui::setPaneWindowPaneCount(int k, int n)
+  void DatumGui::setPaneWindowPaneCount(int k, int n)
   {
   if (k < 0 || k >= nPaneWindows()) return;
   int count = 0;
@@ -320,21 +320,21 @@ namespace CAP
   if (_currentPane >= nPanes()) _currentPane = 0;
   }
 
-  void CapGui::closePaneWindowsFrom(int k)
+  void DatumGui::closePaneWindowsFrom(int k)
   {
   for (int j=nPanes()-1; j>=0; j--) if (_panes[std::size_t(j)]->host() >= k) _panes.erase(_panes.begin() + j);
   for (std::size_t w=std::size_t(std::max(0, k)); w<_paneWindows.size(); w++) { _paneWindows[w].placed = false; _paneWindows[w].layoutPending = true; }
   if (_currentPane >= nPanes()) _currentPane = 0;
   }
 
-  std::vector<CanvasPane *> CapGui::panesOf(int window)
+  std::vector<CanvasPane *> DatumGui::panesOf(int window)
   {
   std::vector<CanvasPane *> panes;
   for (const auto & p : _panes) if (p->host() == window) panes.push_back(p.get());
   return panes;
   }
 
-  CanvasPane & CapGui::addPaneTo(int window)
+  CanvasPane & DatumGui::addPaneTo(int window)
   {
   CanvasPane & pane = newPane();
   if (window >= 0 && window < nPaneWindows())
@@ -345,32 +345,32 @@ namespace CAP
   return pane;
   }
 
-  void CapGui::paneWindowLayout(int k, int & width, int & height, int & columns, int & rows) const
+  void DatumGui::paneWindowLayout(int k, int & width, int & height, int & columns, int & rows) const
   {
   const PaneWindow & w = _paneWindows.at(std::size_t(k));
   width = w.width; height = w.height; columns = w.columns; rows = w.rows;
   }
 
-  void CapGui::setWindowTitle(const String & title)
+  void DatumGui::setWindowTitle(const String & title)
   {
   _settings.title = title;
   if (_window) glfwSetWindowTitle(_window, title.data());
   }
 
-  void CapGui::windowSize(int & width, int & height) const
+  void DatumGui::windowSize(int & width, int & height) const
   {
   width = _settings.width; height = _settings.height;
   if (_window) glfwGetWindowSize(_window, &width, &height);
   }
 
-  void CapGui::setWindowSize(int width, int height)
+  void DatumGui::setWindowSize(int width, int height)
   {
   _settings.width = width; _settings.height = height;
   if (_window && width > 0 && height > 0) glfwSetWindowSize(_window, width, height);
   _layoutRequested = true;
   }
 
-  void CapGui::renderPaneWindows()
+  void DatumGui::renderPaneWindows()
   {
   ImGuiViewport * main = ImGui::GetMainViewport();
   for (std::size_t w=0; w<_paneWindows.size(); w++)
@@ -412,7 +412,7 @@ namespace CAP
     ImVec2 size = ImGui::GetWindowSize();
     window.width = int(size.x);
     window.height = int(size.y);
-    ImGuiID dock = ImHashStr((std::string("CapPaneWindowDock") + std::to_string(w)).c_str());
+    ImGuiID dock = ImHashStr((std::string("DatumPaneWindowDock") + std::to_string(w)).c_str());
     if (window.layoutPending)
       {
       ImVec2 area = ImGui::GetContentRegionAvail();
@@ -429,7 +429,7 @@ namespace CAP
     }
   }
 
-  DataPane & CapGui::addDataPane()
+  DataPane & DatumGui::addDataPane()
   {
   char name[32];
   std::snprintf(name, sizeof(name), "Data %d", ++_dataCounter);
@@ -440,7 +440,7 @@ namespace CAP
   return pane;
   }
 
-  void CapGui::closePane(int k)
+  void DatumGui::closePane(int k)
   {
   if (k < 0 || k >= nPanes()) return;
   int nMain = 0;
@@ -474,7 +474,7 @@ namespace CAP
   _focusedPane = -1;
   }
 
-  void CapGui::setFitPaneVisible(bool visible)
+  void DatumGui::setFitPaneVisible(bool visible)
   {
   if (visible && !_fitsVisible)
     {
@@ -486,10 +486,10 @@ namespace CAP
   _fitsVisible = visible;
   }
 
-  void CapGui::dockFitPane()
+  void DatumGui::dockFitPane()
   {
   // the node of the canvases: the largest one holding the first canvas pane but not the docked file browser
-  ImGuiID dockspace = ImHashStr("CapDockSpace");
+  ImGuiID dockspace = ImHashStr("DatumDockSpace");
   ImGuiWindow * first = _panes.empty() ? nullptr : ImGui::FindWindowByName(_panes[0]->windowId());
   ImGuiWindow * browser = ImGui::FindWindowByName(FileBrowser::mainWindowName());
   ImGuiDockNode * browserNode = browser ? browser->DockNode : nullptr;
@@ -508,7 +508,7 @@ namespace CAP
   ImGui::DockBuilderFinish(dockspace);
   }
 
-  void CapGui::renderFitPane()
+  void DatumGui::renderFitPane()
   {
   if (!_fitsShownOnce && !_panes.empty())
     for (const auto & item : currentPane().currentGraph().items())
@@ -528,7 +528,7 @@ namespace CAP
   _fitsVisible = open;
   }
 
-  void CapGui::renderCanvasList()
+  void DatumGui::renderCanvasList()
   {
   if (!_canvasListVisible) return;
   bool open = true;
@@ -603,32 +603,32 @@ namespace CAP
   _canvasListVisible = open;
   }
 
-  void CapGui::setShowToolbars(bool v)
+  void DatumGui::setShowToolbars(bool v)
   {
   _settings.toolbars = v;
   for (auto & pane : _panes) pane->setShowToolbar(v);
   }
 
-  void CapGui::setStatus(const String & message)
+  void DatumGui::setStatus(const String & message)
   {
   _status = message;
   _statusTime = ImGui::GetCurrentContext() ? ImGui::GetTime() : 0.0;
   }
 
-  void CapGui::showMessage(const String & title, const String & text)
+  void DatumGui::showMessage(const String & title, const String & text)
   {
   _messageTitle = title;
   _messageText  = text;
   _messageRequested = true;
   }
 
-  void CapGui::requestExit()
+  void DatumGui::requestExit()
   {
   _exitRequested = true;
   }
 
 
-  void CapGui::run()
+  void DatumGui::run()
   {
   if (!_window) return;
   ImGuiIO & io = ImGui::GetIO();
@@ -669,7 +669,7 @@ namespace CAP
     }
   }
 
-  void CapGui::renderFrame()
+  void DatumGui::renderFrame()
   {
   const MenuItem * hovered = _menuBar.render();
   String hoverText;
@@ -683,7 +683,7 @@ namespace CAP
     if (ImGui::BeginMenuBar()) { renderStatusBar(hovered, hoverText); ImGui::EndMenuBar(); }
     }
   ImGui::End();
-  ImGuiID dockspace = ImHashStr("CapDockSpace");
+  ImGuiID dockspace = ImHashStr("DatumDockSpace");
   if (_firstFrame)
     {
     // the canvas panes are laid out at startup; the browser follows the settings
@@ -703,19 +703,19 @@ namespace CAP
 
   }
 
-  FileBrowser & CapGui::activeBrowser()
+  FileBrowser & DatumGui::activeBrowser()
   {
   if (_activeBrowser < 0 || _activeBrowser >= int(_browsers.size())) _activeBrowser = 0;
   return *_browsers[_activeBrowser];
   }
 
-  void CapGui::closeBrowser(FileBrowser & browser)
+  void DatumGui::closeBrowser(FileBrowser & browser)
   {
   if (!_browsers.empty() && _browsers.front().get() == &browser) { _settings.browserVisible = false; return; }
   _browsersToClose.push_back(&browser);
   }
 
-  FileBrowser & CapGui::addBrowser()
+  FileBrowser & DatumGui::addBrowser()
   {
   _browsers.emplace_back(new FileBrowser(++_browserCounter));
   FileBrowser & browser = *_browsers.back();
@@ -725,7 +725,7 @@ namespace CAP
   return browser;
   }
 
-  void CapGui::setBrowserDocked(bool docked)
+  void DatumGui::setBrowserDocked(bool docked)
   {
   if (docked == _settings.browserDocked) return;
   _settings.browserDocked = docked;
@@ -733,7 +733,7 @@ namespace CAP
   if (docked) _layoutRequested = true; else _undockRequested = true;
   }
 
-  void CapGui::buildDockLayout(unsigned int dockId)
+  void DatumGui::buildDockLayout(unsigned int dockId)
   {
   ImGuiViewport * viewport = ImGui::GetMainViewport();
   ImGui::DockBuilderRemoveNode(dockId);
@@ -756,14 +756,14 @@ namespace CAP
   ImGui::DockBuilderFinish(dockId);
   }
 
-  void CapGui::buildPaneGrid(unsigned int nodeId)
+  void DatumGui::buildPaneGrid(unsigned int nodeId)
   {
   std::vector<CanvasPane *> panes;
   for (const auto & p : _panes) if (p->host() < 0) panes.push_back(p.get());
   dockGrid(nodeId, panes, _gridColumns);
   }
 
-  void CapGui::dockGrid(unsigned int nodeId, const std::vector<CanvasPane *> & panes, int gridColumns)
+  void DatumGui::dockGrid(unsigned int nodeId, const std::vector<CanvasPane *> & panes, int gridColumns)
   {
   // rows from the top, then the panes of each row from the left (the last row may have fewer panes)
   int n = int(panes.size());
@@ -793,7 +793,7 @@ namespace CAP
     }
   }
 
-  void CapGui::renderBrowser()
+  void DatumGui::renderBrowser()
   {
   for (FileBrowser * closing : _browsersToClose)
     for (std::size_t k=1; k<_browsers.size(); k++)
@@ -854,10 +854,10 @@ namespace CAP
     }
   }
 
-  void CapGui::renderCanvases(String & hoverText)
+  void DatumGui::renderCanvases(String & hoverText)
   {
   // panes added since the last frame: docked beside the pane that was current, splitting its area
-  ImGuiID dockspace = ImHashStr("CapDockSpace");
+  ImGuiID dockspace = ImHashStr("DatumDockSpace");
   for (const auto & request : _dockBeside)
     {
     ImGuiWindow * target = request.second.empty() ? nullptr : ImGui::FindWindowByName(request.second.c_str());
@@ -958,7 +958,7 @@ namespace CAP
     }
   }
 
-  void CapGui::renderStatusBar(const MenuItem * hovered, const String & /*hoverText*/)
+  void DatumGui::renderStatusBar(const MenuItem * hovered, const String & /*hoverText*/)
   {
   // left: menu item description, or the last status message (10 s), or a hint
   if (hovered && !hovered->description().isNull())
@@ -976,7 +976,7 @@ namespace CAP
   ImGui::TextUnformatted(right);
   }
 
-  void CapGui::renderMessage()
+  void DatumGui::renderMessage()
   {
   if (_messageRequested) { ImGui::OpenPopup("##message"); _messageRequested = false; }
   ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -1006,7 +1006,7 @@ namespace CAP
   }
   } // namespace
 
-  bool CapGui::saveFigure(const String & fileName, int paneIndex, int graphIndex)
+  bool DatumGui::saveFigure(const String & fileName, int paneIndex, int graphIndex)
   {
   if (paneIndex >= nPanes()) return false;
   // the page: the area of the canvases, of one canvas, or of the cell of one graph (points = pixels on screen)
@@ -1068,4 +1068,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

@@ -7,29 +7,29 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__RootFileConversion
-#define CAP__RootFileConversion
+#ifndef DATUM__RootFileConversion
+#define DATUM__RootFileConversion
 #include <vector>
 #include "Folder.hpp"
 
 class TDirectory;
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @file RootFileConversion.hpp
-//! @brief Import of the histograms of ROOT files into CAP folders, and export of CAP folders to ROOT files.
+//! @brief Import of the histograms of ROOT files into Datum folders, and export of Datum folders to ROOT files.
 //!
 //! The directories of a ROOT file become folders, and folders become directories. Histograms (TH1, TH2, TH3) and
 //! profiles (TProfile, TProfile2D) are converted (see RootConversion.hpp); the other objects are skipped and reported.
 //!
 //! Example:
 //! @code
-//!   CAP::Folder tree("run");
-//!   std::vector<CAP::String> skipped;
-//!   int n = CAP::importRootFile("old.root", tree, &skipped);   // histograms of old.root, as CAP histograms
-//!   CAP::exportRootFile(tree, "copy.root");                     // and back
+//!   Datum::Folder tree("run");
+//!   std::vector<Datum::String> skipped;
+//!   int n = Datum::importRootFile("old.root", tree, &skipped);   // histograms of old.root, as Datum histograms
+//!   Datum::exportRootFile(tree, "copy.root");                     // and back
 //! @endcode
 //!
 
@@ -68,6 +68,6 @@ int exportRootDirectory(const Folder & folder, TDirectory & directory, std::vect
 //!
 int exportRootFile(const Folder & folder, const String & path, std::vector<String> * skipped=nullptr);
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

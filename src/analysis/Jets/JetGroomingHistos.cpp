@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 #include "Histogram.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 JetGroomingHistos::JetGroomingHistos()
@@ -162,4 +162,4 @@ void JetGroomingHistos::normalize(double eventFactor __attribute__((unused)))
   for (Histogram * h : allHistograms()) if (h) h->scale(1.0/_jetCount);
 }
 
-} // namespace CAP
+} // namespace Datum

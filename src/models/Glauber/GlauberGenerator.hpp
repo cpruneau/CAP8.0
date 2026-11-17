@@ -9,8 +9,8 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberGenerator
-#define CAP__GlauberGenerator
+#ifndef DATUM__GlauberGenerator
+#define DATUM__GlauberGenerator
 #include "GlauberDb.hpp"
 #include "GlauberEvent.hpp"
 #include "GlauberEventFilter.hpp"
@@ -20,7 +20,7 @@
 #include "ManagedObjects.hpp"
 #include "Task.hpp"
 
-namespace CAP
+namespace Datum
 {
 using namespace std;
 
@@ -174,7 +174,7 @@ class GlauberGenerator
 
 
 
-} // namespace CAP
+} // namespace Datum
 
 #endif
 

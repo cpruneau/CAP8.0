@@ -1,8 +1,8 @@
-#ifndef CAP__MacOsCanvas
-#define CAP__MacOsCanvas
+#ifndef DATUM__MacOsCanvas
+#define DATUM__MacOsCanvas
 #include "Painter.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -62,6 +62,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MacOsCanvas
+#endif // !DATUM__MacOsCanvas

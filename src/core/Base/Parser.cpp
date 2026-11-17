@@ -11,7 +11,7 @@
 #include "Exceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   Parser::Parser()
@@ -36,4 +36,4 @@ namespace CAP
   return *this;
   }
 
-} // namespace CAP
+} // namespace Datum

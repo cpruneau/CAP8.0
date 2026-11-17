@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__BaseHistos
-#define CAP__BaseHistos
+#ifndef DATUM__BaseHistos
+#define DATUM__BaseHistos
 #include "HistogramFolder.hpp"
 #include "Particle.hpp"
 #include "MathConstants.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -39,9 +39,9 @@ public:
   virtual void cloneB(const BaseHistos & source);
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__BaseDerivedHistos  */
+#endif /* DATUM__BaseDerivedHistos  */
 
 
 

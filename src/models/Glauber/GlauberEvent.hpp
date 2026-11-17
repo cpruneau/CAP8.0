@@ -9,15 +9,15 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberEvent
-#define CAP__GlauberEvent
+#ifndef DATUM__GlauberEvent
+#define DATUM__GlauberEvent
 #include "GlauberPoint.hpp"
 #include "GlauberNucleus.hpp"
 #include "GlauberEventMoments.hpp"
 #include "ManagedObject.hpp"
 #include "Configuration.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -235,7 +235,7 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif
 

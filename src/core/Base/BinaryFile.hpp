@@ -9,27 +9,27 @@
  * *********************************************************************/
 //! @file BinaryFile.hpp
 //! @brief BinaryFile: file of raw bytes, read whole, by ranges, or lazily.
-#ifndef CAP__BinaryFile
-#define CAP__BinaryFile
+#ifndef DATUM__BinaryFile
+#define DATUM__BinaryFile
 #include <string>
 #include "File.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @brief Binary file: raw bytes, read and written without any conversion.
 //!
 //! Gives byte-level access (readAll(), writeAll(), appendAll(), readRange()) and, through File::open() and
-//! File::stream(), a binary stream for record-based formats such as the CAP binary records (see BinaryIO.hpp and
-//! CapFile).
+//! File::stream(), a binary stream for record-based formats such as the Datum binary records (see BinaryIO.hpp and
+//! DatumFile).
 //!
 //! In memory, the content is bytes(): load() reads the whole file into it and save() writes it back. load(kLazy) keeps
 //! nothing in memory: the content is then read on demand, by ranges, with readRange().
 //!
 //! Example:
 //! @code
-//!   CAP::BinaryFile f("data.bin");
+//!   Datum::BinaryFile f("data.bin");
 //!   f.writeAll(std::string("\x01\x02\x03",3));
 //!   std::string bytes = f.readAll();     // 3 bytes
 //! @endcode
@@ -86,6 +86,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

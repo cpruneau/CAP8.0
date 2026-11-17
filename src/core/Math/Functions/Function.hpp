@@ -1,12 +1,12 @@
-#ifndef CAP_MATH_Function
-#define CAP_MATH_Function
+#ifndef DATUM_MATH_Function
+#define DATUM_MATH_Function
 #include <vector>
 #include "String.hpp"
 #include "Object.hpp"
 #include "FitRecord.hpp"
 #include "VectorND.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -34,7 +34,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   class Paraboloid : public CAP::MATH::Function
+  //!   class Paraboloid : public Datum::MATH::Function
   //!   {
   //!   public:
   //!     Paraboloid() : Function(2) {}
@@ -236,6 +236,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

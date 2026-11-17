@@ -9,11 +9,11 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__NuclearDistribution
-#define CAP__NuclearDistribution
+#ifndef DATUM__NuclearDistribution
+#define DATUM__NuclearDistribution
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Density of the nucleons of a nucleus, and the random positions drawn from it (TGlauberMC v3.2 types).
@@ -123,6 +123,6 @@ namespace CAP
   double _densityMax;                 //!< upper bound of the density in the box (deformed types)
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__NuclearDistribution
+#endif // !DATUM__NuclearDistribution

@@ -7,15 +7,15 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP_MATH_DataPointND
-#define CAP_MATH_DataPointND
+#ifndef DATUM_MATH_DataPointND
+#define DATUM_MATH_DataPointND
 #include <ostream>
 #include <vector>
 #include "String.hpp"
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -32,7 +32,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::DataPointND p({1.0, 2.0, 3.0}, {0.1, 0.1, 0.1}, 5.0, 0.4, 0.3);  // x, xErrors, value, stat, syst
+  //!   Datum::MATH::DataPointND p({1.0, 2.0, 3.0}, {0.1, 0.1, 0.1}, 5.0, 0.4, 0.3);  // x, xErrors, value, stat, syst
   //!   p.setX(2, 3.5);
   //! @endcode
   //!
@@ -128,11 +128,11 @@ namespace CAP
   //! @}
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPN" records in the CAP binary format (see BinaryIO.hpp).
+  //! Saved as "DTMN" records in the Datum binary format (see BinaryIO.hpp).
   //! @{
 
-  //! @brief Tag of DataPointND records in binary files. @return "CAPN"
-  static const char * binaryTag() { return "CAPN"; }
+  //! @brief Tag of DataPointND records in binary files. @return "DTMN"
+  static const char * binaryTag() { return "DTMN"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return ""
@@ -157,6 +157,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

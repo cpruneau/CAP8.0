@@ -1,6 +1,6 @@
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 char selectFiller(unsigned int style)
@@ -145,5 +145,5 @@ std::ostream * gOutputStream = & std::cout;
 unsigned int   gOutputStyle  = 0;
 unsigned int   gOutputlength = 50;
 
-} // namespace CAP
+} // namespace Datum
 

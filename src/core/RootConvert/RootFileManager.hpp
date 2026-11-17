@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__RootFileManager
-#define CAP__RootFileManager
+#ifndef DATUM__RootFileManager
+#define DATUM__RootFileManager
 #include "Manager.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class RootFileManager : public Manager<TFile>
@@ -29,8 +29,8 @@ public:
 
 
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP_Manager */
+#endif /* DATUM_Manager */
 
 

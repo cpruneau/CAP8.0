@@ -1,11 +1,11 @@
-#ifndef CAP_MATH_ChiSquare
-#define CAP_MATH_ChiSquare
+#ifndef DATUM_MATH_ChiSquare
+#define DATUM_MATH_ChiSquare
 #include <vector>
 #include "String.hpp"
 #include "ParameterizedFunction.hpp"
 #include "DataPoints.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -36,10 +36,10 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Linear f(1.0, 2.0);
-  //!   CAP::MATH::DataPointsVector data;
+  //!   Datum::MATH::Linear f(1.0, 2.0);
+  //!   Datum::MATH::DataPointsVector data;
   //!   data.addPoints({0.0, 1.0, 2.0}, {1.1, 2.9, 5.2}, {0.1, 0.1, 0.2});
-  //!   CAP::MATH::ChiSquare chi2(f, data);
+  //!   Datum::MATH::ChiSquare chi2(f, data);
   //!   double value = chi2.chiSquare();
   //!   double perNdf = chi2.chiSquarePerDegreeOfFreedom();
   //! @endcode
@@ -177,6 +177,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

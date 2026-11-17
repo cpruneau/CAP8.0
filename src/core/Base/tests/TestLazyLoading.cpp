@@ -8,9 +8,9 @@
  *
  * *********************************************************************/
 //! @file TestLazyLoading.cpp
-//! @brief Test program of the lazy loading of CAP files (run by ctest).
+//! @brief Test program of the lazy loading of Datum files (run by ctest).
 //
-// TestLazyLoading -- tests of CapFile::load(File::Loading::kLazy): the tree read at once with placeholders, objects
+// TestLazyLoading -- tests of DatumFile::load(File::Loading::kLazy): the tree read at once with placeholders, objects
 // decoded on first use, loadAll(), checksums checked when the file is opened, changes of the file on disk, copies,
 // and writing a lazily loaded folder.
 //
@@ -23,11 +23,11 @@
 #include <string>
 #include <algorithm>
 #include <unistd.h>
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Directory.hpp"
 #include "LongParameter.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {
@@ -89,12 +89,12 @@ int main()
     CHECK(crc32(text.data(), text.size())==(reference ^ 0xFFFFFFFFu) && pieces==reference);
   }
 
-  char buffer[] = "/tmp/CapTestLazyLoading.XXXXXX";
+  char buffer[] = "/tmp/DatumTestLazyLoading.XXXXXX";
   Directory top{String(mkdtemp(buffer))};
   String path = top.join("run.cap");
   // run: a=1, b=2, singles/{n=10, m=11}, singles/deep/{k=12}, empty/
   {
-    CapFile out(path, File::kWriteOnly);
+    DatumFile out(path, File::kWriteOnly);
     out.setFolderName("run");
     out.add(new LongParameter("a", 1), "a");
     out.add(new LongParameter("b", 2), "b");
@@ -108,7 +108,7 @@ int main()
 
   // ---- the tree at once, nothing decoded
   {
-    CapFile in(path, File::kReadOnly);
+    DatumFile in(path, File::kReadOnly);
     in.load(File::Loading::kLazy);
     CHECK(in.isLoaded() && in.isLazy());
     CHECK(in.folderName().equalTo("run") && in.size()==4);
@@ -117,7 +117,7 @@ int main()
     CHECK(in.folder("singles/deep")!=nullptr && in.folder("empty")!=nullptr);
     CHECK(in.folder("singles")->parent()==&in.folder());
     CHECK(in.isLoaded("singles") && !in.isLoaded("a") && !in.isLoaded("singles/deep/k") && !in.isLoaded("nothing"));
-    CHECK(in.folder().typeName("singles/n")=="CAP::LongParameter");    // known from the index
+    CHECK(in.folder().typeName("singles/n")=="Datum::LongParameter");    // known from the index
     CHECK(in.nNotLoaded()==5);                                           // ... without decoding
 
     // ---- decoded on first use, then kept
@@ -144,32 +144,32 @@ int main()
 
   // ---- written elsewhere without decoding: the records are copied as they are
   {
-    CapFile in(path, File::kReadWrite);
+    DatumFile in(path, File::kReadWrite);
     in.load(File::Loading::kLazy);
     in.setPath(top.join("copy.cap"));
     in.write();
     CHECK(in.nNotLoaded()==5);
     CHECK(fileBytes(top.join("copy.cap"))==fileBytes(path));            // identical file
-    CapFile reread(top.join("copy.cap"), File::kReadOnly);
+    DatumFile reread(top.join("copy.cap"), File::kReadOnly);
     reread.load();
     CHECK(value(reread, "singles/deep/k")==12 && reread.nNotLoaded()==0);
   }
 
   // ---- written to the same file: everything is decoded first
   {
-    CapFile in(path, File::kReadWrite);
+    DatumFile in(path, File::kReadWrite);
     in.load(File::Loading::kLazy);
     in.add(new LongParameter("c", 3), "c");
     in.write();
     CHECK(in.nNotLoaded()==0);
-    CapFile reread(path, File::kReadOnly);
+    DatumFile reread(path, File::kReadOnly);
     reread.load(File::Loading::kLazy);
     CHECK(value(reread, "c")==3 && value(reread, "singles/n")==10 && value(reread, "a")==1);
   }
 
   // ---- the file changes on disk: objects not decoded can no longer be
   {
-    CapFile in(path, File::kReadOnly);
+    DatumFile in(path, File::kReadOnly);
     in.load(File::Loading::kLazy);
     CHECK(value(in, "a")==1);
     std::string bytes = fileBytes(path);
@@ -187,23 +187,23 @@ int main()
     corrupted[at + 20] ^= 0x01;
     writeBytes(top.join("corrupted.cap"), corrupted);
     writeBytes(top.join("truncated.cap"), bytes.substr(0, bytes.size() - 3));
-    writeBytes(top.join("text.cap"), "not a CAP file");
+    writeBytes(top.join("text.cap"), "not a Datum file");
     writeBytes(top.join("empty.cap"), "");
     for (const char * name : {"corrupted.cap", "truncated.cap", "text.cap", "empty.cap"})
       {
-      CapFile file(top.join(name), File::kReadOnly);
+      DatumFile file(top.join(name), File::kReadOnly);
       file.setFolderName("kept");
       bool thrown = false;
       try { file.load(File::Loading::kLazy); } catch (const FileException &) { thrown = true; }
       check(thrown && file.folderName().equalTo("kept") && !file.isLoaded(), std::string(name) + " refused, folder unchanged", __LINE__);
       }
-    CapFile missing(top.join("missing.cap"), File::kReadOnly);
+    DatumFile missing(top.join("missing.cap"), File::kReadOnly);
     CHECK_THROWS(missing.load(File::Loading::kLazy));
   }
 
   // ---- eager after lazy, unload
   {
-    CapFile in(path, File::kReadOnly);
+    DatumFile in(path, File::kReadOnly);
     in.load(File::Loading::kLazy);
     in.load();
     CHECK(!in.isLazy() && in.nNotLoaded()==0 && value(in, "singles/deep/k")==12);

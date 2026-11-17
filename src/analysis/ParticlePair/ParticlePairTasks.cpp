@@ -13,9 +13,9 @@
 #include "ParticlePairBFHistos.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(ParticlePairTasks)
+DATUM_REFLECTION(ParticlePairTasks)
 {
-  CAP::registerTask<CAP::ParticlePairAnalyzer>("CAP::ParticlePairAnalyzer");
-  CAP::registerTask<CAP::ParticlePairDerivedCalculator>("CAP::ParticlePairDerivedCalculator");
-  CAP::registerTask<CAP::ParticlePairBFCalculator>("CAP::ParticlePairBFCalculator");
+  Datum::registerTask<Datum::ParticlePairAnalyzer>("Datum::ParticlePairAnalyzer");
+  Datum::registerTask<Datum::ParticlePairDerivedCalculator>("Datum::ParticlePairDerivedCalculator");
+  Datum::registerTask<Datum::ParticlePairBFCalculator>("Datum::ParticlePairBFCalculator");
 }

@@ -4,10 +4,10 @@
 //using Tpower;
 
 
-using CAP::MATH::power;
-using CAP::MATH::ScalarField;
+using Datum::MATH::power;
+using Datum::MATH::ScalarField;
 
-namespace CAP
+namespace Datum
 {
 
   Chemistry::Chemistry()
@@ -206,4 +206,4 @@ namespace CAP
   _lambdaCField = lambdaC;
   }
 
-} // namespace CAP
+} // namespace Datum

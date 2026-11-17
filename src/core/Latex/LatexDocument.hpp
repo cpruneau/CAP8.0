@@ -1,5 +1,5 @@
-#ifndef CAP__LatexDocument
-#define CAP__LatexDocument
+#ifndef DATUM__LatexDocument
+#define DATUM__LatexDocument
 #include "LatexAuthor.hpp"
 #include "LatexCommand.hpp"
 #include "LatexElement.hpp"
@@ -13,7 +13,7 @@
 #include "LatexSubsubsection.hpp"
 #include "LatexText.hpp"
 
-namespace CAP
+namespace Datum
 {
   class LatexDocument : public LatexElement
   {
@@ -103,6 +103,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexDocument
+#endif // !DATUM__LatexDocument

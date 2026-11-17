@@ -17,7 +17,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   ParticleSingleHistos::ParticleSingleHistos()
@@ -195,7 +195,7 @@ namespace CAP
   configuration.addProperty(createKey(taskName,type,"rapidity_max"),   1.0);
   configuration.addProperty(createKey(taskName,type,"phi_nbins"),       36);
   configuration.addProperty(createKey(taskName,type,"phi_min"),        0.0);
-  configuration.addProperty(createKey(taskName,type,"phi_max"),        CAP::MATH::twoPi());
+  configuration.addProperty(createKey(taskName,type,"phi_max"),        Datum::MATH::twoPi());
   configuration.addProperty(createKey(taskName,type,"phiEta_nbins"),   720);
   configuration.addProperty(createKey(taskName,type,"phiEtaPt_nbins"), 7200);
   configuration.addProperty(createKey(taskName,type,"phiY_nbins"),     720);
@@ -457,7 +457,7 @@ namespace CAP
   float pt   = momentum.perp();
   float eta  = momentum.pseudorapidity();
   float phi  = momentum.phi();
-  if (phi<0) phi += CAP::MATH::twoPi();
+  if (phi<0) phi += Datum::MATH::twoPi();
   float rapidity = momentum.rapidity();
   h_n1_pt  ->fill(pt,weight);
   if (pt>0) h_n1_ptXS->fill(pt,weight/pt);
@@ -521,4 +521,4 @@ namespace CAP
   }
 
 
-} // namespace CAP
+} // namespace Datum

@@ -10,7 +10,7 @@
 #include "JetFilter.hpp"
 #include "NameHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 JetFilter::JetFilter()
@@ -93,4 +93,4 @@ void JetFilter::configure(const String & ownerName, const String & typeName, con
     }
 }
 
-} // namespace CAP
+} // namespace Datum

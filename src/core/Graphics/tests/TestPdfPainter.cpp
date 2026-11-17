@@ -22,8 +22,8 @@
 #include "PdfPainter.hpp"
 #include "SvgPainter.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {

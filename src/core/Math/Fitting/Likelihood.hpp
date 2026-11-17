@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file Likelihood.hpp
 //! @brief Likelihood and its implementations: chi square, binned Poisson and unbinned likelihoods of a fit.
-#ifndef CAP__MATH__Likelihood
-#define CAP__MATH__Likelihood
+#ifndef DATUM__MATH__Likelihood
+#define DATUM__MATH__Likelihood
 #include <vector>
 #include "String.hpp"
 #include "ChiSquare.hpp"
 #include "FitSelection.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -242,6 +242,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__Likelihood
+#endif // !DATUM__MATH__Likelihood

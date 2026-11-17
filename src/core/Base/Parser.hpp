@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Parser
-#define CAP__Parser
+#ifndef DATUM__Parser
+#define DATUM__Parser
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -18,7 +18,7 @@
 #include <iomanip>
 #include "Object.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -46,6 +46,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif /* Parser_hpp */

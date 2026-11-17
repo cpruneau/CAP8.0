@@ -1,12 +1,12 @@
-#ifndef CAP_Partition
-#define CAP_Partition
+#ifndef DATUM_Partition
+#define DATUM_Partition
 #include <vector>
 #include <map>
 #include "String.hpp"
 #include "Object.hpp"
 #include "MathExceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -27,13 +27,13 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Partition p;
+  //!   Datum::MATH::Partition p;
   //!   p.addDimension(10, 0.0, 1.0, "x");
   //!   p.addDimension(20, -1.0, 1.0, "y");
   //!   int k = p.binIndex(0.25, 0.5);   // global index of the bin containing (0.25,0.5)
   //! @endcode
   //!
-  //! Partition is the base class providing the binning of CAP::MATH::Histogram.
+  //! Partition is the base class providing the binning of Datum::MATH::Histogram.
   //!
   class Partition
   {
@@ -345,6 +345,6 @@ namespace CAP
   };
 
   }  // namespace MATH
-}  // namespace CAP
+}  // namespace Datum
 
 #endif

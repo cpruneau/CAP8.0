@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file FitSelection.hpp
 //! @brief FitSelection: the points (bins, events) used by a fit: a box, and regions included and excluded.
-#ifndef CAP__MATH__FitSelection
-#define CAP__MATH__FitSelection
+#ifndef DATUM__MATH__FitSelection
+#define DATUM__MATH__FitSelection
 #include <string>
 #include <utility>
 #include <vector>
 #include "Region.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -35,11 +35,11 @@ namespace CAP
   //! selection (see cells()).
   //!
   //! @code
-  //!   CAP::MATH::FitSelection selection({ 0.0 }, { 10.0 });
+  //!   Datum::MATH::FitSelection selection({ 0.0 }, { 10.0 });
   //!   selection.exclude(0, 4.5, 5.5);                        // leave the peak out: fit the background
   //!   fitter.setSelection(selection);
   //!
-  //!   CAP::MATH::FitSelection sidebands;                     // two windows in x, any y
+  //!   Datum::MATH::FitSelection sidebands;                     // two windows in x, any y
   //!   sidebands.include(0, 1.0, 2.0).include(0, 8.0, 9.0);
   //! @endcode
   //!
@@ -124,6 +124,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__FitSelection
+#endif // !DATUM__MATH__FitSelection

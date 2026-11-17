@@ -10,7 +10,7 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 const String createName(const String & s0,
@@ -510,4 +510,4 @@ String createKey(const String & taskName,
   return key;
 }
 
-} // namespace CAP
+} // namespace Datum

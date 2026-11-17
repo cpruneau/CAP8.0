@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024-2024
  *
  * *********************************************************************/
-#ifndef CAP__StreamManager
-#define CAP__StreamManager
+#ifndef DATUM__StreamManager
+#define DATUM__StreamManager
 #include <vector>
 #include "String.hpp"
 #include "StreamHelpers.hpp"
 #include "Manager.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class StreamManager : public Manager<stream*>
@@ -256,4 +256,4 @@ public:
 
 }
 
-#endif /* CAP__StreamManager */
+#endif /* DATUM__StreamManager */

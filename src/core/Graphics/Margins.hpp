@@ -1,8 +1,8 @@
-#ifndef CAP__Margins
-#define CAP__Margins
+#ifndef DATUM__Margins
+#define DATUM__Margins
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -65,6 +65,6 @@ namespace CAP
 
 
   } //  namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Margins
+#endif // !DATUM__Margins

@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "JetPairAnalyzer.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 JetPairAnalyzer::JetPairAnalyzer()
@@ -81,4 +81,4 @@ void JetPairAnalyzer::fill(unsigned int first, const std::vector<Jet> & jets __a
     }
 }
 
-} // namespace CAP
+} // namespace Datum

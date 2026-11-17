@@ -9,10 +9,10 @@
  * *********************************************************************/
 //! @file Color.hpp
 //! @brief Color: a color given by its red, green, blue and alpha components (for the painters).
-#ifndef CAP__Color
-#define CAP__Color
+#ifndef DATUM__Color
+#define DATUM__Color
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -20,7 +20,7 @@ namespace CAP
   //!
   //! @brief A color given by its components in [0,1]: red, green, blue, and alpha (opacity).
   //!
-  //! Most attributes of CAP graphics use ROOT color indices (see Painter::rgb()); a Color is used where any color may
+  //! Most attributes of Datum graphics use ROOT color indices (see Painter::rgb()); a Color is used where any color may
   //! be needed, e.g. for the cells of a color map (see Palette, Painter::fillRectangle()).
   //!
   struct Color
@@ -41,6 +41,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Color
+#endif // !DATUM__Color

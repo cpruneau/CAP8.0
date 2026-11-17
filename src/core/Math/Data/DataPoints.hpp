@@ -1,12 +1,12 @@
-#ifndef CAP_MATH_DataPoints
-#define CAP_MATH_DataPoints
+#ifndef DATUM_MATH_DataPoints
+#define DATUM_MATH_DataPoints
 #include <vector>
 #include "String.hpp"
 #include "Object.hpp"
 #include "DataPoint2D.hpp"
 #include "FitRecord.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -23,16 +23,16 @@ namespace CAP
   //! Points can be added one at a time (addPoint) or in bulk (addPoints), either as
   //! DataPoint2D objects or from parallel vectors x, y (and optionally uncertainties).
   //!
-  //! Concrete implementations: CAP::GRAPHICS::Data2DPoints (stores DataPoint2D objects) and
-  //! CAP::GRAPHICS::Data2DColumns (stores one vector per quantity), both through CAP::GRAPHICS::Data2D.
+  //! Concrete implementations: Datum::GRAPHICS::Data2DPoints (stores DataPoint2D objects) and
+  //! Datum::GRAPHICS::Data2DColumns (stores one vector per quantity), both through Datum::GRAPHICS::Data2D.
   //!
   //! Example:
   //! @code
   //!   std::vector<double> x = {1.0, 2.0, 3.0};
   //!   std::vector<double> y = {4.0, 5.0, 6.0};
-  //!   CAP::GRAPHICS::Data2DPoints data;   // any concrete DataPoints
+  //!   Datum::GRAPHICS::Data2DPoints data;   // any concrete DataPoints
   //!   data.addPoints(x, y);
-  //!   data.addPoint(CAP::MATH::DataPoint2D(4.0f, 7.0f));
+  //!   data.addPoint(Datum::MATH::DataPoint2D(4.0f, 7.0f));
   //!   float yMax = data.yMaximum();       // 7
   //! @endcode
   //!
@@ -206,7 +206,7 @@ namespace CAP
   //! @brief Print all points to std::cout, one per line.
   virtual void print() const override;
 
-  //! @name Table of the values (as the data pane of CapGui shows them)
+  //! @name Table of the values (as the data pane of DatumGui shows them)
   //! @{
 
   //! @brief Kind and size, e.g. "Histogram (1D), 100 bins" or "Data points (2D), 25 points". @return text
@@ -284,6 +284,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

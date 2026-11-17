@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file ScanSearch.hpp
 //! @brief ScanSearch: extremum search by evaluating a regular grid, or every candidate of a discrete problem.
-#ifndef CAP__MATH__ScanSearch
-#define CAP__MATH__ScanSearch
+#ifndef DATUM__MATH__ScanSearch
+#define DATUM__MATH__ScanSearch
 #include "SearchEngine.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -46,6 +46,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__ScanSearch
+#endif // !DATUM__MATH__ScanSearch

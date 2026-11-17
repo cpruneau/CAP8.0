@@ -8,15 +8,15 @@
 //! @file AnalysisHistos.hpp
 //! @brief AnalysisHistos: the histogram folders of an analysis task, by combination of filters; the aliases
 //! EventProcessorHistos (analyzers) and CalculatorHistos (calculators of the later phases).
-#ifndef CAP__AnalysisHistos
-#define CAP__AnalysisHistos
+#ifndef DATUM__AnalysisHistos
+#define DATUM__AnalysisHistos
 #include <type_traits>
 #include "AnalysisTask.hpp"
 #include "EventProcessor.hpp"
 #include "HistogramFolder.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Base class of the tasks of an analysis that work on its histogram folders: the analyzer (event processing),
@@ -99,7 +99,7 @@ namespace CAP
   {
   BASE::setDefaultConfiguration();
   _managedHistograms.setDefaultObjectConfiguration(this->name(),"HISTOGRAM",this->configuration());
-  // for RunCAP (one folder per combination of an event filter and FOLDER_RANK particle filters); not read here
+  // for RunDatum (one folder per combination of an event filter and FOLDER_RANK particle filters); not read here
   this->configuration().addProperty(createKey(this->name(),"HISTOGRAM","FOLDER_RANK"),int(RANK));
   }
 
@@ -382,6 +382,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__AnalysisHistos */
+#endif /* DATUM__AnalysisHistos */

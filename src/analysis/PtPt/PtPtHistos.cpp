@@ -18,7 +18,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   PtPtHistos::PtPtHistos()
@@ -336,5 +336,5 @@ namespace CAP
                 h_f4_evt,h_F4_evt,h_R4_evt);
 }
 
-} // namespace CAP
+} // namespace Datum
 

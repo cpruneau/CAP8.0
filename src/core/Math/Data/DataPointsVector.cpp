@@ -5,7 +5,7 @@
 #include <memory>
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -438,4 +438,4 @@ namespace CAP
   std::vector<DataPointsVector> DataPointsVector::loadAllBinary(const String & fileName)       { return loadAllBinaryObjects<DataPointsVector>(fileName); }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

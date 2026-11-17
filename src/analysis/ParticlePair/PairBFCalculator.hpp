@@ -9,8 +9,8 @@
  * *********************************************************************/
 //! @file PairBFCalculator.hpp
 //! @brief PairBFCalculator: the balance-function phase of a pair analysis, for any kind of pair histograms.
-#ifndef CAP__PairBFCalculator
-#define CAP__PairBFCalculator
+#ifndef DATUM__PairBFCalculator
+#define DATUM__PairBFCalculator
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -21,7 +21,7 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -49,7 +49,7 @@ namespace CAP
 //!
 //! There is no class per analysis: the task of an analysis is an instance of this template, registered under its own
 //! name (e.g. ParticlePairBFCalculator = PairBFCalculator<ParticlePairHistos,ParticlePairBFHistos>, registered as
-//! CAP::ParticlePairBFCalculator in ParticlePairTasks.cpp).
+//! Datum::ParticlePairBFCalculator in ParticlePairTasks.cpp).
 //!
 //! @tparam PAIR pair folder: static addDefaultConfiguration(configuration, taskName), hasDerived(), createDerived(),
 //! calculateDerived(single1, single2, same)
@@ -305,6 +305,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__PairBFCalculator */
+#endif /* DATUM__PairBFCalculator */

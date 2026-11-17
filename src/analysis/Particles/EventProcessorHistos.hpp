@@ -7,7 +7,7 @@
  * *********************************************************************/
 //! @file EventProcessorHistos.hpp
 //! @brief EventProcessorHistos and CalculatorHistos: see AnalysisHistos.hpp.
-#ifndef CAP__EventProcessorHistos
-#define CAP__EventProcessorHistos
+#ifndef DATUM__EventProcessorHistos
+#define DATUM__EventProcessorHistos
 #include "AnalysisHistos.hpp"
-#endif /* CAP__EventProcessorHistos */
+#endif /* DATUM__EventProcessorHistos */

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- CAP workflow: Glauber Monte Carlo of Pb-Pb at 5.02 TeV (GlauberGenerator, GlauberAnalyzer), event filters in impact parameter. Load it in RunCAP.py; the nuclei, cross section and profile are in the GENERATION keys of GlauberGenerator. -->
-<CAP version="1">
-  <TASK name="Workflow" class="CAP::Task" severity="INFO" stage="EventProcessing">
+<!-- Datum workflow: Glauber Monte Carlo of Pb-Pb at 5.02 TeV (GlauberGenerator, GlauberAnalyzer), event filters in impact parameter. Load it in RunDatum.py; the nuclei, cross section and profile are in the GENERATION keys of GlauberGenerator. -->
+<Datum version="1">
+  <TASK name="Workflow" class="Datum::Task" severity="INFO" stage="EventProcessing">
     <GROUP name="JOB">
-      <PARAMETER name="OUTPUT_FILE" type="string">RunGlauber.cap</PARAMETER>
+      <PARAMETER name="OUTPUT_FILE" type="string">RunGlauber.datum</PARAMETER>
     </GROUP>
-    <TASK name="FilterCreator" class="CAP::FilterCreator" severity="INFO">
-      <TASK name="EventFilters" class="CAP::EventFilterCreator" severity="INFO">
+    <TASK name="FilterCreator" class="Datum::FilterCreator" severity="INFO">
+      <TASK name="EventFilters" class="Datum::EventFilterCreator" severity="INFO">
         <GROUP name="EVENT_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -26,7 +26,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleFilters" class="CAP::ParticleFilterCreator" severity="INFO">
+      <TASK name="ParticleFilters" class="Datum::ParticleFilterCreator" severity="INFO">
         <GROUP name="PARTICLE_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -46,7 +46,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="EventEfficiencies" class="CAP::EventEfficiencyCreator" severity="INFO">
+      <TASK name="EventEfficiencies" class="Datum::EventEfficiencyCreator" severity="INFO">
         <GROUP name="EVENT_EFFICIENCY">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -66,7 +66,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleEfficiencies" class="CAP::ParticleEfficiencyCreator" severity="INFO">
+      <TASK name="ParticleEfficiencies" class="Datum::ParticleEfficiencyCreator" severity="INFO">
         <GROUP name="PARTICLE_EFFICIENCY">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -86,7 +86,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="EventSmearers" class="CAP::EventSmearerCreator" severity="INFO">
+      <TASK name="EventSmearers" class="Datum::EventSmearerCreator" severity="INFO">
         <GROUP name="EVENT_SMEARER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -106,7 +106,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleSmearers" class="CAP::ParticleSmearerCreator" severity="INFO">
+      <TASK name="ParticleSmearers" class="Datum::ParticleSmearerCreator" severity="INFO">
         <GROUP name="PARTICLE_SMEARER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -126,7 +126,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="Events" class="CAP::EventCreator" severity="INFO">
+      <TASK name="Events" class="Datum::EventCreator" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -151,7 +151,7 @@
           <PARAMETER name="OWNER" type="bool">true</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleDbs" class="CAP::ParticleDbCreator" severity="INFO">
+      <TASK name="ParticleDbs" class="Datum::ParticleDbCreator" severity="INFO">
         <GROUP name="PARTICLE_DB">
           <PARAMETER name="IMPORT" type="bool">true</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -178,7 +178,7 @@
         </GROUP>
       </TASK>
     </TASK>
-    <TASK name="RunGlauber" class="CAP::EventIterator" severity="INFO">
+    <TASK name="RunGlauber" class="Datum::EventIterator" severity="INFO">
       <GROUP name="EVENT">
         <PARAMETER name="USE" type="bool">false</PARAMETER>
         <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -339,7 +339,7 @@
         <PARAMETER name="TITLE" type="string" />
         <PARAMETER name="OWNER" type="bool">false</PARAMETER>
       </GROUP>
-      <TASK name="GlauberGenerator" class="CAP::GlauberGenerator" severity="INFO">
+      <TASK name="GlauberGenerator" class="Datum::GlauberGenerator" severity="INFO">
         <GROUP name="DB">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="N" type="int">1</PARAMETER>
@@ -459,7 +459,7 @@
           <PARAMETER name="OWNER" type="bool">true</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="GlauberAnalyzer" class="CAP::GlauberAnalyzer" severity="INFO">
+      <TASK name="GlauberAnalyzer" class="Datum::GlauberAnalyzer" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -636,7 +636,7 @@
       </TASK>
     </TASK>
   </TASK>
-  <RUNCAP version="2">
+  <RUNDATUM version="2">
     <EventFilter name="MinBias" title="minimum bias">
       <Condition quantity="IMPACT" form="range" minimum="0" maximum="20" />
     </EventFilter>
@@ -654,5 +654,5 @@
       <Parameter name="_dbDisableWeakDecays">false</Parameter>
     </ParticleDb>
     <HISTOGRAMS task="GlauberAnalyzer" same_binning="true" />
-  </RUNCAP>
-</CAP>
+  </RUNDATUM>
+</Datum>

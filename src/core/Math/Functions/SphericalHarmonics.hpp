@@ -1,11 +1,11 @@
-#ifndef CAP_MATH_SphericalHarmonics
-#define CAP_MATH_SphericalHarmonics
+#ifndef DATUM_MATH_SphericalHarmonics
+#define DATUM_MATH_SphericalHarmonics
 #include <vector>
 #include <complex>
 #include "String.hpp"
 #include "Function.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -29,7 +29,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   using namespace CAP::MATH;
+  //!   using namespace Datum::MATH;
   //!   SphericalHarmonics y21(2, 1);
   //!   std::complex<double> v = y21.value(0.3, 1.2);            // Y_2^1(0.3, 1.2)
   //!   double re = y21.evaluateAt(0.3, 1.2);                    // Re Y_2^1
@@ -107,6 +107,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

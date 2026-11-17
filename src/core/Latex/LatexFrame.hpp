@@ -1,8 +1,8 @@
-#ifndef CAP__LatexFrame
-#define CAP__LatexFrame
+#ifndef DATUM__LatexFrame
+#define DATUM__LatexFrame
 #include "LatexElement.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class LatexFrame : public LatexElement
@@ -32,6 +32,6 @@ class LatexFrame : public LatexElement
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexFrame
+#endif // !DATUM__LatexFrame

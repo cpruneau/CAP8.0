@@ -1708,7 +1708,7 @@
       </GROUP>
     </TASK>
   </TASK>
-  <RUNCAP version="2">
+  <RUNDATUM version="2">
     <EventFilter name="ALL" title="ALL" />
     <ParticleFilter name="ALL" title="ALL">
       <Condition quantity="PT" form="range" minimum="0.2" maximum="100" />
@@ -1726,7 +1726,7 @@
       <Parameter name="_dbDisableWeakDecays">false</Parameter>
     </ParticleDb>
     <HISTOGRAMS task="ParticleSingleAnalyzerDerived" same_binning="true" />
-  </RUNCAP>
+  </RUNDATUM>
   <SUBSAMPLES enabled="true" count="10" parallel="16" mode="SUBSAMPLE" stage="" where="LOCAL" prefix="sub_" seed="112133" weights="EVENTS">
     <SLURM host="" cap="" directory="" partition="" time="04:00:00" memory="4G" account="" />
   </SUBSAMPLES>

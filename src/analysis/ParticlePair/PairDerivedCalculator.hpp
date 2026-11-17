@@ -9,8 +9,8 @@
  * *********************************************************************/
 //! @file PairDerivedCalculator.hpp
 //! @brief PairDerivedCalculator: the derived-histogram phase of a pair analysis, for any kind of pair histograms.
-#ifndef CAP__PairDerivedCalculator
-#define CAP__PairDerivedCalculator
+#ifndef DATUM__PairDerivedCalculator
+#define DATUM__PairDerivedCalculator
 #include <vector>
 #include "AnalysisHistos.hpp"
 #include "ParticleSingleHistos.hpp"
@@ -18,7 +18,7 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -62,7 +62,7 @@ void calculatePairDerived(std::vector<PAIR*> & pairFolders, std::vector<Particle
 //!
 //! There is no class per analysis: the task of an analysis is an instance of this template, registered under its own
 //! name (e.g. ParticlePairDerivedCalculator = PairDerivedCalculator<ParticlePairHistos>, registered as
-//! CAP::ParticlePairDerivedCalculator in ParticlePairTasks.cpp).
+//! Datum::ParticlePairDerivedCalculator in ParticlePairTasks.cpp).
 //!
 //! @tparam PAIR pair folder: static addDefaultConfiguration(configuration, taskName), derivedCalculatorName() (name of
 //! the task class, without namespace) and analyzerName() (default name of the analyzer task); hasDerived(),
@@ -123,6 +123,6 @@ public:
   }
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__PairDerivedCalculator */
+#endif /* DATUM__PairDerivedCalculator */

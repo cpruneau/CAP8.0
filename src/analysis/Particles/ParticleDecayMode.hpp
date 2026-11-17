@@ -11,8 +11,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleDecayMode
-#define CAP__ParticleDecayMode
+#ifndef DATUM__ParticleDecayMode
+#define DATUM__ParticleDecayMode
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -22,7 +22,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 
   class ParticleType;
@@ -99,7 +99,7 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif  // CAP__ParticleDecayMode
+#endif  // DATUM__ParticleDecayMode
 

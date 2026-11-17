@@ -12,7 +12,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   EventMerger::EventMerger()
@@ -78,4 +78,4 @@ namespace CAP
   }
 
 
-} // namespace CAP
+} // namespace Datum

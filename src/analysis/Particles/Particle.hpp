@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Particle
-#define CAP__Particle
+#ifndef DATUM__Particle
+#define DATUM__Particle
 #include <vector>
 #include "String.hpp"
 #include "Factory.hpp"
@@ -16,9 +16,9 @@
 #include "VectorLorentz.hpp"
 
 using namespace std;
-using namespace CAP::MATH;
+using namespace Datum::MATH;
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -594,6 +594,6 @@ public:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__Particle */
+#endif /* DATUM__Particle */

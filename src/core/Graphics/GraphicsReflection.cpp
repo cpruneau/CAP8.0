@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //! @file GraphicsReflection.cpp
-//! @brief Canvases and graphs described for the run-time reflection (see Reflection.hpp): usable from CapShell.
+//! @brief Canvases and graphs described for the run-time reflection (see Reflection.hpp): usable from DatumShell.
 #include "Reflection.hpp"
 #include "CanvasRegistry.hpp"
 #include "DataPoints.hpp"
@@ -18,8 +18,8 @@
 
 namespace
 {
-  using namespace CAP;
-  using namespace CAP::GRAPHICS;
+  using namespace Datum;
+  using namespace Datum::GRAPHICS;
 
   //! Write a canvas (or one graph of it) to an SVG or PDF file, the size of the canvas (or of the cell of the graph).
   bool saveCanvas(const Canvas & canvas, const String & fileName, int graph)
@@ -38,13 +38,13 @@ namespace
   }
 } // namespace
 
-CAP_REFLECTION(Graphics)
+DATUM_REFLECTION(Graphics)
 {
-  using namespace CAP;
-  using namespace CAP::GRAPHICS;
-  using namespace CAP::REFLECTION;
+  using namespace Datum;
+  using namespace Datum::GRAPHICS;
+  using namespace Datum::REFLECTION;
 
-  ClassBuilder<Graph>("CAP::GRAPHICS::Graph")
+  ClassBuilder<Graph>("Datum::GRAPHICS::Graph")
     .property("title", static_cast<const String & (Graph::*)() const>(&Graph::title), &Graph::setTitle)
     .property("logX", &Graph::isLogX, &Graph::setLogX)
     .property("logY", &Graph::isLogY, &Graph::setLogY)
@@ -58,7 +58,7 @@ CAP_REFLECTION(Graphics)
     .method("restyleItems", &Graph::restyleItems)
     .method("setAutoRange", &Graph::setAutoRange);
 
-  ClassBuilder<Canvas>("CAP::GRAPHICS::Canvas")
+  ClassBuilder<Canvas>("Datum::GRAPHICS::Canvas")
     .constructor<const String &, const String &, int, int>()
     .constructor<const String &, const String &>()
     .property("name", static_cast<const String & (Canvas::*)() const>(&Canvas::name), &Canvas::setName)

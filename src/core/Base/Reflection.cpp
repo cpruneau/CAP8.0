@@ -17,7 +17,7 @@
 #include <sstream>
 #include "Reflection.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace REFLECTION
   {
@@ -315,6 +315,8 @@ namespace CAP
   {
   auto found = _byName.find(name);
   if (found != _byName.end()) return found->second.get();
+  // CAP::X: a name written before Datum 1.0 (the namespace was CAP)
+  if (name.compare(0,5,"CAP::")==0) return find("Datum::"+name.substr(5));
   // the name without its namespaces, if no other class has it
   const ClassInfo * match = nullptr;
   for (const auto & e : _byName)
@@ -387,4 +389,4 @@ namespace CAP
   } // namespace Detail
 
   } // namespace REFLECTION
-} // namespace CAP
+} // namespace Datum

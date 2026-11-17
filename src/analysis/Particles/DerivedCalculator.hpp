@@ -7,14 +7,14 @@
  * *********************************************************************/
 //! @file DerivedCalculator.hpp
 //! @brief DerivedCalculator: the derived-histogram phase of an analysis whose folders are computed one by one.
-#ifndef CAP__DerivedCalculator
-#define CAP__DerivedCalculator
+#ifndef DATUM__DerivedCalculator
+#define DATUM__DerivedCalculator
 #include <vector>
 #include "AnalysisHistos.hpp"
 #include "Exceptions.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -28,7 +28,7 @@ namespace CAP
 //!
 //! There is no class per analysis: the task of an analysis is an instance of this template, registered under its own
 //! name (e.g. GlobalDerivedCalculator = DerivedCalculator<GlobalHistos,1>, declared in GlobalHistos.hpp and registered
-//! as CAP::GlobalDerivedCalculator in GlobalTasks.cpp).
+//! as Datum::GlobalDerivedCalculator in GlobalTasks.cpp).
 //!
 //! @tparam HISTOS histogram folder: static addDefaultConfiguration(configuration, taskName), derivedCalculatorName()
 //! (name of the task class, without namespace) and analyzerName() (default name of the analyzer task); hasDerived(),
@@ -93,6 +93,6 @@ public:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__DerivedCalculator */
+#endif /* DATUM__DerivedCalculator */

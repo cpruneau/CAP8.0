@@ -17,7 +17,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 EventSmearer::EventSmearer()
@@ -68,4 +68,4 @@ void EventSmearer::smear(const Event & source __attribute__((unused)),
 
 }
 
-} // namespace CAP
+} // namespace Datum

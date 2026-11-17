@@ -10,12 +10,12 @@
 //! @file ParticleFlowAnalyzer.hpp
 //! @brief ParticleFlowAnalyzer: analysis of anisotropic flow by multi-particle cumulants (any harmonic and order, with
 //! or without a rapidity gap) and by the scalar product method, integral and differential.
-#ifndef CAP__ParticleFlowAnalyzer
-#define CAP__ParticleFlowAnalyzer
+#ifndef DATUM__ParticleFlowAnalyzer
+#define DATUM__ParticleFlowAnalyzer
 #include "EventProcessorHistos.hpp"
 #include "ParticleFlowHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -80,6 +80,6 @@ protected:
   std::vector<unsigned int> _poiSlots;
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticleFlowAnalyzer */
+#endif /* DATUM__ParticleFlowAnalyzer */

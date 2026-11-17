@@ -10,15 +10,15 @@
 //! @file JetFilter.hpp
 //! @brief JetFilter: selection of jets on their kinematics and their rank in the event; JetFilterCreator: the task
 //! creating the jet filters of a job (JET_FILTER).
-#ifndef CAP__JetFilter
-#define CAP__JetFilter
+#ifndef DATUM__JetFilter
+#define DATUM__JetFilter
 #include "Filter.hpp"
 #include "ManagedObject.hpp"
 #include "ObjectCreator.hpp"
 #include "Configuration.hpp"
 #include "Jet.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -78,6 +78,6 @@ public:
   Task * clone() override { return new JetFilterCreator(*this); }
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetFilter */
+#endif /* DATUM__JetFilter */

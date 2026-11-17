@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleDecayerTask
-#define CAP__ParticleDecayerTask
+#ifndef DATUM__ParticleDecayerTask
+#define DATUM__ParticleDecayerTask
 #include "EventProcessor.hpp"
 #include "Event.hpp"
 #include "EventFilter.hpp"
@@ -20,7 +20,7 @@
 #include "ParticleSmear.hpp"
 #include "ParticleDecayer.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -57,6 +57,6 @@ public:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticleDecayerTask */
+#endif /* DATUM__ParticleDecayerTask */

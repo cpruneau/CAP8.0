@@ -10,12 +10,12 @@
 //! @file JetPairAnalyzer.hpp
 //! @brief JetPairAnalyzer: pairs of jets (e.g. leading and subleading), selected by jet pair filters, and their
 //! histograms: azimuthal separation, acoplanarity, momentum balance, mass.
-#ifndef CAP__JetPairAnalyzer
-#define CAP__JetPairAnalyzer
+#ifndef DATUM__JetPairAnalyzer
+#define DATUM__JetPairAnalyzer
 #include "JetTask.hpp"
 #include "JetPairHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -70,6 +70,6 @@ protected:
   std::vector<JetPair> _selected;                      //!< work: the pairs accepted by a pair filter
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetPairAnalyzer */
+#endif /* DATUM__JetPairAnalyzer */

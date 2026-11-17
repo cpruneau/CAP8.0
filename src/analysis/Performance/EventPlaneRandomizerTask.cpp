@@ -12,7 +12,7 @@
 #include "MathConstants.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 EventPlaneRandomizerTask::EventPlaneRandomizerTask()
@@ -27,7 +27,7 @@ EventProcessor()
 
 void EventPlaneRandomizerTask::execute()
 {
-  double eventAngle= CAP::MATH::twoPi() * CAP::MATH::randomGenerator().random();
+  double eventAngle= Datum::MATH::twoPi() * Datum::MATH::randomGenerator().random();
   Event & theEvent = event();
   for (auto & particle : theEvent.particles())
     {
@@ -37,4 +37,4 @@ void EventPlaneRandomizerTask::execute()
   theEvent.invalidateSelections();    // particles changed in place: the selections are made again
 }
 
-} // namespace CAP
+} // namespace Datum

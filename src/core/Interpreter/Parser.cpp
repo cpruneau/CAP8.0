@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //! @file Parser.cpp
-//! @brief Parser of the CAP command language (recursive descent).
+//! @brief Parser of the Datum command language (recursive descent).
 //!
 //! Grammar, from the lowest precedence to the highest:
 //! @code
@@ -28,7 +28,7 @@
 #include "Ast.hpp"
 #include "Lexer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace INTERPRETER
   {
@@ -382,4 +382,4 @@ namespace CAP
   }
 
   } // namespace INTERPRETER
-} // namespace CAP
+} // namespace Datum

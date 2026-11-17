@@ -5,22 +5,22 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPSubSamples.py -- sub-samples of a workflow of RunDatum.py, and their combination (SubSampleStatCalculator).
+RunDatumSubSamples.py -- sub-samples of a workflow of RunDatum.py, and their combination (SubSampleStatCalculator).
 
 A workflow is run as N independent jobs, the sub-samples, each with its own seeds, in the directories
 <output>/<prefix>000, <prefix>001, ... of the output directory. Their outputs are then combined by the task
-CAP::SubSampleStatCalculator (a CAP job of its own), in one of the modes:
+Datum::SubSampleStatCalculator (a Datum job of its own), in one of the modes:
   * Sub-sample average (SUBSAMPLE): each sub-sample runs the stages up to the stage combined; its output file is
     averaged over the sub-samples, with the uncertainty of the mean;
   * Jackknife on results: the same runs; the delete-one jackknife of the output files of the stage combined;
   * Jackknife through stages: the sub-samples run event processing only; the later stages (Derived Histos, Balance
     Fct, up to the stage combined) are run by the combination on the whole sample and on each replica (the sample
     without one sub-sample), so that the nonlinear observables are computed from (nearly) all the statistics.
-The jackknife also writes the bias-corrected values, to a file of their own (<output>_biasCorrected.cap).
+The jackknife also writes the bias-corrected values, to a file of their own (<output>_biasCorrected.datum).
 
 Seeds: in the workflow file of sub-sample k (<output>/<prefix>k.xml), every parameter Seed or SeedValue of the tasks
 (BasicEventGen Random:Seed, PythiaEventGenerator SeedValue, ...) is increased by k and the matching SetSeed switches are
-turned on; the seed of gRandom (key JOB:SEED of the task CAP runs, see CAP.cxx) is the base seed + k.
+turned on; the seed of gRandom (key JOB:SEED of the task Datum runs, see Datum.cxx) is the base seed + k.
 
 Where: the sub-samples run on this computer (Local: several at once, each running its stages in order), or on a Slurm
 cluster (Slurm): RunDatum writes the files of the production (the workflow files of the sub-samples and an sbatch script
@@ -49,7 +49,7 @@ import subprocess
 import threading
 import xml.etree.ElementTree as ET
 
-#: Modes of the combination (CAP::SubSampleStatCalculator), and their titles.
+#: Modes of the combination (Datum::SubSampleStatCalculator), and their titles.
 SUBSAMPLE, JACKKNIFE, JACKKNIFE_STAGES = "SUBSAMPLE", "JACKKNIFE", "JACKKNIFE_STAGES"
 MODES = (SUBSAMPLE, JACKKNIFE, JACKKNIFE_STAGES)
 MODE_TITLES = {SUBSAMPLE: "Sub-sample average", JACKKNIFE: "Jackknife on results",
@@ -69,7 +69,7 @@ SET_SEED_KEY = re.compile(r"(?:^|:)SetSeed$")
 MAX_SEED = 900000000
 #: Name of the task of the combination, and files of the production.
 COMBINE_TASK = "SubSampleCombine"
-COMBINE_FILE, BASE_FILE, SBATCH_FILE = "RunCAP_combine.xml", "RunCAP_workflow.xml", "submit.sbatch"
+COMBINE_FILE, BASE_FILE, SBATCH_FILE = "RunDatum_combine.xml", "RunDatum_workflow.xml", "submit.sbatch"
 
 
 class SlurmSettings:
@@ -79,13 +79,13 @@ class SlurmSettings:
 
     def __init__(self):
         self.host = ""          # user@login node (ssh)
-        self.cap = ""           # CAP directory on the cluster (bin/Datum, lib, DB)
+        self.cap = ""           # Datum directory on the cluster (bin/Datum, lib, DB)
         self.directory = ""     # directory of the production on the cluster
         self.partition = ""
         self.time = "04:00:00"
         self.memory = "4G"
         self.account = ""
-        self.setup = ""         # lines run before CAP (e.g. module load root pythia gsl)
+        self.setup = ""         # lines run before Datum (e.g. module load root pythia gsl)
 
 
 class SubSampleSettings:
@@ -197,7 +197,7 @@ def check_settings(settings, api, stages):
             errors.append("The jackknife through stages needs a later stage to combine (Derived Histos or Balance Fct).")
     errors += check_pthat(settings, api, stages, present)
     if settings.where == SLURM:
-        for name, title in (("host", "host"), ("cap", "CAP directory"), ("directory", "production directory")):
+        for name, title in (("host", "host"), ("cap", "Datum directory"), ("directory", "production directory")):
             if not getattr(settings.slurm, name).strip():
                 errors.append("Slurm: enter the %s (Slurm…)." % title)
     return errors
@@ -211,7 +211,7 @@ def _tasks_of(tasks):
 
 def pthat_generators(tasks):
     """The PYTHIA generators of tasks (and subtasks), whose pT-hat range is set per job."""
-    return [t for t in _tasks_of(tasks) if t.cls.replace("CAP::", "") == PTHAT_GENERATOR]
+    return [t for t in _tasks_of(tasks) if t.cls.replace("Datum::", "") == PTHAT_GENERATOR]
 
 
 def check_pthat(settings, api, stages, present):
@@ -333,12 +333,29 @@ def pthat_tasks(tasks, settings, j):
             p.value = "%.17g" % value
 
 
+#: extension of Datum files; those of CAP (before Datum 1.0) end with .cap, still read and written
+DATUM_EXTENSION, FORMER_EXTENSION = ".datum", ".cap"
+
+
+def datum_stem(name):
+    """File name without its extension (.datum, .cap or .root)."""
+    for extension in (DATUM_EXTENSION, FORMER_EXTENSION, ".root"):
+        if name.endswith(extension):
+            return name[:-len(extension)]
+    return name
+
+
+def datum_file_name(name):
+    """Name of the Datum file of a configured name: as is with .datum or .cap; otherwise with .datum (in place of .root)."""
+    return name if name.endswith((DATUM_EXTENSION, FORMER_EXTENSION)) else datum_stem(name) + DATUM_EXTENSION
+
+
 def output_file(api, stages, library, templates, jobs, stage):
-    """Output file of the job of a stage (its OUTPUT_FILE, or <task CAP runs>.cap)."""
+    """Output file of the job of a stage (its OUTPUT_FILE, or <task Datum runs>.datum)."""
     name = (jobs.get(stage) or {}).get("OUTPUT_FILE") or ""
     if not name:
-        name = api.run_root_name(stages[stage], library, templates, stage) + ".cap"
-    return name if name.endswith(".cap") else name[:-5] + ".cap" if name.endswith(".root") else name + ".cap"
+        name = api.run_root_name(stages[stage], library, templates, stage) + DATUM_EXTENSION
+    return datum_file_name(name)
 
 
 class Production:
@@ -347,10 +364,10 @@ class Production:
     def __init__(self):
         self.directory = ""
         self.files = []           # workflow file of each sub-sample
-        self.names = {}           # {stage: name of the task CAP runs}
+        self.names = {}           # {stage: name of the task Datum runs}
         self.stages = []          # stages run by each sub-sample
         self.base = ""            # the workflow, without seeds (jackknife through stages)
-        self.combine = ""         # CAP file of the combination
+        self.combine = ""         # Datum file of the combination
         self.result = ""          # output file of the combination
         self.sbatch = ""          # sbatch script (Slurm)
         self.seeds = []           # keys of the seeds changed
@@ -358,8 +375,8 @@ class Production:
 
 
 def write_production(directory, settings, api, stages, library, templates, jobs, subsample_files=True):
-    """Write the workflow files of the sub-samples (<directory>/<prefix>k.xml), the workflow (RunCAP_workflow.xml),
-    the configuration of the combination (RunCAP_combine.xml) and, for Slurm, the sbatch script (without
+    """Write the workflow files of the sub-samples (<directory>/<prefix>k.xml), the workflow (RunDatum_workflow.xml),
+    the configuration of the combination (RunDatum_combine.xml) and, for Slurm, the sbatch script (without
     subsample_files: only the workflow and the combination, to combine sub-samples run earlier). Returns a Production.
     Raises ValueError for invalid settings and OSError if a file cannot be written."""
     errors = check_settings(settings, api, stages)
@@ -402,12 +419,12 @@ def write_production(directory, settings, api, stages, library, templates, jobs,
 
 
 def write_combination(path, directory, settings, api, stages, library, templates, jobs, workflow):
-    """Write the configuration of the CAP job combining the sub-samples. Returns the name of its output file."""
+    """Write the configuration of the Datum job combining the sub-samples. Returns the name of its output file."""
     last = combined_stage(settings, api, stages)
     first = subsample_stages(settings, api, stages)[-1]       # stage whose outputs are read
     imported = output_file(api, stages, library, templates, jobs, first)
-    stem = output_file(api, stages, library, templates, jobs, last)[:-4]
-    result = "%s_%s.cap" % (stem, "SubSample" if settings.mode == SUBSAMPLE else "Jackknife")
+    stem = datum_stem(output_file(api, stages, library, templates, jobs, last))
+    result = "%s_%s%s" % (stem, "SubSample" if settings.mode == SUBSAMPLE else "Jackknife", DATUM_EXTENSION)
     mode = "SUBSAMPLE" if settings.mode == SUBSAMPLE else "JACKKNIFE"
     replica = jackknife_stages(settings, api, stages)
     params = [("HISTOGRAM:IMPORT:PATH", directory), ("HISTOGRAM:IMPORT:FILE_NAME", imported),
@@ -418,8 +435,8 @@ def write_combination(path, directory, settings, api, stages, library, templates
               ("JOB:OUTPUT_FILE", "NONE")]
     if settings.pthat():
         params[-1:-1] = [("PTHAT:BINS", str(settings.nbins())), ("PTHAT:NORMALIZATION", settings.normalization)]
-    root = ET.Element("CAP", {"version": "1"})
-    task = ET.SubElement(root, "TASK", {"name": COMBINE_TASK, "class": "CAP::SubSampleStatCalculator",
+    root = ET.Element("Datum", {"version": "1"})
+    task = ET.SubElement(root, "TASK", {"name": COMBINE_TASK, "class": "Datum::SubSampleStatCalculator",
                                         "severity": "INFO"})
     groups = {}
     for key, value in params:
@@ -457,7 +474,7 @@ def sbatch_script(settings, production):
     slurm = settings.slurm
     remote = slurm.directory.rstrip("/")
     cap = slurm.cap.rstrip("/")
-    name = "CAP_" + os.path.basename(production.directory.rstrip("/"))
+    name = "DATUM_" + os.path.basename(production.directory.rstrip("/"))
     lines = ["#!/bin/bash",
              "# Sub-samples of a Datum workflow, written by RunDatum.py: one task of the array per sub-sample.",
              "#SBATCH --job-name=%s" % name,
@@ -471,11 +488,13 @@ def sbatch_script(settings, production):
             lines.append("#SBATCH --%s=%s" % (option, value.strip()))
     lines += ["", "set -e"]
     lines += [l for l in slurm.setup.splitlines() if l.strip()]
-    lines += ["export CAP_ROOT_PATH=%s" % shlex.quote(cap),
-              "export CAP_DATABASE_PATH=$CAP_ROOT_PATH/DB/",
-              "export CAP_PROJECTS_PATH=$CAP_ROOT_PATH/projects/",
-              "export LD_LIBRARY_PATH=$CAP_ROOT_PATH/lib:${LD_LIBRARY_PATH:-}",
-              "export DYLD_LIBRARY_PATH=$CAP_ROOT_PATH/lib:${DYLD_LIBRARY_PATH:-}",
+    lines += ["export DATUM_ROOT_PATH=%s" % shlex.quote(cap),
+              "export DATUM_DATABASE_PATH=$DATUM_ROOT_PATH/DB/",
+              "export DATUM_PROJECTS_PATH=$DATUM_ROOT_PATH/projects/",
+              "export LD_LIBRARY_PATH=$DATUM_ROOT_PATH/lib:${LD_LIBRARY_PATH:-}",
+              "export DYLD_LIBRARY_PATH=$DATUM_ROOT_PATH/lib:${DYLD_LIBRARY_PATH:-}",
+              "export CAP_ROOT_PATH=$DATUM_ROOT_PATH CAP_DATABASE_PATH=$DATUM_DATABASE_PATH "
+              "CAP_PROJECTS_PATH=$DATUM_PROJECTS_PATH      # their former names, read by a build of CAP",
               ("K=$(printf '%%03d_pthat%%02d' $((SLURM_ARRAY_TASK_ID / %d)) $((SLURM_ARRAY_TASK_ID %% %d)))"
                % (settings.nbins(), settings.nbins())) if settings.pthat() else
               "K=$(printf '%%03d' $SLURM_ARRAY_TASK_ID)",
@@ -483,8 +502,8 @@ def sbatch_script(settings, production):
               "OUT=$WORK/%s$K" % settings.prefix,
               "mkdir -p $OUT",
               "cd $OUT",
-              "DATUM=$CAP_ROOT_PATH/bin/Datum",
-              "[ -x \"$DATUM\" ] || DATUM=$CAP_ROOT_PATH/bin/CAP      # built before the program was named Datum"]
+              "DATUM=$DATUM_ROOT_PATH/bin/Datum",
+              "[ -x \"$DATUM\" ] || DATUM=$DATUM_ROOT_PATH/bin/CAP      # built before the program was named Datum"]
     for s in production.stages:
         lines.append("$DATUM %s $WORK/ %s$K.xml $OUT/" % (production.names[s], settings.prefix))
     lines.append("echo \"Job $K done\"")
@@ -513,7 +532,7 @@ def submit_commands(production, settings):
 
 def status_commands(production, settings):
     host, remote = settings.slurm.host.strip(), remote_paths(production, settings)
-    name = "CAP_" + os.path.basename(production.directory.rstrip("/"))
+    name = "DATUM_" + os.path.basename(production.directory.rstrip("/"))
     files = " ".join("%s/%s*/%s" % (shlex.quote(remote), settings.prefix, f) for f in production.outputs[-1:])
     command = ("squeue --me --name=%s; echo; echo \"Sub-samples done: $(ls %s 2>/dev/null | wc -l) of %d\""
                % (name, files, settings.njobs()))
@@ -525,7 +544,8 @@ def fetch_commands(production, settings):
     host, remote = settings.slurm.host.strip(), remote_paths(production, settings)
     local = production.directory.rstrip("/") + "/"
     return [("Copying the outputs of the sub-samples", ["rsync", "-a", "-m", "--include=%s*/" % settings.prefix,
-                                                         "--include=logs/", "--include=*.cap", "--include=*.log",
+                                                         "--include=logs/", "--include=*.datum", "--include=*.cap",
+                                                         "--include=*.log",
                                                          "--exclude=*", "%s:%s/" % (host, remote), local], local)]
 
 
@@ -789,7 +809,7 @@ def SlurmDialog(parent, settings, changed):
     frame = ttk.Frame(window, padding=10)
     frame.pack(fill=tk.BOTH, expand=True)
     rows = (("host", "Login host (user@host):", "ssh must log in without a password (ssh keys)"),
-            ("cap", "CAP directory on the cluster:", "Holds bin/Datum, lib and DB (CAP built on the cluster)"),
+            ("cap", "Datum directory on the cluster:", "Holds bin/Datum, lib and DB (Datum built on the cluster)"),
             ("directory", "Production directory on the cluster:", "Where the workflow files, the outputs of the "
                                                                   "sub-samples and the logs go"),
             ("partition", "Partition:", ""), ("time", "Time limit:", "e.g. 04:00:00"),
@@ -802,7 +822,7 @@ def SlurmDialog(parent, settings, changed):
         if tip:
             ttk.Label(frame, text=tip, foreground="gray40").grid(row=r, column=2, sticky="w", padx=6)
         entries[name] = var
-    ttk.Label(frame, text="Setup (run before CAP):").grid(row=len(rows), column=0, sticky="nw", pady=2)
+    ttk.Label(frame, text="Setup (run before Datum):").grid(row=len(rows), column=0, sticky="nw", pady=2)
     setup = tk.Text(frame, width=48, height=5)
     setup.insert("1.0", settings.slurm.setup)
     setup.grid(row=len(rows), column=1, sticky="ew", pady=2)

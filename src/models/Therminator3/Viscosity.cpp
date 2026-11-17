@@ -28,7 +28,7 @@
 #include "Viscosity.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   Viscosity::Viscosity()
@@ -75,4 +75,4 @@ namespace CAP
   _shear[aIndex] = aShear;
   }
   
-} // namespace CAP
+} // namespace Datum

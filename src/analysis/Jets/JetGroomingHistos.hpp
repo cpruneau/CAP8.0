@@ -10,14 +10,14 @@
 //! @file JetGroomingHistos.hpp
 //! @brief JetGroomingHistos: the histograms of the groomed jets of one combination of an event filter, a particle
 //! filter, jet settings, a jet filter and a jet groomer.
-#ifndef CAP__JetGroomingHistos
-#define CAP__JetGroomingHistos
+#ifndef DATUM__JetGroomingHistos
+#define DATUM__JetGroomingHistos
 #include <vector>
 #include "HistogramFolder.hpp"
 #include "Configuration.hpp"
 #include "JetGroomer.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -90,6 +90,6 @@ protected:
   Histogram * h_pt;  Histogram * h_mass;  Histogram * h_mult;  Histogram * h_ptLoss;  Histogram * h_massVsMass;
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetGroomingHistos */
+#endif /* DATUM__JetGroomingHistos */

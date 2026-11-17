@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file Region.hpp
 //! @brief Region: a box made of intervals along some of the dimensions of a space.
-#ifndef CAP__MATH__Region
-#define CAP__MATH__Region
+#ifndef DATUM__MATH__Region
+#define DATUM__MATH__Region
 #include <string>
 #include <utility>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -80,6 +80,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__Region
+#endif // !DATUM__MATH__Region

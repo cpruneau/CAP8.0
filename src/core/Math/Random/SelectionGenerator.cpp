@@ -11,19 +11,19 @@
 #include "Exceptions.hpp"
 
 
-CAP::SelectionGenerator::SelectionGenerator()
+Datum::SelectionGenerator::SelectionGenerator()
 :
 cumulativeProbability()
 {    }
 
-CAP::SelectionGenerator::SelectionGenerator(const std::vector<double> & probabilities)
+Datum::SelectionGenerator::SelectionGenerator(const std::vector<double> & probabilities)
 :
 cumulativeProbability()
 {
   initializeWith(probabilities);
 }
 
-CAP::SelectionGenerator & CAP::SelectionGenerator::operator=(const CAP::SelectionGenerator & source)
+Datum::SelectionGenerator & Datum::SelectionGenerator::operator=(const Datum::SelectionGenerator & source)
 {
   if (this!=&source)
     {
@@ -32,18 +32,18 @@ CAP::SelectionGenerator & CAP::SelectionGenerator::operator=(const CAP::Selectio
   return *this;
 }
 
-void CAP::SelectionGenerator::initializeWith(const std::vector<double> & probabilities)
+void Datum::SelectionGenerator::initializeWith(const std::vector<double> & probabilities)
 {
   cumulativeProbability.clear();
   int n = probabilities.size();
-  if (n==0) throw CAP::Exception("Empty probability vector","SelectionGenerator::initializeWith()");
+  if (n==0) throw Datum::Exception("Empty probability vector","SelectionGenerator::initializeWith()");
   double sum = 0.0;
   for (int k=0; k<n; k++)
     {
-    if (probabilities[k]<0.0) throw CAP::Exception("Negative probability","SelectionGenerator::initializeWith()");
+    if (probabilities[k]<0.0) throw Datum::Exception("Negative probability","SelectionGenerator::initializeWith()");
     sum += probabilities[k];
     }
-  if (!(sum>0.0)) throw CAP::Exception("Probabilities sum to zero","SelectionGenerator::initializeWith()");
+  if (!(sum>0.0)) throw Datum::Exception("Probabilities sum to zero","SelectionGenerator::initializeWith()");
   double prob = 0.0;
   for (int kk=0; kk<n; kk++)
     {
@@ -53,11 +53,11 @@ void CAP::SelectionGenerator::initializeWith(const std::vector<double> & probabi
 }
 
 
-int CAP::SelectionGenerator::generate()
+int Datum::SelectionGenerator::generate()
 {
-  double v = CAP::MATH::randomGenerator().random();
+  double v = Datum::MATH::randomGenerator().random();
   int n = cumulativeProbability.size();
-  if (n==0) throw CAP::Exception("Generator not initialized","SelectionGenerator::generate()");
+  if (n==0) throw Datum::Exception("Generator not initialized","SelectionGenerator::generate()");
   for (int k=0; k<n; k++)
   {
   if (v <= cumulativeProbability[k]) return k;

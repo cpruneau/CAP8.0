@@ -10,8 +10,8 @@
 //! @file TestFileLoading.cpp
 //! @brief Test program of load(), unload(), isLoaded() and save() of the file classes (run by ctest).
 //
-// TestFileLoading -- tests of load(), unload(), isLoaded() and save() for TxtFile, XmlFile, BinaryFile and CapFile,
-// of BinaryFile::readRange(), and of the moves of Folder used when reading a CapFile.
+// TestFileLoading -- tests of load(), unload(), isLoaded() and save() for TxtFile, XmlFile, BinaryFile and DatumFile,
+// of BinaryFile::readRange(), and of the moves of Folder used when reading a DatumFile.
 //
 // Works in a temporary directory, removed at the end. Prints each failed check and exits with the number of failures.
 //
@@ -19,18 +19,20 @@
 #include <cstdlib>
 #include <fstream>
 #include <functional>
+#include <memory>
 #include <string>
 #include <utility>
 #include <unistd.h>
 #include "BinaryFile.hpp"
-#include "CapFile.hpp"
+#include "BinaryIO.hpp"
+#include "DatumFile.hpp"
 #include "Directory.hpp"
 #include "LongParameter.hpp"
 #include "TxtFile.hpp"
 #include "XmlFile.hpp"
 
-using namespace CAP;
-namespace FS = CAP::FileSystem;
+using namespace Datum;
+namespace FS = Datum::FileSystem;
 
 namespace
 {
@@ -52,7 +54,7 @@ void checkThrows(const std::function<void()> & f, const std::string & what, int 
   check(thrown, what + " should throw", line);
 }
 
-long parameter(const CapFile & file, const char * path)
+long parameter(const DatumFile & file, const char * path)
 {
   const LongParameter * p = file.get<LongParameter>(path);
   return p ? p->value() : -999;
@@ -79,7 +81,7 @@ void writeBytes(const String & path, const std::string & bytes)
 //! @brief Run the checks. @return number of failed checks (0: all passed)
 int main()
 {
-  char buffer[] = "/tmp/CapTestFileLoading.XXXXXX";
+  char buffer[] = "/tmp/DatumTestFileLoading.XXXXXX";
   Directory top{String(mkdtemp(buffer))};
 
   // ---- TxtFile
@@ -173,11 +175,11 @@ int main()
     CHECK(target.empty());
   }
 
-  // ---- CapFile
+  // ---- DatumFile
   {
     String path = top.join("run42.cap");
     {
-      CapFile out(path, File::kWriteOnly);
+      DatumFile out(path, File::kWriteOnly);
       out.setFolderName("run42");
       out.addFolder("singles")->add(new LongParameter("n", 7), "n");
       out.exportParameter("events", 1000);
@@ -188,7 +190,7 @@ int main()
       out.exportParameter("events", 2000);
       out.append();                                     // a second folder in the same file
     }
-    CapFile in(path, File::kReadOnly);
+    DatumFile in(path, File::kReadOnly);
     in.load();
     CHECK(in.isLoaded() && in.folderName().equalTo("run42") && parameter(in, "events")==1000 && parameter(in, "singles/n")==7);
     CHECK(in.folder("singles")->parent()==&in.folder());
@@ -201,22 +203,63 @@ int main()
     in.load(File::Loading::kLazy);                      // not available yet: everything
     CHECK(in.isLoaded() && parameter(in, "singles/n")==7);
 
-    // corrupted, truncated, not a CAP file, no folder: refused, and the folder held is unchanged
+    // corrupted, truncated, not a Datum file, no folder: refused, and the folder held is unchanged
     std::string bytes = fileBytes(path);
     std::string corrupted = bytes;
     corrupted[bytes.size()/4] ^= 0x55;
     writeBytes(top.join("corrupted.cap"), corrupted);
     writeBytes(top.join("truncated.cap"), bytes.substr(0, 20));          // inside the first record
-    writeBytes(top.join("text.cap"), "not a CAP file");
+    writeBytes(top.join("text.cap"), "not a Datum file");
     writeBytes(top.join("empty.cap"), "");
     for (const char * name : {"corrupted.cap", "truncated.cap", "text.cap", "empty.cap"})
       {
-      CapFile file(top.join(name), File::kReadOnly);
+      DatumFile file(top.join(name), File::kReadOnly);
       file.setFolderName("kept");
       bool thrown = false;
       try { file.load(); } catch (const FileException &) { thrown = true; }
       check(thrown && file.folderName().equalTo("kept") && !file.isLoaded(), std::string(name) + " refused, folder unchanged", __LINE__);
       }
+  }
+
+  // ---- files of CAP (before Datum 1.0): records "CAP" + letter, extension .cap; still read
+  {
+    {
+      DatumFile out(top.join("current.datum"), File::kWriteOnly);
+      out.setFolderName("run");
+      out.add(new LongParameter("n", 11), "n");
+      out.exportParameter("events", 500);
+      out.save();
+    }
+    // the same file as CAP wrote it: each record retagged, the checksums of the payloads (which hold the records of
+    // the entries) computed again
+    std::ifstream in(top.join("current.datum").data(), std::ios::binary);
+    std::ofstream old(top.join("old.cap").data(), std::ios::binary);
+    std::string tag, payload;
+    unsigned int version = 0;
+    int records = 0;
+    while (readBinaryRecord(in, tag, version, payload, "current.datum"))
+      {
+      for (std::size_t k = payload.find("DTM"); k != std::string::npos; k = payload.find("DTM", k + 3)) payload.replace(k, 3, "CAP");
+      std::string oldTag = "CAP" + tag.substr(3);
+      writeBinaryRecord(old, oldTag.c_str(), version, payload, "old.cap");
+      records++;
+      }
+    old.close();
+    CHECK(records > 0 && fileBytes(top.join("old.cap")).compare(0, 3, "CAP") == 0);
+    DatumFile cap(top.join("old.cap"), File::kReadOnly);
+    cap.load();
+    CHECK(cap.isLoaded() && parameter(cap, "n")==11 && parameter(cap, "events")==500);
+    // names: .datum appended, and a missing x.datum read as x.cap (and the reverse)
+    CHECK(DatumFile::makeFileName("dir", "run").equalTo("dir/run.datum"));
+    CHECK(DatumFile::makeFileName("dir", "run.cap").equalTo("dir/run.cap"));
+    CHECK(DatumFile::makeFileName("", "/abs/run.datum").equalTo("/abs/run.datum"));
+    CHECK(DatumFile::isDatumFileName("a.datum") && DatumFile::isDatumFileName("a.cap") && !DatumFile::isDatumFileName("a.root"));
+    CHECK(DatumFile::existingFileName(top.path(), "old").equalTo(top.join("old.cap")));
+    CHECK(DatumFile::existingFileName(top.path(), "old.datum").equalTo(top.join("old.cap")));
+    CHECK(DatumFile::existingFileName(top.path(), "current.cap").equalTo(top.join("current.datum")));
+    CHECK(DatumFile::existingFileName(top.path(), "none").equalTo(top.join("none.datum")));
+    std::unique_ptr<DatumFile> opened(DatumFile::openOldDatumFile(top.path(), "old"));
+    CHECK(opened->path().equalTo(top.join("old.cap")) && parameter(*opened, "events")==500);
   }
 
   top.remove(true);

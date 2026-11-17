@@ -11,7 +11,7 @@
 #include "ModelKrakowSFO.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   Therminator3::Therminator3()
@@ -211,9 +211,9 @@ namespace CAP
   _createEvents        = configuration.valueBool(  createKey(taskName,typeName,"EVENTS:CREATE"));
   _importModel         = configuration.valueBool(  createKey(taskName,typeName,"MULT:IMPORT"));
   _exportModel         = configuration.valueBool(  createKey(taskName,typeName,"MULT:EXPORT"));
-  _modelImportPath     = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"MULT:IMPORT:PATH")),"CAP_HISTOS_IMPORT_PATH");
+  _modelImportPath     = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"MULT:IMPORT:PATH")),"DATUM_HISTOS_IMPORT_PATH");
   _modelImportFileName = configuration.valueString(createKey(taskName,typeName,"MULT:IMPORT:FILE_NAME"));
-  _modelExportPath     = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"MULT:EXPORT:PATH")),"CAP_HISTOS_EXPORT_PATH");
+  _modelExportPath     = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"MULT:EXPORT:PATH")),"DATUM_HISTOS_EXPORT_PATH");
   _modelExportFileName = configuration.valueString(createKey(taskName,typeName,"MULT:EXPORT:FILE_NAME"));
   typeName = "HISTOGRAM";
   String importPathA;
@@ -227,9 +227,9 @@ namespace CAP
   _exportBaseName = configuration.valueString(createKey(taskName,typeName,"EXPORT:BASE_NAME"));
   exportPathA    = configuration.valueString(createKey(taskName,typeName,"EXPORT:PATH"));
   _forceRewrite   = configuration.valueBool(  createKey(taskName,typeName,"EXPORT:FORCE_REWRITE"));
-  // "DEFAULT", absolute, "./..." or relative to $CAP_HISTOS_IMPORT_PATH / $CAP_HISTOS_EXPORT_PATH
-  _importPath = FileSystem::configuredPath(importPathA,"CAP_HISTOS_IMPORT_PATH");
-  _exportPath = FileSystem::configuredPath(exportPathA,"CAP_HISTOS_EXPORT_PATH");
+  // "DEFAULT", absolute, "./..." or relative to $DATUM_HISTOS_IMPORT_PATH / $DATUM_HISTOS_EXPORT_PATH
+  _importPath = FileSystem::configuredPath(importPathA,"DATUM_HISTOS_IMPORT_PATH");
+  _exportPath = FileSystem::configuredPath(exportPathA,"DATUM_HISTOS_EXPORT_PATH");
   _histograms.configure(taskName,"HISTOGRAM",configuration,0);
   }
 
@@ -285,8 +285,8 @@ namespace CAP
     {
     int temp = 1000*_model->temperature();
     _exportFileName = _exportBaseName + temp;
-    std::unique_ptr<CapFile> outputFile(_forceRewrite ? CapFile::openRecreateCapFile(_exportPath,_exportFileName,true)
-                                                     : CapFile::openNewCapFile(_exportPath,_exportFileName,true));
+    std::unique_ptr<DatumFile> outputFile(_forceRewrite ? DatumFile::openRecreateDatumFile(_exportPath,_exportFileName,true)
+                                                     : DatumFile::openNewDatumFile(_exportPath,_exportFileName,true));
     _histograms.saveTo(*outputFile);
     outputFile->write();
     }
@@ -296,4 +296,4 @@ namespace CAP
   }
 
 
-} // namespace CAP;
+} // namespace Datum;

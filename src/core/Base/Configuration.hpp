@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Configuration
-#define CAP__Configuration
+#ifndef DATUM__Configuration
+#define DATUM__Configuration
 #include "Properties.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -23,7 +23,7 @@ namespace CAP
 //!
 //! Example:
 //! @code
-//!   CAP::Configuration c;
+//!   Datum::Configuration c;
 //!   c.generateKeyValuePairs("Ana","Particle","none",4);   // Ana:Particle0 ... Ana:Particle3 = none
 //!   c.addProperty("Ana:Particle0","pi+");
 //!   std::vector<String> used = c.selectedValues("Ana","Particle","none");   // {"pi+"}
@@ -122,6 +122,6 @@ protected:
   
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif /* Configuration_hpp */

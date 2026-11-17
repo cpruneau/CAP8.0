@@ -18,11 +18,11 @@
 #include "MersenneTwister.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
-  using CAP::MATH::pi;
-  using CAP::MATH::twoPi;
+  using Datum::MATH::pi;
+  using Datum::MATH::twoPi;
 
 
   GlauberAnalyzer::GlauberAnalyzer()
@@ -129,7 +129,7 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,objectType,"area_nBins"),50);
   _configuration.addProperty(createKey(taskName,objectType,"area_min"),0.0);
   _configuration.addProperty(createKey(taskName,objectType,"area_max"),14.0);
-  // for RunCAP: one folder of histograms per event filter, no particle filter (not read here)
+  // for RunDatum: one folder of histograms per event filter, no particle filter (not read here)
   _configuration.addProperty(createKey(taskName,objectType,"FOLDER_RANK"),0);
 
   _managedHistograms.setDefaultObjectConfiguration(taskName,objectType, _configuration);
@@ -267,7 +267,7 @@ namespace CAP
       if (_useRadialProfile)
         {
         double smearRadius = 0.5;// fix me radialProfile->GetRandom();
-        double smearPhi    = twoPi() * CAP::MATH::randomGenerator().random();
+        double smearPhi    = twoPi() * Datum::MATH::randomGenerator().random();
         x += smearRadius*std::cos(smearPhi);
         y += smearRadius*std::sin(smearPhi);
         }
@@ -358,4 +358,4 @@ namespace CAP
   
 
 
-} // namespace CAP
+} // namespace Datum

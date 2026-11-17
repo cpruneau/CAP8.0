@@ -203,14 +203,14 @@ TH2 * setupEffVsEtaPt(int eta_nbins,
 int Test(const TString & path="/Volumes/ClaudeDisc4/OutputFiles/pythiaTest3D/",
            const TString & fileName0="Test.root")
 {
-  TString includeBasePath = getenv("CAP_SRC");
+  TString includeBasePath = getenv("DATUM_SRC");
   loadBase(includeBasePath);
   loadPlotting(includeBasePath);
 
-  using CAP::Configuration;
-  using CAP::CanvasConfiguration;
-  using CAP::GraphConfiguration;
-  using CAP::Plotter;
+  using Datum::Configuration;
+  using Datum::CanvasConfiguration;
+  using Datum::GraphConfiguration;
+  using Datum::Plotter;
 
   Configuration taskConfig;
   Plotter * plotter = new Plotter();
@@ -277,7 +277,7 @@ int Test(const TString & path="/Volumes/ClaudeDisc4/OutputFiles/pythiaTest3D/",
  // plotter->printAllCanvas(path);
 
   }
-  catch (CAP::PropertyException & e)
+  catch (Datum::PropertyException & e)
   {
   e.print();
   }

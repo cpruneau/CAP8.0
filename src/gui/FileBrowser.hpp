@@ -8,9 +8,9 @@
  *
  * *********************************************************************/
 //! @file FileBrowser.hpp
-//! @brief FileBrowser: browser of the CAP files and folders of the CapGui window.
-#ifndef CAP__GUI__FileBrowser
-#define CAP__GUI__FileBrowser
+//! @brief FileBrowser: browser of the Datum files and folders of the DatumGui window.
+#ifndef DATUM__GUI__FileBrowser
+#define DATUM__GUI__FileBrowser
 #include <functional>
 #include <map>
 #include <memory>
@@ -19,16 +19,16 @@
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   class Folder;
-  class CapFile;
+  class DatumFile;
 
   namespace GUI
   {
 
   //!
-  //! @brief Reference to an object of an open CAP file: what the browser passes to the application when an object
+  //! @brief Reference to an object of an open Datum file: what the browser passes to the application when an object
   //! is clicked, and what a drag from the browser carries to a canvas.
   //!
   struct ObjectReference
@@ -38,35 +38,35 @@ namespace CAP
   };
 
   //!
-  //! @brief A CAP file opened by the application and shown in the browser.
+  //! @brief A Datum file opened by the application and shown in the browser.
   //!
   struct BrowserFile
   {
   int    id = -1;                       //!< unique id (not reused)
   String path;                          //!< path of the file on disk (empty for a tree not saved yet)
-  std::shared_ptr<CapFile> file;        //!< contents (the folder tree loaded from the file)
+  std::shared_ptr<DatumFile> file;        //!< contents (the folder tree loaded from the file)
   bool   editable = false;              //!< a tree made in the application (New Tree): folders and copies can be added
   bool   modified = false;              //!< a tree changed since it was made or saved last (asks to be saved when closed)
   String name;                          //!< name shown for a tree (files show the name of their path)
   };
 
   //!
-  //! @brief File browser of CapGui: folders of the file system and the contents of the CAP files.
+  //! @brief File browser of DatumGui: folders of the file system and the contents of the Datum files.
   //!
   //! Several browsers can be open at once (File > New Browser), each with its own files and folders; a file open in two
   //! browsers is read once and shared. Two sections:
-  //! - Files: the CAP files opened in this browser with File > Open (or from the command line) that are not inside a
+  //! - Files: the Datum files opened in this browser with File > Open (or from the command line) that are not inside a
   //!   folder below, and the trees made in it (New Tree).
-  //! - Folders: the folders opened with File > Open Folder, as trees of sub-folders and CAP files. Expanding a CAP
+  //! - Folders: the folders opened with File > Open Folder, as trees of sub-folders and Datum files. Expanding a Datum
   //!   file opens it (onOpenFile) and shows its contents in place.
   //!
-  //! The contents of a CAP file are its Folder tree: folders expand when clicked; clicking an object shows it in the
+  //! The contents of a Datum file are its Folder tree: folders expand when clicked; clicking an object shows it in the
   //! selected graph (onShowObject); an object can also be dragged onto a graph (payload kPayloadType, decoded by
   //! decodePayload()). Right-click menus: on a file (Reload, Close), on a folder (Show All), on an object (Show).
   //! The filter field keeps the objects whose name contains the text (ignoring case), and the folders holding them.
   //!
   //! The browser does not own the files: the application does (setFiles()), and decides what opening, closing and
-  //! showing mean. The browser only draws its contents in the current ImGui window (render()); CapGui owns the window,
+  //! showing mean. The browser only draws its contents in the current ImGui window (render()); DatumGui owns the window,
   //! docked in the main window or standalone.
   //!
   class FileBrowser
@@ -80,9 +80,9 @@ namespace CAP
   //! Number of this browser (1 for the first).
   int number() const { return _number; }
   //! Type of the drag-and-drop payload of an object.
-  static const char * payloadType() { return "CAP_OBJECT"; }
+  static const char * payloadType() { return "DATUM_OBJECT"; }
   //! Type of the drag-and-drop payload of a folder (the whole tree of a file for an empty path).
-  static const char * folderPayloadType() { return "CAP_FOLDER"; }
+  static const char * folderPayloadType() { return "DATUM_FOLDER"; }
   //! @brief Decode a drag-and-drop payload. @param data payload data @param size payload size
   //! @param reference set to the object dragged @return false if the payload is not an object reference
   static bool decodePayload(const void * data, int size, ObjectReference & reference);
@@ -124,7 +124,7 @@ namespace CAP
 
   //! @name What the browser asks the application to do
   //! @{
-  std::function<int(const String & path)>                      onOpenFile;    //!< open a CAP file: id, or -1
+  std::function<int(const String & path)>                      onOpenFile;    //!< open a Datum file: id, or -1
   std::function<void(const ObjectReference & object)>          onShowObject;  //!< show an object
   std::function<void(const ObjectReference & object)>          onShowData;    //!< show the values of an object as a table
   std::function<void(int file, const String & folderPath)>     onShowFolder;  //!< show all the objects of a folder
@@ -142,7 +142,7 @@ namespace CAP
   std::function<void(int file, const String & path)>                           onDuplicate;  //!< copy an entry beside itself
   std::function<void(int file)>                                                onSaveTree;   //!< save a tree to a file
   std::function<void(int file, const String & folderPath)>                     onExportRoot; //!< write a folder to a ROOT file (if ROOT files are supported)
-  std::function<void(int file, const String & folderPath)>                     onSaveCopy;   //!< write a file or folder to a new CAP file
+  std::function<void(int file, const String & folderPath)>                     onSaveCopy;   //!< write a file or folder to a new Datum file
   //! @}
 
   //! @brief Draw the browser in the current window.
@@ -155,11 +155,11 @@ namespace CAP
 
   protected:
 
-  //! Contents of a folder of the file system, as shown: sub-folders and CAP files, or an error
+  //! Contents of a folder of the file system, as shown: sub-folders and Datum files, or an error
   struct Listing
   {
   std::vector<std::string> directories;   //!< names of the sub-folders
-  std::vector<std::string> files;   //!< names of the CAP files
+  std::vector<std::string> files;   //!< names of the Datum files
   std::string error;   //!< why the folder cannot be listed, or empty
   };
 
@@ -210,8 +210,8 @@ namespace CAP
   void renderFile(const BrowserFile & file, const String & label);
   //! @brief Draw a folder of the file system and, if expanded, its contents. @param directory path @param label text shown @param isRoot whether it is one of the folders added
   void renderDirectory(const std::string & directory, const std::string & label, bool isRoot);
-  //! @brief Draw a CAP file of a folder: opened when first expanded. @param path path @param label text shown
-  void renderCapFileInTree(const std::string & path, const std::string & label);
+  //! @brief Draw a Datum file of a folder: opened when first expanded. @param path path @param label text shown
+  void renderDatumFileInTree(const std::string & path, const std::string & label);
   //! @brief Draw the entries of a folder of objects. @param fileId file @param folder folder @param prefix path of the folder in the file
   void renderFolder(int fileId, const Folder & folder, const std::string & prefix, bool editable=false);
   //! @brief Draw one object: click to show, drag onto a graph, right-click for its menu. @param fileId file @param folder folder holding it @param name name @param path path in the file
@@ -224,6 +224,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__FileBrowser
+#endif // !DATUM__GUI__FileBrowser

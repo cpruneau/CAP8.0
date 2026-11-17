@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 Accountant::Accountant(const String & _name, unsigned int size)
@@ -107,7 +107,7 @@ void Accountant::print() const
     }
 }
 
-} // namespace CAP
+} // namespace Datum
 
 
 

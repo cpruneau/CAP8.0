@@ -15,7 +15,7 @@
 #include <cstdlib>
 #include <sstream>
 
-namespace CAP
+namespace Datum
 {
 
   XmlException::XmlException(const String & message, const String & source, int line, int column)
@@ -400,4 +400,4 @@ namespace CAP
   return String(buffer);
   }
 
-} // namespace CAP
+} // namespace Datum

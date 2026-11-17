@@ -1,10 +1,10 @@
-#ifndef CAP__ModelSettings
-#define CAP__ModelSettings
+#ifndef DATUM__ModelSettings
+#define DATUM__ModelSettings
 #include "String.hpp"
 #include "ParticleType.hpp"
 #include <iostream>
 
-namespace CAP
+namespace Datum
 {
   class ModelSettings
   {
@@ -101,6 +101,6 @@ namespace CAP
 
 
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__ModelH_
+#endif // !DATUM__ModelH_

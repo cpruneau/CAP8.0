@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleDecayer
-#define CAP__ParticleDecayer
+#ifndef DATUM__ParticleDecayer
+#define DATUM__ParticleDecayer
 #include <iostream>
 #include <iomanip>
 #include "MersenneTwister.hpp"
@@ -17,7 +17,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -32,14 +32,14 @@ namespace CAP
 class ParticleDecayer
 {
 public:
-  //! @brief Default constructor (uses CAP::MATH::randomGenerator()).
+  //! @brief Default constructor (uses Datum::MATH::randomGenerator()).
   ParticleDecayer();
   //! @brief Destructor.
   virtual ~ParticleDecayer() {}
   //! @brief Set the random number generator. @param _random generator (not owned)
-  void setRandomGenerator(CAP::MATH::RandomGenerator * _random) { random = _random; }
+  void setRandomGenerator(Datum::MATH::RandomGenerator * _random) { random = _random; }
   //! @brief Random number generator. @return generator
-  CAP::MATH::RandomGenerator * getRandomGenerator() { return random; }
+  Datum::MATH::RandomGenerator * getRandomGenerator() { return random; }
 
   //! @brief Two-body decay. @param parentType type of the parent @param parentMomentum its momentum
   //! @param parentPosition its production point @param childType1 type of product 1 @param p1 its momentum (set)
@@ -118,7 +118,7 @@ protected:
   static double   twoPi;
 
   //! Random number generator (not owned).
-  CAP::MATH::RandomGenerator * random;
+  Datum::MATH::RandomGenerator * random;
 
 
 

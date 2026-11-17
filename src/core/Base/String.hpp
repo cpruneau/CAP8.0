@@ -7,8 +7,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__String
-#define CAP__String
+#ifndef DATUM__String
+#define DATUM__String
 #include <cstddef>
 #include <functional>
 #include <iosfwd>
@@ -16,19 +16,19 @@
 #include <type_traits>
 #include <utility>
 
-namespace CAP
+namespace Datum
 {
 
 //!
-//! @brief Character string of CAP: a light replacement for ROOT's TString, built on std::string.
+//! @brief Character string of Datum: a light replacement for ROOT's TString, built on std::string.
 //!
-//! String holds a std::string (it does not inherit from it) and offers the operations used throughout CAP, with the
-//! behaviour of their TString counterparts but CAP-style names (equalTo(), beginsWith(), atof(), ...). It depends on the
+//! String holds a std::string (it does not inherit from it) and offers the operations used throughout Datum, with the
+//! behaviour of their TString counterparts but Datum-style names (equalTo(), beginsWith(), atof(), ...). It depends on the
 //! standard library only.
 //!
 //! <b>Appending numbers.</b> As with TString, appending a number appends its decimal representation:
 //! @code
-//!   CAP::String key = "PARTICLE_";
+//!   Datum::String key = "PARTICLE_";
 //!   key += 3;          // "PARTICLE_3" (std::string would append the character of code 3)
 //!   key += 2.5;        // "PARTICLE_32.5" (doubles are written with 17 significant digits, as TString does)
 //!   key += true;       // "PARTICLE_32.51"
@@ -303,14 +303,14 @@ std::ostream & operator<<(std::ostream & os, const String & s);
 //! @brief Read a white-space delimited word from a stream. @param is stream @param s string read @return is
 std::istream & operator>>(std::istream & is, String & s);
 
-} // namespace CAP
+} // namespace Datum
 
 namespace std
 {
-  //! @brief Hash of a CAP::String, for std::unordered_map and std::unordered_set.
-  template <> struct hash<CAP::String>
+  //! @brief Hash of a Datum::String, for std::unordered_map and std::unordered_set.
+  template <> struct hash<Datum::String>
   {
-    std::size_t operator()(const CAP::String & s) const { return s.hash(); }
+    std::size_t operator()(const Datum::String & s) const { return s.hash(); }
   };
 }
 

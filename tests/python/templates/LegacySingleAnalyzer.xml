@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CAP version="1" type="template">
+<Datum version="1" type="template">
   <!-- Test fixture: a task of the design with numbered lists of folders (HISTOGRAM_1, ...), as the analyzers had
        before they moved to EventProcessorHistos (template of PerformanceAnalyzer). -->
   <TASK name="LegacySingleAnalyzer" class="CAP::LegacySingleAnalyzer" severity="INFO">
@@ -186,4 +186,4 @@
       <PARAMETER name="Drapidity_max" type="double">1</PARAMETER>
     </GROUP>
   </TASK>
-</CAP>
+</Datum>

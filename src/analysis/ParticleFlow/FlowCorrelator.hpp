@@ -10,13 +10,13 @@
 //! @file FlowCorrelator.hpp
 //! @brief FlowVector (the weighted flow vectors Q_{h,p} of a set of particles) and FlowCorrelator (multi-particle
 //! azimuthal correlators of any order and harmonics from flow vectors: the generic framework).
-#ifndef CAP__FlowCorrelator
-#define CAP__FlowCorrelator
+#ifndef DATUM__FlowCorrelator
+#define DATUM__FlowCorrelator
 #include <complex>
 #include <functional>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -122,6 +122,6 @@ namespace CAP
   static double blockCoefficient(unsigned int b);
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__FlowCorrelator */
+#endif /* DATUM__FlowCorrelator */

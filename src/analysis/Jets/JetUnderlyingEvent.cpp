@@ -13,7 +13,7 @@
 #include "Particle.hpp"
 #include "ParticleType.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 Multiplicities constituentMultiplicities(const Jet & jet)
@@ -73,4 +73,4 @@ Multiplicities UnderlyingEventCones::count(const std::vector<Particle*> & partic
   return m;
 }
 
-} // namespace CAP
+} // namespace Datum

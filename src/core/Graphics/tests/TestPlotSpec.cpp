@@ -13,15 +13,15 @@
 #include <fstream>
 #include <string>
 #include <unistd.h>
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "ColorTable.hpp"
 #include "FileSystem.hpp"
 #include "Histogram.hpp"
 #include "PlotSpec.hpp"
 #include "PptxPainter.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {
@@ -73,10 +73,10 @@ const char * kSpec = R"XML(<?xml version="1.0"?>
 
 int main()
 {
-  char buffer[] = "/tmp/CapTestPlotSpec.XXXXXX";
+  char buffer[] = "/tmp/DatumTestPlotSpec.XXXXXX";
   String top(mkdtemp(buffer));
   {
-    CapFile out(FileSystem::join(top, "input.cap"), File::kWriteOnly);
+    DatumFile out(FileSystem::join(top, "input.cap"), File::kWriteOnly);
     out.setFolderName("run");
     MATH::Histogram * gauss = new MATH::Histogram("gauss", "Gaussian", 60, -3.0, 3.0);
     MATH::Histogram * flat  = new MATH::Histogram("flat", "Flat", 10, 0.0, 1.0);

@@ -14,7 +14,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 
@@ -521,4 +521,4 @@ namespace CAP
   ParticleType * ParticleType::antiHe3Type      = ParticleType::createNucleus("AntiHelium3");
   ParticleType * ParticleType::antiHe4Type      = ParticleType::createNucleus("AntiHelium4");
 
-  } // namespace CAP
+  } // namespace Datum

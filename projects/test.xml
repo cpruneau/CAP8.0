@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- CAP workflow written by RunCAP.py on 2026-10-25 09:46:18 -->
+<!-- Datum workflow written by RunDatum.py on 2026-10-25 09:46:18 -->
 <!-- Converted from projects/test.ini (removed): the jobs RunThermalModel and RunAnalysis (Therminator3, decays,
-     single and pair analyzers) with their filters, which RunCAP.py puts in FilterCreator. Left out: CalculateDerived
+     single and pair analyzers) with their filters, which RunDatum.py puts in FilterCreator. Left out: CalculateDerived
      (the fill job writes the derived histograms) and BasicEventGen (no job used it); dropped: the keys no class
      defines any more (*:FORCE_REWRITE of the filters and databases, PARTICLE_EFFICIENCIE:USE, PARTICLE_SMEARERS:USE,
      HISTOGRAM:pid_fill, HISTOGRAM:ptVsRapidity_fill). RunThermalModel:HADRON_GAS:... became ThermalHadronGas:...,
      the group ThermalModel reads, and the Therminator task got the particle database DefaultDb. -->
-<CAP version="1">
-  <TASK name="Workflow" class="CAP::Task" severity="INFO">
-    <TASK name="FilterCreator" class="CAP::FilterCreator" severity="INFO">
-      <TASK name="EventFilters" class="CAP::EventFilterCreator" severity="INFO">
+<Datum version="1">
+  <TASK name="Workflow" class="Datum::Task" severity="INFO">
+    <TASK name="FilterCreator" class="Datum::FilterCreator" severity="INFO">
+      <TASK name="EventFilters" class="Datum::EventFilterCreator" severity="INFO">
         <GROUP name="EVENT_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -37,7 +37,7 @@
           </GROUP>
         </GROUP>
       </TASK>
-      <TASK name="ParticleFilters" class="CAP::ParticleFilterCreator" severity="INFO">
+      <TASK name="ParticleFilters" class="Datum::ParticleFilterCreator" severity="INFO">
         <GROUP name="PARTICLE_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -117,7 +117,7 @@
           </GROUP>
         </GROUP>
       </TASK>
-      <TASK name="EventEfficiencies" class="CAP::EventEfficiencyCreator" severity="INFO">
+      <TASK name="EventEfficiencies" class="Datum::EventEfficiencyCreator" severity="INFO">
         <GROUP name="EVENT_EFFICIENCY">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -137,7 +137,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleEfficiencies" class="CAP::ParticleEfficiencyCreator" severity="INFO">
+      <TASK name="ParticleEfficiencies" class="Datum::ParticleEfficiencyCreator" severity="INFO">
         <GROUP name="PARTICLE_EFFICIENCY">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -157,7 +157,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="EventSmearers" class="CAP::EventSmearerCreator" severity="INFO">
+      <TASK name="EventSmearers" class="Datum::EventSmearerCreator" severity="INFO">
         <GROUP name="EVENT_SMEARER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -177,7 +177,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleSmearers" class="CAP::ParticleSmearerCreator" severity="INFO">
+      <TASK name="ParticleSmearers" class="Datum::ParticleSmearerCreator" severity="INFO">
         <GROUP name="PARTICLE_SMEARER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -197,7 +197,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="Events" class="CAP::EventCreator" severity="INFO">
+      <TASK name="Events" class="Datum::EventCreator" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -222,7 +222,7 @@
           <PARAMETER name="OWNER" type="bool">true</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleDbs" class="CAP::ParticleDbCreator" severity="INFO">
+      <TASK name="ParticleDbs" class="Datum::ParticleDbCreator" severity="INFO">
         <GROUP name="PARTICLE_DB">
           <PARAMETER name="IMPORT" type="bool">true</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -248,7 +248,7 @@
         </GROUP>
       </TASK>
     </TASK>
-    <TASK name="RunThermalModel" class="CAP::ThermalModel" severity="TRACE">
+    <TASK name="RunThermalModel" class="Datum::ThermalModel" severity="TRACE">
       <GROUP name="EVENT">
         <PARAMETER name="USE" type="bool">false</PARAMETER>
         <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -435,7 +435,7 @@
         <PARAMETER name="OWNER" type="bool">false</PARAMETER>
       </GROUP>
     </TASK>
-    <TASK name="RunAnalysis" class="CAP::EventIterator" severity="TRACE">
+    <TASK name="RunAnalysis" class="Datum::EventIterator" severity="TRACE">
       <GROUP name="EVENT">
         <PARAMETER name="USE" type="bool">true</PARAMETER>
         <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -616,7 +616,7 @@
         <PARAMETER name="TITLE" type="string">DefaultDb</PARAMETER>
         <PARAMETER name="OWNER" type="bool">false</PARAMETER>
       </GROUP>
-      <TASK name="Therminator" class="CAP::Therminator3" severity="TRACE">
+      <TASK name="Therminator" class="Datum::Therminator3" severity="TRACE">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">false</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -870,7 +870,7 @@
           <PARAMETER name="OWNER" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleDecayerTask" class="CAP::ParticleDecayerTask" severity="INFO">
+      <TASK name="ParticleDecayerTask" class="Datum::ParticleDecayerTask" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -1036,7 +1036,7 @@
           <PARAMETER name="OWNER" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleSingleAnalyzer" class="CAP::ParticleSingleAnalyzer" severity="INFO">
+      <TASK name="ParticleSingleAnalyzer" class="Datum::ParticleSingleAnalyzer" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -1251,7 +1251,7 @@
           <PARAMETER name="OWNER" type="bool">true</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="PairAnalyzer" class="CAP::ParticlePairAnalyzer" severity="INFO">
+      <TASK name="PairAnalyzer" class="Datum::ParticlePairAnalyzer" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -1508,7 +1508,7 @@
       </TASK>
     </TASK>
   </TASK>
-  <RUNCAP version="1">
+  <RUNDATUM version="1">
     <OBJECT kind="EVENT_FILTER" name="ALL" title="ALL" />
     <OBJECT kind="PARTICLE_FILTER" name="ALL" title="ALL">
       <CONDITION subtype="PT" form="range" minimum="0" maximum="4" />
@@ -1526,5 +1526,5 @@
     <OBJECT kind="PARTICLE_DB" name="DefaultDb" title="DefaultDb" />
     <HISTOGRAMS task="ParticleSingleAnalyzer" same_binning="true" />
     <HISTOGRAMS task="PairAnalyzer" same_binning="true" />
-  </RUNCAP>
-</CAP>
+  </RUNDATUM>
+</Datum>

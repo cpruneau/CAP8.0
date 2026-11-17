@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/Epos
+# Project Datum/Epos
 ################################################################################################
 
 
@@ -10,5 +10,5 @@ add_library(Epos SHARED EposTasks.cpp EposEventReader.cpp)
 target_link_libraries(Epos Base RootConvert Particles ${ROOT_LIBRARIES} ${EXTRA_LIBS} )
 target_include_directories(Epos  PUBLIC Base  Particles  Cluster Epos ${EXTRA_INCLUDES})
 
-cap_install(Epos LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Epos LIBRARY "$ENV{DATUM_LIB_PATH}")
 

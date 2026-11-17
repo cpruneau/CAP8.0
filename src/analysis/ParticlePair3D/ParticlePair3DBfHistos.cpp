@@ -11,7 +11,7 @@
 #include "Exceptions.hpp"
 #include "NameHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   ParticlePair3DBFHistos::ParticlePair3DBFHistos(const String & name)
@@ -121,4 +121,4 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum

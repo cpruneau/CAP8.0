@@ -1,5 +1,5 @@
-#ifndef CAP_MathBasicSortingFunctions
-#define CAP_MathBasicSortingFunctions
+#ifndef DATUM_MathBasicSortingFunctions
+#define DATUM_MathBasicSortingFunctions
 #include "MathExceptions.hpp"
 
 #include <vector>
@@ -10,7 +10,7 @@ using std::vector;
 //! By convention, all function names  begin with a lower case letter.
 //!
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -20,7 +20,7 @@ void bubbleHigh(vector<double> valuesArray, vector<int> orderArray);
 void bubbleLow (vector<double> valuesArray, vector<int> orderArray);
 } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum
 
 #endif
 

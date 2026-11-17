@@ -1,5 +1,5 @@
-#ifndef CAP_MATH_ParameterizedFunction
-#define CAP_MATH_ParameterizedFunction
+#ifndef DATUM_MATH_ParameterizedFunction
+#define DATUM_MATH_ParameterizedFunction
 #include <istream>
 #include <vector>
 #include "String.hpp"
@@ -7,7 +7,7 @@
 #include "Function.hpp"
 #include "VectorND.hpp"
 
-namespace CAP
+namespace Datum
 {
   class BinaryWriter;
   class BinaryReader;
@@ -37,7 +37,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   class Parabola : public CAP::MATH::ParameterizedFunction
+  //!   class Parabola : public Datum::MATH::ParameterizedFunction
   //!   {
   //!   public:
   //!     double evaluateAt(double x) const override { return x*x; }
@@ -71,7 +71,7 @@ namespace CAP
   virtual ~ParameterizedFunction() = 0;
   //!
   //! @brief Copy of the function, of its own class (e.g. to keep the result of a fit, see FitRecord). The functions of
-  //! CAP implement it; a class of a user should too, as @c MyFunction * clone() const override { return new MyFunction(*this); }.
+  //! Datum implement it; a class of a user should too, as @c MyFunction * clone() const override { return new MyFunction(*this); }.
   //! @return new function (the caller owns it)
   //! @throws MathException if the class does not implement it
   //!
@@ -128,7 +128,7 @@ namespace CAP
   //!
   //! @brief Adapt the function to the range of x of a fit, before it is fitted there (rank 1). By default nothing;
   //! functions whose variable is mapped onto a standard interval (e.g. OrthogonalSeries) set their mapping
-  //! parameters, if those are fixed. Called by Fitter::estimate() and by the Fit window of CapGui.
+  //! parameters, if those are fixed. Called by Fitter::estimate() and by the Fit window of DatumGui.
   //! @param low lower end of the range @param high upper end of the range
   //!
   virtual void adaptToRange(double low, double high) { (void)low; (void)high; }
@@ -148,8 +148,8 @@ namespace CAP
 
   //! @name Binary files
   //!
-  //! A parameterized function, of any class derived from ParameterizedFunction, is saved as one "CAPU" record of the
-  //! CAP binary format (see BinaryIO.hpp), on its own or in a Folder: add(new Normal(...)) to a folder and save it.
+  //! A parameterized function, of any class derived from ParameterizedFunction, is saved as one "DTMU" record of the
+  //! Datum binary format (see BinaryIO.hpp), on its own or in a Folder: add(new Normal(...)) to a folder and save it.
   //! Payload, after the name of the function:
   //!  - the name of its class in FunctionRegistry (a composite: "ParameterizedComposite"), its number of parameters and
   //!    its rank (varints), its title;
@@ -159,11 +159,11 @@ namespace CAP
   //!  - the fits attached to the function (FitList::encodeBinary()).
   //! When it is read, the function is made by its class name through FunctionRegistry (a composite is rebuilt from its
   //! components), given its state and its parameters, and checked: the class must be registered by the program that
-  //! reads the record (those of CAP always are), and have the number of parameters and the rank recorded.
+  //! reads the record (those of Datum always are), and have the number of parameters and the rank recorded.
   //! A class of a user with state beyond its parameters overrides encodeState() and decodeState().
   //! @{
-  //! @brief Tag of the records of parameterized functions. @return "CAPU"
-  static const char * binaryTag() { return "CAPU"; }
+  //! @brief Tag of the records of parameterized functions. @return "DTMU"
+  static const char * binaryTag() { return "DTMU"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return name()
@@ -178,7 +178,7 @@ namespace CAP
   //!
   static ParameterizedFunction * decodeNewBinary(BinaryReader & r, const String & name, unsigned int version);
   //!
-  //! @brief Read the next function record ("CAPU") from a stream, skipping records of other classes. Functions are
+  //! @brief Read the next function record ("DTMU") from a stream, skipping records of other classes. Functions are
   //! written with writeBinaryObject(out, f) (see BinaryIO.hpp), or saved in a Folder.
   //! @param in stream (binary mode) @return function (owned by the caller), or null at the end of the stream
   //! @throws Exception if the record is invalid or its class is not registered
@@ -241,6 +241,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -23,7 +23,7 @@
 #include "ParticleType.hpp"
 #include "Polynomial.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {

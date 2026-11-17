@@ -13,7 +13,7 @@
 #include "FileSystem.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 std::vector<String> listDirsIn(const String & pathname,
@@ -112,4 +112,4 @@ std::vector<String>  listFilesInDir(const String & pathName,
   return outputList;
 }
 
-} // namespace CAP
+} // namespace Datum

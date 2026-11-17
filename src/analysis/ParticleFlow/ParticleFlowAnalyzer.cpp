@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 ParticleFlowAnalyzer::ParticleFlowAnalyzer()
@@ -113,4 +113,4 @@ void ParticleFlowAnalyzer::execute()
     }
 }
 
-} // namespace CAP
+} // namespace Datum

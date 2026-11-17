@@ -8,15 +8,15 @@
  *
  * *********************************************************************/
 //! @file Ast.hpp
-//! @brief Syntax tree of the CAP command language: expressions and statements, evaluated by the Interpreter.
-#ifndef CAP__INTERPRETER__Ast
-#define CAP__INTERPRETER__Ast
+//! @brief Syntax tree of the Datum command language: expressions and statements, evaluated by the Interpreter.
+#ifndef DATUM__INTERPRETER__Ast
+#define DATUM__INTERPRETER__Ast
 #include <memory>
 #include <string>
 #include <vector>
 #include "Reflection.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace INTERPRETER
   {
@@ -115,6 +115,6 @@ namespace CAP
   std::shared_ptr<Block> parse(const std::string & source, int firstLine=1);
 
   } // namespace INTERPRETER
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__INTERPRETER__Ast
+#endif // !DATUM__INTERPRETER__Ast

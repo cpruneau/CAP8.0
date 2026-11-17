@@ -1,8 +1,8 @@
-#ifndef CAP__LatexSubsection
-#define CAP__LatexSubsection
+#ifndef DATUM__LatexSubsection
+#define DATUM__LatexSubsection
 #include "LatexSection.hpp"
 
-namespace CAP
+namespace Datum
 {
   class LatexSubsection  : public LatexSection
   {
@@ -16,6 +16,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexSubsection
+#endif // !DATUM__LatexSubsection

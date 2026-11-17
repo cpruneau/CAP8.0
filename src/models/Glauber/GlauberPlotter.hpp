@@ -9,10 +9,10 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberPlotter
-#define CAP__GlauberPlotter
+#ifndef DATUM__GlauberPlotter
+#define DATUM__GlauberPlotter
 
-namespace CAP
+namespace Datum
 {
 
 //! @brief Draw the participants and spectators of the current Glauber event (legacy function).
@@ -27,7 +27,7 @@ void draw(double xs,
 
 }
 
-#endif // CAP__GlauberPoint
+#endif // DATUM__GlauberPoint
 
 
 

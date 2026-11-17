@@ -15,7 +15,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 PerformanceAnalyzer::PerformanceAnalyzer()
@@ -88,4 +88,4 @@ void PerformanceAnalyzer::execute()
       }
     }
 }
-} // namespace CAP
+} // namespace Datum

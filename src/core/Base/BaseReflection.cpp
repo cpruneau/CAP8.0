@@ -13,13 +13,13 @@
 #include "Object.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(Base)
+DATUM_REFLECTION(Base)
 {
-  using namespace CAP;
-  using namespace CAP::REFLECTION;
-  ClassBuilder<Object>("CAP::Object")
+  using namespace Datum;
+  using namespace Datum::REFLECTION;
+  ClassBuilder<Object>("Datum::Object")
     .property("name", &Object::name, &Object::setName)
     .property("title", &Object::title, &Object::setTitle)
     .method("print", &Object::print);
-  registerTask<Task>("CAP::Task");
+  registerTask<Task>("Datum::Task");
 }

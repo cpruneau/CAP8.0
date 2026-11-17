@@ -12,8 +12,8 @@
 #include "NuDynAnalyzer.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(NuDynTasks)
+DATUM_REFLECTION(NuDynTasks)
 {
-  CAP::registerTask<CAP::NuDynAnalyzer>("CAP::NuDynAnalyzer");
-  CAP::registerTask<CAP::NuDynDerivedCalculator>("CAP::NuDynDerivedCalculator");
+  Datum::registerTask<Datum::NuDynAnalyzer>("Datum::NuDynAnalyzer");
+  Datum::registerTask<Datum::NuDynDerivedCalculator>("Datum::NuDynDerivedCalculator");
 }

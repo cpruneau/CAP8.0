@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file FitResult.hpp
 //! @brief FitResult: the outcome of a fit (see Fitter).
-#ifndef CAP__MATH__FitResult
-#define CAP__MATH__FitResult
+#ifndef DATUM__MATH__FitResult
+#define DATUM__MATH__FitResult
 #include <vector>
 #include "String.hpp"
 #include "Matrix.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -49,6 +49,6 @@ namespace CAP
     long   nIterations = 0;   //!< iterations
   };
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__FitResult
+#endif // !DATUM__MATH__FitResult

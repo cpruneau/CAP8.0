@@ -2,7 +2,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   void LatexElement::skipLines(std::ofstream & out, int n)
@@ -79,4 +79,4 @@ namespace CAP
   }
 
 
-} // namespace CAP
+} // namespace Datum

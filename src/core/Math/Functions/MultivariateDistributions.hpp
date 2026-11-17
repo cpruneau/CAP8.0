@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file MultivariateDistributions.hpp
 //! @brief Distributions of several variables: MultinomialDistribution, DirichletDistribution.
-#ifndef CAP_MATH_MultivariateDistributions
-#define CAP_MATH_MultivariateDistributions
+#ifndef DATUM_MATH_MultivariateDistributions
+#define DATUM_MATH_MultivariateDistributions
 #include <vector>
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -29,7 +29,7 @@ namespace CAP
   //! (as DiscreteDistribution); 0 if a count or p_m is negative. The sum over all the counts is A.
   //!
   //! @code
-  //!   CAP::MATH::MultinomialDistribution f(10.0, {0.2, 0.3, 0.5});   // rank 2: k_1, k_2 (k_3 = 10 - k_1 - k_2)
+  //!   Datum::MATH::MultinomialDistribution f(10.0, {0.2, 0.3, 0.5});   // rank 2: k_1, k_2 (k_3 = 10 - k_1 - k_2)
   //!   double p = f.evaluateAt(2.0, 3.0);                              // P(2, 3, 5)
   //! @endcode
   //!
@@ -77,7 +77,7 @@ namespace CAP
   //! (delta_ij alpha_i/alpha_0 - alpha_i alpha_j/alpha_0^2)/(alpha_0 + 1).
   //!
   //! @code
-  //!   CAP::MATH::DirichletDistribution f({2.0, 3.0, 4.0});   // rank 2: x_1, x_2 (x_3 = 1 - x_1 - x_2)
+  //!   Datum::MATH::DirichletDistribution f({2.0, 3.0, 4.0});   // rank 2: x_1, x_2 (x_3 = 1 - x_1 - x_2)
   //!   double p = f.evaluateAt(0.2, 0.3);
   //! @endcode
   //!
@@ -110,6 +110,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_MATH_MultivariateDistributions
+#endif // DATUM_MATH_MultivariateDistributions

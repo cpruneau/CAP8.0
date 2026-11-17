@@ -17,8 +17,8 @@
 #include "Reflection.hpp"
 #include "Task.hpp"
 
-using namespace CAP;
-using namespace CAP::REFLECTION;
+using namespace Datum;
+using namespace Datum::REFLECTION;
 
 namespace
 {
@@ -49,14 +49,14 @@ int main()
   if (!taskInfo) return 1;
   std::set<std::string> registered;
   for (const auto & name : registry.names(taskInfo)) registered.insert(name);
-#ifdef CAP_WITH_GLAUBER
+#ifdef DATUM_WITH_GLAUBER
   CHECK(registered.size() >= 34);                                   // the task classes of the default build
-  CHECK(registered.count("CAP::GlauberGenerator") == 1);
+  CHECK(registered.count("Datum::GlauberGenerator") == 1);
 #else
   CHECK(registered.size() >= 32);                                   // without the two Glauber tasks
 #endif
-  for (const char * name : { "CAP::Task", "CAP::BasicEventGen", "CAP::EventIterator", "CAP::FilterCreator",
-                             "CAP::ParticleSingleAnalyzer", "CAP::PtPtAnalyzer" })
+  for (const char * name : { "Datum::Task", "Datum::BasicEventGen", "Datum::EventIterator", "Datum::FilterCreator",
+                             "Datum::ParticleSingleAnalyzer", "Datum::PtPtAnalyzer" })
     CHECK(registered.count(name) == 1);
 
   // each task made by the registry is of its class

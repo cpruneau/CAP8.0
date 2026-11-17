@@ -1,8 +1,8 @@
-#ifndef CAP__LatexAuthor
-#define CAP__LatexAuthor
+#ifndef DATUM__LatexAuthor
+#define DATUM__LatexAuthor
 #include "LatexElement.hpp"
 
-namespace CAP
+namespace Datum
 {
   class LatexAuthor : public LatexElement
   {
@@ -28,6 +28,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexAuthor
+#endif // !DATUM__LatexAuthor

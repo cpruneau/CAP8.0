@@ -1,11 +1,11 @@
-#ifndef CAP__Drawable2D
-#define CAP__Drawable2D
+#ifndef DATUM__Drawable2D
+#define DATUM__Drawable2D
 #include <vector>
 #include "String.hpp"
 #include "Renderer.hpp"
 #include "Point2D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -78,6 +78,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Drawable2D
+#endif // !DATUM__Drawable2D

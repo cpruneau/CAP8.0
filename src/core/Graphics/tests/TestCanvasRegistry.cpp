@@ -19,8 +19,8 @@
 #include "Histogram.hpp"
 #include "PdfPainter.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 
 namespace
 {
@@ -90,7 +90,7 @@ int main()
   }
 
   // ---- output: files per canvas or per graph, one book of pages
-  char buffer[] = "/tmp/CapTestCanvasRegistry.XXXXXX";
+  char buffer[] = "/tmp/DatumTestCanvasRegistry.XXXXXX";
   Directory top{String(mkdtemp(buffer))};
   std::vector<String> files = registry.saveAll(top.join("figures"), ".pdf");
   CHECK(files.size() == 3 && top.contains("figures/spectra.pdf") && top.contains("figures/map_of_pt.pdf"));

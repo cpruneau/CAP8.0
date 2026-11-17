@@ -15,15 +15,15 @@
 //! @image latex NumericalTools.pdf "Interpolation, integration and differentiation: classes and dependencies" width=\textwidth
 //! @image html DerivativeClasses.png "Classes of the folder Derivative" width=100%
 //! @image latex DerivativeClasses.pdf "Classes of the folder Derivative" width=\textwidth
-#ifndef CAP__MATH__Differentiation
-#define CAP__MATH__Differentiation
+#ifndef DATUM__MATH__Differentiation
+#define DATUM__MATH__Differentiation
 #include <functional>
 #include <vector>
 #include "String.hpp"
 #include "FiniteDifference.hpp"
 #include "VectorND.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -50,10 +50,10 @@ namespace CAP
   //! each axis in turn.
   //!
   //! @code
-  //!   CAP::MATH::Differentiation d;                                     // Automatic
-  //!   CAP::MATH::Polynomial p{1.0, 0.0, 3.0};                           // 1 + 3x^2
+  //!   Datum::MATH::Differentiation d;                                     // Automatic
+  //!   Datum::MATH::Polynomial p{1.0, 0.0, 3.0};                           // 1 + 3x^2
   //!   double d1 = d.derivative(p, 2.0);                                 // 12, analytical
-  //!   CAP::MATH::Differentiation cubic(CAP::MATH::Differentiation::Cubic);
+  //!   Datum::MATH::Differentiation cubic(Datum::MATH::Differentiation::Cubic);
   //!   double d2 = cubic.derivative([](double x) { return std::sin(x); }, 1.0, 2);   // -sin(1)
   //!   std::vector<double> s = cubic.derivatives(x, y);                  // of sampled values (degree 3)
   //! @endcode
@@ -155,6 +155,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__Differentiation
+#endif // DATUM__MATH__Differentiation

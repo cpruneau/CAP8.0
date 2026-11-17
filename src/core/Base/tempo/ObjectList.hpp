@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ObjectList
-#define CAP__ObjectList
+#ifndef DATUM__ObjectList
+#define DATUM__ObjectList
 #include "Exceptions.hpp"
 #include "List.hpp"
 #include "Object.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -61,8 +61,8 @@ protected:
   ClassDef(ObjectList,0)
 };
 
-} //namespace CAP
+} //namespace Datum
 
-#endif /* CAP_ObjectList */
+#endif /* DATUM_ObjectList */
 
 

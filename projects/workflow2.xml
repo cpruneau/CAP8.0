@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- CAP workflow written by RunCAP.py on 2026-10-23 15:23:22 -->
-<CAP version="1">
-  <TASK name="Workflow" class="CAP::Task" severity="INFO">
+<!-- Datum workflow written by RunDatum.py on 2026-10-23 15:23:22 -->
+<Datum version="1">
+  <TASK name="Workflow" class="Datum::Task" severity="INFO">
     <GROUP name="JOB">
       <PARAMETER name="OUTPUT_FILE" type="string">TestWithTwoSingles</PARAMETER>
     </GROUP>
-    <TASK name="FilterCreator" class="CAP::FilterCreator" severity="INFO">
-      <TASK name="EventFilters" class="CAP::EventFilterCreator" severity="INFO">
+    <TASK name="FilterCreator" class="Datum::FilterCreator" severity="INFO">
+      <TASK name="EventFilters" class="Datum::EventFilterCreator" severity="INFO">
         <GROUP name="EVENT_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -34,7 +34,7 @@
           </GROUP>
         </GROUP>
       </TASK>
-      <TASK name="ParticleFilters" class="CAP::ParticleFilterCreator" severity="INFO">
+      <TASK name="ParticleFilters" class="Datum::ParticleFilterCreator" severity="INFO">
         <GROUP name="PARTICLE_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -62,7 +62,7 @@
           </GROUP>
         </GROUP>
       </TASK>
-      <TASK name="EventEfficiencies" class="CAP::EventEfficiencyCreator" severity="INFO">
+      <TASK name="EventEfficiencies" class="Datum::EventEfficiencyCreator" severity="INFO">
         <GROUP name="EVENT_EFFICIENCY">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -82,7 +82,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleEfficiencies" class="CAP::ParticleEfficiencyCreator" severity="INFO">
+      <TASK name="ParticleEfficiencies" class="Datum::ParticleEfficiencyCreator" severity="INFO">
         <GROUP name="PARTICLE_EFFICIENCY">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -102,7 +102,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="EventSmearers" class="CAP::EventSmearerCreator" severity="INFO">
+      <TASK name="EventSmearers" class="Datum::EventSmearerCreator" severity="INFO">
         <GROUP name="EVENT_SMEARER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -122,7 +122,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleSmearers" class="CAP::ParticleSmearerCreator" severity="INFO">
+      <TASK name="ParticleSmearers" class="Datum::ParticleSmearerCreator" severity="INFO">
         <GROUP name="PARTICLE_SMEARER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -142,7 +142,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="Events" class="CAP::EventCreator" severity="INFO">
+      <TASK name="Events" class="Datum::EventCreator" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -167,7 +167,7 @@
           <PARAMETER name="OWNER" type="bool">true</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleDbs" class="CAP::ParticleDbCreator" severity="INFO">
+      <TASK name="ParticleDbs" class="Datum::ParticleDbCreator" severity="INFO">
         <GROUP name="PARTICLE_DB">
           <PARAMETER name="IMPORT" type="bool">true</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -193,7 +193,7 @@
         </GROUP>
       </TASK>
     </TASK>
-    <TASK name="EventIterator" class="CAP::EventIterator" severity="INFO">
+    <TASK name="EventIterator" class="Datum::EventIterator" severity="INFO">
       <GROUP name="EVENT">
         <PARAMETER name="USE" type="bool">false</PARAMETER>
         <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -354,7 +354,7 @@
         <PARAMETER name="TITLE" type="string" />
         <PARAMETER name="OWNER" type="bool">false</PARAMETER>
       </GROUP>
-      <TASK name="BasicEventGen" class="CAP::BasicEventGen" severity="INFO">
+      <TASK name="BasicEventGen" class="Datum::BasicEventGen" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">false</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -530,7 +530,7 @@
           <PARAMETER name="OWNER" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleSingleAnalyzer" class="CAP::ParticleSingleAnalyzer" severity="INFO">
+      <TASK name="ParticleSingleAnalyzer" class="Datum::ParticleSingleAnalyzer" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -740,7 +740,7 @@
           <PARAMETER name="OWNER" type="bool">true</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleSingleAnalyzer_2" class="CAP::ParticleSingleAnalyzer" severity="INFO">
+      <TASK name="ParticleSingleAnalyzer_2" class="Datum::ParticleSingleAnalyzer" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -952,7 +952,7 @@
       </TASK>
     </TASK>
   </TASK>
-  <RUNCAP version="1">
+  <RUNDATUM version="1">
     <OBJECT kind="EVENT_FILTER" name="EventFilter0" title="" />
     <OBJECT kind="PARTICLE_FILTER" name="ParticleFilter0" title="" />
     <OBJECT kind="EVENT" name="Event" title="" />
@@ -960,5 +960,5 @@
     <JOB output_file="TestWithTwoSingles" />
     <HISTOGRAMS task="ParticleSingleAnalyzer" same_binning="true" />
     <HISTOGRAMS task="ParticleSingleAnalyzer_2" same_binning="true" />
-  </RUNCAP>
-</CAP>
+  </RUNDATUM>
+</Datum>

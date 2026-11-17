@@ -15,13 +15,13 @@
 //! @image latex NumericalTools.pdf "Interpolation, integration and differentiation: classes and dependencies" width=\textwidth
 //! @image html IntegralClasses.png "Classes of the folder Integral" width=100%
 //! @image latex IntegralClasses.pdf "Classes of the folder Integral" width=\textwidth
-#ifndef CAP__MATH__Integrator
-#define CAP__MATH__Integrator
+#ifndef DATUM__MATH__Integrator
+#define DATUM__MATH__Integrator
 #include <functional>
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -60,11 +60,11 @@ namespace CAP
   //! GaussLegendreIntegrator and MonteCarloIntegrator integrate the box directly.
   //!
   //! @code
-  //!   CAP::MATH::SimpsonIntegrator simpson;                          // adaptive
-  //!   CAP::MATH::Normal g(1.0, 0.0, 1.0);
+  //!   Datum::MATH::SimpsonIntegrator simpson;                          // adaptive
+  //!   Datum::MATH::Normal g(1.0, 0.0, 1.0);
   //!   double s = simpson.integral(g, -1.0, 1.0);                    // 0.6827 (times sqrt(2 pi))
-  //!   CAP::MATH::IntegralResult r = simpson.integrate([](double x) { return x*x; }, 0.0, 3.0);   // 9
-  //!   CAP::MATH::MonteCarloIntegrator mc(1.0E-3);
+  //!   Datum::MATH::IntegralResult r = simpson.integrate([](double x) { return x*x; }, 0.0, 3.0);   // 9
+  //!   Datum::MATH::MonteCarloIntegrator mc(1.0E-3);
   //!   double v = mc.integral([](const std::vector<double> & x) { return x[0]*x[1]*x[2]*x[3]; },
   //!                          {0, 0, 0, 0}, {1, 1, 1, 1});            // 1/16, to 0.1%
   //! @endcode
@@ -151,6 +151,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__Integrator
+#endif // DATUM__MATH__Integrator

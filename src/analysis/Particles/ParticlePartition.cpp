@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ParticlePartition::ParticlePartition()
@@ -215,4 +215,4 @@ std::ostream & ParticlePartition::print(std::ostream & output, , )
     }
 }
 
-} // namespace CAP
+} // namespace Datum

@@ -1,7 +1,7 @@
-#ifndef CAP__Attributes
-#define CAP__Attributes
+#ifndef DATUM__Attributes
+#define DATUM__Attributes
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -46,6 +46,6 @@ namespace CAP
 
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Attributes
+#endif // !DATUM__Attributes

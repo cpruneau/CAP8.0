@@ -8,13 +8,13 @@
  *
  * *********************************************************************/
 //! @file FitPane.hpp
-//! @brief FitPane: pane of the CapGui window showing the results of the fits drawn in the selected graph.
-#ifndef CAP__GUI__FitPane
-#define CAP__GUI__FitPane
+//! @brief FitPane: pane of the DatumGui window showing the results of the fits drawn in the selected graph.
+#ifndef DATUM__GUI__FitPane
+#define DATUM__GUI__FitPane
 #include <functional>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -32,7 +32,7 @@ namespace CAP
   {
 
   //!
-  //! @brief Pane of the CapGui window showing the fits attached to the objects of the selected graph, one tab per fit.
+  //! @brief Pane of the DatumGui window showing the fits attached to the objects of the selected graph, one tab per fit.
   //!
   //! Fits of one variable (curves) and of two (over maps) are shown alike. Each tab gives the fitted function and the object it was fitted to, the quality of the fit (chi square or
   //! -2 ln L, degrees of freedom, chi square per degree of freedom, p-value, points, convergence, method), the
@@ -40,7 +40,7 @@ namespace CAP
   //! the clipboard as tab-separated text. The curve of the fit can be hidden, and its color, style and width
   //! changed; check boxes above the tabs show or hide all the fits of the graph and their quality in the legend.
   //!
-  //! The pane is docked below the canvases when first shown (CapGui::setFitPaneVisible()).
+  //! The pane is docked below the canvases when first shown (DatumGui::setFitPaneVisible()).
   //!
   class FitPane
   {
@@ -73,6 +73,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__FitPane
+#endif // !DATUM__GUI__FitPane

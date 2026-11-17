@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Nuclei of the Glauber Monte Carlo (CAP::GlauberDb, models/Glauber). One NUCLEUS element per nucleus type, found
+  Nuclei of the Glauber Monte Carlo (Datum::GlauberDb, models/Glauber). One NUCLEUS element per nucleus type, found
   by its name (GENERATION:NUCLEUS_A:NAME and NUCLEUS_B:NAME of GlauberGenerator). Nuclei can be added or changed
-  here; the file read is GlauberGenerator:DB_0:FILE (default Glauber/NucleusDb.xml, in $CAP_DATABASE_PATH).
-  NucleusDbEditor.py (at the top of CAP) edits it in a table and checks it.
+  here; the file read is GlauberGenerator:DB_0:FILE (default Glauber/NucleusDb.xml, in $DATUM_DATABASE_PATH).
+  NucleusDbEditor.py (at the top of Datum) edits it in a table and checks it.
 
   Attributes (lengths in fm):
     name          name of the nucleus type (e.g. Pb, Au2rw)
@@ -25,7 +25,7 @@
 
   Uranium (U): Heinz and Kuhlman, nucl-th/0411054, with radius = 6.8 x 0.91 and w = 6.8 x 0.26.
 -->
-<CAP version="1" type="glauberNucleusDb">
+<Datum version="1" type="glauberNucleusDb">
   <NUCLEUS_DB>
     <NUCLEUS name="p" A="1" Z="1" radialType="0" radius="0.234" skin="0" w="0"/>
     <NUCLEUS name="pg" A="1" Z="1" radialType="9" radius="0.514" skin="0" w="0"/>
@@ -74,4 +74,4 @@
     <NUCLEUS name="U" A="238" Z="92" radialType="5" radius="6.188" skin="0.54" w="1.77"/>
     <NUCLEUS name="U2" A="238" Z="92" radialType="8" radius="6.67" skin="0.44" w="0" beta2="0.280" beta4="0.093"/>
   </NUCLEUS_DB>
-</CAP>
+</Datum>

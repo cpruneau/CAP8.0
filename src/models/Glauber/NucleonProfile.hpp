@@ -9,13 +9,13 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__NucleonProfile
-#define CAP__NucleonProfile
+#ifndef DATUM__NucleonProfile
+#define DATUM__NucleonProfile
 //#include <ostream>
 #include "MathConstants.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Radial profile of a nucleon: r^2 exp(-r/R).
@@ -46,9 +46,9 @@ namespace CAP
   double _nucleonRadius;
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__NucleonProfile
+#endif // !DATUM__NucleonProfile
 
 
 

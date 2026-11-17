@@ -14,7 +14,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 GlobalAnalyzer::GlobalAnalyzer()
@@ -93,4 +93,4 @@ void GlobalAnalyzer::execute()
 }
 
 
-} // namespace CAP
+} // namespace Datum

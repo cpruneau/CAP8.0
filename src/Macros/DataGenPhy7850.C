@@ -142,7 +142,7 @@ void generateCubicValue(double a0, double a1, double a2, double a3, double sigma
 
 void DataGenPhy7850(int option=3, const TString & outputFileName="cube.txt")
 {
-  TString includeBasePath = getenv("CAP_SRC");
+  TString includeBasePath = getenv("DATUM_SRC");
   loadBase(includeBasePath);
 
   ofstream out(outputFileName);

@@ -2,7 +2,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   ParticleTypeFilter::ParticleTypeFilter()
@@ -234,4 +234,4 @@ namespace CAP
 
 
 
-} // namespace CAP
+} // namespace Datum

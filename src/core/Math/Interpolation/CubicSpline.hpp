@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file CubicSpline.hpp
 //! @brief CubicSpline: cubic interpolation of points at any spacing (natural, clamped, not-a-knot, monotone).
-#ifndef CAP__MATH__CubicSpline
-#define CAP__MATH__CubicSpline
+#ifndef DATUM__MATH__CubicSpline
+#define DATUM__MATH__CubicSpline
 #include <vector>
 #include "PiecewisePolynomial.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -37,9 +37,9 @@ namespace CAP
   //!
   //! @code
   //!   std::vector<double> x = {0, 1, 2, 3}, y = {0, 1, 8, 27};
-  //!   CAP::MATH::CubicSpline s(x, y);                     // not-a-knot: x^3 exactly
+  //!   Datum::MATH::CubicSpline s(x, y);                     // not-a-knot: x^3 exactly
   //!   double v = s(1.5), d = s.derivativeAt(1.5);          // 3.375, 6.75
-  //!   CAP::MATH::CubicSpline n(x, y, CAP::MATH::CubicSpline::Natural);
+  //!   Datum::MATH::CubicSpline n(x, y, Datum::MATH::CubicSpline::Natural);
   //! @endcode
   //!
   class CubicSpline : public PiecewisePolynomial
@@ -85,6 +85,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__CubicSpline
+#endif // DATUM__MATH__CubicSpline

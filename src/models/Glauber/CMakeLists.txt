@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/Glauber
+# Project Datum/Glauber
 ################################################################################################
 
 
@@ -33,11 +33,11 @@ SmearingProfile.cpp)
 target_link_libraries(Glauber Base Math Particles  ${EXTRA_LIBS} )
 target_include_directories(Glauber PUBLIC Base Math Glauber ParticleDb Particles ${EXTRA_INCLUDES} )
 
-cap_install(Glauber LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Glauber LIBRARY "$ENV{DATUM_LIB_PATH}")
 
 
 # The database of nuclei (DB/Glauber/NucleusDb.xml) and its built-in copy (run with ctest; not installed)
 add_executable(TestGlauberDb tests/TestGlauberDb.cpp)
 target_link_libraries(TestGlauberDb Glauber Particles Math Base)
-target_compile_definitions(TestGlauberDb PRIVATE CAP_NUCLEUS_DB="${CMAKE_SOURCE_DIR}/../DB/Glauber/NucleusDb.xml")
+target_compile_definitions(TestGlauberDb PRIVATE DATUM_NUCLEUS_DB="${CMAKE_SOURCE_DIR}/../DB/Glauber/NucleusDb.xml")
 add_test(NAME GlauberDb COMMAND TestGlauberDb)

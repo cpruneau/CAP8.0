@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/ParticleFlow: anisotropic flow by multi-particle cumulants and the scalar product method
+# Project Datum/ParticleFlow: anisotropic flow by multi-particle cumulants and the scalar product method
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(ParticleFlow SHARED
@@ -12,7 +12,7 @@ FlowCumulants.cpp)
 target_link_libraries(ParticleFlow Base Math Particles ${EXTRA_LIBS} )
 target_include_directories(ParticleFlow PUBLIC Base Particles ParticleFlow ${EXTRA_INCLUDES} )
 
-cap_install(ParticleFlow LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(ParticleFlow LIBRARY "$ENV{DATUM_LIB_PATH}")
 
 ################################################################################################
 # Tests (run with ctest in the build directory; not installed)

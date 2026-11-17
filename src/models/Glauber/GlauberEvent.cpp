@@ -13,11 +13,11 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
-  using CAP::MATH::pi;
-  using CAP::MATH::twoPi;
+  using Datum::MATH::pi;
+  using Datum::MATH::twoPi;
 
 
   GlauberEvent::GlauberEvent()
@@ -228,4 +228,4 @@ namespace CAP
   _momentsSystem.print();
   printLine();
   }
-} // namespace CAP
+} // namespace Datum

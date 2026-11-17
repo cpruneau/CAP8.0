@@ -12,7 +12,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 EventVertexRandomizerTask::EventVertexRandomizerTask()
 :
@@ -67,12 +67,12 @@ void EventVertexRandomizerTask::initialize()
 
 void EventVertexRandomizerTask::execute()
 {
-  double eventX = CAP::MATH::randomGenerator().gauss(rConversion*xAvg, rConversion*xRms);
-  double eventY = CAP::MATH::randomGenerator().gauss(rConversion*yAvg, rConversion*yRms);
-  double eventZ = CAP::MATH::randomGenerator().gauss(rConversion*zAvg, rConversion*zRms);
-  double eventT = CAP::MATH::randomGenerator().gauss(tConversion*tAvg, tConversion*tRms);
+  double eventX = Datum::MATH::randomGenerator().gauss(rConversion*xAvg, rConversion*xRms);
+  double eventY = Datum::MATH::randomGenerator().gauss(rConversion*yAvg, rConversion*yRms);
+  double eventZ = Datum::MATH::randomGenerator().gauss(rConversion*zAvg, rConversion*zRms);
+  double eventT = Datum::MATH::randomGenerator().gauss(tConversion*tAvg, tConversion*tRms);
   for (auto & particle : event().particles()) particle->shift(eventX,eventY,eventZ,eventT);
   event().invalidateSelections();    // particles changed in place: the selections are made again
 }
 
-} // namespace CAP
+} // namespace Datum

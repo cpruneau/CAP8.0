@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__CommandLineParser
-#define CAP__CommandLineParser
+#ifndef DATUM__CommandLineParser
+#define DATUM__CommandLineParser
 #include "Parser.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -46,4 +46,4 @@ public:
 
 
 
-#endif /* CAP__CommandLineParser */
+#endif /* DATUM__CommandLineParser */

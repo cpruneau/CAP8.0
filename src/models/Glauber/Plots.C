@@ -1381,7 +1381,7 @@ void createFigureSlide(std::ofstream & out, const TString & title, const TString
 
 int Plots(bool print=0, bool latex=1)
 {
-  TString includeBasePath = getenv("CAP_SRC_PATH");
+  TString includeBasePath = getenv("DATUM_SRC_PATH");
   loadLatex(includeBasePath);
 
   setDefaultOptions(1);
@@ -1790,13 +1790,13 @@ void loadLatex(const TString & includeBasePath)
 
 void createPresentation(vector<TCanvas*> canvasList, const TString & outDirectory, const TString & fileName)
 {
-  CAP::LatexDocument doc;
+  Datum::LatexDocument doc;
   doc.setName("MyPresentation");
   doc.setDocumentClassName("beamer");
   doc.setThemeName("Warsaw");
   doc.addAuthor("C. Pruneau","aa7526@wayne.edu","Wayne State University");
   doc.setTitle("Selected Glauber Calculations");
-  doc.setSubtitle("A New CAP Module");
+  doc.setSubtitle("A New Datum Module");
   doc.setDate("");
   doc.setUseToday(true);
   doc.setOutputPath(outDirectory);
@@ -1810,7 +1810,7 @@ void createPresentation(vector<TCanvas*> canvasList, const TString & outDirector
   //doc.endSection();
 
   doc.addSection("Methods","Methods");
-  CAP::LatexFrame & methods = doc.addFrame("Methods");
+  Datum::LatexFrame & methods = doc.addFrame("Methods");
   doc.addText("Methods to Testing our new GlauberMC Code");
   std::vector<TString> list;
   list.push_back(TString("Method 1"));
@@ -1828,13 +1828,13 @@ void createPresentation(vector<TCanvas*> canvasList, const TString & outDirector
     canvasFileName = outDirectory;
     canvasFileName += name;
     canvasFileName += ".pdf";
-    CAP::LatexFrame & frame = doc.addFrame(name);
+    Datum::LatexFrame & frame = doc.addFrame(name);
     doc.addFigure(canvasFileName,canvasFileName,"caption to be added here");
     doc.endSection();
     }
   doc.endSection();
   doc.addSection("Conclusions","Conclusions");
-  CAP::LatexFrame & conclusion = doc.addFrame("Conclusions");
+  Datum::LatexFrame & conclusion = doc.addFrame("Conclusions");
   doc.addText("Very cool package!");
   doc.endSection();
   doc.create();

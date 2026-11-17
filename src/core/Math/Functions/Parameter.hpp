@@ -1,10 +1,10 @@
-#ifndef CAP_MATH_Parameter
-#define CAP_MATH_Parameter
+#ifndef DATUM_MATH_Parameter
+#define DATUM_MATH_Parameter
 #include <vector>
 #include "String.hpp"
 #include "BinaryIO.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -28,7 +28,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Parameter p("mu", 1.5, CAP::MATH::Parameter::LowHigh, 0.0, 3.0);
+  //!   Datum::MATH::Parameter p("mu", 1.5, Datum::MATH::Parameter::LowHigh, 0.0, 3.0);
   //!   p.setValue(2.0);
   //!   double v = p.value();   // 2.0
   //! @endcode
@@ -148,12 +148,12 @@ namespace CAP
   //! Stored: name, value, type, minimum and maximum, restored exactly (without the checks of the setters, which the
   //! saved parameter already satisfied).
 
-  //! Saved as "CAPR" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTMR" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! @{
 
-  //! @brief Tag of Parameter records in binary files. @return "CAPR"
-  static const char * binaryTag() { return "CAPR"; }
+  //! @brief Tag of Parameter records in binary files. @return "DTMR"
+  static const char * binaryTag() { return "DTMR"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return name()
@@ -195,6 +195,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -6,7 +6,7 @@
 #include "FiniteDifference.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -483,4 +483,4 @@ namespace CAP
   ScalarField operator-(const ScalarField & left, const ScalarField & right) { ScalarField r(left); r -= right; return r; }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

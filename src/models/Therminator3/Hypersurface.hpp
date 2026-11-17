@@ -1,11 +1,11 @@
-#ifndef CAP__Hypersurface
-#define CAP__Hypersurface
+#ifndef DATUM__Hypersurface
+#define DATUM__Hypersurface
 #include "String.hpp"
 #include "VectorLorentz.hpp"
 
-using CAP::MATH::VectorLorentz;
+using Datum::MATH::VectorLorentz;
 
-namespace CAP
+namespace Datum
 {
   class Hypersurface
   {
@@ -43,6 +43,6 @@ namespace CAP
   MATH::VectorLorentz _momentum;
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__ModelH_
+#endif // !DATUM__ModelH_

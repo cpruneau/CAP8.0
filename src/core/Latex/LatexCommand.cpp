@@ -1,6 +1,6 @@
 #include "LatexCommand.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexCommand::LatexCommand()
   :
@@ -30,5 +30,5 @@ namespace CAP
   out << "\\newcommand{" << key << "}{" << str << "}" << endl;
   }
 
-} // namespace CAP
+} // namespace Datum
 

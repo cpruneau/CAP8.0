@@ -1,5 +1,5 @@
-#ifndef CAP__Folder
-#define CAP__Folder
+#ifndef DATUM__Folder
+#define DATUM__Folder
 #include <vector>
 #include <map>
 #include <memory>
@@ -16,7 +16,7 @@
 #include "BinaryIO.hpp"
 #include "Object.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   class Folder;
@@ -81,7 +81,7 @@ namespace CAP
   struct hasPlusMinus<T, std::void_t<decltype(T(std::declval<const T &>() + std::declval<const T &>())),
                                      decltype(T(std::declval<const T &>() - std::declval<const T &>()))>> : std::true_type {};
 
-  //! @brief Whether T can be saved in CAP binary files (it provides binaryTag() and encodeBinary()).
+  //! @brief Whether T can be saved in Datum binary files (it provides binaryTag() and encodeBinary()).
   template <typename T, typename = void>
   struct isBinarySavable : std::false_type {};
   template <typename T>
@@ -99,7 +99,7 @@ namespace CAP
 
   //!
   //! @brief Container of named objects of any type (histograms, data points, functions, fields, ...) and of
-  //! sub-folders, forming a tree, with save and load of the whole tree to and from CAP binary files.
+  //! sub-folders, forming a tree, with save and load of the whole tree to and from Datum binary files.
   //!
   //! <b>Ownership.</b> The folder owns its objects: add() takes an object created with new, and the folder deletes it
   //! when the object is removed, replaced or the folder destroyed. release() gives an object back to the caller.
@@ -121,7 +121,7 @@ namespace CAP
   //! Histogram, DataPoints or Object, a Polynomial as Polynomial, ParameterizedFunction or Function. Add objects with their
   //! concrete type (e.g. add(new Polynomial(...))), so that they can be copied and saved.
   //!
-  //! <b>Binary files.</b> A folder is saved as a "CAPO" record holding the records of its entries, sub-folders included
+  //! <b>Binary files.</b> A folder is saved as a "DTMO" record holding the records of its entries, sub-folders included
   //! (see BinaryIO.hpp). Objects are rebuilt with their types when loading, through a registry of types. Folder is
   //! registered here; the Math library registers its classes (Histogram, DataPointsVector, DataPointColumns, DataPoint2D,
   //! ScalarField, Matrix, VectorND, Vector2D, Vector3D, VectorLorentz, Parameter, the parameterized functions) when it is
@@ -132,7 +132,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   using namespace CAP;
+  //!   using namespace Datum;
   //!   Folder run("run42");
   //!   Folder * pairs = run.addFolder("PtPt")->addFolder("pairs");
   //!   pairs->add(new Histogram("n2","pairs",100,0.0,10.0));
@@ -142,9 +142,9 @@ namespace CAP
   //!   run.add(new Histogram("n1","singles",100,0.0,10.0));   // added to PtPt/pairs
   //!   run.cd();                             // up to PtPt
   //!   std::cout << run.pwd() << std::endl;  // "/PtPt"
-  //!   run.saveBinary("run42.cap");
+  //!   run.saveBinary("run42.datum");
   //!   Folder copy;
-  //!   copy.loadBinary("run42.cap");
+  //!   copy.loadBinary("run42.datum");
   //! @endcode
   //!
   class Folder : public Object
@@ -329,8 +329,8 @@ namespace CAP
   //! @name Binary files
   //! @{
 
-  //! @brief Tag of folder records in binary files. @return "CAPO"
-  static const char * binaryTag() { return "CAPO"; }
+  //! @brief Tag of folder records in binary files. @return "DTMO"
+  static const char * binaryTag() { return "DTMO"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return name()
@@ -678,6 +678,6 @@ namespace CAP
       };
   }
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

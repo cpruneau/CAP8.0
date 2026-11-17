@@ -9,8 +9,8 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberNucleon
-#define CAP__GlauberNucleon
+#ifndef DATUM__GlauberNucleon
+#define DATUM__GlauberNucleon
 #include "GlauberExceptions.hpp"
 #include "MathConstants.hpp"
 #include "String.hpp"
@@ -19,9 +19,9 @@
 #include "VectorLorentz.hpp"
 #include "NuclearDistribution.hpp"
 
-using CAP::MATH::VectorLorentz;
+using Datum::MATH::VectorLorentz;
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -139,7 +139,7 @@ public:
 
 };
 
-}  // namespace CAP
+}  // namespace Datum
 
 
 #endif

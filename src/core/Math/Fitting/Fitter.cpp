@@ -30,7 +30,7 @@
 #include "Polynomial2D.hpp"
 #include "DataPoint3D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -827,4 +827,4 @@ namespace CAP
   }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

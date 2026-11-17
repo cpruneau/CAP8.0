@@ -20,7 +20,7 @@
 #include <unordered_set>
 
 
-namespace CAP
+namespace Datum
 {
 
 MeasurementSimulator::MeasurementSimulator()
@@ -52,7 +52,7 @@ void MeasurementSimulator::setDefaultConfiguration()
 {
   EventProcessor::setDefaultConfiguration();
   // events: the generator-level event, read, and the detector-level event, written (FastSimEvent); both are objects of
-  // the store (made by FilterCreator in RunCAP workflows), reset by the event iterator before each event
+  // the store (made by FilterCreator in RunDatum workflows), reset by the event iterator before each event
   _configuration.addProperty(createKey(name(),"EVENT:USE"),true);
   _configuration.addProperty(createKey(name(),"EVENT:N"),2);
   _configuration.addProperty(createKey(name(),"EVENT_0:NAME"),"Event");
@@ -126,4 +126,4 @@ void MeasurementSimulator::execute()
   if (!eventSmearer.empty()) eventSmearer[0]->smear(genEvent,recoEvent);
 }
 
-} // namespace CAP
+} // namespace Datum

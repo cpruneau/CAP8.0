@@ -16,9 +16,9 @@
 #include "NameHelpers.hpp"
 
 
-using CAP::MATH::absolute;
+using Datum::MATH::absolute;
 
-namespace CAP
+namespace Datum
 {
 SpherocityAnalyzer::SpherocityAnalyzer()
 :
@@ -28,7 +28,7 @@ fillS0(true),
 fillS1(false),
 fillS1VsS0(false),
 nSteps(1000),
-stepSize(CAP::MATH::twoPi()/1000.0),
+stepSize(Datum::MATH::twoPi()/1000.0),
 minMultiplicity(3)
 {
   appendClassName("SpherocityAnalyzer");
@@ -123,4 +123,4 @@ void SpherocityAnalyzer::execute()
     }
 }
 
-}  //namespace CAP
+}  //namespace Datum

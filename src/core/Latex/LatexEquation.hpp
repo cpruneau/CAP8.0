@@ -1,8 +1,8 @@
-#ifndef CAP__LatexEquation
-#define CAP__LatexEquation
+#ifndef DATUM__LatexEquation
+#define DATUM__LatexEquation
 #include "LatexElement.hpp"
 
-namespace CAP
+namespace Datum
 {
   class LatexEquation : public LatexElement
   {
@@ -20,6 +20,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexEquation
+#endif // !DATUM__LatexEquation

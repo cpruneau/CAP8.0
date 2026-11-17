@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file GraphEditor.hpp
 //! @brief GraphEditor: dialogs editing the parts of a graph (title, axes, legend, items).
-#ifndef CAP__GUI__GraphEditor
-#define CAP__GUI__GraphEditor
+#ifndef DATUM__GUI__GraphEditor
+#define DATUM__GUI__GraphEditor
 #include "Graph.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -72,6 +72,6 @@ namespace CAP
   } // namespace GraphEditor
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__GraphEditor
+#endif // !DATUM__GUI__GraphEditor

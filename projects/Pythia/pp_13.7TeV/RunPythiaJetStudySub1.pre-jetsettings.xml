@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- CAP workflow written by RunCAP.py on 2026-11-15 13:16:57 -->
-<CAP version="1">
-  <TASK name="Workflow" class="CAP::Task" severity="INFO" stage="EventProcessing">
+<!-- Datum workflow written by RunDatum.py on 2026-11-15 13:16:57 -->
+<Datum version="1">
+  <TASK name="Workflow" class="Datum::Task" severity="INFO" stage="EventProcessing">
     <GROUP name="JOB">
       <PARAMETER name="OUTPUT_FILE" type="string">PythiaJetStudyWithPtHat</PARAMETER>
     </GROUP>
-    <TASK name="FilterCreator" class="CAP::FilterCreator" severity="INFO">
-      <TASK name="EventFilters" class="CAP::EventFilterCreator" severity="INFO">
+    <TASK name="FilterCreator" class="Datum::FilterCreator" severity="INFO">
+      <TASK name="EventFilters" class="Datum::EventFilterCreator" severity="INFO">
         <GROUP name="EVENT_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -34,7 +34,7 @@
           </GROUP>
         </GROUP>
       </TASK>
-      <TASK name="ParticleFilters" class="CAP::ParticleFilterCreator" severity="INFO">
+      <TASK name="ParticleFilters" class="Datum::ParticleFilterCreator" severity="INFO">
         <GROUP name="PARTICLE_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -74,7 +74,7 @@
           </GROUP>
         </GROUP>
       </TASK>
-      <TASK name="JetSettings" class="CAP::JetSettingsCreator" severity="INFO">
+      <TASK name="JetSettings" class="Datum::JetSettingsCreator" severity="INFO">
         <GROUP name="JET_SETTINGS">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -103,7 +103,7 @@
           <PARAMETER name="PT_FLOOR" type="double">1</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="JetFilters" class="CAP::JetFilterCreator" severity="INFO">
+      <TASK name="JetFilters" class="Datum::JetFilterCreator" severity="INFO">
         <GROUP name="JET_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -143,7 +143,7 @@
           </GROUP>
         </GROUP>
       </TASK>
-      <TASK name="JetPairFilters" class="CAP::JetPairFilterCreator" severity="INFO">
+      <TASK name="JetPairFilters" class="Datum::JetPairFilterCreator" severity="INFO">
         <GROUP name="JET_PAIR_FILTER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -177,7 +177,7 @@
           </GROUP>
         </GROUP>
       </TASK>
-      <TASK name="EventEfficiencies" class="CAP::EventEfficiencyCreator" severity="INFO">
+      <TASK name="EventEfficiencies" class="Datum::EventEfficiencyCreator" severity="INFO">
         <GROUP name="EVENT_EFFICIENCY">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -197,7 +197,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleEfficiencies" class="CAP::ParticleEfficiencyCreator" severity="INFO">
+      <TASK name="ParticleEfficiencies" class="Datum::ParticleEfficiencyCreator" severity="INFO">
         <GROUP name="PARTICLE_EFFICIENCY">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -217,7 +217,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="EventSmearers" class="CAP::EventSmearerCreator" severity="INFO">
+      <TASK name="EventSmearers" class="Datum::EventSmearerCreator" severity="INFO">
         <GROUP name="EVENT_SMEARER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -237,7 +237,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleSmearers" class="CAP::ParticleSmearerCreator" severity="INFO">
+      <TASK name="ParticleSmearers" class="Datum::ParticleSmearerCreator" severity="INFO">
         <GROUP name="PARTICLE_SMEARER">
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -257,7 +257,7 @@
           <PARAMETER name="USE" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="Events" class="CAP::EventCreator" severity="INFO">
+      <TASK name="Events" class="Datum::EventCreator" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">true</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -282,7 +282,7 @@
           <PARAMETER name="OWNER" type="bool">true</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="ParticleDbs" class="CAP::ParticleDbCreator" severity="INFO">
+      <TASK name="ParticleDbs" class="Datum::ParticleDbCreator" severity="INFO">
         <GROUP name="PARTICLE_DB">
           <PARAMETER name="IMPORT" type="bool">true</PARAMETER>
           <PARAMETER name="CREATE" type="bool">false</PARAMETER>
@@ -309,7 +309,7 @@
         </GROUP>
       </TASK>
     </TASK>
-    <TASK name="RunAnalysis" class="CAP::EventIterator" severity="INFO">
+    <TASK name="RunAnalysis" class="Datum::EventIterator" severity="INFO">
       <GROUP name="EVENT">
         <PARAMETER name="USE" type="bool">true</PARAMETER>
         <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -480,7 +480,7 @@
         <PARAMETER name="TITLE" type="string">DefaultDb</PARAMETER>
         <PARAMETER name="OWNER" type="bool">false</PARAMETER>
       </GROUP>
-      <TASK name="PythiaEventGenerator" class="CAP::PythiaEventGenerator" severity="INFO">
+      <TASK name="PythiaEventGenerator" class="Datum::PythiaEventGenerator" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">false</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -701,7 +701,7 @@
           <PARAMETER name="OWNER" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="JetAnalyzer" class="CAP::JetAnalyzer" severity="INFO">
+      <TASK name="JetAnalyzer" class="Datum::JetAnalyzer" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">false</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -943,7 +943,7 @@
           <PARAMETER name="OWNER" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="JetFluctuationAnalyzer" class="CAP::JetFluctuationAnalyzer" severity="INFO">
+      <TASK name="JetFluctuationAnalyzer" class="Datum::JetFluctuationAnalyzer" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">false</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -1169,7 +1169,7 @@
           <PARAMETER name="OWNER" type="bool">false</PARAMETER>
         </GROUP>
       </TASK>
-      <TASK name="JetPairAnalyzer" class="CAP::JetPairAnalyzer" severity="INFO">
+      <TASK name="JetPairAnalyzer" class="Datum::JetPairAnalyzer" severity="INFO">
         <GROUP name="EVENT">
           <PARAMETER name="USE" type="bool">false</PARAMETER>
           <PARAMETER name="IMPORT" type="bool">false</PARAMETER>
@@ -1429,7 +1429,7 @@
       </TASK>
     </TASK>
   </TASK>
-  <RUNCAP version="2">
+  <RUNDATUM version="2">
     <EventFilter name="ALL" title="ALL" />
     <ParticleFilter name="ALL" title="ALL">
       <Condition quantity="PT" form="range" minimum="0.2" maximum="100" />
@@ -1452,8 +1452,8 @@
     <ParticleDb name="DefaultDb" title="DefaultDb">
       <Parameter name="_dbDisableWeakDecays">false</Parameter>
     </ParticleDb>
-  </RUNCAP>
+  </RUNDATUM>
   <SUBSAMPLES enabled="true" count="10" parallel="16" mode="SUBSAMPLE" stage="" where="LOCAL" prefix="sub_" seed="112133" weights="EVENTS" pthat="10,15,20,25,30,35,40,45,50,60,70,80,90,100,150,200" normalization="SIGMA">
     <SLURM host="" cap="" directory="" partition="" time="04:00:00" memory="4G" account="" />
   </SUBSAMPLES>
-</CAP>
+</Datum>

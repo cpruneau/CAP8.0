@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 RootChainManager::RootChainManager()
@@ -115,4 +115,4 @@ void RootChainManager::exportEvent()
   throw Exception("Not available",__FUNCTION__);
 }
 
-} // namespace CAP
+} // namespace Datum

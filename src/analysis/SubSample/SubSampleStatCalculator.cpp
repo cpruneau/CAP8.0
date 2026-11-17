@@ -24,12 +24,12 @@
 #include "HistogramFolder.hpp"
 #include "NameHelpers.hpp"
 #include "Exceptions.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "ManagedObjects.hpp"
 #include "WorkflowHistograms.hpp"
 #include "XmlDocument.hpp"
 
-namespace CAP
+namespace Datum
 {
 using MATH::Histogram;
 
@@ -381,24 +381,28 @@ for (const String & path : histogramPaths(*bins[0]))
 bool SubSampleStatCalculator::crossSection(const Folder & folder, double & sigma, double & error, long & nAccepted,
                                            double & ptHatMin, double & ptHatMax)
 {
-const String key = "CAP_SIGMA_GEN";
-for (const String & path : folder.paths())
+// the parameters are named DATUM_..., or CAP_... in the files written before Datum 1.0
+for (const char * names : {"DATUM_", "CAP_"})
   {
-  if (!path.endsWith(key) || !folder.get<StringParameter>(path)) continue;
-  const String prefix(path.data(), path.length() - key.length());
-  auto number = [&](const char * name, double fallback)
+  const String key = String(names) + String("SIGMA_GEN");
+  for (const String & path : folder.paths())
     {
-    const StringParameter * p = folder.get<StringParameter>(prefix + String(name));
-    if (!p) return fallback;
-    try { return std::stod(p->value().str()); } catch (const std::exception &) { return fallback; }
-    };
-  sigma = number("CAP_SIGMA_GEN", -1.0);
-  error = number("CAP_SIGMA_ERR", 0.0);
-  ptHatMin = number("CAP_PTHAT_MIN", -1.0);
-  ptHatMax = number("CAP_PTHAT_MAX", -1.0);
-  const LongParameter * n = folder.get<LongParameter>(prefix + String("CAP_N_ACCEPTED"));
-  nAccepted = n ? n->value() : 0;
-  return sigma >= 0.0;
+    if (!path.endsWith(key) || !folder.get<StringParameter>(path)) continue;
+    const String prefix = String(path.data(), path.length() - key.length()) + String(names);
+    auto number = [&](const char * name, double fallback)
+      {
+      const StringParameter * p = folder.get<StringParameter>(prefix + String(name));
+      if (!p) return fallback;
+      try { return std::stod(p->value().str()); } catch (const std::exception &) { return fallback; }
+      };
+    sigma = number("SIGMA_GEN", -1.0);
+    error = number("SIGMA_ERR", 0.0);
+    ptHatMin = number("PTHAT_MIN", -1.0);
+    ptHatMax = number("PTHAT_MAX", -1.0);
+    const LongParameter * n = folder.get<LongParameter>(prefix + String("N_ACCEPTED"));
+    nAccepted = n ? n->value() : 0;
+    return sigma >= 0.0;
+    }
   }
 return false;
 }
@@ -437,11 +441,11 @@ for (const auto & item : groups)
   for (unsigned int k = 0; k < nBins; k++)
     {
     const SubSample & s = item.second[k];
-    std::unique_ptr<CapFile> file(CapFile::openOldCapFile(s.path, s.file));
+    std::unique_ptr<DatumFile> file(DatumFile::openOldDatumFile(s.path, s.file));
     double sigma = -1.0, error = 0.0, ptMin = -1.0, ptMax = -1.0;
     long accepted = 0;
     if (!crossSection(file->folder(), sigma, error, accepted, ptMin, ptMax))
-      throw Exception(String("no cross section (CAP_SIGMA_GEN, PythiaEventGenerator) in ") + s.path, __FUNCTION__);
+      throw Exception(String("no cross section (DATUM_SIGMA_GEN, PythiaEventGenerator) in ") + s.path, __FUNCTION__);
     if (accepted <= 0) throw Exception(String("no event accepted in ") + s.path, __FUNCTION__);
     n[k] = double(accepted);
     sumSigmaN[k] += sigma * n[k];
@@ -479,12 +483,12 @@ if (reportInfo(__FUNCTION__))
 std::vector<SubSample> result;
 for (const auto & item : groups)
   {
-  std::vector<std::unique_ptr<CapFile>> files;
+  std::vector<std::unique_ptr<DatumFile>> files;
   std::vector<const Folder *> folders;
   std::vector<double> weights;
   for (unsigned int k = 0; k < nBins; k++)
     {
-    files.emplace_back(CapFile::openOldCapFile(item.second[k].path, item.second[k].file));
+    files.emplace_back(DatumFile::openOldDatumFile(item.second[k].path, item.second[k].file));
     folders.push_back(&files.back()->folder());
     weights.push_back(sigma[k] / events.at(item.first)[k]);
     }
@@ -493,9 +497,11 @@ for (const auto & item : groups)
   // the cross section of the bins replaces that of the run of bin 0 (copied with its folder)
   for (const String & path : sum.paths())
     {
-    const String leaf = FileSystem::name(path);
-    if (leaf == "CAP_SIGMA_GEN" || leaf == "CAP_SIGMA_ERR" || leaf == "CAP_N_ACCEPTED" || leaf == "CAP_PTHAT_MIN"
-        || leaf == "CAP_PTHAT_MAX")
+    String leaf = FileSystem::name(path);
+    if (leaf.beginsWith("DATUM_")) leaf = leaf.subString(6);
+    else if (leaf.beginsWith("CAP_")) leaf = leaf.subString(4);           // written before Datum 1.0
+    else continue;
+    if (leaf == "SIGMA_GEN" || leaf == "SIGMA_ERR" || leaf == "N_ACCEPTED" || leaf == "PTHAT_MIN" || leaf == "PTHAT_MAX")
       sum.remove(path);
     }
   for (unsigned int k = 0; k < nBins; k++)
@@ -503,18 +509,18 @@ for (const auto & item : groups)
     char text[200];
     std::snprintf(text, sizeof(text), "%.17g %.17g %.17g %.17g %.17g", low[k], high[k], sigma[k], sigmaError[k],
                   events.at(item.first)[k]);
-    String key = String("CAP_PTHAT_BIN_") + String(std::to_string(k));
+    String key = String("DATUM_PTHAT_BIN_") + String(std::to_string(k));
     sum.add(new StringParameter(key, String(text)), key);
     }
   char text[64];
   std::snprintf(text, sizeof(text), "%.17g", covered);
-  sum.add(new StringParameter("CAP_SIGMA_COVERED", String(text)), "CAP_SIGMA_COVERED");
-  sum.add(new StringParameter("CAP_NORMALIZATION", perEvent ? String("COVERED") : String("SIGMA")), "CAP_NORMALIZATION");
+  sum.add(new StringParameter("DATUM_SIGMA_COVERED", String(text)), "DATUM_SIGMA_COVERED");
+  sum.add(new StringParameter("DATUM_NORMALIZATION", perEvent ? String("COVERED") : String("SIGMA")), "DATUM_NORMALIZATION");
   SubSample combined;
   combined.path = FileSystem::join(_importPath, item.first + String("_CrossSection"));
   combined.file = item.second[0].file;
   FileSystem::createDirectory(FileSystem::expand(combined.path));
-  std::unique_ptr<CapFile> output(CapFile::openRecreateCapFile(combined.path, combined.file));
+  std::unique_ptr<DatumFile> output(DatumFile::openRecreateDatumFile(combined.path, combined.file));
   output->folder() = sum;
   output->write(true);
   result.push_back(combined);
@@ -569,7 +575,7 @@ std::vector<SubSampleStatCalculator::SubSample> SubSampleStatCalculator::findSub
 const String & taskName = name();
 String pattern = _configuration.valueString(createKey(taskName,"SUBSAMPLE:PATTERN"));
 if (pattern.isNull() || pattern == "NONE") pattern = "*";
-String file = ManagedObjects<HistogramFolder>::capFileName(_importFile);
+String file = ManagedObjects<HistogramFolder>::datumFileName(_importFile);
 std::vector<String> directories = listDirsIn(_importPath, false);
 std::sort(directories.begin(), directories.end());
 std::vector<SubSample> result;
@@ -577,7 +583,7 @@ for (const String & directory : directories)
   {
   if (!FileSystem::matches(directory, pattern)) continue;
   String path = FileSystem::join(_importPath, directory);
-  if (!FileSystem::isFile(FileSystem::expand(FileSystem::join(path, file, ".cap"))))
+  if (!FileSystem::isFile(FileSystem::expand(DatumFile::existingFileName(path, file))))
     {
     if (reportWarning(__FUNCTION__))
       std::cout << "No file " << file << " in " << path << ": directory skipped" << std::endl;
@@ -641,7 +647,7 @@ MeanAccumulator mean;
 for (size_t i = 0; i < samples.size(); i++)
   {
   SubSample & s = samples[i];
-  std::unique_ptr<CapFile> file(CapFile::openOldCapFile(s.path, s.file));
+  std::unique_ptr<DatumFile> file(DatumFile::openOldDatumFile(s.path, s.file));
   Accountant executed("Executed",0);
   try
     {
@@ -707,7 +713,7 @@ else
   for (size_t i = 0; i < samples.size(); i++)
     {
     const SubSample & s = samples[i];
-    std::unique_ptr<CapFile> file(CapFile::openOldCapFile(s.path, s.file));
+    std::unique_ptr<DatumFile> file(DatumFile::openOldDatumFile(s.path, s.file));
     if (withStages)
       {
       Folder replica, derived;
@@ -736,8 +742,8 @@ else
   jack.result(result, biasCorrected);
   }
 
-String outputName = ManagedObjects<HistogramFolder>::capFileName(_exportFile);
-std::unique_ptr<CapFile> outputFile(CapFile::openRecreateCapFile(_exportPath, outputName));
+String outputName = ManagedObjects<HistogramFolder>::datumFileName(_exportFile);
+std::unique_ptr<DatumFile> outputFile(DatumFile::openRecreateDatumFile(_exportPath, outputName));
 outputFile->folder() = result;
 if (haveAccountants)
   {
@@ -751,13 +757,13 @@ if (mode == "JACKKNIFE")
   if (name.isNull() || name == "NONE")
     {
     String stem = outputName;
-    if (stem.endsWith(".cap")) stem = String(stem.data(), stem.length() - 4);
+    if (DatumFile::isDatumFileName(stem)) stem = FileSystem::withExtension(stem, "");
     name = stem + String("_biasCorrected");
     }
-  std::unique_ptr<CapFile> biasOutput(CapFile::openRecreateCapFile(_exportPath, ManagedObjects<HistogramFolder>::capFileName(name)));
+  std::unique_ptr<DatumFile> biasOutput(DatumFile::openRecreateDatumFile(_exportPath, ManagedObjects<HistogramFolder>::datumFileName(name)));
   biasOutput->folder() = biasCorrected;
   biasOutput->write(true);
   }
 }
 
-} // namespace CAP
+} // namespace Datum

@@ -8,9 +8,9 @@
  *
  * *********************************************************************/
 //! @file CanvasPane.hpp
-//! @brief CanvasPane: canvas pane of the CapGui window, with its toolbar and mouse interactions.
-#ifndef CAP__GUI__CanvasPane
-#define CAP__GUI__CanvasPane
+//! @brief CanvasPane: canvas pane of the DatumGui window, with its toolbar and mouse interactions.
+#ifndef DATUM__GUI__CanvasPane
+#define DATUM__GUI__CanvasPane
 #include <functional>
 #include "Canvas.hpp"
 #include "BezierCurve.hpp"
@@ -18,7 +18,7 @@
 
 struct ImFont;
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -26,7 +26,7 @@ namespace CAP
   class ImGuiPainter;
 
   //!
-  //! @brief One canvas pane of the CapGui window: a GRAPHICS::Canvas (divided into graphs) with a toolbar.
+  //! @brief One canvas pane of the DatumGui window: a GRAPHICS::Canvas (divided into graphs) with a toolbar.
   //!
   //! Toolbar: Add / Replace (what showing an object does to the selected graph), Log X, Log Y (scales of the
   //! selected graph), Graphs (divide the canvas into n' x m' graphs), Clear (empty the selected graph), + (new pane).
@@ -104,7 +104,7 @@ namespace CAP
   MATH::BezierCurve * editedCurve() const { return _curve; }
   //! @}
 
-  //! @brief Window holding the pane: -1 for the main window, otherwise a window of canvases (CapGui::addPaneWindow()).
+  //! @brief Window holding the pane: -1 for the main window, otherwise a window of canvases (DatumGui::addPaneWindow()).
   int  host() const { return _host; }
   //! @brief Set the window holding the pane. @param host -1 for the main window, or the index of a window of canvases
   void setHost(int host) { _host = host; }
@@ -248,6 +248,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__CanvasPane
+#endif // !DATUM__GUI__CanvasPane

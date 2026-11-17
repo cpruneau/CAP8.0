@@ -7,7 +7,7 @@
 """Tests of the stages of a workflow (event processing, derived histograms, balance functions): files holding several
 stages, files written before the stages, and the stage buttons of RunDatum.py.
 
-Run from the CAP directory:  python3 -m unittest discover -s tests/python
+Run from the Datum directory:  python3 -m unittest discover -s tests/python
 """
 
 import os
@@ -16,17 +16,17 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
-CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, CAP_DIR)
+DATUM_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, DATUM_DIR)
 
 import RunDatum                                   # noqa: E402
-import RunCAPFilters as F                       # noqa: E402
+import RunDatumFilters as F                       # noqa: E402
 
-TEMPLATES = RunDatum.load_templates(os.path.join(CAP_DIR, "DB", "Templates"))
+TEMPLATES = RunDatum.load_templates(os.path.join(DATUM_DIR, "DB", "Templates"))
 
 
 def task(cls, name=None):
-    t = TEMPLATES["CAP::" + cls].clone()
+    t = TEMPLATES["Datum::" + cls].clone()
     if name:
         t.name = name
     return t
@@ -65,8 +65,8 @@ class TestStageFiles(unittest.TestCase):
         lib = library()
         events = events_stage(lib)
         derived = F.derived_workflow(events, TEMPLATES, RunDatum.TaskConfig)
-        self.assertEqual([t.cls for t in derived], ["CAP::ParticleSingleDerivedCalculator",
-                                                    "CAP::ParticlePairDerivedCalculator"])
+        self.assertEqual([t.cls for t in derived], ["Datum::ParticleSingleDerivedCalculator",
+                                                    "Datum::ParticlePairDerivedCalculator"])
         jobs = {RunDatum.EVENTS: {"OUTPUT_FILE": "fill.cap", "INPUT_FILE": ""},
                 RunDatum.DERIVED: {"OUTPUT_FILE": "fillDerived.cap", "INPUT_FILE": "fill.cap"}}
         with tempfile.TemporaryDirectory() as d:
@@ -132,14 +132,14 @@ class TestStageFiles(unittest.TestCase):
 
     def test_balance_function_tasks(self):
         """Tasks of balance functions belong to their stage; the names of the tasks of the stages are reserved."""
-        bf = RunDatum.TaskConfig("BF", "CAP::ParticlePairBfCalculator")
+        bf = RunDatum.TaskConfig("BF", "Datum::ParticlePairBfCalculator")
         self.assertTrue(RunDatum.is_bf_task(bf))
         self.assertFalse(RunDatum.is_bf_task(task("ParticlePairDerivedCalculator")))
         self.assertIn("Task BF computes balance functions: it belongs to the stage Balance Fct.",
                       RunDatum.check_workflow([bf], RunDatum.DERIVED))
         self.assertEqual(RunDatum.check_workflow([bf], RunDatum.BF), [])
         self.assertIn("The name DerivedHistos is reserved", "\n".join(
-            RunDatum.check_workflow([RunDatum.TaskConfig("DerivedHistos", "CAP::Task")], RunDatum.EVENTS)))
+            RunDatum.check_workflow([RunDatum.TaskConfig("DerivedHistos", "Datum::Task")], RunDatum.EVENTS)))
 
 
 try:
@@ -223,7 +223,7 @@ class TestStageButtons(unittest.TestCase):
                 self.assertEqual([t.name for t in app.stage_tasks(RunDatum.DERIVED)], ["Renamed", "PairDerived"])
                 self.assertIn("disabled", app.stage_buttons[RunDatum.BF].state())
                 # a task of balance functions (a class of a later build) makes the stage Balance Fct live
-                app.stages[RunDatum.BF] = [RunDatum.TaskConfig("BF", "CAP::ParticlePairBfCalculator", known=False)]
+                app.stages[RunDatum.BF] = [RunDatum.TaskConfig("BF", "Datum::ParticlePairBfCalculator", known=False)]
                 app._update_stages()
                 self.assertNotIn("disabled", app.stage_buttons[RunDatum.BF].state())
                 app.show_stage(RunDatum.BF)

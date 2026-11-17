@@ -9,8 +9,8 @@
  * *********************************************************************/
 //! @file FitRecord.hpp
 //! @brief FitRecord: a fit attached to the data points or the function it was made to.
-#ifndef CAP__MATH__FitRecord
-#define CAP__MATH__FitRecord
+#ifndef DATUM__MATH__FitRecord
+#define DATUM__MATH__FitRecord
 #include <memory>
 #include <utility>
 #include <vector>
@@ -18,7 +18,7 @@
 #include "FitResult.hpp"
 #include "FitSelection.hpp"
 
-namespace CAP
+namespace Datum
 {
   class BinaryWriter;
   class BinaryReader;
@@ -72,7 +72,7 @@ namespace CAP
     //! @param k index @param value set to the value @param error set to the uncertainty
     void parameterAt(unsigned int k, double & value, double & error) const;
     //!
-    //! @brief Quality of the fit as (name, value) rows, as in the fit pane of CapGui: chi square (or -2 ln L), degrees
+    //! @brief Quality of the fit as (name, value) rows, as in the fit pane of DatumGui: chi square (or -2 ln L), degrees
     //! of freedom, chi square per degree of freedom and p-value (for a chi square), points, convergence, uncertainties,
     //! status, statistic, method, evaluations, iterations, range. @return rows
     //!
@@ -107,13 +107,13 @@ namespace CAP
   //! @brief Detach all the fits.
   void clear() { _records.clear(); }
 
-  //! @name Binary encoding (part of the payload of the objects the fits are attached to, in CAP files)
+  //! @name Binary encoding (part of the payload of the objects the fits are attached to, in Datum files)
   //!
   //! The fits are written as a format version (1 byte), the number of fits, and each fit as a block preceded by its
   //! length: the name of the class of its function (see FunctionRegistry), the number of parameters, the rank, the
   //! name and title of the function, its parameters (names, values, types and bounds), the label, the FitResult and
   //! the range; then extensions, which readers written before them skip: the regions of the fit (if it has some), and
-  //! the whole fitted function as a "CAPU" payload (ParameterizedFunction::encodeBinary()), from which any function is
+  //! the whole fitted function as a "DTMU" payload (ParameterizedFunction::encodeBinary()), from which any function is
   //! read back, a composite that was never registered included. A fit whose function can be made neither from that
   //! payload nor from the class named in the head (not registered here, or not with that number of parameters and
   //! rank) is skipped when read; the other fits are still read.
@@ -135,6 +135,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__FitRecord
+#endif // !DATUM__MATH__FitRecord

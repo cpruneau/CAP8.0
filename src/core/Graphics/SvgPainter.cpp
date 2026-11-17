@@ -16,7 +16,7 @@
 #include "SvgPainter.hpp"
 #include "LatexRenderer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -256,4 +256,4 @@ namespace CAP
   }
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum

@@ -1,5 +1,5 @@
 //
-// MacOsCanvas.mm -- macOS backend for CAP::GRAPHICS::Canvas (AppKit + CoreGraphics + CoreText).
+// MacOsCanvas.mm -- macOS backend for Datum::GRAPHICS::Canvas (AppKit + CoreGraphics + CoreText).
 // Compiled as Objective-C++ with ARC (see CMakeLists.txt).
 //
 #import <Cocoa/Cocoa.h>
@@ -12,16 +12,16 @@
 #include "MacOsCanvas.hpp"
 #include "Canvas.hpp"
 
-using CAP::GRAPHICS::MacOsCanvas;
+using Datum::GRAPHICS::MacOsCanvas;
 
 //------------------------------------------------------------------------------
 // View: forwards drawRect: to the C++ painter
 //------------------------------------------------------------------------------
-@interface CAPCanvasView : NSView
+@interface DatumCanvasView : NSView
 @property (nonatomic, assign) MacOsCanvas * painter;
 @end
 
-@implementation CAPCanvasView
+@implementation DatumCanvasView
 - (BOOL)isOpaque { return YES; }
 - (void)drawRect:(NSRect)dirtyRect
 {
@@ -36,10 +36,10 @@ using CAP::GRAPHICS::MacOsCanvas;
 //------------------------------------------------------------------------------
 // Window delegate: closing the window ends show()
 //------------------------------------------------------------------------------
-@interface CAPWindowDelegate : NSObject <NSWindowDelegate>
+@interface DatumWindowDelegate : NSObject <NSWindowDelegate>
 @end
 
-@implementation CAPWindowDelegate
+@implementation DatumWindowDelegate
 - (void)windowWillClose:(NSNotification *)notification
 {
   (void)notification;
@@ -113,10 +113,10 @@ namespace
     return line;
   }
 
-  void setStroke(CGContextRef context, const CAP::GRAPHICS::LineAttributes & line)
+  void setStroke(CGContextRef context, const Datum::GRAPHICS::LineAttributes & line)
   {
     float r, g, b;
-    CAP::GRAPHICS::Painter::rgb(line.color(), r, g, b);
+    Datum::GRAPHICS::Painter::rgb(line.color(), r, g, b);
     CGContextSetRGBStrokeColor(context, r, g, b, line.alpha());
     CGFloat w = line.width() > 0 ? line.width() : 1.0;
     CGContextSetLineWidth(context, w);
@@ -134,7 +134,7 @@ namespace
   void setFill(CGContextRef context, int color, float alpha)
   {
     float r, g, b;
-    CAP::GRAPHICS::Painter::rgb(color, r, g, b);
+    Datum::GRAPHICS::Painter::rgb(color, r, g, b);
     CGContextSetRGBFillColor(context, r, g, b, alpha);
   }
 
@@ -151,7 +151,7 @@ namespace
 //------------------------------------------------------------------------------
 // MacOsCanvas
 //------------------------------------------------------------------------------
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -197,11 +197,11 @@ namespace CAP
     NSString * title = [NSString stringWithUTF8String:_canvas->title().data()];
     window.title = title ? title : @"Canvas";
 
-    CAPCanvasView * view = [[CAPCanvasView alloc] initWithFrame:frame];
+    DatumCanvasView * view = [[DatumCanvasView alloc] initWithFrame:frame];
     view.painter = this;
     window.contentView = view;
 
-    CAPWindowDelegate * delegate = [[CAPWindowDelegate alloc] init]; // kept alive by this scope
+    DatumWindowDelegate * delegate = [[DatumWindowDelegate alloc] init]; // kept alive by this scope
     window.delegate = delegate;
 
     [window center];
@@ -211,7 +211,7 @@ namespace CAP
     else
       [NSApp activateIgnoringOtherApps:YES];
 
-    [NSApp run]; // returns when the window closes (see CAPWindowDelegate)
+    [NSApp run]; // returns when the window closes (see DatumWindowDelegate)
 
     view.painter    = nullptr;
     window.delegate = nil;
@@ -439,4 +439,4 @@ namespace CAP
   }
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum

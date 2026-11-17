@@ -8,8 +8,8 @@
 """
 NucleusDbEditor.py -- view and edit the nuclei of the Glauber Monte Carlo (DB/Glauber/NucleusDb.xml).
 
-Usage (from anywhere; the script locates CAP from its own position):
-    python3 NucleusDbEditor.py [file.xml]      # open the GUI (default: <CAP>/DB/Glauber/NucleusDb.xml)
+Usage (from anywhere; the script locates Datum from its own position):
+    python3 NucleusDbEditor.py [file.xml]      # open the GUI (default: <Datum>/DB/Glauber/NucleusDb.xml)
     python3 NucleusDbEditor.py --check [FILE]  # load FILE, report problems and exit
     python3 NucleusDbEditor.py --list [FILE]   # print the nuclei as a table and exit
 
@@ -33,7 +33,7 @@ by that column (click again to reverse; View > File order restores the order of 
 when saving). View > Plot densities draws the radial densities of the selected nuclei (normalized to 1 at r = 0
 for the Fermi and Gaussian forms; deformed nuclei along and perpendicular to their axis).
 
-File menu: Open, Save, Save As (the file written keeps the comment at its top and the format of CAP's nucleus
+File menu: Open, Save, Save As (the file written keeps the comment at its top and the format of Datum's nucleus
 database). Edit menu: add, duplicate, delete and move nuclei.
 
 Requires Python 3.7+ with tkinter (on macOS with Homebrew Python: brew install python-tk).
@@ -46,8 +46,8 @@ import sys
 import xml.etree.ElementTree as ET
 from xml.sax.saxutils import escape
 
-CAP_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_FILE = os.path.join(CAP_DIR, "DB", "Glauber", "NucleusDb.xml")
+DATUM_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_FILE = os.path.join(DATUM_DIR, "DB", "Glauber", "NucleusDb.xml")
 
 #: Attributes of a nucleus, in the order of the file.
 FIELDS = ["name", "A", "Z", "radialType", "radius", "skin", "w", "neutronRadius", "neutronSkin", "neutronW",
@@ -89,14 +89,14 @@ IMPLEMENTED_TYPES = {0, 1, 2, 9}
 
 COLORS = {"row_bg": "white", "row_fg": "black", "alt_bg": "#f0f0f0", "bad_fg": "#b00000",
           "selected_bg": "#2f6db5", "selected_fg": "white"}
-#: Characters escaped in attribute values (as CAP's XmlWriter does), besides & < >.
+#: Characters escaped in attribute values (as Datum's XmlWriter does), besides & < >.
 ENTITIES = {'"': "&quot;", "'": "&apos;"}
 INT_RE = re.compile(r"[+-]?\d+")
 INT_PARTIAL = re.compile(r"[+-]?\d*")
 FLOAT_PARTIAL = re.compile(r"[+-]?\d*\.?\d*([eE][+-]?\d*)?")
 #: Comment written at the top of a new file (a file read keeps its own).
 DEFAULT_HEADER = """<!--
-  Nuclei of the Glauber Monte Carlo (CAP::GlauberDb, models/Glauber), edited with NucleusDbEditor.py.
+  Nuclei of the Glauber Monte Carlo (Datum::GlauberDb, models/Glauber), edited with NucleusDbEditor.py.
   Attributes (lengths in fm): name, A, Z, radialType (see NuclearDistribution), radius, skin, w (proton density),
   neutronRadius, neutronSkin, neutronW (default: those of the protons), beta2, beta4, r0, r1, r2, a, b (default 0),
   maxRadius (default 3 x 1.2 A^(1/3)), comment.
@@ -143,7 +143,7 @@ class Nucleus:
 class NucleusDb:
     def __init__(self):
         self.header = DEFAULT_HEADER
-        self.root_tag = "CAP"
+        self.root_tag = "Datum"
         self.root_attributes = {"version": "1", "type": "glauberNucleusDb"}
         self.db_tag = "NUCLEUS_DB"
         self.nuclei = []
@@ -179,7 +179,7 @@ class NucleusDb:
         return db
 
     def text(self):
-        """The database in the format of CAP's nucleus database file."""
+        """The database in the format of Datum's nucleus database file."""
         def attrs(n):
             keys = [f for f in self.fields if n.attributes.get(f, "") != "" or f in REQUIRED]
             keys += [k for k in n.attributes if k not in keys and n.attributes[k] != ""]
@@ -188,7 +188,7 @@ class NucleusDb:
         if self.header:
             for body in re.findall(r"<!--(.*?)-->", self.header, re.S):
                 if "--" in body:
-                    raise ValueError("a comment at the top of the file holds \"--\", which XML forbids (CAP could "
+                    raise ValueError("a comment at the top of the file holds \"--\", which XML forbids (Datum could "
                                      "not read the file)")
             lines.append(self.header)
         nested = self.root_tag != self.db_tag
@@ -905,7 +905,7 @@ def run_gui(path=None, hook=None):
                 options.pop("filetypes", None)
             options.setdefault("parent", self.root)
             if options.get("initialdir") and not os.path.isdir(options["initialdir"]):
-                options["initialdir"] = CAP_DIR
+                options["initialdir"] = DATUM_DIR
             try:
                 return getattr(filedialog, kind_)(**options) or ""
             except tk.TclError as e:

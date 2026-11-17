@@ -12,7 +12,7 @@
 #include "ObjectCreator.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   FilterCreator::FilterCreator()
@@ -25,4 +25,4 @@ namespace CAP
   setTitle("FilterCreator");
   }
 
-} // namespace CAP
+} // namespace Datum

@@ -14,7 +14,7 @@
 #include <sstream>
 #include <string>
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -188,9 +188,9 @@ void ParticleDbXml::addDecayMode(ParticleType * parentType,
     // Multiply the Clebsh by two?
     // The same spin, mass, strangeness (charm?)
     // and different I3?
-    if (  (CAP::MATH::absolute(childType1->spin()  - childType2->spin()) < 0.01)
-        &&  (CAP::MATH::absolute(childType1->mass() - childType2->mass()) < 0.01)
-        &&  (CAP::MATH::absolute(childType1->isospin3()-childType2->isospin3())   > 0.01)
+    if (  (Datum::MATH::absolute(childType1->spin()  - childType2->spin()) < 0.01)
+        &&  (Datum::MATH::absolute(childType1->mass() - childType2->mass()) < 0.01)
+        &&  (Datum::MATH::absolute(childType1->isospin3()-childType2->isospin3())   > 0.01)
         &&  (childType1->strangeness()-childType2->strangeness() == 0)
         &&  (childType1->charm()- childType2->charm() == 0)        )
       {
@@ -226,7 +226,7 @@ double ParticleDbXml::clebschGordan(double aJot,  double aEm,
 
   for (tIter = mint; tIter<=maxt; tIter ++)
     {
-    coef = CAP::MATH::power(-1, tIter);
+    coef = Datum::MATH::power(-1, tIter);
     // PRINT_DEBUG_3("\t\t\tcoef1 " << coef);
     coef *= std::sqrt( (2*aJot+1)
                  * factorials[lrint(aJot1+aEm1)]
@@ -301,7 +301,7 @@ XmlElement ParticleDbXml::createElement(const ParticleDb & particleDb)
 
 XmlDocument ParticleDbXml::createDocument(const ParticleDb & particleDb)
 {
-  XmlDocument document("CAP");
+  XmlDocument document("Datum");
   document.root().setAttribute("version",1);
   document.root().setAttribute("type","particleDb");
   document.root().addChild(createElement(particleDb));
@@ -318,4 +318,4 @@ void ParticleDbXml::write(const ParticleDb & particleDb, const String & path, co
   createDocument(particleDb).write(path,name);
 }
 
-} // namespace CAP
+} // namespace Datum

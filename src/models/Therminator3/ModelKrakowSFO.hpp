@@ -1,8 +1,8 @@
-#ifndef CAP__ModelKrakowSFO
-#define CAP__ModelKrakowSFO
+#ifndef DATUM__ModelKrakowSFO
+#define DATUM__ModelKrakowSFO
 #include "Model.hpp"
 
-namespace CAP
+namespace Datum
 {
   class ModelKrakowSFO
   :
@@ -15,7 +15,7 @@ namespace CAP
   virtual double calculateIntegrand(ThermalHadron & hadron);
   };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif
 

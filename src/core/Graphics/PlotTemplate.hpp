@@ -8,23 +8,23 @@
  *
  * *********************************************************************/
 //! @file PlotTemplate.hpp
-//! @brief PlotTemplate: a PlotHistos XML file made from the histograms of CAP files or of a workflow.
-#ifndef CAP__PlotTemplate
-#define CAP__PlotTemplate
+//! @brief PlotTemplate: a PlotHistos XML file made from the histograms of Datum files or of a workflow.
+#ifndef DATUM__PlotTemplate
+#define DATUM__PlotTemplate
 #include <map>
 #include <set>
 #include <vector>
 #include "String.hpp"
 #include "XmlDocument.hpp"
 
-namespace CAP
+namespace Datum
 {
   class Folder;
   namespace GRAPHICS
   {
 
   //!
-  //! @brief A PlotHistos file (see PlotSpec) made from a catalog of histograms: those of CAP files (addFolder() with
+  //! @brief A PlotHistos file (see PlotSpec) made from a catalog of histograms: those of Datum files (addFolder() with
   //! their contents), or those the stages of a workflow write (addFolder() with the folders made by
   //! WorkflowHistograms, each stage an input).
   //!
@@ -36,8 +36,8 @@ namespace CAP
   //! a graph per histogram name; graphs of histograms of rank 1 can also overlay the combinations.
   //! @code
   //!   PlotTemplate t;
-  //!   int input = t.addInput("pairs", "derived.cap");
-  //!   t.addFolder(input, capFile.folder());
+  //!   int input = t.addInput("pairs", "derived.datum");
+  //!   t.addFolder(input, datumFile.folder());
   //!   t.select({"Pair/*/n1_pt", "*R2_DyDphi"}, {"*_shft"});
   //!   t.makeSpec(options).write("plots.xml");
   //! @endcode
@@ -74,7 +74,7 @@ namespace CAP
 
   //! @brief Empty catalog.
   PlotTemplate() { }
-  //! @brief Add an input. @param id identifier @param file path of the CAP file @return index
+  //! @brief Add an input. @param id identifier @param file path of the Datum file @return index
   int addInput(const String & id, const String & file);
   //! @brief Set the file of an input. @param k index @param file path
   void setInputFile(int k, const String & file) { if (k >= 0 && k < int(_inputs.size())) _inputs[std::size_t(k)].file = file; }
@@ -136,6 +136,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__PlotTemplate
+#endif // !DATUM__PlotTemplate

@@ -1,9 +1,9 @@
-#ifndef CAP__Polygon
-#define CAP__Polygon
+#ifndef DATUM__Polygon
+#define DATUM__Polygon
 #include <vector>
 #include "Geom2D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -43,6 +43,6 @@ namespace CAP
   };
 
   } //  namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Polygon
+#endif // !DATUM__Polygon

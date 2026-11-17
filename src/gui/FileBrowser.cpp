@@ -18,14 +18,14 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "FileBrowser.hpp"
 #include "FileSystem.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Folder.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
 #include "DataPoints.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -42,7 +42,7 @@ namespace CAP
   }
 
 
-  //! "CAP::MATH::Matrix" -> "Matrix".
+  //! "Datum::MATH::Matrix" -> "Matrix".
   String shortTypeName(const std::string & typeName)
   {
   size_t colon = typeName.rfind("::");
@@ -156,12 +156,12 @@ namespace CAP
   auto found = _listings.find(directory);
   if (found != _listings.end()) return found->second;
   Listing & l = _listings[directory];
-  // sub-directories and CAP files (and ROOT files when CapGui reads them), directories first, by name (case-insensitive); hidden entries left out
+  // sub-directories and Datum files (and ROOT files when DatumGui reads them), directories first, by name (case-insensitive); hidden entries left out
   FileSystem::ListOptions options;
-#ifdef CAP_WITH_ROOT
-  options.extensions = { ".cap", ".root" };
+#ifdef DATUM_WITH_ROOT
+  options.extensions = { DatumFile::extension(), DatumFile::formerExtension(), ".root" };
 #else
-  options.extensions = { ".cap" };
+  options.extensions = { DatumFile::extension(), DatumFile::formerExtension() };
 #endif
   try
     {
@@ -228,10 +228,10 @@ namespace CAP
   {
   if (ImGui::Button("New") && onNewTree) onNewTree();
   ImGui::SetItemTooltip("Make a new, empty tree: add folders to it, drag objects and folders onto it (copies), then "
-                        "save it to a CAP file");
+                        "save it to a Datum file");
   ImGui::SameLine();
   if (ImGui::Button("Open...") && onCommand) onCommand("file.open");
-  ImGui::SetItemTooltip("Open a CAP file (File > Open)");
+  ImGui::SetItemTooltip("Open a Datum file (File > Open)");
   ImGui::SameLine();
   // the file or tree holding the entry selected
   const BrowserFile * current = _selected.file >= 0 ? fileById(_selected.file) : nullptr;
@@ -275,7 +275,7 @@ namespace CAP
   if (loose.empty() && _folders.empty())
     {
     ImGui::Spacing();
-    ImGui::TextWrapped("Use Open (File > Open) to open a CAP file, or New (File > New) to make a new data file of copies.");
+    ImGui::TextWrapped("Use Open (File > Open) to open a Datum file, or New (File > New) to make a new data file of copies.");
     ImGui::Spacing();
     ImGui::TextWrapped("Click an object to show it in the selected graph, or drag it onto a graph.");
     }
@@ -333,7 +333,7 @@ namespace CAP
     else
       {
       if (ImGui::MenuItem("Reload")      && onReloadFile) onReloadFile(file.id);
-      if (onSaveCopy && ImGui::MenuItem("Save as CAP File...")) onSaveCopy(file.id, "");
+      if (onSaveCopy && ImGui::MenuItem("Save as Datum File...")) onSaveCopy(file.id, "");
       if (onExportRoot && ImGui::MenuItem("Export to ROOT...")) onExportRoot(file.id, "");
       if (ImGui::MenuItem("Close File")) close = true;
       }
@@ -372,16 +372,16 @@ namespace CAP
     {
     const Listing & l = listing(directory);
     if (!l.error.empty()) ImGui::TextDisabled("%s", l.error.c_str());
-    else if (l.directories.empty() && l.files.empty()) ImGui::TextDisabled("(no CAP files)");
+    else if (l.directories.empty() && l.files.empty()) ImGui::TextDisabled("(no Datum files)");
     Listing copy = l;                                   // the cache may change while rendering the children
     for (const auto & d : copy.directories) renderDirectory(FileSystem::join(String(directory), String(d)).str(), d, false);
-    for (const auto & f : copy.files)       renderCapFileInTree(FileSystem::join(String(directory), String(f)).str(), f);
+    for (const auto & f : copy.files)       renderDatumFileInTree(FileSystem::join(String(directory), String(f)).str(), f);
     ImGui::TreePop();
     }
   ImGui::PopID();
   }
 
-  void FileBrowser::renderCapFileInTree(const std::string & path, const std::string & label)
+  void FileBrowser::renderDatumFileInTree(const std::string & path, const std::string & label)
   {
   const BrowserFile * file = fileByPath(path);
   ImGui::PushID(path.c_str());
@@ -411,7 +411,7 @@ namespace CAP
     if (ImGui::MenuItem("Show All")   && onShowFolder) onShowFolder(file->id, "");
     ImGui::Separator();
     if (ImGui::MenuItem("Reload")     && onReloadFile) onReloadFile(file->id);
-    if (onSaveCopy && ImGui::MenuItem("Save as CAP File...")) onSaveCopy(file->id, "");
+    if (onSaveCopy && ImGui::MenuItem("Save as Datum File...")) onSaveCopy(file->id, "");
     if (onExportRoot && ImGui::MenuItem("Export to ROOT...")) onExportRoot(file->id, "");
     if (ImGui::MenuItem("Close File")) close = true;
     ImGui::EndPopup();
@@ -455,7 +455,7 @@ namespace CAP
       if (ImGui::BeginPopupContextItem("##folderMenu"))
         {
         if (ImGui::MenuItem("Show All") && onShowFolder) onShowFolder(fileId, String(path));
-        if (onSaveCopy && ImGui::MenuItem("Save Folder as CAP File...")) onSaveCopy(fileId, String(path));
+        if (onSaveCopy && ImGui::MenuItem("Save Folder as Datum File...")) onSaveCopy(fileId, String(path));
         if (onExportRoot && ImGui::MenuItem("Export to ROOT...")) onExportRoot(fileId, String(path));
         if (editable) { ImGui::Separator(); editMenu(fileId, path, true); }
         ImGui::EndPopup();
@@ -633,4 +633,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

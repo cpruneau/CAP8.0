@@ -7,15 +7,15 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__XmlElement
-#define CAP__XmlElement
+#ifndef DATUM__XmlElement
+#define DATUM__XmlElement
 #include <memory>
 #include <utility>
 #include <vector>
 #include "String.hpp"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -56,10 +56,10 @@ protected:
 //!
 //! Example:
 //! @code
-//!   CAP::XmlElement model("MODEL");
+//!   Datum::XmlElement model("MODEL");
 //!   model.setAttribute("name","Hydro");
 //!   model.addChild("PARAMETER").setAttribute("name","Temperature").setText(165.6);
-//!   const CAP::XmlElement * t = model.findFirst("PARAMETER","name","Temperature");
+//!   const Datum::XmlElement * t = model.findFirst("PARAMETER","name","Temperature");
 //!   double temperature = t->textDouble();
 //! @endcode
 //!
@@ -262,6 +262,6 @@ protected:
   std::vector<std::unique_ptr<XmlElement>> _children;//!< child elements (owned)
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

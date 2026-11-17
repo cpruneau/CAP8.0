@@ -75,7 +75,7 @@ TH1 * computeHistoSum(const vector<TH1*> & histos, const TString & name)
   return histoSum;
 }
 
-void plotPionSingles(CAP::Plotter * plotter, vector<TFile*> & inputFiles)
+void plotPionSingles(Datum::Plotter * plotter, vector<TFile*> & inputFiles)
 {
   int linear = 0;
   int logY   = 1;
@@ -137,7 +137,7 @@ void plotPionSingles(CAP::Plotter * plotter, vector<TFile*> & inputFiles)
 
 }
 
-void plotKaonSingles(CAP::Plotter * plotter, vector<TFile*> & inputFiles)
+void plotKaonSingles(Datum::Plotter * plotter, vector<TFile*> & inputFiles)
 {
   int linear = 0;
   int logY   = 1;
@@ -201,7 +201,7 @@ void plotKaonSingles(CAP::Plotter * plotter, vector<TFile*> & inputFiles)
 }
 
 
-void plotPionsQinv(CAP::Plotter * plotter, vector<TFile*> & inputFiles)
+void plotPionsQinv(Datum::Plotter * plotter, vector<TFile*> & inputFiles)
 {
   int linear = 0;
   int logY   = 1;
@@ -319,7 +319,7 @@ void plotPionsQinv(CAP::Plotter * plotter, vector<TFile*> & inputFiles)
 
 }
 
-void plotKaonsQinv(CAP::Plotter * plotter, vector<TFile*> & inputFiles)
+void plotKaonsQinv(Datum::Plotter * plotter, vector<TFile*> & inputFiles)
 {
   int linear = 0;
   int logY   = 1;
@@ -410,14 +410,14 @@ int PlotBF(const TString & path="/Volumes/ClaudeDisc4/OutputFiles/GaussTest/",
   //bool doPrint = true;
   bool doPrint = false;
 
-  TString includeBasePath = getenv("CAP_SRC");
+  TString includeBasePath = getenv("DATUM_SRC");
   loadBase(includeBasePath);
   loadPlotting(includeBasePath);
 
-  using CAP::Configuration;
-  using CAP::CanvasConfiguration;
-  using CAP::GraphConfiguration;
-  using CAP::Plotter;
+  using Datum::Configuration;
+  using Datum::CanvasConfiguration;
+  using Datum::GraphConfiguration;
+  using Datum::Plotter;
 
   Configuration taskConfig;
   Plotter * plotter = new Plotter();
@@ -452,7 +452,7 @@ int PlotBF(const TString & path="/Volumes/ClaudeDisc4/OutputFiles/GaussTest/",
 //  plotKaonsQinv(plotter,inputFiles);
   if (doPrint) plotter->printAllCanvas(path);
   }
-  catch (CAP::PropertyException & e)
+  catch (Datum::PropertyException & e)
   {
   e.print();
   }

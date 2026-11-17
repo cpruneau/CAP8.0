@@ -1,8 +1,8 @@
-#ifndef CAP_MATH_Linear
-#define CAP_MATH_Linear
+#ifndef DATUM_MATH_Linear
+#define DATUM_MATH_Linear
 #include "Polynomial.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -15,7 +15,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Linear f(1.0, 2.0);   // 1 + 2x
+  //!   Datum::MATH::Linear f(1.0, 2.0);   // 1 + 2x
   //!   double y = f(3.0);               // 7
   //!   double x0 = f.root();            // -0.5
   //! @endcode
@@ -66,6 +66,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

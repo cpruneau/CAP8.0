@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventEfficiencyFilterCreator
-#define CAP__EventEfficiencyFilterCreator
+#ifndef DATUM__EventEfficiencyFilterCreator
+#define DATUM__EventEfficiencyFilterCreator
 #include "FilterCreator.hpp"
 #include "EventEfficiencyFilter.hpp"
 
-namespace CAP
+namespace Datum
 {
 class EventEfficiencyFilterCreator
 :
@@ -43,6 +43,6 @@ public:
 
 }
 
-#endif /* CAP_FilterCreator */
+#endif /* DATUM_FilterCreator */
 
 

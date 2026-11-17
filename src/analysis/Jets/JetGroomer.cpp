@@ -16,7 +16,7 @@
 #include "NameHelpers.hpp"
 #include "Particle.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -260,4 +260,4 @@ GroomedJet JetGroomer::groom(const Jet & jet) const
   return groomed;
 }
 
-} // namespace CAP
+} // namespace Datum

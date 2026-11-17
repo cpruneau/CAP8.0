@@ -11,7 +11,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   LongParameter::LongParameter(const String & name, long value)
@@ -38,4 +38,4 @@ namespace CAP
   _value = value;
   }
 
-} // namespace CAP
+} // namespace Datum

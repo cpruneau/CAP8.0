@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file MonteCarloIntegrator.hpp
 //! @brief MonteCarloIntegrator: Monte Carlo integration over a box of any dimension.
-#ifndef CAP__MATH__MonteCarloIntegrator
-#define CAP__MATH__MonteCarloIntegrator
+#ifndef DATUM__MATH__MonteCarloIntegrator
+#define DATUM__MATH__MonteCarloIntegrator
 #include <cstdint>
 #include <memory>
 #include "Integrator.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -36,9 +36,9 @@ namespace CAP
   //! Mersenne twister of its own, seeded by setSeed() (each integrate() continues its sequence; a copy has its own).
   //!
   //! @code
-  //!   CAP::MATH::MonteCarloIntegrator mc(1.0E-3);                    // 0.1% statistical accuracy
+  //!   Datum::MATH::MonteCarloIntegrator mc(1.0E-3);                    // 0.1% statistical accuracy
   //!   mc.setSeed(12345);
-  //!   CAP::MATH::IntegralResult r = mc.integrate(
+  //!   Datum::MATH::IntegralResult r = mc.integrate(
   //!     [](const std::vector<double> & x) { double s = 0; for (double v : x) s += v*v; return s < 1 ? 1.0 : 0.0; },
   //!     std::vector<double>(5, -1.0), std::vector<double>(5, 1.0));   // volume of the 5-ball, 8 pi^2/15
   //! @endcode
@@ -93,6 +93,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__MonteCarloIntegrator
+#endif // DATUM__MATH__MonteCarloIntegrator

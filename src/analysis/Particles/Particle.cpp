@@ -14,7 +14,7 @@
 
 
 
-namespace CAP
+namespace Datum
 {
 
 Particle::Particle()
@@ -379,4 +379,4 @@ bool Particle::isSecondary() const
   }
 
 
-} // namespace CAP
+} // namespace Datum

@@ -1,5 +1,5 @@
-#ifndef CAP__Canvas
-#define CAP__Canvas
+#ifndef DATUM__Canvas
+#define DATUM__Canvas
 #include <vector>
 #include "String.hpp"
 #include "Drawable2D.hpp"
@@ -7,7 +7,7 @@
 #include "LineAttributes.hpp"
 #include "Graph.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -63,7 +63,7 @@ namespace CAP
   //! needed. @param n number of graphs (at least 1)
   void divideFor(int n);
   //!
-  //! @brief Show the items one per graph (as CapGui shows the objects of a folder): the canvas is divided for their
+  //! @brief Show the items one per graph (as DatumGui shows the objects of a folder): the canvas is divided for their
   //! number (divideFor()), all its graphs are cleared, and item k is shown in graph k (Graph::show(), replacing).
   //! @param items items (functions, data points)
   //!
@@ -109,6 +109,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Canvas
+#endif // !DATUM__Canvas

@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleEfficiencyFilterCreator
-#define CAP__ParticleEfficiencyFilterCreator
+#ifndef DATUM__ParticleEfficiencyFilterCreator
+#define DATUM__ParticleEfficiencyFilterCreator
 #include "EventProcessor.hpp"
 #include "Event.hpp"
 #include "EventFilter.hpp"
@@ -21,7 +21,7 @@
 #include "BaseHistos.hpp"
 #include "BaseDerivedHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class ParticleEfficiencyFilterCreator
@@ -52,6 +52,6 @@ public:
 
 }
 
-#endif /* CAP_FilterCreator */
+#endif /* DATUM_FilterCreator */
 
 

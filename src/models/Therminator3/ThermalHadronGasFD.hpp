@@ -9,11 +9,11 @@
  * Copyright (C) 2019-2026, Claude Pruneau, Victor Gonzalez, Oveis Sheibani
  *
  * *********************************************************************/
-#ifndef CAP_ThermalHadronGasFD
-#define CAP_ThermalHadronGasFD
+#ifndef DATUM_ThermalHadronGasFD
+#define DATUM_ThermalHadronGasFD
 #include "ThermalHadronGas.hpp"
 
-namespace CAP
+namespace Datum
 {
   //!
   //! This class embodies a thermal gas of independent hadrons and their basic properties as well as
@@ -78,7 +78,7 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif  // CAP_ThermalHadronGasFD
+#endif  // DATUM_ThermalHadronGasFD
 

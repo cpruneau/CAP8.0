@@ -11,7 +11,7 @@
 #include "ParticlePairBFHistos.hpp"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   ParticlePairBFHistos::ParticlePairBFHistos(const String & name)
@@ -197,4 +197,4 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum

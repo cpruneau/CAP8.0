@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__List
-#define CAP__List
+#ifndef DATUM__List
+#define DATUM__List
 #include <iostream>
 #include <vector>
 #include "String.hpp"
@@ -22,7 +22,7 @@
 //! The list can be given a name and a title (or description) via the Object class
 //!
 //!
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -136,6 +136,6 @@ public:
 
 
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__List */
+#endif /* DATUM__List */

@@ -1,9 +1,9 @@
-#ifndef CAP_MATH_Exponential
-#define CAP_MATH_Exponential
+#ifndef DATUM_MATH_Exponential
+#define DATUM_MATH_Exponential
 #include <cmath>
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -18,7 +18,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Exponential f(2.0, -0.5);   // 2 exp(-x/2)
+  //!   Datum::MATH::Exponential f(2.0, -0.5);   // 2 exp(-x/2)
   //!   double y = f(2.0);                     // 2/e
   //! @endcode
   //! Parameters (see ParameterizedFunction::parameters()): 0 amplitude, 1 exponent.
@@ -104,6 +104,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

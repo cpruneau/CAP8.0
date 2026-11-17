@@ -1,5 +1,5 @@
-#ifndef CAP_Histogram
-#define CAP_Histogram
+#ifndef DATUM_Histogram
+#define DATUM_Histogram
 #include <vector>
 #include <cmath>
 #include <ostream>
@@ -12,9 +12,9 @@
 #include "DataPointsVector.hpp"
 #include "BinaryIO.hpp"
 
-namespace CAP
+namespace Datum
 {
-  class CapFile;
+  class DatumFile;
 
   namespace MATH
   {
@@ -114,7 +114,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   using namespace CAP::MATH;
+  //!   using namespace Datum::MATH;
   //!   Histogram h("pt","Transverse momentum",100,0.0,10.0);
   //!   h.fill(2.5);          // weight 1
   //!   h.fill(3.1,0.8);      // weight 0.8
@@ -1320,7 +1320,7 @@ namespace CAP
   //! @name Binary files (independent of ROOT)
   //!
   //! Compact, portable binary format. A file holds one or more histogram records, one after the other:
-  //!  - "CAPH" (4 bytes), format version (1 byte), payload length (varint), payload, CRC-32 of the payload (4 bytes)
+  //!  - "DTMH" (4 bytes), format version (1 byte), payload length (varint), payload, CRC-32 of the payload (4 bytes)
   //!  - payload: name, title, partition type, rank, then for each axis: number of bins, minimum and maximum (float32),
   //!    title; then the number of non-empty bins and, for each, the gap in global bin index since the previous
   //!    non-empty bin (varint), the entries (zigzag varint), the average value and its uncertainty (float32); then
@@ -1331,8 +1331,8 @@ namespace CAP
   //! Records of other classes in the same file are skipped. See BinaryIO.hpp for the record format and encodings.
   //! @{
 
-  //! @brief Tag of histogram records in binary files. @return "CAPH"
-  static const char * binaryTag() { return "CAPH"; }
+  //! @brief Tag of histogram records in binary files. @return "DTMH"
+  static const char * binaryTag() { return "DTMH"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 4; }
   //! @brief Name stored in binary records. @return name()
@@ -1490,7 +1490,7 @@ namespace CAP
   Histogram * clone(const Histogram * h1, const String & histoName);
   Histogram * safeClone(const Histogram * h);
   void cloneHistoVector(const std::vector<Histogram*> & source, std::vector<Histogram*> & target);
-  Histogram * loadHistogram(const CapFile & inputFile, const String & histoName);
+  Histogram * loadHistogram(const DatumFile & inputFile, const String & histoName);
   //! @}
 
   //! @name Arithmetic
@@ -1610,6 +1610,6 @@ namespace CAP
   //! @}
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

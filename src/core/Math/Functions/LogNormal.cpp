@@ -3,7 +3,7 @@
 #include "MathExceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -88,4 +88,4 @@ namespace CAP
   }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

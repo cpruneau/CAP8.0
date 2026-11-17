@@ -11,18 +11,18 @@
 #include <cmath>
 #include "NameHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 double JetPair::deltaPhi() const
 {
-  double d = CAP::deltaPhi(first->phi(),second->phi());     // [-pi, pi)
+  double d = Datum::deltaPhi(first->phi(),second->phi());     // [-pi, pi)
   return d<-0.5*M_PI ? d+2.0*M_PI : d;                       // [-pi/2, 3 pi/2)
 }
 
 double JetPair::absDeltaPhi() const
 {
-  return std::fabs(CAP::deltaPhi(first->phi(),second->phi()));
+  return std::fabs(Datum::deltaPhi(first->phi(),second->phi()));
 }
 
 double JetPair::acoplanarity() const
@@ -122,4 +122,4 @@ void JetPairFilter::configure(const String & ownerName, const String & typeName,
     }
 }
 
-} // namespace CAP
+} // namespace Datum

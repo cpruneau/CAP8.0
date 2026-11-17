@@ -7,8 +7,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP_MATH_DataPointColumns
-#define CAP_MATH_DataPointColumns
+#ifndef DATUM_MATH_DataPointColumns
+#define DATUM_MATH_DataPointColumns
 #include <memory>
 #include <vector>
 #include "String.hpp"
@@ -17,7 +17,7 @@
 #include "DataPoint2D.hpp"
 #include "DataPoints.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -43,9 +43,9 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::DataPointColumns data(2);                                 // rank 2: x and y
+  //!   Datum::MATH::DataPointColumns data(2);                                 // rank 2: x and y
   //!   data.setColumns({{1,2,3},{4,5,6}}, {}, {10,20,30}, {1,2,3}, {});     // x and y columns, values, stat errors
-  //!   data.addPoint(CAP::MATH::DataPoint3D(4.0, 7.0, 40.0, 4.0));
+  //!   data.addPoint(Datum::MATH::DataPoint3D(4.0, 7.0, 40.0, 4.0));
   //!   const std::vector<float> & y = data.xColumn(1);                      // {4,5,6,7}
   //!   double zMax = data.maximumValue();                                   // 40
   //! @endcode
@@ -256,13 +256,13 @@ namespace CAP
   //! @}
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPK" records in the CAP binary format (see BinaryIO.hpp): rank, size, then each column (float32):
+  //! Saved as "DTMK" records in the Datum binary format (see BinaryIO.hpp): rank, size, then each column (float32):
   //! x[0], xError[0], ..., x[rank-1], xError[rank-1], value, stat, syst; then the fits attached (format version 2,
   //! see FitList::encodeBinary()). Restored exactly.
   //! @{
 
-  //! @brief Tag of DataPointColumns records in binary files. @return "CAPK"
-  static const char * binaryTag() { return "CAPK"; }
+  //! @brief Tag of DataPointColumns records in binary files. @return "DTMK"
+  static const char * binaryTag() { return "DTMK"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 2; }
   //! @brief Name stored in binary records. @return ""
@@ -297,6 +297,6 @@ namespace CAP
   DataPointColumns operator-(const DataPointColumns & left, const DataPointColumns & right);
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

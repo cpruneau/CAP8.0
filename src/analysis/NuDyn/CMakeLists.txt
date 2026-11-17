@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/NuDyn
+# Project Datum/NuDyn
 ################################################################################################
 
 ################################################################################################
@@ -14,5 +14,5 @@ NuDynHistos.cpp)
 target_link_libraries(NuDyn Base  Particles  ${EXTRA_LIBS} )
 target_include_directories(NuDyn  PUBLIC Base  Particles  NuDyn ${EXTRA_INCLUDES} ) 
 
-cap_install(NuDyn LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(NuDyn LIBRARY "$ENV{DATUM_LIB_PATH}")
 

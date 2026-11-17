@@ -13,7 +13,7 @@
 #include "Exceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ResolutionFunction::ResolutionFunction()
@@ -97,11 +97,11 @@ double ResolutionFunction::smear(double pt, double eta, double phi, double & out
 //    }
   switch (option)
     {
-      case 0: output = CAP::MATH::randomGenerator().gauss(pt+bias,rms);  break;
-      case 1: output = CAP::MATH::randomGenerator().gauss(eta+bias,rms); break;
-      case 2: output = CAP::MATH::randomGenerator().gauss(phi+bias,rms); break;
+      case 0: output = Datum::MATH::randomGenerator().gauss(pt+bias,rms);  break;
+      case 1: output = Datum::MATH::randomGenerator().gauss(eta+bias,rms); break;
+      case 2: output = Datum::MATH::randomGenerator().gauss(phi+bias,rms); break;
     }
   return output;
 }
 
-} // namespace CAP
+} // namespace Datum

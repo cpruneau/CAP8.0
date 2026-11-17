@@ -13,7 +13,7 @@
 #include "Menu.hpp"
 #include "MenuBar.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -123,4 +123,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

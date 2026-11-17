@@ -4,25 +4,25 @@
 #
 # For the licensing terms see LICENSE.
 # **********************************************************************
-"""Tests of the window of a task of RunDatum.py (RunCAPTaskDialog), skipped without tkinter or a display."""
+"""Tests of the window of a task of RunDatum.py (RunDatumTaskDialog), skipped without tkinter or a display."""
 
 import os
 import sys
 import unittest
 
-CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, CAP_DIR)
+DATUM_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, DATUM_DIR)
 
 import RunDatum                                   # noqa: E402
-import RunCAPFilters as F                       # noqa: E402
+import RunDatumFilters as F                       # noqa: E402
 
-TEMPLATES = RunDatum.load_templates(os.path.join(CAP_DIR, "DB", "Templates"))
-TEMPLATES.update(RunDatum.load_templates(os.path.join(CAP_DIR, "tests", "python", "templates")))   # legacy designs
+TEMPLATES = RunDatum.load_templates(os.path.join(DATUM_DIR, "DB", "Templates"))
+TEMPLATES.update(RunDatum.load_templates(os.path.join(DATUM_DIR, "tests", "python", "templates")))   # legacy designs
 HELPERS = {"valid_value": RunDatum.valid_value, "partial_value": RunDatum.partial_value, "severities": RunDatum.SEVERITIES}
 
 try:
     import tkinter as tk
-    import RunCAPTaskDialog as D
+    import RunDatumTaskDialog as D
     _root = tk.Tk()
     _root.withdraw()
 except Exception:                               # no tkinter, or no display
@@ -51,7 +51,7 @@ def library():
 class TestDialog(unittest.TestCase):
 
     def setUp(self):
-        self.task = TEMPLATES["CAP::LegacySingleAnalyzer"].clone()     # numbered lists of folders (1 and 2)
+        self.task = TEMPLATES["Datum::LegacySingleAnalyzer"].clone()   # written CAP::...; numbered lists of folders (1 and 2)
         self.task.name = "PSA"
         F.default_histogram_settings(self.task, TEMPLATES)
         self.library = library()
@@ -75,7 +75,7 @@ class TestDialog(unittest.TestCase):
         general = D.general_parameters(self.task, TEMPLATES)
         self.assertFalse(any(F.MANAGED_KEY.match(p.key) or p.key.startswith("HISTOGRAM") for p in general))
         self.assertFalse(any(p.key.startswith(("EVENT_FILTER:", "PARTICLE_EFFICIENCY:")) for p in general))
-        generator = TEMPLATES["CAP::BasicEventGen"].clone()
+        generator = TEMPLATES["Datum::BasicEventGen"].clone()
         dialog = D.TaskDialog(_root, generator, TEMPLATES, self.library, HELPERS, self.rename, lambda: None,
                               lambda k: None)
         self.assertEqual([dialog.notebook.tab(t, "text") for t in dialog.notebook.tabs()], ["General"])
@@ -199,7 +199,7 @@ class TestDialog(unittest.TestCase):
     def test_single_list(self):
         """An analyzer whose folders hold all its histograms: one list, HISTOGRAM, one folder per combination."""
         self.dialog.destroy()
-        self.task = TEMPLATES["CAP::ParticleSingleAnalyzer"].clone()
+        self.task = TEMPLATES["Datum::ParticleSingleAnalyzer"].clone()
         self.task.name = "PSA"
         F.default_histogram_settings(self.task, TEMPLATES)
         self.dialog = D.TaskDialog(_root, self.task, TEMPLATES, self.library, HELPERS, rename=self.rename,
@@ -232,10 +232,10 @@ class TestDialog(unittest.TestCase):
         self.library.add(F.FilterDef("EVENT", "Event"))
         self.dialog._update_problems()
         self.assertIn("uses the events Event, which no task creates", self.dialog.problems.get())     # alone
-        generator = TEMPLATES["CAP::BasicEventGen"].clone()
+        generator = TEMPLATES["Datum::BasicEventGen"].clone()
         F.default_event_settings(generator, TEMPLATES)
         F.choices(generator)["EVENT"] = ["Event"]
-        it = TEMPLATES["CAP::EventIterator"].clone()
+        it = TEMPLATES["Datum::EventIterator"].clone()
         it.children = [generator, self.task]
         self.dialog.workflow = lambda: [it]
         self.dialog._update_problems()

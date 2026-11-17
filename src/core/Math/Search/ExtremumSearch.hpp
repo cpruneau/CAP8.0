@@ -9,8 +9,8 @@
  * *********************************************************************/
 //! @file ExtremumSearch.hpp
 //! @brief ExtremumSearch: the master engine of extremum searches, for Function and DataPoints objects.
-#ifndef CAP__MATH__ExtremumSearch
-#define CAP__MATH__ExtremumSearch
+#ifndef DATUM__MATH__ExtremumSearch
+#define DATUM__MATH__ExtremumSearch
 #include "AnnealingSearch.hpp"
 #include "DivideAndConquerSearch.hpp"
 #include "EvolutionarySearch.hpp"
@@ -20,7 +20,7 @@
 #include "HillClimbingSearch.hpp"
 #include "ScanSearch.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -45,14 +45,14 @@ namespace CAP
   //! gradient(), hillClimbing() and greedy().
   //!
   //! @code
-  //!   CAP::MATH::ExtremumSearch search;
-  //!   CAP::MATH::SearchDomain domain({-5.0, -5.0}, {5.0, 5.0});
+  //!   Datum::MATH::ExtremumSearch search;
+  //!   Datum::MATH::SearchDomain domain({-5.0, -5.0}, {5.0, 5.0});
   //!   domain.exclude(0, -1.0, 1.0);                       // not where -1 <= x <= 1
   //!   search.setMethod("hill climbing");
   //!   search.options().xTolerance = 1E-8;
-  //!   CAP::MATH::SearchResult r = search.minimum(f, domain);
+  //!   Datum::MATH::SearchResult r = search.minimum(f, domain);
   //!   if (r.converged) ... r.point, r.value ...
-  //!   CAP::MATH::SearchResult peak = search.maximum(histogram);   // the highest bin, refined between bins
+  //!   Datum::MATH::SearchResult peak = search.maximum(histogram);   // the highest bin, refined between bins
   //! @endcode
   //!
   class ExtremumSearch
@@ -157,6 +157,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__ExtremumSearch
+#endif // !DATUM__MATH__ExtremumSearch

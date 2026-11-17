@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file RandomDistribution.hpp
 //! @brief RandomDistribution: base of the distributions added to those of RandomGenerator; TabulatedDistribution.
-#ifndef CAP__RandomDistribution
-#define CAP__RandomDistribution
+#ifndef DATUM__RandomDistribution
+#define DATUM__RandomDistribution
 #include <functional>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -26,11 +26,11 @@ namespace CAP
   //! distributions to those of RandomGenerator without changing it.
   //!
   //! @code
-  //!   class Cauchy : public CAP::MATH::RandomDistribution
+  //!   class Cauchy : public Datum::MATH::RandomDistribution
   //!   {
   //!   public:
   //!   Cauchy(double x0, double gamma) : _x0(x0), _gamma(gamma) { }
-  //!   double generate(CAP::MATH::RandomGenerator & g) const override
+  //!   double generate(Datum::MATH::RandomGenerator & g) const override
   //!   { return _x0 + _gamma*std::tan(M_PI*(g.random() - 0.5)); }
   //!   double _x0, _gamma;
   //!   };
@@ -55,7 +55,7 @@ namespace CAP
   //! (inverseLinearInterpolation()).
   //!
   //! @code
-  //!   CAP::MATH::TabulatedDistribution d([](double x) { return x*x*std::exp(-x); }, 0.0, 20.0);
+  //!   Datum::MATH::TabulatedDistribution d([](double x) { return x*x*std::exp(-x); }, 0.0, 20.0);
   //!   double x = generator.sample(d);
   //! @endcode
   //!
@@ -82,6 +82,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__RandomDistribution
+#endif // !DATUM__RandomDistribution

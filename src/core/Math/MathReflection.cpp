@@ -14,13 +14,13 @@
 #include "Histogram.hpp"
 #include "MersenneTwister.hpp"
 
-CAP_REFLECTION(Math)
+DATUM_REFLECTION(Math)
 {
-  using namespace CAP;
-  using namespace CAP::MATH;
-  using namespace CAP::REFLECTION;
+  using namespace Datum;
+  using namespace Datum::MATH;
+  using namespace Datum::REFLECTION;
 
-  ClassBuilder<Partition>("CAP::MATH::Partition")
+  ClassBuilder<Partition>("Datum::MATH::Partition")
     .property("rank", &Partition::rank)
     .property("nBinsTotal", &Partition::nBinsTotal)
     .method("nBins", &Partition::nBins)
@@ -31,11 +31,11 @@ CAP_REFLECTION(Math)
     .function("minimum", +[](const Partition & p) { return p.minimum(); })
     .function("maximum", +[](const Partition & p) { return p.maximum(); });
 
-  ClassBuilder<DataPoints>("CAP::MATH::DataPoints")
+  ClassBuilder<DataPoints>("Datum::MATH::DataPoints")
     .base<Object>()
     .property("size", &DataPoints::size);
 
-  ClassBuilder<Histogram>("CAP::MATH::Histogram")
+  ClassBuilder<Histogram>("Datum::MATH::Histogram")
     .base<DataPoints>()
     .base<Partition>()
     .constructor<const String &, const String &, unsigned int, double, double>()
@@ -57,7 +57,7 @@ CAP_REFLECTION(Math)
     .method("scale", &Histogram::scale)
     .method("print", &Histogram::print);
 
-  ClassBuilder<RandomGenerator>("CAP::MATH::RandomGenerator")
+  ClassBuilder<RandomGenerator>("Datum::MATH::RandomGenerator")
     .method("random", &RandomGenerator::random)
     .method("setSeed", &RandomGenerator::setSeed)
     .method("uniform", &RandomGenerator::uniform)
@@ -72,7 +72,7 @@ CAP_REFLECTION(Math)
     .method("chiSquare", &RandomGenerator::chiSquare)
     .method("polynomial", &RandomGenerator::polynomial);
 
-  ClassBuilder<MersenneTwister>("CAP::MATH::MersenneTwister")
+  ClassBuilder<MersenneTwister>("Datum::MATH::MersenneTwister")
     .base<RandomGenerator>()
     .constructor<>()
     .constructor<std::uint64_t>()

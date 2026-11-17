@@ -18,7 +18,7 @@
 #include <cmath>
 #include <string>
 
-namespace CAP
+namespace Datum
 {
 
   KinematicMapFolder::KinematicMapFolder()
@@ -374,4 +374,4 @@ namespace CAP
   saveSettings(outputFile);
   }
 
-} // namespace CAP
+} // namespace Datum

@@ -19,7 +19,7 @@
 #include <typeinfo>
 
 
-namespace CAP
+namespace Datum
 {
 
 
@@ -450,7 +450,7 @@ namespace CAP
   const REFLECTION::ClassInfo * taskInfo = registry.find(typeid(Task));
   const REFLECTION::ClassInfo * info = registry.find(taskClassName.str());
   if (!info || !taskInfo) throw UnknownClassException(taskClassName,__FUNCTION__);
-  if (!info->inheritsFrom(*taskInfo)) throw Exception(String("Class ")+taskClassName+" is not a CAP::Task",__FUNCTION__);
+  if (!info->inheritsFrom(*taskInfo)) throw Exception(String("Class ")+taskClassName+" is not a Datum::Task",__FUNCTION__);
   if (info->constructors().empty()) throw Exception(String("Class ")+taskClassName+" has no default constructor registered",__FUNCTION__);
   return static_cast<Task*>(info->upcast(info->construct(), *taskInfo));
   }
@@ -498,7 +498,7 @@ namespace CAP
 
   void Task::unknownXmlParameter(const String & key)
   {
-  // Files of the job (<task>:JOB:OUTPUT_FILE, INPUT_FILE, read by CAP.cxx for the main task) are expected.
+  // Files of the job (<task>:JOB:OUTPUT_FILE, INPUT_FILE, read by Datum.cxx for the main task) are expected.
   if (key.contains(":JOB:")) return;
   // Keys of the objects of managed lists (<task>:<TYPE>_<k>:..., the list having <task>:<TYPE>:N) are not in the
   // default configuration, whose lists are empty: they are expected.
@@ -563,9 +563,9 @@ namespace CAP
 
   String Task::xmlTemplateName() const
   {
-  // class name without the namespaces, made a valid file name (e.g. CAP::PtPtAnalyzer -> PtPtAnalyzer)
+  // class name without the namespaces, made a valid file name (e.g. Datum::PtPtAnalyzer -> PtPtAnalyzer)
   String shortName = className();
-  shortName.replaceAll("CAP::","");
+  shortName.replaceAll("Datum::","");
   shortName.replaceAll("::","_");
   shortName.replaceAll("<","_");
   shortName.replaceAll(",","_");
@@ -576,7 +576,7 @@ namespace CAP
 
   XmlDocument Task::createXmlTemplate()
   {
-  XmlDocument document("CAP");
+  XmlDocument document("Datum");
   document.root().setAttribute("version",1);
   document.root().setAttribute("type","template");
   XmlElement & element = document.root().addChild(createXmlElement());
@@ -618,7 +618,7 @@ namespace CAP
       task->setName(task->xmlTemplateName());
       fileNames.push_back(task->exportXmlTemplate(path));
       }
-    catch (const std::exception & exception)   // CAP::Exception derives from std::exception
+    catch (const std::exception & exception)   // Datum::Exception derives from std::exception
       {
       std::cout << "<WARNING> Task::exportXmlTemplates() no template for " << className << ": " << exception.what() << std::endl;
       }
@@ -711,6 +711,6 @@ namespace CAP
   return task;
   }
 
-} // namespace CAP
+} // namespace Datum
 
 

@@ -5,11 +5,11 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPTaskDialog -- the window of a task of a RunDatum.py workflow.
+RunDatumTaskDialog -- the window of a task of a RunDatum.py workflow.
 
 Tabs:
   * General: name, report level, class, and the parameters of the task (the keys of its filters and histogram folders
-    are written from the choices below, see RunCAPFilters);
+    are written from the choices below, see RunDatumFilters);
   * Filters (tasks that use filters, efficiencies or smearers): for each kind the task supports, how many objects it
     uses and which ones, by name, among those of the library of the workflow (Filters pane); the particle efficiencies
     and smearers (read from the maps file of the workflow): none, one for all particles, or a grid of one per event
@@ -21,21 +21,21 @@ Tabs:
     <event filter>_<particle filter>[_<particle filter 2>], with the histograms and the derived histograms. Then the
     binning of the folders: the same for all (the HISTOGRAM group of the task), or folder by folder, the parameters
     not set for a folder being those of the HISTOGRAM group.
-Changes apply to the task at once; the problems of the task (RunCAPFilters.check_choices()) are listed at the bottom.
+Changes apply to the task at once; the problems of the task (RunDatumFilters.check_choices()) are listed at the bottom.
 """
 
 import tkinter as tk
 from tkinter import ttk
 
-import RunCAPFilters as F
-from RunCAPFiltersGui import ScrollFrame
+import RunDatumFilters as F
+from RunDatumFiltersGui import ScrollFrame
 
 #: Label of the default binning in the list of folders.
 DEFAULT_ENTRY = "All folders (HISTOGRAM group)"
 
 
 def general_parameters(task, templates):
-    """Parameters of the General tab: all but the keys managed by RunCAPFilters, the settings of the lists of
+    """Parameters of the General tab: all but the keys managed by RunDatumFilters, the settings of the lists of
     filters, efficiencies and smearers (FilterCreator creates, imports and exports them) and, for analyzers, the
     histogram groups (Histograms tab)."""
     analyzer = F.histogram_layout(task, templates) is not None
@@ -50,7 +50,7 @@ def _is_list_key(key):
 class TaskDialog(tk.Toplevel):
     """Window of a task.
     @param task RunDatum.TaskConfig edited in place
-    @param templates task templates; @param library RunCAPFilters.FilterLibrary of the workflow
+    @param templates task templates; @param library RunDatumFilters.FilterLibrary of the workflow
     @param helpers {"valid_value", "partial_value", "severities"} of RunDatum.py
     @param rename called with (task, new name): None if renamed, else the reason it is not
     @param changed called after any change; @param show_filters called with a kind to show the Filters pane
@@ -325,7 +325,7 @@ class TaskDialog(tk.Toplevel):
 
     def _make_event_settings(self, box, row):
         """What the task does with its events: uses them (analyzer), creates them (generator, reader), imports
-        or exports them (CAP files)."""
+        or exports them (Datum files)."""
         line = ttk.Frame(box)
         line.grid(row=row, column=2, sticky="w", padx=(10, 0), pady=(0, 4))
         for name, label in (("USE", "Use (analyze)"), ("CREATE", "Create (generate, read)")):

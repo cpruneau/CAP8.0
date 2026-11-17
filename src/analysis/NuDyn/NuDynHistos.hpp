@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__NuDynHistos
-#define CAP__NuDynHistos
+#ifndef DATUM__NuDynHistos
+#define DATUM__NuDynHistos
 #include "HistogramFolder.hpp"
 #include "DerivedCalculator.hpp"
 #include "ParticleFilter.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 
@@ -145,13 +145,13 @@ protected:
 
 //!
 //! @brief Derived histograms of the nu-dynamic analysis (second phase): DerivedCalculator with the folders NuDynHistos,
-//! registered as the task class CAP::NuDynDerivedCalculator.
+//! registered as the task class Datum::NuDynDerivedCalculator.
 //!
 using NuDynDerivedCalculator = DerivedCalculator<NuDynHistos,2>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__NuDynHistos  */
+#endif /* DATUM__NuDynHistos  */
 
 
 

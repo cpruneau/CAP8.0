@@ -41,7 +41,7 @@
 #include "ModelHydro3D.hpp"
 #include "Therminator3.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {
@@ -201,9 +201,9 @@ std::vector<Generated> generate(TestModel<M> & model, int nEvents)
 
 int main()
 {
-  CAP::MATH::randomGenerator().setSeed(4357);
+  Datum::MATH::randomGenerator().setSeed(4357);
   ParticleDb db;
-  db.loadFromXml(CAP_PARTICLE_DB);
+  db.loadFromXml(DATUM_PARTICLE_DB);
 
   // ---------------------------------------------------------------- BlastWave against Therminator 2
   TestModel<ModelBlastWave> blastWave;
@@ -225,7 +225,7 @@ int main()
   {
   const char * gasFile = "TestTherminator3Models_gas.txt";
   { std::ofstream out(gasFile); blastWave.saveToAscii(out); }
-  CAP::ThermalHadronGas gas;
+  Datum::ThermalHadronGas gas;
   { std::ifstream in(gasFile); gas.loadFromAscii(in,db); }
   std::remove(gasFile);
   bool same = gas.hadrons().size()==species.size();

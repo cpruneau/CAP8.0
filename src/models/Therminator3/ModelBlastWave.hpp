@@ -1,8 +1,8 @@
-#ifndef CAP__ModelBlastWave
-#define CAP__ModelBlastWave
+#ifndef DATUM__ModelBlastWave
+#define DATUM__ModelBlastWave
 #include "Model.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   class ModelBlastWave
@@ -16,7 +16,7 @@ namespace CAP
   virtual double calculateIntegrand(ThermalHadron & hadron);
   };
 
-} // namespace CAP
+} // namespace Datum
 
 
-#endif // !CAP__ModelBlastWave
+#endif // !DATUM__ModelBlastWave

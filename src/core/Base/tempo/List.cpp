@@ -9,5 +9,5 @@
  * *********************************************************************/
 #include "List.hpp"
 
-//ClassImp(CAP::List)
-//ClassImp(CAP::ListPtr)
+//ClassImp(Datum::List)
+//ClassImp(Datum::ListPtr)

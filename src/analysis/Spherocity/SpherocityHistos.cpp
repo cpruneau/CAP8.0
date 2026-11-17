@@ -18,7 +18,7 @@
 #include "Configuration.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   SpherocityHistos::SpherocityHistos()
@@ -140,4 +140,4 @@ namespace CAP
   if (fillS1VsS0) h_s1VsS0->fill(s0,s1,weight);
   }
 
-} // namespace CAP
+} // namespace Datum

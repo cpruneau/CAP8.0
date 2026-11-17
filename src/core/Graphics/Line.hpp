@@ -1,12 +1,12 @@
-#ifndef CAP__Line
-#define CAP__Line
+#ifndef DATUM__Line
+#define DATUM__Line
 #include <vector>
 #include "String.hpp"
 #include "Drawable2D.hpp"
 #include "LineAttributes.hpp"
 #include "Point2D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -42,6 +42,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Line
+#endif // !DATUM__Line

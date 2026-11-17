@@ -7,12 +7,12 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__XmlFile
-#define CAP__XmlFile
+#ifndef DATUM__XmlFile
+#define DATUM__XmlFile
 #include "TxtFile.hpp"
 #include "XmlDocument.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -27,7 +27,7 @@ namespace CAP
 //!
 //! Example:
 //! @code
-//!   CAP::XmlFile xml("run.xml", CAP::File::kWriteOnly);
+//!   Datum::XmlFile xml("run.xml", Datum::File::kWriteOnly);
 //!   xml.setDeclaration();
 //!   xml.addLine("<run>");
 //!   xml.addElement("energy", "13.6 TeV", 1);
@@ -114,6 +114,6 @@ protected:
   mutable bool        _documentValid;  //!< _document matches the lines
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

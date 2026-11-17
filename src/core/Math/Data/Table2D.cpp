@@ -18,7 +18,7 @@
 #include <sstream>
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -324,4 +324,4 @@ namespace CAP
   void Table2D::loadBinary(const String & fileName, const String & name)  { loadBinaryObject(fileName,*this,name); }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

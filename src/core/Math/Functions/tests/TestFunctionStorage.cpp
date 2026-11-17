@@ -8,9 +8,9 @@
  *
  * *********************************************************************/
 //! @file TestFunctionStorage.cpp
-//! @brief Test program of the binary records of parameterized functions ("CAPU") (run by ctest).
+//! @brief Test program of the binary records of parameterized functions ("DTMU") (run by ctest).
 //
-// TestFunctionStorage -- every registered class of ParameterizedFunction written to a CAP file in a Folder and read
+// TestFunctionStorage -- every registered class of ParameterizedFunction written to a Datum file in a Folder and read
 // back (eagerly and lazily) as an object of its own class, with its parameters (values, types, bounds), name, title
 // and fits; composites (sums and products, registered or not) rebuilt from their components; copies of folders
 // holding functions read back; streams with writeBinaryObject() and ParameterizedFunction::readBinary(); classes of a
@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 #include "BinaryIO.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "DataPointsVector.hpp"
 #include "Exceptions.hpp"
 #include "Exponential.hpp"
@@ -39,8 +39,8 @@
 #include "ParameterizedComposite.hpp"
 #include "Polynomial.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {
@@ -127,7 +127,7 @@ int main()
   {
     std::vector<String> names = FunctionRegistry::names();
     CHECK(names.size() >= 15);
-    CapFile out(path, File::kWriteOnly);
+    DatumFile out(path, File::kWriteOnly);
     out.setFolderName("functions");
     Folder * all = out.addFolder("all");
     std::vector<std::unique_ptr<ParameterizedFunction>> originals;
@@ -147,7 +147,7 @@ int main()
       }
     out.write();
 
-    CapFile in(path, File::kReadOnly);
+    DatumFile in(path, File::kReadOnly);
     in.read();
     int good = 0;
     for (const auto & f : originals)
@@ -159,7 +159,7 @@ int main()
     CHECK(good == int(originals.size()));
     CHECK(in.get<Normal>("all/Normal") != nullptr && in.get<Function>("all/Normal") != nullptr);   // through its own class and its bases
 
-    CapFile lazy(path, File::kReadOnly);
+    DatumFile lazy(path, File::kReadOnly);
     lazy.load(File::Loading::kLazy);
     CHECK(!lazy.folder().isLoaded("all/Exponential"));
     Exponential * e = lazy.get<Exponential>("all/Exponential");
@@ -280,7 +280,7 @@ int main()
     w.writeVarUInt(2);
     w.writeVarUInt(1);
     std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
-    writeBinaryRecord(stream, "CAPU", 1, w.buffer(), "f");
+    writeBinaryRecord(stream, "DTMU", 1, w.buffer(), "f");
     stream.seekg(0);
     bool thrown = false;
     try { std::unique_ptr<ParameterizedFunction> f(ParameterizedFunction::readBinary(stream)); } catch (const std::exception &) { thrown = true; }
@@ -292,7 +292,7 @@ int main()
     v.writeVarUInt(5);
     v.writeVarUInt(1);
     std::stringstream second(std::ios::in | std::ios::out | std::ios::binary);
-    writeBinaryRecord(second, "CAPU", 1, v.buffer(), "n");
+    writeBinaryRecord(second, "DTMU", 1, v.buffer(), "n");
     second.seekg(0);
     thrown = false;
     try { std::unique_ptr<ParameterizedFunction> f(ParameterizedFunction::readBinary(second)); } catch (const std::exception &) { thrown = true; }

@@ -5,7 +5,7 @@
 
 
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -635,6 +635,6 @@ double VectorLorentz::distance(const VectorLorentz & other) const
   std::vector<VectorLorentz> VectorLorentz::loadAllBinary(const String & fileName)       { return loadAllBinaryObjects<VectorLorentz>(fileName); }
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 

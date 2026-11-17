@@ -19,7 +19,7 @@
 #include "Particle.hpp"
 #include "FlowCumulants.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -688,4 +688,4 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum

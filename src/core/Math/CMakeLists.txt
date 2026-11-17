@@ -1,10 +1,10 @@
 ################################################################################################
-# Project CAP/Math
+# Project Datum/Math
 #
 # One library (libMath) and one ROOT dictionary, the sources in sub-folders by subject:
 #   Basic          basic numerical functions, constants, exceptions, complex numbers
 #   LinearAlgebra  matrices and vectors (2D, 3D, n-D, Lorentz)
-#   Functions      Function, ParameterizedFunction and the functions of CAP, special functions, fields
+#   Functions      Function, ParameterizedFunction and the functions of Datum, special functions, fields
 #   Interpolation  interpolation of tables and grids, piecewise polynomials, cubic splines, Interpolation
 #   Integral       integrators (trapezoid, Simpson, Romberg, Gauss-Legendre, Monte Carlo), Integration, sampled rules
 #   Derivative     finite differences, Differentiation, Derivative
@@ -205,5 +205,5 @@ add_executable(TestDerivative Derivative/tests/TestDerivative.cpp)
 target_link_libraries(TestDerivative Math Base)
 add_test(NAME Derivative COMMAND TestDerivative)
 
-cap_install(Math LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Math LIBRARY "$ENV{DATUM_LIB_PATH}")
 

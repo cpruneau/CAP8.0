@@ -10,15 +10,15 @@
 //! @file JetPair.hpp
 //! @brief JetPair: two jets of an event and the variables of the pair; JetPairFilter: selection of pairs;
 //! JetPairFilterCreator: the task creating the jet pair filters (JET_PAIR_FILTER).
-#ifndef CAP__JetPair
-#define CAP__JetPair
+#ifndef DATUM__JetPair
+#define DATUM__JetPair
 #include "Filter.hpp"
 #include "ManagedObject.hpp"
 #include "ObjectCreator.hpp"
 #include "Configuration.hpp"
 #include "Jet.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -106,6 +106,6 @@ public:
   Task * clone() override { return new JetPairFilterCreator(*this); }
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetPair */
+#endif /* DATUM__JetPair */

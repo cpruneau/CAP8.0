@@ -1,5 +1,5 @@
-#ifndef CAP_MathBasicFunctions
-#define CAP_MathBasicFunctions
+#ifndef DATUM_MathBasicFunctions
+#define DATUM_MathBasicFunctions
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -15,7 +15,7 @@ using namespace std;
 //! Compendium of basic and essential mathematical  functions
 //!  By convention, all function names  begin with a lower case letter.
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -660,6 +660,6 @@ namespace CAP
 
   } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

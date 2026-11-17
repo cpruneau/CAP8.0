@@ -10,13 +10,13 @@
 //! @file JetGroomingAnalyzer.hpp
 //! @brief JetGroomingAnalyzer: the jets of a jet filter groomed by each jet groomer, and the histograms of the groomed
 //! jets and of the splittings the groomers select.
-#ifndef CAP__JetGroomingAnalyzer
-#define CAP__JetGroomingAnalyzer
+#ifndef DATUM__JetGroomingAnalyzer
+#define DATUM__JetGroomingAnalyzer
 #include "JetTask.hpp"
 #include "JetGroomer.hpp"
 #include "JetGroomingHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -68,6 +68,6 @@ protected:
   ManagedObjects<JetGroomer> _managedGroomers;   //!< jet groomers
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetGroomingAnalyzer */
+#endif /* DATUM__JetGroomingAnalyzer */

@@ -9,8 +9,8 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberNucleus
-#define CAP__GlauberNucleus
+#ifndef DATUM__GlauberNucleus
+#define DATUM__GlauberNucleus
 #include "GlauberExceptions.hpp"
 #include "GlauberNucleon.hpp"
 #include "GlauberNucleusType.hpp"
@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Nucleus of a Monte Carlo Glauber simulation: its type and nucleons, and the options used to place the
@@ -270,7 +270,7 @@ namespace CAP
 
   };
   
-} // namespace CAP
+} // namespace Datum
 
 #endif
 

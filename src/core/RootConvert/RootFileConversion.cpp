@@ -19,7 +19,7 @@
 #include "RootFileConversion.hpp"
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -123,4 +123,4 @@ namespace CAP
   return count;
   }
 
-} // namespace CAP
+} // namespace Datum

@@ -8,14 +8,14 @@
  *
  * *********************************************************************/
 //! @file Lexer.hpp
-//! @brief Tokens of the CAP command language, and the exception of the interpreter.
-#ifndef CAP__INTERPRETER__Lexer
-#define CAP__INTERPRETER__Lexer
+//! @brief Tokens of the Datum command language, and the exception of the interpreter.
+#ifndef DATUM__INTERPRETER__Lexer
+#define DATUM__INTERPRETER__Lexer
 #include <string>
 #include <vector>
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace INTERPRETER
   {
@@ -62,6 +62,6 @@ namespace CAP
   bool isComplete(const std::string & source);
 
   } // namespace INTERPRETER
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__INTERPRETER__Lexer
+#endif // !DATUM__INTERPRETER__Lexer

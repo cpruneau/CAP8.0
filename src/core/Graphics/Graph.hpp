@@ -9,8 +9,8 @@
  * *********************************************************************/
 //! @file Graph.hpp
 //! @brief Graph: a plot of functions and data points in a cell of a canvas; GraphItem: one object shown.
-#ifndef CAP__Graph
-#define CAP__Graph
+#ifndef DATUM__Graph
+#define DATUM__Graph
 #include <algorithm>
 #include <memory>
 #include <vector>
@@ -27,7 +27,7 @@
 #include "Shape.hpp"
 #include "Palettes.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -54,7 +54,7 @@ namespace CAP
   //! in the cells (showValues(), where they fit), and the points themselves as colored disks (showMapPoints(), always
   //! for scattered points), optionally sized by their values and outlined.
   //!
-  //! The objects are not owned: they must outlive the graphs that show them (in CapApp they are owned by the
+  //! The objects are not owned: they must outlive the graphs that show them (in DatumApp they are owned by the
   //! application or by the files it opened).
   //!
   class GraphItem
@@ -89,7 +89,7 @@ namespace CAP
   //! function, of rank 1 or 2. @return true if so
   bool isFittable() const;
   //!
-  //! @brief Default style of the k-th item of a graph (what CapGui gives the objects it shows): line and marker
+  //! @brief Default style of the k-th item of a graph (what DatumGui gives the objects it shows): line and marker
   //! colors cycling through black, red, blue, green, magenta, dark blue, brown and dark red, and markers through
   //! filled circle, square, triangles, diamond, star, cross and a few others. @param k index of the item in its graph
   //!
@@ -460,7 +460,7 @@ namespace CAP
   //! @brief Remove the item showing object. @return true if it was found
   bool remove(const void * object);
   //!
-  //! @brief Show an item as CapGui does: added (or replacing the items), with the default style of its place
+  //! @brief Show an item as DatumGui does: added (or replacing the items), with the default style of its place
   //! (GraphItem::applyDefaultStyle()); in a graph that was empty (or when replacing), the titles are taken from the
   //! object (setTitlesFrom()) and the ranges become automatic. An object already shown is not added again.
   //! @param item item @param replace remove the items shown first @return the item in the graph
@@ -551,13 +551,13 @@ namespace CAP
   //! @brief Data coordinates of a canvas point for the given view (inverse of toCanvas()).
   void fromCanvas(const View & view, const Point2D & p, double & x, double & y) const;
   //!
-  //! @brief Zoom on the rectangle between two canvas points (as dragging in CapGui): the x range, the y range, or
+  //! @brief Zoom on the rectangle between two canvas points (as dragging in DatumGui): the x range, the y range, or
   //! both, are set to the data coordinates of the rectangle in the current view. @param a corner @param b opposite
   //! corner @param x set the x range @param y set the y range @return false if the rectangle is empty along an axis set
   //!
   bool zoom(const Point2D & a, const Point2D & b, bool x=true, bool y=true);
   //!
-  //! @brief Value of the maps at a point (what CapGui shows under the mouse): of the last map drawn that has a value
+  //! @brief Value of the maps at a point (what DatumGui shows under the mouse): of the last map drawn that has a value
   //! there. @param view view @param x abscissa @param y ordinate @param z set to the value @param item set to the
   //! index of the item @return false if no map has a value there
   //!
@@ -830,6 +830,6 @@ namespace CAP
   void niceLinear(double & low, double & high, double & step);
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Graph
+#endif // !DATUM__Graph

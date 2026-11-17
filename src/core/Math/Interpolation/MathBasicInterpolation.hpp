@@ -1,5 +1,5 @@
-#ifndef CAP_MathBasicInterpolation
-#define CAP_MathBasicInterpolation
+#ifndef DATUM_MathBasicInterpolation
+#define DATUM_MathBasicInterpolation
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -23,9 +23,9 @@ double interpolationNearestDirect(const vector<double> & x, const vector<double>
 double interpolationNearestMono(const vector<double> & x, const vector<double> & y, double xx) ;
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP_MathBasicInterpolation
+#endif // !DATUM_MathBasicInterpolation
 
 
 

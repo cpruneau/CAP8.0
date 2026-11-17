@@ -1,10 +1,10 @@
-#ifndef CAP_MATH_Bessel
-#define CAP_MATH_Bessel
+#ifndef DATUM_MATH_Bessel
+#define DATUM_MATH_Bessel
 #include <vector>
 #include "String.hpp"
 #include "Function.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -29,7 +29,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   using namespace CAP::MATH;
+  //!   using namespace Datum::MATH;
   //!   Bessel j0(Bessel::BesselJ);         // J0
   //!   Bessel k2(Bessel::BesselK, 2);      // K2
   //!   double y  = j0.evaluateAt(2.4);     // close to the first zero of J0
@@ -130,6 +130,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -7,14 +7,14 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP_MATH_Table2D
-#define CAP_MATH_Table2D
+#ifndef DATUM_MATH_Table2D
+#define DATUM_MATH_Table2D
 #include <vector>
 #include "String.hpp"
 #include "BinaryIO.hpp"
 #include "Object.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -33,12 +33,12 @@ namespace CAP
   //! <b>Text files.</b> One row per line, values separated by blanks (or commas or tabs). Blank lines and lines starting
   //! with '#' are skipped. All rows must have the same number of values. The grid is not part of the text format.
   //!
-  //! <b>Binary files.</b> "CAPB" records of the CAP binary format (see BinaryIO.hpp): rows, columns, grid and values
-  //! (float64), restored exactly. Tables can be stored in a Folder / CapFile.
+  //! <b>Binary files.</b> "DTMB" records of the Datum binary format (see BinaryIO.hpp): rows, columns, grid and values
+  //! (float64), restored exactly. Tables can be stored in a Folder / DatumFile.
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Table2D t("eos");
+  //!   Datum::MATH::Table2D t("eos");
   //!   t.readText("eos.dat");              // e.g. 101 rows (temperature) x 51 columns (chemical potential)
   //!   t.setGrid(0.100, 0.002, 0.0, 0.01); // x = T from 0.100 GeV in steps of 0.002; y = mu from 0 in steps of 0.01
   //!   double p = t.interpolate(0.1555, 0.123);
@@ -189,8 +189,8 @@ namespace CAP
   //! @name Binary files (independent of ROOT)
   //! @{
 
-  //! @brief Tag of Table2D records in binary files. @return "CAPB"
-  static const char * binaryTag() { return "CAPB"; }
+  //! @brief Tag of Table2D records in binary files. @return "DTMB"
+  static const char * binaryTag() { return "DTMB"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return name()
@@ -214,6 +214,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

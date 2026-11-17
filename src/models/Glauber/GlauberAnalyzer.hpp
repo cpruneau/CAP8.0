@@ -9,8 +9,8 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberAnalyzer
-#define CAP__GlauberAnalyzer
+#ifndef DATUM__GlauberAnalyzer
+#define DATUM__GlauberAnalyzer
 #include "Accountant.hpp"
 #include "Task.hpp"
 #include "GlauberDb.hpp"
@@ -18,7 +18,7 @@
 #include "GlauberEventFilter.hpp"
 #include "GlauberHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -128,6 +128,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GlauberAnalyzer
+#endif // !DATUM__GlauberAnalyzer

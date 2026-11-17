@@ -12,10 +12,16 @@ The programs were renamed with Datum 1.0; their former names still work:
 | `RunDatum.py`      | `RunCAP.py`       |
 | `BuildDatum.py`    | `BuildCAP.py`     |
 | `SetupDatum.sh`    | `SetupCAP.sh`     |
-| `DATUM_...` environment variables | `CAP_...` (both are defined by `SetupDatum.sh`) |
+| `DATUM_...` environment variables | `CAP_...` (both are defined by `SetupDatum.sh`; the programs read `CAP_...` when `DATUM_...` is not set) |
 | `-DDATUM_WITH_...` CMake options | `-DCAP_WITH_...` |
+| C++ namespace `Datum` (`DatumFile`, `DatumGui`, ...) | namespace `CAP` (`CapFile`, `CapGui`, ...) |
+| data files `*.datum` (records `DTMH`, `DTMO`, ...) | `*.cap` (records `CAPH`, `CAPO`, ...) |
+| workflow files `<Datum>`, classes `Datum::...`, element `RUNDATUM` | `<CAP>`, `CAP::...`, `RUNCAP` |
+| `~/.DatumGui.xml` (root `DatumGui`) | `~/.CapGui.xml` (root `CapGui`) |
 
-The C++ classes (namespace `CAP`), the workflow files and the data files (`.cap`) are unchanged.
+Files written by CAP are still read: `.cap` data files (and files given as `x.datum` are looked for as `x.cap` when
+`x.datum` does not exist), workflows with `CAP::` class names and a `RUNCAP` element, selection files `<CapSelections>`.
+Files written from now on use the new names.
 
 # Prerequisites
 - `cmake` (3.14 or later), `make` and a C++17 compiler. Datum does not need ROOT.
@@ -64,5 +70,5 @@ from `DATUM_PYTHIA8_DIR`, `DATUM_HERWIG_DIR`, `DATUM_FASTJET_DIR` (or `CAP_...`)
 # Run
 ```
 python3 RunDatum.py [workflow.xml]     # compose, check and run workflows
-bin/DatumGui [file.cap ...]            # histograms, plots and figures
+bin/DatumGui [file.datum ...]            # histograms, plots and figures
 ```

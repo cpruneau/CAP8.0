@@ -1,7 +1,7 @@
 #include "BesselFunctions.hpp"
 #include "MathConstants.hpp"
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -575,5 +575,5 @@ double  struveL1(double  x)
 }
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 

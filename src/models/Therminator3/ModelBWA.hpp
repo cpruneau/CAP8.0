@@ -1,8 +1,8 @@
-#ifndef CAP__ModelBWA_H_
-#define CAP__ModelBWA_H_
+#ifndef DATUM__ModelBWA_H_
+#define DATUM__ModelBWA_H_
 #include "Model.hpp"
 
-namespace CAP
+namespace Datum
 {
   class ModelBWA
   :
@@ -15,9 +15,9 @@ namespace CAP
   virtual double calculateIntegrand(ThermalHadron & hadron);
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__ModelBWA_H_
+#endif // !DATUM__ModelBWA_H_
 
 /*! @file ModelBWA.h
  * @brief Definition of ModelBWA class. Modified versions of Blast-Wave Model.

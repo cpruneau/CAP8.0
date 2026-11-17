@@ -9,7 +9,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 
   ThermalHadronGasFD::ThermalHadronGasFD()
@@ -244,4 +244,4 @@ namespace CAP
   calculateStableDensities();
   }
 
-}   // namespace CAP
+}   // namespace Datum

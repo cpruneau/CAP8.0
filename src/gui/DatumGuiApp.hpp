@@ -7,28 +7,28 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-//! @file CapGuiApp.hpp
-//! @brief CapGuiApp: the application of CapGui, where every session is a plot file (also PlotEditor and the windows
+//! @file DatumGuiApp.hpp
+//! @brief DatumGuiApp: the application of DatumGui, where every session is a plot file (also PlotEditor and the windows
 //! of PlotHistos).
-#ifndef CAP__GUI__CapGuiApp
-#define CAP__GUI__CapGuiApp
+#ifndef DATUM__GUI__DatumGuiApp
+#define DATUM__GUI__DatumGuiApp
 #include <functional>
 #include <map>
 #include <memory>
 #include <set>
 #include <vector>
-#include "CapApp.hpp"
+#include "DatumApp.hpp"
 #include "PlotDocument.hpp"
 #include "PlotSpec.hpp"
 #include "PlotTemplate.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
 
   //!
-  //! @brief The application of CapGui: the file browser, the plot tree, and the canvases, which are the windows of a
+  //! @brief The application of DatumGui: the file browser, the plot tree, and the canvases, which are the windows of a
   //! plot file (the XML files of PlotHistos, see GRAPHICS::PlotSpec and GRAPHICS::PlotDocument).
   //!
   //! Every session is a plot file: an untitled one at first, or those opened (one tab each in the Plot Tree). The
@@ -46,7 +46,7 @@ namespace CAP
   //! Modes: BASIC starts with a new plot file and the current folder in the browser; EDIT starts with the plot files
   //! given (or asks for one). Both have the same tools.
   //!
-  class CapGuiApp : public CapApp
+  class DatumGuiApp : public DatumApp
   {
   public:
   //! Starting point
@@ -56,11 +56,11 @@ namespace CAP
   using Catalog = std::function<bool(const std::vector<String> & sources, const String & dataDirectory,
                                      GRAPHICS::PlotTemplate & catalog, String & problems)>;
 
-  //! @brief Constructor. @param mode mode @param plotFiles plot files to open @param argc arguments of CapGui
-  //! (--config, CAP files and folders for the browser) @param argv arguments
-  CapGuiApp(Mode mode, const std::vector<String> & plotFiles, int argc, char ** argv);
+  //! @brief Constructor. @param mode mode @param plotFiles plot files to open @param argc arguments of DatumGui
+  //! (--config, Datum files and folders for the browser) @param argv arguments
+  DatumGuiApp(Mode mode, const std::vector<String> & plotFiles, int argc, char ** argv);
   //! @brief Destructor.
-  virtual ~CapGuiApp();
+  virtual ~DatumGuiApp();
   //! @brief Handle the commands of the menus. @param event action
   void actionPerformed(const ActionEvent & event) override;
 
@@ -70,7 +70,7 @@ namespace CAP
   void setCatalog(const Catalog & catalog) { _catalog = catalog; }
   //! @brief Show every window of the plot file (View > All Windows). @param v flag
   void setAllWindows(bool v) { _allWindows = v; }
-  //! @brief Files replacing the inputs of the first plot file opened, in order (PlotHistos plots.xml data.cap).
+  //! @brief Files replacing the inputs of the first plot file opened, in order (PlotHistos plots.xml data.datum).
   //! @param files files
   void setInputFiles(const std::vector<String> & files) { _inputFiles = files; }
   //! @brief Open the Plot Template window with a catalog at startup (PlotHistos --template --choose).
@@ -167,7 +167,7 @@ namespace CAP
   //! @brief Enable and check the items of the menus.
   void updateMenuStates() override;
   //! @brief The rebinned copy of a histogram: made and owned by the plot file (GRAPHICS::PlotSpec::rebinned(), written
-  //! back with the attribute rebin) for a canvas of the plot file, by the application (CapApp) for the other panes.
+  //! back with the attribute rebin) for a canvas of the plot file, by the application (DatumApp) for the other panes.
   //! @param pane pane @param data histogram @param factors factors @return histogram to show
   const MATH::DataPoints * rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
                                         const std::vector<unsigned int> & factors) override;
@@ -316,6 +316,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__CapGuiApp
+#endif // !DATUM__GUI__DatumGuiApp

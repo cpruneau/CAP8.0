@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__SubSampleStatCalculator
-#define CAP__SubSampleStatCalculator
+#ifndef DATUM__SubSampleStatCalculator
+#define DATUM__SubSampleStatCalculator
 #include <vector>
 #include "Task.hpp"
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 class Folder;
 namespace MATH { class Histogram; }
@@ -36,9 +36,9 @@ namespace MATH { class Histogram; }
 //!   sigma^2 = N/(N-1) sum w_i^2 (x_i - m)^2 / W^2 (for equal weights, the variance of the sub-samples divided by N);
 //! - JACKKNIFE: the delete-one jackknife. The replica i is the sample without sub-sample i. Without stages, each
 //!   replica is the weighted average of the other sub-samples, theta_i = (W m - w_i x_i)/(W - w_i), and the value is
-//!   theta = m. With stages (\<name\>:JACKKNIFE:WORKFLOW, a workflow file of RunCAP.py, and \<name\>:JACKKNIFE:STAGES,
+//!   theta = m. With stages (\<name\>:JACKKNIFE:WORKFLOW, a workflow file of RunDatum.py, and \<name\>:JACKKNIFE:STAGES,
 //!   the names of stages of it, e.g. "DerivedHistos BalanceFct"), the stages are run on the whole sample (the average
-//!   of the sub-samples) and on each replica, as bin/CAP would run them on files: theta is what they make of the whole
+//!   of the sub-samples) and on each replica, as bin/Datum would run them on files: theta is what they make of the whole
 //!   sample and theta_i what they make of replica i, so that nonlinear observables (correlation functions, balance
 //!   functions, ratios, cumulants) are computed from (nearly) all the statistics. In both cases the uncertainty is
 //!   sigma^2 = (N-1)/N sum (theta_i - mean)^2, with mean the average of the theta_i, and the bias-corrected values
@@ -48,14 +48,14 @@ namespace MATH { class Histogram; }
 //! Production in pT-hat bins (\<name\>:PTHAT:BINS = K > 0): each sub-sample is K jobs, in the directories
 //! \<sub-sample\>_pthat\<k\> (k = 00 ... K-1), run with PythiaEventGenerator PTHAT_MIN and PTHAT_MAX set to the edges of
 //! bin k and the raw histograms kept (JOB:NORMALIZE false); each file holds the cross section sigma_k,s of its run and
-//! its number of events N_k,s (CAP_SIGMA_GEN, CAP_N_ACCEPTED). First, the K bins of each sub-sample s are added with
+//! its number of events N_k,s (DATUM_SIGMA_GEN, DATUM_N_ACCEPTED). First, the K bins of each sub-sample s are added with
 //! the weights sigma_k/N_k,s, sigma_k the cross section of bin k averaged over the sub-samples (weighted by N_k,s):
 //! H_s = sum_k sigma_k/N_k,s H_k,s, the differential cross section in mb, whatever the event filter or the jets of the
 //! folder (raw counts are additive); the profiles are averages weighted by sigma_k/N_k,s. With
 //! \<name\>:PTHAT:NORMALIZATION COVERED (default SIGMA), H_s is divided by the cross section of the range covered,
 //! sum_k sigma_k (per event of that range; for later stages computing ratios, correlation functions, ...). H_s is
-//! written to the directory \<sub-sample\>_CrossSection (with the cross sections of the bins: CAP_PTHAT_BIN_\<k\>,
-//! CAP_SIGMA_COVERED), and these are the sub-samples combined as above (equal weights).
+//! written to the directory \<sub-sample\>_CrossSection (with the cross sections of the bins: DATUM_PTHAT_BIN_\<k\>,
+//! DATUM_SIGMA_COVERED), and these are the sub-samples combined as above (equal weights).
 //!
 //! The result (the histograms of the first sub-sample, or of the stages, with the values and uncertainties so computed;
 //! the numbers of entries summed in SUBSAMPLE mode) and the summed accountants are written to
@@ -121,8 +121,8 @@ public:
   static void weightedSum(const std::vector<const Folder *> & bins, const std::vector<double> & weights, double divisor,
                           Folder & result);
   //!
-  //! @brief The cross section of the run saved in a folder tree by PythiaEventGenerator (CAP_SIGMA_GEN, CAP_SIGMA_ERR,
-  //! CAP_N_ACCEPTED, CAP_PTHAT_MIN, CAP_PTHAT_MAX). @param folder folder @param sigma sigma (mb) @param error error
+  //! @brief The cross section of the run saved in a folder tree by PythiaEventGenerator (DATUM_SIGMA_GEN, DATUM_SIGMA_ERR,
+  //! DATUM_N_ACCEPTED, DATUM_PTHAT_MIN, DATUM_PTHAT_MAX). @param folder folder @param sigma sigma (mb) @param error error
   //! @param nAccepted events @param ptHatMin lower edge @param ptHatMax upper edge @return false if not found
   //!
   static bool crossSection(const Folder & folder, double & sigma, double & error, long & nAccepted, double & ptHatMin,
@@ -146,6 +146,6 @@ protected:
   String _exportFile;   //!< Output file name.
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__SubSampleStatCalculator */
+#endif /* DATUM__SubSampleStatCalculator */

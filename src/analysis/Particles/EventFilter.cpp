@@ -14,7 +14,7 @@
 #include "ParticleSelection.hpp"
 #include "Event.hpp"
 
-namespace CAP
+namespace Datum
 {
   
   EventFilter::EventFilter()
@@ -130,4 +130,4 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum

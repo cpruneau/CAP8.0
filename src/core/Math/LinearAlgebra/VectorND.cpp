@@ -4,7 +4,7 @@
 
 
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -267,4 +267,4 @@ std::ostream& operator<<(std::ostream& out, const VectorND & v)
 
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum

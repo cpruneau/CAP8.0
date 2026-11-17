@@ -16,7 +16,7 @@
 #include "Profile.hpp"
 #include "Particle.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -328,4 +328,4 @@ void JetHistos::normalize(double eventFactor)
   for (Histogram * h : jetHistograms) if (h) h->scale(perJet);
 }
 
-} // namespace CAP
+} // namespace Datum

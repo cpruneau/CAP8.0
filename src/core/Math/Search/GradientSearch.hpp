@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file GradientSearch.hpp
 //! @brief GradientSearch: extremum search by gradient descent (ascent for a maximum) with a line search.
-#ifndef CAP__MATH__GradientSearch
-#define CAP__MATH__GradientSearch
+#ifndef DATUM__MATH__GradientSearch
+#define DATUM__MATH__GradientSearch
 #include "SearchEngine.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -63,6 +63,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__GradientSearch
+#endif // !DATUM__MATH__GradientSearch

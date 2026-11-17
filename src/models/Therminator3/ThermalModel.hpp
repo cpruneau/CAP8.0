@@ -1,10 +1,10 @@
-#ifndef CAP_ThermalModel
-#define CAP_ThermalModel
+#ifndef DATUM_ThermalModel
+#define DATUM_ThermalModel
 #include "EventProcessor.hpp"
 #include "ThermalHistos.hpp"
 #include "ThermalHadronGasFD.hpp"
 
-namespace CAP
+namespace Datum
 {
   class ThermalModel
   :
@@ -42,6 +42,6 @@ namespace CAP
 
   };
 
-} // namespace CAP;
+} // namespace Datum;
 
-#endif // !CAP_ThermalModel
+#endif // !DATUM_ThermalModel

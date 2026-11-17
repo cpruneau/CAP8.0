@@ -15,8 +15,8 @@
 #include "GlauberGenerator.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(GlauberTasks)
+DATUM_REFLECTION(GlauberTasks)
 {
-  CAP::registerTask<CAP::GlauberAnalyzer>("CAP::GlauberAnalyzer");
-  CAP::registerTask<CAP::GlauberGenerator>("CAP::GlauberGenerator");
+  Datum::registerTask<Datum::GlauberAnalyzer>("Datum::GlauberAnalyzer");
+  Datum::registerTask<Datum::GlauberGenerator>("Datum::GlauberGenerator");
 }

@@ -1,8 +1,8 @@
-#ifndef CAP__LineRenderer
-#define CAP__LineRenderer
+#ifndef DATUM__LineRenderer
+#define DATUM__LineRenderer
 #include "Renderer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -27,6 +27,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LineRenderer
+#endif // !DATUM__LineRenderer

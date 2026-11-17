@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 
   ModelSettings::ModelSettings()
@@ -69,4 +69,4 @@ namespace CAP
   }
 
 
- } // namespace CAP
+ } // namespace Datum

@@ -7,8 +7,9 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-//! @file CapApp.cpp
-//! @brief Implementation of CapApp.
+//! @file DatumApp.cpp
+//! @brief Implementation of DatumApp.
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
@@ -18,12 +19,12 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "FileSystem.hpp"
-#ifdef CAP_WITH_ROOT
+#ifdef DATUM_WITH_ROOT
 #include "RootFileConversion.hpp"
 #endif
-#include "CapApp.hpp"
+#include "DatumApp.hpp"
 #include "CanvasRegistry.hpp"
-#ifdef CAP_GUI_PRESENTATIONS
+#ifdef DATUM_GUI_PRESENTATIONS
 #include "CanvasPresentation.hpp"
 #endif
 #include "XmlDocument.hpp"
@@ -36,18 +37,18 @@
 #include "FunctionRegistry.hpp"
 #include "Histogram.hpp"
 #include "StatisticalTests.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "LatexRenderer.hpp"
 #include "GraphEditor.hpp"
 
-#ifndef CAP_SOURCE_ROOT
-//! Top directory of the CAP sources (set by the build; empty if not).
-#define CAP_SOURCE_ROOT ""
+#ifndef DATUM_SOURCE_ROOT
+//! Top directory of the Datum sources (set by the build; empty if not).
+#define DATUM_SOURCE_ROOT ""
 #endif
 
 namespace fs = std::filesystem;
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -73,7 +74,8 @@ namespace CAP
     {
     XmlDocument document = XmlDocument::read(fileName);
     const XmlElement & root = document.root();
-    if (!root.isNamed("CapGui")) { error = "Root element is not CapGui"; return false; }
+    if (!root.isNamed("DatumGui") && !root.isNamed("CapGui"))         // CapGui: written before Datum 1.0
+      { error = "Root element is not DatumGui"; return false; }
     if (const XmlElement * e = root.child("Window"))
       {
       gui.title     = e->attribute("title", gui.title);
@@ -134,7 +136,7 @@ namespace CAP
   {
   try
     {
-    XmlDocument document("CapGui");
+    XmlDocument document("DatumGui");
     XmlElement & root = document.root();
     root.setAttribute("version", 1);
     XmlElement & window = root.addChild("Window");
@@ -183,9 +185,9 @@ namespace CAP
   return true;
   }
 
-  // ------------------------------------------------------------------------------------------------ CapApp
+  // ------------------------------------------------------------------------------------------------ DatumApp
 
-  CapApp::CapApp(int argc, char ** argv)
+  DatumApp::DatumApp(int argc, char ** argv)
   :
   _arguments(),
   _configurationFile(),
@@ -222,25 +224,27 @@ namespace CAP
     else if (argument.str().rfind("-psn_", 0) == 0) continue;   // process serial number added by older macOS Finders
     else _arguments.push_back(argument);
     }
-  // Opened from the Finder or the Dock (CapGui.app), the current folder is "/": start in the home folder instead.
+  // Opened from the Finder or the Dock (DatumGui.app), the current folder is "/": start in the home folder instead.
   std::error_code ec;
   String home = FileSystem::home();
   if (!home.isNull() && FileSystem::current().equalTo("/")) fs::current_path(home.str(), ec);
   }
 
-  CapApp::~CapApp()
+  DatumApp::~DatumApp()
   { }
 
-  String CapApp::findConfigurationFile() const
+  String DatumApp::findConfigurationFile() const
   {
-  // $CAP_ROOT_PATH left as written when not defined: that candidate then does not exist
+  // $DATUM_ROOT_PATH left as written when not defined: that candidate then does not exist
   String home = FileSystem::home();
-  return FileSystem::firstExisting({ home.isNull() ? String() : FileSystem::join(home, ".CapGui.xml"),
-                                     FileSystem::expand("$CAP_ROOT_PATH/config/CapGui.xml"),
-                                     FileSystem::join(CAP_SOURCE_ROOT, "config/CapGui.xml") });
+  // ~/.CapGui.xml: the configuration saved by CapGui, before Datum 1.0
+  return FileSystem::firstExisting({ home.isNull() ? String() : FileSystem::join(home, ".DatumGui.xml"),
+                                     home.isNull() ? String() : FileSystem::join(home, ".CapGui.xml"),
+                                     FileSystem::expand("$DATUM_ROOT_PATH/config/DatumGui.xml"),
+                                     FileSystem::join(DATUM_SOURCE_ROOT, "config/DatumGui.xml") });
   }
 
-  int CapApp::run()
+  int DatumApp::run()
   {
   // configuration
   if (_configurationFile.isNull()) _configurationFile = findConfigurationFile();
@@ -251,7 +255,7 @@ namespace CAP
   if (!palettes.setColorPalette(_configuration.colorPalette))     _configuration.colorPalette = palettes.colorPalette().name();
   if (!palettes.setMarkerPalette(_configuration.markerPalette))   _configuration.markerPalette = palettes.markerPalette().name();
   if (!palettes.setShadingPalette(_configuration.shadingPalette)) _configuration.shadingPalette = palettes.shadingPaletteName();
-  if (!FileSystem::home().isNull()) _configuration.gui.iniFile = FileSystem::join(FileSystem::home(), ".CapGui.ini");
+  if (!FileSystem::home().isNull()) _configuration.gui.iniFile = FileSystem::join(FileSystem::home(), ".DatumGui.ini");
   if (_configuration.directory.isNull())
     {
     _configuration.directory = FileSystem::current();
@@ -311,13 +315,13 @@ namespace CAP
   return 0;
   }
 
-  String CapApp::dataPath(const BrowserFile & f)
+  String DatumApp::dataPath(const BrowserFile & f)
   {
   if (!f.path.isNull()) return f.path;
-  return String("/@tree/") + String(std::to_string(f.id).c_str()) + String("/") + f.name + String(".cap");
+  return String("/@tree/") + String(std::to_string(f.id).c_str()) + String("/") + f.name + String(DatumFile::extension());
   }
 
-  BrowserFile * CapApp::dataFile(const String & path)
+  BrowserFile * DatumApp::dataFile(const String & path)
   {
   std::string p = path.str();
   if (p.compare(0, 7, "/@tree/") == 0)
@@ -330,13 +334,13 @@ namespace CAP
   return fileOfPath(path);
   }
 
-  BrowserFile * CapApp::fileOfPath(const String & path)
+  BrowserFile * DatumApp::fileOfPath(const String & path)
   {
   for (auto & f : _files) if (!f.editable && f.path == path) return &f;
   return nullptr;
   }
 
-  void CapApp::setupPane(CanvasPane & pane)
+  void DatumApp::setupPane(CanvasPane & pane)
   {
   pane.divide(_configuration.graphColumns, _configuration.graphRows);
   for (int k=0; k<pane.canvas().nGraphs(); k++)
@@ -371,7 +375,7 @@ namespace CAP
     { rebinItem(pane, graph, item, factors); };
   }
 
-  void CapApp::rebinItem(CanvasPane & pane, int graph, int item, const std::vector<unsigned int> & factors)
+  void DatumApp::rebinItem(CanvasPane & pane, int graph, int item, const std::vector<unsigned int> & factors)
   {
   if (graph < 0 || graph >= pane.canvas().nGraphs()) return;
   Graph & g = pane.canvas().graph(graph);
@@ -394,7 +398,7 @@ namespace CAP
   _gui.setStatus(shown.label() + String(": ") + bins + String(" bins"));
   }
 
-  const MATH::DataPoints * CapApp::rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
+  const MATH::DataPoints * DatumApp::rebinnedData(CanvasPane & pane, const MATH::DataPoints * data,
                                                 const std::vector<unsigned int> & factors)
   {
   (void)pane;
@@ -415,7 +419,7 @@ namespace CAP
   return copy;
   }
 
-  const MATH::DataPoints * CapApp::rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const
+  const MATH::DataPoints * DatumApp::rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const
   {
   factors.clear();
   for (const auto & record : _rebinned)
@@ -425,14 +429,14 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ menus
 
-  void CapApp::buildMenus()
+  void DatumApp::buildMenus()
   {
   MenuBar & bar = _gui.menuBar();
 
   Menu & file = bar.addMenu("File");
-  file.addItem("Open...",        "file.open",       "Ctrl+O",       "Open a CAP file, or the histograms of a ROOT file");
+  file.addItem("Open...",        "file.open",       "Ctrl+O",       "Open a Datum file, or the histograms of a ROOT file");
   file.addItem("Open Folder...", "file.openFolder", "Ctrl+Shift+O", "Show a folder of the file system in the browser");
-  file.addItem("Close All Files", "file.closeAll",  "",             "Close the CAP files open in the browsers");
+  file.addItem("Close All Files", "file.closeAll",  "",             "Close the Datum files open in the browsers");
   file.addSeparator();
   file.addItem("New Browser",    "file.newBrowser", "",             "Open another file browser, with files of its own");
   file.addItem("New Tree",       "file.newTree",    "",             "Make a new, empty tree in the browser used last: "
@@ -446,7 +450,7 @@ namespace CAP
   file.addItem("Save All Canvases...", "file.saveAll", "",          "Save every canvas to its own file in a folder (the format saved last)");
   file.addItem("Save All Graphs...",   "file.saveAllGraphs", "",    "Save every graph of every canvas to its own file in a folder");
   file.addItem("Save Book as PDF...",  "file.saveBook", "",         "Every canvas as a page of one PDF file, to print");
-#ifdef CAP_GUI_PRESENTATIONS
+#ifdef DATUM_GUI_PRESENTATIONS
   file.addItem("Make Presentation...", "file.presentation", "",     "A Beamer presentation (LaTeX) of the canvases, one frame each");
 #endif
   file.addSeparator();
@@ -536,7 +540,7 @@ namespace CAP
   help.addItem("ImGui Demo (developers)", "help.imguiDemo", "", "Dear ImGui's demonstration window: all the widgets available").setCheckable(true);
   }
 
-  void CapApp::updateMenuStates()
+  void DatumApp::updateMenuStates()
   {
   MenuBar & bar = _gui.menuBar();
   if (MenuItem * item = bar.findItem("edit.undo"))  item->setEnabled(!_undo.empty());
@@ -563,24 +567,25 @@ namespace CAP
   _configuration.gui.browserDocked  = _gui.browserDocked();
   }
 
-  void CapApp::actionPerformed(const ActionEvent & event)
+  void DatumApp::actionPerformed(const ActionEvent & event)
   {
   const String & c = event.command;
   int columns = 0, rows = 0;
   if (c == "file.open")
     {
-    // the configured types that can be opened (CAP and ROOT files)
+    // the configured types that can be opened (Datum and ROOT files)
     std::vector<String> types;
     for (const auto & e : _configuration.extensions)
       {
       bool root = FileSystem::hasExtension(String("x") + e, ".root");
-#ifndef CAP_WITH_ROOT
+#ifndef DATUM_WITH_ROOT
       if (root) continue;                                // ROOT files not supported: not offered
 #endif
-      if (root || FileSystem::hasExtension(String("x") + e, ".cap")) types.push_back(e);
+      if (root || DatumFile::isDatumFileName(String("x") + e)) types.push_back(e);
       }
-    if (types.empty()) types.push_back(".cap");
-    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a CAP or ROOT file", _configuration.directory, types, "",
+    for (const char * e : { DatumFile::extension(), DatumFile::formerExtension() })   // both, whatever the configuration
+      if (std::find(types.begin(), types.end(), String(e)) == types.end()) types.push_back(String(e));
+    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a Datum or ROOT file", _configuration.directory, types, "",
                            [this](const String & path) { openFile(path); });
     }
   else if (c == "file.openFolder")
@@ -722,7 +727,7 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ actions
 
-  void CapApp::setLayout(int columns, int rows)
+  void DatumApp::setLayout(int columns, int rows)
   {
   recordUndo();
   _gui.setLayout(columns, rows);
@@ -730,7 +735,7 @@ namespace CAP
   _configuration.gui.rows    = _gui.nRows();
   }
 
-  void CapApp::setGraphs(int columns, int rows)
+  void DatumApp::setGraphs(int columns, int rows)
   {
   recordUndo();
   CanvasPane & pane = _gui.currentPane();
@@ -738,19 +743,19 @@ namespace CAP
   for (int k=0; k<pane.canvas().nGraphs(); k++) pane.canvas().graph(k).setShowLegend(_configuration.legend);
   }
 
-  GraphItem & CapApp::show(MATH::Function * function, float xMinimum, float xMaximum)
+  GraphItem & DatumApp::show(MATH::Function * function, float xMinimum, float xMaximum)
   {
   _functions.emplace_back(function);
   return _gui.currentPane().show(GraphItem(function, xMinimum, xMaximum));
   }
 
-  GraphItem & CapApp::show(MATH::Function * function, float xMinimum, float xMaximum, float yMinimum, float yMaximum)
+  GraphItem & DatumApp::show(MATH::Function * function, float xMinimum, float xMaximum, float yMinimum, float yMaximum)
   {
   _functions.emplace_back(function);
   return _gui.currentPane().show(GraphItem(function, xMinimum, xMaximum, yMinimum, yMaximum));
   }
 
-  GraphItem & CapApp::show(MATH::DataPoints * data)
+  GraphItem & DatumApp::show(MATH::DataPoints * data)
   {
   _data.emplace_back(data);
   return _gui.currentPane().show(GraphItem(data));
@@ -764,16 +769,16 @@ namespace CAP
   return FileSystem::normalize(path);
   }
 
-  //! Read a CAP file, or import the histograms of a ROOT file (kept in memory). @param error set to the problem
+  //! Read a Datum file, or import the histograms of a ROOT file (kept in memory). @param error set to the problem
   //! @return the file, or nullptr
-  std::shared_ptr<CapFile> readCapFile(const String & path, String & error)
+  std::shared_ptr<DatumFile> readDatumFile(const String & path, String & error)
   {
   try
     {
-#ifdef CAP_WITH_ROOT
+#ifdef DATUM_WITH_ROOT
     if (FileSystem::hasExtension(path, ".root"))
       {
-      auto file = std::make_shared<CapFile>(String(""), File::kReadWrite);
+      auto file = std::make_shared<DatumFile>(String(""), File::kReadWrite);
       file->setFolderName(FileSystem::stem(path));
       importRootFile(path, *file);
       return file;
@@ -782,7 +787,7 @@ namespace CAP
     if (FileSystem::hasExtension(path, ".root"))
       { error = "this DatumGui is built without ROOT files (BuildDatum.py: ROOT files)"; return nullptr; }
 #endif
-    auto file = std::make_shared<CapFile>(path, File::kReadOnly);
+    auto file = std::make_shared<DatumFile>(path, File::kReadOnly);
     file->load(File::Loading::kLazy);   // the tree at once; objects read when first shown
     return file;
     }
@@ -792,13 +797,13 @@ namespace CAP
   }
   } // namespace
 
-  BrowserFile * CapApp::file(int id)
+  BrowserFile * DatumApp::file(int id)
   {
   for (auto & f : _files) if (f.id == id) return &f;
   return nullptr;
   }
 
-  int CapApp::openFile(const String & fileName, FileBrowser * browser)
+  int DatumApp::openFile(const String & fileName, FileBrowser * browser)
   {
   FileBrowser & target = browser ? *browser : _gui.activeBrowser();
   String path = normalizedPath(fileName);
@@ -812,12 +817,12 @@ namespace CAP
       }
   if (!FileSystem::isFile(path)) { _gui.showMessage("Open", String("No such file: ") + path); return -1; }
   String error;
-  std::shared_ptr<CapFile> capFile = readCapFile(path, error);
-  if (!capFile) { _gui.showMessage("Open", String("Cannot read ") + path + String(":\n") + error); return -1; }
+  std::shared_ptr<DatumFile> datumFile = readDatumFile(path, error);
+  if (!datumFile) { _gui.showMessage("Open", String("Cannot read ") + path + String(":\n") + error); return -1; }
   BrowserFile entry;
   entry.id   = _nextFileId++;
   entry.path = path;
-  entry.file = capFile;
+  entry.file = datumFile;
   _files.push_back(entry);
   target.showFile(entry.id);
   _configuration.directory = FileSystem::parent(path);
@@ -827,7 +832,7 @@ namespace CAP
   return entry.id;
   }
 
-  void CapApp::openFolder(const String & folder)
+  void DatumApp::openFolder(const String & folder)
   {
   String path = normalizedPath(folder);
   if (!FileSystem::isDirectory(path)) { _gui.showMessage("Open Folder", String("No such folder: ") + path); return; }
@@ -837,7 +842,7 @@ namespace CAP
   _gui.setStatus(String("Folder ") + path);
   }
 
-  void CapApp::closeFile(int id, FileBrowser * browser)
+  void DatumApp::closeFile(int id, FileBrowser * browser)
   {
   if (browser)
     {
@@ -857,7 +862,7 @@ namespace CAP
     }
   }
 
-  void CapApp::connectBrowser(FileBrowser & browser)
+  void DatumApp::connectBrowser(FileBrowser & browser)
   {
   FileBrowser * b = &browser;
   browser.setFiles(&_files);
@@ -877,7 +882,7 @@ namespace CAP
   browser.onRemove     = [this](int file, const String & path) { removeEntry(file, path); };
   browser.onSaveTree   = [this](int file) { saveTree(file, true); };
   browser.onDuplicate  = [this](int file, const String & path) { duplicateEntry(file, path); };
-#ifdef CAP_WITH_ROOT
+#ifdef DATUM_WITH_ROOT
   browser.onExportRoot = [this](int file, const String & path) { exportRoot(file, path); };
 #endif
   browser.onSaveCopy   = [this](int file, const String & path) { saveCopy(file, path); };
@@ -893,13 +898,13 @@ namespace CAP
   }
   } // namespace
 
-  int CapApp::newTree(FileBrowser & browser)
+  int DatumApp::newTree(FileBrowser & browser)
   {
   BrowserFile tree;
   tree.id       = _nextFileId++;
   tree.editable = true;
   tree.name     = String("Tree ") + String(std::to_string(++_treeCounter).c_str());
-  tree.file     = std::make_shared<CapFile>(String(""), File::kReadWrite);
+  tree.file     = std::make_shared<DatumFile>(String(""), File::kReadWrite);
   tree.file->setFolderName(tree.name);
   _files.push_back(tree);
   browser.showFile(tree.id);
@@ -909,7 +914,7 @@ namespace CAP
   return tree.id;
   }
 
-  bool CapApp::copyInto(const ObjectReference & source, bool folder, int target, const String & folderPath)
+  bool DatumApp::copyInto(const ObjectReference & source, bool folder, int target, const String & folderPath)
   {
   BrowserFile * from = file(source.file);
   BrowserFile * to   = file(target);
@@ -958,7 +963,7 @@ namespace CAP
     }
   }
 
-  void CapApp::newFolder(int target, const String & folderPath, const String & name)
+  void DatumApp::newFolder(int target, const String & folderPath, const String & name)
   {
   BrowserFile * tree = file(target);
   if (!tree || !tree->editable) return;
@@ -974,7 +979,7 @@ namespace CAP
   catch (const std::exception & e) { _gui.showMessage("New Folder", String(e.what())); }
   }
 
-  void CapApp::renameEntry(int target, const String & path, const String & name)
+  void DatumApp::renameEntry(int target, const String & path, const String & name)
   {
   BrowserFile * tree = file(target);
   if (!tree || !tree->editable) return;
@@ -994,7 +999,7 @@ namespace CAP
   catch (const std::exception & e) { _gui.showMessage("Rename", String(e.what())); }
   }
 
-  void CapApp::renameTree(int target, const String & name)
+  void DatumApp::renameTree(int target, const String & name)
   {
   BrowserFile * tree = file(target);
   if (!tree || !tree->editable || name.isNull()) return;
@@ -1004,7 +1009,7 @@ namespace CAP
   _gui.setStatus(String("Renamed to ") + name);
   }
 
-  void CapApp::removeEntry(int target, const String & path)
+  void DatumApp::removeEntry(int target, const String & path)
   {
   BrowserFile * tree = file(target);
   if (!tree || !tree->editable) return;
@@ -1016,7 +1021,7 @@ namespace CAP
   _gui.setStatus(String("Removed ") + path);
   }
 
-  void CapApp::saveTree(int target, bool ask, const std::function<void()> & after)
+  void DatumApp::saveTree(int target, bool ask, const std::function<void()> & after)
   {
   BrowserFile * tree = file(target);
   if (!tree || !tree->editable) return;
@@ -1025,13 +1030,13 @@ namespace CAP
     if (saveTreeTo(target, tree->path) && after) after();
     return;
     }
-  String name = tree->path.isEmpty() ? tree->name + String(".cap") : FileSystem::name(tree->path);
+  String name = tree->path.isEmpty() ? tree->name + String(DatumFile::extension()) : FileSystem::name(tree->path);
   String start = tree->path.isEmpty() ? _configuration.directory : FileSystem::parent(tree->path);
-  _gui.fileDialog().open(FileDialog::kSaveFile, String("Save the tree ") + tree->name, start, {".cap"}, name,
+  _gui.fileDialog().open(FileDialog::kSaveFile, String("Save the tree ") + tree->name, start, {DatumFile::extension(), DatumFile::formerExtension()}, name,
                          [this, target, after](const String & chosen) { if (saveTreeTo(target, chosen) && after) after(); });
   }
 
-  void CapApp::saveChangedTrees(const std::function<void()> & after)
+  void DatumApp::saveChangedTrees(const std::function<void()> & after)
   {
   for (const auto & f : _files)
     if (f.editable && f.modified)
@@ -1043,7 +1048,7 @@ namespace CAP
   if (after) after();
   }
 
-  bool CapApp::duplicateEntry(int target, const String & path)
+  bool DatumApp::duplicateEntry(int target, const String & path)
   {
   BrowserFile * tree = file(target);
   if (!tree || !tree->file) return false;
@@ -1078,7 +1083,7 @@ namespace CAP
     }
   }
 
-  BrowserFile * CapApp::selectedEntry(String & path, bool & folder)
+  BrowserFile * DatumApp::selectedEntry(String & path, bool & folder)
   {
   const FileBrowser & browser = _gui.activeBrowser();
   BrowserFile * entry = file(browser.selected().file);
@@ -1087,7 +1092,7 @@ namespace CAP
   return entry;
   }
 
-  bool CapApp::asksBeforeClosing(int id, const FileBrowser * browser) const
+  bool DatumApp::asksBeforeClosing(int id, const FileBrowser * browser) const
   {
   const BrowserFile * entry = nullptr;
   for (const auto & f : _files) if (f.id == id) entry = &f;
@@ -1098,7 +1103,7 @@ namespace CAP
   return true;
   }
 
-  void CapApp::closeFilesAsking(const std::vector<int> & ids, FileBrowser * browser, const std::function<void()> & after)
+  void DatumApp::closeFilesAsking(const std::vector<int> & ids, FileBrowser * browser, const std::function<void()> & after)
   {
   _treeClosing.ids     = ids;
   _treeClosing.browser = browser;
@@ -1106,7 +1111,7 @@ namespace CAP
   continueClosing();
   }
 
-  void CapApp::continueClosing()
+  void DatumApp::continueClosing()
   {
   while (!_treeClosing.ids.empty())
     {
@@ -1120,7 +1125,7 @@ namespace CAP
   if (after) after();
   }
 
-  void CapApp::renderTreeClosing()
+  void DatumApp::renderTreeClosing()
   {
   const char * title = "Save the tree?##treeClosing";
   if (_treeClosing.ask) { ImGui::OpenPopup(title); _treeClosing.ask = false; }
@@ -1161,7 +1166,7 @@ namespace CAP
   ImGui::EndPopup();
   }
 
-  void CapApp::requestCloseBrowser(FileBrowser & browser)
+  void DatumApp::requestCloseBrowser(FileBrowser & browser)
   {
   if (&browser == &_gui.browser()) { _gui.setBrowserVisible(false); return; }   // the first one: hidden
   std::vector<int> ids;
@@ -1170,7 +1175,7 @@ namespace CAP
   closeFilesAsking(ids, b, [this, b]() { _gui.closeBrowser(*b); });
   }
 
-  bool CapApp::confirmTreesBeforeExit()
+  bool DatumApp::confirmTreesBeforeExit()
   {
   std::vector<int> ids;
   for (const auto & f : _files) if (f.editable && f.modified) ids.push_back(f.id);
@@ -1179,8 +1184,8 @@ namespace CAP
   return false;
   }
 
-#ifdef CAP_WITH_ROOT
-  void CapApp::exportRoot(int target, const String & folderPath)
+#ifdef DATUM_WITH_ROOT
+  void DatumApp::exportRoot(int target, const String & folderPath)
   {
   BrowserFile * entry = file(target);
   if (!entry || !entry->file) return;
@@ -1207,24 +1212,24 @@ namespace CAP
     });
   }
 #else
-  void CapApp::exportRoot(int, const String &) { }
+  void DatumApp::exportRoot(int, const String &) { }
 #endif
 
-  void CapApp::saveCopy(int target, const String & folderPath)
+  void DatumApp::saveCopy(int target, const String & folderPath)
   {
   BrowserFile * entry = file(target);
   if (!entry || !entry->file) return;
   String base = folderPath.isEmpty() ? (entry->editable ? entry->name : FileSystem::stem(entry->path)) : FileSystem::name(folderPath);
-  _gui.fileDialog().open(FileDialog::kSaveFile, folderPath.isEmpty() ? "Save as a CAP file" : "Save the folder as a CAP file",
-                         _configuration.directory, {".cap"}, base + String(".cap"),
+  _gui.fileDialog().open(FileDialog::kSaveFile, folderPath.isEmpty() ? "Save as a Datum file" : "Save the folder as a Datum file",
+                         _configuration.directory, {DatumFile::extension(), DatumFile::formerExtension()}, base + String(DatumFile::extension()),
                          [this, target, folderPath](const String & chosen) { saveCopyTo(target, folderPath, chosen); });
   }
 
-  bool CapApp::saveCopyTo(int target, const String & folderPath, const String & fileName)
+  bool DatumApp::saveCopyTo(int target, const String & folderPath, const String & fileName)
   {
   BrowserFile * entry = file(target);
   if (!entry || !entry->file) return false;
-  String path = normalizedPath(FileSystem::hasExtension(fileName, ".cap") ? fileName : fileName + String(".cap"));
+  String path = normalizedPath(DatumFile::makeFileName("", fileName));
   for (const auto & f : _files)
     if (!f.editable && f.path == path)
       {
@@ -1237,7 +1242,7 @@ namespace CAP
     Folder * folder = folderPath.isEmpty() ? &top : top.folder(folderPath);
     if (!folder) { _gui.showMessage("Save", String("No folder ") + folderPath); return false; }
     folder->loadAll();                                   // objects of a file not read yet: read before the copy
-    CapFile output(path, File::kWriteOnly);
+    DatumFile output(path, File::kWriteOnly);
     output = *folder;
     output.setFolderName(FileSystem::stem(path));
     output.write();
@@ -1252,11 +1257,11 @@ namespace CAP
     }
   }
 
-  bool CapApp::saveTreeTo(int target, const String & fileName)
+  bool DatumApp::saveTreeTo(int target, const String & fileName)
   {
   BrowserFile * tree = file(target);
   if (!tree || !tree->editable) return false;
-  String path = normalizedPath(FileSystem::hasExtension(fileName, ".cap") ? fileName : fileName + String(".cap"));
+  String path = normalizedPath(DatumFile::makeFileName("", fileName));
   for (const auto & f : _files)
     if (!f.editable && f.path == path)
       {
@@ -1268,7 +1273,7 @@ namespace CAP
     {
     String previous = dataPath(*tree);
     Folder & content = *tree->file;
-    CapFile output(path, File::kWriteOnly);
+    DatumFile output(path, File::kWriteOnly);
     output = content;
     output.setFolderName(FileSystem::stem(path));
     output.write();
@@ -1288,15 +1293,15 @@ namespace CAP
     }
   }
 
-  void CapApp::reloadFile(int id)
+  void DatumApp::reloadFile(int id)
   {
   BrowserFile * entry = file(id);
   if (!entry) return;
   String error;
-  std::shared_ptr<CapFile> fresh = readCapFile(entry->path, error);
+  std::shared_ptr<DatumFile> fresh = readDatumFile(entry->path, error);
   if (!fresh) { _gui.showMessage("Reload", String("Cannot read ") + entry->path + String(":\n") + error); return; }
   // the graphs showing objects of the old version show the objects of the same path in the new one
-  std::shared_ptr<CapFile> old = entry->file;
+  std::shared_ptr<DatumFile> old = entry->file;
   std::vector<String> paths = old->paths();
   int updated = 0;
   for (int p=0; p<_gui.nPanes(); p++)
@@ -1333,7 +1338,7 @@ namespace CAP
   _gui.setStatus(String("Reloaded ") + entry->path + String(text));
   }
 
-  bool CapApp::showData(const ObjectReference & object)
+  bool DatumApp::showData(const ObjectReference & object)
   {
   BrowserFile * entry = file(object.file);
   if (!entry || !entry->file) { _gui.setStatus("That file is no longer open"); return false; }
@@ -1345,7 +1350,7 @@ namespace CAP
   return true;
   }
 
-  void CapApp::showDataTable(const MATH::DataPoints * data, const String & label)
+  void DatumApp::showDataTable(const MATH::DataPoints * data, const String & label)
   {
   if (!data) return;
   _gui.addDataPane().setData(data, label);
@@ -1354,7 +1359,7 @@ namespace CAP
   _gui.setStatus(String("Data table of ") + label + String(text));
   }
 
-  void CapApp::showResidualMap(const MATH::DataPoints * data, unsigned int k)
+  void DatumApp::showResidualMap(const MATH::DataPoints * data, unsigned int k)
   {
   if (!data || k >= data->nFits() || data->rank() != 2) return;
   const MATH::FitRecord & fit = data->fit(k);
@@ -1391,7 +1396,7 @@ namespace CAP
   _gui.setStatus(String("Pulls of ") + data->name() + String(" to ") + label + String(" (data - fit)/uncertainty"));
   }
 
-  void CapApp::showComparison(const MATH::DataPoints * first, const MATH::DataPoints * second, const String & firstLabel,
+  void DatumApp::showComparison(const MATH::DataPoints * first, const MATH::DataPoints * second, const String & firstLabel,
                               const String & secondLabel, int comparison)
   {
   const MATH::Histogram * a = dynamic_cast<const MATH::Histogram*>(first);
@@ -1464,7 +1469,7 @@ namespace CAP
                  + _comparison.chiSquare);
   }
 
-  void CapApp::computeComparison()
+  void DatumApp::computeComparison()
   {
   Comparison & c = _comparison;
   if (!c.first || !c.second) return;
@@ -1478,7 +1483,7 @@ namespace CAP
   catch (const std::exception & e) { c.kolmogorov = String("cannot be computed: ") + String(e.what()); }
   }
 
-  void CapApp::renderComparison()
+  void DatumApp::renderComparison()
   {
   Comparison & c = _comparison;
   if (!c.open) return;
@@ -1504,7 +1509,7 @@ namespace CAP
   ImGui::End();
   }
 
-  void CapApp::showProjections(const MATH::DataPoints * data)
+  void DatumApp::showProjections(const MATH::DataPoints * data)
   {
   const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram*>(data);
   if (!histogram || histogram->rank() != 2) { _gui.setStatus("Projections are made of histograms of rank 2"); return; }
@@ -1532,13 +1537,13 @@ namespace CAP
   _gui.setStatus(String("Projections of ") + histogram->name() + String(" with its fits projected"));
   }
 
-  bool CapApp::showObject(const ObjectReference & object)
+  bool DatumApp::showObject(const ObjectReference & object)
   {
   CanvasPane & pane = _gui.currentPane();
   return showObject(pane, pane.selectedGraph(), object);
   }
 
-  bool CapApp::showObject(CanvasPane & pane, int graphIndex, const ObjectReference & object)
+  bool DatumApp::showObject(CanvasPane & pane, int graphIndex, const ObjectReference & object)
   {
   BrowserFile * entry = file(object.file);
   if (!entry || !entry->file) { _gui.setStatus("That file is no longer open"); return false; }
@@ -1567,7 +1572,7 @@ namespace CAP
   return true;
   }
 
-  void CapApp::showFolder(int fileId, const String & folderPath)
+  void DatumApp::showFolder(int fileId, const String & folderPath)
   {
   BrowserFile * entry = file(fileId);
   if (!entry || !entry->file) return;
@@ -1608,13 +1613,13 @@ namespace CAP
   pane.setSelectedGraph(0);
   }
 
-  int CapApp::paneIndex(const CanvasPane & pane)
+  int DatumApp::paneIndex(const CanvasPane & pane)
   {
   for (int k=0; k<_gui.nPanes(); k++) if (&_gui.pane(k) == &pane) return k;
   return -1;
   }
 
-  void CapApp::saveAs(int pane, int graph)
+  void DatumApp::saveAs(int pane, int graph)
   {
   if (pane >= _gui.nPanes()) return;
   // default name: the last file of the window, the title of the canvas, or of the graph
@@ -1643,7 +1648,7 @@ namespace CAP
                          [this, pane, graph](const String & path) { save(path, pane, graph); });
   }
 
-  void CapApp::save(const String & fileName, int pane, int graph)
+  void DatumApp::save(const String & fileName, int pane, int graph)
   {
   String name = fileName;
   if (!name.endsWith(".svg") && !name.endsWith(".pdf")) name += _saveFormat;
@@ -1659,10 +1664,10 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ undo
 
-  CapApp::Snapshot CapApp::snapshot() const
+  DatumApp::Snapshot DatumApp::snapshot() const
   {
   Snapshot s;
-  CapGui & gui = const_cast<CapGui&>(_gui);
+  DatumGui & gui = const_cast<DatumGui&>(_gui);
   s.columns = gui.nColumns();
   s.rows    = gui.nRows();
   s.current = gui.currentPaneIndex();
@@ -1674,7 +1679,7 @@ namespace CAP
   return s;
   }
 
-  void CapApp::restore(const Snapshot & s)
+  void DatumApp::restore(const Snapshot & s)
   {
   if (_gui.nPanes() != int(s.canvases.size())) _gui.setPaneCount(int(s.canvases.size()));
   for (int k=0; k<_gui.nPanes() && k<int(s.canvases.size()); k++)
@@ -1685,14 +1690,14 @@ namespace CAP
   _gui.setCurrentPane(s.current);
   }
 
-  void CapApp::recordUndo()
+  void DatumApp::recordUndo()
   {
   _undo.push_back(snapshot());
   if (_undo.size() > 50) _undo.pop_front();
   _redo.clear();
   }
 
-  void CapApp::undo()
+  void DatumApp::undo()
   {
   if (_undo.empty()) return;
   _redo.push_back(snapshot());
@@ -1700,7 +1705,7 @@ namespace CAP
   _undo.pop_back();
   }
 
-  void CapApp::redo()
+  void DatumApp::redo()
   {
   if (_redo.empty()) return;
   _undo.push_back(snapshot());
@@ -1710,7 +1715,7 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ demo
 
-  void CapApp::createDemo()
+  void DatumApp::createDemo()
   {
   // a Gaussian and pseudo-data scattered around it, with statistical (bars) and systematic (boxes) uncertainties
   MATH::Normal * gaussian = new MATH::Normal(1.0, 0.0, 1.0);
@@ -1762,7 +1767,7 @@ namespace CAP
 
   // ------------------------------------------------------------------------------------------------ windows
 
-  void CapApp::renderWindows()
+  void DatumApp::renderWindows()
   {
   renderPreferences();
   renderAbout();
@@ -1775,7 +1780,7 @@ namespace CAP
   if (_showImGuiDemo) ImGui::ShowDemoWindow(&_showImGuiDemo);
   }
 
-  String CapApp::applyLatex()
+  String DatumApp::applyLatex()
   {
   GRAPHICS::LatexRenderer & latex = GRAPHICS::LatexRenderer::instance();
   latex.setEnabled(_configuration.latex);
@@ -1795,7 +1800,7 @@ namespace CAP
   return problem;
   }
 
-  void CapApp::renderPreferences()
+  void DatumApp::renderPreferences()
   {
   if (!_showPreferences) return;
   ImGui::SetNextWindowSize(ImVec2(470, 0), ImGuiCond_FirstUseEver);
@@ -1914,7 +1919,7 @@ namespace CAP
 
   ImGui::Separator();
   String target = _configurationFile;
-  if (target.isNull() && !FileSystem::home().isNull()) target = FileSystem::join(FileSystem::home(), ".CapGui.xml");
+  if (target.isNull() && !FileSystem::home().isNull()) target = FileSystem::join(FileSystem::home(), ".DatumGui.xml");
   if (ImGui::Button("Save configuration"))
     {
     c.gui.columns = _gui.nColumns(); c.gui.rows = _gui.nRows();
@@ -1926,7 +1931,7 @@ namespace CAP
   ImGui::End();
   }
 
-  void CapApp::renderAbout()
+  void DatumApp::renderAbout()
   {
   if (!_showAbout) return;
   ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -1934,14 +1939,14 @@ namespace CAP
     {
     ImGui::Text("Datum graphical interface");
     ImGui::Separator();
-    ImGui::Text("Display of functions and data points; CAP files and folders.");
+    ImGui::Text("Display of functions and data points; Datum files and folders.");
     ImGui::Text("Built on Dear ImGui %s and GLFW; no ROOT classes.", IMGUI_VERSION);
     ImGui::Text("Configuration: %s", _configurationFile.isNull() ? "(defaults)" : _configurationFile.data());
     }
   ImGui::End();
   }
 
-  void CapApp::renderShortcuts()
+  void DatumApp::renderShortcuts()
   {
   if (!_showShortcuts) return;
   if (ImGui::Begin("Keyboard Shortcuts", &_showShortcuts, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
@@ -1989,7 +1994,7 @@ namespace CAP
   ImGui::End();
   }
 
-  void CapApp::renderCustomLayout()
+  void DatumApp::renderCustomLayout()
   {
   if (_customLayoutRequested) { ImGui::OpenPopup("Canvases##custom"); _customLayoutRequested = false; }
   if (_customGraphsRequested) { ImGui::OpenPopup("Graphs##custom");   _customGraphsRequested = false; }
@@ -2014,7 +2019,7 @@ namespace CAP
     }
   }
 
-  void CapApp::renderRenameCanvas()
+  void DatumApp::renderRenameCanvas()
   {
   if (_renameRequested) { ImGui::OpenPopup("Rename Canvas##rename"); _renameRequested = false; }
   if (!ImGui::BeginPopupModal("Rename Canvas##rename", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
@@ -2034,9 +2039,9 @@ namespace CAP
   ImGui::EndPopup();
   }
 
-  void CapApp::renderPresentation()
+  void DatumApp::renderPresentation()
   {
-#ifdef CAP_GUI_PRESENTATIONS
+#ifdef DATUM_GUI_PRESENTATIONS
   if (_presentation.requested) { ImGui::OpenPopup("Presentation##dialog"); _presentation.requested = false; }
   if (!ImGui::BeginPopupModal("Presentation##dialog", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
   PresentationSettings & p = _presentation;
@@ -2062,9 +2067,9 @@ namespace CAP
 #endif
   }
 
-  void CapApp::makePresentation(const String & texFile)
+  void DatumApp::makePresentation(const String & texFile)
   {
-#ifdef CAP_GUI_PRESENTATIONS
+#ifdef DATUM_GUI_PRESENTATIONS
   const PresentationSettings & p = _presentation;
   CanvasPresentation presentation(String(p.title.c_str()));
   if (!p.author.empty()) presentation.setAuthor(String(p.author.c_str()), "", String(p.affiliation.c_str()));
@@ -2090,13 +2095,13 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
-  void CapApp::connectMapsDialog()
+  void DatumApp::connectMapsDialog()
   {
   DetectorMapsDialog & maps = _gui.mapsDialog();
   maps.fileDialog = &_gui.fileDialog();
@@ -2130,4 +2135,4 @@ namespace CAP
   if (!_mapsFile.isNull()) _gui.openMapsDialog(_mapsFile);
   }
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

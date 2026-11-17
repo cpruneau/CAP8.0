@@ -1,8 +1,8 @@
-#ifndef CAP__FillAttributes
-#define CAP__FillAttributes
+#ifndef DATUM__FillAttributes
+#define DATUM__FillAttributes
 #include "Attributes.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -45,6 +45,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__FillAttributes
+#endif // !DATUM__FillAttributes

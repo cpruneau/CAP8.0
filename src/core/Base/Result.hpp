@@ -8,8 +8,8 @@
  *
  * *********************************************************************/
 
-#ifndef CAP__Result
-#define CAP__Result
+#ifndef DATUM__Result
+#define DATUM__Result
 
 #include <vector>
 #include "String.hpp"
@@ -19,7 +19,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -238,6 +238,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__Result */
+#endif /* DATUM__Result */

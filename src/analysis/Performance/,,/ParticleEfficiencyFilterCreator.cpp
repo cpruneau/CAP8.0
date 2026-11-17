@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ParticleEfficiencyFilterCreator::ParticleEfficiencyFilterCreator()
@@ -248,4 +248,4 @@ ParticleEfficiencyFilter * ParticleEfficiencyFilterCreator::createFilter(const S
   return filter;
 }
 
-} // namespace CAP
+} // namespace Datum

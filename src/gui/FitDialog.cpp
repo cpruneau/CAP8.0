@@ -32,7 +32,7 @@
 #include "Polynomial2D.hpp"
 #include <map>
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -659,7 +659,7 @@ namespace CAP
     }
   const bool histogram = item.kind() == GraphItem::kData && dynamic_cast<const MATH::Histogram*>(item.data());
 
-  // the function: those of CAP and of programs, then the composites
+  // the function: those of Datum and of programs, then the composites
   std::vector<String> names = MATH::FunctionRegistry::names(), composites = MATH::FunctionRegistry::compositeNames();
   const MATH::ParameterizedComposite * session = sessionComposite(_functionName);
   if (session ? session->rank() != _rank : (!MATH::FunctionRegistry::isRegistered(_functionName) || rankOf(_functionName) != _rank))
@@ -864,4 +864,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

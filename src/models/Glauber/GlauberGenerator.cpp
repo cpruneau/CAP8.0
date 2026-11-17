@@ -17,11 +17,11 @@
 
 
 
-namespace CAP
+namespace Datum
 {
 
-  using CAP::MATH::pi;
-  using CAP::MATH::twoPi;
+  using Datum::MATH::pi;
+  using Datum::MATH::twoPi;
 
   //TF1 *getNNProf(Double_t snn=67.6, Double_t omega=0.4, Double_t G=1);
 //  Double_t      fXSectOmega;     //StdDev of Nucleon-nucleon cross section
@@ -157,7 +157,7 @@ namespace CAP
   _configuration.addProperty(createKey(taskName,"DB_0:NAME"),"DefaultDb");
   _configuration.addProperty(createKey(taskName,"DB_0:TITLE"),"DefaultDb");
   _configuration.addProperty(createKey(taskName,"DB_0:OWNER"),true);
-  _configuration.addProperty(createKey(taskName,"DB_0:FILE"),"Glauber/NucleusDb.xml");   // nuclei (in $CAP_DATABASE_PATH)
+  _configuration.addProperty(createKey(taskName,"DB_0:FILE"),"Glauber/NucleusDb.xml");   // nuclei (in $DATUM_DATABASE_PATH)
 
   objectType = "GENERATION";
   _configuration.addProperty(createKey(taskName,objectType,"NUCLEUS_A:NAME"),          "Pb");
@@ -359,7 +359,7 @@ namespace CAP
   GlauberEvent & ev = event();
   GlauberNucleus & nucleusA = ev.nucleusA();
   GlauberNucleus & nucleusB = ev.nucleusB();
-  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  Datum::MATH::RandomGenerator & generator = Datum::MATH::randomGenerator();
   ev.reset();
   nucleusA.positionNucleons();
   nucleusB.positionNucleons();
@@ -498,4 +498,4 @@ namespace CAP
   }
 
 
-} // namespace CAP
+} // namespace Datum

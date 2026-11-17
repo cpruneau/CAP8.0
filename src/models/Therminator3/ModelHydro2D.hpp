@@ -1,8 +1,8 @@
-#ifndef CAP__ModelHydro2D
-#define CAP__ModelHydro2D
+#ifndef DATUM__ModelHydro2D
+#define DATUM__ModelHydro2D
 #include "Model.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   class ModelHydro2D
@@ -15,7 +15,7 @@ namespace CAP
   virtual Model * clone() const { return new ModelHydro2D(*this); }
   virtual double calculateIntegrand(ThermalHadron & hadron);
   //! @brief Model::configure(), then the hypersurface from the XML file HYPERS:IMPORT:PATH/HYPERS:IMPORT:FILE_NAME
-  //! (a Therminator 2 hypersurface file; the path is "DEFAULT", absolute, "./..." or relative to $CAP_HYPERSURFACE_PATH).
+  //! (a Therminator 2 hypersurface file; the path is "DEFAULT", absolute, "./..." or relative to $DATUM_HYPERSURFACE_PATH).
   virtual void configure(const String & taskName,
                          const String & objectType,
                          const Configuration & configuration);
@@ -31,7 +31,7 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif
 

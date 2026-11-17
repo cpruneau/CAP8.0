@@ -1,12 +1,12 @@
-#ifndef CAP_MathConstants
-#define CAP_MathConstants
+#ifndef DATUM_MathConstants
+#define DATUM_MathConstants
 #include <cmath>
 
 //!
 //! Compendium of basic mathematical constants
 //!
 //!
-namespace CAP
+namespace Datum
 {
 
   namespace MATH
@@ -180,6 +180,6 @@ namespace CAP
 
 
   } // Math namespace
-} // CAP namespace
+} // Datum namespace
 
 #endif

@@ -6,8 +6,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Timer
-#define CAP__Timer
+#ifndef DATUM__Timer
+#define DATUM__Timer
 #include <wchar.h>
 #include <iostream>
 #include <chrono>
@@ -15,7 +15,7 @@
 using namespace std;
 using namespace std::chrono;
 
-namespace CAP
+namespace Datum
 {
 //!
 //! @brief Wall-clock timer measuring total and lap durations.
@@ -26,7 +26,7 @@ namespace CAP
 //!
 //! Example:
 //! @code
-//!   CAP::Timer timer;   // started
+//!   Datum::Timer timer;   // started
 //!   // ... work ...
 //!   timer.stop();
 //!   timer.print();      // total and interval durations
@@ -72,4 +72,4 @@ public:
 
 
 
-#endif /* CAP__Timer */
+#endif /* DATUM__Timer */

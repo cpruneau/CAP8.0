@@ -8,27 +8,27 @@
  *
  * *********************************************************************/
 //! @file Builtins.cpp
-//! @brief Built-in functions of the CAP command language: output, mathematics, lists, classes, CAP files, figures.
+//! @brief Built-in functions of the Datum command language: output, mathematics, lists, classes, Datum files, figures.
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <sstream>
 #include "Interpreter.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "FileSystem.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
-#ifdef CAP_INTERPRETER_GRAPHICS
+#ifdef DATUM_INTERPRETER_GRAPHICS
 #include "Canvas.hpp"
 #include "CanvasRegistry.hpp"
 #include "PdfPainter.hpp"
 #include "SvgPainter.hpp"
 #endif
-#ifdef CAP_INTERPRETER_LATEX
+#ifdef DATUM_INTERPRETER_LATEX
 #include "CanvasPresentation.hpp"
 #endif
 
-namespace CAP
+namespace Datum
 {
   namespace INTERPRETER
   {
@@ -199,23 +199,23 @@ namespace CAP
   interpreter.addBuiltin("pow", "pow(x, y)", "x to the power y.",
     [](Interpreter &, const std::vector<Value> & a, int line) { count("pow", a, 2, 2, line); return Value(std::pow(a[0].toReal(), a[1].toReal())); });
 
-  // ---- CAP files
-  interpreter.addBuiltin("ls", "ls(file)", "Paths of the objects of a CAP file.",
+  // ---- Datum files
+  interpreter.addBuiltin("ls", "ls(file)", "Paths of the objects of a Datum file.",
     [](Interpreter &, const std::vector<Value> & a, int line)
     {
     count("ls", a, 1, 1, line);
-    CapFile file(FileSystem::expand(a[0].toText()), File::kReadOnly);
+    DatumFile file(FileSystem::expand(a[0].toText()), File::kReadOnly);
     file.load(File::Loading::kLazy);
     std::vector<Value> paths;
     for (const auto & p : file.folder().paths()) paths.push_back(Value(p.str()));
     return Value(paths);
     });
-  interpreter.addBuiltin("read", "read(file, path)", "Object of a CAP file (see ls()), e.g. h = read(\"run.cap\", \"singles/pt\").",
+  interpreter.addBuiltin("read", "read(file, path)", "Object of a Datum file (see ls()), e.g. h = read(\"run.datum\", \"singles/pt\").",
     [](Interpreter &, const std::vector<Value> & a, int line)
     {
     count("read", a, 2, 2, line);
     String path = FileSystem::expand(a[0].toText());
-    CapFile file(path, File::kReadOnly);
+    DatumFile file(path, File::kReadOnly);
     file.read();
     Object * object = file.folder().release<Object>(String(a[1].toText()));
     if (!object)
@@ -226,11 +226,11 @@ namespace CAP
       }
     return owned<Object>(object);
     });
-  interpreter.addBuiltin("write", "write(file, a, b, ...)", "Write histograms and profiles to a new CAP file, under their names.",
+  interpreter.addBuiltin("write", "write(file, a, b, ...)", "Write histograms and profiles to a new Datum file, under their names.",
     [](Interpreter &, const std::vector<Value> & a, int line)
     {
     if (a.size() < 2) throw InterpreterException("write takes a file and objects", line);
-    CapFile file(FileSystem::expand(a[0].toText()), File::kWriteOnly);
+    DatumFile file(FileSystem::expand(a[0].toText()), File::kWriteOnly);
     for (std::size_t k=1; k<a.size(); k++)
       {
       if (MATH::Profile * p = as<MATH::Profile>(a[k])) file.add(new MATH::Profile(*p), p->name());
@@ -241,7 +241,7 @@ namespace CAP
     return Value();
     });
 
-#ifdef CAP_INTERPRETER_GRAPHICS
+#ifdef DATUM_INTERPRETER_GRAPHICS
   // ---- figures
   interpreter.addBuiltin("save", "save(file, a, b, ...)",
     "Draw histograms and data points in one graph, and write it to an SVG or PDF file (by the extension), 800 x 600 points.",
@@ -330,7 +330,7 @@ namespace CAP
     return Value();
     });
 #endif
-#ifdef CAP_INTERPRETER_LATEX
+#ifdef DATUM_INTERPRETER_LATEX
   interpreter.addBuiltin("presentation", "presentation(file.tex, title, perGraph, compile)",
     "A Beamer presentation of the canvases of the session, a frame per canvas (or per graph), compiled with pdflatex (default).",
     [](Interpreter &, const std::vector<Value> & a, int line)
@@ -350,4 +350,4 @@ namespace CAP
   }
 
   } // namespace INTERPRETER
-} // namespace CAP
+} // namespace Datum

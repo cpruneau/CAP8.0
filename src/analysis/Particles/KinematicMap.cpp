@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -195,4 +195,4 @@ namespace CAP
   return result;
   }
 
-} // namespace CAP
+} // namespace Datum

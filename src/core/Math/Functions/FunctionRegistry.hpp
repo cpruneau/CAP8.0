@@ -9,15 +9,15 @@
  * *********************************************************************/
 //! @file FunctionRegistry.hpp
 //! @brief FunctionRegistry: the classes of ParameterizedFunction that can be recreated by name (e.g. to read fits).
-#ifndef CAP__MATH__FunctionRegistry
-#define CAP__MATH__FunctionRegistry
+#ifndef DATUM__MATH__FunctionRegistry
+#define DATUM__MATH__FunctionRegistry
 #include <functional>
 #include <memory>
 #include <typeinfo>
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -29,13 +29,13 @@ namespace CAP
   //! @brief Registry of the classes of ParameterizedFunction, by name: a function stored in a file (the function of a
   //! FitRecord, see FitList::encodeBinary()) is written with the name of its class and recreated by it when read.
   //!
-  //! The functions of CAP are registered under their class names, without namespaces: Constant, Linear, Parabolic,
+  //! The functions of Datum are registered under their class names, without namespaces: Constant, Linear, Parabolic,
   //! Cubic, Quartic, Polynomial, Normal, LogNormal, Exponential; the series of orthogonal polynomials LegendreSeries,
   //! ChebyshevSeries, HermiteSeries, LaguerreSeries (see OrthogonalSeries); and the Bessel functions BesselJ, BesselY,
   //! BesselI, BesselK (see BesselFunction); BezierCurve (made with 2n parameters: n knots); and, of two variables, Normal2D and Polynomial2D. A class of a user is
   //! registered once, before its fits are written or read:
   //! @code
-  //!   CAP::MATH::FunctionRegistry::registerType<MyFunction>("MyFunction");
+  //!   Datum::MATH::FunctionRegistry::registerType<MyFunction>("MyFunction");
   //! @endcode
   //! The factory makes a function with a given number of parameters (whose values, bounds and names are then set from
   //! the file); the default one, for registerType<T>(name), uses the default constructor of T.
@@ -43,14 +43,14 @@ namespace CAP
   //! Composites (ParameterizedComposite: sums of registered functions, e.g. a signal over a background, or products
   //! such as f(x) g(y)) are registered
   //! by name with registerComposite(); their definitions can be written to a file and read back (writeComposites(),
-  //! readComposites()). CapGui reads defaultCompositesFile() when it starts and writes the composites made in its Fit
-  //! window there, so the composites a program saves to that file are offered by CapGui, and the other way around.
+  //! readComposites()). DatumGui reads defaultCompositesFile() when it starts and writes the composites made in its Fit
+  //! window there, so the composites a program saves to that file are offered by DatumGui, and the other way around.
   //! @code
-  //!   CAP::MATH::ParameterizedComposite model;
-  //!   model.add("signal", CAP::MATH::Normal(100.0, 0.0, 1.0));
-  //!   model.add("background", CAP::MATH::Linear(10.0, 0.0));
-  //!   CAP::MATH::FunctionRegistry::registerComposite("Gauss+Linear", model);
-  //!   CAP::MATH::FunctionRegistry::writeComposites(CAP::MATH::FunctionRegistry::defaultCompositesFile());
+  //!   Datum::MATH::ParameterizedComposite model;
+  //!   model.add("signal", Datum::MATH::Normal(100.0, 0.0, 1.0));
+  //!   model.add("background", Datum::MATH::Linear(10.0, 0.0));
+  //!   Datum::MATH::FunctionRegistry::registerComposite("Gauss+Linear", model);
+  //!   Datum::MATH::FunctionRegistry::writeComposites(Datum::MATH::FunctionRegistry::defaultCompositesFile());
   //! @endcode
   //!
   class FunctionRegistry
@@ -101,11 +101,11 @@ namespace CAP
   static std::vector<String> names();
   //!
   //! @brief Write the catalog of the registered functions and composites to an XML file, for programs choosing a
-  //! function by name (RunCAP): for each function, its name, rank, whether it is a composite, and its variants, one per
+  //! function by name (RunDatum): for each function, its name, rank, whether it is a composite, and its variants, one per
   //! number of parameters it can be made with (create(name, n), n up to maxParameters; the default one of create(name)
   //! is marked), each with the names, starting values, types and bounds of its parameters.
   //! @code
-  //!   <CAP type="function-catalog" version="1">
+  //!   <Datum type="function-catalog" version="1">
   //!     <FUNCTION name="Polynomial" rank="1" composite="false">
   //!       <VARIANT nParameters="3" default="true">
   //!         <PARAMETER name="a0" value="0" type="Free" minimum="..." maximum="..."/> ...
@@ -145,12 +145,12 @@ namespace CAP
   //! @return number of composites registered, or -1 if the file cannot be read
   //!
   static int readComposites(const String & fileName, String * problems=nullptr);
-  //! @brief File of the composites shared by programs and CapGui: $HOME/.CapFunctions.xml. @return path
+  //! @brief File of the composites shared by programs and DatumGui: $HOME/.DatumFunctions.xml. @return path
   static String defaultCompositesFile();
   //! @}
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__FunctionRegistry
+#endif // !DATUM__MATH__FunctionRegistry

@@ -12,7 +12,7 @@
 #include <fstream>
 #include <functional>
 #include "PlotOutputs.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "DataPoints.hpp"
 #include "FileSystem.hpp"
 #include "LatexRenderer.hpp"
@@ -20,13 +20,13 @@
 #include "PdfPainter.hpp"
 #include "PptxPainter.hpp"
 #include "XmlDocument.hpp"
-#ifdef CAP_GUI_PRESENTATIONS
+#ifdef DATUM_GUI_PRESENTATIONS
 #include "CanvasPresentation.hpp"
 #include "LatexAuthor.hpp"
 #include "LatexDocument.hpp"
 #endif
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -36,7 +36,7 @@ namespace CAP
 
   namespace
   {
-#ifdef CAP_GUI_PRESENTATIONS
+#ifdef DATUM_GUI_PRESENTATIONS
   //! A LaTeX article (the document classes of the Latex folder write Beamer presentations): its header, then the
   //! elements added (sections and figures, as texts), then its trailer.
   class LatexArticle : public LatexDocument
@@ -133,7 +133,7 @@ namespace CAP
   String PlotOutputs::latex(const PlotSpec & spec, const std::vector<PlotSpec::WindowState> & windows, String & error,
                             const String & fileName)
   {
-#ifdef CAP_GUI_PRESENTATIONS
+#ifdef DATUM_GUI_PRESENTATIONS
   const PlotSpec::OutputSpec & o = spec.output();
   String path = outputFile(spec, fileName, o.latex, ".tex");
   String directory = FileSystem::parent(path), stem = FileSystem::stem(path);
@@ -195,4 +195,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

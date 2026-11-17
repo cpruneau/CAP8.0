@@ -7,8 +7,8 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP_MATH_DataPoint
-#define CAP_MATH_DataPoint
+#ifndef DATUM_MATH_DataPoint
+#define DATUM_MATH_DataPoint
 #include <cmath>
 #include <iostream>
 #include <ostream>
@@ -16,7 +16,7 @@
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -219,6 +219,6 @@ namespace CAP
   //! @}
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

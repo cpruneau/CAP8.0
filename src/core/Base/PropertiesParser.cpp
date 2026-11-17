@@ -12,7 +12,7 @@
 #include "StreamHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 PropertiesParser::PropertiesParser()

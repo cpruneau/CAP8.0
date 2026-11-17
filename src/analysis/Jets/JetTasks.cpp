@@ -15,13 +15,13 @@
 #include "JetGroomingAnalyzer.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(JetTasks)
+DATUM_REFLECTION(JetTasks)
 {
-  CAP::registerTask<CAP::JetAnalyzer>("CAP::JetAnalyzer");
-  CAP::registerTask<CAP::JetSettingsCreator>("CAP::JetSettingsCreator");
-  CAP::registerTask<CAP::JetFilterCreator>("CAP::JetFilterCreator");
-  CAP::registerTask<CAP::JetPairAnalyzer>("CAP::JetPairAnalyzer");
-  CAP::registerTask<CAP::JetPairFilterCreator>("CAP::JetPairFilterCreator");
-  CAP::registerTask<CAP::JetGroomerCreator>("CAP::JetGroomerCreator");
-  CAP::registerTask<CAP::JetGroomingAnalyzer>("CAP::JetGroomingAnalyzer");
+  Datum::registerTask<Datum::JetAnalyzer>("Datum::JetAnalyzer");
+  Datum::registerTask<Datum::JetSettingsCreator>("Datum::JetSettingsCreator");
+  Datum::registerTask<Datum::JetFilterCreator>("Datum::JetFilterCreator");
+  Datum::registerTask<Datum::JetPairAnalyzer>("Datum::JetPairAnalyzer");
+  Datum::registerTask<Datum::JetPairFilterCreator>("Datum::JetPairFilterCreator");
+  Datum::registerTask<Datum::JetGroomerCreator>("Datum::JetGroomerCreator");
+  Datum::registerTask<Datum::JetGroomingAnalyzer>("Datum::JetGroomingAnalyzer");
 }

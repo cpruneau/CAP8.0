@@ -16,7 +16,7 @@
 #include "Task.hpp"
 #include <cmath>
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -116,7 +116,7 @@ namespace CAP
   configuration.addProperty(createKey(taskName,type,"dpt_max"),       1.0);
   configuration.addProperty(createKey(taskName,type,"phi_nbins"),     36);
   configuration.addProperty(createKey(taskName,type,"phi_min"),       0.0);
-  configuration.addProperty(createKey(taskName,type,"phi_max"),       CAP::MATH::twoPi());
+  configuration.addProperty(createKey(taskName,type,"phi_max"),       Datum::MATH::twoPi());
   configuration.addProperty(createKey(taskName,type,"Dphi_nbins"),    100);
   configuration.addProperty(createKey(taskName,type,"Dphi_min"),      -1.0);
   configuration.addProperty(createKey(taskName,type,"Dphi_max"),      1.0);
@@ -524,4 +524,4 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum

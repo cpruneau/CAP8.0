@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <string>
 
-namespace CAP
+namespace Datum
 {
 
   ParticleEfficiency::ParticleEfficiency(double efficiency)
@@ -94,4 +94,4 @@ namespace CAP
   return random.random()<e;           // r in [0, 1): always accepted for e = 1, never for e = 0
   }
 
-} // namespace CAP
+} // namespace Datum

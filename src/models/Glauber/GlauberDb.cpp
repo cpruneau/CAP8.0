@@ -18,9 +18,9 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-using CAP::MATH::power;
+using Datum::MATH::power;
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -53,7 +53,7 @@ namespace CAP
   }
 
   //!
-  //! The nuclei delivered with CAP (DB/Glauber/NucleusDb.xml): name, A, Z, radialType, radius, skin, w, neutron
+  //! The nuclei delivered with Datum (DB/Glauber/NucleusDb.xml): name, A, Z, radialType, radius, skin, w, neutron
   //! parameters (flag, radius, skin, w), beta2, beta4, r0, r1, r2, comment.
   //! Uranium (U): Heinz and Kuhlman, nucl-th/0411054, with radius = 6.8 x 0.91 and w = 6.8 x 0.26.
   //!
@@ -177,7 +177,7 @@ namespace CAP
 
   XmlDocument GlauberDb::toXml() const
   {
-  XmlDocument document("CAP");
+  XmlDocument document("Datum");
   XmlElement & root = document.root();
   root.setAttribute("version", 1);
   root.setAttribute("type", "glauberNucleusDb");
@@ -210,12 +210,12 @@ namespace CAP
   {
   if (_loaded) return;
   if (_fileName.isEmpty() || _fileName == "NONE") { useBuiltIn(); return; }
-  String path = FileSystem::configuredPath(_fileName, "CAP_DATABASE_PATH");
+  String path = FileSystem::configuredPath(_fileName, "DATUM_DATABASE_PATH");
   if (!path.isEmpty() && !path.endsWith(".xml") && !FileSystem::isFile(path)) path += ".xml";
   if (path.isEmpty() || !FileSystem::isFile(path))
     {
     if (reportWarning(__FUNCTION__))
-      std::cout << "Nucleus database " << _fileName << " not found (is CAP_DATABASE_PATH set?): built-in table used" << std::endl;
+      std::cout << "Nucleus database " << _fileName << " not found (is DATUM_DATABASE_PATH set?): built-in table used" << std::endl;
     useBuiltIn();
     return;
     }
@@ -260,4 +260,4 @@ namespace CAP
   nucleusType.setWNeutron(     n->neutron ? n->neutronW      : n->w);
   }
 
-}  // namespace CAP
+}  // namespace Datum

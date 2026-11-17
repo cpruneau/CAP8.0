@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__BaseDerivedHistos
-#define CAP__BaseDerivedHistos
+#ifndef DATUM__BaseDerivedHistos
+#define DATUM__BaseDerivedHistos
 #include "BaseHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -39,6 +39,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__BaseDerivedHistos  */
+#endif /* DATUM__BaseDerivedHistos  */

@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file Normal2D.hpp
 //! @brief Normal2D: Gaussian of two variables, with a correlation, for fits.
-#ifndef CAP__MATH__Normal2D
-#define CAP__MATH__Normal2D
+#ifndef DATUM__MATH__Normal2D
+#define DATUM__MATH__Normal2D
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -28,7 +28,7 @@ namespace CAP
   //! when rho = 0 (product of error functions), numerically otherwise.
   //!
   //! @code
-  //!   CAP::MATH::Normal2D f(100.0, 0.0, 1.0, 0.5, 2.0, 0.3);
+  //!   Datum::MATH::Normal2D f(100.0, 0.0, 1.0, 0.5, 2.0, 0.3);
   //!   double peak = f.evaluateAt(0.0, 1.0);   // 100
   //! @endcode
   //!
@@ -57,6 +57,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__Normal2D
+#endif // !DATUM__MATH__Normal2D

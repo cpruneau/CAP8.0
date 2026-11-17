@@ -16,11 +16,11 @@
 #include <cmath>
 #include "Distributions.hpp"
 using namespace std;
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
-using CAP::MATH::sqrtTwoPi;
+using Datum::MATH::pi;
+using Datum::MATH::twoPi;
+using Datum::MATH::sqrtTwoPi;
 
-namespace CAP
+namespace Datum
 {
 
   NNProfile::NNProfile()
@@ -76,7 +76,7 @@ namespace CAP
   // otherwise the gamma profile of Rybczynski et al. (TGlauberMC getNNProf, arXiv:1307.0636): G (1 - P(1/omega,
   // G b^2/(omega R^2))), P the regularized lower incomplete gamma function; omega = 1 gives G exp(-G b^2/R^2). Its
   // integral over the plane is pi R^2 = sigma for any omega.
-  return _g*(1-CAP::MATH::Distributions::regularizedGammaP(_omegaInv,_gOverOmegaR2*x*x));
+  return _g*(1-Datum::MATH::Distributions::regularizedGammaP(_omegaInv,_gOverOmegaR2*x*x));
   }
 
   //!
@@ -113,7 +113,7 @@ namespace CAP
     }
   }
 
-}  // namespace CAP
+}  // namespace Datum
 
 
 

@@ -17,7 +17,7 @@
 //#include "Task.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   ParticleDb::ParticleDb()
@@ -886,4 +886,4 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum

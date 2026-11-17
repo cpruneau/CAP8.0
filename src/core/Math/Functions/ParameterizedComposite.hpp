@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file ParameterizedComposite.hpp
 //! @brief ParameterizedComposite: sum of parameterized functions with all their parameters, for fits.
-#ifndef CAP__MATH__ParameterizedComposite
-#define CAP__MATH__ParameterizedComposite
+#ifndef DATUM__MATH__ParameterizedComposite
+#define DATUM__MATH__ParameterizedComposite
 #include <memory>
 #include <vector>
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -36,14 +36,14 @@ namespace CAP
   //! the product of those of its components.
   //!
   //! Unlike CompositeFunction (a sum of functions without parameters, which it does not own), a composite owns its
-  //! components and can be fitted, copied, stored with a fit in a CAP file, and registered under a name with
-  //! FunctionRegistry::registerComposite(), which makes it available in the Fit window of CapGui.
+  //! components and can be fitted, copied, stored with a fit in a Datum file, and registered under a name with
+  //! FunctionRegistry::registerComposite(), which makes it available in the Fit window of DatumGui.
   //!
   //! @code
-  //!   CAP::MATH::ParameterizedComposite model;
-  //!   model.add("signal", CAP::MATH::Normal(100.0, 0.0, 1.0));
-  //!   model.add("background", CAP::MATH::Linear(10.0, 0.0));
-  //!   CAP::MATH::FunctionRegistry::registerComposite("Gauss+Linear", model);
+  //!   Datum::MATH::ParameterizedComposite model;
+  //!   model.add("signal", Datum::MATH::Normal(100.0, 0.0, 1.0));
+  //!   model.add("background", Datum::MATH::Linear(10.0, 0.0));
+  //!   Datum::MATH::FunctionRegistry::registerComposite("Gauss+Linear", model);
   //! @endcode
   //!
   class ParameterizedComposite : public ParameterizedFunction
@@ -143,6 +143,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__ParameterizedComposite
+#endif // !DATUM__MATH__ParameterizedComposite

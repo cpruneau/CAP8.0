@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/RootConvert
+# Project Datum/RootConvert
 ################################################################################################
 
 #include(${ROOT_USE_FILE})
@@ -28,13 +28,13 @@ add_executable(TestRootConversion tests/TestRootConversion.cpp)
 target_link_libraries(TestRootConversion RootConvert Base Math ${ROOT_LIBRARIES})
 add_test(NAME RootConversion COMMAND TestRootConversion)
 
-# Conversion of the histograms of ROOT files to CAP files and back (the RootConvert library is built only with CAP_WITH_ROOT)
-add_executable(CapRootConvert CapRootConvert.cxx)
-target_link_libraries(CapRootConvert RootConvert Base Math ${ROOT_LIBRARIES})
-set_target_properties(CapRootConvert PROPERTIES INSTALL_RPATH "$ENV{CAP_LIB_PATH}"   # runs without SetupDatum.sh
+# Conversion of the histograms of ROOT files to Datum files and back (the RootConvert library is built only with DATUM_WITH_ROOT)
+add_executable(DatumRootConvert DatumRootConvert.cxx)
+target_link_libraries(DatumRootConvert RootConvert Base Math ${ROOT_LIBRARIES})
+set_target_properties(DatumRootConvert PROPERTIES INSTALL_RPATH "$ENV{DATUM_LIB_PATH}"   # runs without SetupDatum.sh
                       OUTPUT_NAME DatumRootConvert)                                   # bin/CapRootConvert: a link
-cap_install(CapRootConvert RUNTIME "${CAP_INSTALL_BIN_DIR}")
-cap_install_alias(CapRootConvert CapRootConvert "${CAP_INSTALL_BIN_DIR}")
+datum_install(DatumRootConvert RUNTIME "${DATUM_INSTALL_BIN_DIR}")
+datum_install_alias(DatumRootConvert CapRootConvert "${DATUM_INSTALL_BIN_DIR}")
 
-cap_install(RootConvert LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(RootConvert LIBRARY "$ENV{DATUM_LIB_PATH}")
 

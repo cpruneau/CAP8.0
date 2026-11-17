@@ -10,13 +10,13 @@
 //! @file JetAnalyzer.hpp
 //! @brief JetAnalyzer: jets found with FastJet for several jet settings in one run, selected by jet filters, and their
 //! per-event, single-jet and constituent histograms.
-#ifndef CAP__JetAnalyzer
-#define CAP__JetAnalyzer
+#ifndef DATUM__JetAnalyzer
+#define DATUM__JetAnalyzer
 #include "JetTask.hpp"
 #include "JetHistos.hpp"
 #include "JetUnderlyingEvent.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -72,6 +72,6 @@ protected:
   std::vector<Multiplicities> _cones;                                   //!< work: multiplicities of the cones
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetAnalyzer */
+#endif /* DATUM__JetAnalyzer */

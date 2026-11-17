@@ -7,20 +7,20 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__CalibrationProducer
-#define CAP__CalibrationProducer
+#ifndef DATUM__CalibrationProducer
+#define DATUM__CalibrationProducer
 #include "AnalysisHistos.hpp"
 #include "ParticlePerformanceHistos.hpp"
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmear.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @brief Task writing the detector maps measured by a performance analysis: a map file of particle efficiencies and
 //! smearers (ParticleEfficiency, ParticleSmear), read by the measurement simulators (IMPORT of PARTICLE_EFFICIENCY and
-//! PARTICLE_SMEARER) and edited in CapGui (Detector Maps).
+//! PARTICLE_SMEARER) and edited in DatumGui (Detector Maps).
 //!
 //! The task reads the performance histograms (ParticlePerformanceHistos) of a source task (SOURCE_TASK, by default
 //! PerformanceAnalyzer) from the input file of its job, one folder per combination of filters, computes their derived
@@ -35,7 +35,7 @@ namespace CAP
 //! fewer than two detected particles has resolution 0 (no smearing): choose the binning for the statistics.
 //!
 //! Configuration (keys \<task\>:...): SOURCE_TASK, MAPS:PATH (directory; DEFAULT, absolute, "./...", or relative to
-//! $CAP_CALIB_EXPORT_PATH), MAPS:FILE_NAME (default DetectorMaps.cap), MAPS:VARIABLES, MAPS:BIASES (default true), and
+//! $DATUM_CALIB_EXPORT_PATH), MAPS:FILE_NAME (default DetectorMaps.datum), MAPS:VARIABLES, MAPS:BIASES (default true), and
 //! the binning and fill options of the performance histograms (see ParticlePerformanceHistos).
 //!
 class CalibrationProducer : public CalculatorHistos<ParticlePerformanceHistos,1>
@@ -90,6 +90,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__CalibrationProducer */
+#endif /* DATUM__CalibrationProducer */

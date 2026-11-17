@@ -13,9 +13,9 @@
 #include "ParticlePair3DBFHistos.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(ParticlePair3DTasks)
+DATUM_REFLECTION(ParticlePair3DTasks)
 {
-  CAP::registerTask<CAP::ParticlePair3DAnalyzer>("CAP::ParticlePair3DAnalyzer");
-  CAP::registerTask<CAP::ParticlePair3DDerivedCalculator>("CAP::ParticlePair3DDerivedCalculator");
-  CAP::registerTask<CAP::ParticlePair3DBFCalculator>("CAP::ParticlePair3DBFCalculator");
+  Datum::registerTask<Datum::ParticlePair3DAnalyzer>("Datum::ParticlePair3DAnalyzer");
+  Datum::registerTask<Datum::ParticlePair3DDerivedCalculator>("Datum::ParticlePair3DDerivedCalculator");
+  Datum::registerTask<Datum::ParticlePair3DBFCalculator>("Datum::ParticlePair3DBFCalculator");
 }

@@ -3,7 +3,7 @@
 #include "MathBasicFunctions.hpp"
 #include "MathExceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 namespace MATH
@@ -101,5 +101,5 @@ double factorial(int  n)
 
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 

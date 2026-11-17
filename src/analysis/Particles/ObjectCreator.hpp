@@ -10,8 +10,8 @@
 //! @file ObjectCreator.hpp
 //! @brief Tasks creating the filters, efficiencies, smearers, events and particle databases of a job, used by the other
 //! tasks by name.
-#ifndef CAP__ObjectCreator
-#define CAP__ObjectCreator
+#ifndef DATUM__ObjectCreator
+#define DATUM__ObjectCreator
 #include "Task.hpp"
 #include "ManagedObjects.hpp"
 #include "Event.hpp"
@@ -23,7 +23,7 @@
 #include "ParticleEfficiency.hpp"
 #include "ParticleSmear.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -209,15 +209,15 @@ public:
 //! the objects of their type; the tasks of the job then use them by name.
 //!
 //! @code
-//!   <TASK name="Filters" class="CAP::FilterCreator">
-//!     <TASK name="ParticleFilters" class="CAP::ParticleFilterCreator">
+//!   <TASK name="Filters" class="Datum::FilterCreator">
+//!     <TASK name="ParticleFilters" class="Datum::ParticleFilterCreator">
 //!       <GROUP name="PARTICLE_FILTER"> <PARAMETER name="N" type="int">1</PARAMETER> </GROUP>
 //!       <GROUP name="PARTICLE_FILTER_0"> NAME, OWNER (true), CONDITION:N, CONDITION_0:... </GROUP>
 //!     </TASK>
 //!   </TASK>
-//!   <TASK name="Analysis" class="CAP::EventIterator"> ... PARTICLE_FILTER_0:NAME, OWNER (false) ... </TASK>
+//!   <TASK name="Analysis" class="Datum::EventIterator"> ... PARTICLE_FILTER_0:NAME, OWNER (false) ... </TASK>
 //! @endcode
-//! Its subtasks are those of its configuration (nested TASK elements); RunCAP.py writes one per type the job uses.
+//! Its subtasks are those of its configuration (nested TASK elements); RunDatum.py writes one per type the job uses.
 //!
 class FilterCreator : public Task
 {
@@ -232,6 +232,6 @@ public:
   Task * clone() override { return new FilterCreator(*this); }
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ObjectCreator */
+#endif /* DATUM__ObjectCreator */

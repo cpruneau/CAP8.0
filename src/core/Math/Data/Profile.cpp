@@ -14,7 +14,7 @@
 #include <cmath>
 
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -319,7 +319,7 @@ namespace MATH
   return p ? new Profile(*p) : nullptr;
   }
 
-  Profile * loadProfile(const CapFile & inputFile, const String & name)
+  Profile * loadProfile(const DatumFile & inputFile, const String & name)
   {
   const Profile * p = inputFile.get<Profile>(name);
   if (!p) throw FileException(inputFile.path(),String("No profile named ")+name,__FUNCTION__);
@@ -341,4 +341,4 @@ namespace MATH
   }
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum

@@ -12,7 +12,7 @@
 #include "HerwigEventGenerator.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(HerwigTasks)
+DATUM_REFLECTION(HerwigTasks)
 {
-  CAP::registerTask<CAP::HerwigEventGenerator>("CAP::HerwigEventGenerator");
+  Datum::registerTask<Datum::HerwigEventGenerator>("Datum::HerwigEventGenerator");
 }

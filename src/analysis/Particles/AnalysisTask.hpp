@@ -9,8 +9,8 @@
  * *********************************************************************/
 //! @file AnalysisTask.hpp
 //! @brief AnalysisTask: base class of the tasks working with event and particle filters (analyzers and calculators).
-#ifndef CAP__AnalysisTask
-#define CAP__AnalysisTask
+#ifndef DATUM__AnalysisTask
+#define DATUM__AnalysisTask
 #include <vector>
 #include "Task.hpp"
 #include "Exceptions.hpp"
@@ -18,7 +18,7 @@
 #include "EventFilter.hpp"
 #include "ParticleFilter.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -121,6 +121,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__AnalysisTask */
+#endif /* DATUM__AnalysisTask */

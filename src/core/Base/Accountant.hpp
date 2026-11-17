@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__Accountant
-#define CAP__Accountant
+#ifndef DATUM__Accountant
+#define DATUM__Accountant
 #include <vector>
 #include "String.hpp"
 #include "Object.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -23,12 +23,12 @@ namespace CAP
 //! completed or a condition is fulfilled (e.g., Task uses one to count calls to execute()); with several counts it keeps
 //! track of disjoint conditions, such as the outcome of each of a list of event filters.
 //!
-//! Counts are indexed from 0 to size()-1. Accountants can be saved and loaded with CapFile::exportAccountant() and
-//! CapFile::importAccountant().
+//! Counts are indexed from 0 to size()-1. Accountants can be saved and loaded with DatumFile::exportAccountant() and
+//! DatumFile::importAccountant().
 //!
 //! Example:
 //! @code
-//!   CAP::Accountant accepted("eventAccepted",3);   // three filters
+//!   Datum::Accountant accepted("eventAccepted",3);   // three filters
 //!   accepted.increment(1);                          // filter 1 accepted an event
 //!   long n = accepted.valueAt(1);
 //! @endcode
@@ -91,6 +91,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__Accountant */
+#endif /* DATUM__Accountant */

@@ -13,7 +13,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   Event::Event()
@@ -207,4 +207,4 @@ namespace CAP
   printCR();
   }
 
-} // namespace CAP
+} // namespace Datum

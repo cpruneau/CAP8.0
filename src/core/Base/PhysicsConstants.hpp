@@ -1,5 +1,5 @@
-#ifndef CAP_PhysicsConstants
-#define CAP_PhysicsConstants
+#ifndef DATUM_PhysicsConstants
+#define DATUM_PhysicsConstants
 
 //!
 //! Compendium of physics constants
@@ -8,7 +8,7 @@
 //!   after what they represent to avoid ambiguities and naming crounding. For instance, instead of "c" for the speed of light, we use "lightVelocity"
 
 
-namespace CAP
+namespace Datum
 {
 namespace Physics
 {
@@ -593,6 +593,6 @@ constexpr double pb208Mass()
 
 } // Physics 
 
-} // CAP
+} // Datum
 #endif
 

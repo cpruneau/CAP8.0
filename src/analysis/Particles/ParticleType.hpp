@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleType
-#define CAP__ParticleType
+#ifndef DATUM__ParticleType
+#define DATUM__ParticleType
 #include <cmath>
 #include <vector>
 #include "String.hpp"
@@ -19,9 +19,9 @@
 #include "PrintHelpers.hpp"
 
 using namespace std;
-using namespace CAP::Physics;
+using namespace Datum::Physics;
 
-namespace CAP
+namespace Datum
 {
 
 class ParticleDecayMode;
@@ -34,7 +34,7 @@ class ParticleDecayMode;
 //! charm, ... are computed from them. Static singletons describe the nuclei used by the Glauber model (protonType,
 //! he4Type, auType, pbType, ...).
 //!
-//!This class defines the notion of particle type used in CAP.  Virtually all elementary particle properties
+//!This class defines the notion of particle type used in Datum.  Virtually all elementary particle properties
 //!are represented and stored. Property values are stored and read from a particle property file. Property values are based on
 //!the particle data book maintained by the particle data group (PDG).
 //!

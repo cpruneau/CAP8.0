@@ -19,10 +19,10 @@
 #include <sstream>
 
 
-namespace CAP
+namespace Datum
 {
-  using CAP::MATH::pi;
-  using CAP::MATH::twoPi;
+  using Datum::MATH::pi;
+  using Datum::MATH::twoPi;
 
   GlauberNucleus::GlauberNucleus()
   :
@@ -358,7 +358,7 @@ namespace CAP
   {
   const int n = int(_nucleons.size());
   if (n<1) throw InvalidValueGlauberException(n,"Nucleus has nNucleons<1",__FUNCTION__);
-  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  Datum::MATH::RandomGenerator & generator = Datum::MATH::randomGenerator();
   const int nZ = _nucleusType.nProtons();
   for (int i=0, iz=0; i<n; ++i)
     {
@@ -398,7 +398,7 @@ namespace CAP
   //!
   void GlauberNucleus::positionDeuteron()
   {
-  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  Datum::MATH::RandomGenerator & generator = Datum::MATH::randomGenerator();
   for (int i=0; i<2; ++i)
     {
     if (i==1 && _nucleusType.radialDistType()==4)
@@ -458,7 +458,7 @@ namespace CAP
     throw GlauberException("The lattice placement is not available for deformed nuclei",__FUNCTION__);
   if (!_allowOverlap && _nnDistanceMin>_nodeDistance)
     throw GlauberException("The minimum distance between nucleons is larger than the distance between the nodes",__FUNCTION__);
-  CAP::MATH::RandomGenerator & generator = CAP::MATH::randomGenerator();
+  Datum::MATH::RandomGenerator & generator = Datum::MATH::randomGenerator();
   const double d = _nodeDistance;
   const double edge = 20.0;
   const double edgeX = edge + d*generator.random() - 0.5*d;
@@ -540,7 +540,7 @@ namespace CAP
   }
 
   //!
-  //! Name of the file of nucleon configurations of a nucleus (type 6), in $CAP_DATABASE_PATH/Glauber/NucleonConfigurations.
+  //! Name of the file of nucleon configurations of a nucleus (type 6), in $DATUM_DATABASE_PATH/Glauber/NucleonConfigurations.
   //!
   String GlauberNucleus::configurationFileName() const
   {
@@ -561,13 +561,13 @@ namespace CAP
   {
   static std::map<std::string, std::shared_ptr<const std::vector<double>>> cache;
   String relative = String("Glauber/NucleonConfigurations/") + configurationFileName();
-  String path = FileSystem::configuredPath(relative, "CAP_DATABASE_PATH");
+  String path = FileSystem::configuredPath(relative, "DATUM_DATABASE_PATH");
   std::string key = path.str();
   auto found = cache.find(key);
   if (found==cache.end())
     {
     std::ifstream file(key);
-    if (!file) throw GlauberException(String("Cannot read the nucleon configurations ")+path+" (is CAP_DATABASE_PATH set?)",
+    if (!file) throw GlauberException(String("Cannot read the nucleon configurations ")+path+" (is DATUM_DATABASE_PATH set?)",
                                       __FUNCTION__);
     const int n = int(_nucleons.size());
     const int skip = (n==12) ? 2 : 0;
@@ -588,7 +588,7 @@ namespace CAP
   _configurations = found->second;
   // a random first configuration, so that two nuclei of the same kind do not use the same sequence
   const long nConfigurations = long(_configurations->size()/(3*_nucleons.size()));
-  _configurationIndex = long(CAP::MATH::randomGenerator().random()*nConfigurations) % nConfigurations;
+  _configurationIndex = long(Datum::MATH::randomGenerator().random()*nConfigurations) % nConfigurations;
   }
 
   //!
@@ -861,4 +861,4 @@ namespace CAP
   _configurations.reset();
   }
 
-} // namespace CAP
+} // namespace Datum

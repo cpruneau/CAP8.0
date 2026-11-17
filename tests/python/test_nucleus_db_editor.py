@@ -14,12 +14,12 @@ import tempfile
 import textwrap
 import unittest
 
-CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, CAP_DIR)
+DATUM_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, DATUM_DIR)
 
 import NucleusDbEditor as E                     # noqa: E402
 
-DB_FILE = os.path.join(CAP_DIR, "DB", "Glauber", "NucleusDb.xml")
+DB_FILE = os.path.join(DATUM_DIR, "DB", "Glauber", "NucleusDb.xml")
 
 
 def has_display():
@@ -92,11 +92,11 @@ class TestModel(unittest.TestCase):
         self.assertIsNone(E.density(db.find("He3"), 1.0))                # configurations from a file
 
     def test_command_line(self):
-        out = subprocess.run([sys.executable, os.path.join(CAP_DIR, "NucleusDbEditor.py"), "--check", DB_FILE],
+        out = subprocess.run([sys.executable, os.path.join(DATUM_DIR, "NucleusDbEditor.py"), "--check", DB_FILE],
                              capture_output=True, text=True)
         self.assertEqual(out.returncode, 0)
         self.assertIn("46 nuclei", out.stdout)
-        out = subprocess.run([sys.executable, os.path.join(CAP_DIR, "NucleusDbEditor.py"), "--list", DB_FILE],
+        out = subprocess.run([sys.executable, os.path.join(DATUM_DIR, "NucleusDbEditor.py"), "--list", DB_FILE],
                              capture_output=True, text=True)
         self.assertEqual(out.returncode, 0)
         self.assertIn("Pbpn", out.stdout)
@@ -138,7 +138,7 @@ class TestGui(unittest.TestCase):
                 db = E.NucleusDb.read(%r)
                 print(result["shown"], result["plot"], result["moved"], result["dirty"], db.find("Pb").get("skin"),
                       [n.name for n in db.nuclei].index("U2"))
-            """) % (CAP_DIR, path, path)
+            """) % (DATUM_DIR, path, path)
             out = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=60)
             self.assertEqual(out.returncode, 0, out.stderr)
             shown, plot, moved, dirty, skin, index = out.stdout.split()

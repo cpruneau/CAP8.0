@@ -7,13 +7,13 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticlePair3DAnalyzer
-#define CAP__ParticlePair3DAnalyzer
+#ifndef DATUM__ParticlePair3DAnalyzer
+#define DATUM__ParticlePair3DAnalyzer
 #include "EventProcessorHistos.hpp"
 #include "ParticlePair3DHistos.hpp"
 #include "ParticleSingleHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -57,6 +57,6 @@ protected:
   
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticlePair3DAnalyzer */
+#endif /* DATUM__ParticlePair3DAnalyzer */

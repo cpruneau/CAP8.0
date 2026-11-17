@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__PropertiesParser
-#define CAP__PropertiesParser
+#ifndef DATUM__PropertiesParser
+#define DATUM__PropertiesParser
 #include "Parser.hpp"
 #include "Properties.hpp"
 
-namespace CAP
+namespace Datum
 {
 //!
 //! @brief Reader and writer of property files ("name = value" lines).
@@ -67,6 +67,6 @@ public:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif /* PropertiesParser_hpp */

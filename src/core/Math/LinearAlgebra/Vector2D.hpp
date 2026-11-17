@@ -1,5 +1,5 @@
-#ifndef CAP_Vector2D
-#define CAP_Vector2D
+#ifndef DATUM_Vector2D
+#define DATUM_Vector2D
 #include <cmath>
 #include <ostream>
 #include <iostream>
@@ -7,7 +7,7 @@
 #include "String.hpp"
 #include "BinaryIO.hpp"
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -21,7 +21,7 @@ namespace MATH
 //!
 //! Example:
 //! @code
-//!   CAP::MATH::Vector2D v(3.0,4.0);
+//!   Datum::MATH::Vector2D v(3.0,4.0);
 //!   double r = v.modulus();     // 5
 //!   v.rotate(M_PI/2);           // (-4,3)
 //! @endcode
@@ -179,12 +179,12 @@ public:
 
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAP2" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTM2" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! @{
 
-  //! @brief Tag of Vector2D records in binary files. @return "CAP2"
-  static const char * binaryTag() { return "CAP2"; }
+  //! @brief Tag of Vector2D records in binary files. @return "DTM2"
+  static const char * binaryTag() { return "DTM2"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return ""
@@ -238,6 +238,6 @@ Vector2D operator* (double a, const Vector2D & v);
 std::ostream& operator<<(std::ostream& out, const Vector2D & v);
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

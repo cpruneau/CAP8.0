@@ -1,6 +1,6 @@
 #include "LatexText.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexText::LatexText()
   :

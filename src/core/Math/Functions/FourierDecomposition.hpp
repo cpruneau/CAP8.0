@@ -10,11 +10,11 @@
 //! @file FourierDecomposition.hpp
 //! @brief FourierDecomposition: a Fourier series of order nMax, in one of two forms, a composite of its harmonics;
 //! FourierHarmonic: one of its terms.
-#ifndef CAP_MATH_FourierDecomposition
-#define CAP_MATH_FourierDecomposition
+#ifndef DATUM_MATH_FourierDecomposition
+#define DATUM_MATH_FourierDecomposition
 #include "ParameterizedComposite.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -94,15 +94,15 @@ namespace CAP
   //!
   //! The class is registered in FunctionRegistry as "FourierDecomposition" (made with 2 nMax + 1 parameters, form 1;
   //! nMax = 4 when the registry makes it with no number of parameters), and form 2 as "FourierFlow" (FourierFlow), so
-  //! that both can be fitted in the Fit window of CapGui (estimates: Fitter::estimate()) and saved with their fits in a
-  //! CAP file; a decomposition is read back in its own form. CalculateFourierDecomposition computes the decomposition
+  //! that both can be fitted in the Fit window of DatumGui (estimates: Fitter::estimate()) and saved with their fits in a
+  //! Datum file; a decomposition is read back in its own form. CalculateFourierDecomposition computes the decomposition
   //! of a function or of data points, by averages or by a fit, with its chi square.
   //!
   //! @code
-  //!   CAP::MATH::FourierDecomposition f(3);                                   // form 1: k, c1, s1, ..., s3
+  //!   Datum::MATH::FourierDecomposition f(3);                                   // form 1: k, c1, s1, ..., s3
   //!   f.setConstant(1.0);
   //!   f.setCosine(2, 0.1);                                                    // c2
-  //!   CAP::MATH::FourierDecomposition g(4, CAP::MATH::FourierDecomposition::kFlow);   // form 2: k, v1, psi1, ...
+  //!   Datum::MATH::FourierDecomposition g(4, Datum::MATH::FourierDecomposition::kFlow);   // form 2: k, v1, psi1, ...
   //!   g.setConstant(100.0);
   //!   g.setFlow(2, 0.06);                                                     // v2
   //!   g.setFlowPhase(2, 0.3);                                                 // psi2
@@ -206,7 +206,7 @@ namespace CAP
   //!
   //! @brief A FourierDecomposition of form 2 (kFlow), k [1 + 2 sum v_n cos(n (x - psi_n))]: registered in
   //! FunctionRegistry as "FourierFlow" (made with 2 nMax + 1 parameters), so that both forms are offered by the Fit
-  //! window of CapGui.
+  //! window of DatumGui.
   //!
   class FourierFlow : public FourierDecomposition
   {
@@ -223,6 +223,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_MATH_FourierDecomposition
+#endif // DATUM_MATH_FourierDecomposition

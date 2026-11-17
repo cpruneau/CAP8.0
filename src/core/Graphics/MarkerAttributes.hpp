@@ -1,8 +1,8 @@
-#ifndef CAP__MarkerAttributes
-#define CAP__MarkerAttributes
+#ifndef DATUM__MarkerAttributes
+#define DATUM__MarkerAttributes
 #include "Attributes.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -35,6 +35,6 @@ namespace CAP
   };
 
   }  // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MarkerAttributes
+#endif // !DATUM__MarkerAttributes

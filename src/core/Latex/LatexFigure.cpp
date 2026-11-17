@@ -1,7 +1,7 @@
 #include "LatexFigure.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   LatexFigure::LatexFigure()
   :
@@ -65,4 +65,4 @@ namespace CAP
   out << "\\end{figure}" << endl;
   }
 
-} //namespace CAP
+} //namespace Datum

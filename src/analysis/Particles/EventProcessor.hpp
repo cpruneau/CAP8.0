@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventProcessor
-#define CAP__EventProcessor
+#ifndef DATUM__EventProcessor
+#define DATUM__EventProcessor
 #include "AnalysisTask.hpp"
 #include "Exceptions.hpp"
 #include "ManagedObjects.hpp"
@@ -24,7 +24,7 @@
 #include "ParticleSelection.hpp"
 #include <memory>
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -221,7 +221,7 @@ namespace CAP
   virtual void scaleHistograms();
   using AnalysisTask::scaleHistograms;
   //! @brief Whether the analyzers of the job normalize their histograms at the end of the run (default true). A job
-  //! of a production in pT-hat bins keeps the raw histograms (JOB:NORMALIZE false, see CAP.cxx): they are added with
+  //! of a production in pT-hat bins keeps the raw histograms (JOB:NORMALIZE false, see Datum.cxx): they are added with
   //! the weights sigma/N of the bins by SubSampleStatCalculator. @param normalize true to normalize
   static void setNormalizeHistograms(bool normalize);
   //! @brief Whether the analyzers normalize their histograms. @return true if so
@@ -248,6 +248,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__EventProcessor */
+#endif /* DATUM__EventProcessor */

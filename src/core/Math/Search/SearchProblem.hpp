@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file SearchProblem.hpp
 //! @brief SearchProblem, FunctionProblem, DataProblem: what an extremum search looks for.
-#ifndef CAP__MATH__SearchProblem
-#define CAP__MATH__SearchProblem
+#ifndef DATUM__MATH__SearchProblem
+#define DATUM__MATH__SearchProblem
 #include <vector>
 #include "SearchDomain.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -199,6 +199,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__SearchProblem
+#endif // !DATUM__MATH__SearchProblem

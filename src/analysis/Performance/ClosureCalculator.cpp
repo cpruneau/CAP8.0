@@ -12,7 +12,7 @@
 #include <memory>
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
 #include "HistogramFolder.hpp"
@@ -22,7 +22,7 @@
 #include "StringParameter.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ClosureCalculator::ClosureCalculator()
@@ -72,9 +72,9 @@ void ClosureCalculator::execute()
       throw Exception("Set the file names: HISTOGRAM:IMPORT:GEN_FILE_NAME, IMPORT:REC_FILE_NAME and "
                       "EXPORT:CLOSURE_FILE_NAME",__FUNCTION__);
   calculate(method,test,
-            FileSystem::configuredPath(importPath,"CAP_HISTOS_IMPORT_PATH"),importGenFileName,importGenFolder,
+            FileSystem::configuredPath(importPath,"DATUM_HISTOS_IMPORT_PATH"),importGenFileName,importGenFolder,
             importRecoFileName,importRecoFolder,
-            FileSystem::configuredPath(exportPath,"CAP_HISTOS_EXPORT_PATH"),exportFileName,forceRewrite);
+            FileSystem::configuredPath(exportPath,"DATUM_HISTOS_EXPORT_PATH"),exportFileName,forceRewrite);
 }
 
 namespace
@@ -198,8 +198,8 @@ unsigned int ClosureCalculator::calculate(int method,
     printValue("Detector-level folder",recoFolder);
     printValue("Closure file",FileSystem::join(exportDirectory,closureFileName));
     }
-  std::unique_ptr<CapFile> generatorFile(CapFile::openOldCapFile(importDirectory,ManagedObjects<HistogramFolder>::capFileName(genFileName)));
-  std::unique_ptr<CapFile> detectorFile (CapFile::openOldCapFile(importDirectory,ManagedObjects<HistogramFolder>::capFileName(recoFileName)));
+  std::unique_ptr<DatumFile> generatorFile(DatumFile::openOldDatumFile(importDirectory,ManagedObjects<HistogramFolder>::datumFileName(genFileName)));
+  std::unique_ptr<DatumFile> detectorFile (DatumFile::openOldDatumFile(importDirectory,ManagedObjects<HistogramFolder>::datumFileName(recoFileName)));
   const Folder & genTop  = generatorFile->folder();
   const Folder & recoTop = detectorFile->folder();
   const Folder * gen  = genFolder.isNull()  ? &genTop  : genTop.folder(genFolder);
@@ -207,10 +207,10 @@ unsigned int ClosureCalculator::calculate(int method,
   if (!gen)  throw Exception(String("No folder ")+genFolder+" in "+genFileName,__FUNCTION__);
   if (!reco) throw Exception(String("No folder ")+recoFolder+" in "+recoFileName,__FUNCTION__);
 
-  String outputName = ManagedObjects<HistogramFolder>::capFileName(closureFileName);
-  std::unique_ptr<CapFile> closureFile(forceRewrite
-                                       ? CapFile::openRecreateCapFile(exportDirectory,outputName)
-                                       : CapFile::openNewCapFile(exportDirectory,outputName));
+  String outputName = ManagedObjects<HistogramFolder>::datumFileName(closureFileName);
+  std::unique_ptr<DatumFile> closureFile(forceRewrite
+                                       ? DatumFile::openRecreateDatumFile(exportDirectory,outputName)
+                                       : DatumFile::openNewDatumFile(exportDirectory,outputName));
   if (test==kUserTest && !theUserTest())
     throw Exception("TEST 3 (user defined): no user test, call ClosureCalculator::setUserTest() first",__FUNCTION__);
   std::vector<String> skipped;
@@ -247,4 +247,4 @@ unsigned int ClosureCalculator::calculate(int method,
   return n;
 }
 
-} // namespace CAP
+} // namespace Datum

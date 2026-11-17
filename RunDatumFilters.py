@@ -5,7 +5,7 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-RunCAPFilters -- the filters of a CAP workflow and the histogram folders of its analyzers (model of RunDatum.py, no GUI).
+RunDatumFilters -- the filters of a Datum workflow and the histogram folders of its analyzers (model of RunDatum.py, no GUI).
 
 A workflow has a library of named objects, shared by its tasks, of eight kinds:
   * event filters and particle filters: each a list of conditions (a range, two ranges, a value or a flag of one
@@ -19,7 +19,7 @@ folders hold the histograms of each combination, written by the job to its outpu
 <task>/<event filter>_<particle filter>[_<particle filter 2>] (with the derived histograms), and
 their binning is either the same for all (the HISTOGRAM group of the task) or set folder by folder.
 
-CAP reads all this from flat keys of the configuration of each task (see ManagedObjects::configureObjects() and the
+Datum reads all this from flat keys of the configuration of each task (see ManagedObjects::configureObjects() and the
 configure() functions of the filters, efficiencies, smearers and histogram folders):
     <task>:<KIND>:N, <task>:<KIND>:USE
     <task>:<KIND>_<k>:NAME, TITLE, OWNER
@@ -27,17 +27,17 @@ configure() functions of the filters, efficiencies, smearers and histogram folde
     <task>:<KIND>_<k>:CONDITION_<i>:TYPE, SUBTYPE, MINIMUM, MAXIMUM[, MINIMUM2, MAXIMUM2]
     <task>:<KIND>_<k>:<parameter>                              (efficiencies, smearers)
     <task>:HISTOGRAM_<l>:N, USE, CREATE, IMPORT, <task>:HISTOGRAM_<l>_<k>:NAME, TITLE, OWNER[, <binning parameter>]
-    <main task>:JOB:OUTPUT_FILE, INPUT_FILE   (files of the job, see CAP.cxx)
+    <main task>:JOB:OUTPUT_FILE, INPUT_FILE   (files of the job, see Datum.cxx)
 apply_choices() writes these keys from the library and the choices of the tasks; extract_choices() reads them back
 (library, choices and histogram options), so workflows written by hand or by earlier versions load too. The object of
 a name is defined (OWNER true, with its conditions or parameters) by the task FilterCreator, written first in the
-workflow file (so configured first by CAP), with one subtask per kind (EventFilterCreator, ParticleFilterCreator, ...)
-creating all the objects of the library; the other tasks take them by name from CAP's stores (OWNER false). Event
+workflow file (so configured first by Datum), with one subtask per kind (EventFilterCreator, ParticleFilterCreator, ...)
+creating all the objects of the library; the other tasks take them by name from Datum's stores (OWNER false). Event
 filters on Glauber quantities (impact parameter, participants, ...) are objects of the Glauber tasks, which have a
 store of their own: the first Glauber task using one defines it.
 
 The library itself, including the objects no task uses, and the histogram options of the tasks are also written in a
-RUNCAP element of the workflow file, next to its TASK element (CAP reads only the TASK elements).
+RUNDATUM element of the workflow file, next to its TASK element (Datum reads only the TASK elements).
 
 Selection files. The objects of the library are written in XML, one element per object named after its kind
 (EventFilter, ParticleFilter, EventEfficiency, ...; see TAG_OF_KIND):
@@ -46,8 +46,8 @@ Selection files. The objects of the library are written in XML, one element per 
       <Condition quantity="PT" form="range" minimum="0.2" maximum="2"/>
     </ParticleFilter>
     <EventEfficiency name="Eff"><Parameter name="nBins_mult">100</Parameter> ...</EventEfficiency>
-The same elements are written in the RUNCAP element of a workflow, or in a file of their own, a selection file (root
-CapSelections, see write_selections(), read_selections()), which several workflows can share: a workflow either
+The same elements are written in the RUNDATUM element of a workflow, or in a file of their own, a selection file (root
+DatumSelections, see write_selections(), read_selections()), which several workflows can share: a workflow either
 copies the objects of a selection file (import_selections()), or links it (FilterLibrary.link()), writing
 <Include file="..."/> (relative to the workflow) instead of the objects, which are read from the file each time the
 workflow is loaded and written back to it when the workflow is saved (save_linked()).
@@ -86,7 +86,7 @@ TAG_OF_KIND = {"EVENT_FILTER": "EventFilter", "PARTICLE_FILTER": "ParticleFilter
                "PARTICLE_SMEARER": "ParticleSmearer", "EVENT": "Event", "PARTICLE_DB": "ParticleDb"}
 KIND_OF_TAG = {tag: kind for kind, tag in TAG_OF_KIND.items()}
 #: Lists of objects of some tasks taken from the library of another kind: the particles of interest of the flow
-#: analysis (CAP::ParticleFlowAnalyzer, POI_FILTER) are particle filters of the library.
+#: analysis (Datum::ParticleFlowAnalyzer, POI_FILTER) are particle filters of the library.
 ALIAS_KINDS = {"POI_FILTER": "PARTICLE_FILTER"}
 #: Kinds of the lists a task can choose objects for: those of the library and the aliases.
 CHOICE_KINDS = KINDS + list(ALIAS_KINDS)
@@ -101,11 +101,13 @@ def library_kind(kind):
 def lists_of_kind(kind):
     """Kinds of the lists choosing objects of a kind of the library: the kind and its aliases."""
     return [kind] + [alias for alias, target in ALIAS_KINDS.items() if target == kind]
-SELECTIONS_ROOT = "CapSelections"
+SELECTIONS_ROOT = "DatumSelections"
+SELECTIONS_ROOTS = (SELECTIONS_ROOT, "CapSelections")     # CapSelections: selection files written by CAP (before Datum 1.0)
+WORKFLOW_ROOTS = ("Datum", "CAP")                         # CAP: workflows written before Datum 1.0
 #: Kinds defined by conditions (the others by parameters).
 CONDITION_KINDS = ("EVENT_FILTER", "PARTICLE_FILTER", "JET_FILTER", "JET_PAIR_FILTER")
 #: Kinds of the optional modules: their creator is written only when the library has objects of the kind (the jet
-#: settings, jet filters, jet pair filters and jet groomers need CAP built with Jets).
+#: settings, jet filters, jet pair filters and jet groomers need Datum built with Jets).
 OPTIONAL_KINDS = ("JET_SETTINGS", "JET_FILTER", "JET_PAIR_FILTER", "JET_GROOMER")
 
 #: Forms of a condition and the TYPE written for them.
@@ -116,7 +118,7 @@ FORM_OF_TYPE = {"DOUBLE_RANGE": RANGE, "DOUBLE_DUAL_RANGE": DUAL_RANGE, "INTEGER
 
 #: Quantities of the conditions: {SUBTYPE: (description, forms accepted)}, as read by the configure() functions.
 #: Event filters: the global quantities of the selection of a particle filter, named by the condition (SELECTION),
-#: computed once per event and shared by the tasks (CAP::ParticleSelection, CAP::EventFilter).
+#: computed once per event and shared by the tasks (Datum::ParticleSelection, Datum::EventFilter).
 SELECTION_SUBTYPES = {"MULT": ("multiplicity of a selection", (RANGE,)),
                       "ENERGY": ("energy of a selection", (RANGE,)),
                       "CHARGE": ("net charge of a selection", (RANGE,)),
@@ -152,7 +154,7 @@ PARTICLE_SUBTYPES = {"PT": ("transverse momentum pT", (RANGE, DUAL_RANGE)),
                      "CHARM": ("charm", (VALUE,)),
                      "LIVE": ("live (not decayed)", (FLAG,)),
                      "ENABLED": ("enabled", (FLAG,))}
-#: Jet filters (CAP::JetFilter): the jet and its rank in pT among all the jets of the event found with the same particle
+#: Jet filters (Datum::JetFilter): the jet and its rank in pT among all the jets of the event found with the same particle
 #: filter and jet settings (1: leading; the rank before the conditions of the filter). The jet filters are the only
 #: selection of the jets: the jet finder keeps all the jets above the pT floor of its settings.
 JET_SUBTYPES = {"PT": ("jet transverse momentum pT", (RANGE, DUAL_RANGE)),
@@ -161,7 +163,7 @@ JET_SUBTYPES = {"PT": ("jet transverse momentum pT", (RANGE, DUAL_RANGE)),
                 "MASS": ("jet mass", (RANGE, DUAL_RANGE)),
                 "RANK": ("rank in pT in the event (1: leading)", (VALUE, RANGE)),
                 "MULT": ("number of constituents", (VALUE, RANGE))}
-#: Jet pair filters (CAP::JetPairFilter): the ranks of the two jets of a pair (the first of higher rank) and the
+#: Jet pair filters (Datum::JetPairFilter): the ranks of the two jets of a pair (the first of higher rank) and the
 #: variables of the pair.
 JET_PAIR_SUBTYPES = {"RANK1": ("rank of the first jet (1: leading)", (VALUE, RANGE)),
                      "RANK2": ("rank of the second jet", (VALUE, RANGE)),
@@ -180,12 +182,12 @@ KIND_PARAMETERS = {
     "EVENT_SMEARER": [("BASE_NAME", "string", "")],
     # switch read by ParticleDb::configure(): true turns off the weak decays (K0S, K0L, Lambda, Sigma, Xi, Omega)
     "PARTICLE_DB": [("_dbDisableWeakDecays", "bool", "false")],
-    # definition of a jet finder (CAP::JetSettings): FastJet algorithm, radius, recombination scheme and pT floor (the
+    # definition of a jet finder (Datum::JetSettings): FastJet algorithm, radius, recombination scheme and pT floor (the
     # technical minimum of FastJet, GeV/c: it does not change the rank of the jets above it)
     "JET_SETTINGS": [("ALGORITHM", "string", "ANTIKT"), ("R", "double", "0.4"), ("RECOMBINATION", "string", "E"),
                      ("PT_FLOOR", "double", "1.0")],
 }
-#: Jet groomers (CAP::JetGroomer): a method (METHOD) and its parameters (see JetGroomer.hpp and METHOD_PARAMETERS).
+#: Jet groomers (Datum::JetGroomer): a method (METHOD) and its parameters (see JetGroomer.hpp and METHOD_PARAMETERS).
 KIND_PARAMETERS["JET_GROOMER"] = [
     ("METHOD", "string", "SOFT_DROP"), ("RECLUSTER", "string", "CA"),
     ("Z_CUT", "double", "0.1"), ("BETA", "double", "0"), ("R0", "double", "0"), ("MU", "double", "1"),
@@ -222,26 +224,26 @@ def shown_parameters(kind, parameters):
         return list(every)
     return [p for p in every if p[0] == selector or p[0] in used[value]]
 
-#: Task creating the objects of the library, run first (CAP::FilterCreator), and its subtasks, one per kind.
-CREATOR_NAME, CREATOR_CLASS = "FilterCreator", "CAP::FilterCreator"
-CREATORS = {"EVENT_FILTER": ("EventFilters", "CAP::EventFilterCreator"),
-            "PARTICLE_FILTER": ("ParticleFilters", "CAP::ParticleFilterCreator"),
-            "JET_SETTINGS": ("JetSettings", "CAP::JetSettingsCreator"),
-            "JET_FILTER": ("JetFilters", "CAP::JetFilterCreator"),
-            "JET_PAIR_FILTER": ("JetPairFilters", "CAP::JetPairFilterCreator"),
-            "JET_GROOMER": ("JetGroomers", "CAP::JetGroomerCreator"),
-            "EVENT_EFFICIENCY": ("EventEfficiencies", "CAP::EventEfficiencyCreator"),
-            "PARTICLE_EFFICIENCY": ("ParticleEfficiencies", "CAP::ParticleEfficiencyCreator"),
-            "EVENT_SMEARER": ("EventSmearers", "CAP::EventSmearerCreator"),
-            "PARTICLE_SMEARER": ("ParticleSmearers", "CAP::ParticleSmearerCreator"),
-            "EVENT": ("Events", "CAP::EventCreator"),
-            "PARTICLE_DB": ("ParticleDbs", "CAP::ParticleDbCreator")}
+#: Task creating the objects of the library, run first (Datum::FilterCreator), and its subtasks, one per kind.
+CREATOR_NAME, CREATOR_CLASS = "FilterCreator", "Datum::FilterCreator"
+CREATORS = {"EVENT_FILTER": ("EventFilters", "Datum::EventFilterCreator"),
+            "PARTICLE_FILTER": ("ParticleFilters", "Datum::ParticleFilterCreator"),
+            "JET_SETTINGS": ("JetSettings", "Datum::JetSettingsCreator"),
+            "JET_FILTER": ("JetFilters", "Datum::JetFilterCreator"),
+            "JET_PAIR_FILTER": ("JetPairFilters", "Datum::JetPairFilterCreator"),
+            "JET_GROOMER": ("JetGroomers", "Datum::JetGroomerCreator"),
+            "EVENT_EFFICIENCY": ("EventEfficiencies", "Datum::EventEfficiencyCreator"),
+            "PARTICLE_EFFICIENCY": ("ParticleEfficiencies", "Datum::ParticleEfficiencyCreator"),
+            "EVENT_SMEARER": ("EventSmearers", "Datum::EventSmearerCreator"),
+            "PARTICLE_SMEARER": ("ParticleSmearers", "Datum::ParticleSmearerCreator"),
+            "EVENT": ("Events", "Datum::EventCreator"),
+            "PARTICLE_DB": ("ParticleDbs", "Datum::ParticleDbCreator")}
 #: Settings of the list of objects of a kind in its creator (import or creation of their histograms, export).
 LIST_SETTINGS = [("CREATE", "bool", "false"), ("IMPORT", "bool", "false"), ("IMPORT:PATH", "string", "DEFAULT"),
                  ("IMPORT:FILE_NAME", "string", "NONE"), ("EXPORT", "bool", "false"),
                  ("EXPORT:PATH", "string", "DEFAULT"), ("EXPORT:FILE_NAME", "string", "NONE")]
 #: Settings of the lists of a kind that differ from LIST_SETTINGS: particle databases are imported from
-#: <CAP_DATABASE_PATH>/ParticleData/ParticleDb.xml (one XML file: the particles and their decay modes).
+#: <DATUM_DATABASE_PATH>/ParticleData/ParticleDb.xml (one XML file: the particles and their decay modes).
 DATABASE_FILE = "ParticleDb.xml"
 KIND_SETTINGS = {"PARTICLE_DB": {"IMPORT": "true", "IMPORT:PATH": "ParticleData", "IMPORT:FILE_NAME": DATABASE_FILE}}
 #: Settings shown for a kind in the Filters pane (all of LIST_SETTINGS by default): databases are only imported.
@@ -303,7 +305,7 @@ WRITTEN_EVENT_READERS = ("PerformanceAnalyzer",)
 def default_reader_events(task, library):
     """Events of a new analyzer of written events (WRITTEN_EVENT_READERS): [written, read] when the library has a written
     event (FastSimEvent)."""
-    if task.cls.replace("CAP::", "") not in WRITTEN_EVENT_READERS:
+    if task.cls.replace("Datum::", "") not in WRITTEN_EVENT_READERS:
         return
     names = library.names("EVENT")
     written = [n for n in EVENT_WRITERS.values() if n in names]
@@ -315,7 +317,7 @@ def default_reader_events(task, library):
 
 def writes_events(task):
     """Whether a task writes an event of its own (see EVENT_WRITERS)."""
-    return task.cls.replace("CAP::", "") in EVENT_WRITERS
+    return task.cls.replace("Datum::", "") in EVENT_WRITERS
 
 
 def written_event(task):
@@ -330,7 +332,7 @@ def default_writer_events(task, library):
     itself. @return True if changed"""
     if not writes_events(task):
         return False
-    written = EVENT_WRITERS[task.cls.replace("CAP::", "")]
+    written = EVENT_WRITERS[task.cls.replace("Datum::", "")]
     names = choices(task).setdefault("EVENT", [])
     changed = False
     if len(names) < 2:
@@ -357,13 +359,13 @@ def update_writer_events(tasks, library):
         if default_writer_events(task, library):
             warnings.append("Task %s reads %s and writes %s (Events)." % (
                 task.name, choices(task)["EVENT"][0] if choices(task).get("EVENT") else "?",
-                written_event(task) or EVENT_WRITERS[task.cls.replace("CAP::", "")]))
+                written_event(task) or EVENT_WRITERS[task.cls.replace("Datum::", "")]))
     return warnings
 
 
 def makes_events(task):
     """Whether a task makes events (a generator, a reader or a model)."""
-    name = task.cls.replace("CAP::", "")
+    name = task.cls.replace("Datum::", "")
     return name in EVENT_SOURCES or name.endswith(("Gen", "Generator", "Reader"))
 
 
@@ -481,7 +483,7 @@ class Condition:
 
     @property
     def type(self):
-        """TYPE written for CAP."""
+        """TYPE written for Datum."""
         return TYPE_OF_FORM.get(self.form, self.form)
 
     def significant(self):
@@ -698,7 +700,7 @@ class Folder:
     def __init__(self, list_index, index, name, combination, derived):
         self.list = list_index
         self.index = index
-        self.name = name                        # name of the object in CAP's store
+        self.name = name                        # name of the object in Datum's store
         self.combination = combination
         self.derived = derived
         self.folder = "_".join(combination)     # folder in the folder of the task, in the files of the job
@@ -720,7 +722,7 @@ def task_kinds(task, templates):
 
 def is_glauber(task):
     """Whether the event filters of a task are those of Glauber (GlauberEventFilter)."""
-    return task.cls.replace("CAP::", "").startswith("Glauber")
+    return task.cls.replace("Datum::", "").startswith("Glauber")
 
 
 def histogram_layout(task, templates):
@@ -843,8 +845,8 @@ FOLDER_LIST_SETTINGS = ("USE", "CREATE", "IMPORT")
 #: Keys of earlier versions, dropped when a workflow is read: files of the lists of folders, base names of the folders,
 #: directory levels of FileIterator.
 OBSOLETE_KEY = re.compile(r"^(?:HISTOGRAM_[1-4]:(?:EXPORT(?::.*)?|IMPORT:.*|SCALE|OWNER)|nLevels)$")
-#: Files of the job, keys of the task CAP runs (<task>:JOB:<name>, see CAP.cxx): the output file, where the histograms of
-#: all the tasks are written (a folder per task holding a folder per combination of filters; by default <task>.cap),
+#: Files of the job, keys of the task Datum runs (<task>:JOB:<name>, see Datum.cxx): the output file, where the histograms of
+#: all the tasks are written (a folder per task holding a folder per combination of filters; by default <task>.datum),
 #: the input file, read for the histograms imported (a derived run reads the output file of its fill run), and the
 #: directory of the input file (empty: the output directory of the job).
 JOB_SETTINGS = ("OUTPUT_FILE", "INPUT_FILE", "INPUT_PATH")
@@ -854,7 +856,7 @@ JOB_KEY = re.compile(r"^JOB:(%s)$" % "|".join(JOB_SETTINGS))
 #: Runs of an analyzer: filling its histograms event by event (in an EventIterator), or computing its derived
 #: histograms from histograms filled by an earlier run (in a FileIterator: postProcess() calls calculateDerived()).
 FILL, DERIVED, CUSTOM = "fill", "derived", "custom"
-ITERATOR_OF_MODE = {FILL: "CAP::EventIterator", DERIVED: "CAP::FileIterator"}
+ITERATOR_OF_MODE = {FILL: "Datum::EventIterator", DERIVED: "Datum::FileIterator"}
 
 
 def _set_list(task, list_index, name, value):
@@ -913,7 +915,7 @@ def _copy_task(task):
 
 
 def derived_calculator_class(cls):
-    """Class of the task computing the derived histograms of an analyzer (CAP::XAnalyzer -> CAP::XDerivedCalculator)."""
+    """Class of the task computing the derived histograms of an analyzer (Datum::XAnalyzer -> Datum::XDerivedCalculator)."""
     return cls[:-len("Analyzer")] + "DerivedCalculator" if cls.endswith("Analyzer") else None
 
 
@@ -921,7 +923,7 @@ def derived_calculator(analyzer, templates):
     """Task computing the derived histograms of an analyzer whose folders hold all its histograms (layout "folders"):
     its calculator class (derived_calculator_class()), named <analyzer>Derived, with the filters and histogram settings
     of the analyzer, SOURCE_TASK the analyzer (it reads and writes the folders of the analyzer in the files of the jobs)
-    and its folders imported; no events (a calculator, a CAP::AnalysisTask, has the event and particle filters only).
+    and its folders imported; no events (a calculator, a Datum::AnalysisTask, has the event and particle filters only).
     @return the calculator, or None if the class has no calculator"""
     template = templates.get(derived_calculator_class(analyzer.cls) or "")
     if template is None:
@@ -1080,7 +1082,7 @@ def update_jet_settings(tasks, library, templates):
 
 
 #: Settings of the former JetFluctuationAnalyzer moved to JetAnalyzer (the cones of the underlying event).
-_FLUCTUATION_CLASS = "CAP::JetFluctuationAnalyzer"
+_FLUCTUATION_CLASS = "Datum::JetFluctuationAnalyzer"
 _UE_KEYS = ("UE:MODE", "UE:ETA_MAX")
 
 
@@ -1097,11 +1099,11 @@ def update_jet_fluctuation_tasks(tasks):
             if task.cls != _FLUCTUATION_CLASS:
                 continue
             ue = {p.key: p for p in task.params if p.key in _UE_KEYS}
-            analyzers = [t for t in siblings if t.cls == "CAP::JetAnalyzer"]
+            analyzers = [t for t in siblings if t.cls == "Datum::JetAnalyzer"]
             if not analyzers:
-                task.cls = "CAP::JetAnalyzer"
+                task.cls = "Datum::JetAnalyzer"
                 task.known = True
-                warnings.append("Task %s (JetFluctuationAnalyzer, removed from CAP) is now a JetAnalyzer: it makes the "
+                warnings.append("Task %s (JetFluctuationAnalyzer, removed from Datum) is now a JetAnalyzer: it makes the "
                                 "moments of the multiplicities within the jets and of the underlying event." % task.name)
                 continue
             for analyzer in analyzers:
@@ -1113,7 +1115,7 @@ def update_jet_fluctuation_tasks(tasks):
                         mine.value = p.value
             siblings.remove(task)
             siblings.extend(task.children)
-            warnings.append("Task %s (JetFluctuationAnalyzer, removed from CAP) dropped: its histograms are made by %s%s."
+            warnings.append("Task %s (JetFluctuationAnalyzer, removed from Datum) dropped: its histograms are made by %s%s."
                             % (task.name, ", ".join(a.name for a in analyzers),
                                " (with its settings of the underlying event)" if ue else ""))
     walk(tasks)
@@ -1148,7 +1150,7 @@ def folders(task, templates):
     layout = histogram_layout(task, templates)
     if layout is None:
         return []
-    prefix = task.name                  # objects shared by name in CAP's stores: unique across the tasks
+    prefix = task.name                  # objects shared by name in Datum's stores: unique across the tasks
     events = choices(task).get("EVENT_FILTER", [])
     particles = choices(task).get("PARTICLE_FILTER", [])
     result = []
@@ -1235,7 +1237,7 @@ def _write_object(task, kind, k, name, definition, owner, Param):
                 _set(task, cp + "SELECTION", "string", c.selection, Param)
             _set(task, cp + "MINIMUM", "double", number_text(c.minimum), Param)
             _set(task, cp + "MAXIMUM", "double", number_text(c.minimum if c.form in (VALUE, FLAG) else c.maximum),
-                 Param)                                         # a value or a flag: CAP reads MINIMUM only
+                 Param)                                         # a value or a flag: Datum reads MINIMUM only
             if c.form == DUAL_RANGE:
                 _set(task, cp + "MINIMUM2", "double", number_text(c.minimum2), Param)
                 _set(task, cp + "MAXIMUM2", "double", number_text(c.maximum2), Param)
@@ -1380,7 +1382,7 @@ def extract_choices(tasks, templates, library=None):
             if names:
                 task.filters[kind] = names
         layout = histogram_layout(task, templates)
-        for l in folder_lists(task, templates):           # folders without USE (USE was not read by CAP): used
+        for l in folder_lists(task, templates):           # folders without USE (USE was not read by Datum): used
             n = values.get(list_key(l) + ":N", "0") or "0"
             p = task.param(list_key(l) + ":USE")
             if n.isdigit() and int(n) > 0 and p is not None and p.value != "true":
@@ -1549,7 +1551,7 @@ def check_library(library):
 
 
 def _jet_settings_problems(definition):
-    """Problems of the values of jet settings (CAP::JetSettings::configure()): a positive radius, a pT floor >= 0."""
+    """Problems of the values of jet settings (Datum::JetSettings::configure()): a positive radius, a pT floor >= 0."""
     errors = []
     try:
         if not float(definition.parameters.get("R", "0.4")) > 0:
@@ -1564,7 +1566,7 @@ def _jet_settings_problems(definition):
     return errors
 
 
-#: Parameters of the jet groomers that must be positive (> 0) or not negative (>= 0) (CAP::JetGroomer::configure()).
+#: Parameters of the jet groomers that must be positive (> 0) or not negative (>= 0) (Datum::JetGroomer::configure()).
 _GROOMER_POSITIVE = ("MU", "R_SUB", "R_FILT", "N_KEEP", "R_CUT_FACTOR")
 _GROOMER_NOT_NEGATIVE = ("Z_CUT", "R0", "F_CUT", "A")
 
@@ -1614,7 +1616,7 @@ def check_job(tasks, library, templates):
 
 
 def short_class(cls):
-    return cls.replace("CAP::", "")
+    return cls.replace("Datum::", "")
 
 
 def _parents(tasks, parent=None):
@@ -1631,7 +1633,7 @@ def _jet_task_problems(task, library):
         return ["Task %s finds jets: choose at least one jet settings (Jet settings: algorithm, R, recombination, pT "
                 "floor)." % task.name]
     errors = []
-    if task.cls.replace("CAP::", "") == "JetGroomingAnalyzer" and not choices(task).get("JET_GROOMER"):
+    if task.cls.replace("Datum::", "") == "JetGroomingAnalyzer" and not choices(task).get("JET_GROOMER"):
         errors.append("Task %s grooms jets: choose at least one jet groomer (Jet groomers)." % task.name)
     eta = _param_value(task, "UE:ETA_MAX")
     if eta is not None:
@@ -1695,7 +1697,7 @@ def check_choices(tasks, library, templates):
             if not _param_value(task, "SOURCE_TASK", ""):
                 errors.append("Task %s: name the analyzer whose histograms it completes (SOURCE_TASK)." % task.name)
         elif mode in (FILL, DERIVED) and parent is not None and parent.cls != ITERATOR_OF_MODE[mode] \
-                and parent.cls != "CAP::Task":
+                and parent.cls != "Datum::Task":
             errors.append("Task %s %s: put it in a%s (it is in %s, a %s)." % (
                 task.name, "fills its histograms event by event" if mode == FILL
                 else "computes its derived histograms from a file",
@@ -1747,7 +1749,7 @@ def check_choices(tasks, library, templates):
         names = choices(task).get("EVENT", [])
         if len(names) != 2 or names[0] == names[1]:
             errors.append("Task %s reads one event and writes another (by default %s): choose two events, in this "
-                          "order (Events)." % (task.name, EVENT_WRITERS[task.cls.replace("CAP::", "")]))
+                          "order (Events)." % (task.name, EVENT_WRITERS[task.cls.replace("Datum::", "")]))
         elif _param_value(task, "EVENT:USE", "false") != "true":
             errors.append("Task %s must use its events (Events: Use)." % task.name)
         else:
@@ -1766,8 +1768,14 @@ def check_choices(tasks, library, templates):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-# RUNCAP element of the workflow file
+# RUNDATUM element of the workflow file
 # ------------------------------------------------------------------------------------------------------------------
+
+def find_rundatum_element(root):
+    """The RUNDATUM element of a workflow (RUNCAP in the workflows written before Datum 1.0), or None."""
+    element = root.find("RUNDATUM")
+    return element if element is not None else root.find("RUNCAP")
+
 
 def object_element(o):
     """XML element of an object of the library (see TAG_OF_KIND): its name, title, conditions or parameters."""
@@ -1879,17 +1887,19 @@ def write_selections(path, objects, extras=()):
 
 
 def read_selections(path):
-    """Objects of a selection file (or of the RUNCAP element of a workflow file). @return objects, the other elements
+    """Objects of a selection file (or of the RUNDATUM element of a workflow file). @return objects, the other elements
     of the file (kept as they are), warnings @throws OSError, ValueError if it is not a file of selections"""
     try:
         root = ET.parse(path).getroot()
     except ET.ParseError as error:
         raise ValueError("%s is not an XML file: %s" % (path, error))
-    if root.tag == "CAP":                                       # a workflow: its RUNCAP element
-        root = root.find("RUNCAP")
+    if root.tag in WORKFLOW_ROOTS:                                # a workflow: its RUNDATUM element
+        root = find_rundatum_element(root)
         if root is None:
-            raise ValueError("%s is a workflow without filters (no RUNCAP element)." % path)
-    elif root.tag != SELECTIONS_ROOT:
+            raise ValueError("%s is a workflow without filters (no RUNDATUM element)." % path)
+    elif root.tag in SELECTIONS_ROOTS:
+        root.tag = SELECTIONS_ROOT
+    else:
         raise ValueError("%s is not a selection file (root <%s>, not <%s>)." % (path, root.tag, SELECTIONS_ROOT))
     warnings, objects, extras, seen = [], [], [], set()
     where = os.path.basename(path)
@@ -1941,10 +1951,10 @@ def _relative(path, base_dir):
         return path
 
 
-def runcap_element(library, tasks, base_dir=None):
-    """The RUNCAP element: the library (its own objects, and Include elements for the selection files it links, with
+def rundatum_element(library, tasks, base_dir=None):
+    """The RUNDATUM element: the library (its own objects, and Include elements for the selection files it links, with
     paths relative to base_dir, the directory of the workflow) and the histogram options of the tasks."""
-    root = ET.Element("RUNCAP", {"version": "2"})
+    root = ET.Element("RUNDATUM", {"version": "2"})
     for path in library.links:
         ET.SubElement(root, "Include", {"file": _relative(path, base_dir)})
     for kind in KINDS:
@@ -1972,14 +1982,14 @@ def runcap_element(library, tasks, base_dir=None):
     return root
 
 
-def read_runcap_element(element, tasks, base_dir=None):
-    """Library and histogram options of the tasks from a RUNCAP element (its objects, those of the selection files it
+def read_rundatum_element(element, tasks, base_dir=None):
+    """Library and histogram options of the tasks from a RUNDATUM element (its objects, those of the selection files it
     includes, paths relative to base_dir, and the OBJECT elements of earlier versions). @return library, warnings"""
     library = FilterLibrary()
     warnings = []
     for e in element:                                   # the objects of the workflow, then those of the linked files
         if e.tag in KIND_OF_TAG or e.tag == "OBJECT":
-            o = object_from_element(e, warnings, "RUNCAP")
+            o = object_from_element(e, warnings, "RUNDATUM")
             if o is not None:
                 library.add(o)
     for e in element:
@@ -2007,7 +2017,7 @@ def read_runcap_element(element, tasks, base_dir=None):
     for h in element.findall("HISTOGRAMS"):
         task = by_name.get(h.get("task", ""))
         if task is None:
-            warnings.append("RUNCAP: histogram options of an unknown task '%s' (ignored)." % h.get("task", ""))
+            warnings.append("RUNDATUM: histogram options of an unknown task '%s' (ignored)." % h.get("task", ""))
             continue
         binning = {}
         for c in h.findall("COMBINATION"):
@@ -2036,15 +2046,15 @@ def prepared_for_writing(tasks, library, templates, Param, TaskConfig):
 
 #: Kinds read from a maps file: RunDatum does not define them, it lists those of the file (bin/Datum --maps-list) and the
 #: tasks choose them by name. FilterCreator imports them (IMPORT from the file, CREATE off), each from the folder of
-#: its name (KinematicMapFolder in CAP: the folders are self-describing).
+#: its name (KinematicMapFolder in Datum: the folders are self-describing).
 MAPS_KINDS = ("PARTICLE_EFFICIENCY", "PARTICLE_SMEARER")
 MAPS_LABELS = {"PARTICLE_EFFICIENCY": "Particle efficiency", "PARTICLE_SMEARER": "Particle smearer"}
 #: Program listing the objects of a maps file.
-CAP_PROGRAM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "Datum")
-if not os.path.exists(CAP_PROGRAM) and os.path.exists(os.path.join(os.path.dirname(CAP_PROGRAM), "CAP")):
-    CAP_PROGRAM = os.path.join(os.path.dirname(CAP_PROGRAM), "CAP")      # built before the program was named Datum
+DATUM_PROGRAM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "Datum")
+if not os.path.exists(DATUM_PROGRAM) and os.path.exists(os.path.join(os.path.dirname(DATUM_PROGRAM), "CAP")):
+    DATUM_PROGRAM = os.path.join(os.path.dirname(DATUM_PROGRAM), "CAP")      # built before the program was named Datum
 #: How a task uses the efficiencies (or smearers) it chooses, by the number of names chosen (see EventProcessor::
-#: objectFor() in CAP): none, one for all the particles, or one per event filter and particle filter.
+#: objectFor() in Datum): none, one for all the particles, or one per event filter and particle filter.
 NO_MAPS, ONE_FOR_ALL, PER_FILTERS = "none", "one", "per filters"
 
 
@@ -2108,7 +2118,7 @@ def parse_maps_list(text):
 def list_maps(path, program=None):
     """Objects of a maps file, read by bin/Datum --maps-list. @return [MapsEntry]
     @throws RuntimeError if the file cannot be read"""
-    program = program or CAP_PROGRAM
+    program = program or DATUM_PROGRAM
     if not os.path.isfile(path):
         raise RuntimeError("No maps file %s." % path)
     if not os.path.isfile(program):
@@ -2209,7 +2219,7 @@ def check_maps_choices(task):
     return problems
 
 
-#: Catalog of the functions of CAP (written by bin/Datum --function-catalog; see function_catalog()).
+#: Catalog of the functions of Datum (written by bin/Datum --function-catalog; see function_catalog()).
 FUNCTION_CATALOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DB", "FunctionCatalog.xml")
 
 
@@ -2253,7 +2263,7 @@ def load_function_catalog(path=FUNCTION_CATALOG_FILE):
 
 
 def function_catalog():
-    """The catalog of the functions of CAP, read once from FUNCTION_CATALOG_FILE ({} if there is none yet)."""
+    """The catalog of the functions of Datum, read once from FUNCTION_CATALOG_FILE ({} if there is none yet)."""
     global _catalog
     if _catalog is None:
         _catalog = load_function_catalog()

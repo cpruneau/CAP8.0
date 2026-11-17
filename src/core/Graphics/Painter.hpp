@@ -1,5 +1,5 @@
-#ifndef CAP__Painter
-#define CAP__Painter
+#ifndef DATUM__Painter
+#define DATUM__Painter
 #include <vector>
 #include "String.hpp"
 #include "Point2D.hpp"
@@ -9,7 +9,7 @@
 #include "TextAttributes.hpp"
 #include "Color.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -90,6 +90,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Painter
+#endif // !DATUM__Painter

@@ -27,8 +27,8 @@
 #include "FourierDecomposition.hpp"
 #include "FunctionRegistry.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

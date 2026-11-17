@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ResolutionFunction
-#define CAP__ResolutionFunction
+#ifndef DATUM__ResolutionFunction
+#define DATUM__ResolutionFunction
 #include "HistogramFolder.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -53,6 +53,6 @@ protected:
   std::vector<double> rmsVsEta;
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ResolutionFunction */
+#endif /* DATUM__ResolutionFunction */

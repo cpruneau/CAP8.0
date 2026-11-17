@@ -30,8 +30,8 @@
 #include "Function.hpp"
 #include "Histogram.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

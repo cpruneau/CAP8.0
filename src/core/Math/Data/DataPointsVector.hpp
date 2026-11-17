@@ -1,5 +1,5 @@
-#ifndef CAP_MATH_DataPointsVector
-#define CAP_MATH_DataPointsVector
+#ifndef DATUM_MATH_DataPointsVector
+#define DATUM_MATH_DataPointsVector
 #include <type_traits>
 #include <vector>
 #include "String.hpp"
@@ -11,7 +11,7 @@
 #include "BinaryIO.hpp"
 #include "MathExceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -35,13 +35,13 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::DataPointsVector data(std::vector<double>{1,2,3}, std::vector<double>{4,6,5});
-  //!   data.addPoint(CAP::MATH::DataPoint2D(4.0f, 7.0f));
-  //!   data.pointAs<CAP::MATH::DataPoint2D>(0).setErrors(0.1, 0.2, 0.5);   // modify a stored point in place
+  //!   Datum::MATH::DataPointsVector data(std::vector<double>{1,2,3}, std::vector<double>{4,6,5});
+  //!   data.addPoint(Datum::MATH::DataPoint2D(4.0f, 7.0f));
+  //!   data.pointAs<Datum::MATH::DataPoint2D>(0).setErrors(0.1, 0.2, 0.5);   // modify a stored point in place
   //!   std::vector<double> y = data.yValues();                              // {4,6,5,7}
   //!
-  //!   CAP::MATH::DataPointsVector surface;                                 // rank 2 points
-  //!   surface.addPoint(CAP::MATH::DataPoint3D(1.0, 2.0, 5.0, 0.4));
+  //!   Datum::MATH::DataPointsVector surface;                                 // rank 2 points
+  //!   surface.addPoint(Datum::MATH::DataPoint3D(1.0, 2.0, 5.0, 0.4));
   //! @endcode
   //!
   class DataPointsVector : public DataPoints
@@ -328,15 +328,15 @@ namespace CAP
   //! @}
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPD" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTMD" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! Format version 2: number of points, rank (if any point), then each point in the binary encoding of its class
   //! (DataPoint2D for rank 1, DataPoint3D for rank 2, DataPointND for rank 3 and more). Version 3 adds the fits
   //! attached (see FitList::encodeBinary()). Versions 1 (rank 1 only) and 2 are still read.
   //! @{
 
-  //! @brief Tag of DataPointsVector records in binary files. @return "CAPD"
-  static const char * binaryTag() { return "CAPD"; }
+  //! @brief Tag of DataPointsVector records in binary files. @return "DTMD"
+  static const char * binaryTag() { return "DTMD"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 3; }
   //! @brief Name stored in binary records. @return ""
@@ -378,6 +378,6 @@ namespace CAP
   DataPointsVector operator-(const DataPointsVector & left, const DataPointsVector & right);
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -16,7 +16,7 @@
 #include <istream>
 #include <ostream>
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -266,4 +266,4 @@ namespace CAP
   return is >> s.str();
   }
 
-} // namespace CAP
+} // namespace Datum

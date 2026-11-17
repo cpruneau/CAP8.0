@@ -7,27 +7,27 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__RootConversion
-#define CAP__RootConversion
+#ifndef DATUM__RootConversion
+#define DATUM__RootConversion
 #include "TH1.h"
 #include "Histogram.hpp"
 #include "Profile.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @file RootConversion.hpp
-//! @brief Conversions between CAP histograms (MATH::Histogram, MATH::Profile) and ROOT histograms.
+//! @brief Conversions between Datum histograms (MATH::Histogram, MATH::Profile) and ROOT histograms.
 //!
-//! The analysis classes fill and save MATH::Histogram objects in CAP files. These conversions are for drawing with
+//! The analysis classes fill and save MATH::Histogram objects in Datum files. These conversions are for drawing with
 //! ROOT (plotters) and for importing histograms from older ROOT files.
 //!
-//! Bin numbering: CAP bins are numbered from 0, ROOT bins from 1 (ROOT's under- and overflow bins are not converted).
+//! Bin numbering: Datum bins are numbered from 0, ROOT bins from 1 (ROOT's under- and overflow bins are not converted).
 //!
 //! Example:
 //! @code
-//!   TH1 * h = CAP::toRootHistogram(*histogram);   // rank 1, 2 or 3; caller owns h
+//!   TH1 * h = Datum::toRootHistogram(*histogram);   // rank 1, 2 or 3; caller owns h
 //!   h->Draw();
 //! @endcode
 //!
@@ -43,7 +43,7 @@ namespace CAP
 TH1 * toRootHistogram(const MATH::Histogram & histogram, const String & name="");
 
 //!
-//! @brief CAP copy of a ROOT histogram (TH1, TH2 or TH3, with fixed-width bins): bin contents become bin values and bin
+//! @brief Datum copy of a ROOT histogram (TH1, TH2 or TH3, with fixed-width bins): bin contents become bin values and bin
 //! errors their uncertainties. A bin of unweighted counts (error^2 = content, a whole number) gets content entries,
 //! other non-empty bins one entry. Under- and overflow bins are dropped. A TProfile or TProfile2D becomes a Profile
 //! (see fromRootProfile()).
@@ -62,7 +62,7 @@ MATH::Histogram * fromRootHistogram(const TH1 & histogram);
 TH1 * toRootProfile(const MATH::Profile & profile, const String & name="");
 
 //!
-//! @brief CAP copy of a TProfile or TProfile2D (fixed-width bins), with its sums per bin. The number of entries of a bin
+//! @brief Datum copy of a TProfile or TProfile2D (fixed-width bins), with its sums per bin. The number of entries of a bin
 //! is its sum of weights for unweighted fills, its effective number of entries otherwise.
 //! @param profile ROOT profile @return new profile, owned by the caller
 //! @throws Exception if it is not a TProfile or TProfile2D, or has variable-width bins
@@ -75,6 +75,6 @@ MATH::Profile * fromRootProfile(const TH1 & profile);
 //!
 inline TH1 * rootCopy(const MATH::Histogram * h) { return h ? toRootHistogram(*h) : nullptr; }
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

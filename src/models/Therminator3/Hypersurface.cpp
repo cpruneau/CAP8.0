@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace CAP
+namespace Datum
 {
   Hypersurface::Hypersurface()
   :
@@ -70,4 +70,4 @@ namespace CAP
   }
 
 
-} // namespace CAP
+} // namespace Datum

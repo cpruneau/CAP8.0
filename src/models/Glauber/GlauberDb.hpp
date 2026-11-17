@@ -9,8 +9,8 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberDb
-#define CAP__GlauberDb
+#ifndef DATUM__GlauberDb
+#define DATUM__GlauberDb
 #include <ostream>
 #include <vector>
 #include "Configuration.hpp"
@@ -26,10 +26,10 @@
 #include "XmlDocument.hpp"
 
 using namespace std;
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
+using Datum::MATH::pi;
+using Datum::MATH::twoPi;
 
-namespace CAP
+namespace Datum
 {
   //!
   //! @brief Database of the nucleus types of the Glauber simulations: numbers of nucleons and protons, and parameters
@@ -37,19 +37,19 @@ namespace CAP
   //!
   //! The nuclei are read from an XML file, DB/Glauber/NucleusDb.xml by default, where they can be added or changed:
   //! @code
-  //!   <CAP version="1" type="glauberNucleusDb">
+  //!   <Datum version="1" type="glauberNucleusDb">
   //!     <NUCLEUS_DB>
   //!       <NUCLEUS name="Pb" A="208" Z="82" radialType="1" radius="6.62" skin="0.546" w="0"/>
   //!       <NUCLEUS name="Pbpn" A="208" Z="82" radialType="11" radius="6.68" skin="0.447" w="0"
   //!                neutronRadius="6.69" neutronSkin="0.56" neutronW="0"/>
   //!       <NUCLEUS name="U2" A="238" Z="92" radialType="8" radius="6.67" skin="0.44" w="0" beta2="0.28" beta4="0.093"/>
   //!     </NUCLEUS_DB>
-  //!   </CAP>
+  //!   </Datum>
   //! @endcode
   //! (attributes: see Nucleus and the comment at the top of the file; NucleusDbEditor.py edits and checks it). The file is that of the key
-  //! \<task\>:DB_\<k\>:FILE (default Glauber/NucleusDb.xml; relative paths are taken in $CAP_DATABASE_PATH; NONE: the
+  //! \<task\>:DB_\<k\>:FILE (default Glauber/NucleusDb.xml; relative paths are taken in $DATUM_DATABASE_PATH; NONE: the
   //! built-in table). When the file cannot be found, the built-in table, the same nuclei as the file delivered with
-  //! CAP, is used.
+  //! Datum, is used.
   //!
   class GlauberDb
   :
@@ -104,7 +104,7 @@ namespace CAP
   virtual void configure(const String & taskName, const String & objectType, const Configuration & configuration,
                          unsigned int index) override;
   //! @brief Set the file of the database (read when a nucleus is first looked for). @param fileName file ("NONE":
-  //! the built-in table; relative paths are taken in $CAP_DATABASE_PATH)
+  //! the built-in table; relative paths are taken in $DATUM_DATABASE_PATH)
   void setFileName(const String & fileName) { _fileName = fileName; _loaded = false; }
   //! @brief File of the database. @return file name, as given
   const String & fileName() const { return _fileName; }
@@ -119,7 +119,7 @@ namespace CAP
   XmlDocument toXml() const;
   //! @brief Write the nuclei held to an XML file. @param fileName file
   void exportXml(const String & fileName) const { toXml().write(fileName); }
-  //! @brief Use the built-in table, the nuclei of the file delivered with CAP.
+  //! @brief Use the built-in table, the nuclei of the file delivered with Datum.
   void useBuiltIn();
   //! @brief The built-in table. @return nuclei
   static std::vector<Nucleus> builtIn();
@@ -133,6 +133,6 @@ namespace CAP
   std::vector<Nucleus> _nuclei;    //!< nuclei
   };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

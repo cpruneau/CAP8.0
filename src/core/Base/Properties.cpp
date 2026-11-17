@@ -11,7 +11,7 @@
 #include "PropertiesParser.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   Properties::Properties()
@@ -411,4 +411,4 @@ namespace CAP
   parser.saveTo(*this,_path,_fileName,_extension);
   }
 
-} // namespace CAP
+} // namespace Datum

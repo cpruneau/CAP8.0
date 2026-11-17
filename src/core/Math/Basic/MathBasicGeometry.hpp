@@ -1,5 +1,5 @@
-#ifndef CAP_BasicGeometry
-#define CAP_BasicGeometry
+#ifndef DATUM_BasicGeometry
+#define DATUM_BasicGeometry
 #include <vector>
 #include <algorithm>
 #include <limits>
@@ -14,7 +14,7 @@ using namespace std;
 //! By convention, all function names  begin with a lower case letter.
 //!
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -112,6 +112,6 @@ template <typename T> bool isInside(T xp, T yp, int  np, T *x, T *y)
 
 } // namespace MATH
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

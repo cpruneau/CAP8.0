@@ -7,22 +7,22 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__PHSDEventReader
-#define CAP__PHSDEventReader
+#ifndef DATUM__PHSDEventReader
+#define DATUM__PHSDEventReader
 #include <fstream>
 #include <map>
 #include <memory>
 #include <vector>
 #include "EventProcessor.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
 //! @brief Task reading PHSD (Parton-Hadron-String Dynamics) events from its ASCII output files and copying their
-//! particles into the current CAP event.
+//! particles into the current Datum event.
 //!
-//! Keys: \<name\>:DataImportPath (default $CAP_DATA_IMPORT_PATH), a file or a directory, and DataImportFile, a
+//! Keys: \<name\>:DataImportPath (default $DATUM_DATA_IMPORT_PATH), a file or a directory, and DataImportFile, a
 //! pattern of file names (default "*.dat") searched in the directory and in its sub-directories down to
 //! DataImportDepth levels (default 2: the directory and its sub-directories). The files are read in the order of
 //! their paths. Each event of a file is
@@ -106,4 +106,4 @@ protected:
 
 }
 
-#endif /* CAP__PHSDEventReader */
+#endif /* DATUM__PHSDEventReader */

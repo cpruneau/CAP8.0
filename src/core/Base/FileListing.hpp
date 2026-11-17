@@ -9,18 +9,18 @@
  * *********************************************************************/
 //! @file FileListing.hpp
 //! @brief listDirsIn(), listFilesInDir(): the files and sub-directories of a directory, by name (built on FileSystem).
-#ifndef CAP__FileListing
-#define CAP__FileListing
+#ifndef DATUM__FileListing
+#define DATUM__FileListing
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
 //! @brief Names of the sub-directories of pathname (not hidden ones), by name. @throws FileException if it is not a directory
 std::vector<String> listDirsIn(const String & pathname,bool verbose=false);
 //! @brief Files of pathname whose names end with ext, by name, then those of its sub-directories while
 //! currentDepth < maximumDepth (maximumDepth 0: pathname only). With prependPath, the full paths; otherwise the paths
-//! relative to pathname (e.g. "sub/file.cap"). @throws FileException if pathname is not a directory
+//! relative to pathname (e.g. "sub/file.datum"). @throws FileException if pathname is not a directory
 std::vector<String> listFilesInDir(const String & pathname,
                                    const String & ext,
                                    bool prependPath=1,
@@ -37,8 +37,8 @@ std::vector<String>  listFilesInDir(const String & pathName,
                                     bool verbose=0,
                                     int  maximumDepth=1,
                                     int  currentDepth=0,
-                                    const String & ext=".cap");
+                                    const String & ext=".datum");
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__FileListing
+#endif // !DATUM__FileListing

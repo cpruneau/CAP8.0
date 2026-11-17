@@ -1,6 +1,6 @@
 #include "LatexParagraph.hpp"
 
-namespace CAP
+namespace Datum
 {
   LatexParagraph::LatexParagraph()
   :
@@ -34,4 +34,4 @@ namespace CAP
   skipLines(out,1);
   }
 
-} // namespace CAP
+} // namespace Datum

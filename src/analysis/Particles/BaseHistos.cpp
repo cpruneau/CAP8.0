@@ -17,7 +17,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 BaseHistos::BaseHistos()
@@ -53,4 +53,4 @@ void BaseHistos::cloneB(const BaseHistos & source __attribute__((unused)) )
   if (reportWarning(__FUNCTION__)) { printCR(); }
 }
 
-} // namespace CAP
+} // namespace Datum

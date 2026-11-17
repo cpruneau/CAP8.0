@@ -10,9 +10,9 @@
 #include "ObjectList.hpp"
 #include "PrintHelpers.hpp"
 
-ClassImp(CAP::ObjectList);
+ClassImp(Datum::ObjectList);
 
-namespace CAP
+namespace Datum
 {
 
 NameObjectListException::NameObjectListException(const String  & _name, const String  & _message, const String  & _source)
@@ -212,4 +212,4 @@ const std::vector<Object> & ObjectList::getObjects() const
   return objects;
 }
 
-} // namespace CAP
+} // namespace Datum

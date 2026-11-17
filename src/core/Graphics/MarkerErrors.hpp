@@ -1,8 +1,8 @@
-#ifndef CAP__MarkerErrors
-#define CAP__MarkerErrors
+#ifndef DATUM__MarkerErrors
+#define DATUM__MarkerErrors
 #include "Drawable2D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -50,6 +50,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-}   // namespace CAP
+}   // namespace Datum
 
-#endif // !CAP__MarkerErrors
+#endif // !DATUM__MarkerErrors

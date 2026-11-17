@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "StreamManager.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 StreamManager::StreamManager()
@@ -303,6 +303,6 @@ String StreamManager::removeRootExtension(const String fileName)
 
 
 
-} // namespace CAP
+} // namespace Datum
 
 

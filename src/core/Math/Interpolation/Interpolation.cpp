@@ -15,7 +15,7 @@
 #include "CubicSpline.hpp"
 #include "MathExceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -23,7 +23,7 @@ namespace CAP
   Interpolation::Interpolation(const std::vector<double> & x, const std::vector<double> & y, Method method,
                                unsigned int degree, double slopeLow, double slopeHigh)
   :
-  Function("Interpolation", "Interpolation", "CAP::MATH::Interpolation", 1),
+  Function("Interpolation", "Interpolation", "Datum::MATH::Interpolation", 1),
   _x(),
   _y(),
   _method(method),
@@ -149,4 +149,4 @@ namespace CAP
   }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

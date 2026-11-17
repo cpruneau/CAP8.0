@@ -5,7 +5,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   ModelHydro3D::ModelHydro3D()
@@ -19,7 +19,7 @@ namespace CAP
   {
   Model::configure(taskName,typeName,configuration);
   String path = FileSystem::configuredPath(configuration.valueString(createKey(taskName,typeName,"HYPERS:IMPORT:PATH")),
-                                           "CAP_HYPERSURFACE_PATH");
+                                           "DATUM_HYPERSURFACE_PATH");
   String fileName = configuration.valueString(createKey(taskName,typeName,"HYPERS:IMPORT:FILE_NAME"));
   readFromXmlFile(path.c_str(),fileName.c_str());
   }
@@ -33,9 +33,9 @@ namespace CAP
   double mass  = type.mass();
   double mass2 = mass*mass;
   double chemPotential = chemicalPotential(type);
-  double zeta    = _distanceField.randomX( CAP::MATH::randomGenerator().random() );
-  double sPhi    = _distanceField.randomY( CAP::MATH::randomGenerator().random() );
-  double theta   = _distanceField.randomZ( CAP::MATH::randomGenerator().random() );;
+  double zeta    = _distanceField.randomX( Datum::MATH::randomGenerator().random() );
+  double sPhi    = _distanceField.randomY( Datum::MATH::randomGenerator().random() );
+  double theta   = _distanceField.randomZ( Datum::MATH::randomGenerator().random() );;
   double dhs     = _distanceField.interpolate(zeta,sPhi,theta);
   double dDdZeta = _distanceFieldDZeta.interpolate(zeta,sPhi,theta);
   double dDdPhi  = _distanceFieldDPhi.interpolate(zeta,sPhi,theta);
@@ -49,12 +49,12 @@ namespace CAP
   _position.setTXYZ(tau *std::cosh(sRapidity),rho*std::cos(sPhi),rho*std::sin(sPhi),tau *std::sinh(sRapidity));
 
   // pT = u/(1-u): its own random number, zeta must stay the hypersurface angle used by dSigmaP below
-  double u         = CAP::MATH::randomGenerator().random();
+  double u         = Datum::MATH::randomGenerator().random();
   double zetac     = (u>0.9999999) ? 0.00000001 : 1.00-u;
   double pT        = u/zetac;
   double dPt       = 1.0/(zetac*zetac);
-  double pPhi      = twoPi() * CAP::MATH::randomGenerator().random();
-  double pRapidity = _pRapidityRange * (CAP::MATH::randomGenerator().random() - 0.5);
+  double pPhi      = twoPi() * Datum::MATH::randomGenerator().random();
+  double pRapidity = _pRapidityRange * (Datum::MATH::randomGenerator().random() - 0.5);
   double mT        = std::sqrt(mass2+pT*pT);
   double e         = mT*std::cosh(pRapidity);
   _momentum.setTXYZ(e,pT*std::cos(pPhi),pT*std::sin(pPhi),mT*std::sinh(pRapidity));
@@ -113,8 +113,8 @@ namespace CAP
     if (!e) throw XmlException(String("No PARAMETER named ")+name,"readFromXmlFile()");
     return e->text();
     };
-  _tauI            = parameter("Tau_i").atof() / CAP::Physics::hBarC();       // [GeV^-1]
-  _lambda          = parameter("Lambda").atof() / CAP::Physics::hBarC();      // [GeV^-1]
+  _tauI            = parameter("Tau_i").atof() / Datum::Physics::hBarC();       // [GeV^-1]
+  _lambda          = parameter("Lambda").atof() / Datum::Physics::hBarC();      // [GeV^-1]
   temperature     = parameter("Temperature").atof() * 0.001;  // [GeV]
   muB             = parameter("Mu_B").atof() * 0.001;
   muI             = parameter("Mu_I").atof() * 0.001;
@@ -157,5 +157,5 @@ namespace CAP
     _distanceFieldDTheta = _distanceField.derivativeZ("DistanceDTheta");
   }
 
-} // namespace CAP
+} // namespace Datum
 

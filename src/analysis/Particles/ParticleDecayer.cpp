@@ -17,14 +17,14 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 double ParticleDecayer::twoPi = 2.0*3.1415927;
 
 ParticleDecayer::ParticleDecayer()
 :
-random(&CAP::MATH::randomGenerator())
+random(&Datum::MATH::randomGenerator())
 {
 }
 
@@ -377,5 +377,5 @@ void  ParticleDecayer::decay4(Particle & parent,
 }
 
 
-} // namespace CAP
+} // namespace Datum
 

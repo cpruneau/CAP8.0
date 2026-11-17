@@ -1,5 +1,5 @@
-#ifndef CAP_Pdf
-#define CAP_Pdf
+#ifndef DATUM_Pdf
+#define DATUM_Pdf
 #include "MathConstants.hpp"
 #include "MathBasicFunctions.hpp"
 
@@ -9,7 +9,7 @@ using namespace std;
 //! Compendium of basic and essential mathematical  functions
 //!  By convention, all function names  begin with a lower case letter.
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -163,4 +163,4 @@ double landauPdf(double x, double xi = 1, double x0 = 0);
 
 }
 
-#endif // !CAP_Pdf
+#endif // !DATUM_Pdf

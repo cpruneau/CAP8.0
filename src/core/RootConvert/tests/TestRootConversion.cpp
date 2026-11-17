@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //! @file TestRootConversion.cpp
-//! @brief Tests of the conversions between CAP and ROOT histograms: histograms and profiles in memory (values,
+//! @brief Tests of the conversions between Datum and ROOT histograms: histograms and profiles in memory (values,
 //! uncertainties, entries, labels), and whole files (directories and folders, objects skipped).
 //
 // Works in a temporary directory. Prints each failed check and exits with the number of failures.
@@ -22,12 +22,12 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Directory.hpp"
 #include "RootConversion.hpp"
 #include "RootFileConversion.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {
@@ -50,7 +50,7 @@ int main()
 {
   TH1::AddDirectory(false);
 
-  // ---- histograms: ROOT -> CAP -> ROOT
+  // ---- histograms: ROOT -> Datum -> ROOT
   {
     TH1D r("r", "a ROOT histogram", 10, 0.0, 5.0);
     r.Sumw2();
@@ -92,7 +92,7 @@ int main()
   }
 
   // ---- files: directories <-> folders, other objects skipped
-  char buffer[] = "/tmp/CapTestRootConversion.XXXXXX";
+  char buffer[] = "/tmp/DatumTestRootConversion.XXXXXX";
   Directory top{String(mkdtemp(buffer))};
   String rootPath = top.join("input.root");
   {
@@ -111,16 +111,16 @@ int main()
   CHECK(importRootFile(rootPath, tree, &skipped)==2);
   CHECK(tree.get<MATH::Histogram>("a")!=nullptr && tree.get<MATH::Profile>("singles/p")!=nullptr);
   CHECK(skipped.size()==1 && skipped[0].str().find("graph")!=std::string::npos);
-  // saved as a CAP file, read back lazily, exported to ROOT
-  String capPath = top.join("imported.cap");
+  // saved as a Datum file, read back lazily, exported to ROOT
+  String datumPath = top.join("imported.cap");
   {
-    CapFile out(capPath, File::kWriteOnly);
+    DatumFile out(datumPath, File::kWriteOnly);
     out = tree;
     out.write();
   }
   String outPath = top.join("output.root");
   {
-    CapFile in(capPath, File::kReadOnly);
+    DatumFile in(datumPath, File::kReadOnly);
     in.load(File::Loading::kLazy);
     CHECK(exportRootFile(in, outPath)==2);
   }

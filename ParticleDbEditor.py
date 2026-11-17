@@ -6,10 +6,10 @@
 # For the licensing terms see LICENSE.
 # **********************************************************************
 """
-ParticleDbEditor.py -- view and edit the CAP particle database (DB/ParticleData/ParticleDb.xml).
+ParticleDbEditor.py -- view and edit the Datum particle database (DB/ParticleData/ParticleDb.xml).
 
-Usage (from anywhere; the script locates CAP from its own position):
-    python3 ParticleDbEditor.py [file.xml]      # open the GUI (default: <CAP>/DB/ParticleData/ParticleDb.xml)
+Usage (from anywhere; the script locates Datum from its own position):
+    python3 ParticleDbEditor.py [file.xml]      # open the GUI (default: <Datum>/DB/ParticleData/ParticleDb.xml)
     python3 ParticleDbEditor.py --check FILE    # load FILE, report problems (unknown decay products, duplicate
                                                 # names or PDG codes) and exit
 
@@ -29,7 +29,7 @@ Filters (top): a part of the name (or of the title), the kinds of particles show
 Clicking a column title sorts the particles by that column (click again to reverse; View > File order restores the
 order of the file, which is the order used when saving).
 
-File menu: Open, Save, Save As (the file written keeps the format of CAP's particle database). Edit menu: add,
+File menu: Open, Save, Save As (the file written keeps the format of Datum's particle database). Edit menu: add,
 duplicate and delete particles and decays. Renaming a particle offers to update the decays that refer to it.
 
 Requires Python 3.7+ with tkinter (on macOS with Homebrew Python: brew install python-tk).
@@ -41,8 +41,8 @@ import sys
 import xml.etree.ElementTree as ET
 from xml.sax.saxutils import escape
 
-CAP_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_FILE = os.path.join(CAP_DIR, "DB", "ParticleData", "ParticleDb.xml")
+DATUM_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_FILE = os.path.join(DATUM_DIR, "DB", "ParticleData", "ParticleDb.xml")
 
 #: Types of the known attributes (others are strings).
 INT_FIELDS = {"pdg", "quarks", "antiquarks", "leptons"}
@@ -71,7 +71,7 @@ COLORS = {
 KINDS = ["baryon", "meson", "lepton", "gauge boson", "quark", "other"]
 KIND_LABELS = {"baryon": "Baryons", "meson": "Mesons", "lepton": "Leptons", "gauge boson": "Gauge bosons",
                "quark": "Quarks", "other": "Other"}
-#: Characters escaped in attribute values (as CAP's XmlWriter does), besides & < >.
+#: Characters escaped in attribute values (as Datum's XmlWriter does), besides & < >.
 ENTITIES = {'"': "&quot;", "'": "&apos;"}
 INT_RE = re.compile(r"[+-]?\d+")
 INT_PARTIAL = re.compile(r"[+-]?\d*")
@@ -94,7 +94,7 @@ class Particle:
 
 class ParticleDb:
     def __init__(self):
-        self.root_tag = "CAP"
+        self.root_tag = "Datum"
         self.root_attributes = {"version": "1", "type": "particleDb"}
         self.db_tag = "PARTICLE_DB"
         self.particles = []
@@ -130,7 +130,7 @@ class ParticleDb:
         return db
 
     def write(self, path):
-        """Write the database in the format of CAP's particle database files."""
+        """Write the database in the format of Datum's particle database files."""
         def attrs(d, fields):
             keys = [f for f in fields if f in d] + [k for k in d if k not in fields]
             return " ".join('%s="%s"' % (k, escape(str(d[k]), ENTITIES)) for k in keys)
@@ -773,7 +773,7 @@ def run_gui(path=None, hook=None):
                 options.pop("filetypes", None)
             options.setdefault("parent", self.root)
             if options.get("initialdir") and not os.path.isdir(options["initialdir"]):
-                options["initialdir"] = CAP_DIR
+                options["initialdir"] = DATUM_DIR
             try:
                 return getattr(filedialog, kind_)(**options) or ""
             except tk.TclError as e:

@@ -1,11 +1,11 @@
-#ifndef CAP__ParticleTypeFilter
-#define CAP__ParticleTypeFilter
+#ifndef DATUM__ParticleTypeFilter
+#define DATUM__ParticleTypeFilter
 #include "ParticleType.hpp"
 #include "Filter.hpp"
 #include "ManagedObject.hpp"
 #include "Configuration.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -53,5 +53,5 @@ namespace CAP
 
 }
 
-#endif /* CAP__ParticleTypeFilter */
+#endif /* DATUM__ParticleTypeFilter */
 

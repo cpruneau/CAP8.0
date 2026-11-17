@@ -7,14 +7,14 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__PtPtHistos
-#define CAP__PtPtHistos
+#ifndef DATUM__PtPtHistos
+#define DATUM__PtPtHistos
 #include "HistogramFolder.hpp"
 #include "DerivedCalculator.hpp"
 #include "ParticleFilter.hpp"
 #include "Configuration.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 
@@ -126,13 +126,13 @@ protected:
 
 //!
 //! @brief Derived histograms of the pT-pT analysis (second phase): DerivedCalculator with the folders PtPtHistos,
-//! registered as the task class CAP::PtPtDerivedCalculator.
+//! registered as the task class Datum::PtPtDerivedCalculator.
 //!
 using PtPtDerivedCalculator = DerivedCalculator<PtPtHistos,1>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__PtPtHistos  */
+#endif /* DATUM__PtPtHistos  */
 
 
 

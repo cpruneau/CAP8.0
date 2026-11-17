@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/SubSample
+# Project Datum/SubSample
 ################################################################################################
 
 
@@ -12,7 +12,7 @@ SubSampleStatCalculator.cpp)
 target_link_libraries(SubSample Base  Particles  ${EXTRA_LIBS} )
 target_include_directories(SubSample  PUBLIC Base  Particles SubSample ${EXTRA_INCLUDES} )
 
-cap_install(SubSample LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(SubSample LIBRARY "$ENV{DATUM_LIB_PATH}")
 
 
 ################################################################################################

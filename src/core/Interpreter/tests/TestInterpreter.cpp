@@ -8,8 +8,8 @@
  *
  * *********************************************************************/
 //! @file TestInterpreter.cpp
-//! @brief Tests of the CAP command language: values and operators, control flow, functions, lists, objects of the
-//! registered classes, built-in functions, CAP files and figures, error messages with their lines.
+//! @brief Tests of the Datum command language: values and operators, control flow, functions, lists, objects of the
+//! registered classes, built-in functions, Datum files and figures, error messages with their lines.
 #include <cmath>
 #include <cstdio>
 #include <sstream>
@@ -18,8 +18,8 @@
 #include "Interpreter.hpp"
 #include "Directory.hpp"
 
-using namespace CAP;
-using namespace CAP::INTERPRETER;
+using namespace Datum;
+using namespace Datum::INTERPRETER;
 
 namespace
 {
@@ -96,8 +96,8 @@ int main()
   CHECK(std::fabs(run("h.mean(0)").toReal() - 0.5) < 0.03);
   CHECK(run("h.name").toText() == "h" && run("h.nBins(0)").toInteger() == 40);
   run("h.name = \"gauss\"");
-  CHECK(run("h.name").toText() == "gauss" && run("type(h)").toText() == "CAP::MATH::Histogram");
-  CHECK(run("len(classes(\"CAP::Object\"))").toInteger() >= 3);
+  CHECK(run("h.name").toText() == "gauss" && run("type(h)").toText() == "Datum::MATH::Histogram");
+  CHECK(run("len(classes(\"Datum::Object\"))").toInteger() >= 3);
   output.str("");
   run("help Histogram");
   CHECK(output.str().find("fill void (double, double)") != std::string::npos);
@@ -108,14 +108,14 @@ int main()
   run("print(\"mean\", 1, [1, \"a\"])");
   CHECK(output.str() == "mean 1 [1, \"a\"]\n");
 
-  // ---- CAP files and figures
-  char buffer[] = "/tmp/CapTestInterpreter.XXXXXX";
+  // ---- Datum files and figures
+  char buffer[] = "/tmp/DatumTestInterpreter.XXXXXX";
   Directory top{String(mkdtemp(buffer))};
   std::string dir = top.path().str();
   run("write(\"" + dir + "/out.cap\", h)");
   CHECK(run("ls(\"" + dir + "/out.cap\")").toList().size() == 1);
   run("back = read(\"" + dir + "/out.cap\", \"gauss\")");
-  CHECK(run("type(back)").toText() == "CAP::MATH::Histogram" && run("back.integral() == h.integral()").toBool());
+  CHECK(run("type(back)").toText() == "Datum::MATH::Histogram" && run("back.integral() == h.integral()").toBool());
   run("save(\"" + dir + "/gauss.pdf\", h)\nsave(\"" + dir + "/gauss.svg\", h, back)");
   CHECK(top.contains("gauss.pdf") && top.contains("gauss.svg"));
   // the canvases of the session: made, listed, reached by name and index, saved

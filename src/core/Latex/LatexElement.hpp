@@ -1,11 +1,11 @@
-#ifndef CAP__LatexElement
-#define CAP__LatexElement
+#ifndef DATUM__LatexElement
+#define DATUM__LatexElement
 #include "String.hpp"
 #include <ostream>
 #include <fstream>
 using  std::endl;
 
-namespace CAP
+namespace Datum
 {
   
   class LatexElement
@@ -47,6 +47,6 @@ namespace CAP
   LatexElement * _parent;
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexElement
+#endif // !DATUM__LatexElement

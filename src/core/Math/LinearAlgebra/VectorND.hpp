@@ -1,5 +1,5 @@
-#ifndef CAP_VectorND
-#define CAP_VectorND
+#ifndef DATUM_VectorND
+#define DATUM_VectorND
 #include <cmath>
 #include <ostream>
 #include <iostream>
@@ -7,7 +7,7 @@
 #include "String.hpp"
 #include "BinaryIO.hpp"
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -25,8 +25,8 @@ namespace MATH
 //! Example:
 //! @code
 //!   std::vector<float> data = {1.0f, 2.0f, 2.0f, 4.0f};
-//!   CAP::MATH::VectorND u(data);          // 4 dimensions
-//!   CAP::MATH::VectorND v(4, 1.0);        // (1,1,1,1)
+//!   Datum::MATH::VectorND u(data);          // 4 dimensions
+//!   Datum::MATH::VectorND v(4, 1.0);        // (1,1,1,1)
 //!   double s = u*v;                       // scalar product: 9
 //!   double r = u.modulus();               // 5
 //! @endcode
@@ -207,12 +207,12 @@ public:
 
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPV" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTMV" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! @{
 
-  //! @brief Tag of VectorND records in binary files. @return "CAPV"
-  static const char * binaryTag() { return "CAPV"; }
+  //! @brief Tag of VectorND records in binary files. @return "DTMV"
+  static const char * binaryTag() { return "DTMV"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return ""
@@ -269,6 +269,6 @@ VectorND operator* (double a, const VectorND & v);
 std::ostream& operator<<(std::ostream& out, const VectorND & v);
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

@@ -9,8 +9,8 @@
  * C. Loizides, P. Steinberg, [arXiv:0805.4411](https://arxiv.org/abs/0805.4411) [nucl-ex]
  *
  * *********************************************************************/
-#ifndef CAP__GlauberHistos
-#define CAP__GlauberHistos
+#ifndef DATUM__GlauberHistos
+#define DATUM__GlauberHistos
 #include "Task.hpp"
 #include "Exceptions.hpp"
 #include "ManagedObjects.hpp"
@@ -18,7 +18,7 @@
 #include "HistogramFolder.hpp"
 #include "MathConstants.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -237,9 +237,9 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__GlauberHistos  */
+#endif /* DATUM__GlauberHistos  */
 
 
 

@@ -1,8 +1,8 @@
-#ifndef CAP_ParticleDbExceptions
-#define CAP_ParticleDbExceptions
+#ifndef DATUM_ParticleDbExceptions
+#define DATUM_ParticleDbExceptions
 #include "String.hpp"
 #include "Exceptions.hpp"
-namespace CAP
+namespace Datum
 {
 
 //! @brief Exception thrown for an invalid decay (e.g., a decay mode with an unsupported number of products).
@@ -167,6 +167,6 @@ public:
 };
 
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

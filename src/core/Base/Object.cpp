@@ -14,7 +14,7 @@ using std::cout;
 using std::endl;
 
 
-namespace CAP
+namespace Datum
 {
 
   String Object::kUnknownName   = "UNKNOWN";
@@ -151,4 +151,4 @@ namespace CAP
 
 
 
-} // namespace CAP
+} // namespace Datum

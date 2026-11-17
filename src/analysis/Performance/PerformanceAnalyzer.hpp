@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__PerformanceAnalyzer
-#define CAP__PerformanceAnalyzer
+#ifndef DATUM__PerformanceAnalyzer
+#define DATUM__PerformanceAnalyzer
 #include "EventProcessorHistos.hpp"
 #include "ParticlePerformanceHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -48,6 +48,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__PerformanceAnalyzer */
+#endif /* DATUM__PerformanceAnalyzer */

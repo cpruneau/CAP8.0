@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__BasicEventGen
-#define CAP__BasicEventGen
+#ifndef DATUM__BasicEventGen
+#define DATUM__BasicEventGen
 #include <memory>
 #include <vector>
 #include "EventProcessor.hpp"
@@ -17,7 +17,7 @@
 #include "ParameterizedFunction.hpp"
 #include "VectorLorentz.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -32,8 +32,8 @@ namespace CAP
 //!   Mult:Function:Parameters (empty: the defaults of the class), e.g. "Exponential" or a registered composite
 //!   (a negative or non-finite f(n) counts as 0);
 //! - "HISTOGRAM": P(n) proportional to the contents of a histogram of one variable, n = the integers of each bin
-//!   (equally; the integer nearest to the centre of a bin holding none), read from the CAP file Mult:Histogram:File
-//!   (".cap" may be omitted) of the directory Mult:Histogram:Path ("DEFAULT": $CAP_HISTOS_IMPORT_PATH), at the path
+//!   (equally; the integer nearest to the centre of a bin holding none), read from the Datum file Mult:Histogram:File
+//!   (".datum" may be omitted) of the directory Mult:Histogram:Path ("DEFAULT": $DATUM_HISTOS_IMPORT_PATH), at the path
 //!   Mult:Histogram:Name in it (e.g. "ParticleSingleAnalyzer/ALL_ALL/n1"); MultMin and MultMax are not used
 //!   (negative bins and contents count as 0).
 //!
@@ -198,4 +198,4 @@ protected:
 
 }
 
-#endif /* CAP__BasicEventGen */
+#endif /* DATUM__BasicEventGen */

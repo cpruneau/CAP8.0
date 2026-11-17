@@ -6,7 +6,7 @@ Three libraries of the core turn the results of the analyses into figures and do
 without compiling a program. Graphics draws histograms, data points, functions and their fits on canvases, on the
 screen and in SVG, PDF and PowerPoint files; Latex writes \LaTeX{} documents and Beamer presentations of the canvases;
 and Interpreter runs a small command language, used interactively by DatumShell. None of them uses ROOT: the drawing,
-the vector file formats and the typesetting of the labels are implemented in \CAP{} itself, in standard C++17.
+the vector file formats and the typesetting of the labels are implemented in \Datum{} itself, in standard C++17.
 
 % ---------------------------------------------------------------------------------------------------------------
 \subsection{Graphics}
@@ -22,7 +22,7 @@ renderer never calls a platform: the same code draws a canvas on every device, a
 screen is what is written to a file.
 
 The styles follow the conventions of ROOT, so that the styles of existing configurations keep their meaning: colours
-are numbers, with the numbering and values of ROOT (\code{kRed+2} is 634), held by a colour table of \CAP{} that does
+are numbers, with the numbering and values of ROOT (\code{kRed+2} is 634), held by a colour table of \Datum{} that does
 not need ROOT and gives numbers from 1000 up to any other colour; line, fill and marker styles and font codes are
 those of ROOT, the fill styles including its hatch patterns. Colours carry an opacity.
 
@@ -108,14 +108,14 @@ DatumGui; the registry writes them all, one file per canvas or per graph, or as 
 figure is made in a few lines:
 \begin{widetext}
 \begin{verbatim}[language=C++]
-CAP::GRAPHICS::Canvas canvas("spectra", "Transverse momentum spectra", 800, 600);
+Datum::GRAPHICS::Canvas canvas("spectra", "Transverse momentum spectra", 800, 600);
 canvas.divide(2, 1);                                        // two graphs side by side
-CAP::GRAPHICS::Graph & left = canvas.graph(0);
-left.show(CAP::GRAPHICS::GraphItem(&ptPions, "$\\pi^{+}$"));
-left.show(CAP::GRAPHICS::GraphItem(&ptKaons, "$K^{+}$"));           // overlaid
+Datum::GRAPHICS::Graph & left = canvas.graph(0);
+left.show(Datum::GRAPHICS::GraphItem(&ptPions, "$\\pi^{+}$"));
+left.show(Datum::GRAPHICS::GraphItem(&ptKaons, "$K^{+}$"));           // overlaid
 left.setLogY(true);
-canvas.graph(1).show(CAP::GRAPHICS::GraphItem(&r2, "$R_2$"));        // a map
-CAP::GRAPHICS::PdfPainter pdf(800, 600);
+canvas.graph(1).show(Datum::GRAPHICS::GraphItem(&r2, "$R_2$"));        // a map
+Datum::GRAPHICS::PdfPainter pdf(800, 600);
 canvas.draw(pdf);
 pdf.write("spectra.pdf");
 \end{verbatim}
@@ -124,7 +124,7 @@ pdf.write("spectra.pdf");
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.8\textwidth]{GraphicsExample}
-  \caption{A canvas of four graphs drawn by \CAP{}~8 and written by \code{PdfPainter}. (a) A peak over a linear
+  \caption{A canvas of four graphs drawn by \Datum{} and written by \code{PdfPainter}. (a) A peak over a linear
   background, fitted by a composite function with the Poisson likelihood, a region around a narrow structure being
   excluded from the fit (shaded); the panel below shows the pulls. (b) A correlated peak of two variables, drawn as a colour
   map with contour lines, and its fit by a two-dimensional Gaussian, drawn as contours. (c) The same map in a
@@ -134,9 +134,9 @@ pdf.write("spectra.pdf");
 
 \paragraph{Plot files.}
 The windows, canvases and graphs of a figure can also be described in an XML file, a \emph{plot file}, read and
-written by \code{PlotSpec}: its inputs (CAP files), its outputs, and for each graph the histograms and functions it
+written by \code{PlotSpec}: its inputs (Datum files), its outputs, and for each graph the histograms and functions it
 shows and every setting of style that differs from the defaults. \code{PlotTemplate} makes plot files from the
-histograms of CAP files or of a workflow, laid out by task, histogram and combination of filters, and
+histograms of Datum files or of a workflow, laid out by task, histogram and combination of filters, and
 \code{PlotDocument} edits them, keeping their structure valid, with undo and redo. Plot files are what DatumGui shows
 and saves, and what \code{PlotHistos} draws in batch; they are described with DatumGui
 (Section~\ref{sec:plotfiles}).
@@ -153,10 +153,10 @@ Beamer presentation of canvases: each canvas, or each of its graphs, is written 
 of its own, titled after the canvas, and the document is compiled with \code{pdflatex}:
 \begin{widetext}
 \begin{verbatim}[language=C++]
-CAP::CanvasPresentation talk("Two-particle correlations");
+Datum::CanvasPresentation talk("Two-particle correlations");
 talk.setAuthor("C. Pruneau", "", "Wayne State University");
-talk.addCanvases(CAP::GRAPHICS::CanvasRegistry::session());
-CAP::String tex = talk.write("talk", "correlations");
+talk.addCanvases(Datum::GRAPHICS::CanvasRegistry::session());
+Datum::String tex = talk.write("talk", "correlations");
 talk.compile(tex);                    // talk/correlations.pdf
 \end{verbatim}
 \end{widetext}
@@ -184,7 +184,7 @@ points, random generators, canvases and graphs are registered today.
 The built-in functions write values, give help on the language, on any function and on any registered class, list
 the classes and the variables, run files of commands, time them, and convert and combine values (numbers, texts,
 lists, sums, extrema and the usual mathematical functions). Others reach the files and the graphics: \code{ls},
-\code{read} and \code{write} list, read and write the objects of CAP files; \code{save} draws objects in one graph and
+\code{read} and \code{write} list, read and write the objects of Datum files; \code{save} draws objects in one graph and
 writes it to an SVG or PDF file; and the canvases of the session are found by name or index, registered, saved one
 file per canvas or per graph, printed as a book, or shown in a Beamer presentation, compiled at once
 (Section~\ref{sec:latex}):
@@ -195,7 +195,7 @@ h = Histogram("h", "Gaussian numbers", 40, -4, 4)
 for k in 1..10000 { h.fill(g.gauss(0, 1)) }
 if h.mean(0) > 0 { print("positive mean", h.mean(0)) }
 save("gauss.pdf", h)
-pt = read("run.cap", "Single/MB_PiP/n1_pt")
+pt = read("run.datum", "Single/MB_PiP/n1_pt")
 c = Canvas("spectra", "Spectra", 800, 600)
 c.divide(1, 1)
 c.graph(0).add(pt)

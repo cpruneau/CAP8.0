@@ -10,15 +10,15 @@
 //! @file PlotDocument.hpp
 //! @brief PlotDocument: a PlotHistos XML file being edited (PlotEditor): its tree of inputs, outputs, windows,
 //! canvases, graphs, histograms and functions, the edits that keep it valid, and their undo and redo.
-#ifndef CAP__PlotDocument
-#define CAP__PlotDocument
+#ifndef DATUM__PlotDocument
+#define DATUM__PlotDocument
 #include <deque>
 #include <vector>
 #include "String.hpp"
 #include "XmlDocument.hpp"
 #include "XmlElement.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -142,11 +142,11 @@ namespace CAP
   //! @param parameters its parameters @param xMin lower end @param xMax upper end @return its path
   Path addFunction(const Path & graph, const String & className="Normal", const String & parameters="1, 0, 1",
                    double xMin=-3.0, double xMax=3.0);
-  //! @brief Add an input (or find it). @param file path of the CAP file @return its identifier
+  //! @brief Add an input (or find it). @param file path of the Datum file @return its identifier
   String input(const String & file);
   //!
   //! @brief Add data points of an input file where dropped (see the class description). @param target path of the
-  //! element dropped on @param file CAP file @param objects paths of the objects in the file (several: a folder) —
+  //! element dropped on @param file Datum file @param objects paths of the objects in the file (several: a folder) —
   //! overlaid in one graph when dropped on a graph or an item, one graph each otherwise
   //! @return path of the first element added (histogram, graph or canvas)
   //!
@@ -238,6 +238,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__PlotDocument
+#endif // !DATUM__PlotDocument

@@ -1,8 +1,8 @@
-#ifndef CAP__PolygonRenderer
-#define CAP__PolygonRenderer
+#ifndef DATUM__PolygonRenderer
+#define DATUM__PolygonRenderer
 #include "Renderer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -27,6 +27,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__PolygonRenderer
+#endif // !DATUM__PolygonRenderer

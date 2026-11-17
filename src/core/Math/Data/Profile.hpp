@@ -7,12 +7,12 @@
  * Author: Claude Pruneau
  *
  * *********************************************************************/
-#ifndef CAP__Profile
-#define CAP__Profile
+#ifndef DATUM__Profile
+#define DATUM__Profile
 #include "Histogram.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -34,11 +34,11 @@ namespace MATH
 //!
 //! Means and their uncertainties are stored in double precision.
 //!
-//! <b>Binary files.</b> "CAPQ" records: the Histogram record followed by the sums. The class is registered with Folder.
+//! <b>Binary files.</b> "DTMQ" records: the Histogram record followed by the sums. The class is registered with Folder.
 //!
 //! Example:
 //! @code
-//!   CAP::MATH::Profile p("nPartVsB","<N_{part}> vs b",20,0.0,20.0);
+//!   Datum::MATH::Profile p("nPartVsB","<N_{part}> vs b",20,0.0,20.0);
 //!   p.fill(impact, nParticipants, eventWeight);
 //!   double avg = p.binValueAt(3);
 //! @endcode
@@ -146,8 +146,8 @@ public:
   //! @name Binary files (independent of ROOT)
   //! The payload is that of Histogram (with the fits attached since format version 2), then the sums of the bins.
   //! @{
-  //! @brief Tag of the records of this class. @return "CAPQ"
-  static const char * binaryTag() { return "CAPQ"; }
+  //! @brief Tag of the records of this class. @return "DTMQ"
+  static const char * binaryTag() { return "DTMQ"; }
   //! @brief Version of the record format. @return version
   static unsigned int binaryVersion() { return 2; }
   //! @brief Encode the profile. @param w writer
@@ -178,7 +178,7 @@ protected:
 Profile * safeClone(const Profile * p);
 //! @brief Copy of a profile stored in the current folder of a file. @param inputFile file @param name name of the profile
 //! @return copy owned by the caller @throws FileException if the file has no profile with that name
-Profile * loadProfile(const CapFile & inputFile, const String & name);
+Profile * loadProfile(const DatumFile & inputFile, const String & name);
 
 //! @brief Merge of two profiles (see Profile::add()). @param lhs first profile @param rhs second profile @return merge
 Profile operator+(const Profile & lhs, const Profile & rhs);
@@ -187,10 +187,10 @@ Profile operator-(const Profile & lhs, const Profile & rhs);
 
 } // namespace MATH
 
-// Short names in namespace CAP for the analysis classes.
+// Short names in namespace Datum for the analysis classes.
 using MATH::Histogram;
 using MATH::Profile;
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

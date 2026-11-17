@@ -32,8 +32,8 @@
 #include "MultivariateDistributions.hpp"
 #include "SpecialFunctions.hpp"
 
-using namespace CAP;
-using namespace CAP::MATH;
+using namespace Datum;
+using namespace Datum::MATH;
 
 namespace
 {

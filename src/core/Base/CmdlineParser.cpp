@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "CmdlineParser.hpp"
 
-using CAP::CommandLineParser;
+using Datum::CommandLineParser;
 using std::ostream;
 using std::cout;
 using std::endl;

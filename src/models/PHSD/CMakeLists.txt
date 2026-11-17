@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/PHSD
+# Project Datum/PHSD
 ################################################################################################
 
 
@@ -10,5 +10,5 @@ add_library(PHSD SHARED PHSDTasks.cpp PHSDEventReader.cpp)
 target_link_libraries(PHSD Base Particles ${EXTRA_LIBS} )
 target_include_directories(PHSD  PUBLIC Base  Particles  Cluster PHSD ${EXTRA_INCLUDES})
 
-cap_install(PHSD LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(PHSD LIBRARY "$ENV{DATUM_LIB_PATH}")
 

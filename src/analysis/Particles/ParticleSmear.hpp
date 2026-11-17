@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleSmear
-#define CAP__ParticleSmear
+#ifndef DATUM__ParticleSmear
+#define DATUM__ParticleSmear
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -17,7 +17,7 @@
 #include "MersenneTwister.hpp"
 #include "Particle.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -41,7 +41,7 @@ namespace CAP
 //!
 //! The smeared particle is a copy of the generated one (type, position, live status, pid) with the smeared momentum at
 //! the same mass, and the generated particle as its truth particle (Particle::truth()). The random numbers come from the
-//! generator of the object (CAP's MersenneTwister, seeded with setSeed()) or from a generator given to smear().
+//! generator of the object (Datum's MersenneTwister, seeded with setSeed()) or from a generator given to smear().
 //!
 //! As a managed object (PARTICLE_SMEARER, see ManagedObjects and KinematicMapFolder), the keys of object k are, for
 //! each map PT, ETA, PHI (resolutions) and PT_BIAS, ETA_BIAS, PHI_BIAS (biases): \<task\>:PARTICLE_SMEARER_\<k\>:\<MAP\>:
@@ -174,6 +174,6 @@ protected:
   MATH::MersenneTwister _random;      //!< generator of smear(generated, smeared)
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticleSmear */
+#endif /* DATUM__ParticleSmear */

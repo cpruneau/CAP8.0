@@ -1,8 +1,8 @@
-#ifndef CAP__LatexPackage
-#define CAP__LatexPackage
+#ifndef DATUM__LatexPackage
+#define DATUM__LatexPackage
 #include "LatexElement.hpp"
 
-namespace CAP
+namespace Datum
 {
   class LatexPackage : public LatexElement
   {
@@ -23,6 +23,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexPackage
+#endif // !DATUM__LatexPackage

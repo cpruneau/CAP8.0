@@ -3,7 +3,7 @@
 #include <cmath>
 
 
-namespace CAP
+namespace Datum
 {
 
   Thermodynamics::Thermodynamics()
@@ -89,5 +89,5 @@ namespace CAP
 //  }
   return 0; //(tBulkPart + tShearPart); // fix me
   }
-}  //namespace CAP
+}  //namespace Datum
 

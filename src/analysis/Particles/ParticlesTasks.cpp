@@ -17,20 +17,20 @@
 #include "ParticleDecayerTask.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(ParticlesTasks)
+DATUM_REFLECTION(ParticlesTasks)
 {
-  CAP::registerTask<CAP::EventIterator>("CAP::EventIterator");
-  CAP::registerTask<CAP::EventMerger>("CAP::EventMerger");
-  CAP::registerTask<CAP::EventProcessor>("CAP::EventProcessor");
-  CAP::registerTask<CAP::FileIterator>("CAP::FileIterator");
-  CAP::registerTask<CAP::ParticleDecayerTask>("CAP::ParticleDecayerTask");
-  CAP::registerTask<CAP::FilterCreator>("CAP::FilterCreator");
-  CAP::registerTask<CAP::EventFilterCreator>("CAP::EventFilterCreator");
-  CAP::registerTask<CAP::ParticleFilterCreator>("CAP::ParticleFilterCreator");
-  CAP::registerTask<CAP::EventEfficiencyCreator>("CAP::EventEfficiencyCreator");
-  CAP::registerTask<CAP::ParticleEfficiencyCreator>("CAP::ParticleEfficiencyCreator");
-  CAP::registerTask<CAP::EventSmearerCreator>("CAP::EventSmearerCreator");
-  CAP::registerTask<CAP::ParticleSmearerCreator>("CAP::ParticleSmearerCreator");
-  CAP::registerTask<CAP::EventCreator>("CAP::EventCreator");
-  CAP::registerTask<CAP::ParticleDbCreator>("CAP::ParticleDbCreator");
+  Datum::registerTask<Datum::EventIterator>("Datum::EventIterator");
+  Datum::registerTask<Datum::EventMerger>("Datum::EventMerger");
+  Datum::registerTask<Datum::EventProcessor>("Datum::EventProcessor");
+  Datum::registerTask<Datum::FileIterator>("Datum::FileIterator");
+  Datum::registerTask<Datum::ParticleDecayerTask>("Datum::ParticleDecayerTask");
+  Datum::registerTask<Datum::FilterCreator>("Datum::FilterCreator");
+  Datum::registerTask<Datum::EventFilterCreator>("Datum::EventFilterCreator");
+  Datum::registerTask<Datum::ParticleFilterCreator>("Datum::ParticleFilterCreator");
+  Datum::registerTask<Datum::EventEfficiencyCreator>("Datum::EventEfficiencyCreator");
+  Datum::registerTask<Datum::ParticleEfficiencyCreator>("Datum::ParticleEfficiencyCreator");
+  Datum::registerTask<Datum::EventSmearerCreator>("Datum::EventSmearerCreator");
+  Datum::registerTask<Datum::ParticleSmearerCreator>("Datum::ParticleSmearerCreator");
+  Datum::registerTask<Datum::EventCreator>("Datum::EventCreator");
+  Datum::registerTask<Datum::ParticleDbCreator>("Datum::ParticleDbCreator");
 }

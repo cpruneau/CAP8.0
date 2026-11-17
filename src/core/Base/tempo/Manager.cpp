@@ -10,7 +10,7 @@
 #include "Manager.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 ManagerException::ManagerException(const String  & _name, const String  & _message, const String  & _source)
@@ -41,4 +41,4 @@ void ManagerException::print()
   printLine();
 }
 
-} // namespace CAP
+} // namespace Datum

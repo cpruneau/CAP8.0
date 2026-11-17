@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file TrapezoidIntegrator.hpp
 //! @brief TrapezoidIntegrator: the trapezoidal rule in 1, 2 or n dimensions, with step halving or fixed panels.
-#ifndef CAP__MATH__TrapezoidIntegrator
-#define CAP__MATH__TrapezoidIntegrator
+#ifndef DATUM__MATH__TrapezoidIntegrator
+#define DATUM__MATH__TrapezoidIntegrator
 #include "Integrator.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -72,6 +72,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__TrapezoidIntegrator
+#endif // DATUM__MATH__TrapezoidIntegrator

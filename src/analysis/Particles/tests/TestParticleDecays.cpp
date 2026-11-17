@@ -18,7 +18,7 @@
 #include "ParticleDb.hpp"
 #include "ParticleDecayerTask.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {
@@ -83,9 +83,9 @@ Result decayMany(ParticleType & type, double pz, int n)
 
 int main()
 {
-  CAP::MATH::randomGenerator().setSeed(4357);
+  Datum::MATH::randomGenerator().setSeed(4357);
   ParticleDb db;
-  db.loadFromXml(CAP_PARTICLE_DB);
+  db.loadFromXml(DATUM_PARTICLE_DB);
 
   // the branching ratios of the weak decays and of the rho(770) (once listed twice) sum to 1,
   // and of Sigma(1940), Delta(1920), Delta(1930) (rescaled after the PDG 2026 update)

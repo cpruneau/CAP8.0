@@ -9,14 +9,14 @@
  * *********************************************************************/
 //! @file ParticlePairBFHistos.hpp
 //! @brief ParticlePairBFHistos: balance functions and charge combinations of two species and their antiparticles.
-#ifndef CAP__ParticlePairBFHistos
-#define CAP__ParticlePairBFHistos
+#ifndef DATUM__ParticlePairBFHistos
+#define DATUM__ParticlePairBFHistos
 #include "HistogramFolder.hpp"
 #include "PairBFCalculator.hpp"
 #include "ParticleSingleHistos.hpp"
 #include "ParticlePairHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -125,10 +125,10 @@ protected:
 
 //!
 //! @brief Balance functions of the pair analysis (third phase): PairBFCalculator with the pair folders ParticlePairHistos and
-//! the balance-function folders ParticlePairBFHistos, registered as the task class CAP::ParticlePairBFCalculator.
+//! the balance-function folders ParticlePairBFHistos, registered as the task class Datum::ParticlePairBFCalculator.
 //!
 using ParticlePairBFCalculator = PairBFCalculator<ParticlePairHistos,ParticlePairBFHistos>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticlePairBFHistos */
+#endif /* DATUM__ParticlePairBFHistos */

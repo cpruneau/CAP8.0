@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file Grid2D.hpp
 //! @brief Grid2D: values on the cells of a rectangular grid, for the color maps of rank-2 functions and data.
-#ifndef CAP__Grid2D
-#define CAP__Grid2D
+#ifndef DATUM__Grid2D
+#define DATUM__Grid2D
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
   namespace MATH { class Function; class DataPoints; class Histogram; }
 
@@ -114,6 +114,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Grid2D
+#endif // !DATUM__Grid2D

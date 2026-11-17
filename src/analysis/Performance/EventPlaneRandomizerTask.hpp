@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventPlaneRandomizerTask
-#define CAP__EventPlaneRandomizerTask
+#ifndef DATUM__EventPlaneRandomizerTask
+#define DATUM__EventPlaneRandomizerTask
 #include "EventProcessor.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -32,6 +32,6 @@ public:
   virtual void execute();
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__EventPlaneRandomizerTask */
+#endif /* DATUM__EventPlaneRandomizerTask */

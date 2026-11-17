@@ -14,20 +14,20 @@
 #include "InterpolationTools.hpp"
 #include "MathExceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
 
   PiecewisePolynomial::PiecewisePolynomial()
   :
-  Function("PiecewisePolynomial", "PiecewisePolynomial", "CAP::MATH::PiecewisePolynomial", 1)
+  Function("PiecewisePolynomial", "PiecewisePolynomial", "Datum::MATH::PiecewisePolynomial", 1)
   { }
 
   PiecewisePolynomial::PiecewisePolynomial(const std::vector<double> & breakpoints,
                                            const std::vector<std::vector<double>> & coefficients)
   :
-  Function("PiecewisePolynomial", "PiecewisePolynomial", "CAP::MATH::PiecewisePolynomial", 1)
+  Function("PiecewisePolynomial", "PiecewisePolynomial", "Datum::MATH::PiecewisePolynomial", 1)
   {
   setPieces(breakpoints, coefficients);
   }
@@ -125,4 +125,4 @@ namespace CAP
   }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

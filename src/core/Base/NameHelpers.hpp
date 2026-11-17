@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__NameHelpers
-#define CAP__NameHelpers
+#ifndef DATUM__NameHelpers
+#define DATUM__NameHelpers
 #include <vector>
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
 const String createName(const String & s0,
                         const String & s1,
@@ -117,6 +117,6 @@ String createKey(const String & taskName, const String & objectType, const Strin
 String createKey(const String & taskName, const String & objectType, unsigned int index, const String & suffix);
 String createKey(const String & taskName, const String & objectType, unsigned int index1, const String & s,unsigned int index2,const String & suffix );
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__NameHelpers */
+#endif /* DATUM__NameHelpers */

@@ -1,12 +1,12 @@
-#ifndef CAP__Geom2D
-#define CAP__Geom2D
+#ifndef DATUM__Geom2D
+#define DATUM__Geom2D
 #include "String.hpp"
 #include "Drawable2D.hpp"
 #include "FillAttributes.hpp"
 #include "LineAttributes.hpp"
 #include "TextAttributes.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -61,6 +61,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Geom2D
+#endif // !DATUM__Geom2D

@@ -1,10 +1,10 @@
-#ifndef CAP_MATH_CompositeFunction
-#define CAP_MATH_CompositeFunction
+#ifndef DATUM_MATH_CompositeFunction
+#define DATUM_MATH_CompositeFunction
 #include <vector>
 #include "String.hpp"
 #include "Function.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -36,18 +36,18 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Linear   line(1.0, 2.0);   // 1 + 2x
-  //!   CAP::MATH::Constant offset(3.0);      // 3
-  //!   CAP::MATH::CompositeFunction f;
+  //!   Datum::MATH::Linear   line(1.0, 2.0);   // 1 + 2x
+  //!   Datum::MATH::Constant offset(3.0);      // 3
+  //!   Datum::MATH::CompositeFunction f;
   //!   f.addFunction(&line);
   //!   f.addFunction(&offset);
   //!   double y = f.evaluateAt(2.0);             // 8
   //!   double d = f.derivativeAt(2.0);           // 2
   //!   double s = f.integralInRange(0.0, 1.0);   // 5
   //!
-  //!   CAP::MATH::Normal      gx(1.0, 0.0, 1.0);   // exp(-x^2/2)
-  //!   CAP::MATH::Exponential ey(2.0, -0.5);       // 2 exp(-y/2)
-  //!   CAP::MATH::CompositeFunction g = CAP::MATH::CompositeFunction::product(&gx, &ey);   // rank 2
+  //!   Datum::MATH::Normal      gx(1.0, 0.0, 1.0);   // exp(-x^2/2)
+  //!   Datum::MATH::Exponential ey(2.0, -0.5);       // 2 exp(-y/2)
+  //!   Datum::MATH::CompositeFunction g = Datum::MATH::CompositeFunction::product(&gx, &ey);   // rank 2
   //!   double v = g.evaluateAt(1.0, 2.0);           // exp(-1/2) 2 exp(-1)
   //!   double w = g.integralInRange(-1.0, 1.0, 0.0, 4.0);   // integral of gx times integral of ey
   //! @endcode
@@ -214,6 +214,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

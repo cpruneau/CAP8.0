@@ -10,11 +10,11 @@
 //! @file ContinuousDistributions.hpp
 //! @brief Probability densities of one variable: StudentDistribution, ChiSquareDistribution, FDistribution,
 //! CauchyDistribution, MaxwellBoltzmannDistribution, WeibullDistribution.
-#ifndef CAP_MATH_ContinuousDistributions
-#define CAP_MATH_ContinuousDistributions
+#ifndef DATUM_MATH_ContinuousDistributions
+#define DATUM_MATH_ContinuousDistributions
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -206,6 +206,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP_MATH_ContinuousDistributions
+#endif // DATUM_MATH_ContinuousDistributions

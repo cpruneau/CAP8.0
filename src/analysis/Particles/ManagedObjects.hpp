@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ManagedObjects
-#define CAP__ManagedObjects
+#ifndef DATUM__ManagedObjects
+#define DATUM__ManagedObjects
 #include <vector>
 #include "String.hpp"
 #include "FileSystem.hpp"
@@ -17,7 +17,7 @@
 #include "PrintHelpers.hpp"
 #include "NameHelpers.hpp"
 #include "StreamHelpers.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Object.hpp"
 #include "EnvironmentVariables.hpp"
 #include "Object.hpp"
@@ -27,7 +27,7 @@
 #include <utility>
 #include <iostream>
 
-namespace CAP
+namespace Datum
 {
 
 //! @brief Whether a type has a member function loadFromXml(const String &) (used by ManagedObjects::loadFromXml()).
@@ -59,9 +59,9 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   //!
   //! Histograms (HISTOGRAM types) have no files of their own: the job writes those of all its tasks to one output file,
   //! a folder per task and a sub-folder per object (saveToFolders()), and imports them (IMPORT) from one input file in
-  //! the same way (loadFromFolders(); see CAP.cxx). Other types: for PARTICLE_DB, relative import paths are taken in
-  //! $CAP_DATABASE_PATH.
-  //! Files ending in .cap (or .root, read as .cap) are CAP files; a PARTICLE_DB is read from an XML file (.xml) holding
+  //! the same way (loadFromFolders(); see Datum.cxx). Other types: for PARTICLE_DB, relative import paths are taken in
+  //! $DATUM_DATABASE_PATH.
+  //! Files ending in .datum or .cap (or .root, read as .datum) are Datum files; a PARTICLE_DB is read from an XML file (.xml) holding
   //! the particles and their decay modes (see ParticleDbXml).
     //!
   //! @tparam MANAGED type of the managed objects (a ManagedObject)
@@ -161,7 +161,7 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   configuration.addProperty(createKey(_taskName,_typeName,"N"),      0);
   configuration.addProperty(createKey(_taskName,_typeName,"IMPORT"), false);
   configuration.addProperty(createKey(_taskName,_typeName,"CREATE"), false);
-  if (isHistogramList()) return;    // histograms: read from and written to the files of the job (see CAP.cxx)
+  if (isHistogramList()) return;    // histograms: read from and written to the files of the job (see Datum.cxx)
   configuration.addProperty(createKey(_taskName,_typeName,"EXPORT"), false);
   configuration.addProperty(createKey(_taskName,_typeName,"IMPORT:BASE_NAME"),"NONE");
   configuration.addProperty(createKey(_taskName,_typeName,"IMPORT:PATH"),"DEFAULT");
@@ -174,24 +174,25 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   
   
   //!
-  //! @brief Whether a file name designates a CAP file: names ending with ".cap", and names ending with ".root" (from
-  //! configurations written for the ROOT version, read and written as CAP files, see capFileName()).
-  //! @param fileName file name @return true for a CAP file
+  //! @brief Whether a file name designates a Datum file: names ending with ".datum" or ".cap" (written by CAP, before
+  //! Datum 1.0), and names ending with ".root" (from
+  //! configurations written for the ROOT version, read and written as Datum files, see datumFileName()).
+  //! @param fileName file name @return true for a Datum file
   //!
-  static bool isCapFileName(const String & fileName)
+  static bool isDatumFileName(const String & fileName)
   {
-  return fileName.endsWith(".cap") || fileName.endsWith(".root");
+  return DatumFile::isDatumFileName(fileName) || fileName.endsWith(".root");
   }
 
   //!
-  //! @brief Name of the CAP file used for a configured file name: a ".root" extension is replaced by ".cap".
-  //! @param fileName configured file name @return CAP file name
+  //! @brief Name of the Datum file used for a configured file name: a ".root" extension is replaced by ".datum".
+  //! @param fileName configured file name @return Datum file name
   //!
-  static String capFileName(const String & fileName)
+  static String datumFileName(const String & fileName)
   {
   if (!fileName.endsWith(".root")) return fileName;
   String name(fileName.data(),fileName.length()-5);
-  name += ".cap";
+  name += DatumFile::extension();
   return name;
   }
 
@@ -428,7 +429,7 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   _forceRewrite   = configuration.valueBool(  createKey(_taskName,_typeName,"EXPORT:FORCE_REWRITE"));
     // "DEFAULT", absolute, "./..." or relative to the directory of the environment variable
     if (_typeName.beginsWith("PARTICLE_DB"))
-      _importPath = FileSystem::configuredPath(importPath,"CAP_DATABASE_PATH");
+      _importPath = FileSystem::configuredPath(importPath,"DATUM_DATABASE_PATH");
     }
   bool verbose = true;
   if (reportInfo(__FUNCTION__))
@@ -581,7 +582,7 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   load(_importPath,_importFileName);
   }
   
-  //! @brief Import the objects from a file: a CAP file, or for PARTICLE_DB an XML file (particles and decay modes).
+  //! @brief Import the objects from a file: a Datum file, or for PARTICLE_DB an XML file (particles and decay modes).
   //! @param importPath directory @param importFileName file name @throws Exception for another file
   virtual void load(const String & importPath,
                             const String & importFileName)
@@ -592,9 +593,9 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     printValue("importPath",importPath);
     printValue("importFileName",importFileName);
     };
-  if (isCapFileName(importFileName))
+  if (isDatumFileName(importFileName))
     {
-    std::unique_ptr<CapFile> file(CapFile::openOldCapFile(importPath,capFileName(importFileName)));
+    std::unique_ptr<DatumFile> file(DatumFile::openOldDatumFile(importPath,datumFileName(importFileName)));
     loadFrom(*file);
     }
   else
@@ -607,14 +608,14 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     else
       {
       throw Exception(String("Cannot import ")+_typeName+" objects from "+importFileName
-                      +": a CAP file (.cap, .root) or, for PARTICLE_DB, an XML file (.xml) is expected",__FUNCTION__);
+                      +": a Datum file (.datum, .cap, .root) or, for PARTICLE_DB, an XML file (.xml) is expected",__FUNCTION__);
       }
     
     }
   }
   
-  //! @brief Load each object from a CAP file. @param file file
-  virtual void loadFrom(CapFile & file)
+  //! @brief Load each object from a Datum file. @param file file
+  virtual void loadFrom(DatumFile & file)
   {
   if (reportDebug(__FUNCTION__)) { printCR(); }
   for (auto & object : _objects) object->loadFrom(file);
@@ -654,9 +655,9 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
     printValue("EXPORT:PATH",_exportPath);
     printValue("EXPORT:FILE_NAME",_exportFileName);
     };
-  if (isCapFileName(_exportFileName))
+  if (isDatumFileName(_exportFileName))
     {
-    std::unique_ptr<CapFile> outputFile(CapFile::openRecreateCapFile(_exportPath,capFileName(_exportFileName)));
+    std::unique_ptr<DatumFile> outputFile(DatumFile::openRecreateDatumFile(_exportPath,datumFileName(_exportFileName)));
     for (auto & object : _objects) object->saveTo(*outputFile);
     outputFile->write();
     }
@@ -701,6 +702,6 @@ struct HasLoadFromXml<T, std::void_t<decltype(std::declval<T&>().loadFromXml(std
   template <class MANAGED>
   std::vector<MANAGED*> * ManagedObjects<MANAGED>::objectStore = nullptr;
   
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP_Manager */
+#endif /* DATUM_Manager */

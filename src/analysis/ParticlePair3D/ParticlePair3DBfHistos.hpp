@@ -10,14 +10,14 @@
 //! @file ParticlePair3DBFHistos.hpp
 //! @brief ParticlePair3DBFHistos: balance functions in relative momentum variables of two species and their
 //! antiparticles.
-#ifndef CAP__ParticlePair3DBFHistos
-#define CAP__ParticlePair3DBFHistos
+#ifndef DATUM__ParticlePair3DBFHistos
+#define DATUM__ParticlePair3DBFHistos
 #include "HistogramFolder.hpp"
 #include "PairBFCalculator.hpp"
 #include "ParticleSingleHistos.hpp"
 #include "ParticlePair3DHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -107,10 +107,10 @@ protected:
 
 //!
 //! @brief Balance functions of the 3D pair analysis (third phase): PairBFCalculator with the pair folders ParticlePair3DHistos and
-//! the balance-function folders ParticlePair3DBFHistos, registered as the task class CAP::ParticlePair3DBFCalculator.
+//! the balance-function folders ParticlePair3DBFHistos, registered as the task class Datum::ParticlePair3DBFCalculator.
 //!
 using ParticlePair3DBFCalculator = PairBFCalculator<ParticlePair3DHistos,ParticlePair3DBFHistos>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticlePair3DBFHistos */
+#endif /* DATUM__ParticlePair3DBFHistos */

@@ -16,7 +16,7 @@
 #include <numeric>
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -405,4 +405,4 @@ namespace CAP
   std::vector<DataPointColumns> DataPointColumns::loadAllBinary(const String & fileName)       { return loadAllBinaryObjects<DataPointColumns>(fileName); }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

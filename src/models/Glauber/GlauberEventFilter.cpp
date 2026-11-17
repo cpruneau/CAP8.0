@@ -13,7 +13,7 @@
 #include "NameHelpers.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
   GlauberEventFilter::GlauberEventFilter()
   :
@@ -133,4 +133,4 @@ namespace CAP
 
 
 
-} // namespace CAP
+} // namespace Datum

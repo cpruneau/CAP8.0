@@ -7,7 +7,7 @@
 """Test of the Kill button of RunDatum.py: a job printing without pause is killed, and the window shows its end at once
 (the output queued after the kill is not shown). Skipped without tkinter or a display.
 
-Run from the CAP directory:  python3 -m unittest discover -s tests/python
+Run from the Datum directory:  python3 -m unittest discover -s tests/python
 """
 
 import os
@@ -17,8 +17,8 @@ import textwrap
 import time
 import unittest
 
-CAP_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, CAP_DIR)
+DATUM_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, DATUM_DIR)
 
 try:
     import tkinter as tk
@@ -42,7 +42,7 @@ class TestKill(unittest.TestCase):
                 i = 0
                 while True:
                     i += 1
-                    print("<INFO> Task::execute() event %d, a line as long as those of a verbose CAP job" % i, flush=True)
+                    print("<INFO> Task::execute() event %d, a line as long as those of a verbose Datum job" % i, flush=True)
                 """))
         self.settings = RunDatum.SETTINGS_FILE
         RunDatum.SETTINGS_FILE = os.path.join(self.directory, "settings.json")   # the user's settings are not touched

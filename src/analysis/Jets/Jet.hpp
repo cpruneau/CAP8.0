@@ -11,14 +11,14 @@
 //! @brief Jet: a jet found by the jet finder (JetClustering), with its constituents (particles of the event), the
 //! settings it was found with and its rank among the jets found with them; and the variables of a constituent relative
 //! to a jet.
-#ifndef CAP__Jet
-#define CAP__Jet
+#ifndef DATUM__Jet
+#define DATUM__Jet
 #include <vector>
 #include "VectorLorentz.hpp"
 #include "String.hpp"
 #include "JetSettings.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class Particle;
@@ -69,6 +69,6 @@ double transverseToJet(const MATH::VectorLorentz & p, const MATH::VectorLorentz 
 double angleToJet(const MATH::VectorLorentz & p, const MATH::VectorLorentz & jet);
 //! @}
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__Jet */
+#endif /* DATUM__Jet */

@@ -9,12 +9,12 @@
 #include <algorithm>
 
 using namespace std;
-using CAP::MATH::twoPiCube;
-using CAP::MATH::twoPi;
-using CAP::Physics::hBarC;
+using Datum::MATH::twoPiCube;
+using Datum::MATH::twoPi;
+using Datum::Physics::hBarC;
 
 
-namespace CAP
+namespace Datum
 {
 
   Model::Model()
@@ -134,7 +134,7 @@ namespace CAP
   // choose (scaled down) _mult of this event
   double multFraction = 1.0;
   if (_multFractionRange>0)
-    multFraction = _multFractionMin + _multFractionRange*CAP::MATH::randomGenerator().random();
+    multFraction = _multFractionMin + _multFractionRange*Datum::MATH::randomGenerator().random();
   else
     multFraction = _multFractionMin;
   double mean  = 0;
@@ -147,7 +147,7 @@ namespace CAP
     switch (_fluctType)
       {
         case 0: // Poisson fluctuations
-        hadron.setMultiplicity(CAP::MATH::randomGenerator().poisson(mean));
+        hadron.setMultiplicity(Datum::MATH::randomGenerator().poisson(mean));
         break;
 
         case 1: // Negative Binomial  fluctuations
@@ -156,14 +156,14 @@ namespace CAP
 
         default:
         case 2: // Gaussian fluctuations
-        hadron.setMultiplicity(std::max(0, int(CAP::MATH::randomGenerator().gauss(mean,std::sqrt(mean)))));
+        hadron.setMultiplicity(std::max(0, int(Datum::MATH::randomGenerator().gauss(mean,std::sqrt(mean)))));
         break;
 
         case 3:  // Poisson or Gaussian fluctuations
         if (mean>20)
-          hadron.setMultiplicity(std::max(0, int(CAP::MATH::randomGenerator().gauss(mean,std::sqrt(mean)))));
+          hadron.setMultiplicity(std::max(0, int(Datum::MATH::randomGenerator().gauss(mean,std::sqrt(mean)))));
         else
-          hadron.setMultiplicity(std::max(0, int(CAP::MATH::randomGenerator().poisson(mean))));
+          hadron.setMultiplicity(std::max(0, int(Datum::MATH::randomGenerator().poisson(mean))));
         break;
       }
 
@@ -178,7 +178,7 @@ namespace CAP
       {
       value = calculateIntegrand(hadron);
       if (value>maxIntegrand) _nOverflows++;
-      valueTest = maxIntegrand * CAP::MATH::randomGenerator().random();
+      valueTest = maxIntegrand * Datum::MATH::randomGenerator().random();
       if (valueTest<value)
         {
         Particle & particle = Particle::factory().nextObject();
@@ -196,4 +196,4 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum

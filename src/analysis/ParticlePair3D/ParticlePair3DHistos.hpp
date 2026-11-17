@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticlePair3DHistos
-#define CAP__ParticlePair3DHistos
+#ifndef DATUM__ParticlePair3DHistos
+#define DATUM__ParticlePair3DHistos
 #include "HistogramFolder.hpp"
 #include "PairDerivedCalculator.hpp"
 #include "ParticleSingleHistos.hpp"
@@ -17,7 +17,7 @@
 
 
 
-namespace CAP
+namespace Datum
 {
 //!
 //! @brief Pair histograms in relative momentum (femtoscopy-like) variables for one (event filter, particle filter 1,
@@ -194,11 +194,11 @@ protected:
 
 //!
 //! @brief Derived histograms of the 3D pair analysis (second phase): PairDerivedCalculator with the pair folders
-//! ParticlePair3DHistos, registered as the task class CAP::ParticlePair3DDerivedCalculator.
+//! ParticlePair3DHistos, registered as the task class Datum::ParticlePair3DDerivedCalculator.
 //!
 using ParticlePair3DDerivedCalculator = PairDerivedCalculator<ParticlePair3DHistos>;
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticlePair3DHistos  */
+#endif /* DATUM__ParticlePair3DHistos  */
 

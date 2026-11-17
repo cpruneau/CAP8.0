@@ -7,21 +7,21 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ManagedObject
-#define CAP__ManagedObject
+#ifndef DATUM__ManagedObject
+#define DATUM__ManagedObject
 #include "Object.hpp"
 #include "Configuration.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include <fstream>
 
-namespace CAP
+namespace Datum
 {
 
   //!
   //! @brief Base class of the objects managed by tasks through ManagedObjects: events, filters, efficiencies, smearers,
   //! particle databases.
   //!
-  //! A managed object is configured from keys \<task\>:\<TYPE\>_\<index\>:..., created or loaded (from a CAP file or ASCII
+  //! A managed object is configured from keys \<task\>:\<TYPE\>_\<index\>:..., created or loaded (from a Datum file or ASCII
   //! files), and can be saved, scaled, reset and printed. All functions do nothing here; derived classes override those
   //! they need.
   //!
@@ -51,13 +51,13 @@ namespace CAP
   virtual void initialize() {}
   //! @brief Create the object's content, e.g. histograms (nothing by default).
   virtual void create() {}
-  //! @brief Load the object from a CAP file (nothing by default). @param file file
+  //! @brief Load the object from a Datum file (nothing by default). @param file file
   virtual void loadFrom(const Folder & file __attribute__((unused))) {}
   //! @brief Load the object from an ASCII file (nothing by default). @param file file
   virtual void loadFromAscii(std::ifstream & file __attribute__((unused))) {}
   //! @brief Load from an XML file (nothing here; ParticleDb overrides it). @param fileName file name
   virtual void loadFromXml(const String & fileName __attribute__((unused))) {}
-  //! @brief Save the object in a CAP file (nothing by default). @param file file
+  //! @brief Save the object in a Datum file (nothing by default). @param file file
   virtual void saveTo(Folder & file __attribute__((unused))) const {}
   //! @brief Save the object to an ASCII file (nothing by default). @param file file
   virtual void saveToAscii(std::ofstream & file __attribute__((unused))) {}
@@ -80,5 +80,5 @@ namespace CAP
 
 }
 
-#endif /* CAP__ManagedObject */
+#endif /* DATUM__ManagedObject */
 

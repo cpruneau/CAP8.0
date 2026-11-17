@@ -1,5 +1,5 @@
-#ifndef CAP_BesselFunctions
-#define CAP_BesselFunctions
+#ifndef DATUM_BesselFunctions
+#define DATUM_BesselFunctions
 #include "MathBasicFunctions.hpp"
 
 //!
@@ -10,7 +10,7 @@
 //! I_n, K_n which are computed from them), 1e-8 (J0, J1, Y1) and 1e-9 (H0, H1), 1e-12 (L0, L1); not full double precision.
 //! Functions defined only for x > 0 (K, Y) throw MathException otherwise.
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -32,6 +32,6 @@ double struveL0(double x);
 double struveL1(double x);
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

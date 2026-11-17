@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file Polynomial2D.hpp
 //! @brief Polynomial2D: polynomial of two variables, for fits.
-#ifndef CAP__MATH__Polynomial2D
-#define CAP__MATH__Polynomial2D
+#ifndef DATUM__MATH__Polynomial2D
+#define DATUM__MATH__Polynomial2D
 #include <vector>
 #include "ParameterizedFunction.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -29,7 +29,7 @@ namespace CAP
   //! and y onto [-1, 1] x [-1, 1], which keeps fits well conditioned. The degree is at most 9.
   //!
   //! @code
-  //!   CAP::MATH::Polynomial2D background(2);           // 6 coefficients
+  //!   Datum::MATH::Polynomial2D background(2);           // 6 coefficients
   //!   background.adaptToRange({ 0.0, -5.0 }, { 10.0, 5.0 });
   //! @endcode
   //!
@@ -88,6 +88,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__Polynomial2D
+#endif // !DATUM__MATH__Polynomial2D

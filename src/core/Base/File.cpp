@@ -12,7 +12,7 @@
 #include "PrintHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   File::File(const String & path, Format format, Access access, const String & className)
@@ -131,4 +131,4 @@ namespace CAP
   printValue("Loaded",String(_loaded ? "yes" : "no"));
   }
 
-} // namespace CAP
+} // namespace Datum

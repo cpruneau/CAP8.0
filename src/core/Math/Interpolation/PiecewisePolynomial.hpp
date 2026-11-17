@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file PiecewisePolynomial.hpp
 //! @brief PiecewisePolynomial: a function of one variable made of polynomial pieces between breakpoints.
-#ifndef CAP__MATH__PiecewisePolynomial
-#define CAP__MATH__PiecewisePolynomial
+#ifndef DATUM__MATH__PiecewisePolynomial
+#define DATUM__MATH__PiecewisePolynomial
 #include <vector>
 #include "Function.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -29,7 +29,7 @@ namespace CAP
   //! and linear interpolation (Interpolation) are piecewise polynomials.
   //!
   //! @code
-  //!   CAP::MATH::PiecewisePolynomial p({0.0, 1.0, 2.0}, {{0.0, 1.0}, {1.0, -1.0}});   // a tent: x, then 2 - x
+  //!   Datum::MATH::PiecewisePolynomial p({0.0, 1.0, 2.0}, {{0.0, 1.0}, {1.0, -1.0}});   // a tent: x, then 2 - x
   //!   double v = p(1.5);                                                              // 0.5
   //!   double s = p.integralInRange(0.0, 2.0);                                         // 1
   //! @endcode
@@ -99,6 +99,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // CAP__MATH__PiecewisePolynomial
+#endif // DATUM__MATH__PiecewisePolynomial

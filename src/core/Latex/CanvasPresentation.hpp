@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file CanvasPresentation.hpp
 //! @brief CanvasPresentation: a Beamer presentation of canvases (LatexDocument), one frame per canvas or per graph.
-#ifndef CAP__CanvasPresentation
-#define CAP__CanvasPresentation
+#ifndef DATUM__CanvasPresentation
+#define DATUM__CanvasPresentation
 #include <vector>
 #include "CanvasRegistry.hpp"
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   //!
@@ -81,6 +81,6 @@ namespace CAP
   std::vector<Frame> _frames;   //!< frames, in order
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__CanvasPresentation
+#endif // !DATUM__CanvasPresentation

@@ -1,12 +1,12 @@
-#ifndef CAP__ScalarField
-#define CAP__ScalarField
+#ifndef DATUM__ScalarField
+#define DATUM__ScalarField
 #include <vector>
 #include "String.hpp"
 #include "Object.hpp"
 #include "Function.hpp"
 #include "BinaryIO.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -29,7 +29,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   using namespace CAP::MATH;
+  //!   using namespace Datum::MATH;
   //!   ScalarField c("c", 2.5, 3);                                   // constant field of rank 3
   //!   ScalarField f("f", {0.0, 0.0}, {1.0, 2.0}, {11, 21});       // rank 2 mesh, 11 x 21 nodes
   //!   for (unsigned int i=0; i<11; i++)
@@ -293,13 +293,13 @@ namespace CAP
   //! @}
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPF" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTMF" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly, with the fits attached since format version 2 (see FitList::encodeBinary()). Records of other classes in
   //! the same file are skipped.
   //! @{
 
-  //! @brief Tag of ScalarField records in binary files. @return "CAPF"
-  static const char * binaryTag() { return "CAPF"; }
+  //! @brief Tag of ScalarField records in binary files. @return "DTMF"
+  static const char * binaryTag() { return "DTMF"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 2; }
   //! @brief Name stored in binary records. @return name()
@@ -361,6 +361,6 @@ namespace CAP
   ScalarField operator-(const ScalarField & left, const ScalarField & right);
 
   } //namespace MATH
-} //  namespace CAP
+} //  namespace Datum
 
 #endif

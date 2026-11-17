@@ -9,15 +9,15 @@
  * *********************************************************************/
 //! @file BayesianFitter.hpp
 //! @brief BayesianFitter: posterior distribution of the parameters of a fit (likelihood and priors), by MCMC.
-#ifndef CAP__MATH__BayesianFitter
-#define CAP__MATH__BayesianFitter
+#ifndef DATUM__MATH__BayesianFitter
+#define DATUM__MATH__BayesianFitter
 #include <memory>
 #include <vector>
 #include "Fitter.hpp"
 #include "MetropolisHastings.hpp"
 #include "Prior.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -60,10 +60,10 @@ namespace CAP
   //! The function is left at the posterior means.
   //!
   //! @code
-  //!   CAP::MATH::Normal model(100.0, 0.0, 1.0);
-  //!   CAP::MATH::BayesianFitter bayes(model, histogram, CAP::MATH::Fitter::kPoisson);
-  //!   bayes.setPrior(2, CAP::MATH::Prior::gaussian(1.1, 0.05));     // a width known from elsewhere
-  //!   CAP::MATH::BayesianResult r = bayes.sample();
+  //!   Datum::MATH::Normal model(100.0, 0.0, 1.0);
+  //!   Datum::MATH::BayesianFitter bayes(model, histogram, Datum::MATH::Fitter::kPoisson);
+  //!   bayes.setPrior(2, Datum::MATH::Prior::gaussian(1.1, 0.05));     // a width known from elsewhere
+  //!   Datum::MATH::BayesianResult r = bayes.sample();
   //!   std::cout << r.means[1] << " in [" << r.low68[1] << ", " << r.high68[1] << "]";
   //! @endcode
   //!
@@ -106,6 +106,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__BayesianFitter
+#endif // !DATUM__MATH__BayesianFitter

@@ -10,14 +10,14 @@
 //! @file JetSettings.hpp
 //! @brief JetSettings: the definition of a jet finder (algorithm, radius R, recombination scheme, pT floor);
 //! JetSettingsCreator: the task creating the jet settings of a job (JET_SETTINGS).
-#ifndef CAP__JetSettings
-#define CAP__JetSettings
+#ifndef DATUM__JetSettings
+#define DATUM__JetSettings
 #include "ManagedObject.hpp"
 #include "ObjectCreator.hpp"
 #include "Configuration.hpp"
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -99,6 +99,6 @@ public:
   Task * clone() override { return new JetSettingsCreator(*this); }
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetSettings */
+#endif /* DATUM__JetSettings */

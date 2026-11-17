@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file EvolutionarySearch.hpp
 //! @brief EvolutionarySearch: extremum search by differential evolution or a genetic algorithm.
-#ifndef CAP__MATH__EvolutionarySearch
-#define CAP__MATH__EvolutionarySearch
+#ifndef DATUM__MATH__EvolutionarySearch
+#define DATUM__MATH__EvolutionarySearch
 #include "SearchEngine.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -99,6 +99,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__EvolutionarySearch
+#endif // !DATUM__MATH__EvolutionarySearch

@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file GreedySearch.hpp
 //! @brief GreedySearch: extremum search by greedy moves to the best neighbor on a refining lattice.
-#ifndef CAP__MATH__GreedySearch
-#define CAP__MATH__GreedySearch
+#ifndef DATUM__MATH__GreedySearch
+#define DATUM__MATH__GreedySearch
 #include "SearchEngine.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -52,6 +52,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__GreedySearch
+#endif // !DATUM__MATH__GreedySearch

@@ -8,15 +8,15 @@
  *
  * *********************************************************************/
 //! @file MenuItem.hpp
-//! @brief MenuItem and MenuItemStyle: entry of a menu of CapGui.
-#ifndef CAP__GUI__MenuItem
-#define CAP__GUI__MenuItem
+//! @brief MenuItem and MenuItemStyle: entry of a menu of DatumGui.
+#ifndef DATUM__GUI__MenuItem
+#define DATUM__GUI__MenuItem
 #include <functional>
 #include <vector>
 #include "String.hpp"
 #include "Action.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -42,9 +42,9 @@ namespace CAP
   //! actionPerformed() on every listener with an ActionEvent{command, this}.
   //!
   //! @code
-  //!   MenuItem & open = fileMenu.addItem("Open...", "file.open", "Ctrl+O", "Open a CAP file");
+  //!   MenuItem & open = fileMenu.addItem("Open...", "file.open", "Ctrl+O", "Open a Datum file");
   //!   open.addListener(&app);                                 // the application handles "file.open"
-  //!   MenuItem & about = helpMenu.addItem("About CAP", "help.about");
+  //!   MenuItem & about = helpMenu.addItem("About Datum", "help.about");
   //!   about.setCallback([](MenuItem &) { showAbout(); });     // or a one-off callback
   //! @endcode
   //!
@@ -103,6 +103,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__MenuItem
+#endif // !DATUM__GUI__MenuItem

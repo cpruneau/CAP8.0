@@ -16,7 +16,7 @@
 #include <iomanip>
 
 
-namespace CAP
+namespace Datum
 {
 ConfigurationManager::ConfigurationManager()
 :
@@ -287,7 +287,7 @@ void ConfigurationManager::readXmlElement(const XmlElement & element)
 
 void ConfigurationManager::writeXml(const String & path, const String & name) const
 {
-  XmlDocument document("CAP");
+  XmlDocument document("Datum");
   document.root().setAttribute("version",1);
   XmlElement & element = document.root().addChild(createXmlElement());
   fillXmlElement(element);
@@ -296,7 +296,7 @@ void ConfigurationManager::writeXml(const String & path, const String & name) co
 
 void ConfigurationManager::exportXmlDictionary(const String & path, const String & name)
 {
-  XmlDocument document("CAP");
+  XmlDocument document("Datum");
   document.root().setAttribute("version",1);
   XmlElement & element = document.root().addChild(createXmlElement());
   defineXmlElement(element);
@@ -324,5 +324,5 @@ void ConfigurationManager::readXml(const String & path, const String & name)
   readXmlElement(*element);
 }
 
-} // namespace CAP
+} // namespace Datum
 

@@ -1,8 +1,8 @@
-#ifndef CAP_MATH_Quartic
-#define CAP_MATH_Quartic
+#ifndef DATUM_MATH_Quartic
+#define DATUM_MATH_Quartic
 #include "Polynomial.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -14,7 +14,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::Quartic f(0.0, 0.0, -2.0, 0.0, 1.0);   // x^4 - 2x^2
+  //!   Datum::MATH::Quartic f(0.0, 0.0, -2.0, 0.0, 1.0);   // x^4 - 2x^2
   //!   double y = f(2.0);                                // 8
   //! @endcode
   //!
@@ -62,6 +62,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

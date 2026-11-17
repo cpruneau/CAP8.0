@@ -9,13 +9,13 @@
  * *********************************************************************/
 //! @file RandomGenerator.hpp
 //! @brief RandomGenerator: random numbers of the common distributions, from any engine of uniform numbers.
-#ifndef CAP__RandomGenerator
-#define CAP__RandomGenerator
+#ifndef DATUM__RandomGenerator
+#define DATUM__RandomGenerator
 #include <cstdint>
 #include <limits>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -30,7 +30,7 @@ namespace CAP
   //! works with every engine: add a member function here, or derive a RandomDistribution and use sample().
   //!
   //! @code
-  //!   CAP::MATH::MersenneTwister generator(12345);
+  //!   Datum::MATH::MersenneTwister generator(12345);
   //!   double x = generator.random();               // [0,1)
   //!   double y = generator.gauss(0.0, 2.0);        // mean 0, rms 2
   //!   long   n = generator.poisson(7.5);
@@ -108,6 +108,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__RandomGenerator
+#endif // !DATUM__RandomGenerator

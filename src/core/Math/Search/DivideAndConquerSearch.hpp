@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file DivideAndConquerSearch.hpp
 //! @brief DivideAndConquerSearch: extremum search by recursive subdivision of the domain.
-#ifndef CAP__MATH__DivideAndConquerSearch
-#define CAP__MATH__DivideAndConquerSearch
+#ifndef DATUM__MATH__DivideAndConquerSearch
+#define DATUM__MATH__DivideAndConquerSearch
 #include "SearchEngine.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -53,6 +53,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__DivideAndConquerSearch
+#endif // !DATUM__MATH__DivideAndConquerSearch

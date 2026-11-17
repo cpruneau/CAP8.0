@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 #include "CalibrationProducer.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Exceptions.hpp"
 #include "FileSystem.hpp"
 #include "Histogram.hpp"
@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <memory>
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -57,7 +57,7 @@ namespace CAP
   :
   Base(ParticlePerformanceHistos::analyzerName()),
   _mapsPath(""),
-  _mapsFileName("DetectorMaps.cap"),
+  _mapsFileName("DetectorMaps.datum"),
   _variables(kAuto),
   _biases(true)
   {
@@ -72,7 +72,7 @@ namespace CAP
   Base::setDefaultConfiguration();
   ParticlePerformanceHistos::addDefaultConfiguration(_configuration,name());
   _configuration.addProperty(createKey(name(),"MAPS:PATH"),"DEFAULT");
-  _configuration.addProperty(createKey(name(),"MAPS:FILE_NAME"),"DetectorMaps.cap");
+  _configuration.addProperty(createKey(name(),"MAPS:FILE_NAME"),"DetectorMaps.datum");
   _configuration.addProperty(createKey(name(),"MAPS:VARIABLES"),"AUTO");
   _configuration.addProperty(createKey(name(),"MAPS:BIASES"),true);
   }
@@ -80,7 +80,7 @@ namespace CAP
   void CalibrationProducer::configure(const Configuration & configuration)
   {
   Base::configure(configuration);
-  _mapsPath     = FileSystem::configuredPath(configuration.valueString(createKey(name(),"MAPS:PATH")),"CAP_CALIB_EXPORT_PATH");
+  _mapsPath     = FileSystem::configuredPath(configuration.valueString(createKey(name(),"MAPS:PATH")),"DATUM_CALIB_EXPORT_PATH");
   _mapsFileName = configuration.valueString(createKey(name(),"MAPS:FILE_NAME"));
   _variables    = parseMapVariables(configuration.valueString(createKey(name(),"MAPS:VARIABLES")));
   _biases       = configuration.valueBool(createKey(name(),"MAPS:BIASES"));
@@ -145,7 +145,7 @@ namespace CAP
   _taskExecuted.increment();
   std::vector<ParticlePerformanceHistos*> & folders = histograms();
   if (folders.empty()) throw Exception("No performance histograms (HISTOGRAM:IMPORT from the input file of the job)",__FUNCTION__);
-  std::unique_ptr<CapFile> file(CapFile::openRecreateCapFile(_mapsPath,_mapsFileName));
+  std::unique_ptr<DatumFile> file(DatumFile::openRecreateDatumFile(_mapsPath,_mapsFileName));
   for (ParticlePerformanceHistos * folder : folders)
     {
     if (!folder->hasDerived()) { folder->createDerived(); folder->calculateDerived(); }
@@ -154,7 +154,7 @@ namespace CAP
     if (reportInfo(__FUNCTION__)) printValue("Detector maps",mapsName(*folder));
     }
   file->write();
-  if (reportInfo(__FUNCTION__)) printValue("Map file",CapFile::makeFileName(_mapsPath,_mapsFileName));
+  if (reportInfo(__FUNCTION__)) printValue("Map file",DatumFile::makeFileName(_mapsPath,_mapsFileName));
   }
 
-} // namespace CAP
+} // namespace Datum

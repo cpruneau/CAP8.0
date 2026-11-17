@@ -19,7 +19,7 @@
 #include "ParameterizedFunction.hpp"
 #include "MathExceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -285,7 +285,7 @@ namespace CAP
   const uint8_t kExtensionsMarker = 0xFE;
   //! Extension holding the regions of the fit.
   const uint64_t kRegionsExtension = 1;
-  //! Extension holding the whole fitted function, as a "CAPU" payload (see ParameterizedFunction::encodeBinary()).
+  //! Extension holding the whole fitted function, as a "DTMU" payload (see ParameterizedFunction::encodeBinary()).
   const uint64_t kFunctionExtension = 2;
 
   void writeRecord(BinaryWriter & w, const FitRecord & record)
@@ -302,7 +302,7 @@ namespace CAP
   writeDoubles(w, record.low);
   writeDoubles(w, record.high);
   // extensions, at the end of the block (readers written before them skip them): the regions of the fit, and the
-  // whole function (a "CAPU" payload: any function, an unregistered composite included, is read back from it)
+  // whole function (a "DTMU" payload: any function, an unregistered composite included, is read back from it)
   std::vector<std::pair<uint64_t,std::string>> extensions;
   if (record.hasRegions())
     {
@@ -439,4 +439,4 @@ namespace CAP
   }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

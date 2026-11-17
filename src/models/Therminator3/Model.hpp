@@ -1,5 +1,5 @@
-#ifndef CAP__MODEL
-#define CAP__MODEL
+#ifndef DATUM__MODEL
+#define DATUM__MODEL
 #include "String.hpp"
 #include "Event.hpp"
 #include "EventFilter.hpp"
@@ -12,11 +12,11 @@
 #include "VectorLorentz.hpp"
 //#include <iostream>
 
-using CAP::MATH::ScalarField;
-using CAP::MATH::VectorLorentz;
+using Datum::MATH::ScalarField;
+using Datum::MATH::VectorLorentz;
 
 
-namespace CAP
+namespace Datum
 {
 
   class Model
@@ -84,6 +84,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__ModelH_
+#endif // !DATUM__ModelH_

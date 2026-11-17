@@ -8,20 +8,20 @@
  *
  * *********************************************************************/
 //! @file ColorTable.hpp
-//! @brief ColorTable: the colors of CAP by number (ROOT's numbering), independent of ROOT.
-#ifndef CAP__ColorTable
-#define CAP__ColorTable
+//! @brief ColorTable: the colors of Datum by number (ROOT's numbering), independent of ROOT.
+#ifndef DATUM__ColorTable
+#define DATUM__ColorTable
 #include <map>
 #include "Color.hpp"
 #include "String.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
 
   //!
-  //! @brief The colors of CAP by number, with ROOT's numbering and values: attributes, configurations and the GUI store
+  //! @brief The colors of Datum by number, with ROOT's numbering and values: attributes, configurations and the GUI store
   //! color numbers, and those written for ROOT keep their meaning.
   //!
   //! The table starts with ROOT's 446 default colors below 1000 (0-9 the basic colors, 920-923 grays, the families
@@ -67,6 +67,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__ColorTable
+#endif // !DATUM__ColorTable

@@ -34,7 +34,7 @@
 #include "Profile.hpp"
 #include "NameHelpers.hpp"
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {

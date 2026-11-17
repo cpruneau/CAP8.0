@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/ParticleSingle
+# Project Datum/ParticleSingle
 ################################################################################################
 
 
@@ -22,5 +22,5 @@ target_include_directories(ParticleSingle  PUBLIC Base    Particles ParticleSing
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-cap_install(ParticleSingle LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(ParticleSingle LIBRARY "$ENV{DATUM_LIB_PATH}")
 

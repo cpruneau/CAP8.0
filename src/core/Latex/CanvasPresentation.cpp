@@ -15,7 +15,7 @@
 #include "LatexFrame.hpp"
 #include "PdfPainter.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   using namespace GRAPHICS;
@@ -138,4 +138,4 @@ namespace CAP
   return FileSystem::isFile(FileSystem::withExtension(texPath, ".pdf"));
   }
 
-} // namespace CAP
+} // namespace Datum

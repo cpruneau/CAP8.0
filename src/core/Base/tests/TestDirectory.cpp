@@ -10,7 +10,7 @@
 //! @file TestDirectory.cpp
 //! @brief Test program of FileSystemEntry, Directory, and File as a FileSystemEntry (run by ctest).
 //
-// TestDirectory -- tests of CAP::FileSystemEntry, CAP::Directory, and of File as a FileSystemEntry.
+// TestDirectory -- tests of Datum::FileSystemEntry, Datum::Directory, and of File as a FileSystemEntry.
 //
 // Builds a small tree in a temporary directory, checks the classes (including the printed listings and errors), then
 // removes the tree. Prints each failed check and exits with the number of failures (0: all passed).
@@ -27,8 +27,8 @@
 #include "BinaryFile.hpp"
 #include "TxtFile.hpp"
 
-using namespace CAP;
-namespace FS = CAP::FileSystem;
+using namespace Datum;
+namespace FS = Datum::FileSystem;
 
 namespace
 {
@@ -84,7 +84,7 @@ int main()
   //     data/  run1.cap (10)  run2.cap (2 000 000)  x.root (3)
   //       deep/  run3.cap (0)
   //     empty/
-  char buffer[] = "/tmp/CapTestDirectory.XXXXXX";
+  char buffer[] = "/tmp/DatumTestDirectory.XXXXXX";
   String root(mkdtemp(buffer));
   Directory top(root);
   top.directory("data/deep").create();
@@ -108,8 +108,8 @@ int main()
   CHECK(!missing.exists() && missing.type()==FS::EntryType::kNone);
   CHECK_THROWS(missing.info());
   CHECK_THROWS(missing.list());
-  setenv("CAP_TEST_TOP", root.data(), 1);
-  CHECK(Directory("$CAP_TEST_TOP/data").path().equalTo(top.join("data")));   // expanded at construction
+  setenv("DATUM_TEST_TOP", root.data(), 1);
+  CHECK(Directory("$DATUM_TEST_TOP/data").path().equalTo(top.join("data")));   // expanded at construction
 
   // ---- Directory listings
   Directory data = top.directory("data");

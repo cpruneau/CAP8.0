@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/ParticlePair3D
+# Project Datum/ParticlePair3D
 ################################################################################################
 
 
@@ -21,5 +21,5 @@ target_include_directories(ParticlePair3D  PUBLIC Base Particles ParticleSingle 
 add_definitions(-DOPTIMIZEADDBINCONTENT)
 
 
-cap_install(ParticlePair3D LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(ParticlePair3D LIBRARY "$ENV{DATUM_LIB_PATH}")
 

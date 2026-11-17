@@ -12,8 +12,8 @@
 #include "ParticleSingleAnalyzer.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(ParticleSingleTasks)
+DATUM_REFLECTION(ParticleSingleTasks)
 {
-  CAP::registerTask<CAP::ParticleSingleAnalyzer>("CAP::ParticleSingleAnalyzer");
-  CAP::registerTask<CAP::ParticleSingleDerivedCalculator>("CAP::ParticleSingleDerivedCalculator");
+  Datum::registerTask<Datum::ParticleSingleAnalyzer>("Datum::ParticleSingleAnalyzer");
+  Datum::registerTask<Datum::ParticleSingleDerivedCalculator>("Datum::ParticleSingleDerivedCalculator");
 }

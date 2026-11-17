@@ -1,10 +1,10 @@
-#ifndef CAP_PrintHelpers
-#define CAP_PrintHelpers
+#ifndef DATUM_PrintHelpers
+#define DATUM_PrintHelpers
 #include "String.hpp"
 #include <iostream>
 #include <iomanip>
 
-namespace CAP
+namespace Datum
 {
 char selectFiller(unsigned int style=0);
 void printCR(unsigned int n=1);
@@ -32,6 +32,6 @@ extern std::ostream * gOutputStream;
 extern unsigned int   gOutputStyle;
 extern unsigned int   gOutputlength;
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

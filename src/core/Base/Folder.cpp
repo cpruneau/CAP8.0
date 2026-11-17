@@ -13,7 +13,7 @@
 #endif
 
 
-namespace CAP
+namespace Datum
 {
 
   std::string demangledTypeName(const std::type_info & type)
@@ -657,8 +657,9 @@ namespace CAP
   {
     char t[4];
     read(t,4);
-    if (t[0]!='C' || t[1]!='A' || t[2]!='P') fail("Not a CAP binary record (bad tag)");
-    return std::string(t,4);
+    std::string tag;
+    if (!readBinaryTag(t,tag)) fail("Not a Datum binary record (bad tag)");
+    return tag;
   }
   //! Start the checksum of a record whose payload follows.
   void beginRecord() { _crcs.push_back(0xFFFFFFFFu); }
@@ -863,4 +864,4 @@ namespace CAP
   return loadAllBinaryObjects<Folder>(fileName);
   }
 
-} // namespace CAP
+} // namespace Datum

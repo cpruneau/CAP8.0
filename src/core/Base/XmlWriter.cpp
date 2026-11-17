@@ -10,7 +10,7 @@
 #include "XmlWriter.hpp"
 #include "XmlElement.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   XmlWriter::XmlWriter(std::ostream & out, unsigned int indent)
@@ -160,4 +160,4 @@ namespace CAP
   return *this;
   }
 
-} // namespace CAP
+} // namespace Datum

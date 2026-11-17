@@ -11,7 +11,7 @@
 #include <exception>
 #include <fstream>
 #if defined(__unix__) || defined(__APPLE__)
-#define CAP_WORKFLOW_FORK
+#define DATUM_WORKFLOW_FORK
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -20,11 +20,11 @@
 #include <functional>
 #include "WorkflowHistograms.hpp"
 #include "AnalysisTask.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "Exceptions.hpp"
 #include "Task.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -39,7 +39,7 @@ void makeStage(const XmlElement & element, WorkflowHistograms::Stage & stage, Fo
     {
     main = creator.createTask(nullptr, element);
     stage.outputFile = main->configuration().valueString(createKey(main->name(),"JOB:OUTPUT_FILE"), true,
-                                                          main->name() + String(".cap"));
+                                                          main->name() + String(DatumFile::extension()));
     std::function<void(Task &)> visit = [&](Task & task)
       {
       if (AnalysisTask * analysis = dynamic_cast<AnalysisTask *>(&task))
@@ -55,22 +55,22 @@ void makeStage(const XmlElement & element, WorkflowHistograms::Stage & stage, Fo
   delete main;
 }
 
-#ifdef CAP_WORKFLOW_FORK
+#ifdef DATUM_WORKFLOW_FORK
 //! Make one stage in a child process (the stores of the managed objects, filters and histograms included, are those
-//! of one job, as when RunCAP.py runs it; its messages are not shown): the histograms come back in a CAP file, the
+//! of one job, as when RunDatum.py runs it; its messages are not shown): the histograms come back in a Datum file, the
 //! output file and the problems in a text file. @param element TASK element @param stage stage completed
 //! @return false if the child could not be run (the stage is then to be made here)
 bool makeStageApart(const XmlElement & element, WorkflowHistograms::Stage & stage)
 {
-  char capName[] = "/tmp/cap_workflow_XXXXXX";
-  int capFd = ::mkstemp(capName);
-  if (capFd < 0) return false;
-  ::close(capFd);
-  std::string textName = std::string(capName) + ".txt";
+  char datumName[] = "/tmp/datum_workflow_XXXXXX";
+  int datumFd = ::mkstemp(datumName);
+  if (datumFd < 0) return false;
+  ::close(datumFd);
+  std::string textName = std::string(datumName) + ".txt";
   std::fflush(stdout);
   std::fflush(stderr);
   pid_t pid = ::fork();
-  if (pid < 0) { ::unlink(capName); return false; }
+  if (pid < 0) { ::unlink(datumName); return false; }
   if (pid == 0)
     {
     int null = ::open("/dev/null", O_WRONLY);
@@ -78,7 +78,7 @@ bool makeStageApart(const XmlElement & element, WorkflowHistograms::Stage & stag
     int status = 0;
     try
       {
-      CapFile out{String(capName)};
+      DatumFile out{String(datumName)};
       out.folder().setName(stage.task);
       makeStage(element, stage, out.folder());
       out.write(true);
@@ -95,7 +95,7 @@ bool makeStageApart(const XmlElement & element, WorkflowHistograms::Stage & stag
     {
     try
       {
-      CapFile in(String(capName), File::kReadOnly);
+      DatumFile in(String(datumName), File::kReadOnly);
       in.load(File::Loading::kEager);
       *stage.folder = std::move(in.folder());
       std::ifstream text(textName);
@@ -108,7 +108,7 @@ bool makeStageApart(const XmlElement & element, WorkflowHistograms::Stage & stag
     catch (const std::exception & e) { stage.problems += stage.task + String(": ") + String(e.what()) + String("\n"); }
     }
   else stage.problems += stage.task + String(": the stage could not be made (its tasks failed)\n");
-  ::unlink(capName);
+  ::unlink(datumName);
   ::unlink(textName.c_str());
   return true;
 }
@@ -128,7 +128,7 @@ std::vector<WorkflowHistograms::Stage> WorkflowHistograms::make(const XmlDocumen
     stage.task = element->attribute("name", "");
     stage.name = element->attribute("stage", stage.task);
     stage.folder = std::make_shared<Folder>(stage.task);
-#ifdef CAP_WORKFLOW_FORK
+#ifdef DATUM_WORKFLOW_FORK
     if (makeStageApart(*element, stage)) { stages.push_back(stage); continue; }
 #endif
     makeStage(*element, stage, *stage.folder);
@@ -183,13 +183,13 @@ bool WorkflowHistograms::runStages(const XmlDocument & workflow, const std::vect
                                    Folder & output, String & error, bool verbose)
 {
   if (stages.empty()) { error = "no stage to run"; return false; }
-#ifdef CAP_WORKFLOW_FORK
-  char capName[] = "/tmp/cap_stages_XXXXXX";
-  int capFd = ::mkstemp(capName);
-  if (capFd >= 0)
+#ifdef DATUM_WORKFLOW_FORK
+  char datumName[] = "/tmp/datum_stages_XXXXXX";
+  int datumFd = ::mkstemp(datumName);
+  if (datumFd >= 0)
     {
-    ::close(capFd);
-    std::string textName = std::string(capName) + ".txt";
+    ::close(datumFd);
+    std::string textName = std::string(datumName) + ".txt";
     std::fflush(stdout);
     std::fflush(stderr);
     pid_t pid = ::fork();
@@ -203,7 +203,7 @@ bool WorkflowHistograms::runStages(const XmlDocument & workflow, const std::vect
       int status = 0;
       try
         {
-        CapFile out{String(capName)};
+        DatumFile out{String(datumName)};
         String problem;
         if (runStagesHere(workflow, stages, input, out.folder(), problem)) out.write(true);
         else { std::ofstream text(textName); text << problem.str(); status = 2; }
@@ -222,7 +222,7 @@ bool WorkflowHistograms::runStages(const XmlDocument & workflow, const std::vect
         {
         try
           {
-          CapFile in(String(capName), File::kReadOnly);
+          DatumFile in(String(datumName), File::kReadOnly);
           in.load(File::Loading::kEager);
           output = in.folder();
           }
@@ -235,15 +235,15 @@ bool WorkflowHistograms::runStages(const XmlDocument & workflow, const std::vect
         while (std::getline(text, line)) all += line;
         error = all.empty() ? String("the stages failed (child process)") : String(all);
         }
-      ::unlink(capName);
+      ::unlink(datumName);
       ::unlink(textName.c_str());
       return ok;
       }
-    ::unlink(capName);
+    ::unlink(datumName);
     }
 #endif
   (void)verbose;
   return runStagesHere(workflow, stages, input, output, error);
 }
 
-} // namespace CAP
+} // namespace Datum

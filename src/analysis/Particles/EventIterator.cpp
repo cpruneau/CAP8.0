@@ -14,7 +14,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 EventIterator::EventIterator()
@@ -114,7 +114,7 @@ void EventIterator::execute()
     iEvent++;
     }
   }
-  catch (CAP::EndOfDataException & exception)
+  catch (Datum::EndOfDataException & exception)
   {
   if (reportWarning(__FUNCTION__))
     {
@@ -134,4 +134,4 @@ void EventIterator::execute()
 }
 
 
-} // namespace CAP
+} // namespace Datum

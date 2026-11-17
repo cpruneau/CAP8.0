@@ -12,7 +12,7 @@
 #include "PHSDEventReader.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(PHSDTasks)
+DATUM_REFLECTION(PHSDTasks)
 {
-  CAP::registerTask<CAP::PHSDEventReader>("CAP::PHSDEventReader");
+  Datum::registerTask<Datum::PHSDEventReader>("Datum::PHSDEventReader");
 }

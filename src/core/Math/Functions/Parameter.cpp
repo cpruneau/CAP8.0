@@ -3,7 +3,7 @@
 #include "MathExceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -150,4 +150,4 @@ namespace CAP
   std::vector<Parameter> Parameter::loadAllBinary(const String & fileName)       { return loadAllBinaryObjects<Parameter>(fileName); }
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum

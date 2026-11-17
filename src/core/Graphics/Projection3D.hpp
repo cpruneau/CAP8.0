@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file Projection3D.hpp
 //! @brief Projection3D: orthographic projection of the box of a 3D view onto the frame of a graph.
-#ifndef CAP__Projection3D
-#define CAP__Projection3D
+#ifndef DATUM__Projection3D
+#define DATUM__Projection3D
 #include "Graph.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -69,6 +69,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Projection3D
+#endif // !DATUM__Projection3D

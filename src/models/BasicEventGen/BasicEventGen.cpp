@@ -19,14 +19,14 @@
 #include "MathBasicIntegration.hpp"
 #include "InterpolationTools.hpp"
 #include "PrintHelpers.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "FileSystem.hpp"
 #include "Histogram.hpp"
 #include "HistogramFolder.hpp"
 #include "ManagedObjects.hpp"
 #include <memory>
 
-namespace CAP
+namespace Datum
 {
 
 namespace
@@ -309,15 +309,15 @@ void BasicEventGen::readMultiplicity()
     {
     _multDistribution = kMultHistogram;
     String path = FileSystem::configuredPath(_configuration.valueString(key("Mult:Histogram:Path"),true,"DEFAULT"),
-                                             "CAP_HISTOS_IMPORT_PATH");
+                                             "DATUM_HISTOS_IMPORT_PATH");
     String file = _configuration.valueString(key("Mult:Histogram:File"),true,"NONE");
     String histogramName = _configuration.valueString(key("Mult:Histogram:Name"),true,"NONE");
     if (file.isEmpty() || file=="NONE")
       throw ConfigurationException(key("Mult:Histogram:File"),"no file named",__FUNCTION__);
     if (histogramName.isEmpty() || histogramName=="NONE")
       throw ConfigurationException(key("Mult:Histogram:Name"),"no histogram named",__FUNCTION__);
-    std::unique_ptr<CapFile> input;
-    try { input.reset(CapFile::openOldCapFile(path,ManagedObjects<HistogramFolder>::capFileName(file))); }
+    std::unique_ptr<DatumFile> input;
+    try { input.reset(DatumFile::openOldDatumFile(path,ManagedObjects<HistogramFolder>::datumFileName(file))); }
     catch (const std::exception & e)
       {
       throw ConfigurationException(key("Mult:Histogram:File"),String("cannot open ")+file+" in "+path+": "+e.what(),
@@ -511,4 +511,4 @@ void BasicEventGen::execute()
   _taskExecuted.increment();
 }
 
-} // namespace CAP
+} // namespace Datum

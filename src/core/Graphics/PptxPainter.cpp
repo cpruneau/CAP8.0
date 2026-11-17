@@ -18,7 +18,7 @@
 #include "Canvas.hpp"
 #include "LatexRenderer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -51,8 +51,8 @@ namespace CAP
     "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>"
     "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>";
   return std::string("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n")
-    + "<a:theme xmlns:a=\"" + kNsA + "\" name=\"CAP\"><a:themeElements>"
-    "<a:clrScheme name=\"CAP\">"
+    + "<a:theme xmlns:a=\"" + kNsA + "\" name=\"Datum\"><a:themeElements>"
+    "<a:clrScheme name=\"Datum\">"
     "<a:dk1><a:srgbClr val=\"000000\"/></a:dk1><a:lt1><a:srgbClr val=\"FFFFFF\"/></a:lt1>"
     "<a:dk2><a:srgbClr val=\"1F2937\"/></a:dk2><a:lt2><a:srgbClr val=\"F3F4F6\"/></a:lt2>"
     "<a:accent1><a:srgbClr val=\"1F77B4\"/></a:accent1><a:accent2><a:srgbClr val=\"D62728\"/></a:accent2>"
@@ -60,11 +60,11 @@ namespace CAP
     "<a:accent5><a:srgbClr val=\"FF7F0E\"/></a:accent5><a:accent6><a:srgbClr val=\"8C564B\"/></a:accent6>"
     "<a:hlink><a:srgbClr val=\"0563C1\"/></a:hlink><a:folHlink><a:srgbClr val=\"954F72\"/></a:folHlink>"
     "</a:clrScheme>"
-    "<a:fontScheme name=\"CAP\">"
+    "<a:fontScheme name=\"Datum\">"
     "<a:majorFont><a:latin typeface=\"Arial\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:majorFont>"
     "<a:minorFont><a:latin typeface=\"Arial\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:minorFont>"
     "</a:fontScheme>"
-    "<a:fmtScheme name=\"CAP\">"
+    "<a:fmtScheme name=\"Datum\">"
     "<a:fillStyleLst>" + fill3 + "</a:fillStyleLst>"
     "<a:lnStyleLst>"
     "<a:ln w=\"6350\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill></a:ln>"
@@ -656,4 +656,4 @@ namespace CAP
   }
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum

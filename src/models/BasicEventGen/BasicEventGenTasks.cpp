@@ -12,7 +12,7 @@
 #include "BasicEventGen.hpp"
 #include "TaskRegistration.hpp"
 
-CAP_REFLECTION(BasicEventGenTasks)
+DATUM_REFLECTION(BasicEventGenTasks)
 {
-  CAP::registerTask<CAP::BasicEventGen>("CAP::BasicEventGen");
+  Datum::registerTask<Datum::BasicEventGen>("Datum::BasicEventGen");
 }

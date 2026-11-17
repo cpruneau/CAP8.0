@@ -14,9 +14,10 @@
 #include "NameHelpers.hpp"
 #include "Exceptions.hpp"
 #include "FileSystem.hpp"
+#include "DatumFile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ClosureIterator::ClosureIterator()
@@ -54,11 +55,11 @@ void ClosureIterator::execute()
   int    method       = _configuration.valueInt(createKey(taskName,objectType,"METHOD"),1,0);
   int    test         = _configuration.valueInt(createKey(taskName,objectType,"TEST"),1,ClosureCalculator::kNoTest);
   String importPath   = FileSystem::configuredPath(_configuration.valueString(createKey(taskName,objectType,"IMPORT:PATH")),
-                                                   "CAP_HISTOS_IMPORT_PATH");
+                                                   "DATUM_HISTOS_IMPORT_PATH");
   String genFolder    = _configuration.valueString(createKey(taskName,objectType,"IMPORT:GEN_FOLDER"));
   String recoFolder   = _configuration.valueString(createKey(taskName,objectType,"IMPORT:REC_FOLDER"));
   String exportPath   = FileSystem::configuredPath(_configuration.valueString(createKey(taskName,objectType,"EXPORT:PATH")),
-                                                   "CAP_HISTOS_EXPORT_PATH");
+                                                   "DATUM_HISTOS_EXPORT_PATH");
   bool   forceRewrite = _configuration.valueBool(createKey(taskName,objectType,"EXPORT:FORCE_REWRITE"),1,true);
   String path = createKey(taskName,objectType);
   std::vector<String> included = _configuration.selectedValues(path.data(),"IncludedPattern","NONE");
@@ -95,15 +96,15 @@ ClosureIterator::Summary ClosureIterator::run(int method, int test, const String
                                               const std::vector<String> & included,
                                               const std::vector<String> & excluded)
 {
-  // the CAP files of the directory (by name; names relative to it, no sub-directory) with the patterns asked for,
+  // the Datum files of the directory (by name; names relative to it, no sub-directory) with the patterns asked for,
   // holding the tag _Gen once, and neither _Reco nor _Closure
   std::vector<String> files;
-  for (const String & name : listFilesInDir(importDirectory,included,excluded,false,false,0))
-    if (tagPositions(name,"_Gen").size()==1 && tagPositions(name,"_Reco").empty()
+  for (const String & name : listFilesInDir(importDirectory,included,excluded,false,false,0,0,""))
+    if (DatumFile::isDatumFileName(name) && tagPositions(name,"_Gen").size()==1 && tagPositions(name,"_Reco").empty()
         && tagPositions(name,"_Closure").empty())
       files.push_back(name);
   if (files.empty())
-    throw Exception(String("No generator-level file (a .cap file with the tag _Gen) selected in ")+importDirectory,
+    throw Exception(String("No generator-level file (a Datum file with the tag _Gen) selected in ")+importDirectory,
                     __FUNCTION__);
   if (reportInfo(__FUNCTION__))
     {
@@ -171,4 +172,4 @@ ClosureIterator::Summary ClosureIterator::run(int method, int test, const String
   return summary;
 }
 
-} // namespace CAP
+} // namespace Datum

@@ -10,12 +10,12 @@
 //! @file JetUnderlyingEvent.hpp
 //! @brief Multiplicities by charge sign of the constituents of a jet or of the particles of a cone, and the cones of the
 //! underlying event, transverse to the leading jet.
-#ifndef CAP__JetUnderlyingEvent
-#define CAP__JetUnderlyingEvent
+#ifndef DATUM__JetUnderlyingEvent
+#define DATUM__JetUnderlyingEvent
 #include <vector>
 #include "Jet.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -71,6 +71,6 @@ public:
   static Multiplicities count(const std::vector<Particle*> & particles, const Cone & cone, double radius);
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetUnderlyingEvent */
+#endif /* DATUM__JetUnderlyingEvent */

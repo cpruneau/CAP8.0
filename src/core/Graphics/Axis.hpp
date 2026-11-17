@@ -1,12 +1,12 @@
-#ifndef CAP__Axis
-#define CAP__Axis
+#ifndef DATUM__Axis
+#define DATUM__Axis
 #include "AxisRange.hpp"
 #include "Drawable2D.hpp"
 #include "LineAttributes.hpp"
 #include "TextAttributes.hpp"
 #include "Rect2D.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -163,6 +163,6 @@ namespace CAP
 
   };
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__Axis
+#endif // !DATUM__Axis

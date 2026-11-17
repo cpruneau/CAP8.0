@@ -1,10 +1,10 @@
-#ifndef CAP_MATH_Laguerre
-#define CAP_MATH_Laguerre
+#ifndef DATUM_MATH_Laguerre
+#define DATUM_MATH_Laguerre
 #include <vector>
 #include "String.hpp"
 #include "Function.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -26,7 +26,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   using namespace CAP::MATH;
+  //!   using namespace Datum::MATH;
   //!   Laguerre l3(3);                       // L_3(x) = (-x^3 + 9x^2 - 18x + 6)/6
   //!   Laguerre a(2, 0.5);                   // L_2^(1/2)(x)
   //!   double y = l3.evaluateAt(1.0);        // (-1 + 9 - 18 + 6)/6 = -2/3
@@ -105,6 +105,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

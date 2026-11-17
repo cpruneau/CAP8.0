@@ -8,7 +8,7 @@
 """
 RunDatum.py -- graphical front end to compose, configure and run Datum jobs (workflows).
 
-Usage (from anywhere; the script locates CAP from its own position):
+Usage (from anywhere; the script locates Datum from its own position):
     python3 RunDatum.py [workflow.xml]          # open the GUI (and load a workflow)
     python3 RunDatum.py --print-command FILE    # print the command that runs the workflow FILE and exit (no GUI)
     python3 RunDatum.py --check FILE            # load FILE, check its values against the templates and exit (no GUI)
@@ -23,7 +23,7 @@ The window has four parts, from top to bottom:
     times, each copy with its own parameters); the left arrow removes the tasks selected in the workflow. The buttons
     under the workflow reorder the tasks and nest them: a nested task is a subtask of the task above it (e.g. the
     event generator and the analyzers inside an EventIterator, which executes them for every event);
-  * the filters (RunCAPFiltersGui.py): the filters, efficiencies and smearers of the workflow, created by the task
+  * the filters (RunDatumFiltersGui.py): the filters, efficiencies and smearers of the workflow, created by the task
     FilterCreator (written first in the workflow file, with one subtask per kind) and used by the tasks by name. One
     tab per kind (event and particle filters, event efficiencies and smearers, events, particle databases), the number
     of objects of that kind, and for each its name and title and its conditions (a range, two ranges, a value or a flag
@@ -34,49 +34,49 @@ The window has four parts, from top to bottom:
   * the tasks: one line per task of the workflow, in run order, with the filters it uses, the number of its
     histogram folders and its first problem. Above it, the buttons of the stages of the workflow (Event Processing,
     Derived Histos, Balance Fct) choose the stage shown in the workflow editor, and the files of its job. Double-clicking
-    a task (here or in the workflow) opens its window (RunCAPTaskDialog.py): General (name, report level, the filters, corrections, events and particle
+    a task (here or in the workflow) opens its window (RunDatumTaskDialog.py): General (name, report level, the filters, corrections, events and particle
     databases it uses, parameters) and Histograms (for each list of folders: use, creation, import, export; a used
     list has one folder per combination of the event and particle filters; prefix of the folder names, same binning
     for all folders or binning folder by folder). Booleans have a true/false menu, integers and reals fields that only accept numbers;
-  * the output of CAP, which can be saved to a log file.
+  * the output of Datum, which can be saved to a log file.
 
 Available tasks: the XML templates written by "bin/Datum --xml-templates" (one file per task class, listing every
-parameter with its default value and type, see CAP::Task::exportXmlTemplates()). They are kept in <CAP>/DB/Templates
+parameter with its default value and type, see Datum::Task::exportXmlTemplates()). They are kept in <Datum>/DB/Templates
 and regenerated automatically when bin/Datum or the libraries are newer than them (or with the Refresh button). The folder
 then holds exactly the task classes of the last build: templates of classes no longer built are removed. The base class
 Task is not offered (only the stage wrappers, Workflow, DerivedHistos and BalanceFct, are Tasks). The catalog of the
-functions of CAP (bin/Datum --function-catalog, DB/FunctionCatalog.xml) is written at the same time.
+functions of Datum (bin/Datum --function-catalog, DB/FunctionCatalog.xml) is written at the same time.
 
-Stages: a workflow has up to three stages, each run by its own CAP job, one after the other: Event Processing
+Stages: a workflow has up to three stages, each run by its own Datum job, one after the other: Event Processing
 (generators, analyzers filling their histograms event by event), Derived Histos (the calculators of the derived
 histograms, reading the output file of event processing; made from its analyzers the first time the stage is shown)
 and Balance Fct (the tasks computing balance functions: offered for workflows that have such tasks; adding one puts it
 in this stage). The stages are kept together: showing or adding one does not remove the others.
 
-Workflow files: a CAP configuration file (root element CAP, TASK elements, see Task.hpp) with a TASK element per stage
-that has tasks (attribute stage: EventProcessing, DerivedHistos, BalanceFct), the task CAP runs for that stage, holding
+Workflow files: a Datum configuration file (root element Datum, TASK elements, see Task.hpp) with a TASK element per stage
+that has tasks (attribute stage: EventProcessing, DerivedHistos, BalanceFct), the task Datum runs for that stage, holding
 its tasks (FilterCreator first) and the files of its job (JOB group). That task is named Workflow for event processing
 (as in the files written before the stages, which are read as event processing, or as derived histograms when all their
 analysis tasks are calculators), DerivedHistos and BalanceFct for the others. Run uses the file last saved, or, when the
 workflow was changed since (or never saved), a temporary file. The job of a stage is run as:
-    <CAP>/bin/Datum <task of the stage> <directory of the file>/ <file name> <output directory>/
+    <Datum>/bin/Datum <task of the stage> <directory of the file>/ <file name> <output directory>/
 in the output directory, with the environment of SetupDatum.sh (taken from BuildDatum.py's settings). The job writes the
-histograms of all its tasks to one output file in that directory (Output file; by default Workflow.cap): a folder per
+histograms of all its tasks to one output file in that directory (Output file; by default Workflow.datum): a folder per
 task, holding a folder per combination of event and particle filters with its histograms and derived histograms. A
 derived run reads the histograms it imports from its input file (Input file: the output file of the fill run).
 
-Sub-samples (RunCAPSubSamples.py): the row under the files of the job runs the workflow as N independent sub-samples
+Sub-samples (RunDatumSubSamples.py): the row under the files of the job runs the workflow as N independent sub-samples
 (each with its own seeds, in <output>/sub_000, ...), here (several at once) or on a Slurm cluster (job array submitted
-over ssh), and combines them with CAP::SubSampleStatCalculator: the sub-sample average with the uncertainty of the mean,
+over ssh), and combines them with Datum::SubSampleStatCalculator: the sub-sample average with the uncertainty of the mean,
 or the delete-one jackknife (on the outputs of a stage, or through the later stages, run on each replica). Run all
 stages then runs the sub-samples; Combine combines those of the output directory. The settings are saved in the
 workflow file.
 
-Filters (RunCAPFilters.py): the event and particle filters, efficiencies and smearers of a workflow form a library
+Filters (RunDatumFilters.py): the event and particle filters, efficiencies and smearers of a workflow form a library
 shared by its tasks; each task chooses its objects by name, and the analyzers get one histogram folder per combination
 of their filters. write_workflow() writes their keys in the tasks (the first task using an object defines it) and the
-library in a RUNCAP element next to the TASK element; load_workflow_with_filters() reads them back, also from files
-without RUNCAP element.
+library in a RUNDATUM element next to the TASK element; load_workflow_with_filters() reads them back, also from files
+without RUNDATUM element.
 
 The settings are saved in <Datum>/.RunDatum.json (those of RunCAP.py, .RunCAP.json, are read when it does not exist). Requires Python 3.7+ with tkinter (on macOS with Homebrew Python:
 brew install python-tk).
@@ -98,36 +98,36 @@ import threading
 import time
 import xml.etree.ElementTree as ET
 
-import RunCAPFilters as filters
-import RunCAPSubSamples as subsamples
+import RunDatumFilters as filters
+import RunDatumSubSamples as subsamples
 
-CAP_DIR = os.path.dirname(os.path.abspath(__file__))
-BIN_DIR = os.path.join(CAP_DIR, "bin")
-CAP_EXE = os.path.join(BIN_DIR, "Datum")
-if not os.path.exists(CAP_EXE) and os.path.exists(os.path.join(BIN_DIR, "CAP")):
-    CAP_EXE = os.path.join(BIN_DIR, "CAP")      # built before the program was named Datum
-TEMPLATES_DIR = os.path.join(CAP_DIR, "DB", "Templates")
+DATUM_DIR = os.path.dirname(os.path.abspath(__file__))
+BIN_DIR = os.path.join(DATUM_DIR, "bin")
+DATUM_EXE = os.path.join(BIN_DIR, "Datum")
+if not os.path.exists(DATUM_EXE) and os.path.exists(os.path.join(BIN_DIR, "CAP")):
+    DATUM_EXE = os.path.join(BIN_DIR, "CAP")      # built before the program was named Datum
+TEMPLATES_DIR = os.path.join(DATUM_DIR, "DB", "Templates")
 TEMPLATES_STAMP = os.path.join(TEMPLATES_DIR, ".generated")
 TEMPLATES_STAGING = os.path.join(TEMPLATES_DIR, ".new")     # bin/Datum writes the templates here first
-SETTINGS_FILE = os.path.join(CAP_DIR, ".RunDatum.json")
-LEGACY_SETTINGS_FILE = os.path.join(CAP_DIR, ".RunCAP.json")     # of RunCAP.py, read if the new one does not exist
+SETTINGS_FILE = os.path.join(DATUM_DIR, ".RunDatum.json")
+LEGACY_SETTINGS_FILE = os.path.join(DATUM_DIR, ".RunCAP.json")     # of RunCAP.py, read if the new one does not exist
 
-#: Report levels of a task (CAP::Object).
+#: Report levels of a task (Datum::Object).
 SEVERITIES = ["TRACE", "DEBUG0", "DEBUG1", "DEBUG2", "INFO", "WARNING", "ERROR", "FATAL"]
-#: Parameter types (CAP::Property::typeName()) and their aliases.
+#: Parameter types (Datum::Property::typeName()) and their aliases.
 TYPE_ALIASES = {"bool": "bool", "boolean": "bool", "int": "int", "integer": "int", "long": "long",
                 "double": "double", "float": "double", "real": "double", "string": "string", "text": "string"}
 #: Name and class of the task wrapping a workflow of several top-level tasks.
-WRAPPER_NAME, WRAPPER_CLASS = "Workflow", "CAP::Task"
-#: Stages of a workflow, run one after the other by separate CAP jobs: event processing (generators, analyzers filling
+WRAPPER_NAME, WRAPPER_CLASS = "Workflow", "Datum::Task"
+#: Stages of a workflow, run one after the other by separate Datum jobs: event processing (generators, analyzers filling
 #: histograms event by event), derived histograms (calculators computing them from the histograms of the first stage)
 #: and balance functions (computed from the derived histograms). A workflow file holds a TASK element per stage that has
-#: tasks (attribute stage, the name of the stage); CAP runs one of them (its name is the first argument of bin/Datum).
+#: tasks (attribute stage, the name of the stage); Datum runs one of them (its name is the first argument of bin/Datum).
 EVENTS, DERIVED, BF = "EventProcessing", "DerivedHistos", "BalanceFct"
 STAGES = (EVENTS, DERIVED, BF)
 #: Titles of the stages (the buttons of RunDatum.py).
 STAGE_TITLES = {EVENTS: "Event Processing", DERIVED: "Derived Histos", BF: "Balance Fct"}
-#: Name of the task CAP runs for a stage of several tasks (the stage of event processing keeps the name of the earlier
+#: Name of the task Datum runs for a stage of several tasks (the stage of event processing keeps the name of the earlier
 #: single-stage files, Workflow).
 STAGE_ROOTS = {EVENTS: WRAPPER_NAME, DERIVED: DERIVED, BF: BF}
 #: Classes of the tasks computing balance functions (they belong to the stage BF).
@@ -184,9 +184,14 @@ class TaskConfig:
         return None
 
 
+def normalize_class(cls):
+    """Class name with the namespace of Datum: CAP::X, as written in the files of CAP (before Datum 1.0), is Datum::X."""
+    return "Datum::" + cls[5:] if cls and cls.startswith("CAP::") else cls
+
+
 def short_class_name(cls):
-    """Class name without namespace, as in CAP::Task::xmlTemplateName() (e.g. CAP::PtPtAnalyzer -> PtPtAnalyzer)."""
-    s = cls.replace("CAP::", "").replace("::", "_").replace("<", "_").replace(",", "_")
+    """Class name without namespace, as in Datum::Task::xmlTemplateName() (e.g. Datum::PtPtAnalyzer -> PtPtAnalyzer)."""
+    s = normalize_class(cls).replace("Datum::", "").replace("::", "_").replace("<", "_").replace(",", "_")
     return s.replace(">", "").replace(" ", "")
 
 
@@ -248,7 +253,7 @@ def load_templates(directory=TEMPLATES_DIR):
         except (ET.ParseError, OSError):
             continue
         for element in root.iter("TASK"):
-            cls = element.get("class")
+            cls = normalize_class(element.get("class"))
             if not cls:
                 continue
             templates[cls] = TaskConfig(short_class_name(cls), cls, (element.get("severity") or "INFO").upper(),
@@ -276,7 +281,7 @@ def new_task(cls, templates, used_names):
 
 def task_from_element(element, templates, warnings):
     """TaskConfig (with subtasks) from a TASK element: template defaults updated with the values of the element."""
-    cls = element.get("class", "")
+    cls = normalize_class(element.get("class", ""))
     name = element.get("name", "") or short_class_name(cls)
     if cls in templates:
         t = templates[cls].clone()
@@ -341,7 +346,7 @@ def _stage_elements(path):
 
 
 def _unwrapped(tasks, stage):
-    """The tasks of a stage: those held by the task CAP runs for the stage (STAGE_ROOTS), if it only holds them."""
+    """The tasks of a stage: those held by the task Datum runs for the stage (STAGE_ROOTS), if it only holds them."""
     if (len(tasks) == 1 and tasks[0].name == STAGE_ROOTS[stage] and tasks[0].cls == WRAPPER_CLASS
             and not any(p.value != p.default for p in tasks[0].params)):
         return tasks[0].children
@@ -398,7 +403,7 @@ def task_to_element(t):
 
 
 def root_task(tasks, name=WRAPPER_NAME):
-    """The task run by CAP: the single top-level task, or a wrapper (named name) holding the top-level tasks."""
+    """The task run by Datum: the single top-level task, or a wrapper (named name) holding the top-level tasks."""
     if len(tasks) == 1 and name == WRAPPER_NAME:
         return tasks[0]
     wrapper = TaskConfig(name, WRAPPER_CLASS, "INFO")
@@ -407,7 +412,7 @@ def root_task(tasks, name=WRAPPER_NAME):
 
 
 def run_root_name(tasks, library, templates, stage=EVENTS):
-    """Name of the task CAP runs for a stage of a workflow written with its library: the root of the tasks written
+    """Name of the task Datum runs for a stage of a workflow written with its library: the root of the tasks written
     (FilterCreator first, so the wrapper of the top-level tasks), as write_stages() names it."""
     if library is None:
         return root_task(tasks, STAGE_ROOTS[stage]).name
@@ -428,16 +433,16 @@ def _indent(element, level=0):
 
 
 def new_job():
-    """Files of the job of a stage, not named yet: {name: ""} for RunCAPFilters.JOB_SETTINGS."""
+    """Files of the job of a stage, not named yet: {name: ""} for RunDatumFilters.JOB_SETTINGS."""
     return {name: "" for name in filters.JOB_SETTINGS}
 
 
 def load_stages_with_filters(path, templates):
-    """Top-level tasks of each stage of a workflow file with their filters (RunCAPFilters): the library of filters,
-    efficiencies and smearers shared by the stages (from the RUNCAP element of the file, if any, and the objects
+    """Top-level tasks of each stage of a workflow file with their filters (RunDatumFilters): the library of filters,
+    efficiencies and smearers shared by the stages (from the RUNDATUM element of the file, if any, and the objects
     defined by the tasks), the choices of the tasks (task.filters) and their histogram options (task.histograms); the
     keys of these objects are removed from the parameters of the tasks (write_stages() writes them again), and the
-    files of the job of each stage (the JOB keys of the task CAP runs for it). Returns {stage: tasks}, library,
+    files of the job of each stage (the JOB keys of the task Datum runs for it). Returns {stage: tasks}, library,
     {stage: job}, warnings."""
     stages, warnings = load_stages(path, templates)
     root = ET.parse(path).getroot()
@@ -451,9 +456,9 @@ def load_stages_with_filters(path, templates):
                                 if filters.JOB_KEY.match(p.key)})
     everything = [t for s in STAGES for t in stages.get(s, [])]
     library = None
-    element = root.find("RUNCAP")
+    element = filters.find_rundatum_element(root)
     if element is not None:
-        library, more = filters.read_runcap_element(element, everything, os.path.dirname(os.path.abspath(path)))
+        library, more = filters.read_rundatum_element(element, everything, os.path.dirname(os.path.abspath(path)))
         warnings += more
         first = next(s for s in STAGES if s in stages)
         for name, value in library.job.items():           # files of the job written before the stages
@@ -500,12 +505,12 @@ def write_workflow(path, tasks, library=None, templates=None):
 
 def write_stages(path, stages, library=None, templates=None, jobs=None, extra=None):
     """Write the stages of a workflow ({stage: top-level tasks}; stages without tasks are left out) to path: a TASK
-    element per stage, the task CAP runs for it (attribute stage), with the files of its job (jobs[stage]: keys JOB:...
-    of that task). With a library (RunCAPFilters.FilterLibrary), the keys of the filters, efficiencies, smearers and
+    element per stage, the task Datum runs for it (attribute stage), with the files of its job (jobs[stage]: keys JOB:...
+    of that task). With a library (RunDatumFilters.FilterLibrary), the keys of the filters, efficiencies, smearers and
     histogram folders chosen by the tasks are written in their parameters (the tasks are unchanged), FilterCreator
-    first in each stage, and the library in a RUNCAP element. extra: more elements of the root (e.g. the settings of
-    the sub-samples, RunCAPSubSamples). Returns {stage: name of the task to run}."""
-    document = ET.Element("CAP", {"version": "1"})
+    first in each stage, and the library in a RUNDATUM element. extra: more elements of the root (e.g. the settings of
+    the sub-samples, RunDatumSubSamples). Returns {stage: name of the task to run}."""
+    document = ET.Element("Datum", {"version": "1"})
     names = {}
     everything = []
     for stage in STAGES:
@@ -517,7 +522,7 @@ def write_stages(path, stages, library=None, templates=None, jobs=None, extra=No
         everything += written
         top = root_task(written, STAGE_ROOTS[stage])
         job = (jobs or {}).get(stage) or {}
-        if library is not None or job:           # files of the job: keys of the task CAP runs (see CAP.cxx)
+        if library is not None or job:           # files of the job: keys of the task Datum runs (see Datum.cxx)
             top.params = [p for p in top.params if not filters.JOB_KEY.match(p.key)]
             for name, value in job.items():
                 if value:
@@ -529,7 +534,7 @@ def write_stages(path, stages, library=None, templates=None, jobs=None, extra=No
     if library is not None:
         saved, library.job = library.job, {}           # the files of the jobs are in the TASK elements
         try:
-            document.append(filters.runcap_element(library, everything, os.path.dirname(os.path.abspath(path))))
+            document.append(filters.rundatum_element(library, everything, os.path.dirname(os.path.abspath(path))))
         finally:
             library.job = saved
     for element in extra or []:
@@ -537,7 +542,7 @@ def write_stages(path, stages, library=None, templates=None, jobs=None, extra=No
     _indent(document)
     with open(path, "wb") as f:
         f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
-        f.write(b"<!-- CAP workflow written by RunDatum.py on %s -->\n"
+        f.write(b"<!-- Datum workflow written by RunDatum.py on %s -->\n"
                 % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").encode())
         f.write(ET.tostring(document, encoding="utf-8"))
         f.write(b"\n")
@@ -595,17 +600,17 @@ def check_sources(stages, run=None):
 
 def run_command(xml_path, root_name, output_dir):
     xml_path = os.path.abspath(xml_path)
-    return [CAP_EXE, root_name, os.path.dirname(xml_path) + "/", os.path.basename(xml_path),
+    return [DATUM_EXE, root_name, os.path.dirname(xml_path) + "/", os.path.basename(xml_path),
             os.path.abspath(output_dir).rstrip("/") + "/"]
 
 
 def template_command():
-    return [CAP_EXE, "--xml-templates", TEMPLATES_STAGING + "/"]
+    return [DATUM_EXE, "--xml-templates", TEMPLATES_STAGING + "/"]
 
 
 def catalog_command():
-    """Command writing the catalog of the functions of CAP (see RunCAPFilters.FUNCTION_CATALOG_FILE)."""
-    return [CAP_EXE, "--function-catalog", filters.FUNCTION_CATALOG_FILE]
+    """Command writing the catalog of the functions of Datum (see RunDatumFilters.FUNCTION_CATALOG_FILE)."""
+    return [DATUM_EXE, "--function-catalog", filters.FUNCTION_CATALOG_FILE]
 
 
 def prepare_template_staging():
@@ -636,15 +641,15 @@ def install_templates():
 
 
 def build_time():
-    """Modification time of the newest of bin/Datum and the CAP libraries (0 if CAP is not built)."""
-    if not os.path.exists(CAP_EXE):
+    """Modification time of the newest of bin/Datum and the Datum libraries (0 if Datum is not built)."""
+    if not os.path.exists(DATUM_EXE):
         return 0
-    files = [CAP_EXE] + glob.glob(os.path.join(lib_dir(), "lib*.dylib")) + glob.glob(os.path.join(lib_dir(), "lib*.so"))
+    files = [DATUM_EXE] + glob.glob(os.path.join(lib_dir(), "lib*.dylib")) + glob.glob(os.path.join(lib_dir(), "lib*.so"))
     return max(os.path.getmtime(f) for f in files if os.path.exists(f))
 
 
 def templates_outdated():
-    if not os.path.exists(CAP_EXE):
+    if not os.path.exists(DATUM_EXE):
         return False
     if not glob.glob(os.path.join(TEMPLATES_DIR, "*.xml")) or not os.path.exists(TEMPLATES_STAMP):
         return True
@@ -655,25 +660,25 @@ def templates_outdated():
 
 def lib_dir():
     try:
-        import BuildDatum as BuildCAP
-        return BuildCAP.load_settings().get("install_lib_dir") or os.path.join(CAP_DIR, "lib")
+        import BuildDatum as BuildDatum
+        return BuildDatum.load_settings().get("install_lib_dir") or os.path.join(DATUM_DIR, "lib")
     except Exception:
-        return os.path.join(CAP_DIR, "lib")
+        return os.path.join(DATUM_DIR, "lib")
 
 
 def job_environment():
-    """Environment of SetupDatum.sh, with ROOT and the CAP libraries (from BuildDatum.py's settings when available)."""
+    """Environment of SetupDatum.sh, with ROOT and the Datum libraries (from BuildDatum.py's settings when available)."""
     try:
-        import BuildDatum as BuildCAP
-        return BuildCAP.build_environment(BuildCAP.load_settings())
+        import BuildDatum as BuildDatum
+        return BuildDatum.build_environment(BuildDatum.load_settings())
     except Exception:
         env = dict(os.environ)
-        lib = os.path.join(CAP_DIR, "lib") + "/"
-        env.update({"CAP_ROOT_PATH": CAP_DIR, "CAP_SRC_PATH": os.path.join(CAP_DIR, "src") + "/",
-                    "CAP_BIN_PATH": BIN_DIR + "/", "CAP_LIB_PATH": lib,
-                    "CAP_MACROS_PATH": os.path.join(CAP_DIR, "src", "Macros") + "/",
-                    "CAP_PROJECTS_PATH": os.path.join(CAP_DIR, "projects") + "/",
-                    "CAP_DATABASE_PATH": os.path.join(CAP_DIR, "DB") + "/"})
+        lib = os.path.join(DATUM_DIR, "lib") + "/"
+        env.update({"DATUM_ROOT_PATH": DATUM_DIR, "DATUM_SRC_PATH": os.path.join(DATUM_DIR, "src") + "/",
+                    "DATUM_BIN_PATH": BIN_DIR + "/", "DATUM_LIB_PATH": lib,
+                    "DATUM_MACROS_PATH": os.path.join(DATUM_DIR, "src", "Macros") + "/",
+                    "DATUM_PROJECTS_PATH": os.path.join(DATUM_DIR, "projects") + "/",
+                    "DATUM_DATABASE_PATH": os.path.join(DATUM_DIR, "DB") + "/"})
         for var in ("DYLD_LIBRARY_PATH", "LD_LIBRARY_PATH"):
             env[var] = lib + (os.pathsep + env[var] if env.get(var) else "")
         return env
@@ -685,9 +690,9 @@ def shell_text(cmd):
 
 def default_settings():
     return {
-        "output_dir": os.environ.get("CAP_USER_HISTO_EXPORT_PATH") or os.path.join(CAP_DIR, "output"),
+        "output_dir": os.environ.get("DATUM_USER_HISTO_EXPORT_PATH") or os.environ.get("CAP_USER_HISTO_EXPORT_PATH") or os.path.join(DATUM_DIR, "output"),
         "last_workflow": "",
-        "workflow_dir": os.path.join(CAP_DIR, "projects"),
+        "workflow_dir": os.path.join(DATUM_DIR, "projects"),
         "geometry": "1280x960",
     }
 
@@ -815,23 +820,23 @@ def run_gui(initial_file=None, hook=None):
             step = -event.delta if sys.platform == "darwin" else -int(event.delta / 120) * 3
             self.canvas.yview_scroll(step, "units")
 
-    class RunCAPApp:
+    class RunDatumApp:
         def __init__(self, root):
             self.root = root
             self.settings = load_settings()
             self.templates = {}
             self.items = {}             # workflow tree item -> TaskConfig
-            self.dialogs = {}           # workflow tree item -> window of the task (RunCAPTaskDialog)
+            self.dialogs = {}           # workflow tree item -> window of the task (RunDatumTaskDialog)
             self.library = filters.FilterLibrary.with_defaults()   # objects of the workflow (Filters pane)
             self.stage = EVENTS                         # stage shown in the workflow editor
             self.stages = {s: [] for s in STAGES}       # tasks of the stages not shown (those shown are in the tree)
             self.jobs = {s: new_job() for s in STAGES}         # files of the job of each stage (library.job: the stage shown)
             self.library.job = self.jobs[self.stage]
-            self.filters_panel = None       # Filters pane (RunCAPFiltersGui.FiltersPanel)
+            self.filters_panel = None       # Filters pane (RunDatumFiltersGui.FiltersPanel)
             self.saved_path = ""        # file of the last save or load
             self.dirty = False
             self.process = None
-            self.runner = None              # sub-samples running (RunCAPSubSamples.ParallelRunner)
+            self.runner = None              # sub-samples running (RunDatumSubSamples.ParallelRunner)
             self.subsamples = subsamples.SubSampleSettings()
             self.worker = None
             self.kill_requested = False
@@ -891,7 +896,7 @@ def run_gui(initial_file=None, hook=None):
             options.setdefault("parent", self.root)
             initial = options.get("initialdir")
             if initial and not os.path.isdir(initial):
-                options["initialdir"] = CAP_DIR
+                options["initialdir"] = DATUM_DIR
             try:
                 return getattr(filedialog, kind)(**options) or ""
             except tk.TclError as e:
@@ -913,10 +918,10 @@ def run_gui(initial_file=None, hook=None):
             self.run_button = ttk.Button(bar, text="\u25B6 Run " + STAGE_TITLES[EVENTS], style="Run.TButton",
                                          command=self.run)
             self.run_button.pack(side=tk.LEFT)
-            ToolTip(self.run_button, "Run the stage shown in the workflow editor (one CAP job)")
+            ToolTip(self.run_button, "Run the stage shown in the workflow editor (one Datum job)")
             self.run_all_button = ttk.Button(bar, text="\u25B6\u25B6 Run all stages", command=self.run_all)
             self.run_all_button.pack(side=tk.LEFT, padx=(4, 0))
-            ToolTip(self.run_all_button, "Run the stages of the workflow that have tasks, one CAP job after the other: "
+            ToolTip(self.run_all_button, "Run the stages of the workflow that have tasks, one Datum job after the other: "
                                          "event processing, derived histograms, balance functions")
             buttons = [("Save workflow\u2026", self.save_workflow, "Save the workflow and its parameters to an XML file"),
                        ("Load workflow\u2026", self.load_workflow, "Load a workflow XML file saved earlier"),
@@ -932,7 +937,7 @@ def run_gui(initial_file=None, hook=None):
             self.kill_button.pack(side=tk.LEFT, padx=(12, 0))
             ToolTip(self.kill_button, "Stop the running job")
             ttk.Button(bar, text="Exit", command=self.exit).pack(side=tk.LEFT, padx=(12, 0))
-            ttk.Label(bar, text="Datum: " + CAP_DIR, foreground="gray40").pack(side=tk.RIGHT)
+            ttk.Label(bar, text="Datum: " + DATUM_DIR, foreground="gray40").pack(side=tk.RIGHT)
 
         # ---------------------------------------------------------------------------------------------- tasks
         def _make_selection(self, parent):
@@ -1219,7 +1224,7 @@ def run_gui(initial_file=None, hook=None):
                       "of bin/Datum); the job runs in this directory. Sub-samples and pT-hat bins go to <output directory>/<output "
                       "file without extension>", self._browse_output)
             entry(line, "OUTPUT_FILE", "Output file:", "File where the job writes the histograms of all its tasks: a "
-                  "folder per task, holding a folder per combination of filters (default: Workflow.cap)", 30)
+                  "folder per task, holding a folder per combination of filters (default: Workflow.datum)", 30)
             self.subsample_bar = subsamples.make_bar(parent, self, self.subsamples, sys.modules[__name__], ToolTip)
             self.subsample_bar.pack(fill=tk.X, pady=(0, 4))
             box = ttk.Frame(parent)
@@ -1253,12 +1258,12 @@ def run_gui(initial_file=None, hook=None):
                     var.set(self.library.job.get(name, ""))
 
         def _browse_input(self):
-            path = self._dialog("askdirectory", initialdir=self.input_dir.get() or self.output_dir.get() or CAP_DIR)
+            path = self._dialog("askdirectory", initialdir=self.input_dir.get() or self.output_dir.get() or DATUM_DIR)
             if path:
                 self.input_dir.set(path)
 
         def _browse_output(self):
-            path = self._dialog("askdirectory", initialdir=self.output_dir.get() or CAP_DIR)
+            path = self._dialog("askdirectory", initialdir=self.output_dir.get() or DATUM_DIR)
             if path:
                 self.output_dir.set(path)
 
@@ -1341,19 +1346,20 @@ def run_gui(initial_file=None, hook=None):
                 made = filters.derived_workflow(self.stages[EVENTS], self.templates, TaskConfig)
                 if made:
                     self.stages[DERIVED] = made
-                    output = self.jobs[EVENTS].get("OUTPUT_FILE") or WRAPPER_NAME + ".cap"   # (CAP runs the wrapper)
-                    stem = output[:-4] if output.endswith(".cap") else output
+                    output = self.jobs[EVENTS].get("OUTPUT_FILE") or WRAPPER_NAME + subsamples.DATUM_EXTENSION
+                    stem = subsamples.datum_stem(output)                       # (Datum runs the wrapper)
+                    extension = subsamples.datum_file_name(output)[len(stem):]
                     if not self.jobs[DERIVED].get("INPUT_FILE"):
                         self.jobs[DERIVED]["INPUT_FILE"] = output
                     if not self.jobs[DERIVED].get("OUTPUT_FILE"):
-                        self.jobs[DERIVED]["OUTPUT_FILE"] = stem + "Derived.cap"
+                        self.jobs[DERIVED]["OUTPUT_FILE"] = stem + "Derived" + extension
             self.stage = stage
             self.set_workflow(self.stages[stage])           # (the tree takes the subtasks)
             self.library.job = self.jobs[stage]
             self._show_job()
             if made:
                 analyzers = [t.name for t in all_tasks(made) if filters.histogram_layout(t, self.templates)]
-                self._changed("Derived histograms of %s: computed by a second CAP job, from the output file of event "
+                self._changed("Derived histograms of %s: computed by a second Datum job, from the output file of event "
                               "processing (run event processing first)." % ", ".join(analyzers))
             else:
                 self._update_title()
@@ -1376,8 +1382,8 @@ def run_gui(initial_file=None, hook=None):
                 dialog.deiconify()
                 dialog.lift()
                 return
-            import RunCAPTaskDialog
-            dialog = RunCAPTaskDialog.TaskDialog(
+            import RunDatumTaskDialog
+            dialog = RunDatumTaskDialog.TaskDialog(
                 self.root, self.items[item], self.templates, self.library,
                 {"valid_value": valid_value, "partial_value": partial_value, "severities": SEVERITIES},
                 rename=self._rename_task, changed=self._changed, show_filters=self.show_filters, workflow=self.workflow)
@@ -1449,7 +1455,7 @@ def run_gui(initial_file=None, hook=None):
             base = os.path.splitext(os.path.basename(self.saved_path))[0] if self.saved_path else "Datum"
             directory = self.output_dir.get().strip()
             if not os.path.isdir(directory):
-                directory = CAP_DIR
+                directory = DATUM_DIR
             filename = self._dialog("asksaveasfilename", 
                 title="Save the output", initialdir=directory,
                 initialfile="%s_%s.log" % (base, datetime.datetime.now().strftime("%Y%m%d_%H%M%S")),
@@ -1517,7 +1523,7 @@ def run_gui(initial_file=None, hook=None):
         def save_workflow(self):
             if not self._check("Cannot save the workflow"):
                 return False
-            initial = self.saved_path or os.path.join(self.settings.get("workflow_dir") or CAP_DIR, "workflow.xml")
+            initial = self.saved_path or os.path.join(self.settings.get("workflow_dir") or DATUM_DIR, "workflow.xml")
             filename = self._dialog("asksaveasfilename", 
                 title="Save the workflow", initialdir=os.path.dirname(initial), initialfile=os.path.basename(initial),
                 defaultextension=".xml", filetypes=[("Datum workflow", "*.xml"), ("All files", "*")])
@@ -1575,7 +1581,7 @@ def run_gui(initial_file=None, hook=None):
                 return
             if not filename:
                 filename = self._dialog("askopenfilename", 
-                    title="Load a workflow", initialdir=self.settings.get("workflow_dir") or CAP_DIR,
+                    title="Load a workflow", initialdir=self.settings.get("workflow_dir") or DATUM_DIR,
                     filetypes=[("Datum workflow", "*.xml"), ("All files", "*")])
             if not filename:
                 return
@@ -1614,17 +1620,17 @@ def run_gui(initial_file=None, hook=None):
         def _make_filters(self, parent):
             """The Filters pane: the filters of the workflow and its maps file (efficiencies and smearers), used by the
             tasks by name."""
-            import RunCAPFiltersGui
+            import RunDatumFiltersGui
             head = ttk.Frame(parent)
             head.pack(fill=tk.X, pady=(6, 0))
             ttk.Label(head, text="Filters", style="Section.TLabel").pack(side=tk.LEFT)
             ttk.Label(head, text="defined once, used by name by the tasks (double-click a task to choose them)",
                       foreground="gray40").pack(side=tk.LEFT, padx=10)
-            self.filters_panel = RunCAPFiltersGui.FiltersPanel(
+            self.filters_panel = RunDatumFiltersGui.FiltersPanel(
                 parent, self.library, on_change=self._library_changed, on_rename=self._rename_object,
                 on_remove=self._remove_objects, users=self._object_users,
                 directory=lambda: os.path.dirname(self.saved_path) if self.saved_path
-                else self.settings.get("workflow_dir") or CAP_DIR)
+                else self.settings.get("workflow_dir") or DATUM_DIR)
             self.filters_panel.configure(padding=(0, 4, 0, 0))
             self.filters_panel.pack(fill=tk.BOTH, expand=True)
 
@@ -1680,11 +1686,11 @@ def run_gui(initial_file=None, hook=None):
             return self.worker is not None and self.worker.is_alive()
 
         def run(self):
-            """Run the stage shown (one CAP job)."""
+            """Run the stage shown (one Datum job)."""
             self._run_stages([self.stage])
 
         def run_all(self):
-            """Run the stages that have tasks, in order (one CAP job each; a job starts when the previous succeeded);
+            """Run the stages that have tasks, in order (one Datum job each; a job starts when the previous succeeded);
             with sub-samples, run them (here, or on the Slurm cluster) and combine them."""
             if self.subsamples.enabled:
                 if self.subsamples.where == subsamples.SLURM:
@@ -1707,7 +1713,7 @@ def run_gui(initial_file=None, hook=None):
 
         def _production(self, title, write=True):
             """Write the files of the sub-samples in <output directory>/<output file stem> (production_directory(),
-            RunCAPSubSamples.write_production()).
+            RunDatumSubSamples.write_production()).
             Returns the production, or None (error shown)."""
             if self._busy():
                 return None
@@ -1743,8 +1749,8 @@ def run_gui(initial_file=None, hook=None):
 
         def run_subsamples(self):
             """Run the sub-samples here (several at once), then combine them."""
-            if not os.path.exists(CAP_EXE):
-                messagebox.showerror("Run", "%s does not exist: build and install Datum first (BuildDatum.py)." % CAP_EXE)
+            if not os.path.exists(DATUM_EXE):
+                messagebox.showerror("Run", "%s does not exist: build and install Datum first (BuildDatum.py)." % DATUM_EXE)
                 return
             production = self._production("Run sub-samples")
             if production is None:
@@ -1760,8 +1766,8 @@ def run_gui(initial_file=None, hook=None):
 
         def combine_subsamples(self):
             """Combine the sub-samples of the output directory (run elsewhere, e.g. on a cluster)."""
-            if not os.path.exists(CAP_EXE):
-                messagebox.showerror("Combine", "%s does not exist: build and install Datum first (BuildDatum.py)." % CAP_EXE)
+            if not os.path.exists(DATUM_EXE):
+                messagebox.showerror("Combine", "%s does not exist: build and install Datum first (BuildDatum.py)." % DATUM_EXE)
                 return
             production = self._production("Combine", write=False)
             if production is None:
@@ -1810,8 +1816,8 @@ def run_gui(initial_file=None, hook=None):
         def _run_stages(self, stages):
             if self._busy():
                 return
-            if not os.path.exists(CAP_EXE):
-                messagebox.showerror("Run", "%s does not exist: build and install Datum first (BuildDatum.py)." % CAP_EXE)
+            if not os.path.exists(DATUM_EXE):
+                messagebox.showerror("Run", "%s does not exist: build and install Datum first (BuildDatum.py)." % DATUM_EXE)
                 return
             if not stages or not self.stage_tasks(stages[0]):
                 messagebox.showerror("Run", "The stage %s has no task." % STAGE_TITLES[self.stage])
@@ -1829,7 +1835,7 @@ def run_gui(initial_file=None, hook=None):
                     names = {s: run_root_name(self.stage_tasks(s), self.library, self.templates, s) for s in stages}
                 else:
                     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    fd, path = tempfile.mkstemp(prefix="RunCAP_%s_" % stamp, suffix=".xml")
+                    fd, path = tempfile.mkstemp(prefix="RunDatum_%s_" % stamp, suffix=".xml")
                     os.close(fd)
                     names = write_stages(path, self.all_stages(), self.library, self.templates, self.jobs,
                                          [self.subsamples.to_element()])
@@ -1839,17 +1845,17 @@ def run_gui(initial_file=None, hook=None):
             self.settings["output_dir"] = output_dir
             save_settings(self.settings)
             stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.append("\n=== CAP job%s %s (%s) ===\n" % ("s" if len(stages) > 1 else "",
+            self.append("\n=== Datum job%s %s (%s) ===\n" % ("s" if len(stages) > 1 else "",
                                                           ", ".join(STAGE_TITLES[s] for s in stages), stamp), "command")
             if path != self.saved_path:
                 self.append("Workflow not saved since the last change: running the temporary file %s\n" % path)
-            self._start([("Running CAP: %s" % STAGE_TITLES[s], run_command(path, names[s], output_dir), output_dir)
+            self._start([("Running Datum: %s" % STAGE_TITLES[s], run_command(path, names[s], output_dir), output_dir)
                          for s in stages], "job")
 
         def generate_templates(self, force=False):
             if self._busy():
                 return
-            if not os.path.exists(CAP_EXE):
+            if not os.path.exists(DATUM_EXE):
                 self.status.set("bin/Datum not found: build Datum first. Available tasks come from %s" % TEMPLATES_DIR)
                 return
             if not force and not templates_outdated():
@@ -1861,8 +1867,8 @@ def run_gui(initial_file=None, hook=None):
                 self.status.set("Cannot prepare %s: %s" % (TEMPLATES_STAGING, e))
                 return
             self.append("\n=== Task templates (bin/Datum or the libraries changed) ===\n", "command")
-            self._start([("Writing the task templates", template_command(), CAP_DIR),
-                         ("Writing the function catalog", catalog_command(), CAP_DIR)], "templates")
+            self._start([("Writing the task templates", template_command(), DATUM_DIR),
+                         ("Writing the function catalog", catalog_command(), DATUM_DIR)], "templates")
 
         def _start(self, commands, kind):
             self.kill_requested = False
@@ -2038,7 +2044,7 @@ def run_gui(initial_file=None, hook=None):
             self.templates = load_templates()
             self._fill_available()
             if not self.templates:
-                self.status.set("No task templates in %s: build CAP, then click Refresh." % TEMPLATES_DIR)
+                self.status.set("No task templates in %s: build Datum, then click Refresh." % TEMPLATES_DIR)
             else:
                 self.status.set("%d task classes available." % len(self.templates))
             for task in [t for s in STAGES if s != self.stage for t in all_tasks(self.stages[s])]:
@@ -2055,7 +2061,7 @@ def run_gui(initial_file=None, hook=None):
                 self.load_workflow(initial_file)
             if templates_outdated():
                 self.generate_templates()
-            elif not os.path.exists(CAP_EXE) and not self.templates:
+            elif not os.path.exists(DATUM_EXE) and not self.templates:
                 self.append("bin/Datum was not found: build Datum with BuildDatum.py, then click Refresh.\n", "warning")
 
         def exit(self):
@@ -2073,7 +2079,7 @@ def run_gui(initial_file=None, hook=None):
             self.root.destroy()
 
     root = tk.Tk()
-    app = RunCAPApp(root)
+    app = RunDatumApp(root)
     if hook:
         hook(app, root)
     root.mainloop()
@@ -2178,7 +2184,7 @@ def main(args=None):
         return 1
     try:
         import faulthandler      # a crash of Tk itself leaves the Python stack in <Datum>/.RunDatum.crash.log
-        faulthandler.enable(open(os.path.join(CAP_DIR, ".RunDatum.crash.log"), "w"))
+        faulthandler.enable(open(os.path.join(DATUM_DIR, ".RunDatum.crash.log"), "w"))
     except OSError:
         pass
     run_gui(args[0] if args else None)

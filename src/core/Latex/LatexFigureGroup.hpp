@@ -1,8 +1,8 @@
-#ifndef CAP__LatexFigureGroup
-#define CAP__LatexFigureGroup
+#ifndef DATUM__LatexFigureGroup
+#define DATUM__LatexFigureGroup
 #include "LatexElement.hpp"
 
-namespace CAP
+namespace Datum
 {
   class LatexFigureGroup : public LatexElement
   {
@@ -16,6 +16,6 @@ namespace CAP
 
   };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LatexFigureGroup
+#endif // !DATUM__LatexFigureGroup

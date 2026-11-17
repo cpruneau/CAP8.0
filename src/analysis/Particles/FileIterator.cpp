@@ -12,7 +12,7 @@
 #include "Exceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   FileIterator::FileIterator()
@@ -53,4 +53,4 @@ namespace CAP
   printLine();
   }
 
-} // namespace CAP
+} // namespace Datum

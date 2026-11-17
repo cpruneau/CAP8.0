@@ -17,7 +17,7 @@
 #include "NameHelpers.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 NuDynDerivedHistos::NuDynDerivedHistos()
@@ -115,4 +115,4 @@ void NuDynDerivedHistos::calculateDerivedHistograms(const NuDynHistos & source)
   calculateNudyn(h_R2_11_evt,h_R2_12_evt,h_R2_12_evt,h_R2_22_evt,h_nudyn_evt);
 }
 
-} // namespace CAP
+} // namespace Datum

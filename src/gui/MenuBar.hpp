@@ -8,14 +8,14 @@
  *
  * *********************************************************************/
 //! @file MenuBar.hpp
-//! @brief MenuBar: menu bar of the CapGui window, with keyboard shortcuts.
-#ifndef CAP__GUI__MenuBar
-#define CAP__GUI__MenuBar
+//! @brief MenuBar: menu bar of the DatumGui window, with keyboard shortcuts.
+#ifndef DATUM__GUI__MenuBar
+#define DATUM__GUI__MenuBar
 #include <memory>
 #include <vector>
 #include "Menu.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -61,6 +61,6 @@ namespace CAP
   };
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__GUI__MenuBar
+#endif // !DATUM__GUI__MenuBar

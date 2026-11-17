@@ -1,8 +1,8 @@
-#ifndef CAP__LineAttributes
-#define CAP__LineAttributes
+#ifndef DATUM__LineAttributes
+#define DATUM__LineAttributes
 #include "Attributes.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -36,6 +36,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__LineAttributes
+#endif // !DATUM__LineAttributes

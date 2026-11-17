@@ -12,14 +12,14 @@
 #include <set>
 #include <string>
 #include <unistd.h>
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "FileSystem.hpp"
 #include "Histogram.hpp"
 #include "PlotDocument.hpp"
 #include "PlotSpec.hpp"
 
-using namespace CAP;
-using namespace CAP::GRAPHICS;
+using namespace Datum;
+using namespace Datum::GRAPHICS;
 using Path = PlotDocument::Path;
 
 namespace
@@ -44,11 +44,11 @@ int count(const XmlElement & e, const char * name)
 
 int main()
 {
-  char buffer[] = "/tmp/CapTestPlotDocument.XXXXXX";
+  char buffer[] = "/tmp/DatumTestPlotDocument.XXXXXX";
   String top(mkdtemp(buffer));
   String data = FileSystem::join(top, "data.cap");
   {
-    CapFile out(data, File::kWriteOnly);
+    DatumFile out(data, File::kWriteOnly);
     Folder * f = out.folder().addFolder("Pair")->addFolder("MB_PiP");
     f->add(new MATH::Histogram("n1_pt", "pt", 10, 0.0, 2.0), "n1_pt");
     f->add(new MATH::Histogram("n1_eta", "eta", 10, -1.0, 1.0), "n1_eta");

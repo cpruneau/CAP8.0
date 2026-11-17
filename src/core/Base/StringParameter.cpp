@@ -11,7 +11,7 @@
 #include "BinaryIO.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   StringParameter::StringParameter(const String & name, const String & value)
@@ -38,4 +38,4 @@ namespace CAP
   _value = value;
   }
 
-} // namespace CAP
+} // namespace Datum

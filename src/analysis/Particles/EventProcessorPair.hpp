@@ -7,11 +7,11 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__EventProcessorPair
-#define CAP__EventProcessorPair
+#ifndef DATUM__EventProcessorPair
+#define DATUM__EventProcessorPair
 #include "EventProcessor.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -316,7 +316,7 @@ public:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 
-#endif /* CAP__EventProcessorPair */
+#endif /* DATUM__EventProcessorPair */

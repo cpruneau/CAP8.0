@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ClosureCalculator
-#define CAP__ClosureCalculator
+#ifndef DATUM__ClosureCalculator
+#define DATUM__ClosureCalculator
 #include "Task.hpp"
 #include "Folder.hpp"
 #include "StatisticalTests.hpp"
@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -27,8 +27,8 @@ namespace CAP
 //! detector-level ones those of the folder IMPORT:REC_FOLDER of IMPORT:REC_FILE_NAME (empty folder: the whole file).
 //! Both trees are walked: each histogram (or profile) of the generator-level tree is compared with the one at the same
 //! place in the detector-level tree, and the result written at that place in EXPORT:CLOSURE_FILE_NAME. Histograms
-//! without counterpart are skipped (listed at the INFO level). Gen and reco can be two files (e.g. *_Gen.cap and
-//! *_Reco.cap), or two folders of the output file of one job (e.g. ParticleSingleAnalyzer and
+//! without counterpart are skipped (listed at the INFO level). Gen and reco can be two files (e.g. *_Gen.datum and
+//! *_Reco.datum), or two folders of the output file of one job (e.g. ParticleSingleAnalyzer and
 //! ParticleSingleAnalyzerSmeared). Profiles are compared by their averages.
 //!
 //! A statistical test can compare the two levels, histogram by histogram (StatisticalTest, key TEST), with the tests of
@@ -47,8 +47,8 @@ namespace CAP
 //!
 //! Keys \<name\>:HISTOGRAM:METHOD, HISTOGRAM:TEST, IMPORT:PATH, IMPORT:GEN_FILE_NAME, IMPORT:GEN_FOLDER,
 //! IMPORT:REC_FILE_NAME, IMPORT:REC_FOLDER, EXPORT:PATH, EXPORT:CLOSURE_FILE_NAME, EXPORT:FORCE_REWRITE. The paths DEFAULT (or empty) are
-//! $CAP_HISTOS_IMPORT_PATH and $CAP_HISTOS_EXPORT_PATH; relative paths are relative to them (see
-//! FileSystem::configuredPath()). File names are CAP files (the .cap extension may be omitted).
+//! $DATUM_HISTOS_IMPORT_PATH and $DATUM_HISTOS_EXPORT_PATH; relative paths are relative to them (see
+//! FileSystem::configuredPath()). File names are Datum files (the .datum extension may be omitted; .cap files of CAP are read too).
 //!
 namespace MATH { class Histogram; }
 
@@ -131,6 +131,6 @@ protected:
   std::vector<TestRecord> _testResults;   //!< results of the tests of the last calculate()
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ClosureCalculator */
+#endif /* DATUM__ClosureCalculator */

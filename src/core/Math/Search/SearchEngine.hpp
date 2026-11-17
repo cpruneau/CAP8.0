@@ -9,15 +9,15 @@
  * *********************************************************************/
 //! @file SearchEngine.hpp
 //! @brief SearchEngine: base of the extremum search engines; SearchOptions and SearchResult.
-#ifndef CAP__MATH__SearchEngine
-#define CAP__MATH__SearchEngine
+#ifndef DATUM__MATH__SearchEngine
+#define DATUM__MATH__SearchEngine
 #include <random>
 #include <vector>
 #include "String.hpp"
 #include "SearchDomain.hpp"
 #include "SearchProblem.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -144,6 +144,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__SearchEngine
+#endif // !DATUM__MATH__SearchEngine

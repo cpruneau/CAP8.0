@@ -8,13 +8,13 @@
  *
  * *********************************************************************/
 //! @file HerwigEventGenerator.hpp
-//! @brief HerwigEventGenerator: a task running Herwig 7 in the CAP job, each of its events copied into the CAP event.
-#ifndef CAP__HerwigEventGenerator
-#define CAP__HerwigEventGenerator
+//! @brief HerwigEventGenerator: a task running Herwig 7 in the Datum job, each of its events copied into the Datum event.
+#ifndef DATUM__HerwigEventGenerator
+#define DATUM__HerwigEventGenerator
 #include <map>
 #include "EventProcessor.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 class HerwigRun;
@@ -22,7 +22,7 @@ class ParticleType;
 
 //!
 //! @brief Event generator task running Herwig 7 in the job: each execute() generates one Herwig event (a ThePEG event)
-//! and copies its final-state particles into the current CAP event.
+//! and copies its final-state particles into the current Datum event.
 //!
 //! Herwig is configured as on the command line: a run file (.run), made by "Herwig read" from an input file (.in),
 //! holds the event generator; "Herwig run" then generates its events. The task does both:
@@ -45,12 +45,12 @@ class ParticleType;
 //! SavePhotons or SaveNeutrinos is false, whose PDG codes are in the particle database (the others are skipped and
 //! reported by finalize()), with their momentum (GeV) and production vertex (mm, as for PYTHIA); a particle is added if
 //! it passes the first particle filter of the task (or always if the task has no particle filter). Herwig's events
-//! are unweighted by default; weighted events are counted and reported (CAP events have no weight).
+//! are unweighted by default; weighted events are counted and reported (Datum events have no weight).
 //!
 //! finalize() reports the cross section (Print:Statistics) and finalizes the generator (Herwig writes its .out file).
 //! Herwig holds global state: one HerwigEventGenerator per job.
 //!
-//! Build: CMake option CAP_WITH_HERWIG, Herwig found as CAP_HERWIG_DIR (or ../Herwig/install, $CAP_HERWIG_PATH,
+//! Build: CMake option DATUM_WITH_HERWIG, Herwig found as DATUM_HERWIG_DIR (or ../Herwig/install, $DATUM_HERWIG_PATH,
 //! Herwig-config). On macOS, Herwig and ThePEG must be built with -fno-typed-cxx-new-delete and linked to libc++
 //! (~/Developer/Herwig/build_herwig.sh does); this module is compiled the same way.
 //!
@@ -96,4 +96,4 @@ protected:
 
 }
 
-#endif /* CAP__HerwigEventGenerator */
+#endif /* DATUM__HerwigEventGenerator */

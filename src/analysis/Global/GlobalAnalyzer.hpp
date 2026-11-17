@@ -7,12 +7,12 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__GlobalAnalyzer
-#define CAP__GlobalAnalyzer
+#ifndef DATUM__GlobalAnalyzer
+#define DATUM__GlobalAnalyzer
 #include "EventProcessorHistos.hpp"
 #include "GlobalHistos.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -62,4 +62,4 @@ public:
 
 }
 
-#endif /* CAP__GlobalAnalyzer */
+#endif /* DATUM__GlobalAnalyzer */

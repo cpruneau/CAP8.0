@@ -12,10 +12,10 @@
 #include "GlauberExceptions.hpp"
 #include "NucleonProfile.hpp"
 using namespace std;
-using CAP::MATH::pi;
-using CAP::MATH::twoPi;
+using Datum::MATH::pi;
+using Datum::MATH::twoPi;
 
-namespace CAP
+namespace Datum
 {
   NucleonProfile::NucleonProfile()
   :
@@ -49,7 +49,7 @@ namespace CAP
   return x*x*std::exp(-x/_nucleonRadius);
   }
 
-}  // namespace CAP
+}  // namespace Datum
 
 
 

@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,   04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__ParticleEfficiency
-#define CAP__ParticleEfficiency
+#ifndef DATUM__ParticleEfficiency
+#define DATUM__ParticleEfficiency
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -16,7 +16,7 @@
 #include "MersenneTwister.hpp"
 #include "Particle.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -33,7 +33,7 @@ namespace CAP
 //! another species, or without type, has efficiency 0. With no species given, it applies to all particles.
 //!
 //! accept() draws a random number r uniformly in [0, 1) and accepts the particle if r < efficiency: always for an
-//! efficiency of 1, never for 0. The random numbers come from the generator of the object (CAP's MersenneTwister,
+//! efficiency of 1, never for 0. The random numbers come from the generator of the object (Datum's MersenneTwister,
 //! seeded with setSeed()) or from a generator given to accept() (e.g. that of the task, seeded by its configuration).
 //!
 //! As a managed object (PARTICLE_EFFICIENCY, see ManagedObjects and KinematicMapFolder), the keys of object k are
@@ -155,6 +155,6 @@ protected:
   MATH::MersenneTwister _random;      //!< generator of accept(particle)
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__ParticleEfficiency */
+#endif /* DATUM__ParticleEfficiency */

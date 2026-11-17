@@ -9,12 +9,12 @@
  * *********************************************************************/
 //! @file FileSystemEntry.hpp
 //! @brief FileSystemEntry: an entry of the file system, base of File and Directory.
-#ifndef CAP__FileSystemEntry
-#define CAP__FileSystemEntry
+#ifndef DATUM__FileSystemEntry
+#define DATUM__FileSystemEntry
 #include "FileSystem.hpp"
 #include "Object.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -28,7 +28,7 @@ namespace CAP
 //! baseName().
 //!
 //!     FileSystemEntry ─┬─ File ─┬─ TxtFile ──── XmlFile
-//!                      │        └─ BinaryFile ── CapFile
+//!                      │        └─ BinaryFile ── DatumFile
 //!                      └─ Directory
 //!
 class FileSystemEntry : public Object
@@ -50,13 +50,13 @@ public:
   const String & path() const { return _path; }
   //! @brief Set the path (the name of the object is unchanged). @param path new path
   virtual void setPath(const String & path) { _path = path; }
-  //! @brief Last component of the path: "a/b/c.cap" gives "c.cap". @return name
+  //! @brief Last component of the path: "a/b/c.datum" gives "c.datum". @return name
   String baseName() const { return FileSystem::name(_path); }
-  //! @brief Directory part of the path: "a/b/c.cap" gives "a/b". @return directory
+  //! @brief Directory part of the path: "a/b/c.datum" gives "a/b". @return directory
   String parentPath() const { return FileSystem::parent(_path); }
-  //! @brief Last component without its extension: "a/b/c.cap" gives "c". @return stem
+  //! @brief Last component without its extension: "a/b/c.datum" gives "c". @return stem
   String stem() const { return FileSystem::stem(_path); }
-  //! @brief Extension, with its '.': "a/b/c.cap" gives ".cap". @return extension, or ""
+  //! @brief Extension, with its '.': "a/b/c.datum" gives ".datum". @return extension, or ""
   String extension() const { return FileSystem::extension(_path); }
   //! @brief Absolute path, without "." and "..". @return path
   String absolutePath() const { return FileSystem::normalize(_path); }
@@ -98,6 +98,6 @@ protected:
 
 };
 
-} // namespace CAP
+} // namespace Datum
 
 #endif

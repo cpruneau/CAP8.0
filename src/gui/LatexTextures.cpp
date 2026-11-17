@@ -20,7 +20,7 @@
 #include "nanosvgrast.h"
 #include "LatexRenderer.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GUI
   {
@@ -125,4 +125,4 @@ namespace CAP
   }
 
   } // namespace GUI
-} // namespace CAP
+} // namespace Datum

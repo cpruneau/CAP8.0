@@ -1,5 +1,5 @@
 ################################################################################################
-# Project CAP/Latex
+# Project Datum/Latex
 ################################################################################################
 
 
@@ -28,7 +28,7 @@ LatexText.cpp)
 target_link_libraries(Latex Base Math ${EXTRA_LIBS} )
 target_include_directories(Latex PUBLIC Base Math ${EXTRA_INCLUDES} )
 
-if(CAP_WITH_GRAPHICS)   # presentations of canvases (CanvasPresentation)
+if(DATUM_WITH_GRAPHICS)   # presentations of canvases (CanvasPresentation)
   target_sources(Latex PRIVATE CanvasPresentation.cpp)
   target_link_libraries(Latex Graphics)
   add_executable(TestCanvasPresentation tests/TestCanvasPresentation.cpp)
@@ -36,5 +36,5 @@ if(CAP_WITH_GRAPHICS)   # presentations of canvases (CanvasPresentation)
   add_test(NAME CanvasPresentation COMMAND TestCanvasPresentation)
 endif()
 
-cap_install(Latex LIBRARY "$ENV{CAP_LIB_PATH}")
+datum_install(Latex LIBRARY "$ENV{DATUM_LIB_PATH}")
 

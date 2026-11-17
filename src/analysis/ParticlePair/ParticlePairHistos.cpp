@@ -19,7 +19,7 @@
 #include "Profile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
   ParticlePairHistos::ParticlePairHistos()
   :
@@ -439,7 +439,7 @@ namespace CAP
   configuration.addProperty(createKey(taskName,type,"pt_max"),         2.00);
   configuration.addProperty(createKey(taskName,type,"phi_nbins"),      72);
   configuration.addProperty(createKey(taskName,type,"phi_min"),        0.0);
-  configuration.addProperty(createKey(taskName,type,"phi_max"),        CAP::MATH::twoPi());
+  configuration.addProperty(createKey(taskName,type,"phi_max"),        Datum::MATH::twoPi());
   configuration.addProperty(createKey(taskName,type,"eta_nbins"),      20);
   configuration.addProperty(createKey(taskName,type,"eta_min"),        -1.0);
   configuration.addProperty(createKey(taskName,type,"eta_max"),        1.0);
@@ -451,8 +451,8 @@ namespace CAP
   configuration.addProperty(createKey(taskName,type,"n2_max"),          1000.0);
   configuration.addProperty(createKey(taskName,type,"Dphi_nbins"),      36);
   configuration.addProperty(createKey(taskName,type,"Dphi_min"),        0.0);
-  configuration.addProperty(createKey(taskName,type,"Dphi_max"),        CAP::MATH::twoPi());
-  configuration.addProperty(createKey(taskName,type,"Dphi_width"),      CAP::MATH::twoPi());
+  configuration.addProperty(createKey(taskName,type,"Dphi_max"),        Datum::MATH::twoPi());
+  configuration.addProperty(createKey(taskName,type,"Dphi_width"),      Datum::MATH::twoPi());
   configuration.addProperty(createKey(taskName,type,"Dphi_nbins_shft"),  36);
   configuration.addProperty(createKey(taskName,type,"Dphi_min_shft"),   0.0);
   configuration.addProperty(createKey(taskName,type,"Dphi_max_shft"),   0.0);
@@ -502,17 +502,17 @@ namespace CAP
   Dphi_nbins  = phi_nbins;
   Deta_nbins  = 2*eta_nbins-1;
   Drapidity_nbins    = 2*rapidity_nbins-1;
-  Dphi_width  = CAP::MATH::twoPi()/double(Dphi_nbins);
+  Dphi_width  = Datum::MATH::twoPi()/double(Dphi_nbins);
   Dphi_min    = -Dphi_width/2.0;
-  Dphi_max    = CAP::MATH::twoPi() - Dphi_width/2.;
+  Dphi_max    = Datum::MATH::twoPi() - Dphi_width/2.;
   Deta_min    = -(eta_max-eta_min);
   Deta_max    = eta_max-eta_min;
   Drapidity_min      = -(rapidity_maximum-rapidity_minimum);
   Drapidity_max      = rapidity_maximum-rapidity_minimum;
 
   Dphi_nbins_shft = phi_nbins/4;
-  Dphi_min_shft   = Dphi_min - CAP::MATH::twoPi()/4.0;
-  Dphi_max_shft   = Dphi_max - CAP::MATH::twoPi()/4.0;
+  Dphi_min_shft   = Dphi_min - Datum::MATH::twoPi()/4.0;
+  Dphi_max_shft   = Dphi_max - Datum::MATH::twoPi()/4.0;
   rapidity_maximumAcc = 4.0;
 
   if (reportInfo(__FUNCTION__))
@@ -655,7 +655,7 @@ namespace CAP
 
   VectorLorentz & momentum1 = particle1.momentum();
   double pt1   = momentum1.perp();  iPt1 = ptBinFor(pt1);
-  double phi1  = momentum1.phi();   if (phi1<0.0) phi1 += CAP::MATH::twoPi(); iPhi1 = phiBinFor(phi1);
+  double phi1  = momentum1.phi();   if (phi1<0.0) phi1 += Datum::MATH::twoPi(); iPhi1 = phiBinFor(phi1);
   double eta1  = momentum1.pseudorapidity(); iEta1 = eta_fill      ? getEtaBinFor(eta1) : 0;
   double y1    = momentum1.rapidity();       iY1   = rapidity_fill ? getYBinFor(y1)     : 0;
   //  printValue("ParticlePairHistos::fill() eta_fill",eta_fill);
@@ -670,7 +670,7 @@ namespace CAP
   //  printValue("ParticlePairHistos::fill() iPhi1",iPhi1);
   VectorLorentz & momentum2 = particle2.momentum();
   double pt2   = momentum2.perp();  iPt2 = ptBinFor(pt2);
-  double phi2  = momentum2.phi();   if (phi2<0.0) phi2 += CAP::MATH::twoPi(); iPhi2 = phiBinFor(phi2);
+  double phi2  = momentum2.phi();   if (phi2<0.0) phi2 += Datum::MATH::twoPi(); iPhi2 = phiBinFor(phi2);
   double eta2  = momentum2.pseudorapidity(); iEta2 = eta_fill      ? getEtaBinFor(eta2) : 0;
   double y2    = momentum2.rapidity();       iY2   = rapidity_fill ? getYBinFor(y2)     : 0;
 
@@ -1211,4 +1211,4 @@ void ParticlePairHistos::calculateAverageYbar(Histogram * source,
   }
 }
 
-} // namespace CAP
+} // namespace Datum

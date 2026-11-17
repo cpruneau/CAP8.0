@@ -9,7 +9,7 @@
 using std::cout;
 using std::endl;
 
-namespace CAP
+namespace Datum
 {
   LatexDocument::LatexDocument()
   :
@@ -348,5 +348,5 @@ namespace CAP
     }
   }
 
-} // namespace CAP
+} // namespace Datum
 

@@ -9,7 +9,7 @@
  * *********************************************************************/
 #include "XmlScalarField.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   namespace
@@ -62,4 +62,4 @@ namespace CAP
   return read(*vector3d);
   }
 
-} // namespace CAP
+} // namespace Datum

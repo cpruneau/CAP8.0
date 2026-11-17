@@ -14,7 +14,7 @@
 #include "ParticleDbExceptions.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
 ParticleDecayerTask::ParticleDecayerTask()
@@ -163,4 +163,4 @@ void ParticleDecayerTask::execute()
   ev.invalidateSelections();    // decayed particles are no longer live: the selections are made again
 }
 
-} // namespace CAP
+} // namespace Datum

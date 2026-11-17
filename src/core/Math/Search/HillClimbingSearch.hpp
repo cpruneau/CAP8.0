@@ -9,11 +9,11 @@
  * *********************************************************************/
 //! @file HillClimbingSearch.hpp
 //! @brief HillClimbingSearch: extremum search by stochastic hill climbing with adaptive steps and restarts.
-#ifndef CAP__MATH__HillClimbingSearch
-#define CAP__MATH__HillClimbingSearch
+#ifndef DATUM__MATH__HillClimbingSearch
+#define DATUM__MATH__HillClimbingSearch
 #include "SearchEngine.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -72,6 +72,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__MATH__HillClimbingSearch
+#endif // !DATUM__MATH__HillClimbingSearch

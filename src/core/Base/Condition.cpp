@@ -10,7 +10,7 @@
 #include "Condition.hpp"
 #include "PrintHelpers.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   Condition::Condition(int type, int subtype)
@@ -223,5 +223,5 @@ namespace CAP
   printValue("Maximum Value 2",_maximum2);
   }
 
-} // namespace CAP
+} // namespace Datum
 

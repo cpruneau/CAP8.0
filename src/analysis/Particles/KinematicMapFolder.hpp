@@ -7,8 +7,8 @@
  * Author: Claude Pruneau,04/01/2024
  *
  * *********************************************************************/
-#ifndef CAP__KinematicMapFolder
-#define CAP__KinematicMapFolder
+#ifndef DATUM__KinematicMapFolder
+#define DATUM__KinematicMapFolder
 #include <limits>
 #include <memory>
 #include <vector>
@@ -16,7 +16,7 @@
 #include "KinematicMap.hpp"
 #include "Configuration.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -179,6 +179,6 @@ protected:
   double _maximum[3];               //!< upper edges for pt, eta, phi
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__KinematicMapFolder */
+#endif /* DATUM__KinematicMapFolder */

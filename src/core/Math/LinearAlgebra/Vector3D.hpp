@@ -1,5 +1,5 @@
-#ifndef CAP_Vector3D
-#define CAP_Vector3D
+#ifndef DATUM_Vector3D
+#define DATUM_Vector3D
 #include <algorithm>
 #include <limits>
 #include <cmath>
@@ -9,7 +9,7 @@
 #include "String.hpp"
 #include "BinaryIO.hpp"
 
-namespace CAP
+namespace Datum
 {
 namespace MATH
 {
@@ -152,12 +152,12 @@ public:
 
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAP3" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTM3" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! @{
 
-  //! @brief Tag of Vector3D records in binary files. @return "CAP3"
-  static const char * binaryTag() { return "CAP3"; }
+  //! @brief Tag of Vector3D records in binary files. @return "DTM3"
+  static const char * binaryTag() { return "DTM3"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return ""
@@ -203,6 +203,6 @@ Vector3D operator* (double a, const Vector3D & v);
 std::ostream& operator<<(std::ostream& out, const Vector3D & v);
 
 } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

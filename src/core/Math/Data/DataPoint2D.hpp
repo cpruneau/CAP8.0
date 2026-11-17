@@ -1,5 +1,5 @@
-#ifndef CAP_MATH_DataPoint2D
-#define CAP_MATH_DataPoint2D
+#ifndef DATUM_MATH_DataPoint2D
+#define DATUM_MATH_DataPoint2D
 #include <cmath>
 #include <ostream>
 #include <vector>
@@ -7,7 +7,7 @@
 #include "BinaryIO.hpp"
 #include "DataPoint.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace MATH
   {
@@ -37,7 +37,7 @@ namespace CAP
   //!
   //! Example:
   //! @code
-  //!   CAP::MATH::DataPoint2D p(1.0, 0.1, 5.0, 0.4, 0.2);  // x, xError, y, yStatError, ySysError
+  //!   Datum::MATH::DataPoint2D p(1.0, 0.1, 5.0, 0.4, 0.2);  // x, xError, y, yStatError, ySysError
   //!   p.setErrorMatrix(0.01, 0.02, 0.16);                 // var(x), cov(x,y), var(y)
   //!   double rho = p.correlation();                       // 0.5
   //! @endcode
@@ -289,12 +289,12 @@ namespace CAP
 
 
   //! @name Binary files (independent of ROOT)
-  //! Saved as "CAPP" records in the CAP binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
+  //! Saved as "DTMP" records in the Datum binary format (see BinaryIO.hpp): compact, portable, checksummed, and restored
   //! exactly. Records of other classes in the same file are skipped.
   //! @{
 
-  //! @brief Tag of DataPoint2D records in binary files. @return "CAPP"
-  static const char * binaryTag() { return "CAPP"; }
+  //! @brief Tag of DataPoint2D records in binary files. @return "DTMP"
+  static const char * binaryTag() { return "DTMP"; }
   //! @brief Format version written (and highest version read). @return version
   static unsigned int binaryVersion() { return 1; }
   //! @brief Name stored in binary records. @return ""
@@ -332,6 +332,6 @@ namespace CAP
   };
 
   } // namespace MATH
-} // namespace CAP
+} // namespace Datum
 
 #endif

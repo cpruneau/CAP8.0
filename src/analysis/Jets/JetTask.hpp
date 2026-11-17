@@ -11,8 +11,8 @@
 //! @brief JetTask: base of the jet analyzers: jet finding for a list of jet settings, jet filters, and one folder of
 //! histograms per event filter, particle filter, jet settings, jet filter (and a further selection of the analyzer, e.g.
 //! pair filters).
-#ifndef CAP__JetTask
-#define CAP__JetTask
+#ifndef DATUM__JetTask
+#define DATUM__JetTask
 #include <string>
 #include <vector>
 #include "EventProcessor.hpp"
@@ -23,7 +23,7 @@
 #include "JetFilter.hpp"
 #include "JetSettings.hpp"
 
-namespace CAP
+namespace Datum
 {
 
 //!
@@ -289,6 +289,6 @@ protected:
   std::vector<String> _folderNames;               //!< names of the folders (the filters are released by finalize())
 };
 
-} // namespace CAP
+} // namespace Datum
 
-#endif /* CAP__JetTask */
+#endif /* DATUM__JetTask */

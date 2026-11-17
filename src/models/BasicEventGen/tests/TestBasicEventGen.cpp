@@ -17,13 +17,13 @@
 #include "Exceptions.hpp"
 #include "MathConstants.hpp"
 #include "ParticleDb.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 #include "FileSystem.hpp"
 #include "Folder.hpp"
 #include "Histogram.hpp"
 #include <unistd.h>
 
-using namespace CAP;
+using namespace Datum;
 
 namespace
 {
@@ -77,7 +77,7 @@ bool throws(TestGen & gen, const ParticleDb & db)
 int main()
 {
   ParticleDb db;
-  db.loadFromXml(CAP_PARTICLE_DB);
+  db.loadFromXml(DATUM_PARTICLE_DB);
   const int n = 200000;
   const double mPi = 0.13957;
 
@@ -231,7 +231,7 @@ int main()
   check(throws(bad5,db), "unknown MomentumRange: ConfigurationException", __LINE__);
   }
 
-  // multiplicity distributions: a function of the registry on [MultMin, MultMax], a histogram of a CAP file
+  // multiplicity distributions: a function of the registry on [MultMin, MultMax], a histogram of a Datum file
   {
   TestGen gen;                                       // P(n) proportional to n on [1, 4]: <n> = 30/10 = 3
   gen.set("Mult:Distribution",String("FUNCTION"));
@@ -261,11 +261,11 @@ int main()
   check(std::fabs(u.mean()-4.0)<5*u.error(), "multiplicity uniform on [3, 5]: <n> = 4", __LINE__);
   }
   {
-  char directory[] = "/tmp/cap_basicgen_XXXXXX";
+  char directory[] = "/tmp/datum_basicgen_XXXXXX";
   if (!::mkdtemp(directory)) { std::printf("FAILED: mkdtemp\n"); return 1; }
   String dir(directory);
   {
-  CapFile file{FileSystem::join(dir,"mult.cap")};
+  DatumFile file{FileSystem::join(dir,"mult.cap")};
   Folder * folder = file.folder().addFolder("Ana");
   MATH::Histogram * unit = folder->add(new MATH::Histogram("n","n",5,-0.5,4.5),"n");   // bins centred on 0 ... 4
   for (int c=0; c<1; c++) unit->fill(1.0);

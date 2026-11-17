@@ -9,15 +9,15 @@
  * *********************************************************************/
 //! @file PdfPainter.hpp
 //! @brief PdfPainter: painter writing PDF files (no library needed).
-#ifndef CAP__PdfPainter
-#define CAP__PdfPainter
+#ifndef DATUM__PdfPainter
+#define DATUM__PdfPainter
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
 #include "Painter.hpp"
 
-namespace CAP
+namespace Datum
 {
   namespace GRAPHICS
   {
@@ -138,6 +138,6 @@ namespace CAP
   };
 
   } // namespace GRAPHICS
-} // namespace CAP
+} // namespace Datum
 
-#endif // !CAP__PdfPainter
+#endif // !DATUM__PdfPainter

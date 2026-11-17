@@ -12,7 +12,7 @@
 #include <string>
 #include "Exceptions.hpp"
 
-namespace CAP
+namespace Datum
 {
 
   FlowVector::FlowVector(unsigned int maxHarmonic, unsigned int maxPower)
@@ -145,4 +145,4 @@ namespace CAP
   return sum;
   }
 
-} // namespace CAP
+} // namespace Datum

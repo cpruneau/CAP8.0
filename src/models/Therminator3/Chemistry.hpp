@@ -1,11 +1,11 @@
-#ifndef CAP_CHEMISTRY_H_
-#define CAP_CHEMISTRY_H_
+#ifndef DATUM_CHEMISTRY_H_
+#define DATUM_CHEMISTRY_H_
 #include "ScalarField.hpp"
 #include "ParticleType.hpp"
 
-using CAP::MATH::ScalarField;
+using Datum::MATH::ScalarField;
 
-namespace CAP
+namespace Datum
 {
 
   class Chemistry
@@ -114,6 +114,6 @@ namespace CAP
 
   };
 
-}  //namespace CAP
+}  //namespace Datum
 
-#endif // !CAP_CHEMISTRY_H_
+#endif // !DATUM_CHEMISTRY_H_

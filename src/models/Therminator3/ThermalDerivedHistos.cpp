@@ -3,10 +3,10 @@
 #include "NameHelpers.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
-#include "CapFile.hpp"
+#include "DatumFile.hpp"
 
 
-namespace CAP
+namespace Datum
 {
 
   ThermalDerivedHistos::ThermalDerivedHistos()
@@ -45,4 +45,4 @@ namespace CAP
   void ThermalDerivedHistos::calculateDerivedHistograms(const ThermalHistos & h   __attribute__((unused)))
   {   }
 
-}  // namespace CAP
+}  // namespace Datum
