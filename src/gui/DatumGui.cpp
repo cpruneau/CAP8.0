@@ -719,6 +719,7 @@ namespace Datum
   {
   _browsers.emplace_back(new FileBrowser(++_browserCounter));
   FileBrowser & browser = *_browsers.back();
+  _browsersToPlace.push_back(browser.windowName());
   if (onNewBrowser) onNewBrowser(browser);
   _activeBrowser = int(_browsers.size()) - 1;
   _settings.browserVisible = true;
@@ -832,12 +833,27 @@ namespace Datum
   ImGui::End();
   _settings.browserVisible = visible;
 
-  // the other browsers: tabs beside the first one when they are made, then wherever they are moved
-  ImGuiWindow * first = ImGui::FindWindowByName(FileBrowser::mainWindowName());
+  // the other browsers: each in a pane of its own when it is made, below the last browser (the area of that browser
+  // split in two; a floating window if the browsers are not docked), then wherever they are moved
+  for (const std::string & name : _browsersToPlace)
+    {
+    ImGuiWindow * last = nullptr;
+    for (std::size_t k=_browsers.size(); k-- > 0 && !last; )
+      if (name != _browsers[k]->windowName())
+        {
+        ImGuiWindow * w = ImGui::FindWindowByName(_browsers[k]->windowName());
+        if (w && w->DockNode) last = w;
+        }
+    if (!last) continue;
+    ImGuiID below = 0, above = 0;
+    ImGui::DockBuilderSplitNode(last->DockNode->ID, ImGuiDir_Down, 0.5f, &below, &above);
+    ImGui::DockBuilderDockWindow(name.c_str(), below);
+    ImGui::DockBuilderFinish(ImGui::DockNodeGetRootNode(last->DockNode)->ID);
+    }
+  _browsersToPlace.clear();
   for (std::size_t k=1; k<_browsers.size(); )
     {
     FileBrowser & browser = *_browsers[k];
-    if (first && first->DockId) ImGui::SetNextWindowDockID(first->DockId, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(380, viewport->WorkSize.y*0.75f), ImGuiCond_FirstUseEver);
     bool open = true;
     if (ImGui::Begin(browser.windowName(), &open))

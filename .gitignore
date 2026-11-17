@@ -76,3 +76,6 @@ DB/Templates/
 DB/FunctionCatalog.xml
 /output/
 .RunCAP.crash.log
+
+# videos (large files, kept out of git)
+docs/video/

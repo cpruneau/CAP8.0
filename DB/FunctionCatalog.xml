@@ -4684,12 +4684,4 @@
       <PARAMETER name="lambda" value="1" type="Low" minimum="0"/>
     </VARIANT>
   </FUNCTION>
-  <FUNCTION name="test" rank="1" composite="true">
-    <VARIANT nParameters="4" default="true">
-      <PARAMETER name="signal.amplitude" value="1" type="Free"/>
-      <PARAMETER name="signal.exponent" value="1" type="Free"/>
-      <PARAMETER name="background.amplitude" value="1" type="Free"/>
-      <PARAMETER name="background.exponent" value="1" type="Free"/>
-    </VARIANT>
-  </FUNCTION>
 </Datum>

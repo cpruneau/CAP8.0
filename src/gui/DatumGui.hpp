@@ -294,6 +294,7 @@ namespace Datum
   std::vector<FileBrowser *> _browsersToClose;   //!< browsers closed by closeBrowser(), at the next frame
   Focus _lastFocus = kFocusCanvas;   //!< part of the window focused last
   int _browserCounter;   //!< number of the last browser made
+  std::vector<std::string> _browsersToPlace;   //!< windows of the browsers made since the last frame (a pane of their own)
   bool   _firstFrame;   //!< the next frame is the first one (the dock layout is built)
   bool   _layoutRequested;   //!< rebuild the dock layout (browser on the left of the canvases)
   bool   _undockRequested;   //!< move the browser to a window of its own
