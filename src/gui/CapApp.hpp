@@ -147,6 +147,11 @@ namespace CAP
   void newFolder(int target, const String & folderPath, const String & name);
   //! @brief Rename an entry of an editable tree. @param target tree @param path entry @param name new name
   void renameEntry(int target, const String & path, const String & name);
+  //! @brief Rename the top folder of a tree. @param target tree @param name new name
+  void renameTree(int target, const String & name);
+  //! @brief Called when an entry of a tree is renamed (CapGuiApp: the plot files showing it follow it).
+  //! @param id tree @param oldPath path before @param newPath path after
+  virtual void entryRenamed(int id, const String & oldPath, const String & newPath) { (void)id; (void)oldPath; (void)newPath; }
   //! @brief Remove an entry of an editable tree (its objects are kept for the graphs showing them). @param target
   //! tree @param path entry
   void removeEntry(int target, const String & path);
@@ -381,6 +386,18 @@ namespace CAP
   //! @brief Write (and compile) the presentation of the canvases. @param texFile .tex file chosen
   void makePresentation(const String & texFile);
   //! @brief Open file of an identifier. @param id identifier @return file, or null
+  //!
+  //! @brief Path a data file is known by in the plot files: its file, or, for a tree not saved yet, a path of its own
+  //! ("/@tree/<id>/<name>.cap", found by dataFile(); replaced in the plot files when the tree is saved, see treeSaved()).
+  //! @param f data file @return path
+  //!
+  static String dataPath(const BrowserFile & f);
+  //! @brief The data file known by a path (dataPath()): a tree (preferred: its objects as changed) or a file read.
+  //! @param path path @return file, or null
+  BrowserFile * dataFile(const String & path);
+  //! @brief Called when a tree is saved to a file (CapGuiApp: the plot files using it follow it).
+  //! @param id tree @param previousPath path it was known by before (dataPath())
+  virtual void treeSaved(int id, const String & previousPath) { (void)id; (void)previousPath; }
   BrowserFile * file(int id);
   //! @brief Save Changes dialog of the trees being closed (closeFilesAsking()).
   void renderTreeClosing();

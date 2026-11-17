@@ -32,7 +32,7 @@ void usage()
   std::printf(
     "Usage: CapGui [--basic | --edit] [plots.xml ...] [file.cap | folder ...] [--config gui.xml] [--maps maps.cap]\n"
     "  The canvases are the windows of a plot file (the XML files of PlotHistos): drag histograms from the\n"
-    "  browser onto them or onto the Plot Tree, change them, save the plot file; File > Export writes the figures.\n"
+    "  browser onto them or onto the Plot Tree, change them, save the plot file; Plots > Export writes the figures.\n"
     "  --basic   start from a new plot file (the default without plot files)\n"
     "  --edit    start from the plot files given, or ask for one (the default with plot files)\n"
     "  CAP files and folders given are shown in the file browser.\n"

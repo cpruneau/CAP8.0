@@ -15,6 +15,7 @@
 #include <string>
 #include "CapGuiApp.hpp"
 #include "PlotOutputs.hpp"
+#include "PlotTemplate.hpp"
 #include "CapFile.hpp"
 #include "ColorTable.hpp"
 #include "FileSystem.hpp"
@@ -38,6 +39,71 @@ namespace CAP
 
   namespace
   {
+  //!
+  //! Grid of grey squares (8 x 8): the squares up to the one under the mouse are highlighted, those of the current grid
+  //! outlined; a click sets columns and rows and closes the menu. Returns true when a grid is chosen.
+  //!
+  bool gridPicker(int currentColumns, int currentRows, int & columns, int & rows)
+  {
+  const int n = 8;
+  const float cell = 18.0f, gap = 3.0f, step = cell + gap;
+  ImVec2 origin = ImGui::GetCursorScreenPos();
+  ImGui::InvisibleButton("##grid", ImVec2(n*step - gap, n*step - gap));
+  const bool hovered = ImGui::IsItemHovered();
+  int hc = 0, hr = 0;
+  if (hovered)
+    {
+    ImVec2 m = ImGui::GetIO().MousePos;
+    hc = std::max(1, std::min(n, int((m.x - origin.x)/step) + 1));
+    hr = std::max(1, std::min(n, int((m.y - origin.y)/step) + 1));
+    }
+  ImDrawList * draw = ImGui::GetWindowDrawList();
+  const ImU32 grey = ImGui::GetColorU32(ImVec4(0.55f, 0.55f, 0.55f, 0.45f));
+  const ImU32 lit  = ImGui::GetColorU32(ImGuiCol_ButtonActive);
+  const ImU32 line = ImGui::GetColorU32(ImGuiCol_Text);
+  for (int r=0; r<n; r++)
+    for (int c=0; c<n; c++)
+      {
+      ImVec2 a(origin.x + c*step, origin.y + r*step), b(a.x + cell, a.y + cell);
+      draw->AddRectFilled(a, b, hovered && c < hc && r < hr ? lit : grey, 2.0f);
+      if (c < currentColumns && r < currentRows) draw->AddRect(a, b, line, 2.0f);
+      }
+  if (hovered) ImGui::Text("%d x %d", hc, hr);
+  else         ImGui::TextDisabled("now %d x %d", currentColumns, currentRows);
+  if (hovered && ImGui::IsItemClicked())
+    {
+    columns = hc;
+    rows = hr;
+    ImGui::CloseCurrentPopup();
+    return true;
+    }
+  return false;
+  }
+
+  //! Lower-case extension of a file name, with its dot ("" if none).
+  std::string extensionOf(const String & fileName)
+  {
+  std::string name = fileName.str();
+  std::size_t slash = name.rfind('/'), dot = name.rfind('.');
+  if (dot == std::string::npos || (slash != std::string::npos && dot < slash)) return "";
+  std::string e = name.substr(dot);
+  for (char & ch : e) ch = char(std::tolower((unsigned char)ch));
+  return e;
+  }
+
+  //! Give the histograms of an element the identifiers of the inputs of another plot file (by the map; the inputs
+  //! without identifier are the first one).
+  void renameInputs(XmlElement & e, const std::map<std::string, String> & ids, const String & first)
+  {
+  if (e.isNamed("Histogram") || e.isNamed("Data") || e.isNamed("Profile"))
+    {
+    String id = e.attribute("input", "");
+    auto found = ids.find((id.isNull() ? first : id).str());
+    if (found != ids.end()) e.setAttribute("input", found->second);
+    }
+  for (unsigned int k=0; k<e.nChildren(); k++) renameInputs(e.child(k), ids, first);
+  }
+
   const char * kEditorWindow = "Plot Tree";
   const char * kNodePayload = "CAP_PLOT_NODE";
 
@@ -316,19 +382,20 @@ namespace CAP
                      "shown in the Plot Tree; what is changed on them is written to the file, and what is changed in the "
                      "tree draws them again.");
   ImGui::Spacing();
-  ImGui::BulletText("File > New makes plot files (a tab each in the Plot Tree), windows, canvases, browsers and empty\n"
-                    "trees; File > Open opens data files (CAP) in the browser and plot files (XML) in the Plot Tree.");
-  ImGui::BulletText("File > Duplicate, Save and Close act on what was used last: the selection of the plot file (canvas,\n"
-                    "graph, histogram, function), or the tree and object selected in the browser. Closing a changed\n"
-                    "plot file or tree asks to save it. File > Export writes figures, the PDF book, the PowerPoint\n"
-                    "presentation and the LaTeX document.");
+  ImGui::BulletText("File acts on the data files (CAP) of the browser, the one selected: New, Open, Duplicate, Close,\n"
+                    "Save (a new or changed file), Export (ROOT, or every histogram on a page of a PDF, LaTeX or\n"
+                    "PowerPoint file).");
+  ImGui::BulletText("Plots acts on the plot files (XML), a tab each in the Plot Tree: New, Open, Duplicate, Close, Save,\n"
+                    "Export (PDF book, LaTeX, PowerPoint, named plots). Closing a changed plot file or tree asks to save it.");
+  ImGui::BulletText("Windows acts on the window shown: New (with one canvas), Open (adds the windows of a plot file),\n"
+                    "Duplicate, Close, Format (its grid of canvases), Save (PDF, SVG, XML or LaTeX), Export.\n"
+                    "Canvas acts on the current canvas: New, Close, Format (its grid of graphs), Save.");
   ImGui::BulletText("Drag a histogram from the browser onto a graph of a canvas or onto the tree: on a graph it is\n"
                     "overlaid; on a histogram it goes after it; on a canvas it gets a new graph; on a window a new\n"
                     "canvas. A folder adds all its histograms. Clicking a histogram in the browser adds it to the\n"
                     "selected graph.");
   ImGui::BulletText("The selection is shared: click a graph on a canvas, its row is selected in the tree, and the other\n"
-                    "way around. Edit > Copy, Cut, Paste, Delete and File > Duplicate act on it; Copy puts its XML on the clipboard.");
-  ImGui::BulletText("Window > Canvases and Graphs in Canvas set the grids of the window and of the canvas in the file.");
+                    "way around. Edit > Copy, Cut, Paste, Delete and Duplicate act on it; Copy puts its XML on the clipboard.");
   ImGui::BulletText("View > All Windows shows every window of the plot file; otherwise the window of the selection.");
   ImGui::BulletText("Shapes drawn on the canvases and fits are shown, not written to the plot file.");
   ImGui::BulletText("PlotHistos plots.xml opens CapGui on a plot file; PlotHistos --all plots.xml writes its outputs.");
@@ -353,53 +420,89 @@ namespace CAP
   void CapGuiApp::buildMenus()
   {
   MenuBar & bar = _gui.menuBar();
+  // File: the CAP data files and trees of the browser (the one selected in the browser used last)
   Menu & file = bar.addMenu("File");
-  Menu & creating = file.addMenu("New", "Plot files, windows, canvases, browsers and trees");
-  creating.addItem("Plot File",                "plot.new",           "Ctrl+N", "A new, untitled plot file (a new tab of the Plot Tree)");
-  creating.addSeparator();
-  creating.addItem("Window",                   "plot.newWindow",     "",       "A new, empty window of the plot file");
-  creating.addItem("Canvas in Current Window", "plot.newCanvas",     "",       "A new canvas in the window shown");
-  creating.addItem("Canvas in New Window",     "plot.newCanvasWindow", "",     "A new window of the plot file, with one canvas");
-  creating.addSeparator();
-  creating.addItem("From Data File...",        "plot.fromData",      "",       "A new plot file with windows, canvases and graphs of the histograms and functions of a CAP file (or of a RunCAP workflow): choose them and their layout");
-  creating.addSeparator();
-  creating.addItem("File Browser",             "file.newBrowser",    "",       "Another file browser, with files of its own");
-  creating.addItem("Empty Folder Tree",        "file.newTree",       "",       "A new, empty tree of histograms and functions in the browser: drag objects onto it, save it as a CAP file");
-  Menu & opening = file.addMenu("Open", "Data files (CAP) and plot files (XML)");
-  opening.addItem("Data File (CAP/ROOT)...",   "file.open",          "Ctrl+Shift+O", "Open a CAP file (or the histograms of a ROOT file) in the browser");
-  opening.addItem("Data Folder...",            "file.openFolder",    "",             "Show a folder of CAP files in the browser");
-  opening.addItem("Plot File (XML)...",        "plot.open",          "Ctrl+O",       "Open a plot file (PlotHistos XML) in a new tab of the Plot Tree");
-  file.addItem("Duplicate",                    "file.duplicate",     "Ctrl+D",       "A copy of the selection, after it: the canvas, graph, histogram or function selected in the Plot Tree "
-                                                                                      "or on a canvas, or the object or folder selected in a tree of the browser (if the browser was used last); "
-                                                                                      "with nothing selected, the plot file");
+  Menu & fileNew = file.addMenu("New", "A new top folder in the browser used last, or a new browser");
+  fileNew.addItem("Top Folder",   "data.new",        "Ctrl+Shift+N", "A new data file in the browser used last: an entry with an empty "
+                                                                     "top folder; drag objects and folders onto it, save it as a CAP file");
+  fileNew.addItem("File Browser", "file.newBrowser", "",             "A new file browser, with files and folders of its own");
+  file.addItem("Open...",      "file.open",      "Ctrl+Shift+O", "Open a CAP file (or the histograms of a ROOT file) in the browser");
+  file.addItem("Duplicate",    "data.duplicate", "",             "A new data file holding a copy of the folders and objects of the file selected");
+  file.addItem("Rename...",    "data.rename",    "",             "A new name for the folder or histogram selected in a data file made in CapGui (or its top folder); "
+                                                                  "files read from disk keep their names");
   file.addSeparator();
-  file.addItem("Save",                         "file.saveItem",      "Ctrl+S",       "Save the plot file shown, or the tree selected in the browser (if the browser was used last)");
-  file.addItem("Save As...",                   "file.saveItemAs",    "Ctrl+Shift+S", "Save the plot file shown, or the tree selected in the browser, under a new name");
-  file.addItem("Save All",                     "file.saveEverything", "",            "Save all the changed plot files and trees");
+  file.addItem("Close",        "file.closeTree", "",             "Close the file selected in the browser, with its folders (asks to save its changes)");
+  file.addItem("Close All",    "data.closeAll",  "",             "Close all the data files of the browsers (asks to save their changes)");
   file.addSeparator();
-  Menu & closing = file.addMenu("Close", "Windows, canvases, browsers, trees and plot files");
-  closing.addItem("Window",                    "plot.closeWindow",   "",       "Remove the window shown from the plot file, with its canvases (Undo restores it)");
-  closing.addItem("Canvas",                    "window.close",       "",       "Remove the current canvas from the plot file (Undo restores it)");
-  closing.addItem("File Browser",              "file.closeBrowser",  "",       "Close the browser used last (the first one is hidden), asking to save its changed trees");
-  closing.addItem("Folder Tree",               "file.closeTree",     "",       "Close the tree (or the data file) selected in the browser, asking to save its changes");
-  closing.addItem("Plot File",                 "plot.close",         "Ctrl+W", "Close the plot file shown, asking to save its changes");
-  closing.addSeparator();
-  closing.addItem("All Data Files",            "file.closeAll",      "",       "Close the data files and trees open in the browsers");
+  file.addItem("Save",         "data.save",      "",             "Save the file selected, new or changed, to its CAP file");
+  file.addItem("Save As...",   "data.saveAs",    "",             "Save the file selected to a new CAP file");
   file.addSeparator();
-  Menu & exporting = file.addMenu("Export", "Figures and documents made from the canvases");
-  exporting.addItem("Window As...",  "file.saveAs",     "", "The canvases of the main window, laid out as on screen, to an SVG or PDF file");
-  exporting.addItem("Canvas As...",  "file.saveCanvas", "", "The current canvas to an SVG or PDF file");
-  exporting.addItem("Graph As...",   "file.saveGraph",  "", "The selected graph of the current canvas to an SVG or PDF file");
-  exporting.addSeparator();
-  exporting.addItem("Named Plots",   "plot.print",  "", "Each canvas and graph of the plot file that has a file name, to that file in the output folder");
-  exporting.addItem("PDF Book",      "plot.pdf",    "", "All the canvases of the plot file, one per page, to the PDF book of the output folder");
-  exporting.addItem("PowerPoint",    "plot.pptx",   "", "All the canvases of the plot file, one per slide (native shapes)");
-  exporting.addItem("LaTeX",         "plot.latex",  "", "A Beamer presentation or an article of all the canvases of the plot file");
-  exporting.addItem("All Outputs",   "plot.all",    "", "Named plots, PDF book, PowerPoint and LaTeX");
-  exporting.addSeparator();
-  exporting.addItem("Output Folder...", "plot.folder", "", "Choose the folder where the outputs of the plot file go");
+  Menu & dataExport = file.addMenu("Export", "The file selected in other formats");
+#ifdef CAP_WITH_ROOT
+  dataExport.addItem("ROOT...",       "data.exportRoot",  "", "All the objects of the file selected, converted, to a ROOT file");
+#endif
+  dataExport.addItem("PDF...",        "data.exportPdf",   "", "Every histogram of the file selected drawn on a page of its own, in one PDF file");
+  dataExport.addItem("LaTeX...",      "data.exportLatex", "", "Every histogram of the file selected drawn in a figure of its own, in a LaTeX document");
+  dataExport.addItem("PowerPoint...", "data.exportPptx",  "", "Every histogram of the file selected drawn on a slide of its own");
   file.addSeparator();
-  file.addItem("Exit",              "file.exit",      "Ctrl+Q",       "Quit (asks to save the changes of the plot files)");
+  file.addItem("Exit",         "file.exit",      "Ctrl+Q",       "Quit (asks to save the changes of the plot files)");
+
+  // Plots: the plot files (XML), the tabs of the Plot Tree
+  Menu & plots = bar.addMenu("Plots");
+  plots.addItem("New",                 "plot.new",       "Ctrl+N",       "A new, untitled plot file (a new tab of the Plot Tree)");
+  plots.addItem("New From Data File...", "plot.fromData", "",            "A new plot file with windows, canvases and graphs of the histograms and functions of a CAP file (or of a RunCAP workflow)");
+  plots.addItem("Open...",             "plot.open",      "Ctrl+O",       "Open a plot file (XML) in a new tab of the Plot Tree");
+  plots.addItem("Duplicate",           "plot.duplicate", "",             "A copy of the plot file shown, in a new, untitled tab");
+  plots.addItem("Rename...",           "plot.rename",    "",             "A new name for the plot file shown (a saved file is renamed in its folder)");
+  plots.addSeparator();
+  plots.addItem("Close",               "plot.close",     "Ctrl+W",       "Close the plot file shown, asking to save its changes");
+  plots.addItem("Close All",           "plot.closeAll",  "",             "Close all the plot files, asking to save their changes");
+  plots.addSeparator();
+  plots.addItem("Save",                "plot.save",      "Ctrl+S",       "Save the plot file shown");
+  plots.addItem("Save As...",          "plot.saveAs",    "Ctrl+Shift+S", "Save the plot file shown under a new name");
+  plots.addSeparator();
+  Menu & plotExport = plots.addMenu("Export", "Figures and documents of all the canvases of the plot file shown, in its output folder");
+  plotExport.addItem("PDF Book",       "plot.pdf",    "", "All the canvases of the plot file, one per page, to the PDF book of the output folder");
+  plotExport.addItem("LaTeX",          "plot.latex",  "", "A Beamer presentation or an article of all the canvases of the plot file");
+  plotExport.addItem("PowerPoint",     "plot.pptx",   "", "All the canvases of the plot file, one per slide (native shapes)");
+  plotExport.addItem("Named Plots",    "plot.print",  "", "Each canvas and graph of the plot file that has a file name, to that file in the output folder");
+  plotExport.addItem("All Outputs",    "plot.all",    "", "Named plots, PDF book, PowerPoint and LaTeX");
+  plotExport.addSeparator();
+  plotExport.addItem("Output Folder...", "plot.folder", "", "Choose the folder where the outputs of the plot file go");
+
+  // Windows: the windows of the plot file shown (the one in the main window)
+  Menu & windows = bar.addMenu("Windows");
+  windows.addItem("New",        "win.new",       "", "A new window of the plot file, with one empty canvas");
+  windows.addItem("Open...",    "win.open",      "", "Add the windows of a plot file (XML) to the plot file shown");
+  windows.addItem("Duplicate",  "win.duplicate", "", "A copy of the window shown, with all its canvases, in a new window");
+  windows.addItem("Rename...",  "win.rename",    "", "A new title for the window shown");
+  windows.addSeparator();
+  windows.addItem("Close",      "win.close",     "", "Remove the window shown from the plot file, with its canvases (Undo restores it)");
+  windows.addItem("Close All",  "win.closeAll",  "", "Remove all the windows of the plot file (Undo restores them)");
+  windows.addSeparator();
+  Menu & windowFormat = windows.addMenu("Format", "Canvases of the window shown: columns x rows");
+  windowFormat.addWidget([this]() { gridMenu(false); });
+  windows.addSeparator();
+  windows.addItem("Save",       "win.save",      "", "Save the window shown again to the file it was saved to (PDF, SVG, XML or LaTeX)");
+  windows.addItem("Save As...", "win.saveAs",    "", "Save the window shown to a PDF or SVG file (as on screen), an XML plot file or a LaTeX document");
+  windows.addSeparator();
+  Menu & windowExport = windows.addMenu("Export", "The canvases of the window shown");
+  windowExport.addItem("PDF Files...",  "win.exportPdfs",  "", "Each canvas of the window to a PDF file of its own, in a folder");
+  windowExport.addItem("Book...",       "win.exportBook",  "", "All the canvases of the window, one per page, in one PDF file");
+  windowExport.addItem("LaTeX...",      "win.exportLatex", "", "All the canvases of the window in a LaTeX document");
+  windowExport.addItem("PowerPoint...", "win.exportPptx",  "", "All the canvases of the window, one per slide");
+
+  // Canvas: the current canvas (of the window shown)
+  Menu & canvas = bar.addMenu("Canvas");
+  canvas.addItem("New",        "plot.newCanvas", "", "A new canvas in the window shown");
+  canvas.addItem("Rename...",  "canvas.rename",  "", "A new name (and title) for the current canvas");
+  canvas.addItem("Close",      "window.close",   "", "Remove the current canvas from the plot file, with its graphs (Undo restores it)");
+  canvas.addSeparator();
+  Menu & canvasFormat = canvas.addMenu("Format", "Graphs of the current canvas: columns x rows");
+  canvasFormat.addWidget([this]() { gridMenu(true); });
+  canvas.addSeparator();
+  canvas.addItem("Save",       "canvas.save",    "", "Save the current canvas again to the file it was saved to (PDF, SVG, XML or LaTeX)");
+  canvas.addItem("Save As...", "canvas.saveAs",  "", "Save the current canvas to a PDF or SVG file, an XML plot file or a LaTeX document");
 
   Menu & edit = bar.addMenu("Edit");
   edit.addItem("Undo",   "plot.undo",  "Ctrl+Z",       "Undo the last change of the plot file (made on the canvases or in the tree)");
@@ -408,6 +511,8 @@ namespace CAP
   edit.addItem("Cut",    "plot.cut",   "Ctrl+X", "Copy the selection (graph, canvas, histogram, ...), then remove it");
   edit.addItem("Copy",   "plot.copy",  "Ctrl+C", "Copy the selection: its XML also goes to the clipboard");
   edit.addItem("Paste",  "plot.paste", "Ctrl+V", "Paste what was copied where it belongs, at the selection");
+  edit.addItem("Duplicate", "file.duplicate", "Ctrl+D", "A copy of the selection, after it: the canvas, graph, histogram or function "
+                                                        "selected in the Plot Tree, or the entry selected in the browser if it was used last");
   edit.addItem("Delete", "plot.delete", "Delete", "Remove the shape selected on a canvas, otherwise the selection");
   edit.addSeparator();
   edit.addItem("Clear Canvas",       "edit.clearCanvas", "", "Remove the histograms and functions of all the graphs of the current canvas");
@@ -427,6 +532,8 @@ namespace CAP
   Menu & view = bar.addMenu("View");
   view.addItem("File Browser",   "view.browser",   "Ctrl+B", "Show or hide the file browser").setCheckable(true);
   view.addItem("Browser in Separate Window", "view.browserWindow", "", "The file browser in a window of its own").setCheckable(true);
+  view.addItem("New File Browser",   "file.newBrowser",   "", "Another file browser, with files of its own");
+  view.addItem("Close File Browser", "file.closeBrowser", "", "Close the browser used last (the first one is hidden), asking to save its changed trees");
   view.addItem("Plot Tree",      "plot.tree",      "Ctrl+T", "Show or hide the tree of the plot files").setCheckable(true);
   view.addItem("Inspector",      "plot.inspector", "", "All the settings of the selection, below the tree").setCheckable(true);
   view.addItem("Style Elements", "plot.showStyle", "", "Show the elements of style (Margins, Axis, Marker, ...) in the tree").setCheckable(true);
@@ -440,26 +547,6 @@ namespace CAP
   Menu & theme = view.addMenu("Theme");
   for (const char * t : { "light", "dark", "classic" })
     theme.addItem(t, String("view.theme.") + t, "", String("Use the ") + t + String(" theme")).setCheckable(true);
-
-  Menu & window = bar.addMenu("Window");
-  Menu & layout = window.addMenu("Canvases", "Canvases of the window shown (columns x rows), in the plot file");
-  for (auto cr : std::vector<std::pair<int,int>>{{1,1},{2,1},{1,2},{2,2},{3,2},{3,3}})
-    {
-    char name[16], command[40];
-    std::snprintf(name, sizeof(name), "%d x %d", cr.first, cr.second);
-    std::snprintf(command, sizeof(command), "window.layout.%dx%d", cr.first, cr.second);
-    layout.addItem(name, command).setCheckable(true);
-    }
-  layout.addItem("Custom...", "window.layout.custom", "", "Any grid of canvases");
-  Menu & graphs = window.addMenu("Graphs in Canvas", "Graphs of the current canvas (columns x rows), in the plot file");
-  for (auto cr : std::vector<std::pair<int,int>>{{1,1},{2,1},{1,2},{2,2},{3,2},{3,3}})
-    {
-    char name[16], command[40];
-    std::snprintf(name, sizeof(name), "%d x %d", cr.first, cr.second);
-    std::snprintf(command, sizeof(command), "window.graphs.%dx%d", cr.first, cr.second);
-    graphs.addItem(name, command).setCheckable(true);
-    }
-  graphs.addItem("Custom...", "window.graphs.custom", "", "Any grid of graphs");
 
   Menu & help = bar.addMenu("Help");
   help.addItem("CapGui Help",        "plot.help",      "F1", "How the canvases, the plot files and the browser work together");
@@ -480,13 +567,36 @@ namespace CAP
   enable("plot.duplicate", any);
   enable("plot.save", any);
   enable("plot.saveAs", any);
-  enable("file.saveItem", any);
-  enable("file.saveItemAs", any);
   enable("file.duplicate", any);
+  enable("plot.closeAll", any);
   enable("plot.newWindow", any);
   enable("plot.newCanvas", any);
   enable("plot.newCanvasWindow", any);
   enable("plot.closeWindow", any && !t->document->children(PlotDocument::Path(), PlotDocument::kWindow).empty());
+  {
+  bool windows = any && !t->document->children(PlotDocument::Path(), PlotDocument::kWindow).empty();
+  Path canvas, graph;
+  bool canvasOfPlot = currentCanvas(canvas, graph);
+  for (const char * c : {"win.duplicate", "win.close", "win.closeAll", "win.save", "win.saveAs", "win.exportPdfs",
+                         "win.exportBook", "win.exportLatex", "win.exportPptx"}) enable(c, windows);
+  enable("win.new", any);
+  enable("win.open", any);
+  enable("canvas.save", canvasOfPlot);
+  enable("canvas.saveAs", canvasOfPlot);
+  if (Menu * w = bar.findMenu("Windows")) if (Menu * f = w->findMenu("Format")) f->setEnabled(windows);
+  if (Menu * c = bar.findMenu("Canvas")) if (Menu * f = c->findMenu("Format")) f->setEnabled(canvasOfPlot);
+  String path;
+  bool folder = false;
+  BrowserFile * data = selectedEntry(path, folder);
+  for (const char * c : {"data.duplicate", "data.saveAs", "data.exportRoot", "data.exportPdf", "data.exportLatex",
+                         "data.exportPptx"}) enable(c, data != nullptr);
+  enable("data.save", data && data->editable && (data->modified || data->path.isNull()));
+  enable("data.closeAll", !_files.empty());
+  enable("data.rename", _gui.activeBrowser().canRename());
+  enable("win.rename", windows);
+  enable("canvas.rename", canvasOfPlot);
+  enable("plot.rename", any);
+  }
   enable("window.close", _gui.nPanes() > 0);
   enable("file.closeBrowser", _gui.browserVisible() || _gui.browsers().size() > 1);
   {
@@ -524,6 +634,19 @@ namespace CAP
   std::function<void(FileBrowser &)> previousBrowser = _gui.onNewBrowser;
   _gui.onNewBrowser = [this, previousBrowser](FileBrowser & b) { if (previousBrowser) previousBrowser(b); connectToPlot(b); };
   _gui.onClosePanes = [this](const std::vector<int> & panes) { return closeCanvases(panes); };
+  // "Rename Canvas..." of the context menu of a graph: the canvas of the plot file (its name and title)
+  auto hookRename = [this](CanvasPane & pane)
+    {
+    std::function<void()> previous = pane.onRename;
+    pane.onRename = [this, &pane, previous]()
+      {
+      for (const auto & link : _links) if (link.pane == &pane && !link.canvas.empty()) { requestRename(3, link.canvas); return; }
+      if (previous) previous();
+      };
+    };
+  for (int k=0; k<_gui.nPanes(); k++) hookRename(_gui.pane(k));
+  std::function<void(CanvasPane &)> previousPane = _gui.onNewPane;
+  _gui.onNewPane = [previousPane, hookRename](CanvasPane & pane) { if (previousPane) previousPane(pane); hookRename(pane); };
   _gui.onCloseRequest = [this]() -> bool
     {
     // the trees changed first (Cancel leaves the plot files as they are), then the plot files changed
@@ -727,7 +850,7 @@ namespace CAP
   std::vector<String> objects;
   BrowserFile * f = file(object.file);
   if (!f || !f->file) return objects;
-  fileName = f->path;
+  fileName = dataPath(*f);                             // a tree not saved yet: a path of its own
   if (!folder) { objects.push_back(object.path); return objects; }
   Folder * dir = object.path.isNull() ? &f->file->folder() : f->file->folder().folder(object.path);
   if (!dir) return objects;
@@ -817,7 +940,7 @@ namespace CAP
     {
     t->selected = d->addWindow();
     t->hasSelection = true;
-    _gui.setStatus("New window: File > New > Canvas in Current Window, or drop histograms on it in the Plot Tree");
+    _gui.setStatus("New window: Canvas > New adds a canvas to it, or drop histograms on it in the Plot Tree");
     }
   else if ((c == "plot.newCanvas" || c == "plot.newCanvasWindow") && d)
     {
@@ -947,6 +1070,115 @@ namespace CAP
   else if (std::sscanf(c.data(), "window.layout.%dx%d", &columns, &rows) == 2) setGrid(false, columns, rows);
   else if (std::sscanf(c.data(), "window.graphs.%dx%d", &columns, &rows) == 2) setGrid(true, columns, rows);
   else if (c == "window.layout.custom" || c == "window.graphs.custom") { _gridOfGraphs = c == "window.graphs.custom"; _gridDialog = true; }
+  // ----- File: the data files
+  else if (c == "data.new") newTree(_gui.activeBrowser());
+  else if (c == "data.duplicate")
+    {
+    BrowserFile * f = selectedDataFile();
+    if (!f) { _gui.setStatus("Select a data file (or one of its objects) in the browser first"); return; }
+    duplicateDataFile(f->id);
+    }
+  else if (c == "data.closeAll")
+    {
+    std::vector<int> ids;
+    for (const auto & f : _files) ids.push_back(f.id);
+    if (!ids.empty()) closeFilesAsking(ids, nullptr);
+    }
+  else if (c == "data.save" || c == "data.saveAs")
+    {
+    BrowserFile * f = selectedDataFile();
+    if (!f) { _gui.setStatus("Select a data file (or one of its objects) in the browser first"); return; }
+    if (f->editable) saveTree(f->id, c == "data.saveAs");
+    else if (c == "data.saveAs") saveCopy(f->id, "");
+    else _gui.setStatus("Unchanged: a file read from disk is saved as it is (Save As writes a copy)");
+    }
+  else if (c == "data.exportRoot")
+    {
+    BrowserFile * f = selectedDataFile();
+    if (f) exportRoot(f->id, "");
+    }
+  else if (c == "data.exportPdf" || c == "data.exportLatex" || c == "data.exportPptx")
+    {
+    BrowserFile * f = selectedDataFile();
+    if (!f) { _gui.setStatus("Select a data file (or one of its objects) in the browser first"); return; }
+    String kind = c == "data.exportPdf" ? "pdf" : (c == "data.exportLatex" ? "latex" : "pptx");
+    String extension = c == "data.exportPdf" ? ".pdf" : (c == "data.exportLatex" ? ".tex" : ".pptx");
+    String name = (f->editable ? f->name : FileSystem::stem(f->path)) + extension;
+    int id = f->id;
+    _gui.fileDialog().open(FileDialog::kSaveFile, "Export the histograms of the file", _configuration.directory,
+                           { extension }, name, [this, id, kind, extension](const String & chosen)
+      {
+      exportDataFile(id, kind, FileSystem::hasExtension(chosen, extension) ? chosen : chosen + extension);
+      });
+    }
+  else if (c == "data.rename")
+    {
+    if (!_gui.activeBrowser().requestRename())
+      _gui.setStatus("Select a folder or a histogram of a data file made in CapGui (files read from disk keep their names)");
+    }
+  // ----- Plots
+  else if (c == "plot.rename" && d) requestRename(1, Path());
+  else if (c == "win.rename" && d)
+    {
+    Path w;
+    if (currentWindow(w)) requestRename(2, w); else _gui.setStatus("No window in the plot file");
+    }
+  else if (c == "canvas.rename" && d)
+    {
+    Path cv, graph;
+    if (currentCanvas(cv, graph)) requestRename(3, cv); else _gui.setStatus("The current canvas is not one of the plot file");
+    }
+  else if (c == "plot.closeAll")
+    {
+    std::vector<int> dirty;
+    for (const auto & tt : _documents) if (tt.document->isDirty()) dirty.push_back(tt.id);
+    for (int k=int(_documents.size())-1; k>=0; k--)
+      if (k < int(_documents.size()) && !_documents[std::size_t(k)].document->isDirty()) closeTab(k);
+    if (!dirty.empty()) { _closing = dirty; _exitAfterClosing = false; _closeDialog = true; }
+    }
+  // ----- Windows
+  else if (c == "win.new") actionPerformed(ActionEvent{"plot.newCanvasWindow", nullptr});
+  else if (c == "win.duplicate" && d)
+    {
+    Path w;
+    if (!currentWindow(w)) { _gui.setStatus("No window in the plot file"); return; }
+    Path copy = d->duplicate(w);
+    if (copy.empty()) return;
+    t->selected = copy;
+    t->hasSelection = true;
+    _gui.setStatus("Window duplicated with its canvases (Undo to remove the copy)");
+    }
+  else if (c == "win.close") actionPerformed(ActionEvent{"plot.closeWindow", nullptr});
+  else if (c == "win.closeAll" && d)
+    {
+    std::vector<Path> windows = d->children(Path(), PlotDocument::kWindow);
+    if (windows.empty()) return;
+    d->beginEdit();
+    for (auto w = windows.rbegin(); w != windows.rend(); ++w) d->remove(*w);
+    d->endEdit();
+    t->hasSelection = false;
+    t->selected = Path();
+    _drawnWindow = -1;
+    _gui.setStatus("All the windows removed from the plot file (Undo to restore them)");
+    }
+  else if (c == "win.open" && d)
+    _gui.fileDialog().open(FileDialog::kOpenFile, "Plot file whose windows to add", _configuration.directory, {".xml"}, "",
+                           [this](const String & path) { openWindows(path); });
+  else if (c == "win.save" || c == "win.saveAs") saveViewAs(false, c == "win.saveAs");
+  else if (c == "canvas.save" || c == "canvas.saveAs") saveViewAs(true, c == "canvas.saveAs");
+  else if (c == "win.exportPdfs")
+    _gui.fileDialog().open(FileDialog::kOpenFolder, "Folder of the PDF files of the canvases", _configuration.directory, {}, "",
+                           [this](const String & folder) { exportWindow("pdfs", folder); });
+  else if (c == "win.exportBook" || c == "win.exportLatex" || c == "win.exportPptx")
+    {
+    String kind = c == "win.exportBook" ? "book" : (c == "win.exportLatex" ? "latex" : "pptx");
+    String extension = c == "win.exportBook" ? ".pdf" : (c == "win.exportLatex" ? ".tex" : ".pptx");
+    _gui.fileDialog().open(FileDialog::kSaveFile, "Export the canvases of the window", _configuration.directory,
+                           { extension }, String("window") + extension, [this, kind, extension](const String & chosen)
+      {
+      exportWindow(kind, FileSystem::hasExtension(chosen, extension) ? chosen : chosen + extension);
+      });
+    }
   else if (c.str().compare(0, 5, "plot.") == 0) { }
   else CapApp::actionPerformed(event);
   }
@@ -975,16 +1207,434 @@ namespace CAP
   d.endEdit();
   }
 
+  void CapGuiApp::gridMenu(bool graphs)
+  {
+  Tab * t = tab();
+  int columns = 1, rows = 1;
+  const XmlElement * e = nullptr;
+  if (t)
+    {
+    PlotDocument & d = *t->document;
+    if (graphs)
+      {
+      Path canvas, graph;
+      if (currentCanvas(canvas, graph)) e = d.element(canvas);
+      }
+    else
+      {
+      Path w;
+      if (currentWindow(w)) e = d.element(w);
+      }
+    }
+  if (!e) { ImGui::TextDisabled(graphs ? "No canvas of the plot file" : "No window in the plot file"); return; }
+  int currentColumns = int(e->attributeInt("columns", 1)), currentRows = int(e->attributeInt("rows", 1));
+  if (gridPicker(std::max(1, currentColumns), std::max(1, currentRows), columns, rows)) setGrid(graphs, columns, rows);
+  }
+
+  PlotDocument CapGuiApp::reducedDocument(const Path & window, const Path & canvas)
+  {
+  PlotDocument reduced = *tab()->document;
+  XmlElement & root = reduced.document().root();
+  for (int k=int(root.nChildren())-1; k>=0; k--)
+    if (root.child(unsigned(k)).isNamed("Window") && (window.empty() || k != window[0])) root.removeChild(unsigned(k));
+  if (!canvas.empty() && canvas.size() >= 2)
+    for (unsigned int k=0; k<root.nChildren(); k++)
+      {
+      XmlElement & w = root.child(k);
+      if (!w.isNamed("Window")) continue;
+      for (int j=int(w.nChildren())-1; j>=0; j--)
+        if (w.child(unsigned(j)).isNamed("Canvas") && j != canvas[1]) w.removeChild(unsigned(j));
+      w.setAttribute("columns", 1);
+      w.setAttribute("rows", 1);
+      }
+  return reduced;
+  }
+
+  std::string CapGuiApp::viewKey(bool canvas)
+  {
+  Tab * t = tab();
+  if (!t) return "";
+  std::string key = std::to_string(t->id);
+  if (canvas)
+    {
+    Path c, graph;
+    if (!currentCanvas(c, graph)) return "";
+    const XmlElement * e = t->document->element(c);
+    return key + "|canvas|" + (e ? e->attribute("name", "").str() : std::string());
+    }
+  Path w;
+  if (!currentWindow(w) || w.empty()) return "";
+  return key + "|window|" + std::to_string(w[0]);
+  }
+
+  bool CapGuiApp::saveView(bool canvas, const String & fileName)
+  {
+  Tab * t = tab();
+  if (!t) return false;
+  Path w, c, graph;
+  if (canvas ? !currentCanvas(c, graph) : !currentWindow(w))
+    { _gui.showMessage("Save", canvas ? "The current canvas is not one of the plot file" : "No window in the plot file"); return false; }
+  if (canvas) w = PlotDocument::parent(c);
+  std::string extension = extensionOf(fileName);
+  String path = extension.empty() ? fileName + String(".pdf") : fileName;
+  if (extension.empty()) extension = ".pdf";
+  String error;
+  if (extension == ".pdf" || extension == ".svg")
+    {
+    CapApp::save(path, canvas ? _gui.currentPaneIndex() : -1);         // as on screen
+    return true;
+    }
+  if (extension == ".xml")
+    {
+    PlotDocument reduced = reducedDocument(w, c);
+    if (!reduced.write(path, error)) { _gui.showMessage("Save", path + String(":\n") + error); return false; }
+    _gui.setStatus(String("Saved ") + path);
+    return true;
+    }
+  if (extension == ".tex")
+    {
+    PlotSpec spec;
+    std::vector<PlotSpec::WindowState> windows;
+    PlotDocument reduced = reducedDocument(w, c);
+    if (!buildOutputs(reduced, spec, windows)) return false;
+    String written = PlotOutputs::latex(spec, windows, error, path);
+    if (written.isNull()) { _gui.showMessage("Save", String("Cannot write ") + path + String("\n") + error); return false; }
+    _gui.setStatus(String("Saved ") + written);
+    return true;
+    }
+  _gui.showMessage("Save", String("Unknown type ") + String(extension.c_str()) + String(": use .pdf, .svg, .xml or .tex"));
+  return false;
+  }
+
+  void CapGuiApp::saveViewAs(bool canvas, bool ask)
+  {
+  std::string key = viewKey(canvas);
+  if (key.empty())
+    { _gui.setStatus(canvas ? "The current canvas is not one of the plot file" : "No window in the plot file"); return; }
+  auto found = _viewFiles.find(key);
+  if (!ask && found != _viewFiles.end()) { saveView(canvas, found->second); return; }
+  String name = canvas ? String("canvas.pdf") : String("window.pdf");
+  if (found != _viewFiles.end()) name = FileSystem::name(found->second);
+  else if (canvas)
+    {
+    Path c, graph;
+    if (currentCanvas(c, graph))
+      if (const XmlElement * e = tab()->document->element(c)) if (!e->attribute("name", "").isNull()) name = e->attribute("name") + String(".pdf");
+    }
+  _gui.fileDialog().open(FileDialog::kSaveFile, canvas ? "Save the canvas (PDF, SVG, XML or LaTeX)" : "Save the window (PDF, SVG, XML or LaTeX)",
+                         _configuration.directory, {".pdf", ".svg", ".xml", ".tex"}, name,
+    [this, canvas, key](const String & chosen)
+    {
+    if (saveView(canvas, chosen))
+      {
+      _viewFiles[key] = extensionOf(chosen).empty() ? chosen + String(".pdf") : chosen;
+      _configuration.directory = FileSystem::parent(chosen);
+      }
+    });
+  }
+
+  void CapGuiApp::exportWindow(const String & kind, const String & path)
+  {
+  Path w;
+  if (!currentWindow(w)) { _gui.setStatus("No window in the plot file"); return; }
+  PlotSpec spec;
+  std::vector<PlotSpec::WindowState> windows;
+  PlotDocument reduced = reducedDocument(w, Path());
+  if (!buildOutputs(reduced, spec, windows)) return;
+  String done, error;
+  if (kind == "pdfs")
+    {
+    int n = 0;
+    for (const GRAPHICS::Canvas * canvas : PlotOutputs::canvases(windows))
+      {
+      String name = canvas->name().isNull() ? String("canvas") + String(std::to_string(n).c_str()) : canvas->name();
+      String file = FileSystem::join(path, name + String(".pdf"));
+      if (PlotSpec::writePdf(file, { canvas })) n++;
+      else done += String("cannot write ") + file + String("\n");
+      }
+    done += String(std::to_string(n).c_str()) + String(" PDF files in ") + path;
+    }
+  else if (kind == "book")
+    {
+    String written = PlotOutputs::pdf(spec, windows, path);
+    done = written.isNull() ? String("Cannot write ") + path : String("Book: ") + written;
+    }
+  else if (kind == "pptx")
+    {
+    String written = PlotOutputs::pptx(spec, windows, path);
+    done = written.isNull() ? String("Cannot write ") + path : String("PowerPoint: ") + written;
+    }
+  else
+    {
+    String written = PlotOutputs::latex(spec, windows, error, path);
+    done = written.isNull() ? String("Cannot write ") + path + String("\n") + error : String("LaTeX: ") + written;
+    }
+  _configuration.directory = kind == "pdfs" ? path : FileSystem::parent(path);
+  _gui.showMessage("Export", done);
+  }
+
+  void CapGuiApp::openWindows(const String & fileName)
+  {
+  Tab * t = tab();
+  if (!t) return;
+  PlotDocument other;
+  String error;
+  if (!other.read(fileName, error)) { _gui.showMessage("Open Windows", fileName + String(":\n") + error); return; }
+  PlotDocument & d = *t->document;
+  d.beginEdit();
+  // the inputs of the other file, added to those of this one
+  std::map<std::string, String> ids;
+  String first;
+  for (const XmlElement * e : other.root().children())
+    {
+    if (!e->isNamed("Input")) continue;
+    String id = e->attribute("id", ""), file = e->attribute("file", "");
+    if (first.isNull()) first = id;
+    if (file.isNull()) continue;
+    String full = (file.str()[0] == '/' || file.str()[0] == '$' || file.str()[0] == '~') ? file
+                  : FileSystem::normalize(FileSystem::join(other.directory(), file));
+    ids[id.str()] = d.input(full);
+    }
+  int added = 0;
+  Path last;
+  for (const XmlElement * e : other.root().children())
+    {
+    if (!e->isNamed("Window")) continue;
+    XmlElement window = *e;
+    renameInputs(window, ids, first);
+    bool ok = false;
+    Path p = d.paste(window.toString(), Path(), ok);
+    if (ok) { added++; last = p; }
+    }
+  d.endEdit();
+  if (added == 0) { _gui.setStatus(String("No window in ") + fileName); return; }
+  t->selected = last;
+  t->hasSelection = true;
+  _configuration.directory = FileSystem::parent(fileName);
+  _gui.setStatus(String(std::to_string(added).c_str()) + String(" windows added from ") + fileName + String(" (Undo removes them)"));
+  }
+
+  void CapGuiApp::treeSaved(int id, const String & previousPath)
+  {
+  BrowserFile * tree = file(id);
+  if (!tree) return;
+  int changed = 0;
+  for (auto & t : _documents)
+    {
+    PlotDocument & d = *t.document;
+    String dir = d.directory();
+    std::vector<Path> inputs;
+    const XmlElement & root = d.root();
+    for (unsigned int k=0; k<root.nChildren(); k++) if (root.child(k).isNamed("Input")) inputs.push_back(Path{int(k)});
+    for (const Path & p : inputs)
+      {
+      const XmlElement * e = d.element(p);
+      String f = e ? e->attribute("file", "") : String("");
+      if (f.isNull()) continue;
+      String resolved = f.str()[0] == '/' ? FileSystem::normalize(f) : FileSystem::normalize(FileSystem::join(dir, f));
+      if (resolved != FileSystem::normalize(previousPath) && f != previousPath) continue;
+      d.setAttribute(p, "file", d.fileName().isNull() ? tree->path : PlotDocument::relativePath(tree->path, dir));
+      changed++;
+      }
+    }
+  if (changed) _drawnTab = -1;                          // drawn again from the file saved
+  }
+
+  void CapGuiApp::entryRenamed(int id, const String & oldPath, const String & newPath)
+  {
+  BrowserFile * tree = file(id);
+  if (!tree) return;
+  std::string from = oldPath.str(), to = newPath.str();
+  int changed = 0;
+  for (auto & t : _documents)
+    {
+    PlotDocument & d = *t.document;
+    String dir = d.directory();
+    // the inputs of the plot file that are this tree (the first one: histograms without input)
+    std::set<std::string> ids;
+    String first;
+    bool firstIsTree = false;
+    for (const XmlElement * e : d.root().children("Input"))
+      {
+      String f = e->attribute("file", "");
+      String resolved = f.isNull() ? f : (f.str()[0] == '/' ? FileSystem::normalize(f) : FileSystem::normalize(FileSystem::join(dir, f)));
+      bool isTree = !resolved.isNull() && dataFile(resolved) == tree;
+      if (first.isNull()) { first = e->attribute("id", ""); firstIsTree = isTree; }
+      if (isTree) ids.insert(e->attribute("id", "").str());
+      }
+    if (ids.empty()) continue;
+    std::vector<Path> items;
+    std::function<void(const XmlElement &, const Path &)> walk = [&](const XmlElement & e, const Path & p)
+      {
+      if (e.isNamed("Histogram") || e.isNamed("Data") || e.isNamed("Profile"))
+        {
+        String input = e.attribute("input", "");
+        bool mine = input.isNull() ? firstIsTree : ids.count(input.str()) > 0;
+        std::string path = e.attribute("path", "").str();
+        if (mine && (path == from || path.compare(0, from.size() + 1, from + "/") == 0)) items.push_back(p);
+        }
+      for (unsigned int k=0; k<e.nChildren(); k++) { Path q = p; q.push_back(int(k)); walk(e.child(k), q); }
+      };
+    walk(d.root(), Path());
+    if (items.empty()) continue;
+    d.beginEdit();
+    for (const Path & p : items)
+      {
+      std::string path = d.element(p)->attribute("path", "").str();
+      d.setAttribute(p, "path", String((to + path.substr(from.size())).c_str()));
+      changed++;
+      }
+    d.endEdit();
+    }
+  if (changed) _drawnTab = -1;                          // drawn again: the histograms under their new names
+  }
+
+  void CapGuiApp::requestRename(int kind, const Path & path)
+  {
+  Tab * t = tab();
+  if (!t) return;
+  PlotDocument & d = *t->document;
+  std::string text;
+  if (kind == 1)
+    {
+    text = d.fileName().isNull() ? d.displayName().str() : FileSystem::stem(d.fileName()).str();
+    }
+  else
+    {
+    const XmlElement * e = d.element(path);
+    if (!e) return;
+    text = kind == 2 ? e->attribute("title", "").str()
+                     : (e->attribute("title", "").isNull() ? e->attribute("name", "") : e->attribute("title", "")).str();
+    }
+  _rename = RenameRequest{kind, t->id, path, text, false};
+  }
+
+  void CapGuiApp::renderRenameDialog()
+  {
+  if (_rename.kind == 0) return;
+  const char * title = "Rename##plotRename";
+  if (!_rename.opened) { ImGui::OpenPopup(title); _rename.opened = true; }
+  if (!ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_AlwaysAutoResize)) { _rename = RenameRequest(); return; }
+  ImGui::Text("%s", _rename.kind == 1 ? "New name of the plot file:" : (_rename.kind == 2 ? "New title of the window:"
+                                                                                          : "New name of the canvas:"));
+  if (ImGui::IsWindowAppearing()) ImGui::SetKeyboardFocusHere();
+  bool done = ImGui::InputText("##name", &_rename.text, ImGuiInputTextFlags_EnterReturnsTrue);
+  if (_rename.kind == 1) ImGui::TextDisabled("A saved plot file is renamed in its folder.");
+  done = ImGui::Button("OK") || done;
+  ImGui::SameLine();
+  bool cancel = ImGui::Button("Cancel");
+  if (done && !_rename.text.empty())
+    {
+    for (auto & t : _documents)
+      {
+      if (t.id != _rename.tab) continue;
+      PlotDocument & d = *t.document;
+      String name(_rename.text.c_str());
+      if (_rename.kind == 1)
+        {
+        if (d.fileName().isNull()) d.setUntitledName(name);
+        else
+          {
+          String target = FileSystem::join(FileSystem::parent(d.fileName()),
+                                            FileSystem::hasExtension(name, ".xml") ? name : name + String(".xml"));
+          if (FileSystem::isFile(target)) _gui.showMessage("Rename", target + String(" exists already"));
+          else if (std::rename(d.fileName().data(), target.data()) != 0) _gui.showMessage("Rename", String("Cannot rename ") + d.fileName());
+          else { d.setFileName(target); _gui.setStatus(String("Renamed to ") + target); }
+          }
+        }
+      else if (_rename.kind == 2) d.setAttribute(_rename.path, "title", name);
+      else
+        {
+        // the title shown, and the name (an identifier, the name of its files): unique, without spaces
+        std::string id = _rename.text;
+        for (char & ch : id) if (ch == ' ' || ch == '/') ch = '_';
+        d.beginEdit();
+        d.setAttribute(_rename.path, "title", name);
+        const XmlElement * e = d.element(_rename.path);
+        if (e && e->attribute("name", "").str() != id) d.setAttribute(_rename.path, "name", d.uniqueCanvasName(String(id.c_str())));
+        d.endEdit();
+        }
+      }
+    }
+  if (done || cancel) { _rename = RenameRequest(); ImGui::CloseCurrentPopup(); }
+  ImGui::EndPopup();
+  }
+
+  BrowserFile * CapGuiApp::selectedDataFile()
+  {
+  String path;
+  bool folder = false;
+  return selectedEntry(path, folder);
+  }
+
+  void CapGuiApp::duplicateDataFile(int id)
+  {
+  int copy = newTree(_gui.activeBrowser());
+  BrowserFile * from = file(id);                       // after newTree (the list of files grew)
+  BrowserFile * to = file(copy);
+  if (!from || !to || !from->file) return;
+  String name = String("Copy of ") + (from->editable ? from->name : FileSystem::stem(from->path));
+  to->name = name;
+  to->file->setFolderName(name);
+  try
+    {
+    Folder & whole = *from->file;
+    Folder & top = *to->file;
+    for (const auto & entry : whole.names()) top.copyEntry(whole, entry);
+    to->modified = true;
+    _gui.setStatus(name + String(": a new data file (Save to write it)"));
+    }
+  catch (const std::exception & e) { _gui.showMessage("Duplicate", String("Cannot copy:\n") + String(e.what())); }
+  }
+
+  void CapGuiApp::exportDataFile(int id, const String & kind, const String & path)
+  {
+  BrowserFile * f = file(id);
+  if (!f || !f->file) return;
+  String name = f->editable ? f->name : FileSystem::stem(f->path);
+  GRAPHICS::PlotTemplate catalog;
+  int input = catalog.addInput("data", f->path.isNull() ? name + String(".cap") : f->path);
+  if (catalog.addFolder(input, *f->file) == 0) { _gui.showMessage("Export", name + String(": no histogram to draw")); return; }
+  GRAPHICS::PlotTemplate::Options options;
+  options.grouping = GRAPHICS::PlotTemplate::Options::kByHistogram;
+  options.overlay = false;
+  options.maxGraphs = 1;                               // one histogram per page
+  options.maxCanvases = 1000000;
+  options.printFiles = false;
+  options.title = name;
+  options.outputDirectory = FileSystem::parent(path);
+  PlotSpec spec;
+  String error, problems;
+  if (!spec.read(catalog.makeSpec(options), FileSystem::parent(path), error)) { _gui.showMessage("Export", error); return; }
+  spec.setInputFile(0, f->file);
+  if (!spec.openInputs(error)) { _gui.showMessage("Export", error); return; }
+  std::vector<PlotSpec::WindowState> windows = spec.buildAll(problems);
+  String written;
+  if (kind == "pdf")       written = PlotOutputs::pdf(spec, windows, path);
+  else if (kind == "pptx") written = PlotOutputs::pptx(spec, windows, path);
+  else                     written = PlotOutputs::latex(spec, windows, error, path);
+  _configuration.directory = FileSystem::parent(path);
+  if (written.isNull()) _gui.showMessage("Export", String("Cannot write ") + path + String("\n") + error);
+  else _gui.showMessage("Export", String(std::to_string(PlotOutputs::canvases(windows).size()).c_str()) + String(" histograms: ")
+                        + written + (problems.isNull() ? String("") : String("\n") + problems));
+  }
+
   bool CapGuiApp::makeOutputs(GRAPHICS::PlotSpec & spec, std::vector<GRAPHICS::PlotSpec::WindowState> & windows)
   {
   Tab * t = tab();
   if (!t) return false;
+  return buildOutputs(*t->document, spec, windows);
+  }
+
+  bool CapGuiApp::buildOutputs(PlotDocument & document, GRAPHICS::PlotSpec & spec,
+                               std::vector<GRAPHICS::PlotSpec::WindowState> & windows)
+  {
   String error, problems;
-  if (!spec.read(t->document->document(), t->document->directory(), error)) { _gui.showMessage("Export", error); return false; }
+  if (!spec.read(document.document(), document.directory(), error)) { _gui.showMessage("Export", error); return false; }
   for (std::size_t k=0; k<spec.inputs().size(); k++)
     {
     String path = spec.resolve(spec.inputs()[k].path);
-    BrowserFile * f = fileOfPath(path);
+    BrowserFile * f = dataFile(path);
     if (f) spec.setInputFile(int(k), f->file);
     }
   if (!spec.openInputs(error)) { _gui.showMessage("Export", error); return false; }
@@ -1215,6 +1865,9 @@ namespace CAP
   if (kind == PlotDocument::kGraph || kind == PlotDocument::kHistogram || kind == PlotDocument::kFunction)
     item("Add Function", "plot.addFunction");
   if (kind == PlotDocument::kRoot) item("Add Window", "plot.addWindow");
+  if (kind == PlotDocument::kRoot || kind == PlotDocument::kWindow || kind == PlotDocument::kCanvas)
+    if (ImGui::MenuItem("Rename..."))
+      requestRename(kind == PlotDocument::kRoot ? 1 : (kind == PlotDocument::kWindow ? 2 : 3), path);
   ImGui::Separator();
   bool element = !path.empty();
   item("Cut", "plot.cut", element);
@@ -1637,6 +2290,7 @@ namespace CAP
 
   void CapGuiApp::renderDialogs()
   {
+  renderRenameDialog();
   if (_closeDialog) { ImGui::OpenPopup("Save changes?"); _closeDialog = false; }
   if (ImGui::BeginPopupModal("Save changes?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
@@ -1938,12 +2592,14 @@ namespace CAP
   for (std::size_t k=0; k<spec->inputs().size(); k++)
     {
     String path = spec->resolve(spec->inputs()[k].path);
-    if (!FileSystem::isFile(path))
+    BrowserFile * f = dataFile(path);                  // a tree of the browser (saved or not), or a file read
+    if (!f && !FileSystem::isFile(path))
       {
-      if (_missing.insert(path.str()).second) _gui.setStatus(String("No input file ") + path);
+      if (_missing.insert(path.str()).second)
+        _gui.setStatus(path.str().compare(0, 7, "/@tree/") == 0 ? String("A tree not saved is no longer open: ") + path
+                                                                : String("No input file ") + path);
       continue;
       }
-    BrowserFile * f = fileOfPath(path);
     int id = f ? f->id : openFile(path);
     f = id >= 0 ? file(id) : nullptr;
     if (f) spec->setInputFile(int(k), f->file);

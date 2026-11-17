@@ -226,15 +226,32 @@ namespace CAP
 
   void FileBrowser::renderToolbar()
   {
-  if (ImGui::Button("Open...") && onCommand) onCommand("file.open");
-  ImGui::SetItemTooltip("Open a CAP file");
-  ImGui::SameLine();
-  if (ImGui::Button("Folder...") && onCommand) onCommand("file.openFolder");
-  ImGui::SetItemTooltip("Browse a folder of the file system");
-  ImGui::SameLine();
-  if (ImGui::Button("New Tree") && onNewTree) onNewTree();
+  if (ImGui::Button("New") && onNewTree) onNewTree();
   ImGui::SetItemTooltip("Make a new, empty tree: add folders to it, drag objects and folders onto it (copies), then "
                         "save it to a CAP file");
+  ImGui::SameLine();
+  if (ImGui::Button("Open...") && onCommand) onCommand("file.open");
+  ImGui::SetItemTooltip("Open a CAP file (File > Open)");
+  ImGui::SameLine();
+  // the file or tree holding the entry selected
+  const BrowserFile * current = _selected.file >= 0 ? fileById(_selected.file) : nullptr;
+  ImGui::BeginDisabled(current == nullptr || !onCloseFile);
+  if (ImGui::Button("Close") && current)
+    {
+    int id = current->id;
+    _selected = ObjectReference();
+    _selectedFolder = false;
+    onCloseFile(id);                                 // the file is no longer valid after this
+    current = nullptr;
+    }
+  ImGui::EndDisabled();
+  if (current)
+    {
+    String name = !current->name.isNull() ? current->name : current->path;
+    ImGui::SetItemTooltip("Close %s", name.data());
+    }
+  else if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    ImGui::SetTooltip("Close the file or tree of the entry selected (select one first)");
   ImGui::SameLine();
   if (ImGui::Button("Refresh")) { refresh(); _openFailed.clear(); }
   ImGui::SetItemTooltip("Read the folders again");
@@ -258,8 +275,7 @@ namespace CAP
   if (loose.empty() && _folders.empty())
     {
     ImGui::Spacing();
-    ImGui::TextWrapped("Use File > Open > Data File to open a CAP file, File > Open > Data Folder to browse a folder, "
-                       "or New Tree (File > New > Empty Folder Tree) to make a tree of copies.");
+    ImGui::TextWrapped("Use Open (File > Open) to open a CAP file, or New (File > New) to make a new data file of copies.");
     ImGui::Spacing();
     ImGui::TextWrapped("Click an object to show it in the selected graph, or drag it onto a graph.");
     }
@@ -545,11 +561,37 @@ namespace CAP
   ImGui::EndDragDropTarget();
   }
 
+  bool FileBrowser::canRename() const
+  {
+  const BrowserFile * f = _selected.file >= 0 ? fileById(_selected.file) : nullptr;
+  return f && f->editable;
+  }
+
+  bool FileBrowser::requestRename()
+  {
+  if (!canRename()) return false;
+  const BrowserFile * f = fileById(_selected.file);
+  std::string path = _selected.path.str();
+  if (path.empty()) _nameRequest = NameRequest{NameRequest::kRenameTree, f->id, "", f->name.str(), false};
+  else
+    {
+    std::string leaf = path.substr(path.rfind('/') == std::string::npos ? 0 : path.rfind('/') + 1);
+    _nameRequest = NameRequest{NameRequest::kRename, f->id, path, leaf, false};
+    }
+  return true;
+  }
+
   void FileBrowser::editMenu(int fileId, const std::string & path, bool isFolder)
   {
   if (isFolder && ImGui::MenuItem("New Folder..."))
     _nameRequest = NameRequest{NameRequest::kNewFolder, fileId, path, "folder", false};
-  if (path.empty()) return;
+  if (path.empty())
+    {
+    const BrowserFile * f = fileById(fileId);
+    if (f && ImGui::MenuItem("Rename..."))
+      _nameRequest = NameRequest{NameRequest::kRenameTree, fileId, "", f->name.str(), false};
+    return;
+    }
   std::string leaf = path.substr(path.rfind('/') == std::string::npos ? 0 : path.rfind('/') + 1);
   if (ImGui::MenuItem("Rename..."))
     _nameRequest = NameRequest{NameRequest::kRename, fileId, path, leaf, false};
@@ -579,6 +621,8 @@ namespace CAP
       onNewFolder(_nameRequest.file, String(_nameRequest.path), String(_nameRequest.text));
     if (_nameRequest.kind == NameRequest::kRename && onRename)
       onRename(_nameRequest.file, String(_nameRequest.path), String(_nameRequest.text));
+    if (_nameRequest.kind == NameRequest::kRenameTree && onRenameTree)
+      onRenameTree(_nameRequest.file, String(_nameRequest.text));
     }
   if (done || cancel)
     {

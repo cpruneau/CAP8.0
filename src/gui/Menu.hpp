@@ -11,6 +11,7 @@
 //! @brief Menu: menu of the CapGui menu bar (items, separators, sub-menus).
 #ifndef CAP__GUI__Menu
 #define CAP__GUI__Menu
+#include <functional>
 #include <memory>
 #include <vector>
 #include "MenuItem.hpp"
@@ -43,6 +44,10 @@ namespace CAP
   //! @brief Add a submenu at the end. @return the new submenu (owned by the menu)
   Menu & addMenu(const String & name, const String & description="");
 
+  //! @brief Add a widget drawn by a function inside the open menu (e.g. a grid picker); the function closes the menu
+  //! with ImGui::CloseCurrentPopup() when it is used. @param render function drawing the widget
+  void addWidget(const std::function<void()> & render);
+
   //! @brief Item with the given command, searched in this menu and its submenus. @return item or nullptr
   MenuItem * findItem(const String & command);
   //! @brief Submenu with the given name (this menu only). @return submenu or nullptr
@@ -61,6 +66,7 @@ namespace CAP
   {
   std::unique_ptr<MenuItem> item;   //!< the item, or null
   std::unique_ptr<Menu>     menu;   //!< the sub-menu, or null (both null: a separator)
+  std::function<void()>     widget;  //!< a widget drawn by a function (item and menu null), or empty
   };
 
   String _name;   //!< name of the menu

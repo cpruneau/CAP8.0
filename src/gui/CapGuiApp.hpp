@@ -173,6 +173,20 @@ namespace CAP
                                         const std::vector<unsigned int> & factors) override;
   //! @brief The original histogram of a rebinned copy (of the plot file or of the application) and its factors.
   //! @param data histogram shown @param factors set to its factors @return original histogram
+  //! @brief The plot files using a tree saved to a file now read it from that file. @param id tree
+  //! @param previousPath path it was known by
+  void treeSaved(int id, const String & previousPath) override;
+  //! @brief The plot files showing an entry of a tree renamed follow it. @param id tree @param oldPath path before
+  //! @param newPath path after
+  void entryRenamed(int id, const String & oldPath, const String & newPath) override;
+  //! @brief Ask for a new name of the plot file shown (kind 1), of a window (2) or of a canvas (3) of it.
+  //! @param kind kind @param path window or canvas (kinds 2 and 3)
+  void requestRename(int kind, const GRAPHICS::PlotDocument::Path & path);
+  //! @brief Draw the dialog of requestRename(), if open.
+  void renderRenameDialog();
+  //! A new name asked for: the plot file shown (1), a window (2) or a canvas (3) of it
+  struct RenameRequest { int kind = 0; int tab = -1; GRAPHICS::PlotDocument::Path path; std::string text; bool opened = false; };
+  RenameRequest _rename;   //!< new name asked for, if any
   const MATH::DataPoints * rebinSourceOf(const MATH::DataPoints * data, std::vector<unsigned int> & factors) const override;
   //! @brief Open the plot files of the command line, or a new one; dock the tree; connect the browsers.
   void onStartup() override;
@@ -264,6 +278,41 @@ namespace CAP
   //! @brief Set the grid of the window shown or of the current canvas in the plot file. @param graphs graphs of the
   //! canvas (otherwise canvases of the window) @param columns columns @param rows rows
   void setGrid(bool graphs, int columns, int rows);
+  //! @brief Draw the grid picker of Windows > Format (graphs false) or Canvas > Format (graphs true): squares to click
+  //! for the columns x rows of canvases of the window shown, or of graphs of the current canvas. @param graphs which
+  void gridMenu(bool graphs);
+  //! @brief The plot file shown reduced to one window, or to one canvas of it (in a window of its own).
+  //! @param window window @param canvas canvas of the window (empty: the whole window) @return the plot file reduced
+  GRAPHICS::PlotDocument reducedDocument(const GRAPHICS::PlotDocument::Path & window,
+                                         const GRAPHICS::PlotDocument::Path & canvas);
+  //! @brief The canvases of a plot file (as for the outputs). @param document plot file @param spec specification made
+  //! @param windows windows made @return false on failure (shown)
+  bool buildOutputs(GRAPHICS::PlotDocument & document, GRAPHICS::PlotSpec & spec,
+                    std::vector<GRAPHICS::PlotSpec::WindowState> & windows);
+  //! @brief Save the window shown (canvas false) or the current canvas to a file, by its extension: PDF or SVG (as on
+  //! screen), XML (a plot file of that window or canvas), TEX (a LaTeX document). @param canvas which
+  //! @param fileName file @return false on failure (shown)
+  bool saveView(bool canvas, const String & fileName);
+  //! @brief Save the window shown or the current canvas: again to its file, or to a file chosen (ask).
+  //! @param canvas which @param ask choose the file
+  void saveViewAs(bool canvas, bool ask);
+  //! @brief Key of the window shown or of the current canvas, for the file it was saved to ("" if none). @param canvas
+  //! which @return key
+  std::string viewKey(bool canvas);
+  //! @brief Export the canvases of the window shown. @param kind "pdfs" (a PDF per canvas, in a folder), "book",
+  //! "latex" or "pptx" @param path file (folder for "pdfs")
+  void exportWindow(const String & kind, const String & path);
+  //! @brief Add the windows of a plot file to the plot file shown (their inputs added to its inputs). @param fileName file
+  void openWindows(const String & fileName);
+  //! @brief The data file (or tree) selected in the browser. @return file, or null
+  BrowserFile * selectedDataFile();
+  //! @brief A new data file (tree) holding a copy of the folders and objects of a data file. @param id file
+  void duplicateDataFile(int id);
+  //! @brief Every histogram of a data file drawn on a page, slide or figure of its own. @param id file @param kind
+  //! "pdf", "latex" or "pptx" @param path file written
+  void exportDataFile(int id, const String & kind, const String & path);
+  //! Files the windows and canvases were saved to (Windows > Save, Canvas > Save), by viewKey()
+  std::map<std::string, String> _viewFiles;
   };
 
   } // namespace GUI

@@ -102,6 +102,11 @@ namespace CAP
   //! @brief Entry selected last (clicked): an object, a folder, or a file or tree (empty path). @return reference
   //! (file -1 if none)
   const ObjectReference & selected() const { return _selected; }
+  //! @brief Ask for a new name of the entry selected (a folder or an object of a tree, or the top folder of a tree).
+  //! @return false if the entry selected cannot be renamed (none, or in a file read from disk)
+  bool requestRename();
+  //! @brief Whether the entry selected can be renamed (requestRename()). @return true if so
+  bool canRename() const;
   //! @brief Whether the entry selected is a folder (or a whole file or tree). @return true if so
   bool selectedIsFolder() const { return _selectedFolder; }
   //! @brief Select an entry (e.g. a copy just made). @param file file id @param path path ("" for the file)
@@ -132,6 +137,7 @@ namespace CAP
   std::function<void(const ObjectReference & source, bool folder, int file, const String & folderPath)> onCopy;
   std::function<void(int file, const String & folderPath, const String & name)> onNewFolder;  //!< add a folder
   std::function<void(int file, const String & path, const String & name)>       onRename;     //!< rename an entry
+  std::function<void(int file, const String & name)>                           onRenameTree; //!< rename the top folder of a tree
   std::function<void(int file, const String & path)>                           onRemove;     //!< remove an entry
   std::function<void(int file, const String & path)>                           onDuplicate;  //!< copy an entry beside itself
   std::function<void(int file)>                                                onSaveTree;   //!< save a tree to a file
@@ -172,7 +178,7 @@ namespace CAP
   //! Name asked for (New Folder, Rename): what for, in which file, at which path, the text typed
   struct NameRequest
   {
-  enum Kind { kNone, kNewFolder, kRename } kind = kNone;
+  enum Kind { kNone, kNewFolder, kRename, kRenameTree } kind = kNone;
   int file = -1;
   std::string path;
   std::string text;

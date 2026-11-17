@@ -311,6 +311,25 @@ namespace CAP
   return 0;
   }
 
+  String CapApp::dataPath(const BrowserFile & f)
+  {
+  if (!f.path.isNull()) return f.path;
+  return String("/@tree/") + String(std::to_string(f.id).c_str()) + String("/") + f.name + String(".cap");
+  }
+
+  BrowserFile * CapApp::dataFile(const String & path)
+  {
+  std::string p = path.str();
+  if (p.compare(0, 7, "/@tree/") == 0)
+    {
+    int id = std::atoi(p.c_str() + 7);
+    for (auto & f : _files) if (f.id == id && f.editable) return &f;
+    return nullptr;
+    }
+  for (auto & f : _files) if (f.editable && f.path == path) return &f;
+  return fileOfPath(path);
+  }
+
   BrowserFile * CapApp::fileOfPath(const String & path)
   {
   for (auto & f : _files) if (!f.editable && f.path == path) return &f;
@@ -854,6 +873,7 @@ namespace CAP
                            { copyInto(source, folder, file, path); };
   browser.onNewFolder  = [this](int file, const String & path, const String & name) { newFolder(file, path, name); };
   browser.onRename     = [this](int file, const String & path, const String & name) { renameEntry(file, path, name); };
+  browser.onRenameTree = [this](int file, const String & name) { renameTree(file, name); };
   browser.onRemove     = [this](int file, const String & path) { removeEntry(file, path); };
   browser.onSaveTree   = [this](int file) { saveTree(file, true); };
   browser.onDuplicate  = [this](int file, const String & path) { duplicateEntry(file, path); };
@@ -896,7 +916,7 @@ namespace CAP
   if (!from || !to || !from->file || !to->file) return false;
   if (!to->editable)
     {
-    _gui.showMessage("Copy", "Files read from disk cannot be modified: copy into a tree (File > New > Empty Folder Tree).");
+    _gui.showMessage("Copy", "Files read from disk cannot be modified: copy into a new data file (File > New, or File > Duplicate).");
     return false;
     }
   // a folder cannot be copied into itself or one of its sub-folders
@@ -962,10 +982,26 @@ namespace CAP
     {
     Folder & top = *tree->file;
     top.rename(path, name);
+    std::string p = path.str();
+    std::size_t slash = p.rfind('/');
+    String renamed = slash == std::string::npos ? name : String(p.substr(0, slash + 1).c_str()) + name;
+    if (!top.folder(renamed))                                 // an object: its own name too (legends, labels)
+      if (Object * object = top.get<Object>(renamed)) object->setName(name);
     tree->modified = true;
     _gui.setStatus(String("Renamed ") + path + String(" to ") + name);
+    entryRenamed(target, path, renamed);
     }
   catch (const std::exception & e) { _gui.showMessage("Rename", String(e.what())); }
+  }
+
+  void CapApp::renameTree(int target, const String & name)
+  {
+  BrowserFile * tree = file(target);
+  if (!tree || !tree->editable || name.isNull()) return;
+  tree->name = name;
+  tree->file->setFolderName(name);
+  tree->modified = true;
+  _gui.setStatus(String("Renamed to ") + name);
   }
 
   void CapApp::removeEntry(int target, const String & path)
@@ -1013,8 +1049,8 @@ namespace CAP
   if (!tree || !tree->file) return false;
   if (!tree->editable)
     {
-    _gui.showMessage("Duplicate", "Files read from disk cannot be modified: drag the object into a tree (New > Empty "
-                                  "Folder Tree), then duplicate it there.");
+    _gui.showMessage("Duplicate", "Files read from disk cannot be modified: drag the object into a new data file "
+                                  "(File > New), or duplicate the file (File > Duplicate), then duplicate it there.");
     return false;
     }
   if (path.isEmpty()) { _gui.setStatus("Select an object or a folder of the tree to duplicate"); return false; }
@@ -1230,6 +1266,7 @@ namespace CAP
       }
   try
     {
+    String previous = dataPath(*tree);
     Folder & content = *tree->file;
     CapFile output(path, File::kWriteOnly);
     output = content;
@@ -1241,6 +1278,7 @@ namespace CAP
     tree->file->setFolderName(tree->name);
     _configuration.directory = FileSystem::parent(path);
     _gui.setStatus(String("Tree saved to ") + path);
+    if (previous != path) treeSaved(target, previous);
     return true;
     }
   catch (const std::exception & e)

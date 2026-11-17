@@ -73,6 +73,9 @@ namespace CAP
   String displayName() const;
   //! @brief Name of a new document (e.g. "Untitled 2"). @param name name
   void setUntitledName(const String & name) { _untitled = name; }
+  //! @brief Set the file of the document (e.g. renamed on disk, in the same folder: the relative paths stay valid).
+  //! @param name file
+  void setFileName(const String & name) { _fileName = name; }
   //! @brief Number of changes made (to redraw what depends on the document). @return number
   unsigned long version() const { return _version; }
   //! @}

@@ -39,6 +39,13 @@ namespace CAP
   _entries.push_back(Entry());
   }
 
+  void Menu::addWidget(const std::function<void()> & render)
+  {
+  Entry entry;
+  entry.widget = render;
+  _entries.push_back(std::move(entry));
+  }
+
   Menu & Menu::addMenu(const String & name, const String & description)
   {
   Entry entry;
@@ -84,6 +91,11 @@ namespace CAP
         entry.menu->renderContents(hovered);
         ImGui::EndMenu();
         }
+      continue;
+      }
+    if (entry.widget)
+      {
+      entry.widget();
       continue;
       }
     if (!entry.item)
