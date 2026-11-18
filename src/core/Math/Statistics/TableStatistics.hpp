@@ -9,17 +9,19 @@
  * *********************************************************************/
 //! @file TableStatistics.hpp
 //! @brief TableStatistics: summaries, covariances and correlations of the columns of a table.
-#ifndef DATUM__TableStatistics
-#define DATUM__TableStatistics
+#ifndef DATUM_MATH_TableStatistics
+#define DATUM_MATH_TableStatistics
 #include <vector>
 #include "String.hpp"
 #include "Table2D.hpp"
 
 namespace Datum
 {
+namespace MATH
+{
 
 //!
-//! @brief Statistics of the columns of a table (MATH::Table2D): summaries, covariance and correlation matrices.
+//! @brief Statistics of the columns of a table (Table2D): summaries, covariance and correlation matrices.
 //!
 //! Missing values (NaN) are left out: a column summary uses the finite values of the column, a covariance or
 //! correlation of two columns the rows where both are finite (pairwise complete observations), and Report n gives the
@@ -31,8 +33,8 @@ namespace Datum
 //! normal approximation of tau-b. The uncertainty given is the standard error sqrt((1-r^2)/(n-2)).
 //!
 //! @code
-//!   Datum::MATH::Table2D r = Datum::TableStatistics::correlationMatrix(table);   // all the columns, Pearson
-//!   double rho = Datum::TableStatistics::correlation(table, 0, 3, Datum::TableStatistics::kSpearman).value;
+//!   Datum::Table2D r = Datum::TableStatistics::correlationMatrix(table);   // all the columns, Pearson
+//!   double rho = Datum::MATH::TableStatistics::correlation(table, 0, 3, Datum::MATH::TableStatistics::kSpearman).value;
 //! @endcode
 //!
 class TableStatistics
@@ -73,13 +75,13 @@ public:
 
   //! @brief Summary of a column. @param table table @param column column @return summary
   //! @throws MathException if the column does not exist
-  static Summary summarize(const MATH::Table2D & table, unsigned int column);
+  static Summary summarize(const Table2D & table, unsigned int column);
   //!
   //! @brief Summaries of the columns as a table: one row per column of the table, in order, and the columns n,
   //! missing, mean, stdDev, meanError, minimum, median, maximum, sum.
   //! @param table table @return summary table (named "<name>_summary")
   //!
-  static MATH::Table2D summaryTable(const MATH::Table2D & table);
+  static Table2D summaryTable(const Table2D & table);
 
   //! @brief Covariance of two series (pairs with a NaN left out; n-1 in the denominator). @param x first @param y second
   //! @return covariance (value, n; no error or p-value)
@@ -89,14 +91,14 @@ public:
   static Result correlation(const std::vector<double> & x, const std::vector<double> & y, Method method=kPearson);
   //! @brief Correlation of two columns. @param table table @param a first column @param b second column
   //! @param method method @return correlation @throws MathException if a column does not exist
-  static Result correlation(const MATH::Table2D & table, unsigned int a, unsigned int b, Method method=kPearson);
+  static Result correlation(const Table2D & table, unsigned int a, unsigned int b, Method method=kPearson);
 
   //!
   //! @brief Matrix of the covariances of columns: element (i,j) is the covariance of columns[i] and columns[j].
   //! @param table table @param columns columns (empty: all) @return square table, its columns named as the columns
   //! of the table (named "<name>_covariance")
   //!
-  static MATH::Table2D covarianceMatrix(const MATH::Table2D & table, const std::vector<unsigned int> & columns = {});
+  static Table2D covarianceMatrix(const Table2D & table, const std::vector<unsigned int> & columns = {});
   //!
   //! @brief Matrix of the correlations of columns: element (i,j) is the correlation of columns[i] and columns[j]
   //! (1 on the diagonal, NaN where it cannot be computed).
@@ -104,13 +106,14 @@ public:
   //! the matrix of the p-values @return square table, its columns named as those of the table (named
   //! "<name>_<method>")
   //!
-  static MATH::Table2D correlationMatrix(const MATH::Table2D & table, const std::vector<unsigned int> & columns = {},
-                                         Method method=kPearson, MATH::Table2D * pValues=nullptr);
+  static Table2D correlationMatrix(const Table2D & table, const std::vector<unsigned int> & columns = {},
+                                         Method method=kPearson, Table2D * pValues=nullptr);
 
   //! @brief Ranks of values (1 to n, ties the average of their ranks; NaN stays NaN). @param values values @return ranks
   static std::vector<double> ranks(const std::vector<double> & values);
 };
 
+} // namespace MATH
 } // namespace Datum
 
-#endif // DATUM__TableStatistics
+#endif // DATUM_MATH_TableStatistics

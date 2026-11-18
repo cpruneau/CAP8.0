@@ -27,7 +27,7 @@ namespace Datum
 //! execute() reads the table (TableReader: text, CSV, binary; INPUT:...), keeps the columns asked for
 //! (SELECT:COLUMNS), applies the processing functions (PROCESS:FUNCTIONS, see below), then fills results() with:
 //!  - "table": the table, as processed;
-//!  - "summary" (SUMMARY): the summary of each column (TableStatistics::summaryTable());
+//!  - "summary" (SUMMARY): the summary of each column (MATH::TableStatistics::summaryTable());
 //!  - "correlations/<method>", ".../<method>_pValues", ".../<method>_map", "correlations/covariance"
 //!    (CORRELATIONS:USE): matrices of the columns of CORRELATIONS:COLUMNS (all if empty) and the map of the correlations;
 //!  - "plots/<y>_vs_<x>" (PLOTS:XY), "plots/<value>_bars" (PLOTS:BARS), "plots/<column>_distribution"

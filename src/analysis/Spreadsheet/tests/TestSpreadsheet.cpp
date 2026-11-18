@@ -8,7 +8,7 @@
  *
  * *********************************************************************/
 //! @file TestSpreadsheet.cpp
-//! @brief Tests of the Spreadsheet module: reading and writing every format, statistics, plots, the task.
+//! @brief Tests of the Spreadsheet module: reading and writing every format, plots, the task (the statistics: Math, TestTableStatistics).
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -160,26 +160,6 @@ void testReaderCases()
   expect(t.nRows()==1 && t.columnName(0).equalTo("2019"), "forced header");
 }
 
-void testStatistics()
-{
-  MATH::Table2D t("lin");
-  for (int i=0; i<20; i++) t.addRow({ double(i), 2.0*i+1.0, double((i*7)%11), std::exp(0.2*i) });
-  t.setColumnNames({ "x", "y", "z", "e" });
-  TableStatistics::Result r = TableStatistics::correlation(t,0,1);
-  expect(near(r.value,1.0) && r.n==20 && r.pValue<1e-10, "pearson of a line");
-  expect(near(TableStatistics::correlation(t,0,3,TableStatistics::kSpearman).value,1.0), "spearman of a monotonic function");
-  expect(near(TableStatistics::correlation(t,0,3,TableStatistics::kKendall).value,1.0), "kendall of a monotonic function");
-  expect(TableStatistics::correlation(t,0,3).value<0.95, "pearson of an exponential below 1");
-  MATH::Table2D m = TableStatistics::correlationMatrix(t);
-  expect(m.nRows()==4 && near(m(2,2),1.0) && near(m(1,2),m(2,1)) && m.columnName(3).equalTo("e"), "correlation matrix");
-  MATH::Table2D c = TableStatistics::covarianceMatrix(t,{ 0, 1 });
-  expect(near(c(0,0),35.0) && near(c(0,1),70.0), "covariance");
-  TableStatistics::Summary s = TableStatistics::summarize(sample(),2);
-  expect(s.n==4 && s.missing==1 && near(s.mean,30.0) && near(s.median,30.0), "summary with a missing value");
-  std::vector<double> ranks = TableStatistics::ranks({ 3, 1, 3, 2 });
-  expect(near(ranks[0],3.5) && near(ranks[1],1) && near(ranks[2],3.5) && near(ranks[3],2), "ranks with ties");
-}
-
 void testPlots()
 {
   MATH::Table2D t = sample();
@@ -192,7 +172,7 @@ void testPlots()
   MATH::Histogram * h = TablePlots::distribution(t,1,4);
   expect(h->size()==4, "distribution bins");
   delete h;
-  MATH::Histogram * map = TablePlots::matrixMap(TableStatistics::correlationMatrix(t));
+  MATH::Histogram * map = TablePlots::matrixMap(MATH::TableStatistics::correlationMatrix(t));
   expect(map->rank()==2 && map->size()==9, "matrix map");
   delete map;
 }
@@ -242,7 +222,6 @@ int main()
     testTable2D();
     testFormats();
     testReaderCases();
-    testStatistics();
     testPlots();
     testTask();
     }

@@ -1,16 +1,16 @@
 ################################################################################################
 # Project Datum/Spreadsheet
 #
-# Analysis of tables of data (Table2D): reading and writing text, CSV, binary and Excel files,
-# statistics and correlations of the columns, plots (y vs x, bars, distributions, correlation
-# maps), and the task SpreadsheetAnalyzer. The table pane of DatumGui (gui/SpreadsheetPane) uses it.
+# Analysis of tables of data (Table2D): reading and writing text, CSV, binary and Excel files, plots
+# (y vs x, bars, distributions, correlation maps), and the task SpreadsheetAnalyzer. The statistics
+# (summaries, covariances, correlations) are in Math (core/Math/Statistics/TableStatistics). The table
+# pane of DatumGui (gui/SpreadsheetPane) uses it.
 ################################################################################################
 add_compile_options(-Wall -Wextra -pedantic)
 add_library(Spreadsheet SHARED
 TableFormat.cpp
 TableReader.cpp
 TableWriter.cpp
-TableStatistics.cpp
 TablePlots.cpp
 SpreadsheetAnalyzer.cpp
 SpreadsheetTasks.cpp)

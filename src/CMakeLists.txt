@@ -94,7 +94,7 @@ if(DATUM_WITH_ROOT)
 else()
   set(ROOT_LIBRARIES "")
 endif()
-include_directories(${CMAKE_SOURCE_DIR} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Interpolation" "core/Math/Integral" "core/Math/Derivative" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/ParticleFlow" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance" "analysis/Spreadsheet" "models/BasicEventGen" "models/Glauber"
+include_directories(${CMAKE_SOURCE_DIR} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Interpolation" "core/Math/Integral" "core/Math/Derivative" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Statistics" "core/Math/Random" "core/Interpreter" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/ParticleFlow" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance" "analysis/Spreadsheet" "models/BasicEventGen" "models/Glauber"
  )
 add_compile_options(-Wall -Wextra -pedantic)
 
@@ -402,7 +402,7 @@ if(CMAKE_OSX_SYSROOT)
 endif()
 foreach(dir core/Base core/Math core/Math/Basic core/Math/LinearAlgebra core/Math/Functions core/Math/Interpolation
             core/Math/Integral core/Math/Derivative core/Math/Data core/Math/Search
-            core/Math/Fitting core/Math/StatisticalTests core/Math/Random core/Interpreter core/Graphics)
+            core/Math/Fitting core/Math/StatisticalTests core/Math/Statistics core/Math/Random core/Interpreter core/Graphics)
   list(APPEND DATUM_ROOT_FREE_COMMAND -I${CMAKE_SOURCE_DIR}/${dir})
 endforeach()
 foreach(source ${DATUM_ROOT_FREE_SOURCES})

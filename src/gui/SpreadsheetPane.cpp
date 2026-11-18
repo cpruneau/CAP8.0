@@ -15,7 +15,6 @@
 #include <string>
 #include "imgui.h"
 #include "SpreadsheetPane.hpp"
-#include "TableStatistics.hpp"
 #include "TableWriter.hpp"
 
 namespace Datum

@@ -21,6 +21,8 @@
 
 namespace Datum
 {
+namespace MATH
+{
 
 namespace
 {
@@ -91,21 +93,21 @@ void significance(TableStatistics::Result & result, TableStatistics::Method meth
     }
   if (std::fabs(r)>=1.0) { result.pValue = 0.0; return; }
   double t = r*std::sqrt((n-2)/(1-r*r));
-  MATH::StudentDistribution student(1.0,n-2);
+  StudentDistribution student(1.0,n-2);
   result.pValue = std::min(1.0,2.0*student.cdfUpper(std::fabs(t)));
 }
 
-std::vector<double> columnOf(const MATH::Table2D & table, unsigned int column)
+std::vector<double> columnOf(const Table2D & table, unsigned int column)
 {
-  if (column>=table.nColumns()) throw MATH::MathException("Column index out of range","TableStatistics");
+  if (column>=table.nColumns()) throw MathException("Column index out of range","TableStatistics");
   return table.column(column);
 }
 
-std::vector<unsigned int> allColumns(const MATH::Table2D & table, const std::vector<unsigned int> & columns)
+std::vector<unsigned int> allColumns(const Table2D & table, const std::vector<unsigned int> & columns)
 {
   if (!columns.empty())
     {
-    for (unsigned int c : columns) if (c>=table.nColumns()) throw MATH::MathException("Column index out of range","TableStatistics");
+    for (unsigned int c : columns) if (c>=table.nColumns()) throw MathException("Column index out of range","TableStatistics");
     return columns;
     }
   std::vector<unsigned int> all(table.nColumns());
@@ -150,7 +152,7 @@ std::vector<double> TableStatistics::ranks(const std::vector<double> & values)
   return r;
 }
 
-TableStatistics::Summary TableStatistics::summarize(const MATH::Table2D & table, unsigned int column)
+TableStatistics::Summary TableStatistics::summarize(const Table2D & table, unsigned int column)
 {
   std::vector<double> values = columnOf(table,column);
   Summary s;
@@ -177,9 +179,9 @@ TableStatistics::Summary TableStatistics::summarize(const MATH::Table2D & table,
   return s;
 }
 
-MATH::Table2D TableStatistics::summaryTable(const MATH::Table2D & table)
+Table2D TableStatistics::summaryTable(const Table2D & table)
 {
-  MATH::Table2D result(table.name()+String("_summary"));
+  Table2D result(table.name()+String("_summary"));
   for (unsigned int c=0; c<table.nColumns(); c++)
     {
     Summary s = summarize(table,c);
@@ -223,16 +225,16 @@ TableStatistics::Result TableStatistics::correlation(const std::vector<double> &
   return result;
 }
 
-TableStatistics::Result TableStatistics::correlation(const MATH::Table2D & table, unsigned int a, unsigned int b, Method method)
+TableStatistics::Result TableStatistics::correlation(const Table2D & table, unsigned int a, unsigned int b, Method method)
 {
   return correlation(columnOf(table,a),columnOf(table,b),method);
 }
 
-MATH::Table2D TableStatistics::covarianceMatrix(const MATH::Table2D & table, const std::vector<unsigned int> & selected)
+Table2D TableStatistics::covarianceMatrix(const Table2D & table, const std::vector<unsigned int> & selected)
 {
   std::vector<unsigned int> columns = allColumns(table,selected);
   unsigned int n = columns.size();
-  MATH::Table2D result(table.name()+String("_covariance"),n,n,kNaN);
+  Table2D result(table.name()+String("_covariance"),n,n,kNaN);
   std::vector< std::vector<double> > data;
   for (unsigned int c : columns) data.push_back(table.column(c));
   for (unsigned int i=0; i<n; i++)
@@ -244,13 +246,13 @@ MATH::Table2D TableStatistics::covarianceMatrix(const MATH::Table2D & table, con
   return result;
 }
 
-MATH::Table2D TableStatistics::correlationMatrix(const MATH::Table2D & table, const std::vector<unsigned int> & selected,
-                                                 Method method, MATH::Table2D * pValues)
+Table2D TableStatistics::correlationMatrix(const Table2D & table, const std::vector<unsigned int> & selected,
+                                                 Method method, Table2D * pValues)
 {
   std::vector<unsigned int> columns = allColumns(table,selected);
   unsigned int n = columns.size();
-  MATH::Table2D result(table.name()+String("_")+methodName(method),n,n,kNaN);
-  MATH::Table2D p(table.name()+String("_")+methodName(method)+String("_pValues"),n,n,kNaN);
+  Table2D result(table.name()+String("_")+methodName(method),n,n,kNaN);
+  Table2D p(table.name()+String("_")+methodName(method)+String("_pValues"),n,n,kNaN);
   std::vector< std::vector<double> > data;
   for (unsigned int c : columns) data.push_back(table.column(c));
   for (unsigned int i=0; i<n; i++)
@@ -268,4 +270,5 @@ MATH::Table2D TableStatistics::correlationMatrix(const MATH::Table2D & table, co
   return result;
 }
 
+} // namespace MATH
 } // namespace Datum

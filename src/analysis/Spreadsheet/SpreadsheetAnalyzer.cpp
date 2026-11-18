@@ -109,7 +109,7 @@ bool registerBuiltIns()
     {
     for (unsigned int c=0; c<table.nColumns(); c++)
       {
-      TableStatistics::Summary s = TableStatistics::summarize(table,c);
+      MATH::TableStatistics::Summary s = MATH::TableStatistics::summarize(table,c);
       if (!(s.stdDev>0)) continue;
       for (unsigned int i=0; i<table.nRows(); i++) table(i,c) = (table(i,c)-s.mean)/s.stdDev;
       }
@@ -316,20 +316,20 @@ void SpreadsheetAnalyzer::analyze(const MATH::Table2D & input)
   _results.add(new MATH::Table2D(_table),"table");
 
   if (boolValue("SUMMARY",true))
-    _results.add(new MATH::Table2D(TableStatistics::summaryTable(_table)),"summary");
+    _results.add(new MATH::Table2D(MATH::TableStatistics::summaryTable(_table)),"summary");
 
   if (boolValue("CORRELATIONS:USE",true) && _table.nColumns()>0)
     {
-    TableStatistics::Method method = TableStatistics::methodFromName(stringValue("CORRELATIONS:METHOD"));
+    MATH::TableStatistics::Method method = MATH::TableStatistics::methodFromName(stringValue("CORRELATIONS:METHOD"));
     std::vector<unsigned int> columns = columnIndices(_table,stringValue("CORRELATIONS:COLUMNS"));
     MATH::Table2D pValues;
-    MATH::Table2D r = TableStatistics::correlationMatrix(_table,columns,method,&pValues);
-    String methodName = TableStatistics::methodName(method);
+    MATH::Table2D r = MATH::TableStatistics::correlationMatrix(_table,columns,method,&pValues);
+    String methodName = MATH::TableStatistics::methodName(method);
     Folder * folder = _results.addFolder("correlations");
     folder->add(new MATH::Table2D(r),methodName);
     folder->add(new MATH::Table2D(pValues),methodName+String("_pValues"));
     folder->add(TablePlots::matrixMap(r,methodName+String("_map")),methodName+String("_map"));
-    folder->add(new MATH::Table2D(TableStatistics::covarianceMatrix(_table,columns)),"covariance");
+    folder->add(new MATH::Table2D(MATH::TableStatistics::covarianceMatrix(_table,columns)),"covariance");
     }
 
   Folder * plots = nullptr;

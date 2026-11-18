@@ -68,7 +68,7 @@ public:
                                         double minimum=0.0, double maximum=0.0);
 
   //!
-  //! @brief Map of a square matrix (e.g. TableStatistics::correlationMatrix()): a histogram of rank 2 with one bin per
+  //! @brief Map of a square matrix (e.g. MATH::TableStatistics::correlationMatrix()): a histogram of rank 2 with one bin per
   //! element, bin (i,j) holding element (i,j), on [0,n] x [0,n] (variable i in the bin from i to i+1).
   //! @param matrix square table @param name name of the histogram (empty: that of the table)
   //! @return histogram @throws MathException if the table is not square or empty

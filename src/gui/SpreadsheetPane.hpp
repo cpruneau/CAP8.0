@@ -63,7 +63,7 @@ namespace Datum
     std::vector<unsigned int> columns;   //!< columns plotted (y), or of the correlation matrix
     int  x       = -1;                   //!< column of x (-1: the row index)
     int  yError  = -1;                   //!< column of the uncertainties of y (-1: none)
-    int  method  = 0;                    //!< correlation: Datum::TableStatistics::Method
+    int  method  = 0;                    //!< correlation: Datum::MATH::TableStatistics::Method
     bool overlay = false;                //!< add to the graph rather than replace its contents
   };
 

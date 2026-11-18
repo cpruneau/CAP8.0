@@ -12,6 +12,7 @@
 #   Search         extremum searches (SearchEngine and its engines, ExtremumSearch)
 #   Fitting        fits (Fitter, likelihoods, chi square, Bayesian fits, fit records)
 #   StatisticalTests  statistical tests (binomial, Poisson, z, t, chi square, histograms, Kolmogorov-Smirnov)
+#   Statistics     descriptive statistics of data: summaries, covariances, correlations (Pearson, Spearman, Kendall)
 ################################################################################################
 
 ################################################################################################
@@ -126,6 +127,8 @@ Fitting/Likelihood.cpp
 Fitting/MetropolisHastings.cpp
 Fitting/ModelValues.cpp
 Fitting/Prior.cpp
+# Statistics
+Statistics/TableStatistics.cpp
 # StatisticalTests
 StatisticalTests/Distributions.cpp
 StatisticalTests/StatisticalTests.cpp
@@ -170,6 +173,9 @@ add_test(NAME FitFunctions COMMAND TestFitFunctions)
 add_executable(TestStatisticalTests StatisticalTests/tests/TestStatisticalTests.cpp)
 target_link_libraries(TestStatisticalTests Math Base)
 add_test(NAME StatisticalTests COMMAND TestStatisticalTests)
+add_executable(TestTableStatistics Statistics/tests/TestTableStatistics.cpp)
+target_link_libraries(TestTableStatistics Math Base)
+add_test(NAME TableStatistics COMMAND TestTableStatistics)
 add_executable(TestFits2D Fitting/tests/TestFits2D.cpp)
 target_link_libraries(TestFits2D Math Base)
 add_test(NAME Fits2D COMMAND TestFits2D)

@@ -1432,7 +1432,7 @@ namespace Datum
     if (request.kind == SpreadsheetPane::kSummary)
       {
       // one row per column (the selected ones, or all), named after them
-      MATH::Table2D all = TableStatistics::summaryTable(*table);
+      MATH::Table2D all = MATH::TableStatistics::summaryTable(*table);
       std::vector<unsigned int> columns = request.columns;
       if (columns.empty()) for (unsigned int c=0; c<table->nColumns(); c++) columns.push_back(c);
       std::unique_ptr<MATH::Table2D> summary(new MATH::Table2D(table->name() + String("_summary")));
@@ -1470,9 +1470,9 @@ namespace Datum
       {
       case SpreadsheetPane::kCorrelation:
         {
-        TableStatistics::Method method = TableStatistics::Method(request.method);
-        String methodName = TableStatistics::methodName(method);
-        MATH::Table2D matrix = TableStatistics::correlationMatrix(*table, columns, method);
+        MATH::TableStatistics::Method method = MATH::TableStatistics::Method(request.method);
+        String methodName = MATH::TableStatistics::methodName(method);
+        MATH::Table2D matrix = MATH::TableStatistics::correlationMatrix(*table, columns, method);
         std::vector<String> names = matrix.columnNames();
         MATH::Histogram * map = TablePlots::matrixMap(matrix, table->name() + String("_") + methodName);
         _data.emplace_back(map);
