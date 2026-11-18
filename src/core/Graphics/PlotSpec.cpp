@@ -396,6 +396,9 @@ namespace Datum
     }
   if (e.hasAttribute("sysWidth"))     item.setSysWidth(float(e.attributeDouble("sysWidth", item.sysWidth())));
   if (e.hasAttribute("sysUsesMarkerColor")) item.setSysUsesMarkerColor(e.attributeBool("sysUsesMarkerColor", item.sysUsesMarkerColor()));
+  if (e.hasAttribute("showBars"))     item.setShowBars(e.attributeBool("showBars", item.showBars()));
+  if (e.hasAttribute("barWidth"))     item.setBarWidth(float(e.attributeDouble("barWidth", item.barWidth())));
+  if (e.hasAttribute("barUsesMarkerColor")) item.setBarUsesMarkerColor(e.attributeBool("barUsesMarkerColor", item.barUsesMarkerColor()));
   if (e.hasAttribute("nSamples"))     item.setNSamples(int(e.attributeInt("nSamples", item.nSamples())));
   if (e.hasAttribute("showFits"))     item.setShowFits(e.attributeBool("showFits", item.showFits()));
   if (e.hasAttribute("extendFits"))   item.setExtendFits(e.attributeBool("extendFits", item.extendFits()));
@@ -423,6 +426,8 @@ namespace Datum
   read(e.child("Marker"), item.markerAttributes());
   read(e.child("SysFill"), item.sysFillAttributes());
   read(e.child("SysLine"), item.sysLineAttributes());
+  read(e.child("BarFill"), item.barFillAttributes());
+  read(e.child("BarLine"), item.barLineAttributes());
   read(e.child("ContourLine"), item.contourLineAttributes());
   }
 
@@ -436,6 +441,12 @@ namespace Datum
   e.setAttribute("sysStyle", sysStyleName(item.sysStyle()));
   e.setAttribute("sysWidth", num(item.sysWidth()));
   e.setAttribute("sysUsesMarkerColor", item.sysUsesMarkerColor());
+  if (item.showBars())
+    {
+    e.setAttribute("showBars", true);
+    e.setAttribute("barWidth", num(item.barWidth()));
+    e.setAttribute("barUsesMarkerColor", item.barUsesMarkerColor());
+    }
   e.setAttribute("showFits", item.showFits());
   e.setAttribute("extendFits", item.extendFits());
   if (item.kind() == GraphItem::kFunction) e.setAttribute("nSamples", item.nSamples());
@@ -463,6 +474,11 @@ namespace Datum
   write(e.addChild("Marker"), item.markerAttributes());
   write(e.addChild("SysFill"), item.sysFillAttributes());
   write(e.addChild("SysLine"), item.sysLineAttributes());
+  if (item.showBars())
+    {
+    write(e.addChild("BarFill"), item.barFillAttributes());
+    write(e.addChild("BarLine"), item.barLineAttributes());
+    }
   }
 
   void readCanvas(const XmlElement & e, Canvas & canvas)

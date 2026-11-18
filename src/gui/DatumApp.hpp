@@ -203,6 +203,38 @@ namespace Datum
   bool showData(const ObjectReference & object);
   //! @brief Show the values of data points in a new data pane. @param data data points @param label name shown
   void showDataTable(const MATH::DataPoints * data, const String & label);
+  //! @}
+
+  //! @name Tables of data (Spreadsheet module)
+  //! @{
+
+  //! @brief Whether a file is a table that openTable() reads: .csv, .tsv, .tab, .ssv, .txt, .dat, .dtb. @param fileName
+  //! file @return true if so
+  static bool isTableFile(const String & fileName);
+  //!
+  //! @brief Read a table of data (Datum::TableReader: CSV, tab or blank separated text, Datum binary table) and show it
+  //! in a new table pane. @param fileName file @return false if it cannot be read (the reason is shown)
+  //!
+  bool openTable(const String & fileName);
+  //!
+  //! @brief Show a table in a new table pane, docked beside the current canvas.
+  //! @param table table (owned by the pane) @param label name shown @param fileName file it was read from ("" if none)
+  //! @param rowLabels names of the rows (empty: the index) @return the pane
+  //!
+  SpreadsheetPane & showTable(std::unique_ptr<MATH::Table2D> table, const String & label, const String & fileName="",
+                              const std::vector<String> & rowLabels = {});
+  //!
+  //! @brief Make what a table pane asks for (undoable): plots y vs x, bar charts or distributions of its columns in its
+  //! canvas pane (made beside it the first time); correlation matrices (a new table pane, and their map in the canvas)
+  //! and summaries (a new table pane). @param pane table pane @param request what to make
+  //!
+  void plotTable(SpreadsheetPane & pane, const SpreadsheetPane::PlotRequest & request);
+  //! @brief Ask for a file, then save the table of a table pane (its format from the extension). @param pane table pane
+  void saveTableAs(SpreadsheetPane & pane);
+  //! @}
+
+  //! @name Files (continued)
+  //! @{
   //!
   //! @brief Show the map of the pulls of data points of rank 2 to one of their fits (MATH::residualMap() for a
   //! histogram, MATH::residuals() otherwise) in a new canvas pane, with the diverging palette (undoable).

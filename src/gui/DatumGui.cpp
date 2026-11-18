@@ -440,6 +440,32 @@ namespace Datum
   return pane;
   }
 
+  SpreadsheetPane & DatumGui::addSpreadsheetPane()
+  {
+  char name[32];
+  std::snprintf(name, sizeof(name), "Table %d", ++_spreadsheetCounter);
+  _spreadsheetPanes.emplace_back(new SpreadsheetPane(name));
+  SpreadsheetPane & pane = *_spreadsheetPanes.back();
+  std::string beside = _panes.empty() ? std::string() : std::string(currentPane().windowId());
+  _dockBeside.push_back(std::make_pair(pane.windowId(), beside));
+  return pane;
+  }
+
+  CanvasPane & DatumGui::addPaneBeside(const std::string & windowId)
+  {
+  CanvasPane & pane = newPane();
+  _dockBeside.push_back(std::make_pair(std::string(pane.windowId()), windowId));
+  setCurrentPane(nPanes() - 1);
+  return pane;
+  }
+
+  int DatumGui::paneIndexOfWindow(const std::string & windowId) const
+  {
+  if (windowId.empty()) return -1;
+  for (int k=0; k<int(_panes.size()); k++) if (windowId == _panes[std::size_t(k)]->windowId()) return k;
+  return -1;
+  }
+
   void DatumGui::closePane(int k)
   {
   if (k < 0 || k >= nPanes()) return;
@@ -950,6 +976,19 @@ namespace Datum
     ImGui::End();
     if (open) k++;
     else _dataPanes.erase(_dataPanes.begin() + k);
+    }
+  // table panes (Spreadsheet), closed with the x of their tab
+  for (std::size_t k=0; k<_spreadsheetPanes.size(); )
+    {
+    SpreadsheetPane & pane = *_spreadsheetPanes[k];
+    bool open = true;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6, 6));
+    bool visible = ImGui::Begin(pane.windowTitle().data(), &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar);
+    ImGui::PopStyleVar();
+    if (visible) pane.render();
+    ImGui::End();
+    if (open) k++;
+    else _spreadsheetPanes.erase(_spreadsheetPanes.begin() + k);
     }
   renderFitPane();
   if (_fitDialog.render(_panes.empty() ? nullptr : &currentPane().currentGraph())) setFitPaneVisible(true);

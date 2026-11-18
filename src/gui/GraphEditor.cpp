@@ -739,6 +739,34 @@ namespace Datum
       ImGui::SetItemTooltip("For points without x uncertainty, in fractions of the frame width");
       ImGui::Unindent();
       }
+
+    section("Bars");
+    bool bars = item.showBars();
+    if (ImGui::Checkbox("draw as bars", &bars)) { item.setShowBars(bars); changed = true; }
+    ImGui::SetItemTooltip("A bar chart: a bar from 0 to each value, as wide as twice the x uncertainty");
+    if (bars)
+      {
+      ImGui::Indent();
+      bool same = item.barUsesMarkerColor();
+      if (ImGui::Checkbox("color of the markers##bars", &same)) { item.setBarUsesMarkerColor(same); changed = true; }
+      if (!same)
+        {
+        int fillColor = item.barFillAttributes().color(), lineColor = item.barLineAttributes().color();
+        if (colorEdit("fill##bars", fillColor)) { item.barFillAttributes().setColor(fillColor, item.barFillAttributes().alpha()); changed = true; }
+        ImGui::SameLine(0, 20);
+        if (colorEdit("outline##bars", lineColor)) { item.barLineAttributes().setColor(lineColor, item.barLineAttributes().alpha()); changed = true; }
+        }
+      float opacity = item.barFillAttributes().alpha();
+      ImGui::SetNextItemWidth(120);
+      if (ImGui::SliderFloat("opacity##bars", &opacity, 0.05f, 1.0f, "%.2f")) { item.barFillAttributes().setAlpha(opacity); changed = true; }
+      int outline = item.barLineAttributes().style();
+      if (lineStyleEdit("outline style##bars", outline)) { item.barLineAttributes().setStyle(outline); changed = true; }
+      float width = item.barWidth();
+      ImGui::SetNextItemWidth(160);
+      if (ImGui::SliderFloat("width##bars", &width, 0.05f, 1.0f, "%.2f")) { item.setBarWidth(width); changed = true; }
+      ImGui::SetItemTooltip("For points without x uncertainty, in fractions of the smallest distance between two points");
+      ImGui::Unindent();
+      }
     }
 
   if (!map)

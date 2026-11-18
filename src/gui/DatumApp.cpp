@@ -40,6 +40,11 @@
 #include "DatumFile.hpp"
 #include "LatexRenderer.hpp"
 #include "GraphEditor.hpp"
+#include "TableFormat.hpp"
+#include "TablePlots.hpp"
+#include "TableReader.hpp"
+#include "TableStatistics.hpp"
+#include "TableWriter.hpp"
 
 #ifndef DATUM_SOURCE_ROOT
 //! Top directory of the Datum sources (set by the build; empty if not).
@@ -435,6 +440,8 @@ namespace Datum
 
   Menu & file = bar.addMenu("File");
   file.addItem("Open...",        "file.open",       "Ctrl+O",       "Open a Datum file, or the histograms of a ROOT file");
+  file.addItem("Open Table...",  "file.openTable",  "",             "Open a table of data (CSV, tab or blank separated text, "
+                                                                       "Datum binary table) in a table pane, to plot its columns");
   file.addItem("Open Folder...", "file.openFolder", "Ctrl+Shift+O", "Show a folder of the file system in the browser");
   file.addItem("Close All Files", "file.closeAll",  "",             "Close the Datum files open in the browsers");
   file.addSeparator();
@@ -587,6 +594,14 @@ namespace Datum
       if (std::find(types.begin(), types.end(), String(e)) == types.end()) types.push_back(String(e));
     _gui.fileDialog().open(FileDialog::kOpenFile, "Open a Datum or ROOT file", _configuration.directory, types, "",
                            [this](const String & path) { openFile(path); });
+    }
+  else if (c == "file.openTable")
+    {
+    std::vector<String> types;
+    for (const String & e : TableFormat::readableExtensions())
+      if (!(e == String(".datum")) && !(e == String(".cap"))) types.push_back(e);   // Datum files: File > Open
+    _gui.fileDialog().open(FileDialog::kOpenFile, "Open a table of data", _configuration.directory, types, "",
+                           [this](const String & path) { openTable(path); });
     }
   else if (c == "file.openFolder")
     {
@@ -805,6 +820,7 @@ namespace Datum
 
   int DatumApp::openFile(const String & fileName, FileBrowser * browser)
   {
+  if (isTableFile(fileName)) { openTable(fileName); return -1; }   // a table of data: a table pane, not a browser entry
   FileBrowser & target = browser ? *browser : _gui.activeBrowser();
   String path = normalizedPath(fileName);
   for (const auto & f : _files)
@@ -1343,8 +1359,14 @@ namespace Datum
   BrowserFile * entry = file(object.file);
   if (!entry || !entry->file) { _gui.setStatus("That file is no longer open"); return false; }
   const MATH::DataPoints * data = nullptr;
-  try { data = entry->file->get<MATH::DataPoints>(object.path); }   // read now if the file was opened lazily
+  const MATH::Table2D * table = nullptr;
+  try
+    {
+    data = entry->file->get<MATH::DataPoints>(object.path);   // read now if the file was opened lazily
+    if (!data) table = entry->file->get<MATH::Table2D>(object.path);
+    }
   catch (const std::exception & e) { _gui.setStatus(object.path + String(": cannot be read: ") + String(e.what())); return false; }
+  if (table) { showTable(std::unique_ptr<MATH::Table2D>(new MATH::Table2D(*table)), object.path, entry->path); return true; }
   if (!data) { _gui.setStatus(object.path + String(": has no values to show as a table")); return false; }
   showDataTable(data, data->name().isNull() ? object.path : data->name());
   return true;
@@ -1357,6 +1379,199 @@ namespace Datum
   char text[64];
   std::snprintf(text, sizeof(text), ": %u rows", data->size());
   _gui.setStatus(String("Data table of ") + label + String(text));
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  // Tables of data (Spreadsheet module)
+  //////////////////////////////////////////////////////////////////////////
+
+  bool DatumApp::isTableFile(const String & fileName)
+  {
+  std::string name(fileName.data());
+  for (char & ch : name) ch = char(std::tolower((unsigned char)ch));
+  for (const char * e : { ".csv", ".tsv", ".tab", ".ssv", ".txt", ".dat", ".dtb" })
+    {
+    std::string extension(e);
+    if (name.size() > extension.size() && name.compare(name.size() - extension.size(), extension.size(), extension) == 0) return true;
+    }
+  return false;
+  }
+
+  bool DatumApp::openTable(const String & fileName)
+  {
+  std::unique_ptr<MATH::Table2D> table(new MATH::Table2D());
+  TableReader::Report report;
+  try { report = TableReader().read(fileName, *table); }
+  catch (const std::exception & e)
+    {
+    _gui.showMessage("Open Table", String("Cannot read ") + fileName + String(":\n") + String(e.what()));
+    return false;
+    }
+  String label = table->name();
+  showTable(std::move(table), label, fileName);
+  _gui.setStatus(String("Table ") + label + String(": ") + report.summary());
+  return true;
+  }
+
+  SpreadsheetPane & DatumApp::showTable(std::unique_ptr<MATH::Table2D> table, const String & label, const String & fileName,
+                                        const std::vector<String> & rowLabels)
+  {
+  SpreadsheetPane & pane = _gui.addSpreadsheetPane();
+  pane.setTable(std::move(table), label, fileName, rowLabels);
+  pane.onPlot   = [this](SpreadsheetPane & p, const SpreadsheetPane::PlotRequest & r) { plotTable(p, r); };
+  pane.onSaveAs = [this](SpreadsheetPane & p) { saveTableAs(p); };
+  return pane;
+  }
+
+  void DatumApp::plotTable(SpreadsheetPane & sheet, const SpreadsheetPane::PlotRequest & request)
+  {
+  const MATH::Table2D * table = sheet.table();
+  if (!table || table->nColumns() == 0) return;
+  try
+    {
+    if (request.kind == SpreadsheetPane::kSummary)
+      {
+      // one row per column (the selected ones, or all), named after them
+      MATH::Table2D all = MATH::TableStatistics::summaryTable(*table);
+      std::vector<unsigned int> columns = request.columns;
+      if (columns.empty()) for (unsigned int c=0; c<table->nColumns(); c++) columns.push_back(c);
+      std::unique_ptr<MATH::Table2D> summary(new MATH::Table2D(table->name() + String("_summary")));
+      std::vector<String> rows;
+      for (unsigned int c : columns) { summary->addRow(all.row(c)); rows.push_back(table->columnName(c)); }
+      summary->setColumnNames(all.columnNames());
+      showTable(std::move(summary), sheet.label() + String(" summary"), "", rows);
+      return;
+      }
+    if (request.kind != SpreadsheetPane::kCorrelation && request.columns.empty()) return;
+
+    // the canvas pane of the table, beside it (made the first time, or again if it was closed)
+    recordUndo();
+    CanvasPane * pane = nullptr;
+    int index = _gui.paneIndexOfWindow(sheet.canvasWindow());
+    if (index < 0)
+      {
+      pane = &_gui.addPaneBeside(sheet.windowId());
+      pane->divide(1, 1);
+      pane->setTitle(sheet.label() + String(" plots"));
+      sheet.setCanvasWindow(pane->windowId());
+      }
+    else
+      {
+      pane = &_gui.pane(index);
+      _gui.setCurrentPane(index);
+      }
+    Graph & graph = pane->currentGraph();
+    bool overlay = request.overlay && request.kind != SpreadsheetPane::kCorrelation;
+    if (!overlay) graph.clearItems();
+    bool fresh = graph.items().empty();
+    const std::vector<unsigned int> & columns = request.columns;
+    String xTitle, yTitle;
+    switch (request.kind)
+      {
+      case SpreadsheetPane::kCorrelation:
+        {
+        MATH::TableStatistics::Method method = MATH::TableStatistics::Method(request.method);
+        String methodName = MATH::TableStatistics::methodName(method);
+        MATH::Table2D matrix = MATH::TableStatistics::correlationMatrix(*table, columns, method);
+        std::vector<String> names = matrix.columnNames();
+        MATH::Histogram * map = TablePlots::matrixMap(matrix, table->name() + String("_") + methodName);
+        _data.emplace_back(map);
+        showTable(std::unique_ptr<MATH::Table2D>(new MATH::Table2D(matrix)), sheet.label() + String(" ") + methodName, "", names);
+        GraphItem & item = graph.show(GraphItem(map, methodName + String(" correlation")), true);
+        item.setShowValues(names.size() <= 12);
+        graph.setPalette(Palette(Palette::kDiverging));
+        graph.setZRange(-1.0f, 1.0f);
+        graph.setTitle(sheet.label() + String(": ") + methodName + String(" correlations"));
+        graph.xAxis().setTitle("variable");
+        graph.yAxis().setTitle("variable");
+        std::string order;
+        for (std::size_t k=0; k<names.size() && k<20; k++) order += (k ? ", " : "") + std::to_string(k) + " " + names[k].data();
+        _gui.setStatus(String("Variables (bin from k to k+1): ") + String(order.c_str()));
+        return;
+        }
+      case SpreadsheetPane::kXY:
+        for (unsigned int c : columns)
+          {
+          MATH::DataPointsVector * points = TablePlots::xy(*table, request.x, c, request.yError);
+          _data.emplace_back(points);
+          GraphItem & item = graph.show(GraphItem(points, table->columnName(c)), false);
+          item.setShowMarkers(true);
+          }
+        xTitle = request.x >= 0 ? table->columnName(unsigned(request.x)) : String("row");
+        yTitle = columns.size() == 1 ? table->columnName(columns[0]) : String("");
+        break;
+      case SpreadsheetPane::kBars:
+        {
+        double n = double(columns.size());
+        for (std::size_t k=0; k<columns.size(); k++)
+          {
+          double width = 0.8/n, offset = (double(k) - 0.5*(n - 1))*width;   // the bars of several columns side by side
+          MATH::DataPointsVector * points = TablePlots::bars(*table, columns[k], request.x, width, offset);
+          _data.emplace_back(points);
+          GraphItem & item = graph.show(GraphItem(points, table->columnName(columns[k])), false);
+          item.setShowBars(true);
+          item.setShowMarkers(false);
+          item.setShowErrors(false);
+          }
+        xTitle = request.x >= 0 ? table->columnName(unsigned(request.x)) : String("row");
+        yTitle = columns.size() == 1 ? table->columnName(columns[0]) : String("");
+        break;
+        }
+      case SpreadsheetPane::kDistribution:
+        for (unsigned int c : columns)
+          {
+          MATH::Histogram * histogram = TablePlots::distribution(*table, c);
+          _data.emplace_back(histogram);
+          GraphItem & item = graph.show(GraphItem(histogram, table->columnName(c)), false);
+          item.setShowBars(true);   // contiguous bars, with their statistical uncertainties
+          item.setShowMarkers(false);
+          }
+        xTitle = columns.size() == 1 ? table->columnName(columns[0]) : String("value");
+        yTitle = "entries";
+        break;
+      default:
+        break;
+      }
+    if (fresh || !overlay)
+      {
+      graph.setTitle(sheet.label());
+      graph.xAxis().setTitle(xTitle);
+      graph.yAxis().setTitle(yTitle);
+      }
+    graph.setAutoRange();
+    }
+  catch (const std::exception & e)
+    {
+    _gui.setStatus(String("Cannot make the plot: ") + String(e.what()));
+    }
+  }
+
+  void DatumApp::saveTableAs(SpreadsheetPane & sheet)
+  {
+  if (!sheet.table()) return;
+  String paneName = sheet.name();
+  std::filesystem::path suggested(sheet.fileName().isNull() ? std::string(sheet.table()->name().data()) : std::string(sheet.fileName().data()));
+  String directory = suggested.has_parent_path() ? String(suggested.parent_path().string().c_str()) : _configuration.directory;
+  std::string stem = suggested.stem().string();
+  if (stem.empty()) stem = "table";
+  _gui.fileDialog().open(FileDialog::kSaveFile, "Save the table (.csv, .tsv, .ssv, .txt, .dtb, .datum, .xlsx)", directory,
+                         TableFormat::writableExtensions(), String((stem + ".csv").c_str()),
+                         [this, paneName](const String & chosen)
+    {
+    // the pane may have been closed while the dialog was open
+    SpreadsheetPane * pane = nullptr;
+    for (int k=0; k<_gui.nSpreadsheetPanes(); k++) if (_gui.spreadsheetPane(k).name() == paneName) pane = &_gui.spreadsheetPane(k);
+    if (!pane || !pane->table()) { _gui.setStatus("That table is no longer open"); return; }
+    String path = chosen;
+    if (std::filesystem::path(path.data()).extension().empty()) path += String(".csv");
+    try
+      {
+      TableWriter().write(path, *pane->table());
+      pane->setFileName(path);
+      _gui.setStatus(String("Table saved to ") + path);
+      }
+    catch (const std::exception & e) { _gui.showMessage("Save Table", String("Cannot save ") + path + String(":\n") + String(e.what())); }
+    });
   }
 
   void DatumApp::showResidualMap(const MATH::DataPoints * data, unsigned int k)
@@ -1548,8 +1763,14 @@ namespace Datum
   BrowserFile * entry = file(object.file);
   if (!entry || !entry->file) { _gui.setStatus("That file is no longer open"); return false; }
   const MATH::DataPoints * data = nullptr;
-  try { data = entry->file->get<MATH::DataPoints>(object.path); }   // read now if the file was opened lazily
+  const MATH::Table2D * table = nullptr;
+  try
+    {
+    data = entry->file->get<MATH::DataPoints>(object.path);   // read now if the file was opened lazily
+    if (!data) table = entry->file->get<MATH::Table2D>(object.path);
+    }
   catch (const std::exception & e) { _gui.setStatus(object.path + String(": cannot be read: ") + String(e.what())); return false; }
+  if (table) { showTable(std::unique_ptr<MATH::Table2D>(new MATH::Table2D(*table)), object.path, entry->path); return true; }
   if (!data) { _gui.setStatus(object.path + String(": cannot be shown in a graph")); return false; }
   const MATH::Histogram * histogram = dynamic_cast<const MATH::Histogram *>(data);
   unsigned int rank = histogram ? histogram->rank() : data->rank();

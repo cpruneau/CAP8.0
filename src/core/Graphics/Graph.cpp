@@ -123,6 +123,8 @@ namespace Datum
   _marker.setStyle(20);
   _sysFill.set(1, 0.25, 1001);    // translucent solid fill (the color follows the markers)
   _sysLine.set(1, 1.0, 1, 1.0);
+  _barFill.set(1, 0.6f, 1001);    // bars: translucent solid fill and a thin outline (the color follows the markers)
+  _barLine.set(1, 1.0, 1, 1.0);
   }
 
   GraphItem::GraphItem(const MATH::Function * function, float xMinimum, float xMaximum, float yMinimum, float yMaximum,
@@ -828,6 +830,7 @@ namespace Datum
         double stat = item.showErrors()    ? p.yStatError() : 0.0;
         double sys  = item.showSysErrors() ? p.ySysError()  : 0.0;
         double e = std::max(stat, sys);
+        if (item.showBars() && !_logY) include(0.0, _logY, yLow, yHigh);   // bars start at 0
         if (p.y() < yCentralMinimum) yCentralMinimum = p.y();
         include(p.y() - e, _logY, yLow, yHigh);
         include(p.y() + e, _logY, yLow, yHigh);

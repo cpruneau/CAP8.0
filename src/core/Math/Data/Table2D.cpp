@@ -85,7 +85,8 @@ namespace Datum
 
   void Table2D::resize(unsigned int nRows, unsigned int nColumns, double value)
   {
-  if (nRows==0 || nColumns==0) { _nRows = 0; _nColumns = 0; _values.clear(); return; }
+  if (nRows==0 || nColumns==0) { _nRows = 0; _nColumns = 0; _values.clear(); _columnNames.clear(); return; }
+  if (!_columnNames.empty()) _columnNames.resize(nColumns);
   std::vector<double> values(std::size_t(nRows)*nColumns,value);
   for (unsigned int i=0; i<std::min(nRows,_nRows); i++)
     for (unsigned int j=0; j<std::min(nColumns,_nColumns); j++)
@@ -97,7 +98,7 @@ namespace Datum
 
   void Table2D::clear()
   {
-  _nRows = 0; _nColumns = 0; _values.clear();
+  _nRows = 0; _nColumns = 0; _values.clear(); _columnNames.clear();
   _hasGrid = false; _xMin = 0.0; _dx = 1.0; _yMin = 0.0; _dy = 1.0;
   }
 
@@ -155,6 +156,83 @@ namespace Datum
   _values.insert(_values.end(),values.begin(),values.end());
   _nColumns = values.size();
   _nRows++;
+  if (!_columnNames.empty()) _columnNames.resize(_nColumns);   // names given before the first row
+  }
+
+  void Table2D::addColumn(const std::vector<double> & values, const String & name)
+  {
+  if (values.empty()) throw MathException("Cannot add an empty column",__FUNCTION__);
+  if (_nColumns>0 && values.size()!=_nRows)
+    throw MathException("Column size differs from nRows()",__FUNCTION__);
+  unsigned int nRows = values.size();
+  std::vector<double> merged;
+  merged.reserve(std::size_t(nRows)*(_nColumns+1));
+  for (unsigned int i=0; i<nRows; i++)
+    {
+    for (unsigned int j=0; j<_nColumns; j++) merged.push_back(_values[std::size_t(i)*_nColumns+j]);
+    merged.push_back(values[i]);
+    }
+  if (!name.isNull() || !_columnNames.empty())
+    {
+    _columnNames.resize(_nColumns);
+    _columnNames.push_back(name);
+    }
+  _values.swap(merged);
+  _nRows = nRows;
+  _nColumns++;
+  }
+
+  void Table2D::removeColumn(unsigned int column)
+  {
+  if (column>=_nColumns) throw MathException("Column index out of range (column>=nColumns())",__FUNCTION__);
+  if (_nColumns==1) { _nRows = 0; _nColumns = 0; _values.clear(); _columnNames.clear(); return; }
+  std::vector<double> kept;
+  kept.reserve(std::size_t(_nRows)*(_nColumns-1));
+  for (unsigned int i=0; i<_nRows; i++)
+    for (unsigned int j=0; j<_nColumns; j++)
+      if (j!=column) kept.push_back(_values[std::size_t(i)*_nColumns+j]);
+  _values.swap(kept);
+  if (!_columnNames.empty()) _columnNames.erase(_columnNames.begin()+column);
+  _nColumns--;
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  // Column names
+  //////////////////////////////////////////////////////////////////////////
+
+  String Table2D::columnName(unsigned int column) const
+  {
+  if (column>=_nColumns) throw MathException("Column index out of range (column>=nColumns())",__FUNCTION__);
+  if (column<_columnNames.size() && !_columnNames[column].isNull()) return _columnNames[column];
+  return String("c")+String(std::to_string(column).c_str());
+  }
+
+  std::vector<String> Table2D::columnNames() const
+  {
+  std::vector<String> names;
+  names.reserve(_nColumns);
+  for (unsigned int j=0; j<_nColumns; j++) names.push_back(columnName(j));
+  return names;
+  }
+
+  void Table2D::setColumnName(unsigned int column, const String & name)
+  {
+  if (column>=_nColumns) throw MathException("Column index out of range (column>=nColumns())",__FUNCTION__);
+  if (_columnNames.size()!=_nColumns) _columnNames.resize(_nColumns);
+  _columnNames[column] = name;
+  }
+
+  void Table2D::setColumnNames(const std::vector<String> & names)
+  {
+  if (!names.empty() && names.size()!=_nColumns)
+    throw MathException("Number of names differs from nColumns()",__FUNCTION__);
+  _columnNames = names;
+  }
+
+  int Table2D::columnIndex(const String & name) const
+  {
+  for (unsigned int j=0; j<_nColumns; j++) if (columnName(j).equalTo(name)) return int(j);
+  return -1;
   }
 
   std::vector< std::vector<double> > Table2D::rows() const
@@ -244,6 +322,7 @@ namespace Datum
   _nRows    = table._nRows;
   _nColumns = table._nColumns;
   _values.swap(table._values);
+  if (_columnNames.size()!=_nColumns) _columnNames.clear();   // the names are kept if the columns still match
   }
 
   void Table2D::writeText(const String & fileName, int width, int precision) const
@@ -269,6 +348,11 @@ namespace Datum
   std::cout << "Rows: " << _nRows << "  Columns: " << _nColumns;
   if (_hasGrid) std::cout << "  x: " << _xMin << " + i*" << _dx << "  y: " << _yMin << " + j*" << _dy;
   std::cout << std::endl;
+  if (hasColumnNames())
+    {
+    for (unsigned int j=0; j<_nColumns; j++) std::cout << std::setw(14) << columnName(j).data();
+    std::cout << std::endl;
+    }
   for (unsigned int i=0; i<_nRows; i++)
     {
     for (unsigned int j=0; j<_nColumns; j++) std::cout << std::setw(14) << (*this)(i,j);
@@ -291,9 +375,12 @@ namespace Datum
     w.writeFloat64(_yMin); w.writeFloat64(_dy);
     }
   for (double v : _values) w.writeFloat64(v);
+  // version 2: the column names (none if not given)
+  w.writeVarUInt(_columnNames.size());
+  for (const auto & name : _columnNames) w.writeString(name);
   }
 
-  void Table2D::decodeBinary(BinaryReader & r, const String & name, unsigned int /*version*/)
+  void Table2D::decodeBinary(BinaryReader & r, const String & name, unsigned int version)
   {
   uint64_t nRows    = r.readVarUInt();
   uint64_t nColumns = r.readVarUInt();
@@ -312,9 +399,17 @@ namespace Datum
   if (8*n > r.remaining()) throw Exception("More values than data","Table2D::decodeBinary()");
   std::vector<double> values(n);
   for (auto & v : values) v = r.readFloat64();
+  std::vector<String> names;
+  if (version>=2)
+    {
+    uint64_t nNames = r.readVarUInt();
+    if (nNames!=0 && nNames!=nColumns) throw Exception("Invalid number of column names","Table2D::decodeBinary()");
+    names.reserve(nNames);
+    for (uint64_t k=0; k<nNames; k++) names.push_back(r.readString());
+    }
   setName(name);
   setTitle(name);
-  _nRows = nRows; _nColumns = nColumns; _values.swap(values);
+  _nRows = nRows; _nColumns = nColumns; _values.swap(values); _columnNames.swap(names);
   _hasGrid = grid; _xMin = xMin; _dx = dx; _yMin = yMin; _dy = dy;
   }
 

@@ -58,6 +58,7 @@ add_library(DatumGuiCore STATIC
   PlotOutputs.cpp
   CanvasPane.cpp
   DataPane.cpp
+  SpreadsheetPane.cpp
   FitDialog.cpp
   DetectorMapsDialog.cpp
   FitPane.cpp
@@ -74,7 +75,7 @@ set_target_properties(DatumGuiCore PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUI
 target_compile_definitions(DatumGuiCore PUBLIC DATUM_SOURCE_ROOT="${DATUM_TOP_DIR}")
 target_include_directories(DatumGuiCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} PRIVATE ${DATUM_TOP_DIR}/external/nanosvg)
 set_source_files_properties(NanoSvg.cpp PROPERTIES COMPILE_OPTIONS "-w")   # nanosvg: third-party code, no warnings
-target_link_libraries(DatumGuiCore PUBLIC DatumImGui Graphics Particles Math Base)
+target_link_libraries(DatumGuiCore PUBLIC DatumImGui Graphics Spreadsheet Particles Math Base)
 if(DATUM_WITH_LATEX)   # File > Make Presentation (Latex/CanvasPresentation)
   target_link_libraries(DatumGuiCore PUBLIC Latex)
   target_compile_definitions(DatumGuiCore PUBLIC DATUM_GUI_PRESENTATIONS)
