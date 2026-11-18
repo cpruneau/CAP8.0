@@ -10,7 +10,7 @@
 # Build options (set with -D<option>=ON|OFF, or with the BuildDatum.py GUI): DATUM_WITH_... and DATUM_..._DIR. The names
 # of CAP (CAP_WITH_..., CAP_..._DIR) are still accepted when the new ones are not given.
 # The core modules (Base, Math, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, PtPt, NuDyn,
-# ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen) are always built.
+# ParticleFlow, Spherocity, SubSample, Performance, Spreadsheet, BasicEventGen) are always built.
 ################################################################################################
 cmake_minimum_required(VERSION 3.14)   # 3.14: generator expressions in install(CODE)
 
@@ -94,7 +94,7 @@ if(DATUM_WITH_ROOT)
 else()
   set(ROOT_LIBRARIES "")
 endif()
-include_directories(${CMAKE_SOURCE_DIR} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Interpolation" "core/Math/Integral" "core/Math/Derivative" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/ParticleFlow" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance"  "models/BasicEventGen" "models/Glauber"
+include_directories(${CMAKE_SOURCE_DIR} "core/Base" "core/Math" "core/Math/Basic" "core/Math/LinearAlgebra" "core/Math/Functions" "core/Math/Interpolation" "core/Math/Integral" "core/Math/Derivative" "core/Math/Data" "core/Math/Search" "core/Math/Fitting" "core/Math/StatisticalTests" "core/Math/Random" "core/Interpreter" "core/Graphics" "core/Latex" "analysis/Particles" "analysis/ParticleSingle" "analysis/ParticlePair" "analysis/ParticlePair3D" "analysis/SubSample"  "models/Pythia"  "analysis/Global" "analysis/Jets" "analysis/Spherocity"   "analysis/NuDyn" "analysis/ParticleFlow" "analysis/PtPt" "models/Therminator3" "models/PHSD" "models/Epos" "analysis/Performance" "analysis/Spreadsheet" "models/BasicEventGen" "models/Glauber"
  )
 add_compile_options(-Wall -Wextra -pedantic)
 
@@ -210,8 +210,9 @@ add_subdirectory(analysis/NuDyn)
 add_subdirectory(analysis/ParticleFlow)
 add_subdirectory(analysis/Spherocity)
 add_subdirectory(analysis/SubSample)
+add_subdirectory(analysis/Spreadsheet)   # tables of data: text, CSV, binary, Excel; statistics, correlations, plots
 set(DATUM_LINKED_MODULES Base Math Particles SubSample Global Spherocity ParticleSingle ParticlePair
-                       ParticlePair3D NuDyn ParticleFlow PtPt Performance BasicEventGen)
+                       ParticlePair3D NuDyn ParticleFlow PtPt Performance Spreadsheet BasicEventGen)
 set(DATUM_OPTIONAL_BUILT "")
 if(DATUM_WITH_ROOT)   # ROOT files and trees: RootFileHelpers, RootConversion, RootFileConversion, RootChainManager
   add_subdirectory(core/RootConvert)
@@ -414,6 +415,6 @@ if(optional_text STREQUAL "")
   set(optional_text "none")
 endif()
 message(STATUS "Datum core modules: Base, Math, Particles, Global, ParticleSingle, ParticlePair, ParticlePair3D, "
-               "PtPt, NuDyn, ParticleFlow, Spherocity, SubSample, Performance, BasicEventGen")
+               "PtPt, NuDyn, ParticleFlow, Spherocity, SubSample, Performance, Spreadsheet, BasicEventGen")
 message(STATUS "Datum optional modules: ${optional_text}")
 message(STATUS "Datum libraries install directory: $ENV{DATUM_LIB_PATH}")

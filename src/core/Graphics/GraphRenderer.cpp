@@ -354,6 +354,41 @@ namespace Datum
   flushBand();
   }
 
+  //! Bars of a data item (a bar chart), drawn behind the uncertainties and markers.
+  void drawBars(Painter & painter, const Box & box, const Graph & graph, const Graph::View & view, const GraphItem & item)
+  {
+  const MATH::DataPoints & d = *item.data();
+  FillAttributes fill = item.barFillAttributes();
+  LineAttributes line = item.barLineAttributes();
+  if (item.barUsesMarkerColor())
+    {
+    fill.setColor(item.markerAttributes().color(), fill.alpha());
+    line.setColor(item.markerAttributes().color(), line.alpha());
+    }
+  // width of the bars of points without x uncertainty: a fraction of the smallest distance between two points
+  std::vector<double> xs;
+  for (unsigned int k=0; k<d.size(); k++) { double x = d.point(k).x(); if (std::isfinite(x)) xs.push_back(x); }
+  std::sort(xs.begin(), xs.end());
+  double spacing = 0;
+  for (std::size_t k=1; k<xs.size(); k++)
+    if (xs[k] > xs[k-1] && (spacing == 0 || xs[k] - xs[k-1] < spacing)) spacing = xs[k] - xs[k-1];
+  if (!(spacing > 0)) spacing = std::max(1e-12, 0.1*(view.xMaximum - view.xMinimum));
+  const double base = view.logY ? view.yMinimum : 0.0;
+  for (unsigned int k=0; k<d.size(); k++)
+    {
+    MATH::DataPoint2D p = d.point(k);
+    if (!std::isfinite(p.x()) || !std::isfinite(p.y()) || (view.logX && p.x() <= 0) || (view.logY && p.y() <= 0)) continue;
+    double half = p.xError() > 0 ? p.xError() : 0.5*item.barWidth()*spacing;
+    double xLow = p.x() - half, xHigh = p.x() + half;
+    if (view.logX && xLow <= 0) xLow = view.xMinimum;
+    Point2D a = graph.toCanvas(view, xLow, base), b = graph.toCanvas(view, xHigh, p.y());
+    float x0 = a.x(), y0 = a.y(), x1 = b.x(), y1 = b.y();
+    if (!clipRect(box, x0, y0, x1, y1)) continue;
+    std::vector<Point2D> corners{ Point2D(x0,y0), Point2D(x1,y0), Point2D(x1,y1), Point2D(x0,y1) };
+    painter.drawPolygon(corners, fill, line);
+    }
+  }
+
   bool hasSysErrors(const GraphItem & item)
   {
   if (item.kind() != GraphItem::kData || !item.data() || !item.showSysErrors() || item.isMap()) return false;
@@ -673,6 +708,7 @@ namespace Datum
       {
       const MATH::DataPoints & d = *item.data();
       shadeFitRegions(painter, box, *graph, view, item);
+      if (item.showBars()) drawBars(painter, box, *graph, view, item);
       if (item.showSysErrors()) drawSysErrors(painter, box, *graph, view, item);
       std::vector<Point2D> points;
       std::vector<bool> valid;
@@ -934,6 +970,20 @@ namespace Datum
         }
       else
         {
+        if (item.kind() == GraphItem::kData && item.showBars())   // a small bar
+          {
+          FillAttributes fill = item.barFillAttributes();
+          LineAttributes line = item.barLineAttributes();
+          if (item.barUsesMarkerColor())
+            {
+            fill.setColor(item.markerAttributes().color(), fill.alpha());
+            line.setColor(item.markerAttributes().color(), line.alpha());
+            }
+          float hw = 0.25f*sample, hh = 0.35f*lineHeight;
+          std::vector<Point2D> swatch{ Point2D(middle.x()-hw, y-hh), Point2D(middle.x()+hw, y-hh),
+                                       Point2D(middle.x()+hw, y+hh), Point2D(middle.x()-hw, y+hh) };
+          painter.drawPolygon(swatch, fill, line);
+          }
         if (item.showLine())    painter.drawLine({l, r}, item.lineAttributes());
         if (item.showMarkers()) painter.drawMarker(middle, item.markerAttributes());
         }

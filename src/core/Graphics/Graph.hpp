@@ -249,6 +249,27 @@ namespace Datum
   void  setSysWidth(float width) { _sysWidth = width < 0 ? 0 : width; }   //!< Set the half width of the boxes (fraction of the frame width, at least 0)
   //! @}
 
+  //! @name Bars
+  //!
+  //! Data points of rank 1 can be drawn as bars (a bar chart, e.g. Datum::TablePlots::bars()): a rectangle from y = 0
+  //! (the bottom of the frame if the y axis is logarithmic) to the value of each point, as wide as twice its x
+  //! uncertainty, or barWidth() times the smallest distance between two points if it has none. The bars are drawn
+  //! behind the uncertainties and markers, and the automatic y range of a graph includes 0 when an item shows bars.
+  //! @{
+  bool showBars() const { return _showBars; }   //!< Whether the points are drawn as bars
+  void setShowBars(bool v) { _showBars = v; }   //!< Draw the points as bars or not
+  //! @brief Fill of the bars. Unless barUsesMarkerColor() is false, its color is that of the markers (its alpha kept).
+  FillAttributes & barFillAttributes() { return _barFill; }
+  const FillAttributes & barFillAttributes() const { return _barFill; }   //!< Fill of the bars
+  LineAttributes & barLineAttributes() { return _barLine; }   //!< Outline of the bars (style 0: none)
+  const LineAttributes & barLineAttributes() const { return _barLine; }   //!< Outline of the bars
+  bool barUsesMarkerColor() const { return _barUsesMarkerColor; }   //!< Whether the bars take the color of the markers
+  void setBarUsesMarkerColor(bool v) { _barUsesMarkerColor = v; }   //!< Use the color of the markers for the bars, or their own
+  //! @brief Width of the bars of points without x uncertainty, as a fraction of the smallest distance between two points.
+  float barWidth() const { return _barWidth; }
+  void  setBarWidth(float width) { _barWidth = width < 0.05f ? 0.05f : (width > 1.0f ? 1.0f : width); }   //!< Set the width of the bars (0.05 to 1)
+  //! @}
+
   //! @name Fits
   //!
   //! The fits attached to the object shown (MATH::DataPoints::addFit(), MATH::Function::addFit()) are drawn over the
@@ -330,6 +351,11 @@ namespace Datum
   LineAttributes _sysLine;   //!< outline of the boxes or band
   bool   _sysUsesMarkerColor;   //!< the boxes or band take the color of the markers
   float  _sysWidth;   //!< half width of the boxes of points without x uncertainty (fraction of the frame width)
+  bool   _showBars = false;   //!< points drawn as bars
+  FillAttributes _barFill;    //!< fill of the bars
+  LineAttributes _barLine;    //!< outline of the bars
+  bool   _barUsesMarkerColor = true;   //!< the bars take the color of the markers
+  float  _barWidth = 0.8f;    //!< width of the bars of points without x uncertainty (fraction of the spacing)
   bool   _showFits = true;   //!< the fits of the object are drawn
   bool   _extendFits = false;   //!< the curves of the fits cover the whole x range
   std::vector<bool> _fitHidden;   //!< fits not drawn (by index)

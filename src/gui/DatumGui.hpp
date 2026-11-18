@@ -23,6 +23,7 @@
 #include "MenuBar.hpp"
 #include "CanvasPane.hpp"
 #include "DataPane.hpp"
+#include "SpreadsheetPane.hpp"
 #include "FitDialog.hpp"
 #include "DetectorMapsDialog.hpp"
 #include "FitPane.hpp"
@@ -192,6 +193,16 @@ namespace Datum
   DataPane & addDataPane();
   int  nDataPanes() const { return (int)_dataPanes.size(); }   //!< Number of data panes
   DataPane & dataPane(int k) { return *_dataPanes.at(k); }   //!< Data pane k
+  //! @brief Add a table pane (a table of data of the Spreadsheet module, with its plots), docked beside the current
+  //! canvas pane. @return the new pane
+  SpreadsheetPane & addSpreadsheetPane();
+  int  nSpreadsheetPanes() const { return (int)_spreadsheetPanes.size(); }   //!< Number of table panes
+  SpreadsheetPane & spreadsheetPane(int k) { return *_spreadsheetPanes.at(k); }   //!< Table pane k
+  //! @brief Add a canvas pane docked beside a window (splitting its area), and make it current.
+  //! @param windowId identifier of the window ("###name") @return the new pane
+  CanvasPane & addPaneBeside(const std::string & windowId);
+  //! @brief Index of the canvas pane of a window. @param windowId identifier of its window ("###name") @return index, -1 if none
+  int  paneIndexOfWindow(const std::string & windowId) const;
   //! @brief Show or hide the fit pane (docked below the canvases the first time it is shown). @param visible choice
   void setFitPaneVisible(bool visible);
   bool fitPaneVisible() const { return _fitsVisible; }   //!< Whether the fit pane is shown
@@ -303,6 +314,8 @@ namespace Datum
   std::vector<int> _closeRequests;   //!< panes closed by the user during the frame
   std::vector<std::unique_ptr<DataPane>> _dataPanes;   //!< data panes (not part of the canvas layout)
   int    _dataCounter;       //!< for the names of the data panes
+  std::vector<std::unique_ptr<SpreadsheetPane>> _spreadsheetPanes;   //!< table panes (not part of the canvas layout)
+  int    _spreadsheetCounter = 0;   //!< for the names of the table panes
   bool   _addRequested;      //!< the + button of a toolbar was clicked
   int    _focusedPane;       //!< pane whose window had the focus at the last frame
   bool   _focusRequested;    //!< give the focus to the current pane (changed by the program)

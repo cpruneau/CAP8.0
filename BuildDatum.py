@@ -67,7 +67,8 @@ CONFIGURATIONS_DIR = os.path.join(DATUM_DIR, "configurations")
 
 #: Modules always built (see src/CMakeLists.txt); none of them uses ROOT.
 CORE_MODULES = ["Base", "Math", "Particles", "Global", "ParticleSingle", "ParticlePair", "ParticlePair3D",
-                "PtPt", "NuDyn", "ParticleFlow", "Spherocity", "SubSample", "Performance", "BasicEventGen"]
+                "PtPt", "NuDyn", "ParticleFlow", "Spherocity", "SubSample", "Performance", "Spreadsheet",
+                "BasicEventGen"]
 
 #: Optional modules, in the order of the Optional modules pane: CMake option, label, folder in src (None for a feature
 #: or a placeholder without code), description, default, external package (key of EXTERNALS, "ROOT", or None).

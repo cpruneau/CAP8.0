@@ -19,6 +19,7 @@
 #include "FileBrowser.hpp"
 #include "FileSystem.hpp"
 #include "DatumFile.hpp"
+#include "Table2D.hpp"
 #include "Folder.hpp"
 #include "Histogram.hpp"
 #include "Profile.hpp"
@@ -53,7 +54,7 @@ namespace Datum
   //! profiles and data points (whether it is 1D is known once it is read).
   bool showableType(const std::string & typeName)
   {
-  for (const char * type : {"Histogram", "Profile", "DataPointsVector", "DataPointColumns"})
+  for (const char * type : {"Histogram", "Profile", "DataPointsVector", "DataPointColumns", "Table2D"})
     {
     std::string t(type);
     if (typeName.size() >= t.size() && typeName.compare(typeName.size()-t.size(), t.size(), t) == 0) return true;
@@ -156,12 +157,13 @@ namespace Datum
   auto found = _listings.find(directory);
   if (found != _listings.end()) return found->second;
   Listing & l = _listings[directory];
-  // sub-directories and Datum files (and ROOT files when DatumGui reads them), directories first, by name (case-insensitive); hidden entries left out
+  // sub-directories, Datum files (and ROOT files when DatumGui reads them) and tables of data (opened in table panes,
+  // see DatumApp::openTable()), directories first, by name (case-insensitive); hidden entries left out
   FileSystem::ListOptions options;
 #ifdef DATUM_WITH_ROOT
-  options.extensions = { DatumFile::extension(), DatumFile::formerExtension(), ".root" };
+  options.extensions = { DatumFile::extension(), DatumFile::formerExtension(), ".root", ".csv", ".tsv", ".tab", ".ssv", ".dtb" };
 #else
-  options.extensions = { DatumFile::extension(), DatumFile::formerExtension() };
+  options.extensions = { DatumFile::extension(), DatumFile::formerExtension(), ".csv", ".tsv", ".tab", ".ssv", ".dtb" };
 #endif
   try
     {
@@ -209,6 +211,13 @@ namespace Datum
     if (rank == 2) details += "\n(shown as a color map)";
     if (rank > 2)  details += "\n(histograms of rank 3 and more: 3D views to come)";
     return rank <= 2;
+    }
+  if (const MATH::Table2D * t = folder.get<MATH::Table2D>(name))
+    {
+    kind = "Table";
+    std::snprintf(text, sizeof(text), "%s\n%u rows x %u columns\n(opened in a table pane)", name.data(), t->nRows(), t->nColumns());
+    details = text;
+    return true;
     }
   if (const MATH::DataPoints * d = folder.get<MATH::DataPoints>(name))
     {

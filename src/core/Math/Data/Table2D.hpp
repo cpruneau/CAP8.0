@@ -34,7 +34,10 @@ namespace Datum
   //! with '#' are skipped. All rows must have the same number of values. The grid is not part of the text format.
   //!
   //! <b>Binary files.</b> "DTMB" records of the Datum binary format (see BinaryIO.hpp): rows, columns, grid and values
-  //! (float64), restored exactly. Tables can be stored in a Folder / DatumFile.
+  //! (float64) and, from version 2, the column names, restored exactly. Tables can be stored in a Folder / DatumFile.
+  //!
+  //! <b>Column names.</b> Each column may have a name (the field or variable it holds, e.g. the header row of a CSV
+  //! file, see Datum::TableReader). columnName() gives the default "c<column>" to columns without a name.
   //!
   //! Example:
   //! @code
@@ -56,6 +59,7 @@ namespace Datum
   double _dx;                     //!< x step between rows
   double _yMin;                   //!< y of column 0
   double _dy;                     //!< y step between columns
+  std::vector<String> _columnNames; //!< names of the columns: empty (none given) or nColumns() names
 
   //! @brief Throw unless row and column are valid. @param row row index @param column column index @param source caller name
   void checkIndices(unsigned int row, unsigned int column, const char * source) const;
@@ -120,6 +124,34 @@ namespace Datum
   const std::vector<double> & values() const { return _values; }
   //! @brief All rows. @return nRows() vectors of nColumns() values
   std::vector< std::vector<double> > rows() const;
+  //!
+  //! @brief Append a column (the first column added to an empty table sets the number of rows).
+  //! @param values column values @param name name of the column ("" for none)
+  //! @throws MathException if the size differs from nRows() or is zero
+  //!
+  void addColumn(const std::vector<double> & values, const String & name="");
+  //! @brief Remove a column (and its name). @param column column @throws MathException if out of range
+  void removeColumn(unsigned int column);
+
+  //! @}
+
+  //! @name Column names
+  //! @{
+
+  //! @brief Whether names were given to the columns. @return true if so
+  bool hasColumnNames() const { return !_columnNames.empty(); }
+  //! @brief Name of a column: the name given, or "c<column>" if none. @param column column @return name
+  //! @throws MathException if out of range
+  String columnName(unsigned int column) const;
+  //! @brief Names of all the columns (columnName() of each). @return nColumns() names
+  std::vector<String> columnNames() const;
+  //! @brief Name a column. @param column column @param name name @throws MathException if out of range
+  void setColumnName(unsigned int column, const String & name);
+  //! @brief Name all the columns. @param names nColumns() names, or none to remove the names
+  //! @throws MathException if the number of names differs from nColumns()
+  void setColumnNames(const std::vector<String> & names);
+  //! @brief Index of the first column of a given name (columnName()). @param name name @return index, or -1 if none
+  int columnIndex(const String & name) const;
 
   //! @}
 
@@ -191,8 +223,9 @@ namespace Datum
 
   //! @brief Tag of Table2D records in binary files. @return "DTMB"
   static const char * binaryTag() { return "DTMB"; }
-  //! @brief Format version written (and highest version read). @return version
-  static unsigned int binaryVersion() { return 1; }
+  //! @brief Format version written (and highest version read): 2 (version 1, without the column names, is still read).
+  //! @return version
+  static unsigned int binaryVersion() { return 2; }
   //! @brief Name stored in binary records. @return name()
   String binaryName() const { return name(); }
   //! @brief Write the binary payload after the name. @param w writer
