@@ -63,6 +63,21 @@ namespace Datum
   virtual double logProbability(double x) const = 0;
   //! @brief Whether x is within the support. @param x count @return true if so
   virtual bool inSupport(double x) const = 0;
+
+  public:
+  //! @name Fourier transforms
+  //! Those of the distribution of counts, sum of A P(m) delta(x - m): F(k) = A sum P(m) e^{-ikm} (the discrete-time
+  //! transform, periodic in k, the characteristic function at -k), not of f continued between the integers. On a
+  //! domain: the sum over the integers in it (half for an integer on a bound). By default the sums are made over the
+  //! support until the probability is exhausted; Poisson, binomial and negative binomial: closed forms.
+  //! @{
+  bool hasAnalyticalFourierTransform() const override { return true; }
+  bool hasAnalyticalFourierTransformOnDomain() const override { return true; }
+  //! @}
+
+  protected:
+  std::complex<double> lineTransform(double k) const override;
+  std::complex<double> domainTransform(double k, double low, double high) const override;
   };
 
   //!
@@ -84,6 +99,10 @@ namespace Datum
   protected:
   double logProbability(double x) const override;
   bool inSupport(double x) const override { return x >= 0.0; }
+
+  protected:
+  //! A exp(mu (e^{-ik} - 1))
+  std::complex<double> lineTransform(double k) const override;
   };
 
   //!
@@ -108,6 +127,10 @@ namespace Datum
   protected:
   double logProbability(double x) const override;
   bool inSupport(double x) const override { return x >= 0.0 && x <= trials(); }
+
+  protected:
+  //! A (1 - p + p e^{-ik})^n
+  std::complex<double> lineTransform(double k) const override;
   };
 
   //!
@@ -134,6 +157,10 @@ namespace Datum
   protected:
   double logProbability(double x) const override;
   bool inSupport(double x) const override { return x >= 0.0; }
+
+  protected:
+  //! A (1 + (mu/k) (1 - e^{-ik}))^(-k)
+  std::complex<double> lineTransform(double k) const override;
   };
 
   //!

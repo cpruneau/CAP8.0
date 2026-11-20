@@ -73,6 +73,13 @@ namespace Datum
 
   unsigned int _n;   //!< order
   Form _form;        //!< form
+
+  public:
+  //! @brief The Fourier transform on a domain is exact (the series coefficients are the parameters). @return true
+  bool hasAnalyticalFourierTransformOnDomain() const override { return true; }
+
+  protected:
+  std::complex<double> domainTransform(double k, double low, double high) const override;
   };
 
   //!
@@ -201,6 +208,15 @@ namespace Datum
   void checkForm(Form wanted, const char * what) const;
 
   Form _form;   //!< form
+
+  public:
+  //! @brief No transform on the line (Dirac deltas); on a domain: exact. @return false
+  bool hasAnalyticalFourierTransform() const override { return false; }
+  //! @brief The Fourier transform on a domain is exact (on [x0, x0 + 2 pi]: the coefficients). @return true
+  bool hasAnalyticalFourierTransformOnDomain() const override { return true; }
+
+  protected:
+  std::complex<double> domainTransform(double k, double low, double high) const override;
   };
 
   //!

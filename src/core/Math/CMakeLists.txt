@@ -13,6 +13,7 @@
 #   Fitting        fits (Fitter, likelihoods, chi square, Bayesian fits, fit records)
 #   StatisticalTests  statistical tests (binomial, Poisson, z, t, chi square, histograms, Kolmogorov-Smirnov)
 #   Statistics     descriptive statistics of data: summaries, covariances, correlations (Pearson, Spearman, Kendall)
+#   Fourier        Fourier transforms: of the functions (analytical, on a domain, series), FourierTransform, FourierTools
 ################################################################################################
 
 ################################################################################################
@@ -86,6 +87,7 @@ Functions/Polynomial.cpp
 Functions/Polynomial2D.cpp
 Functions/Quartic.cpp
 Functions/ScalarField.cpp
+Functions/SignalFunctions.cpp
 Functions/SpecialFunctions.cpp
 Functions/SphericalHarmonics.cpp
 Functions/XmlScalarField.cpp
@@ -129,6 +131,11 @@ Fitting/ModelValues.cpp
 Fitting/Prior.cpp
 # Statistics
 Statistics/TableStatistics.cpp
+# Fourier
+Fourier/FourierTools.cpp
+Fourier/FourierTransform.cpp
+Fourier/FunctionFourier.cpp
+Fourier/FunctionTransforms.cpp
 # StatisticalTests
 StatisticalTests/Distributions.cpp
 StatisticalTests/StatisticalTests.cpp
@@ -176,6 +183,9 @@ add_test(NAME StatisticalTests COMMAND TestStatisticalTests)
 add_executable(TestTableStatistics Statistics/tests/TestTableStatistics.cpp)
 target_link_libraries(TestTableStatistics Math Base)
 add_test(NAME TableStatistics COMMAND TestTableStatistics)
+add_executable(TestFourierTransforms Fourier/tests/TestFourierTransforms.cpp)
+target_link_libraries(TestFourierTransforms Math Base)
+add_test(NAME FourierTransforms COMMAND TestFourierTransforms)
 add_executable(TestFits2D Fitting/tests/TestFits2D.cpp)
 target_link_libraries(TestFits2D Math Base)
 add_test(NAME Fits2D COMMAND TestFits2D)

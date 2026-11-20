@@ -54,6 +54,14 @@ namespace Datum
   //! @param x1Low left @param x1High right @param x2Low bottom @param x2High top @return integral
   double integralInRange(double x1Low, double x1High, double x2Low, double x2High) const override;
   using ParameterizedFunction::integralInRange;
+
+  public:
+  //! @brief Fourier transform on the plane: 2 pi A sx sy sqrt(1 - rho^2) e^{-i(kx mx + ky my)}
+  //! e^{-(sx^2 kx^2 + 2 rho sx sy kx ky + sy^2 ky^2)/2} (see Function). @return true
+  bool hasAnalyticalFourierTransform() const override { return true; }
+
+  protected:
+  std::complex<double> lineTransformND(const std::vector<double> & k) const override;
   };
 
   } // namespace MATH

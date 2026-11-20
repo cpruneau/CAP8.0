@@ -1,5 +1,6 @@
 #ifndef DATUM_MATH_Function
 #define DATUM_MATH_Function
+#include <complex>
 #include <vector>
 #include "String.hpp"
 #include "Object.hpp"
@@ -51,6 +52,8 @@ namespace Datum
   //!   f.evaluateAt(1.0);                   // throws MathException: rank is 2
   //! @endcode
   //!
+  class FourierTransform;
+
   class Function : public Object
   {
   public:
@@ -196,6 +199,58 @@ namespace Datum
   virtual double expectationValue(double low, double high, int power) const;
   //! @}
 
+  //! @name Fourier transforms (see FourierTransform, FourierTools and docs/Fourier.md)
+  //!
+  //! Convention: F(k) = integral of f(x) e^{-ikx} dx, k an angular frequency (the characteristic function of a
+  //! probability density p is the transform at -k). Three settings:
+  //!  - the whole line: fourierTransformAt(k) and fourierTransform(), for the classes whose transform is known in closed
+  //!    form (hasAnalyticalFourierTransform(): Normal, Normal2D, Cauchy, Student, ChiSquare, Gamma, Maxwell-Boltzmann,
+  //!    the distributions of counts, Bessel J and K, the functions of SignalFunctions.hpp, sums and separable products
+  //!    of these); the others throw, except the densities, which are approximated on the domain holding all but 1e-12
+  //!    of their probability;
+  //!  - a domain [low, high]: fourierTransformAt(k, low, high) and fourierTransform(low, high), for every function of
+  //!    rank 1: exact for the classes of hasAnalyticalFourierTransformOnDomain() (polynomials, orthogonal series,
+  //!    exponentials, Gaussians, harmonics, Bezier curves, ...), otherwise the exact transform of a Legendre series (a
+  //!    polynomial) approximating f on the domain (FourierTransform::kApproximation);
+  //!  - periodic functions, and functions on a domain seen as one period of their periodic extension:
+  //!    fourierCoefficient(n, x0, period) = F_{[x0, x0 + period]}(2 pi n/period)/period.
+  //!
+  //! Derived classes provide the transforms by overriding the protected functions lineTransform() (rank 1),
+  //! lineTransformND() (any rank), domainTransform(), and, if needed, newLineTransform() and newDomainTransform().
+  //! @{
+
+  //! @brief Whether the transform on the whole line is known in closed form (false by default). @return true if so
+  virtual bool hasAnalyticalFourierTransform() const { return false; }
+  //! @brief Whether the transform on a domain is exact (true by default for polynomials, see polynomialDegree()).
+  //! @return true if so
+  virtual bool hasAnalyticalFourierTransformOnDomain() const { return polynomialDegree() >= 0; }
+  //! @brief Transform on the whole line, rank 1. @param k k @return F(k)
+  //! @throws MathException if the rank is not 1 or the transform is not available
+  std::complex<double> fourierTransformAt(double k) const;
+  //! @brief Transform on the whole line, any rank. @param k rank() values @return F(k)
+  //! @throws MathException if the size differs from the rank or the transform is not available
+  std::complex<double> fourierTransformAt(const std::vector<double> & k) const;
+  //! @brief Transform of f on the domain [low, high], rank 1 (reversed bounds change the sign). @param k k
+  //! @param low lower bound @param high upper bound @return F(k) @throws MathException if the rank is not 1
+  std::complex<double> fourierTransformAt(double k, double low, double high) const;
+  //! @brief Fourier series coefficient c_n of the periodic function equal to f on [x0, x0 + period]:
+  //! F(2 pi n/period) on that domain, divided by the period. @param n index @param x0 start of the period
+  //! @param period period (> 0) @return c_n
+  std::complex<double> fourierCoefficient(int n, double x0, double period) const;
+  //! @brief Transform on the whole line as a function of k (owned by the caller). @return transform
+  //! @throws MathException if it is not available (give a domain)
+  FourierTransform * fourierTransform() const;
+  //! @brief Transform of f on [low, high] as a function of k (owned by the caller): exact, or the exact transform of a
+  //! Legendre series approximating f. @param low lower bound @param high upper bound (> low, finite) @return transform
+  FourierTransform * fourierTransform(double low, double high) const;
+  //! @brief Degree of the function if it is a polynomial of its variable (rank 1), -1 otherwise (the default).
+  //! @return degree
+  virtual int polynomialDegree() const { return -1; }
+  //! @brief Copy of the function (owned by the caller), or null if the class does not provide it (the default; the
+  //! parameterized functions do). @return copy
+  virtual Function * copyFunction() const { return nullptr; }
+  //! @}
+
   //! @name Fits attached (see FitRecord, Fitter::record())
   //! @{
 
@@ -216,6 +271,27 @@ namespace Datum
   //! @}
 
   protected:
+
+  //! @name Fourier transforms: what derived classes override
+  //! @{
+  //! @brief Transform on the whole line, rank 1 (default: throws). @param k k @return F(k)
+  virtual std::complex<double> lineTransform(double k) const;
+  //! @brief Transform on the whole line, any rank (default: lineTransform() for rank 1, throws otherwise). @param k
+  //! rank() values @return F(k)
+  virtual std::complex<double> lineTransformND(const std::vector<double> & k) const;
+  //! @brief Transform on [low, high], low < high (default: exact for polynomials, otherwise the transform of an adaptive
+  //! Legendre approximation). @param k k @param low lower bound @param high upper bound @return F(k)
+  virtual std::complex<double> domainTransform(double k, double low, double high) const;
+  //! @brief Transform on the whole line as a function (default: lineTransformND() of a copy, if analytical).
+  //! @return new transform
+  virtual FourierTransform * newLineTransform() const;
+  //! @brief Transform on [low, high] as a function (default: domainTransform() of a copy if exact, otherwise the
+  //! transform of an adaptive Legendre approximation). @param low lower bound @param high upper bound @return new transform
+  virtual FourierTransform * newDomainTransform(double low, double high) const;
+  //! @brief Transform of the Legendre approximation of f on [low, high] as a function (kApproximation).
+  //! @param low lower bound @param high upper bound @return new transform
+  FourierTransform * approximateDomainTransform(double low, double high) const;
+  //! @}
 
   //!
   //! @brief Throw if the number of arguments differs from the rank.

@@ -127,6 +127,13 @@ namespace Datum
   mutable std::vector<double> _x;   //!< knots, in order of x
   mutable std::vector<double> _y;   //!< values of the knots
   mutable std::vector<double> _slopes;   //!< slopes at the knots
+
+  public:
+  //! @brief The Fourier transform on a domain is exact (a cubic between knots, constant outside). @return true
+  bool hasAnalyticalFourierTransformOnDomain() const override { return true; }
+
+  protected:
+  std::complex<double> domainTransform(double k, double low, double high) const override;
   };
 
   } // namespace MATH

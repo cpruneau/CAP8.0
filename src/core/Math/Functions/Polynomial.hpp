@@ -241,6 +241,10 @@ namespace Datum
   //!
   friend std::ostream& operator<<(std::ostream& out, const Polynomial & p);
 
+
+  public:
+  //! @brief Degree, for the exact Fourier transforms on a domain. @return degree
+  int polynomialDegree() const override { return int(degree()); }
   };
 
   //! @relates Polynomial

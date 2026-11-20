@@ -101,6 +101,13 @@ namespace Datum
   //! @brief Set both parameters. @param a amplitude @param b coefficient of x in the exponent
   void setParameters(double a, double b) { setParameterValue(0,a); setParameterValue(1,b); }
 
+
+  public:
+  //! @brief The Fourier transform on a domain is exact: A integral of e^{(b - ik) x} (see Function). @return true
+  bool hasAnalyticalFourierTransformOnDomain() const override { return true; }
+
+  protected:
+  std::complex<double> domainTransform(double k, double low, double high) const override;
   };
 
   } // namespace MATH

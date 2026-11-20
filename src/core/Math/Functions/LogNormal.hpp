@@ -151,6 +151,15 @@ namespace Datum
 
   //! @}
 
+
+  public:
+  //! @brief No closed form: the transform on the line is that of a piecewise Legendre approximation of f on the
+  //! domain holding all but 1e-12 of its area (see Function). @return false
+  bool hasAnalyticalFourierTransform() const override { return false; }
+
+  protected:
+  std::complex<double> lineTransform(double k) const override;
+  FourierTransform * newLineTransform() const override;
   };
 
   } // namespace MATH

@@ -312,5 +312,33 @@ namespace Datum
   return scale()*scale()*(g2 - g1*g1);
   }
 
+  // ---- GammaDistribution
+
+  GammaDistribution::GammaDistribution(double amplitude, double shape, double scale)
+  :
+  ContinuousDistribution({Parameter("amplitude", amplitude), positive("shape", shape), positive("scale", scale)})
+  {
+  requirePositive(shape, "The shape of a gamma distribution", __FUNCTION__);
+  requirePositive(scale, "The scale of a gamma distribution", __FUNCTION__);
+  }
+
+  double GammaDistribution::density(double x) const
+  {
+  if (x < 0.0) return 0.0;
+  double a = shape(), t = scale();
+  if (x == 0.0) return a < 1.0 ? kInfinity : (a == 1.0 ? 1.0/t : 0.0);
+  return std::exp((a - 1.0)*std::log(x/t) - x/t - std::lgamma(a))/t;
+  }
+
+  double GammaDistribution::cdf(double x) const
+  {
+  return x <= 0.0 ? 0.0 : Distributions::regularizedGammaP(shape(), x/scale());
+  }
+
+  double GammaDistribution::cdfUpper(double x) const
+  {
+  return x <= 0.0 ? 1.0 : Distributions::regularizedGammaQ(shape(), x/scale());
+  }
+
   } // namespace MATH
 } // namespace Datum
