@@ -94,6 +94,12 @@ namespace Datum
 
   unsigned int _degree;  //!< degree n
 
+
+  public:
+  //! @brief Degree n, for the exact Fourier transforms on a domain. @return n
+  int polynomialDegree() const override { return int(degree()); }
+  //! @brief Copy. @return new polynomial (owned by the caller)
+  Function * copyFunction() const override { return new Legendre(*this); }
   };
 
   } // namespace MATH

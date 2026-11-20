@@ -127,6 +127,15 @@ namespace Datum
   BesselType   _type;   //!< kind of function
   unsigned int _order;  //!< order n
 
+
+  public:
+  //! @brief Transform on the line in closed form for J_0, J_1 and K_0 (see BesselFunction). @return true for those
+  bool hasAnalyticalFourierTransform() const override;
+  //! @brief Copy. @return new function (owned by the caller)
+  Function * copyFunction() const override { return new Bessel(*this); }
+
+  protected:
+  std::complex<double> lineTransform(double k) const override;
   };
 
   } // namespace MATH

@@ -101,6 +101,10 @@ namespace Datum
 
   Family _family;   //!< family of the polynomials
   unsigned int _nCoefficients;   //!< N+1
+
+  public:
+  //! @brief Degree N (a polynomial of x), for the exact Fourier transforms on a domain. @return N
+  int polynomialDegree() const override { return int(degree()); }
   };
 
   //! @brief Series of Legendre polynomials P_n, x in [low, high] mapped onto [-1, 1].

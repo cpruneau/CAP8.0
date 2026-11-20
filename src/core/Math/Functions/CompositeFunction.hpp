@@ -211,6 +211,22 @@ namespace Datum
   std::vector<Function*> _functions;  //!< component functions (not owned)
   Operation _operation;  //!< how the functions are combined
 
+
+  public:
+  //! @name Fourier transforms
+  //! Sum: the sum of the transforms; product of functions of their own variables: the product of the transforms;
+  //! pointwise product: on a domain only (approximation). The transforms as functions hold transforms of the
+  //! components (made when they are asked for), so that they do not depend on the components afterwards.
+  //! @{
+  bool hasAnalyticalFourierTransform() const override;
+  bool hasAnalyticalFourierTransformOnDomain() const override;
+  //! @}
+
+  protected:
+  std::complex<double> lineTransformND(const std::vector<double> & k) const override;
+  std::complex<double> domainTransform(double k, double low, double high) const override;
+  FourierTransform * newLineTransform() const override;
+  FourierTransform * newDomainTransform(double low, double high) const override;
   };
 
   } // namespace MATH

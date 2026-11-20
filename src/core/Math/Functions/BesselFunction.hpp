@@ -58,6 +58,15 @@ namespace Datum
   protected:
 
   Bessel::BesselType _type;   //!< kind
+
+  public:
+  //! @brief Transform on the line in closed form for J_n (2 A (-i)^n T_n(k/|q|)/sqrt(q^2 - k^2) e^{-ik x0} for
+  //! |k| < |q|, 0 beyond, q the scale) and K_0 (defined on one side of x0: A [pi/2 - i asinh(k/q)]/sqrt(q^2 + k^2)
+  //! e^{-ik x0}). @return true for J and K_0
+  bool hasAnalyticalFourierTransform() const override;
+
+  protected:
+  std::complex<double> lineTransform(double k) const override;
   };
 
   //! @brief A J_n(k (x - x0)): Bessel function of the first kind.

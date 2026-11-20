@@ -150,6 +150,16 @@ namespace Datum
 
   //! @}
 
+
+  public:
+  //! @brief Fourier transform on the line: A sigma sqrt(2 pi) e^{-ik mu} e^{-sigma^2 k^2/2} (see Function). @return true
+  bool hasAnalyticalFourierTransform() const override { return true; }
+  //! @brief On a domain: exact, with the Faddeeva function (FourierTools::gaussianDomain()). @return true
+  bool hasAnalyticalFourierTransformOnDomain() const override { return true; }
+
+  protected:
+  std::complex<double> lineTransform(double k) const override;
+  std::complex<double> domainTransform(double k, double low, double high) const override;
   };
 
   } // namespace MATH

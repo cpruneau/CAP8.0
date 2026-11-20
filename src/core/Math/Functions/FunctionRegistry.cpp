@@ -39,6 +39,7 @@
 #include "DiscreteDistributions.hpp"
 #include "MultivariateDistributions.hpp"
 #include "ParameterizedComposite.hpp"
+#include "SignalFunctions.hpp"
 #include "FileSystem.hpp"
 #include "XmlDocument.hpp"
 
@@ -125,6 +126,20 @@ namespace Datum
       add<CauchyDistribution>("Cauchy");
       add<MaxwellBoltzmannDistribution>("MaxwellBoltzmann");
       add<WeibullDistribution>("Weibull");
+      add<GammaDistribution>("GammaDistribution");
+      add<Boxcar>("Boxcar");
+      add<Triangle>("Triangle");
+      add<Sinc>("Sinc");
+      add<TwoSidedExponential>("TwoSidedExponential");
+      add<OneSidedExponential>("OneSidedExponential");
+      add<DampedOscillation>("DampedOscillation");
+      add<GaussianWavePacket>("GaussianWavePacket");
+      add<HyperbolicSecant>("HyperbolicSecant");
+      add("HermiteFunction", typeid(HermiteFunction), [](unsigned int n) -> ParameterizedFunction *
+          { return n == 0 || n == 4 ? new HermiteFunction() : nullptr; });
+      add<Voigt>("Voigt");
+      add<HeavisideStep>("HeavisideStep");
+      add<DiracComb>("DiracComb");
       add("Multinomial", typeid(MultinomialDistribution), [](unsigned int n) -> ParameterizedFunction *
           {
           if (n == 0) return new MultinomialDistribution(3u);

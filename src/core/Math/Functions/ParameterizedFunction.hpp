@@ -238,6 +238,10 @@ namespace Datum
 
 
 
+
+  public:
+  //! @brief Copy of the function (clone()), for Function::fourierTransform(). @return copy (owned by the caller)
+  Function * copyFunction() const override { return clone(); }
   };
 
   } // namespace MATH

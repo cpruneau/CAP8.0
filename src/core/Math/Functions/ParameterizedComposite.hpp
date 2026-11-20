@@ -140,6 +140,16 @@ namespace Datum
   std::vector<unsigned int> _first;   //!< index of the first parameter of each component
   String _registryName;   //!< name in FunctionRegistry (empty if not registered)
   mutable std::vector<double> _synchronized;   //!< values last given to the components
+
+  public:
+  //! @brief Sum or product: analytical if all the components are (see CompositeFunction). @return true if so
+  bool hasAnalyticalFourierTransform() const override;
+  //! @brief Sum: exact on a domain if all the components are. @return true if so
+  bool hasAnalyticalFourierTransformOnDomain() const override;
+
+  protected:
+  std::complex<double> lineTransformND(const std::vector<double> & k) const override;
+  std::complex<double> domainTransform(double k, double low, double high) const override;
   };
 
   } // namespace MATH
